@@ -17,18 +17,22 @@ guess = np.zeros(gem.npairs*gem.norbs + 1)
 guess[0] += input['energy']
 guess[1:] += input['coeffs'].ravel()
 
+dets = [ 0b111111 ] + [ gem.excite_single(0b111111, p, q) for q in range(gem.norbs) 
+        for p in range(gem.norbs) if q != p ] + gem.pspace
 
-options = { 'method': 'anderson',
+dets = list(set(dets))
+
+options = { #'method': 'anderson',
             'options': { 'maxiter':maxiter,
                          'disp': True,
                        },
           }
 
-result = gem.solve( dets=gem.pspace,
-                    ham=input['ham'],
-                    x0=guess,
-                    solver=quasinewton,
-                    options=options )
+result = gem( dets=dets,
+              ham=input['ham'],
+              x0=guess,
+              solver=lstsq,
+              options=options )
 
 
 # vim: set textwidth=90 :

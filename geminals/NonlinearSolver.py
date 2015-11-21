@@ -1,15 +1,9 @@
 #!/usr/bin/env python2
 
-"""
-Defines functions that solve a set of nonlinear equations using the Newton-Raphson and
-Quasi-Newton methods.
-
-"""
-
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.optimize import root as quasinewton
+from scipy.optimize import root as quasinewton, minimize as lstsq
 
 
 def newton(fun, x0, jac=None, tol=1.0e-6, maxiter=1000):
