@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.optimize import root as quasinewton, minimize as lstsq
 
 
 def newton(fun, x0, jac=None, tol=1.0e-6, maxiter=1000):

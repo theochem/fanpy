@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from Geminal import *
+from HortonWrapper import *
 
 
 matrix = np.array([ [1,2,3],
@@ -11,15 +12,24 @@ matrix = np.array([ [1,2,3],
 assert Geminal.permanent(matrix) == 450
 
 
-npairs = 3
-norbs = 9
-ham = (np.zeros((norbs, norbs)), np.zeros((norbs, norbs, norbs, norbs)), 1.0)
-gem = Geminal(npairs, norbs)
-result = gem.solve( dets=gem.pspace,
-                    ham=ham,
-                    x0=np.zeros(npairs*norbs + 1),
-                    solver=quasinewton )
-assert result['success']
+file = 'test/li2.xyz'
+basis = 'sto-3g'
+nocc = 3
+input = from_horton(file=file, basis=basis, nocc=nocc, guess=None)
+maxiter = 10
+solver=quasinewton
+options = { 'options': { 'maxiter':maxiter,
+                         'disp': True,
+                         'xatol': 1.0e-6,
+                       },
+            'method': 'krylov',
+          }
+
+gem = Geminal(nocc, input['basis'].nbasis)
+guess = np.zeros(gem.norbs*gem.npairs + 1)
+guess[0] += input['energy']
+guess[1:] += input['coeffs'].ravel()
+result = gem(guess, *input['ham'], solver=solver, options=options)
 
 
 # vim: set textwidth=90 :

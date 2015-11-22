@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from NonlinearSolver import *
+from Newton import *
 import numpy.testing as npt
 from scipy.optimize import rosen, rosen_der
 
@@ -22,9 +22,6 @@ def jac(x0):
 
 r_newton = newton(fun, guess, jac=jac)
 npt.assert_allclose(r_newton['x'], answer, atol=tol, rtol=0)
-
-r_quasi = quasinewton(fun, guess, method='broyden2')
-npt.assert_allclose(r_quasi['x'], answer, atol=tol, rtol=0)
 
 
 # vim: set textwidth=90 :
