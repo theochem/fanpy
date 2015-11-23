@@ -16,7 +16,6 @@ class Geminal(object):
         self.norbs = norbs
         self.coeffs = None
         self.pspace = pspace if (pspace is not None) else self.generate_pspace()
-        self._energy = 0.0
 
 
     def __call__(self, x0, one, two, core, dets=None, jac=None, solver=lstsq, options={}):
