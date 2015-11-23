@@ -126,8 +126,10 @@ class Geminal(object):
         for i in range(len(dets)):
             Hvec[i] = self.phi_H_psi(dets[i], C, one, two, core)
             Svec[i] = self.overlap(dets[i], C)
-        objective = Hvec - E*Svec
-        return objective.dot(objective)
+        numerator = Hvec - E*Svec
+        numerator = numerator.dot(numerator)
+        denominator = Svec.dot(Svec)
+        return numerator/denominator
 
 
     @staticmethod
