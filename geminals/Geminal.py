@@ -89,7 +89,7 @@ class Geminal(object):
             for ps in [2*p, 2*p + 1]:
                 for q in range(self.norbs):
                     for qs in [2*q, 2*q + 1]:
-                        phi_new = self.excite_single(phi, ps, qs)
+                        phi_new = self.excite(phi, ps, qs)
                         result += one[p,q]*self.overlap(phi_new, C)
 
         for p in range(self.norbs):
@@ -100,7 +100,7 @@ class Geminal(object):
                             for ss in [2*s, 2*s + 1]:
                                 for q in range(self.norbs):
                                     for qs in [2*q, 2*q + 1]:
-                                        phi_new = self.excite_double(phi, ps, rs, ss, qs)
+                                        phi_new = self.excite(phi, ps, rs, ss, qs)
                                         result += 0.5*two[p,q,r,s]*self.overlap(phi_new, C)
         return result
 
@@ -132,30 +132,25 @@ class Geminal(object):
         return numerator/denominator
 
 
-    @staticmethod
-    def excite_single(phi, p, q):
-        if (not Geminal.occupied(phi, p)):
-            return 0
-        tmp = phi & ~(1 << p)
-        if Geminal.occupied(tmp, q):
-            return 0
-        return tmp | (1 << q)
+    @classmethod
+    def excite(cls, phi, *args):
+        assert (len(args) % 2) == 0, \
+            "An equal number of annihilations and creations must occur."
+        halfway = len(args)//2
 
+        for i in args[:halfway]:
+            if cls.occupied(phi, i):
+                phi &= ~(1 << i)
+            else:
+                return 0
 
-    @staticmethod
-    def excite_double(phi, p, q, s, r):
-        if (not Geminal.occupied(phi, p)):
-            return 0
-        tmp = phi & ~(1 << p)
-        if (not Geminal.occupied(tmp, q)):
-            return 0
-        tmp = tmp & ~(1 << q)
-        if Geminal.occupied(tmp, s):
-            return 0
-        tmp = tmp | (1 << s)
-        if Geminal.occupied(tmp, r):
-            return 0
-        return tmp | (1 << r)
+        for i in args[halfway:]:
+            if cls.occupied(phi, i):
+                return 0
+            else:
+                phi |= 1 << i
+
+        return phi
 
 
     @staticmethod
