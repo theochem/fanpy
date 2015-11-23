@@ -16,7 +16,6 @@ class Geminal(object):
         self.norbs = norbs
         self.coeffs = None
         self.pspace = pspace if (pspace is not None) else self.generate_pspace()
-        self._overlap_cache = {}
         self._energy = 0.0
 
 
@@ -72,8 +71,6 @@ class Geminal(object):
             return 0
         elif phi not in self.pspace:
             return 0
-        elif phi in self._overlap_cache:
-            return self._overlap_cache[phi]
         else:
             # The ones in phi's binary representation determine the columns (orbitals) of
             # the coefficient matrix for which we want to evaluate the permanent; only
@@ -81,8 +78,54 @@ class Geminal(object):
             # APIG correspond to electron pairs
             slice = [ i for i in range(self.norbs) if self.occupied(phi, 2*i) ]
             overlap = self.permanent(matrix[:,slice])
-            self._overlap_cache[phi] = overlap
             return overlap
+
+
+    def phi_H_psi(self, phi, C, one, two, core):
+        result = core
+        for p in range(self.norbs):
+            for ps in [2*p, 2*p + 1]:
+                for q in range(self.norbs):
+                    for qs in [2*q, 2*q + 1]:
+                        phi_new = self.excite_single(phi, ps, qs)
+                        result += one[p,q]*self.overlap(phi_new, C)
+
+        for r in range(self.norbs):
+            for rs in [2*r, 2*r + 1]:
+                for s in range(self.norbs):
+                    for ss in [2*s, 2*s + 1]:
+                        for q in range(self.norbs):
+                            for qs in [2*q, 2*q + 1]:
+                                for p in range(self.norbs):
+                                    for ps in [2*p, 2*p + 1]:
+                                        phi_new = self.excite_double(phi, rs,ss,qs,ps)
+                                        result += 0.25*two[p,q,r,s]*self.overlap(phi_new, C)
+        return result
+
+
+    def nonlin(self, x0, one, two, core, dets=None):
+        E = x0[0]
+        C = x0[1:].reshape(self.npairs, self.norbs)
+        if dets is None:
+            dets = self.pspace
+        vec = []
+        for phi in dets[:x0.size]:
+            vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, one, two, core))
+        return vec
+
+
+    def lstsq(self, x0, one, two, core, dets=None):
+        E = x0[0]
+        C = x0[1:].reshape(self.npairs, self.norbs)
+        if dets is None:
+            dets = self.pspace
+        Hvec = np.zeros(len(dets))
+        Svec = np.zeros(len(dets))
+        for i in range(len(dets)):
+            Hvec[i] = self.phi_H_psi(dets[i], C, one, two, core)
+            Svec[i] = self.overlap(dets[i], C)
+        objective = Hvec - E*Svec
+        return objective.dot(objective)
 
 
     @staticmethod
@@ -90,7 +133,7 @@ class Geminal(object):
         if (not Geminal.occupied(phi, p)):
             return 0
         tmp = phi & ~(1 << p)
-        if (not Geminal.occupied(tmp, q)):
+        if Geminal.occupied(tmp, q):
             return 0
         return tmp | (1 << q)
 
@@ -114,57 +157,6 @@ class Geminal(object):
     @staticmethod
     def occupied(phi, orbital):
         return bool(phi & (1 << orbital))
-
-
-    def pschrodinger(self, phi, E, C, one, two, core):
-        result = (E - core)*self.overlap(phi, C)
-
-        for p in range(self.norbs):
-            for ps in [2*p, 2*p + 1]:
-                for q in range(self.norbs):
-                    for qs in [2*q, 2*q + 1]:
-                        phi_new = self.excite_single(phi, ps, qs)
-                        result -= one[p,q]*self.overlap(phi_new, C)
-
-        for r in range(self.norbs):
-            for rs in [2*r, 2*r + 1]:
-                for s in range(self.norbs):
-                    for ss in [2*s, 2*s + 1]:
-                        for q in range(self.norbs):
-                            for qs in [2*q, 2*q + 1]:
-                                for p in range(self.norbs):
-                                    for ps in [2*p, 2*p + 1]:
-                                        phi_new = self.excite_double(phi, rs,ss,qs,ps)
-                                        result -= 0.5*two[p,q,r,s]*self.overlap(phi_new, C)
-        return result
-
-
-    def nonlin(self, x0, one, two, core, dets=None):
-        E = x0[0]
-        C = x0[1:].reshape(self.npairs, self.norbs)
-        if dets is None:
-            dets = self.pspace
-        objective = []
-
-        for phi in dets[:x0.size]:
-            objective.append(self.pschrodinger(phi, E, C, one, two, core))
-
-        return objective
-
-
-    def lstsq(self, x0, one, two, core, dets=None):
-        E = x0[0]
-        C = x0[1:].reshape(self.npairs, self.norbs)
-        if dets is None:
-            dets = self.pspace
-        objective = 0
-
-        for phi in dets:
-            tmp = self.pschrodinger(phi, E, C, one, two, core)
-            #tmp /= (self.overlap(phi, C))**2
-            objective += tmp*tmp
-
-        return objective
 
 
 # vim: set textwidth=90 :
