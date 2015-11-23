@@ -22,6 +22,9 @@ class Geminal(object):
         if solver is lstsq:
             objective = self.lstsq
         else:
+            if len(dets) != x0.size:
+                print("Warning: length of 'dets' should be length of guess, 1 + P*K.")
+                print("Using the first {} determinants in 'dets'.".format(x0.size))
             objective = self.nonlin
         result = solver(objective, x0, jac=jac, args=(one, two, core, dets), **options)
         self.coeffs = result['x'][1:].reshape(self.npairs, self.norbs)
@@ -108,9 +111,6 @@ class Geminal(object):
         if dets is None:
             dets = self.pspace
         vec = []
-        if len(dets) != x0.size:
-            print("Warning: 'dets' should be of equal length to the guess, E + {C}.")
-            print("Using the first {} determinants in 'dets'.".format(x0.size))
         for phi in dets[:x0.size]:
             vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, one, two, core))
         return vec
