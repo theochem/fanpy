@@ -105,8 +105,8 @@ class Geminal(object):
             # the coefficient matrix for which we want to evaluate the permanent; only
             # test the a-spin orbital in each pair because the geminal coefficients of
             # APIG correspond to electron pairs
-            slice = [ i for i in range(self.norbs) if is_occupied(phi, 2*i) ]
-            overlap = self.permanent(matrix[:,slice])
+            columns = [ i for i in range(self.norbs) if self.occupied(phi, 2*i) ]
+            overlap = self.permanent(matrix[:,columns])
             return overlap
 
 
@@ -118,16 +118,16 @@ class Geminal(object):
                     for qs in [2*q, 2*q + 1]:
                         phi_new = excite_single(phi, ps, qs)
                         result += one[p,q]*self.overlap(phi_new, C)
-        for r in range(self.norbs):
-            for rs in [2*r, 2*r + 1]:
-                for s in range(self.norbs):
-                    for ss in [2*s, 2*s + 1]:
-                        for q in range(self.norbs):
-                            for qs in [2*q, 2*q + 1]:
-                                for p in range(self.norbs):
-                                    for ps in [2*p, 2*p + 1]:
-                                        phi_new = self.excite_double(phi, rs,ss,qs,ps)
-                                        result += 0.25*two[p,q,r,s]*self.overlap(phi_new, C)
+        for p in range(self.norbs):
+            for ps in [2*p, 2*p + 1]:
+                for r in range(self.norbs):
+                    for rs in [2*r, 2*r + 1]:
+                        for s in range(self.norbs):
+                            for ss in [2*s, 2*s + 1]:
+                                for q in range(self.norbs):
+                                    for qs in [2*q, 2*q + 1]:
+                                        phi_new = self.excite_double(phi, ps, rs, ss, qs)
+                                        result += 0.5*two[p,q,r,s]*self.overlap(phi_new, C)
         return result
 
 
@@ -137,6 +137,9 @@ class Geminal(object):
         if dets is None:
             dets = self.pspace
         vec = []
+        if len(dets) != x0.size:
+            print("Warning: 'dets' should be of equal length to the guess, E + {C}.")
+            print("Using the first {} determinants in 'dets'.".format(x0.size))
         for phi in dets[:x0.size]:
             vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, one, two, core))
         return vec
