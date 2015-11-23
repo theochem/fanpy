@@ -126,16 +126,15 @@ class Geminal(object):
                         phi_new = self.excite_single(phi, ps, qs)
                         result -= one[p,q]*self.overlap(phi_new, C)
 
-        for p in range(self.norbs):
-            for ps in [2*p, 2*p + 1]:
-                for r in range(self.norbs):
-                    for rs in [2*r, 2*r + 1]:
-                        for s in range(self.norbs):
-                            for ss in [2*s, 2*s + 1]:
-                                for q in range(self.norbs):
-                                    for qs in [2*q, 2*q + 1]:
-                                        pass
-                                        phi_new = self.excite_double(phi, ps,rs,ss,qs)
+        for r in range(self.norbs):
+            for rs in [2*r, 2*r + 1]:
+                for s in range(self.norbs):
+                    for ss in [2*s, 2*s + 1]:
+                        for q in range(self.norbs):
+                            for qs in [2*q, 2*q + 1]:
+                                for p in range(self.norbs):
+                                    for ps in [2*p, 2*p + 1]:
+                                        phi_new = self.excite_double(phi, rs,ss,qs,ps)
                                         result -= 0.5*two[p,q,r,s]*self.overlap(phi_new, C)
         return result
 
@@ -162,7 +161,7 @@ class Geminal(object):
 
         for phi in dets:
             tmp = self.pschrodinger(phi, E, C, one, two, core)
-            tmp /= (self.overlap(phi, C))**2
+            #tmp /= (self.overlap(phi, C))**2
             objective += tmp*tmp
 
         return objective
