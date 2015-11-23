@@ -14,13 +14,13 @@ from horton.meanfield.observable import RDirectTerm, RExchangeTerm, RTwoIndexTer
 from horton.orbital_utils import transform_integrals
 
 
-def from_horton(file=None, basis=None, nocc=None, guess=None):
+def from_horton(fn=None, basis=None, nocc=None, guess=None):
     """Computes Geminal-class-compatible information about a molecule's wavefunction from
     HORTON.
 
     Parameters
     ----------
-    file : str
+    fn : str
         The file containing the molecule's information.
     basis: str
         The basis set to use for the orbitals.
@@ -38,7 +38,7 @@ def from_horton(file=None, basis=None, nocc=None, guess=None):
     """
 
     # Load the molecule and basis set from file
-    mol = IOData.from_file(context.get_fn(file))
+    mol = IOData.from_file(context.get_fn(fn))
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
 
     # Fill in the orbital expansion and overlap
