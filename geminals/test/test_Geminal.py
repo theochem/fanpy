@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 from Geminal import *
 from HortonWrapper import *
 from random import shuffle
+from slater_det import excite, is_occupied
 
 # Test permanent evaluation
 matrix = np.array([ [1,2,3],
@@ -13,23 +14,23 @@ matrix = np.array([ [1,2,3],
 assert Geminal.permanent(matrix) == 450
 
 # Test excitations
-assert Geminal.excite(0b001, 0, 2) == 0b100
-assert Geminal.excite(0b000011, 0, 1, 4, 5) == 0b110000
+assert excite(0b001, 0, 2) == 0b100
+assert excite(0b000011, 0, 1, 4, 5) == 0b110000
 
 # Test annihilation --> vacuum on virtual orbitals
-assert Geminal.excite(0b010, 0, 2) == 0
-assert Geminal.excite(0b000101, 0, 1, 4, 5) == 0
+assert excite(0b010, 0, 2) == 0
+assert excite(0b000101, 0, 1, 4, 5) == 0
 
 # Test creation --> vacuum on occupied orbitals
-assert Geminal.excite(0b101, 0, 2) == 0
-assert Geminal.excite(0b110011, 0, 1, 4, 5) == 0
+assert excite(0b101, 0, 2) == 0
+assert excite(0b110011, 0, 1, 4, 5) == 0
 
 # Test occupancy
-assert Geminal.occupied(0b100100, 2)
-assert Geminal.occupied(0b100100, 5)
-assert not Geminal.occupied(0b100100, 4)
-assert not Geminal.occupied(0b100100, 6)
-assert not Geminal.occupied(0b100100, 0)
+assert is_occupied(0b100100, 2)
+assert is_occupied(0b100100, 5)
+assert not is_occupied(0b100100, 4)
+assert not is_occupied(0b100100, 6)
+assert not is_occupied(0b100100, 0)
 
 #
 # Test APIG optimization
@@ -65,10 +66,10 @@ dets = []
 ground = min(gem.pspace)
 for i in range(2*gem.npairs):
     for j in range(2*gem.npairs, 2*gem.norbs):
-        dets.append(gem.excite(ground, i, j))
+        dets.append(excite(ground, i, j))
 for i in range(0, 2*gem.npairs, 2):
     for j in range(2*gem.npairs, 2*gem.norbs, 2):
-        dets.append(gem.excite(ground, i, i+1, j, j+1))
+        dets.append(excite(ground, i, i+1, j, j+1))
 dets = list(set(dets))
 if 0 in dets:
     dets.remove(0)
