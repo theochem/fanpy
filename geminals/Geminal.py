@@ -169,5 +169,4 @@ class Geminal(object):
         return numerator/denominator
 
 
-
 # vim: set textwidth=90 :
