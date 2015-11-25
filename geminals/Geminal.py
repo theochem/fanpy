@@ -1,17 +1,39 @@
-#!/usr/bin/env python2
-
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 from itertools import combinations, permutations
 from Newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-
+from slater_det import excite_single, excite_double, is_occupied
 
 class Geminal(object):
+    """
+    Attributes
+    ----------
+    npairs : int
+        Number of electron pairs
+    norbs : int
+        Number of spatial orbitals
+    coeffs :
+    pspace :
+        Projection space
+    """
 
     def __init__(self, npairs, norbs, pspace=None):
+        """
+
+        Parameters
+        ----------
+        npairs : int
+            Number of electron pairs
+        norbs : int
+            Number of spatial orbitals
+        pspace :
+            Projection space
+
+        Returns
+        -------
+
+        """
         self.npairs = npairs
         self.norbs = norbs
         self.coeffs = None
@@ -32,21 +54,29 @@ class Geminal(object):
     def pspace(self):
         return self._pspace
 
-
     @pspace.setter
     def pspace(self, value):
         for phi in value:
             for i in range(0, self.norbs, 2):
-                assert self.occupied(phi, i) == self.occupied(phi, i + 1), \
+                assert is_occupied(phi, i) == is_occupied(phi, i + 1), \
                     "Determinants in APIG projection space must be doubly occupied."
         self._pspace = value
 
 
     def generate_pspace(self):
+        """ Generates the projection space
+
+        Returns
+        -------
+        pspace : list
+            List of numbers that in binary describes the occupations
+        """
         pspace = []
         for pairs in combinations(range(self.norbs), self.npairs):
             # Python's sum is used here because NumPy's sum doesn't respect
             # arbitrary-precision Python longs
+
+            # i here describes 
             pspace.append(sum([ 2**(2*i) + 2**(2*i + 1) for i in pairs ]))
         return pspace
 
@@ -75,7 +105,7 @@ class Geminal(object):
             # the coefficient matrix for which we want to evaluate the permanent; only
             # test the a-spin orbital in each pair because the geminal coefficients of
             # APIG correspond to electron pairs
-            slice = [ i for i in range(self.norbs) if self.occupied(phi, 2*i) ]
+            slice = [ i for i in range(self.norbs) if is_occupied(phi, 2*i) ]
             overlap = self.permanent(matrix[:,slice])
             return overlap
 
@@ -86,9 +116,8 @@ class Geminal(object):
             for ps in [2*p, 2*p + 1]:
                 for q in range(self.norbs):
                     for qs in [2*q, 2*q + 1]:
-                        phi_new = self.excite_single(phi, ps, qs)
+                        phi_new = excite_single(phi, ps, qs)
                         result += one[p,q]*self.overlap(phi_new, C)
-
         for r in range(self.norbs):
             for rs in [2*r, 2*r + 1]:
                 for s in range(self.norbs):
@@ -125,37 +154,6 @@ class Geminal(object):
             Svec[i] = self.overlap(dets[i], C)
         objective = Hvec - E*Svec
         return objective.dot(objective)
-
-
-    @staticmethod
-    def excite_single(phi, p, q):
-        if (not Geminal.occupied(phi, p)):
-            return 0
-        tmp = phi & ~(1 << p)
-        if Geminal.occupied(tmp, q):
-            return 0
-        return tmp | (1 << q)
-
-
-    @staticmethod
-    def excite_double(phi, p, q, s, r):
-        if (not Geminal.occupied(phi, p)):
-            return 0
-        tmp = phi & ~(1 << p)
-        if (not Geminal.occupied(tmp, q)):
-            return 0
-        tmp = tmp & ~(1 << q)
-        if Geminal.occupied(tmp, s):
-            return 0
-        tmp = tmp | (1 << s)
-        if Geminal.occupied(tmp, r):
-            return 0
-        return tmp | (1 << r)
-
-
-    @staticmethod
-    def occupied(phi, orbital):
-        return bool(phi & (1 << orbital))
 
 
 # vim: set textwidth=90 :
