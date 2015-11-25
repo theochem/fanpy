@@ -24,16 +24,23 @@ assert Geminal.excite(0b000101, 0, 1, 4, 5) == 0
 assert Geminal.excite(0b101, 0, 2) == 0
 assert Geminal.excite(0b110011, 0, 1, 4, 5) == 0
 
+# Test occupancy
+assert Geminal.occupied(0b100100, 2)
+assert Geminal.occupied(0b100100, 5)
+assert not Geminal.occupied(0b100100, 4)
+assert not Geminal.occupied(0b100100, 6)
+assert not Geminal.occupied(0b100100, 0)
+
 #
 # Test APIG optimization
 #
 
 # Define user input
 fn = 'test/li2.xyz'
-basis = 'sto-3g'
+basis = 'cc-pvdz'
 nocc = 3
 maxiter = 10
-solver=lstsq
+solver=quasinewton
 options = { 'options': { 'maxiter':maxiter,
                          'disp': True,
                          'xatol': 1.0e-6,
@@ -44,28 +51,32 @@ if solver is quasinewton: options['method'] = 'krylov'
 
 # Make geminal, and guess, from HORTON's AP1roG module
 inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
-gem = Geminal(nocc, inpt['basis'].nbasis)
-guess = np.zeros(gem.norbs*gem.npairs + 1)
-guess[0] = inpt['energy']
-guess[1:] = inpt['coeffs'].ravel()
-#guess[0] = -5.0
-#guess[1:] = np.random.rand(gem.npairs*gem.norbs)
+basis  = inpt['basis']
+coeffs = inpt['coeffs']
+energy = inpt['energy']
+ham    = inpt['ham']
+guess = np.zeros(nocc*basis.nbasis + 1)
+guess[0] = energy - 0.1
+guess[1:] = coeffs.ravel()
+gem = Geminal(nocc, basis.nbasis)
 
 # Projected Slater determinants are all single and double excitations
 dets = []
 ground = min(gem.pspace)
-for i in range(0, 2*gem.npairs, 2):
-    for j in range(2*gem.npairs, 2*gem.norbs, 2):
-        dets.append(gem.excite(ground, i, i+1, j, j+1))
 for i in range(2*gem.npairs):
     for j in range(2*gem.npairs, 2*gem.norbs):
         dets.append(gem.excite(ground, i, j))
+for i in range(0, 2*gem.npairs, 2):
+    for j in range(2*gem.npairs, 2*gem.norbs, 2):
+        dets.append(gem.excite(ground, i, i+1, j, j+1))
 dets = list(set(dets))
 if 0 in dets:
     dets.remove(0)
 shuffle(dets)
 
 # Run the optimization
+#print("**********energy**********")
+#print(gem.phi_H_psi(ground, coeffs, *ham))
 result = gem(guess, *inpt['ham'], dets=dets, solver=solver, options=options)
 print("GUESS")
 print(inpt['coeffs'])
