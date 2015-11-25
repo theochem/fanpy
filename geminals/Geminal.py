@@ -3,7 +3,7 @@ from itertools import combinations, permutations
 from Newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-from slater_det import excite_single, excite_double, is_occupied
+from slater_det import excite, is_occupied
 
 class Geminal(object):
     """
@@ -108,7 +108,7 @@ class Geminal(object):
             # the coefficient matrix for which we want to evaluate the permanent; only
             # test the a-spin orbital in each pair because the geminal coefficients of
             # APIG correspond to electron pairs
-            columns = [ i for i in range(self.norbs) if self.occupied(phi, 2*i) ]
+            columns = [ i for i in range(self.norbs) if is_occupied(phi, 2*i) ]
             overlap = self.permanent(matrix[:,columns])
             return overlap
 
@@ -118,9 +118,9 @@ class Geminal(object):
         t0 = 0.0
         for p in range(self.norbs):
             number = 0.0
-            if self.occupied(phi, 2*p):
+            if is_occupied(phi, 2*p):
                 number += 1
-            if self.occupied(phi, 2*p + 1):
+            if is_occupied(phi, 2*p + 1):
                 number += 1
             if number:
                 number*= one[p,p]
@@ -130,9 +130,9 @@ class Geminal(object):
         t1 = 0.0
         t2 = 0.0
         for p in range(self.norbs):
-            if self.occupied(phi, 2*p) and self.occupied(phi, 2*p + 1):
+            if is_occupied(phi, 2*p) and is_occupied(phi, 2*p + 1):
                 for q in range(self.norbs):
-                    if self.occupied(phi, 2*q) and self.occupied(phi, 2*q + 1):
+                    if is_occupied(phi, 2*q) and is_occupied(phi, 2*q + 1):
                         t1 += 2*two[p,q,p,q]*self.overlap(phi, C)
                         t2 -= two[p,p,q,q]*self.overlap(phi, C)
 
@@ -168,31 +168,6 @@ class Geminal(object):
         denominator = Svec.dot(Svec)
         return numerator/denominator
 
-
-    @classmethod
-    def excite(cls, phi, *args):
-        assert (len(args) % 2) == 0, \
-            "An equal number of annihilations and creations must occur."
-        halfway = len(args)//2
-
-        for i in args[:halfway]:
-            if cls.occupied(phi, i):
-                phi &= ~(1 << i)
-            else:
-                return 0
-
-        for i in args[halfway:]:
-            if cls.occupied(phi, i):
-                return 0
-            else:
-                phi |= 1 << i
-
-        return phi
-
-
-    @staticmethod
-    def occupied(phi, orbital):
-        return bool(phi & (1 << orbital))
 
 
 # vim: set textwidth=90 :
