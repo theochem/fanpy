@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from Geminal import *
+from geminal import *
 from HortonWrapper import *
 from random import shuffle
 from slater_det import excite, is_occupied

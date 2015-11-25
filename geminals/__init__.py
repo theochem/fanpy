@@ -3,13 +3,13 @@
 from __future__ import absolute_import, division, print_function
 
 
-__all__ = [ 'Geminal',
+__all__ = [ 'geminal',
             'HortonWrapper',
             'JacobiOpt',
             'Newton',
           ]
 
-from Geminal import *
+from geminal import *
 from HortonWrapper import *
 from JacobiOpt import *
 from Newton import *
