@@ -84,7 +84,7 @@ class Geminal(object):
 
 
     def phi_H_psi(self, phi, C, one, two, core):
-        result = core
+
         t0 = 0.0
         for p in range(self.norbs):
             number = 0.0
@@ -95,19 +95,19 @@ class Geminal(object):
             if number:
                 number*= one[p,p]
             t0 += number
+        t0 *= self.overlap(phi, C)
 
         t1 = 0.0
+        t2 = 0.0
         for p in range(self.norbs):
             if self.occupied(phi, 2*p) and self.occupied(phi, 2*p + 1):
                 for q in range(self.norbs):
-                    excitation = self.excite(phi, 2*p, 2*p + 1, 2*q, 2*q + 1)
-                    t1 += two[p,p,q,q]*self.overlap(excitation, C)
-                    excitation = self.excite(phi, 2*p, 2*q + 1, 2*p, 2*q + 1)
-                    t1 += two[p,q,p,q]*self.overlap(excitation, C)
-                    #excitation = self.excite(phi, 2*q, 2*p + 1, 2*q, 2*p + 1)
-                    #t1 += 0.5*two[p,q,p,q]*self.overlap(excitation, C)
+                    if self.occupied(phi, 2*q) and self.occupied(phi, 2*q + 1):
+                        t1 += 2*two[p,q,p,q]*self.overlap(phi, C)
+                        t2 -= two[p,p,q,q]*self.overlap(phi, C)
 
-        result += (t0*self.overlap(phi, C)) + 0.5*t1
+        #print("t0: {}\tt1: {}\tt2: {}".format(t0, t1, t2))
+        result = t0 + t1 + t2 + core
 
         return result
 
