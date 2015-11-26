@@ -6,8 +6,62 @@ orbitals from which they are constructed
 
 """
 
+def remove_orbs(bin_sd, *indices):
+    """ Removes orbitals from Slater determinent specifies by indices
+
+    Parameters
+    ----------
+    bin_sd : int
+        Integer that in binary form describes the orbitals used to make the
+        Slater determinant
+
+    indices : list of int
+        List of indices that describes the orbital that will be removed
+        Start from 0
+
+    Returns
+    -------
+    bin_sd : int
+        Integer that in binary form describes the Slater determinant that with
+        the specified orbitals removed
+        Zero if the selected orbitals are not occupied
+    """
+    for occ_index in indices:
+        if is_occupied(bin_sd, occ_index):
+            bin_sd &= ~(1 << occ_index)
+        else:
+            return 0
+    return bin_sd
+
+def add_orbs(bin_sd, *indices):
+    """ Adds orbitals to Slater determinant specifies by indices
+
+    Parameters
+    ----------
+    bin_sd : int
+        Integer that in binary form describes the orbitals used to make the
+        Slater determinant
+
+    indices : list of int
+        List of indices that describes the orbital that will be removed
+        Start from 0
+
+    Returns
+    -------
+    bin_sd : int
+        Integer that in binary form describes the Slater determinant that with
+        the specified orbitals removed
+        Zero if the selected orbitals are occupied
+    """
+    for vir_index in indices:
+        if is_occupied(bin_sd, vir_index):
+            return 0
+        else:
+            bin_sd |= 1 << vir_index
+    return bin_sd
+
 def excite(bin_sd, *indices):
-    """ Doubly excites Slater determinant 
+    """ Doubly excites Slater determinant
 
     Parameters
     ----------
@@ -17,15 +71,19 @@ def excite(bin_sd, *indices):
 
     index_a : int
         Index for the occupied orbital
+        Start from 0
 
     index_b : int
         Index for the occupied orbital
+        Start from 0
 
     index_v : int
         Index for the virtual orbital
+        Start from 0
 
     index_v : int
         Index for the virtual orbital
+        Start from 0
 
     Returns
     -------
@@ -36,18 +94,10 @@ def excite(bin_sd, *indices):
     assert (len(indices) % 2) == 0, \
         "An equal number of annihilations and creations must occur."
     halfway = len(indices)//2
+    # Add virtuals (Needs to be first because if it was last, we can still add virtuals)
+    bin_sd = add_orbs(bin_sd, *indices[halfway:])
     # Remove occupieds
-    for occ_index in indices[:halfway]:
-        if is_occupied(bin_sd, occ_index):
-            bin_sd &= ~(1 << occ_index)
-        else:
-            return 0
-    # Add virtuals
-    for vir_index in indices[halfway:]:
-        if is_occupied(bin_sd, vir_index):
-            return 0
-        else:
-            bin_sd |= 1 << vir_index
+    bin_sd = remove_orbs(bin_sd, *indices[:halfway])
     return bin_sd
 
 
