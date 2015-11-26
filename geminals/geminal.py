@@ -16,6 +16,24 @@ class Geminal(object):
     coeffs :
     pspace :
         Projection space
+        Tuple of integers that, in binary, describes which spin orbitals are
+        used to build the Slater determinant
+        The 1's in the even positions describe alpha orbitals
+        The 1's in the odd positions describe beta orbitals
+
+
+    Notes
+    -----
+    Slater determinants are expressed by an integer that, in binary form,
+    shows which spin orbitals are used to construct it. The position of each '1'
+    from the right is the index of the orbital that is included in the Slater
+    determinant. The even positions (i.e. 0, 2, 4, ...) are the alpha orbitals,
+    and the odd positions (i.e. 1, 3, 5, ...) are the beta orbitals.
+    e.g. 5=0b00110011 is a Slater determinant constructed with the
+    0th and 2nd spatial orbitals, or the 0th, 1st, 5th, 6th spin orbitals (where
+    the spin orbitals are ordered by the alpha beta pairs)
+
+    The number of electrons is assumed to be even
     """
 
     def __init__(self, npairs, norbs, pspace=None):
@@ -27,18 +45,28 @@ class Geminal(object):
             Number of electron pairs
         norbs : int
             Number of spatial orbitals
-        pspace :
+        pspace : iterable of int
             Projection space
-
-        Returns
-        -------
-
+            Iterable of integers that, in binary, describes which spin orbitals are
+            used to build the Slater determinant
+            The 1's in the even positions describe alpha orbitals
+            The 1's in the odd positions describe beta orbitals
         """
+        assert isinstance(npairs, int)
+        assert isinstance(norbs, int)
+        assert hasattr(pspace, '__iter__')
+        # initialize "private" variables
+        self._npairs = npairs
+        self._norbs = norbs
+        self._pspace = pspace
+        # check if the assigned values follow the desired conditions (using the setter)
         self.npairs = npairs
         self.norbs = norbs
         self.coeffs = None
-        self.pspace = pspace if (pspace is not None) else self.generate_pspace()
-
+        if pspace is not None:
+            self.pspace = pspace
+        else:
+            self.generate_pspace()
 
     def __call__(self, x0, one, two, core, dets=None, jac=None, solver=lstsq, options={}):
         if solver is lstsq:
@@ -52,19 +80,134 @@ class Geminal(object):
         self.coeffs = result['x'][1:].reshape(self.npairs, self.norbs)
         return result
 
+    @property
+    def npairs(self):
+        """ Number of electron pairs
+
+        Returns
+        -------
+        npairs : int
+            Number of electron pairs
+        """
+        return self._npairs
+
+    @npairs.setter
+    def npairs(self, value):
+        """ Sets the number of Electron Pairs
+
+        Parameters
+        ----------
+        value : int
+            Number of electron pairs
+
+        Raises
+        ------
+        AssertionError
+            If fractional number of electron pairs is given
+
+        """
+        assert isinstance(value, int), 'There can only be integral number of electron pairs'
+        assert value <= self._norbs,\
+        'Number of number of electron pairs must be less than the number of spatial orbitals'
+        self._npairs = value
+
+    @property
+    def nelec(self):
+        """ Number of electrons
+
+        Returns
+        -------
+        nelec : int
+            Number of electrons
+        """
+        return 2*self.npairs
+
+    @property
+    def norbs(self):
+        """ Number of spatial orbitals
+
+        Returns
+        -------
+        norbs : int
+            Number of spatial orbitals
+        """
+        return self._norbs
+
+    @norbs.setter
+    def norbs(self, value):
+        """ Sets the number of spatial orbitals
+
+        Parameters
+        ----------
+        value : int
+            Number of spatial orbitals
+
+        Raises
+        ------
+        AssertionError
+            If fractional number of spatial orbitals is given
+        """
+        assert isinstance(value, int), 'There can only be integral number of spatial orbitals'
+        assert value >= self.npairs,\
+        'Number of spatial orbitals must be greater than the number of electron pairs'
+        self._norbs = value
 
     @property
     def pspace(self):
+        """ Projection space
+
+        Returns
+        -------
+        List of integers that, in binary, describes which spin orbitals are
+        used to build the Slater determinant
+        The 1's in the even positions describe alpha orbitals
+        The 1's in the odd positions describe beta orbitals
+
+        """
         return self._pspace
 
     @pspace.setter
     def pspace(self, value):
-        for phi in value:
-            for i in range(0, self.norbs, 2):
-                assert is_occupied(phi, i) == is_occupied(phi, i + 1), \
-                    "Determinants in APIG projection space must be doubly occupied."
-        self._pspace = value
+        """ Sets the projection space
 
+        Parameters
+        ----------
+        value : list of int
+            List of integers that, in binary, describes which spin orbitals are
+            used to build the Slater determinant
+            The 1's in the even positions describe alpha orbitals
+            The 1's in the odd positions describe beta orbitals
+
+        Raises
+        ------
+        AssertionError
+            If any of the Slater determinants contains more orbitals than the number of electrons
+            If any of the Slater determinants is unrestricted (not all alpha beta pairs are
+            both occupied)
+            If any of the Slater determinants has spin orbitals whose indices exceed the given
+            number of spatial orbitals
+
+        """
+        for sd in value:
+            bin_string = bin(sd)[2:]
+            # Check that number of orbitals used to create spin orbitals is equal to number
+            # of electrons
+            assert bin_string.count('1') == self.nelec,\
+            ('Given Slater determinant does not contain the same number of orbitals '
+             'as the given number of electrons')
+            # Check that adjacent orbitals in the Slater determinant are alpha beta pairs
+            # i.e. all spatial orbitals are doubly occupied
+            alpha_occ = bin_string[0::2]
+            beta_occ = bin_string[1::2]
+            assert alpha_occ == beta_occ, "Given Slater determinant is unrestricted"
+            # Check that there are no orbitals are used that are outside of the
+            # specified number (norbs)
+            index_last_spin = len(bin_string)-1-bin_string.index('1')
+            index_last_spatial = (index_last_spin)//2
+            assert index_last_spatial < self.norbs-1,\
+            ('Given Slater determinant contains orbitals whose indices exceed the given number of'
+             'spatial orbitals')
+        self._pspace = tuple(value)
 
     def generate_pspace(self):
         """ Generates the projection space
@@ -82,7 +225,6 @@ class Geminal(object):
             # i here describes 
             pspace.append(sum([ 2**(2*i) + 2**(2*i + 1) for i in pairs ]))
         return pspace
-
 
     @staticmethod
     def permanent(matrix):
