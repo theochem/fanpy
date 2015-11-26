@@ -63,14 +63,14 @@ def from_horton(fn=None, basis=None, nocc=None, guess=None):
     # Do Hartree-Fock SCF
     PlainSCFSolver(1.0e-6)(ham, lf, olp, occ_model, orb)
 
-    # Transform the one- and two- index integrals into the MO basis
+    # Get initial guess at energy, coefficients from AP1roG
     one = kin
     one.iadd(na)
-    one_mo, two_mo = transform_integrals(one, two, 'tensordot', orb)
-
-    # Get initial guess at energy, coefficients from AP1roG
     ap1rog = RAp1rog(lf, occ_model)
     energy, cblock = ap1rog(one, two, external['nn'], orb, olp, False)
+
+    # Transform the one- and two- index integrals into the MO basis
+    one_mo, two_mo = transform_integrals(one, two, 'tensordot', orb)
 
     #RAp1rog only returns the 'A' block from the [I|A]-shaped coefficient matrix
     if guess is 'ap1rog':

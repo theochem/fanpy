@@ -1,6 +1,7 @@
+from __future__ import absolute_import, division, print_function
 import numpy as np
 from itertools import combinations, permutations
-from Newton import newton
+from newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
 from slater_det import excite, is_occupied
@@ -54,7 +55,6 @@ class Geminal(object):
         """
         assert isinstance(npairs, int)
         assert isinstance(norbs, int)
-        assert hasattr(pspace, '__iter__')
         # initialize "private" variables
         self._npairs = npairs
         self._norbs = norbs
@@ -64,19 +64,34 @@ class Geminal(object):
         self.norbs = norbs
         self.coeffs = None
         if pspace is not None:
+            assert hasattr(pspace, '__iter__')
             self.pspace = pspace
         else:
-            self.generate_pspace()
+            self.pspace = self.generate_pspace()
 
-    def __call__(self, x0, one, two, core, dets=None, jac=None, solver=lstsq, options={}):
+    def __call__(self, x0, one, two, jac=None, solver=lstsq, options=None):
+
+        # Check options
+        if not options:
+            options = {}
+        dets = self.pspace
+
+        # Construct processed Hamiltonian
+        ham = self.process_hamiltonian(one, two)
+
+        # Solve for E and C
         if solver is lstsq:
             objective = self.lstsq
         else:
-            if len(dets) != x0.size:
+            if len(dets) > len(x0):
                 print("Warning: length of 'dets' should be length of guess, 1 + P*K.")
                 print("Using the first {} determinants in 'dets'.".format(x0.size))
+            elif len(dets) < (len(x0) - 1):
+                print("Dets is too short")
             objective = self.nonlin
-        result = solver(objective, x0, jac=jac, args=(one, two, core, dets), **options)
+        result = solver(objective, x0, jac=jac, args=(ham, dets), **options)
+
+        # Update the optimized coefficients
         self.coeffs = result['x'][1:].reshape(self.npairs, self.norbs)
         return result
 
@@ -204,10 +219,11 @@ class Geminal(object):
             # specified number (norbs)
             index_last_spin = len(bin_string)-1-bin_string.index('1')
             index_last_spatial = (index_last_spin)//2
-            assert index_last_spatial < self.norbs-1,\
+            #assert index_last_spatial < self.norbs-1,\
+            assert index_last_spatial < self.norbs,\
             ('Given Slater determinant contains orbitals whose indices exceed the given number of'
              'spatial orbitals')
-        self._pspace = tuple(value)
+            self._pspace = tuple(value)
 
     def generate_pspace(self):
         """ Generates the projection space
@@ -255,60 +271,69 @@ class Geminal(object):
             return overlap
 
 
-    def phi_H_psi(self, phi, C, one, two, core):
+    def phi_H_psi(self, phi, C, ham):
 
         t0 = 0.0
-        for p in range(self.norbs):
-            number = 0.0
-            if is_occupied(phi, 2*p):
-                number += 1
-            if is_occupied(phi, 2*p + 1):
-                number += 1
-            if number:
-                number*= one[p,p]
-            t0 += number
-        t0 *= self.overlap(phi, C)
-
         t1 = 0.0
         t2 = 0.0
-        for p in range(self.norbs):
-            if is_occupied(phi, 2*p) and is_occupied(phi, 2*p + 1):
-                for q in range(self.norbs):
-                    if is_occupied(phi, 2*q) and is_occupied(phi, 2*q + 1):
-                        t1 += 2*two[p,q,p,q]*self.overlap(phi, C)
-                        t2 -= two[p,p,q,q]*self.overlap(phi, C)
 
-        #print("t0: {}\tt1: {}\tt2: {}".format(t0, t1, t2))
-        result = t0 + t1 + t2 + core
+        for i in range(self.norbs):
+            if is_occupied(phi, 2*i):
+                t0 += ham[0][i]
 
-        return result
+                for j in range(i + 1, self.norbs):
+                    if is_occupied(phi, 2*j):
+                        t1 += ham[1][i,j]
+
+                for a in range(self.norbs):
+                    if not is_occupied(phi, 2*a):
+                        excitation = excite(phi, 2*i, 2*i + 1, 2*a, 2*a + 1)
+                        t2 += ham[2][i,a]*self.overlap(excitation, C)
+
+        return (t0 + t1)*self.overlap(phi, C) + t2 
+        #return t0 + t1 + t2 
 
 
-    def nonlin(self, x0, one, two, core, dets=None):
+    def nonlin(self, x0, ham, dets):
         E = x0[0]
         C = x0[1:].reshape(self.npairs, self.norbs)
-        if dets is None:
-            dets = self.pspace
-        vec = []
-        for phi in dets[:x0.size]:
-            vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, one, two, core))
+        vec = [(E*self.overlap(min(self.pspace), C) - E)]
+        for phi in dets[:x0.size - 1]:
+            vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, ham))
         return vec
 
 
-    def lstsq(self, x0, one, two, core, dets=None):
+    def lstsq(self, x0, ham, dets):
         E = x0[0]
         C = x0[1:].reshape(self.npairs, self.norbs)
-        if dets is None:
-            dets = self.pspace
         Hvec = np.zeros(len(dets))
         Svec = np.zeros(len(dets))
         for i in range(len(dets)):
-            Hvec[i] = self.phi_H_psi(dets[i], C, one, two, core)
+            Hvec[i] = self.phi_H_psi(dets[i], C, ham)
             Svec[i] = self.overlap(dets[i], C)
         numerator = Hvec - E*Svec
         numerator = numerator.dot(numerator)
         denominator = Svec.dot(Svec)
         return numerator/denominator
+
+    def process_hamiltonian(self, one, two):
+
+        dp = np.zeros(one.shape[0])
+        for p in range(dp.shape[0]):
+            dp[p] += 2*one[p,p] + two[p,p,p,p]
+
+        dpq = np.zeros(one.shape)
+        for p in range(dpq.shape[0]):
+            for q in range(dpq.shape[1]):
+                dpq[p,q] += 4*two[p,q,p,q] - 2*two[p,q,q,p]
+
+        gpq = np.zeros(one.shape)
+        for p in range(gpq.shape[0]):
+            for q in range(gpq.shape[0]):
+                gpq[p,q] = two[p,p,q,q]
+
+        return dp, dpq, gpq
+
 
 
 # vim: set textwidth=90 :

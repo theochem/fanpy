@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 from geminal import *
-from HortonWrapper import *
+from horton_wrapper import *
 from random import shuffle
 from slater_det import excite, is_occupied
 
@@ -133,16 +133,16 @@ def test_permanent():
     assert Geminal.permanent(matrix) == 450
 
 
-'''
 # Define user input
 fn = 'test/li2.xyz'
-basis = 'cc-pvdz'
+basis = 'sto-3g'
 nocc = 3
-maxiter = 10
+maxiter = 20
 solver=quasinewton
 options = { 'options': { 'maxiter':maxiter,
                          'disp': True,
-                         'xatol': 1.0e-6,
+                         'xatol': 1.0e-12,
+                         'fatol': 1.0e-12,
                        },
           }
 
@@ -153,37 +153,24 @@ inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
 basis  = inpt['basis']
 coeffs = inpt['coeffs']
 energy = inpt['energy']
-ham    = inpt['ham']
 guess = np.zeros(nocc*basis.nbasis + 1)
-guess[0] = energy - 0.1
 guess[1:] = coeffs.ravel()
+guess[0] = energy - inpt['ham'][2]
 gem = Geminal(nocc, basis.nbasis)
+ham = gem.process_hamiltonian(*inpt['ham'][0:2])
 
-# Projected Slater determinants are all single and double excitations
-dets = []
-ground = min(gem.pspace)
-for i in range(2*gem.npairs):
-    for j in range(2*gem.npairs, 2*gem.norbs):
-        dets.append(excite(ground, i, j))
-for i in range(0, 2*gem.npairs, 2):
-    for j in range(2*gem.npairs, 2*gem.norbs, 2):
-        dets.append(excite(ground, i, i+1, j, j+1))
-dets = list(set(dets))
-if 0 in dets:
-    dets.remove(0)
-shuffle(dets)
 
 # Run the optimization
 #print("**********energy**********")
-#print(gem.phi_H_psi(ground, coeffs, *ham))
-result = gem(guess, *inpt['ham'], dets=dets, solver=solver, options=options)
+#print(gem.phi_H_psi(min(gem.pspace), coeffs, ham, inpt['ham'][2]))
+print("Guess:\n{}".format(guess))
+result = gem(guess, *inpt['ham'][:2], solver=solver, options=options)
 print("GUESS")
 print(inpt['coeffs'])
-print(inpt['energy'])
+print(inpt['energy'] - inpt['ham'][2])
 print("GEMINAL")
 print(gem.coeffs)
 print(result['x'][0])
 
 
 # vim: set textwidth=90 :
-'''

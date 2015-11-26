@@ -4,15 +4,15 @@ from __future__ import absolute_import, division, print_function
 
 
 __all__ = [ 'geminal',
-            'HortonWrapper',
-            'JacobiOpt',
-            'Newton',
+            'horton_wrapper',
+            'jacobi_opt',
+            'newton',
           ]
 
 from geminal import *
-from HortonWrapper import *
-from JacobiOpt import *
-from Newton import *
+from horton_wrapper import *
+from jacobi_opt import *
+from newton import *
 
 
 # vim: set textwidth=90 :
