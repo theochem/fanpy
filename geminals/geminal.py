@@ -4,7 +4,7 @@ from itertools import combinations, permutations
 from newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-from slater_det import excite, is_occupied
+from slater_det import excite_pairs, is_occupied
 
 class Geminal(object):
     """
@@ -287,7 +287,7 @@ class Geminal(object):
 
                 for a in range(self.norbs):
                     if not is_occupied(phi, 2*a):
-                        excitation = excite(phi, 2*i, 2*i + 1, 2*a, 2*a + 1)
+                        excitation = excite_pairs(phi, i, a)
                         t2 += ham[2][i,a]*self.overlap(excitation, C)
 
         return (t0 + t1)*self.overlap(phi, C) + t2 

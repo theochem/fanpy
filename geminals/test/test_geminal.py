@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 from geminal import *
 from horton_wrapper import *
 from random import shuffle
-from slater_det import excite, is_occupied
+from slater_det import excite_pairs, excite_orbs, is_occupied
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
