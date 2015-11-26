@@ -30,7 +30,7 @@ def remove_orbs(bin_sd, *indices):
         if is_occupied(bin_sd, occ_index):
             bin_sd &= ~(1 << occ_index)
         else:
-            return 0
+            return None
     return bin_sd
 
 def add_orbs(bin_sd, *indices):
@@ -54,14 +54,14 @@ def add_orbs(bin_sd, *indices):
         Zero if the selected orbitals are occupied
     """
     for vir_index in indices:
-        if is_occupied(bin_sd, vir_index):
-            return 0
+        if bin_sd is None or is_occupied(bin_sd, vir_index):
+            return None
         else:
             bin_sd |= 1 << vir_index
     return bin_sd
 
-def excite(bin_sd, *indices):
-    """ Excites Slater determinant
+def excite_orbs(bin_sd, *indices):
+    """ Excites orbitals in Slater determinant
 
     Parameters
     ----------
@@ -246,4 +246,7 @@ def is_occupied(bin_sd, orb_index):
         True if orbital is in SD
         False if orbital is not in SD
     """
-    return bool(bin_sd & (1 << orb_index))
+    if bin_sd is None:
+        return None
+    else:
+        return bool(bin_sd & (1 << orb_index))
