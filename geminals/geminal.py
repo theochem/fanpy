@@ -59,6 +59,7 @@ class Geminal(object):
         self._npairs = npairs
         self._norbs = norbs
         self._pspace = pspace
+        self._ground = None
         # check if the assigned values follow the desired conditions (using the setter)
         self.npairs = npairs
         self.norbs = norbs
@@ -86,14 +87,25 @@ class Geminal(object):
             if len(dets) > len(x0):
                 print("Warning: length of 'dets' should be length of guess, 1 + P*K.")
                 print("Using the first {} determinants in 'dets'.".format(x0.size))
-            elif len(dets) < (len(x0) - 1):
+            elif len(dets) < len(x0):
                 print("Dets is too short")
             objective = self.nonlin
-        result = solver(objective, x0, jac=jac, args=(ham, dets), **options)
+      
+        #result = lstsq(self.normalize, x0)
+        result = {'x': x0}
+        for i in range(10):
+            result = solver(objective, result['x'], jac=jac, args=(ham, dets), **options)
+            n_to_p = 1/self.permanent(result['x'].reshape(self.npairs, self.norbs)[:,:self.npairs])
+            result['x'] *= n_to_p**(1/self.npairs)
+            #result = lstsq(self.normalize, result['x'])
+            #result2 = lstsq(self.normalize, result['x'])
+            #result['x'].reshape(self.npairs, self.norbs)[:,:self.npairs] = \
+            #result2['x'].reshape(self.npairs, self.norbs)[:,:self.npairs]
+
 
         # Update the optimized coefficients
-        self.coeffs = result['x'][1:].reshape(self.npairs, self.norbs)
-        return result
+        self.coeffs = x0.reshape(self.npairs, self.norbs)
+        return None
 
     @property
     def npairs(self):
@@ -224,6 +236,12 @@ class Geminal(object):
             ('Given Slater determinant contains orbitals whose indices exceed the given number of'
              'spatial orbitals')
             self._pspace = tuple(value)
+            self._ground = min(value)
+
+    @property
+    def ground(self):
+        return self._ground
+
 
     def generate_pspace(self):
         """ Generates the projection space
@@ -291,27 +309,30 @@ class Geminal(object):
                         t2 += ham[2][i,a]*self.overlap(excitation, C)
 
         return (t0 + t1)*self.overlap(phi, C) + t2 
-        #return t0 + t1 + t2 
+
+
+    def normalize(self, x0):
+        return self.permanent(x0.reshape(self.npairs, self.norbs)[:,:self.npairs]) - 1.0
 
 
     def nonlin(self, x0, ham, dets):
-        E = x0[0]
-        C = x0[1:].reshape(self.npairs, self.norbs)
-        vec = [(E*self.overlap(min(self.pspace), C) - E)]
-        for phi in dets[:x0.size - 1]:
-            vec.append(E*self.overlap(phi, C) - self.phi_H_psi(phi, C, ham))
+        C = x0.reshape(self.npairs, self.norbs)
+        vec = []
+        for phi in dets[:x0.size]:
+            tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
+            tmp -= self.phi_H_psi(phi, C, ham)
+            vec.append(tmp)
         return vec
 
 
     def lstsq(self, x0, ham, dets):
-        E = x0[0]
-        C = x0[1:].reshape(self.npairs, self.norbs)
+        C = x0.reshape(self.npairs, self.norbs)
         Hvec = np.zeros(len(dets))
         Svec = np.zeros(len(dets))
         for i in range(len(dets)):
             Hvec[i] = self.phi_H_psi(dets[i], C, ham)
             Svec[i] = self.overlap(dets[i], C)
-        numerator = Hvec - E*Svec
+        numerator = Hvec - self.phi_H_psi(self.ground, C, ham)*Svec
         numerator = numerator.dot(numerator)
         denominator = Svec.dot(Svec)
         return numerator/denominator
