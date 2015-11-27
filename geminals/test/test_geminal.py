@@ -42,32 +42,32 @@ def test_init():
     """
     # check first sets of init
     def f():
-        gem = Geminal(1., 4, [0b0011])
+        gem = APIG(1., 4, [0b0011])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = Geminal(1, 4., [0b0011])
+        gem = APIG(1, 4., [0b0011])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = Geminal(1, 4, 0b0011)
+        gem = APIG(1, 4, 0b0011)
     assert check_if_exception_raised(f, AssertionError)
     # check setters
     def f():
-        gem = Geminal(5, 4, [0b0011])
+        gem = APIG(5, 4, [0b0011])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = Geminal(1, 2, [0b0111])
+        gem = APIG(1, 2, [0b0111])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = Geminal(1, 2, [0b0101])
+        gem = APIG(1, 2, [0b0101])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = Geminal(1, 2, [0b110000])
+        gem = APIG(1, 2, [0b110000])
     assert check_if_exception_raised(f, AssertionError)
 
 def test_setters_getters():
     """ Check if setters and getters are working properly
     """
-    gem = Geminal(1, 4, [0b00011])
+    gem = APIG(1, 4, [0b00011])
     # check npairs
     assert gem.npairs == 1
     assert gem.npairs == gem._npairs
@@ -122,16 +122,16 @@ def test_permanent():
     """
     # zero matrix
     matrix = np.zeros((6,6))
-    assert Geminal.permanent(matrix) == 0
+    assert APIG.permanent(matrix) == 0
     # identity matrix
     matrix = np.identity(6)
-    assert Geminal.permanent(matrix) == 1
+    assert APIG.permanent(matrix) == 1
     # one matrix
     matrix = np.zeros((6,6)) + 1
-    assert Geminal.permanent(matrix) == np.math.factorial(6)
+    assert APIG.permanent(matrix) == np.math.factorial(6)
     # random matrix
     matrix = np.arange(1, 10).reshape((3,3))
-    assert Geminal.permanent(matrix) == 450
+    assert APIG.permanent(matrix) == 450
 
 
 # Define user input
@@ -167,7 +167,7 @@ guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
 #guess = np.eye(nocc, M=basis.nbasis)
 #guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
 #guess = guess.ravel()
-gem = Geminal(nocc, basis.nbasis)
+gem = APIG(nocc, basis.nbasis)
 #gem = AP1roG(nocc, basis.nbasis)
 ham = gem.reduce_hamiltonian(*inpt['ham'][0:2])
 backup = copy(guess)

@@ -6,7 +6,7 @@ from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
 from slater_det import excite_pairs, is_occupied
 
-class Geminal(object):
+class APIG(object):
     """
     Attributes
     ----------
@@ -399,7 +399,7 @@ class Geminal(object):
         return dp, dpq, gpq
 
 
-class AP1roG(Geminal):
+class AP1roG(APIG):
 
     def construct_guess(self, x0):
         C = np.eye(self.npairs, M=self.norbs)
