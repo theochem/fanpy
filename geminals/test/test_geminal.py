@@ -10,6 +10,7 @@ from geminal import *
 from horton_wrapper import *
 from random import shuffle
 from slater_det import excite_pairs, excite_orbs, is_occupied
+from copy import deepcopy as copy
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
@@ -134,18 +135,20 @@ def test_permanent():
 
 
 # Define user input
-fn = 'test/li2.xyz'
-basis = 'sto-3g'
-nocc = 3
-maxiter = 20
+fn = 'test/h4.xyz'
+basis = '3-21g'
+nocc = 2
+maxiter = 100
 solver=quasinewton
 #solver=lstsq
 
 options = { 'options': { 'maxiter':maxiter,
                          'disp': True,
-                         #'xatol': 1.0e-10,
-                         'fatol': 1.0e-9,
+                         'xatol': 1.0e-12,
+                         'fatol': 1.0e-12,
                          #'line_search': 'wolfe',
+                         #'eps': 1.0e-12,
+                         #'factor': 0.1,
                        },
           }
 
@@ -154,23 +157,27 @@ if solver is quasinewton:
 
 # Make geminal, and guess, from HORTON's AP1roG module
 inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
+#inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess='ap1rog')
 basis  = inpt['basis']
 coeffs = inpt['coeffs']
 energy = inpt['energy']
 core = inpt['ham'][2]
-ham = gem.reduce_hamiltonian(*inpt['ham'][0:2])
-#guess = coeffs.ravel()
-guess = np.eye(nocc, M=basis.nbasis)
-guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
-guess = guess.ravel()
+guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
+#guess = 0.050*(2.0*(np.random.rand(nocc*(basis.nbasis - nocc)) - 1.0))
+#guess = np.eye(nocc, M=basis.nbasis)
+#guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
+#guess = guess.ravel()
 gem = Geminal(nocc, basis.nbasis)
+#gem = AP1roG(nocc, basis.nbasis)
+ham = gem.reduce_hamiltonian(*inpt['ham'][0:2])
+backup = copy(guess)
 
 # Run the optimization
 print("**********energy**********")
-print(gem.phi_H_psi(min(gem.pspace), coeffs, ham) + inpt['ham'][2])
-print("Guess:\n{}".format(guess))
+#print(gem.phi_H_psi(min(gem.pspace), coeffs, ham) + inpt['ham'][2])
+#print("Guess:\n{}".format(guess))
 
-result = gem(guess.ravel(), *inpt['ham'][:2], solver=solver, options=options)
+result = gem(guess, *inpt['ham'][:2], solver=solver, options=options)
 
 print("GUESS")
 print(inpt['coeffs'])

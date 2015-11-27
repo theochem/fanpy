@@ -61,11 +61,11 @@ class Geminal(object):
         self._norbs = norbs
         self._pspace = pspace
         self._ground = None
+        self._coeffs = None
 
         # check if the assigned values follow the desired conditions (using the setter)
         self.npairs = npairs
         self.norbs = norbs
-        self.coeffs = None
         if pspace is not None:
             assert hasattr(pspace, '__iter__')
             self.pspace = pspace
@@ -103,6 +103,7 @@ class Geminal(object):
         if solver is lstsq:
             # Doing the least-squares method
             objective = self.lstsq
+            options['tol'] = 1.0e-9
         else:
             # Doing the nonlinear-system method, so check for over/under-determination
             objective = self.nonlin
@@ -113,11 +114,12 @@ class Geminal(object):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
       
         # Run the solver (includes intemediate normalization)
-        result = {'x': x0}
-        result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
+        print(solver)
+        print(objective)
+        result = solver(objective, x0, jac=jac, args=(ham, proj), **options)
 
         # Update the optimized coefficients
-        self.coeffs = result['x'].reshape(self.npairs, self.norbs)
+        self.coeffs = result['x']
         return result
 
 
@@ -264,6 +266,15 @@ class Geminal(object):
         return self._ground
 
 
+    @property
+    def coeffs(self):
+        return self._coeffs
+
+    @coeffs.setter
+    def coeffs(self, value):
+        self._coeffs = value.reshape(self.npairs, self.norbs)
+
+
     def generate_pspace(self):
         """ Generates the projection space
 
@@ -333,19 +344,26 @@ class Geminal(object):
         return (t0 + t1)*self.overlap(phi, C) + t2 
 
 
-    def nonlin(self, x0, ham, proj):
+    def construct_guess(self, x0):
         C = x0.reshape(self.npairs, self.norbs)
-        vec = [(self.overlap(self.ground, C) - 1.0)]
-        for phi in proj[:x0.size - 1]:
-            tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
+        return C
+
+
+    def nonlin(self, x0, ham, proj):
+        C = self.construct_guess(x0)
+        vec = [self.overlap(self.ground, C) - 1.0]
+        energy = self.phi_H_psi(self.ground, C, ham)
+        for phi in proj:
+            tmp = energy*self.overlap(phi, C) 
             tmp -= self.phi_H_psi(phi, C, ham)
-            vec.append(tmp**2)
-            #vec.append(abs(tmp))
+            vec.append(tmp)
+            if len(vec) == x0.size:
+                break
         return vec
 
 
     def lstsq(self, x0, ham, proj):
-        C = x0.reshape(self.npairs, self.norbs)
+        C = self.construct_guess(x0)
         Hvec = np.zeros(len(proj))
         Svec = np.zeros(len(proj))
         for i in range(len(proj)):
@@ -358,9 +376,8 @@ class Geminal(object):
 
 
     def normalize(self, x0):
-        C = x0.reshape(self.npairs, self.norbs)
+        C = self.construct_guess(x0)
         return np.abs(self.overlap(self.ground, C) - 1.0)
-
 
 
     def reduce_hamiltonian(self, one, two):
@@ -381,6 +398,88 @@ class Geminal(object):
 
         return dp, dpq, gpq
 
+
+class AP1roG(Geminal):
+
+    def construct_guess(self, x0):
+        C = np.eye(self.npairs, M=self.norbs)
+        C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
+        return C
+   
+   
+    @property
+    def coeffs(self):
+        return self._coeffs
+
+
+    @coeffs.setter
+    def coeffs(self, value):
+        coeffs = np.eye(self.npairs, M=self.norbs)
+        coeffs[:,self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
+        self._coeffs = coeffs
+
+
+    def generate_pspace(self):
+        """ Generates the projection space
+
+        Returns
+        -------
+        pspace : list
+            List of numbers that in binary describes the occupations
+        """
+        base = sum([ 2**(2*i) + 2**(2*i + 1) for i in range(self.npairs) ])
+        pspace = [base]
+        for unoccup in range(self.npairs, self.norbs):
+            for i in range(self.npairs):
+            # Python's sum is used here because NumPy's sum doesn't respect
+            # arbitrary-precision Python longs
+
+            # pspace = all single pair excitations
+                pspace.append(excite_pairs(base, i, unoccup))
+        # Uniquify
+        return list(set(pspace))
+
+    def overlap(self, phi, matrix):
+        if phi == 0:
+            return 0
+        elif phi not in self.pspace:
+            return 0
+        else:
+            from_index = []
+            to_index = []
+            excite_count = 0
+            for i in range(self.npairs):
+                if not is_occupied(phi, 2*i):
+                    excite_count += 1
+                    from_index.append(i)
+            for i in range(self.npairs, self.norbs):
+                if not is_occupied(phi, 2*i):
+                    to_index.append(i)
+
+            if excite_count == 0:
+                return 1
+            elif excite_count == 1:
+                return matrix[from_index[0], to_index[0]]
+            elif excite_count == 2:
+                overlap = matrix[from_index[0], to_index[0]] * \
+                          matrix[from_index[1], to_index[1]]
+                overlap -= matrix[from_index[0], to_index[1]] * \
+                           matrix[from_index[1], to_index[0]]
+                return overlap
+            else:
+                raise Exception(str(excite_count))
+
+
+    def nonlin(self, x0, ham, proj):
+        C = self.construct_guess(x0)
+        vec = []
+        for phi in proj:
+            tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
+            tmp -= self.phi_H_psi(phi, C, ham)
+            vec.append(tmp**2)
+            if len(vec) == x0.size:
+                break
+        return vec
 
 
 # vim: set textwidth=90 :
