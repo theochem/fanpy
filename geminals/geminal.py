@@ -55,11 +55,13 @@ class Geminal(object):
         """
         assert isinstance(npairs, int)
         assert isinstance(norbs, int)
+
         # initialize "private" variables
         self._npairs = npairs
         self._norbs = norbs
         self._pspace = pspace
         self._ground = None
+
         # check if the assigned values follow the desired conditions (using the setter)
         self.npairs = npairs
         self.norbs = norbs
@@ -70,42 +72,74 @@ class Geminal(object):
         else:
             self.pspace = self.generate_pspace()
 
-    def __call__(self, x0, one, two, jac=None, solver=lstsq, options=None):
 
+    def __call__(self, x0, one, two, **kwargs):
+
+        # Default options
+        defaults = {
+                     'jac': None,
+                     'proj': None,
+                     'solver': quasinewton,
+                     'nit': 10,
+                     'options': None,
+                   }
+        defaults.update(kwargs)
+        jac = defaults['jac']
+        proj = defaults['proj']
+        solver = defaults['solver']
+        nit = defaults['nit']
+        options = defaults['options']
+        
         # Check options
         if not options:
             options = {}
-        dets = self.pspace
+        if not proj:
+            proj = self.pspace
+        if jac:
+            raise NotImplementedError
 
-        # Construct processed Hamiltonian
-        ham = self.process_hamiltonian(one, two)
+        # Construct reduced Hamiltonian terms
+        ham = self.reduce_hamiltonian(one, two)
 
-        # Solve for E and C
+        # Solve for geminal coefficients
         if solver is lstsq:
+            # Doing the least-squares method
             objective = self.lstsq
         else:
-            if len(dets) > len(x0):
-                print("Warning: length of 'dets' should be length of guess, 1 + P*K.")
-                print("Using the first {} determinants in 'dets'.".format(x0.size))
-            elif len(dets) < len(x0):
-                print("Dets is too short")
+            # Doing the nonlinear-system method, so check for over/under-determination
             objective = self.nonlin
+            if len(proj) > len(x0):
+                print("Warning: length of 'proj' should be length of guess, 'P*K'.")
+                print("Using the first {} determinants in 'proj'.".format(len(x0)))
+            elif len(proj) < len(x0):
+                raise ValueError("'proj' is too short, the system is underdetermined.")
       
-        #result = lstsq(self.normalize, x0)
+        # Run the solver
         result = {'x': x0}
-        for i in range(10):
-            result = solver(objective, result['x'], jac=jac, args=(ham, dets), **options)
-            n_to_p = 1/self.permanent(result['x'].reshape(self.npairs, self.norbs)[:,:self.npairs])
-            result['x'] *= n_to_p**(1/self.npairs)
-            #result = lstsq(self.normalize, result['x'])
-            #result2 = lstsq(self.normalize, result['x'])
-            #result['x'].reshape(self.npairs, self.norbs)[:,:self.npairs] = \
-            #result2['x'].reshape(self.npairs, self.norbs)[:,:self.npairs]
+        for i in range(nit):
+
+            # SciPy or in-house solver
+            #result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
+            result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
+            result2 = np.zeros((self.npairs,self.norbs))
+            result2[:,:self.npairs] = np.ones((self.npairs, self.npairs))
+            result2.ravel()
+            result = lstsq(self.normalize, result['x'])
+            result2 *= result['x'].reshape(self.npairs, self.norbs)
+            result2[:,self.npairs:] = np.ones((self.npairs, self.norbs - self.npairs))
+            result['x'] *= result2.ravel()
+                    
+            
+            # Intermediate normalization 
+            #nrm = self.overlap(self.ground, result['x'].reshape(self.npairs, self.norbs))
+            #nrm = 1/nrm
+            #result['x'] *= nrm**self.npairs
 
 
         # Update the optimized coefficients
-        self.coeffs = x0.reshape(self.npairs, self.norbs)
-        return None
+        self.coeffs = result['x'].reshape(self.npairs, self.norbs)
+        return result
+
 
     @property
     def npairs(self):
@@ -117,6 +151,7 @@ class Geminal(object):
             Number of electron pairs
         """
         return self._npairs
+
 
     @npairs.setter
     def npairs(self, value):
@@ -137,6 +172,7 @@ class Geminal(object):
         assert value <= self._norbs,\
         'Number of number of electron pairs must be less than the number of spatial orbitals'
         self._npairs = value
+
 
     @property
     def nelec(self):
@@ -160,6 +196,7 @@ class Geminal(object):
         """
         return self._norbs
 
+
     @norbs.setter
     def norbs(self, value):
         """ Sets the number of spatial orbitals
@@ -179,6 +216,7 @@ class Geminal(object):
         'Number of spatial orbitals must be greater than the number of electron pairs'
         self._norbs = value
 
+
     @property
     def pspace(self):
         """ Projection space
@@ -192,6 +230,7 @@ class Geminal(object):
 
         """
         return self._pspace
+
 
     @pspace.setter
     def pspace(self, value):
@@ -236,7 +275,9 @@ class Geminal(object):
             ('Given Slater determinant contains orbitals whose indices exceed the given number of'
              'spatial orbitals')
             self._pspace = tuple(value)
+            # Set the ground-state determinant while we're here
             self._ground = min(value)
+
 
     @property
     def ground(self):
@@ -259,6 +300,7 @@ class Geminal(object):
             # i here describes 
             pspace.append(sum([ 2**(2*i) + 2**(2*i + 1) for i in pairs ]))
         return pspace
+
 
     @staticmethod
     def permanent(matrix):
@@ -311,33 +353,37 @@ class Geminal(object):
         return (t0 + t1)*self.overlap(phi, C) + t2 
 
 
-    def normalize(self, x0):
-        return self.permanent(x0.reshape(self.npairs, self.norbs)[:,:self.npairs]) - 1.0
-
-
-    def nonlin(self, x0, ham, dets):
+    def nonlin(self, x0, ham, proj):
         C = x0.reshape(self.npairs, self.norbs)
         vec = []
-        for phi in dets[:x0.size]:
+        for phi in proj[:x0.size]:
             tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
             tmp -= self.phi_H_psi(phi, C, ham)
-            vec.append(tmp)
+            #vec.append(tmp)
+            vec.append(abs(tmp))
         return vec
 
 
-    def lstsq(self, x0, ham, dets):
+    def lstsq(self, x0, ham, proj):
         C = x0.reshape(self.npairs, self.norbs)
-        Hvec = np.zeros(len(dets))
-        Svec = np.zeros(len(dets))
-        for i in range(len(dets)):
-            Hvec[i] = self.phi_H_psi(dets[i], C, ham)
-            Svec[i] = self.overlap(dets[i], C)
+        Hvec = np.zeros(len(proj))
+        Svec = np.zeros(len(proj))
+        for i in range(len(proj)):
+            Hvec[i] = self.phi_H_psi(proj[i], C, ham)
+            Svec[i] = self.overlap(proj[i], C)
         numerator = Hvec - self.phi_H_psi(self.ground, C, ham)*Svec
         numerator = numerator.dot(numerator)
         denominator = Svec.dot(Svec)
         return numerator/denominator
 
-    def process_hamiltonian(self, one, two):
+
+    def normalize(self, x0):
+        C = x0.reshape(self.npairs, self.norbs)
+        return np.abs(self.overlap(self.ground, C) - 1.0)
+
+
+
+    def reduce_hamiltonian(self, one, two):
 
         dp = np.zeros(one.shape[0])
         for p in range(dp.shape[0]):
