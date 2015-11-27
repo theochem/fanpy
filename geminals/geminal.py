@@ -80,14 +80,12 @@ class Geminal(object):
                      'jac': None,
                      'proj': None,
                      'solver': quasinewton,
-                     'nit': 10,
                      'options': None,
                    }
         defaults.update(kwargs)
         jac = defaults['jac']
         proj = defaults['proj']
         solver = defaults['solver']
-        nit = defaults['nit']
         options = defaults['options']
         
         # Check options
@@ -114,21 +112,9 @@ class Geminal(object):
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
       
-        # Run the solver
+        # Run the solver (includes intemediate normalization)
         result = {'x': x0}
-        for i in range(nit):
-
-            # SciPy or in-house solver
-            result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
-
-            # Intermediate normalization 
-            result2 = np.zeros((self.npairs,self.norbs))
-            result2[:,:self.npairs] = np.ones((self.npairs, self.npairs))
-            result2.ravel()
-            result = lstsq(self.normalize, result['x'])
-            result2 *= result['x'].reshape(self.npairs, self.norbs)
-            result2[:,self.npairs:] = np.ones((self.npairs, self.norbs - self.npairs))
-            result['x'] *= result2.ravel()
+        result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
 
         # Update the optimized coefficients
         self.coeffs = result['x'].reshape(self.npairs, self.norbs)
@@ -349,12 +335,12 @@ class Geminal(object):
 
     def nonlin(self, x0, ham, proj):
         C = x0.reshape(self.npairs, self.norbs)
-        vec = []
-        for phi in proj[:x0.size]:
+        vec = [(self.overlap(self.ground, C) - 1.0)]
+        for phi in proj[:x0.size - 1]:
             tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
             tmp -= self.phi_H_psi(phi, C, ham)
-            #vec.append(tmp)
-            vec.append(abs(tmp))
+            vec.append(tmp**2)
+            #vec.append(abs(tmp))
         return vec
 
 

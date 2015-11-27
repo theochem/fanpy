@@ -137,37 +137,40 @@ def test_permanent():
 fn = 'test/li2.xyz'
 basis = 'sto-3g'
 nocc = 3
-maxiter = 3
+maxiter = 20
 solver=quasinewton
 #solver=lstsq
+
 options = { 'options': { 'maxiter':maxiter,
-                         'xatol': 1.0e-9,
                          'disp': True,
+                         #'xatol': 1.0e-10,
                          'fatol': 1.0e-9,
+                         #'line_search': 'wolfe',
                        },
           }
 
-if solver is quasinewton: options['method'] = 'krylov'
+if solver is quasinewton:
+    options['method'] = 'krylov'
 
 # Make geminal, and guess, from HORTON's AP1roG module
 inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
 basis  = inpt['basis']
 coeffs = inpt['coeffs']
 energy = inpt['energy']
-#guess = np.random.rand(nocc,basis.nbasis)*0.01
-#guess[:,:nocc] += np.eye(nocc)
-guess = coeffs.ravel()
-#guess = 2*(np.random.rand(nocc, basis.nbasis) - 1.0)
-gem = Geminal(nocc, basis.nbasis)
+core = inpt['ham'][2]
 ham = gem.reduce_hamiltonian(*inpt['ham'][0:2])
-
+#guess = coeffs.ravel()
+guess = np.eye(nocc, M=basis.nbasis)
+guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
+guess = guess.ravel()
+gem = Geminal(nocc, basis.nbasis)
 
 # Run the optimization
 print("**********energy**********")
 print(gem.phi_H_psi(min(gem.pspace), coeffs, ham) + inpt['ham'][2])
 print("Guess:\n{}".format(guess))
 
-result = gem(guess.ravel(), *inpt['ham'][:2], solver=solver, options=options, nit=10)
+result = gem(guess.ravel(), *inpt['ham'][:2], solver=solver, options=options)
 
 print("GUESS")
 print(inpt['coeffs'])
