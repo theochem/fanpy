@@ -119,8 +119,9 @@ class Geminal(object):
         for i in range(nit):
 
             # SciPy or in-house solver
-            #result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
             result = solver(objective, result['x'], jac=jac, args=(ham, proj), **options)
+
+            # Intermediate normalization 
             result2 = np.zeros((self.npairs,self.norbs))
             result2[:,:self.npairs] = np.ones((self.npairs, self.npairs))
             result2.ravel()
@@ -128,13 +129,6 @@ class Geminal(object):
             result2 *= result['x'].reshape(self.npairs, self.norbs)
             result2[:,self.npairs:] = np.ones((self.npairs, self.norbs - self.npairs))
             result['x'] *= result2.ravel()
-                    
-            
-            # Intermediate normalization 
-            #nrm = self.overlap(self.ground, result['x'].reshape(self.npairs, self.norbs))
-            #nrm = 1/nrm
-            #result['x'] *= nrm**self.npairs
-
 
         # Update the optimized coefficients
         self.coeffs = result['x'].reshape(self.npairs, self.norbs)
