@@ -174,7 +174,7 @@ def test_generate_pspace():
     for i in pspace:
         assert i in all_sds
 
-    def test_permanent():
+def test_permanent():
     """ test permanent
     """
     # zero matrix

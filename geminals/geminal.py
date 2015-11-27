@@ -361,12 +361,9 @@ class APIG(object):
         assert matrix.shape[0] is matrix.shape[1], \
             "Cannot compute the permanent of a non-square matrix."
         permanent = 0
-        for permutation in permutations(range(matrix.shape[0])):
-            index1, term = 0, 1
-            for index0 in permutation:
-                term *= matrix[index0][index1]
-                index1 += 1
-            permanent += term
+        row_indices = range(matrix.shape[0])
+        for col_indices in permutations(row_indices):
+            permanent += np.product(matrix[row_indices, col_indices])
         return permanent
 
 
