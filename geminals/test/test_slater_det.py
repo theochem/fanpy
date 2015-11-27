@@ -2,7 +2,7 @@
 """
 
 from slater_det import remove_orbs, add_orbs, excite_orbs, is_occupied
-from slater_det import remove_pairs, add_pairs, excite_pairs
+from slater_det import remove_pairs, add_pairs, excite_pairs, is_pair_occupied
 
 def test_remove_orbs():
     """ Test remove_orbs function
@@ -140,4 +140,17 @@ def test_is_occupied():
     assert not is_occupied(0b100100, 4)
     assert not is_occupied(0b100100, 6)
     assert not is_occupied(0b100100, 0)
+
+
+def test_is_pair_occupied():
+    """ Test is_pair_occupied function
+    """
+    # Test occupancy
+    assert is_pair_occupied(0b11111100, 1)
+    assert is_pair_occupied(0b11111100, 2)
+    assert is_pair_occupied(0b11111100, 3)
+    assert not is_pair_occupied(0b11111100, 0)
+    assert not is_pair_occupied(0b11111100, 4)
+    assert not is_pair_occupied(0b11111100, 9)
+test_is_pair_occupied()
 

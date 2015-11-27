@@ -1,10 +1,11 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
+from math import factorial
 from itertools import combinations, permutations
 from newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-from slater_det import excite_pairs, is_occupied
+from slater_det import excite_pairs, is_pair_occupied
 
 class APIG(object):
     """
@@ -46,16 +47,17 @@ class APIG(object):
             Number of electron pairs
         norbs : int
             Number of spatial orbitals
-        pspace : iterable of int
+        pspace : {None, iterable of int}
             Projection space
             Iterable of integers that, in binary, describes which spin orbitals are
             used to build the Slater determinant
             The 1's in the even positions describe alpha orbitals
             The 1's in the odd positions describe beta orbitals
+            By default, a projection space is generated using generate_pspace
         """
         assert isinstance(npairs, int)
         assert isinstance(norbs, int)
-
+        
         # initialize "private" variables
         self._npairs = npairs
         self._norbs = norbs
@@ -146,10 +148,13 @@ class APIG(object):
         Raises
         ------
         AssertionError
+            If number of electron pairs is a float
+            If number of electron pairs is less than or equal to zero
             If fractional number of electron pairs is given
 
         """
         assert isinstance(value, int), 'There can only be integral number of electron pairs'
+        assert value > 0, 'Number of electron pairs cannot be less than or equal to zero'
         assert value <= self._norbs,\
         'Number of number of electron pairs must be less than the number of spatial orbitals'
         self._npairs = value
@@ -214,12 +219,12 @@ class APIG(object):
 
 
     @pspace.setter
-    def pspace(self, value):
+    def pspace(self, list_sds):
         """ Sets the projection space
 
         Parameters
         ----------
-        value : list of int
+        list_sds : list of int
             List of integers that, in binary, describes which spin orbitals are
             used to build the Slater determinant
             The 1's in the even positions describe alpha orbitals
@@ -235,8 +240,10 @@ class APIG(object):
             number of spatial orbitals
 
         """
-        for sd in value:
+        for sd in list_sds:
             bin_string = bin(sd)[2:]
+            # Add zeros on the left so that bin_string has even numbers
+            bin_string = '0'*(len(bin_string)%2) + bin_string
             # Check that number of orbitals used to create spin orbitals is equal to number
             # of electrons
             assert bin_string.count('1') == self.nelec,\
@@ -252,9 +259,9 @@ class APIG(object):
             index_last_spin = len(bin_string)-1-bin_string.index('1')
             index_last_spatial = (index_last_spin)//2
             assert index_last_spatial < self.norbs,\
-            ('Given Slater determinant contains orbitals whose indices exceed the given number of'
-             'spatial orbitals')
-        self._pspace = tuple(value)
+            ('Given Slater determinant contains orbitals whose indices exceed the '
+             'given number of spatial orbitals')
+        self._pspace = tuple(list_sds)
 
 
     @property
@@ -275,21 +282,78 @@ class APIG(object):
 
 
     def generate_pspace(self):
-        """ Generates the projection space
+        """ Generates a well determined projection space
 
         Returns
         -------
-        pspace : list
-            List of numbers that in binary describes the occupations
-        """
-        pspace = []
-        for pairs in combinations(range(self.norbs), self.npairs):
-            # Python's sum is used here because NumPy's sum doesn't respect
-            # arbitrary-precision Python longs
+        tuple_sd : tuple of int
+            Tuple of integers that in binary describes the orbitals used to make the Slater
+            determinant
 
-            # i here describes 
-            pspace.append(sum([ 2**(2*i) + 2**(2*i + 1) for i in pairs ]))
-        return pspace
+        Raises
+        ------
+        AssertionError
+            If the same Slater determinant is generated more than once
+            If not enough Slater determinants can be generated
+
+        Note
+        ----
+        We need to have npairs*norbs+1 dimensional projection space
+        First is the ground state HF slater determinant (using the first npair
+        spatial orbitals) [1]
+        Then, all single pair excitations from any occupieds to any virtuals
+        (ordered HOMO to lowest energy for occupieds and LUMO to highest energy
+        for virtuals)
+        Then, all double excitations of the appropriate number of HOMOs to
+        appropriate number of LUMOs. The appropriate number is the smallest number
+        that would generate the remaining slater determinants. This number will
+        maximally be the number of occupied spatial orbitals.
+        Then all triple excitations of the appropriate number of HOMOs to
+        appropriate number of LUMOs
+
+        It seems that certain combinations of npairs and norbs is not possible
+        because we are assuming that we only use pair excitations. For example,
+        a 2 electron system cannot ever have appropriate number of Slater determinants,
+        a 4 electron system must have 6 spatial orbitals,
+        a 6 electron system must have 6 spatial orbitals.
+        a 8 electron system must have 7 spatial orbitals.
+
+        If we treat E as a parameter
+        """
+        list_sd = []
+        # convert string of a binary into an integer
+        hf_ground = int('1'*2*self.npairs, 2)
+        list_sd.append(hf_ground)
+        ind_occ = [i for i in range(self.norbs) if is_pair_occupied(hf_ground, i)]
+        ind_occ.reverse() # reverse ordering to put HOMOs first
+        ind_vir = [i for i in range(self.norbs) if not is_pair_occupied(hf_ground, i)]
+        num_needed = self.npairs*self.norbs+1
+        # Add pair excitations
+        num_excited = 1
+        num_combs = lambda n, r: factorial(n)/factorial(r)/factorial(n-r)
+        while len(list_sd) < num_needed and num_excited <= len(ind_occ):
+            # Find out what is the smallest number of frontier orbitals (HOMOS and LUMOs)
+            # that can be used
+            for i in range(2, len(ind_occ)+1):
+                if num_combs(i, 2)**2 >= num_needed-len(list_sd):
+                    num_frontier = i
+                    break
+            else:
+                num_frontier = max(len(ind_occ), len(ind_vir))+1
+            # Add excitations from all possible combinations of num_frontier of HOMOs
+            for occs in combinations(ind_occ[:num_frontier], num_excited):
+                # to all possible combinations of num_frontier of LUMOs
+                for virs in combinations(ind_vir[:num_frontier], num_excited):
+                    occs_virs = list(occs) + list(virs)
+                    list_sd.append(excite_pairs(hf_ground, *occs_virs))
+            num_excited += 1
+        assert len(list_sd) == len(set(list_sd)),\
+            ('Woops, something went wrong. Same Slater determinant was generated '
+             'more than once')
+        assert len(list_sd) >= num_needed,\
+            ('Could not generate enough Slater determinants')
+        # Truncate and return
+        return tuple(list_sd[:num_needed])
 
 
     @staticmethod
@@ -316,7 +380,7 @@ class APIG(object):
             # the coefficient matrix for which we want to evaluate the permanent; only
             # test the a-spin orbital in each pair because the geminal coefficients of
             # APIG correspond to electron pairs
-            columns = [ i for i in range(self.norbs) if is_occupied(phi, 2*i) ]
+            columns = [ i for i in range(self.norbs) if is_pair_occupied(phi, i) ]
             overlap = self.permanent(matrix[:,columns])
             return overlap
 
@@ -328,15 +392,15 @@ class APIG(object):
         t2 = 0.0
 
         for i in range(self.norbs):
-            if is_occupied(phi, 2*i):
+            if is_pair_occupied(phi, i):
                 t0 += ham[0][i]
 
                 for j in range(i + 1, self.norbs):
-                    if is_occupied(phi, 2*j):
+                    if is_pair_occupied(phi, j):
                         t1 += ham[1][i,j]
 
                 for a in range(self.norbs):
-                    if not is_occupied(phi, 2*a):
+                    if not is_pair_occupied(phi, a):
                         excitation = excite_pairs(phi, i, a)
                         t2 += ham[2][i,a]*self.overlap(excitation, C)
 
@@ -451,11 +515,11 @@ class AP1roG(APIG):
             to_index = []
             excite_count = 0
             for i in range(self.npairs):
-                if not is_occupied(phi, 2*i):
+                if not is_pair_occupied(phi, i):
                     excite_count += 1
                     from_index.append(i)
             for i in range(self.npairs, self.norbs):
-                if not is_occupied(phi, 2*i):
+                if not is_pair_occupied(phi, i):
                     to_index.append(i)
 
             if excite_count == 0:

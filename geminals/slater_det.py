@@ -148,7 +148,7 @@ def add_pairs(bin_sd, *indices):
         Odd indices from the right (starting from 0) describe the beta orbitals
 
     indices : list of int
-        List of indices that describes the spatial orbital that will be addd
+        List of indices that describes the spatial orbital that will be added
         Start from 0
 
     Returns
@@ -250,3 +250,35 @@ def is_occupied(bin_sd, orb_index):
         return None
     else:
         return bool(bin_sd & (1 << orb_index))
+
+def is_pair_occupied(bin_sd, orb_index):
+    """ Checks if both alpha and beta orbital pair is used in the slater determinant
+
+    Parameters
+    ----------
+    bin_sd : int
+        Integer that in binary form describes the orbitals used to make the
+        Slater determinant
+
+    orb_index : int
+        Index of the spatial orbital that is checked
+        Starts from 0
+
+    Returns
+    -------
+    bool
+        True if both alpha and beta orbitals are in SD
+        False if not both alpha and beta orbitals are not in SD
+
+    Example
+    -------
+    is_pair_occupied(bin_sd, 0) would check if the 0th spatial orbital is included,
+    i.e. 0th and 1st spin orbitals, or 0th alpha and beta orbitals
+
+    Note
+    ----
+    This code ASSUMES a certain structure for the Slater determinant indexing.
+    If the alpha and beta orbitals are ordered differently, then this code will
+    break
+    """
+    return is_occupied(bin_sd, 2*orb_index) and is_occupied(bin_sd, 2*orb_index+1)

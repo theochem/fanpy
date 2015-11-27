@@ -6,11 +6,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from geminal import *
+from copy import deepcopy as copy
+from itertools import combinations
+from geminal import Geminal
 from horton_wrapper import *
 from random import shuffle
 from slater_det import excite_pairs, excite_orbs, is_occupied
-from copy import deepcopy as copy
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
@@ -78,6 +79,9 @@ def test_setters_getters():
         gem.npairs = 5
     assert check_if_exception_raised(f, AssertionError)
     def f():
+        gem.npairs = 0
+    assert check_if_exception_raised(f, AssertionError)
+    def f():
         gem.npairs = 0.5
     assert check_if_exception_raised(f, AssertionError)
     # check nelec
@@ -105,8 +109,13 @@ def test_setters_getters():
     # check pspace setter
     gem.npairs = 2
     gem.norbs = 4
+    gem.pspace = tuple([0b0001111])
+    assert gem.pspace == tuple([0b001111])
     gem.pspace = tuple([0b001111])
     assert gem.pspace == tuple([0b001111])
+    def f():
+        gem.pspace = tuple([0b0])
+    assert check_if_exception_raised(f, AssertionError)
     def f():
         gem.pspace = tuple([0b01])
     assert check_if_exception_raised(f, AssertionError)
@@ -117,7 +126,55 @@ def test_setters_getters():
         gem.pspace = tuple([0b1100000011])
     assert check_if_exception_raised(f, AssertionError)
 
-def test_permanent():
+def test_generate_pspace():
+    """ test Geminal.generate_pspace
+    """
+    def f():
+        gem.generate_pspace()
+    # 99 occupied, No virtuals (Not enough SD generated)
+    gem = Geminal(99, 99, [int('11'*99, 2)])
+    assert check_if_exception_raised(f, AssertionError)
+    # 1 occupied, 1 virtual (Not enough SD generated)
+    gem = Geminal(1, 2, [0b11])
+    assert check_if_exception_raised(f, AssertionError)
+    # 1 occupied, 99 virtuals (Not enough SD generated)
+    gem = Geminal(1, 99, [0b11])
+    assert check_if_exception_raised(f, AssertionError)
+    # 2 occupied, 2 virtuals (Not enough SD generated)
+    gem = Geminal(2, 4, [0b1111])
+    assert check_if_exception_raised(f, AssertionError)
+    # 2 occupied, 3 virtuals (Not enough SD generated)
+    gem = Geminal(2, 5, [0b1111])
+    assert check_if_exception_raised(f, AssertionError)
+    # 2 occupied, 4 virtuals
+    gem = Geminal(2, 6, [0b1111])
+    pspace = gem.generate_pspace()
+    assert len(pspace) == 13
+    #  check that each of the generated slated determinant is in the total space
+    all_sds = (sum(0b11 << i*2 for i in pairs)
+               for pairs in combinations(range(gem.norbs), gem.npairs))
+    for i in pspace:
+        assert i in all_sds
+    #  hand checking
+    assert pspace == (0b1111,
+                      0b110011, 0b11000011, 0b1100000011, 0b110000000011,
+                      0b111100, 0b11001100, 0b1100001100, 0b110000001100,
+                      0b11110000, 0b1100110000, 0b110000110000,
+                      0b1111000000)
+    #  check __init__
+    gem2 = Geminal(2, 6)
+    assert gem.generate_pspace() == gem2.generate_pspace()
+    # 3 occupied, 3 virtuals
+    gem = Geminal(3, 6, [0b111111])
+    pspace = gem.generate_pspace()
+    assert len(pspace) == 19
+    #  check that each of the generated slated determinant is in the total space
+    all_sds = [sum(0b11 << i*2 for i in pairs)
+               for pairs in combinations(range(gem.norbs), gem.npairs)]
+    for i in pspace:
+        assert i in all_sds
+
+    def test_permanent():
     """ test permanent
     """
     # zero matrix
@@ -132,7 +189,6 @@ def test_permanent():
     # random matrix
     matrix = np.arange(1, 10).reshape((3,3))
     assert APIG.permanent(matrix) == 450
-
 
 # Define user input
 fn = 'test/h4.xyz'
