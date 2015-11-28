@@ -135,18 +135,26 @@ def test_generate_pspace():
     # 99 occupied, No virtuals (Not enough SD generated)
     gem = APIG(99, 99, [int('11'*99, 2)])
     assert check_if_exception_raised(f, AssertionError)
-    # 1 occupied, 1 virtual (Not enough SD generated)
+    # 1 occupied, 1 virtual (Enough SD with single excitation)
     gem = APIG(1, 2, [0b11])
-    assert check_if_exception_raised(f, AssertionError)
-    # 1 occupied, 99 virtuals (Not enough SD generated)
+    assert gem.generate_pspace() == (0b0011, 0b1100, 0b0101)
+    # 1 occupied, 99 virtuals (Enough SD with single excitation)
     gem = APIG(1, 99, [0b11])
-    assert check_if_exception_raised(f, AssertionError)
-    # 2 occupied, 2 virtuals (Not enough SD generated)
+    pspace = [0b11 << i*2 for i in range(99)] + [0b0101]
+    assert gem.generate_pspace() == tuple(pspace)
+    # 2 occupied, 2 virtuals (Enough SD with single excitation)
     gem = APIG(2, 4, [0b1111])
-    assert check_if_exception_raised(f, AssertionError)
-    # 2 occupied, 3 virtuals (Not enough SD generated)
+    assert gem.generate_pspace() == (0b1111, 0b110011, 0b11000011, 0b00111100,
+                                     0b11001100, 0b11110000,
+                                     0b010111, 0b01000111, 0b011101)
+    # 2 occupied, 3 virtuals (Enough SD with single excitation)
     gem = APIG(2, 5, [0b1111])
-    assert check_if_exception_raised(f, AssertionError)
+    print([bin(i) for i in gem.generate_pspace()])
+    assert gem.generate_pspace() == (0b1111, 0b110011, 0b11000011, 0b1100000011,
+                                     0b111100, 0b11001100, 0b1100001100,
+                                     0b11110000, 0b1100110000,
+                                     0b1111000000,
+                                     0b010111)
     # 2 occupied, 4 virtuals
     gem = APIG(2, 6, [0b1111])
     pspace = gem.generate_pspace()
@@ -174,6 +182,7 @@ def test_generate_pspace():
                for pairs in combinations(range(gem.norbs), gem.npairs)]
     for i in pspace:
         assert i in all_sds
+test_generate_pspace()
 
 def test_permanent():
     """ test permanent
@@ -219,7 +228,7 @@ test_overlap()
 
 # Define user input
 fn = 'test/h4.xyz'
-basis = '3-21g'
+basis = '6-31g'
 nocc = 2
 maxiter = 100
 solver=quasinewton

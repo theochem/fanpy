@@ -5,7 +5,7 @@ from itertools import combinations, permutations
 from newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-from slater_det import excite_pairs, is_pair_occupied, is_occupied
+from slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied
 
 class APIG(object):
     """
@@ -57,7 +57,7 @@ class APIG(object):
         """
         assert isinstance(npairs, int)
         assert isinstance(norbs, int)
-        
+
         # initialize "private" variables
         self._npairs = npairs
         self._norbs = norbs
@@ -88,7 +88,7 @@ class APIG(object):
         proj = defaults['proj']
         solver = defaults['solver']
         options = defaults['options']
-        
+
         # Check options
         if not options:
             options = {}
@@ -113,7 +113,7 @@ class APIG(object):
                 print("Using the first {} determinants in 'proj'.".format(len(x0)))
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
-      
+
         # Run the solver (includes intemediate normalization)
         print(solver)
         print(objective)
@@ -251,9 +251,11 @@ class APIG(object):
              'as the given number of electrons')
             # Check that adjacent orbitals in the Slater determinant are alpha beta pairs
             # i.e. all spatial orbitals are doubly occupied
-            alpha_occ = bin_string[0::2]
-            beta_occ = bin_string[1::2]
-            assert alpha_occ == beta_occ, "Given Slater determinant is unrestricted"
+            # There must be single excitations if number of electron pairs <= 2
+            if self.npairs > 2:
+                alpha_occ = bin_string[0::2]
+                beta_occ = bin_string[1::2]
+                assert alpha_occ == beta_occ, "Given Slater determinant is unrestricted"
             # Check that there are no orbitals are used that are outside of the
             # specified number (norbs)
             index_last_spin = len(bin_string)-1-bin_string.index('1')
@@ -347,6 +349,13 @@ class APIG(object):
                     occs_virs = list(occs) + list(virs)
                     list_sd.append(excite_pairs(hf_ground, *occs_virs))
             num_excited += 1
+        # Add single excitations (Needed for systems with less than 2 electron pairs)
+        #  Excite betas to alphas
+        if self.npairs <= 2:
+            for i in ind_occ:
+                for j in ind_vir:
+                    list_sd.append(excite_orbs(hf_ground, i*2+1, j*2))
+        # Check
         assert len(list_sd) == len(set(list_sd)),\
             ('Woops, something went wrong. Same Slater determinant was generated '
              'more than once')
@@ -436,7 +445,7 @@ class APIG(object):
                         excitation = excite_pairs(phi, i, a)
                         t2 += ham[2][i,a]*self.overlap(excitation, C)
 
-        return (t0 + t1)*self.overlap(phi, C) + t2 
+        return (t0 + t1)*self.overlap(phi, C) + t2
 
 
     def construct_guess(self, x0):
