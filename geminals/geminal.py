@@ -5,7 +5,7 @@ from itertools import combinations, permutations
 from newton import newton
 from scipy.optimize import root as quasinewton
 from scipy.optimize import minimize as lstsq
-from slater_det import excite_pairs, is_pair_occupied
+from slater_det import excite_pairs, is_pair_occupied, is_occupied
 
 class APIG(object):
     """

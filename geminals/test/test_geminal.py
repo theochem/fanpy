@@ -12,7 +12,7 @@ from scipy.optimize import root as quasinewton
 from geminal import APIG
 from horton_wrapper import *
 from random import shuffle
-from slater_det import excite_pairs, excite_orbs, is_occupied
+from slater_det import excite_pairs, excite_orbs
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
@@ -128,27 +128,27 @@ def test_setters_getters():
     assert check_if_exception_raised(f, AssertionError)
 
 def test_generate_pspace():
-    """ test Geminal.generate_pspace
+    """ test APIG.generate_pspace
     """
     def f():
         gem.generate_pspace()
     # 99 occupied, No virtuals (Not enough SD generated)
-    gem = Geminal(99, 99, [int('11'*99, 2)])
+    gem = APIG(99, 99, [int('11'*99, 2)])
     assert check_if_exception_raised(f, AssertionError)
     # 1 occupied, 1 virtual (Not enough SD generated)
-    gem = Geminal(1, 2, [0b11])
+    gem = APIG(1, 2, [0b11])
     assert check_if_exception_raised(f, AssertionError)
     # 1 occupied, 99 virtuals (Not enough SD generated)
-    gem = Geminal(1, 99, [0b11])
+    gem = APIG(1, 99, [0b11])
     assert check_if_exception_raised(f, AssertionError)
     # 2 occupied, 2 virtuals (Not enough SD generated)
-    gem = Geminal(2, 4, [0b1111])
+    gem = APIG(2, 4, [0b1111])
     assert check_if_exception_raised(f, AssertionError)
     # 2 occupied, 3 virtuals (Not enough SD generated)
-    gem = Geminal(2, 5, [0b1111])
+    gem = APIG(2, 5, [0b1111])
     assert check_if_exception_raised(f, AssertionError)
     # 2 occupied, 4 virtuals
-    gem = Geminal(2, 6, [0b1111])
+    gem = APIG(2, 6, [0b1111])
     pspace = gem.generate_pspace()
     assert len(pspace) == 13
     #  check that each of the generated slated determinant is in the total space
@@ -163,10 +163,10 @@ def test_generate_pspace():
                       0b11110000, 0b1100110000, 0b110000110000,
                       0b1111000000)
     #  check __init__
-    gem2 = Geminal(2, 6)
+    gem2 = APIG(2, 6)
     assert gem.generate_pspace() == gem2.generate_pspace()
     # 3 occupied, 3 virtuals
-    gem = Geminal(3, 6, [0b111111])
+    gem = APIG(3, 6, [0b111111])
     pspace = gem.generate_pspace()
     assert len(pspace) == 19
     #  check that each of the generated slated determinant is in the total space
@@ -192,9 +192,9 @@ def test_permanent():
     assert APIG.permanent(matrix) == 450
 
 def test_overlap():
-    """ Tests Geminal.overlap
+    """ Tests APIG.overlap
     """
-    gem = Geminal(3, 6)
+    gem = APIG(3, 6)
     coeff = np.random.rand(3, 6)
     # Bad Slater determinant
     sd = None
@@ -208,6 +208,14 @@ def test_overlap():
     # Excited SD
     sd = 0b110011001100
     assert gem.overlap(sd, coeff) == gem.permanent(coeff[:, [1, 3, 5]])
+
+'''
+test_init()
+test_setters_getters()
+test_generate_pspace()
+test_permanent()
+test_overlap()
+'''
 
 # Define user input
 fn = 'test/h4.xyz'
