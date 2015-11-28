@@ -60,7 +60,6 @@ class APIG(object):
         self._npairs = npairs
         self._norbs = norbs
         self._pspace = pspace
-        self._ground = None
         self._coeffs = None
 
         # check if the assigned values follow the desired conditions (using the setter)
@@ -252,18 +251,15 @@ class APIG(object):
             # specified number (norbs)
             index_last_spin = len(bin_string)-1-bin_string.index('1')
             index_last_spatial = (index_last_spin)//2
-            #assert index_last_spatial < self.norbs-1,\
             assert index_last_spatial < self.norbs,\
             ('Given Slater determinant contains orbitals whose indices exceed the given number of'
              'spatial orbitals')
-            self._pspace = tuple(value)
-            # Set the ground-state determinant while we're here
-            self._ground = min(value)
+        self._pspace = tuple(value)
 
 
     @property
     def ground(self):
-        return self._ground
+        return min(self.pspace)
 
 
     @property
@@ -272,6 +268,9 @@ class APIG(object):
 
     @coeffs.setter
     def coeffs(self, value):
+        assert value.size == self.npairs*self.norbs,\
+                ('Given geminals coefficient matrix does not have the right number of '
+                 'coefficients')
         self._coeffs = value.reshape(self.npairs, self.norbs)
 
 
@@ -414,6 +413,9 @@ class AP1roG(APIG):
 
     @coeffs.setter
     def coeffs(self, value):
+        assert value.size == self.npairs*(self.norbs - self.npairs),\
+                ('Given geminals coefficient matrix does not have the right number of '
+                 'coefficients')
         coeffs = np.eye(self.npairs, M=self.norbs)
         coeffs[:,self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
         self._coeffs = coeffs
