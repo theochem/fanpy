@@ -8,7 +8,8 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy as copy
 from itertools import combinations
-from geminal import Geminal
+from scipy.optimize import root as quasinewton
+from geminal import APIG
 from horton_wrapper import *
 from random import shuffle
 from slater_det import excite_pairs, excite_orbs, is_occupied
@@ -189,6 +190,24 @@ def test_permanent():
     # random matrix
     matrix = np.arange(1, 10).reshape((3,3))
     assert APIG.permanent(matrix) == 450
+
+def test_overlap():
+    """ Tests Geminal.overlap
+    """
+    gem = Geminal(3, 6)
+    coeff = np.random.rand(3, 6)
+    # Bad Slater determinant
+    sd = None
+    assert gem.overlap(sd, coeff) == 0
+    # Slater determinant with different number of electrons
+    sd = 0b11
+    assert gem.overlap(sd, coeff) == 0
+    # Ground state SD
+    sd = 0b111111
+    assert gem.overlap(sd, coeff) == gem.permanent(coeff[:, :3])
+    # Excited SD
+    sd = 0b110011001100
+    assert gem.overlap(sd, coeff) == gem.permanent(coeff[:, [1, 3, 5]])
 
 # Define user input
 fn = 'test/h4.xyz'

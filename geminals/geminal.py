@@ -367,19 +367,38 @@ class APIG(object):
         return permanent
 
 
-    def overlap(self, phi, matrix):
-        if phi == 0:
+    def overlap(self, slater_det, gem_coeff):
+        """ Calculate the overlap between a slater determinant and geminal wavefunction
+
+        Parameters
+        ----------
+        slater_det : int
+            Integers that, in binary, describes the orbitals used to make the Slater
+            determinant
+        gem_coeff : np.ndarray(P,K)
+            Coefficient matrix for the geminal wavefunction
+
+        Returns
+        -------
+        overlap : float
+            Overlap between the slater determinant and the geminal wavefunction
+
+        """
+        # If bad Slater determinant
+        if slater_det is None:
             return 0
-        elif phi not in self.pspace:
+        # If Slater determinant has different number of electrons
+        elif bin(slater_det).count('1') != self.nelec:
             return 0
+        # If Slater determinant has any of the (of the alpha beta pair) alpha
+        # and beta orbitals do not have the same occupation
+        elif any(is_occupied(slater_det, i*2) != is_occupied(slater_det, i*2+1)
+                 for i in range(self.norbs)):
+            return 0
+        # Else
         else:
-            # The ones in phi's binary representation determine the columns (orbitals) of
-            # the coefficient matrix for which we want to evaluate the permanent; only
-            # test the a-spin orbital in each pair because the geminal coefficients of
-            # APIG correspond to electron pairs
-            columns = [ i for i in range(self.norbs) if is_pair_occupied(phi, i) ]
-            overlap = self.permanent(matrix[:,columns])
-            return overlap
+            ind_occ = [i for i in range(self.norbs) if is_pair_occupied(slater_det, i)]
+            return self.permanent(gem_coeff[:, ind_occ])
 
 
     def phi_H_psi(self, phi, C, ham):
