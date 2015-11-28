@@ -358,6 +358,22 @@ class APIG(object):
 
     @staticmethod
     def permanent(matrix):
+        """ Calculates the permanent of a matrix
+
+        Parameters
+        ----------
+        matrix : np.ndarray(N,N)
+            Two dimensional square numpy array
+
+        Returns
+        -------
+        permanent : float
+
+        Raises
+        ------
+        AssertionError
+            If matrix is not square
+        """
         assert matrix.shape[0] is matrix.shape[1], \
             "Cannot compute the permanent of a non-square matrix."
         permanent = 0
