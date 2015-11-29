@@ -90,10 +90,10 @@ def excite_orbs(bin_sd, *indices):
     assert (len(indices) % 2) == 0, \
         "An equal number of annihilations and creations must occur."
     halfway = len(indices)//2
-    # Add virtuals (Needs to be first because if it was last, we can still add virtuals)
-    bin_sd = add_orbs(bin_sd, *indices[halfway:])
     # Remove occupieds
     bin_sd = remove_orbs(bin_sd, *indices[:halfway])
+    # Add virtuals
+    bin_sd = add_orbs(bin_sd, *indices[halfway:])
     return bin_sd
 
 
@@ -221,10 +221,10 @@ def excite_pairs(bin_sd, *indices):
     assert (len(indices) % 2) == 0, \
         "An equal number of annihilations and creations must occur."
     halfway = len(indices)//2
-    # Add virtuals (Needs to be first because if it was last, we can still add virtuals)
-    bin_sd = add_pairs(bin_sd, *indices[halfway:])
     # Remove occupieds
     bin_sd = remove_pairs(bin_sd, *indices[:halfway])
+    # Add virtuals
+    bin_sd = add_pairs(bin_sd, *indices[halfway:])
     return bin_sd
 
 def is_occupied(bin_sd, orb_index):

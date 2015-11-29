@@ -64,6 +64,10 @@ def test_excite_orbs():
     assert excite_orbs(0b1001, 3, 0) is None
     # Large index
     assert excite_orbs(0b1001, 3, 999999) == 0b0001 | 1 << 999999
+    # Excite to the same orbital
+    assert excite_orbs(0b111100, 3, 3) == 0b111100
+    assert excite_orbs(0b111100, 0, 0) is None
+    assert excite_orbs(0b111100, 3, 3, 3, 3) is None
 
 def test_remove_pairs():
     """ Test remove_pairs function
@@ -130,6 +134,10 @@ def test_excite_pairs():
     assert excite_pairs(0b100011, 2, 3) is None
     # Large index
     assert excite_pairs(0b0111, 0, 999999) == 0b100 | 0b11 << 999999*2
+    # Excite to the same spatial orbital
+    assert excite_pairs(0b111100, 1, 1) == 0b111100
+    assert excite_pairs(0b111100, 0, 0) is None
+    assert excite_pairs(0b111100, 1, 1, 1, 1) is None
 
 def test_is_occupied():
     """ Test is_occupied function
@@ -141,7 +149,6 @@ def test_is_occupied():
     assert not is_occupied(0b100100, 6)
     assert not is_occupied(0b100100, 0)
 
-
 def test_is_pair_occupied():
     """ Test is_pair_occupied function
     """
@@ -152,5 +159,9 @@ def test_is_pair_occupied():
     assert not is_pair_occupied(0b11111100, 0)
     assert not is_pair_occupied(0b11111100, 4)
     assert not is_pair_occupied(0b11111100, 9)
-test_is_pair_occupied()
-
+test_remove_orbs()
+test_add_orbs()
+test_excite_orbs()
+test_remove_pairs()
+test_add_pairs()
+test_excite_pairs()
