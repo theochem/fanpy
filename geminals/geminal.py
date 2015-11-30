@@ -97,9 +97,6 @@ class APIG(object):
         if jac:
             raise NotImplementedError
 
-        # Construct reduced Hamiltonian terms
-        ham = self.reduce_hamiltonian(one, two)
-
         # Solve for geminal coefficients
         if solver is lstsq:
             # Doing the least-squares method
@@ -117,7 +114,7 @@ class APIG(object):
         # Run the solver (includes intemediate normalization)
         print(solver)
         print(objective)
-        result = solver(objective, x0, jac=jac, args=(ham, proj), **options)
+        result = solver(objective, x0, jac=jac, args=(one, two, proj), **options)
 
         # Update the optimized coefficients
         self.coeffs = result['x']
@@ -425,55 +422,216 @@ class APIG(object):
             ind_occ = [i for i in range(self.norbs) if is_pair_occupied(slater_det, i)]
             return self.permanent(gem_coeff[:, ind_occ])
 
+    def phi_H_psi(self, slater_det, gem_coeff, one, two):
+        """ Integrates the Slater determinant with a Geminal wavefunction
 
-    def phi_H_psi(self, phi, C, ham):
+        Parameters
+        ----------
+        slater_det : int
+        gem_coeff : np.ndarray(P,K)
+        one : np.ndarray(K,K)
+            One electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+        two : np.ndarray(K,K,K,K)
+            Two electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
 
+        Returns
+        -------
+        integral : float
+
+        Notes
+        -----
+        Assume molecular orbitals are restricted spatial orbitals
+
+        """
+        bin_string = bin(slater_det)[2:]
+        # Add zeros on the left so that bin_string has even numbers
+        bin_string = '0'*(len(bin_string)%2) + bin_string
+        alpha_occ = bin_string[0::2]
+        beta_occ = bin_string[1::2]
+        # if all the occupied spin orbitals are alpha beta pairs
+        if alpha_occ == beta_occ:
+            return self.double_phi_H_psi(slater_det, gem_coeff, one, two)
+        else:
+            return self.brute_phi_H_psi(slater_det, gem_coeff, one, two)
+
+    def double_phi_H_psi(self, slater_det, gem_coeff, one, two):
+        """ Integrates the Slater determinant with a Geminal wavefunction
+
+        Assuming that the molecular orbitals are spatial orbitals,
+        the only integral elements that contribute are:
+
+        ..math::
+
+            h_{ii}, h_{\bar{i}\bar{i}}, g_{i\bar{i}i\bar{i}}, g_{ijij},
+            g_{\bar{i}\bar{j}\bar{i}\bar{j}}, g_{i\bar{j}i\bar{j}}, g_{\bar{i}j\bar{i}j}
+            g_{i\bar{i}a\bar{a}}
+
+        where :math: `g_{ijkl} = V_{ijkl} - V_{ijlk}`,
+              i and j's are indices for the occupied orbitals
+              a is the index for the virtual orbitals
+        Since :math: `V_{i\bar{i}\bar{i}i}, V_{i\bar{j}\bar{j}i}, V_{\bar{i}jj\bar{i}}` are all zero,
+        and since the alpha and beta parts are identical
+
+        ..math::
+       
+        H = \sum_i (2*h_{ii} + V_{i\bar{i}i\bar{i}}) +
+            \sum_{ij} (4*V_{ijij} - 2*V_{ijji} +
+            \sum_{ia} V_{i\bar{i}a\bar{a}}
+
+        Parameters
+        ----------
+        slater_det : int
+        gem_coeff : np.ndarray(P,K)
+        one : np.ndarray(K,K)
+            One electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+        two : np.ndarray(K,K,K,K)
+            Two electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+
+        Returns
+        -------
+        integral : float
+
+        Notes
+        -----
+        Assume molecular orbitals are restricted spatial orbitals
+        Assumes that the Slater determinant is a pairwise excitation of the ground
+        state HF Slater determinant
+        """
+        # Check if one and two electron integrals are expressed wrt spatial mo's
+        assert one.shape == tuple([self.norbs]*2),\
+            ('One electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        assert two.shape == tuple([self.norbs]*4),\
+            ('Two electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        # Check if Hermitian
+        assert np.allclose(one, one.T), 'One electron integral matrix is not symmetric'
+        assert np.allclose(two, np.einsum('jilk', two)),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <ji|lk>'
+             " or is not in physicist's notation")
+        assert np.allclose(two, np.conjugate(np.einsum('klij', two))),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <kl|ij>^*'
+             " or is not in physicist's notation")
         t0 = 0.0
         t1 = 0.0
         t2 = 0.0
-
         for i in range(self.norbs):
-            if is_pair_occupied(phi, i):
-                t0 += ham[0][i]
+            if is_pair_occupied(slater_det, i):
+                t0 += 2*one[i, i] + two[i, i, i, i]
 
                 for j in range(i + 1, self.norbs):
-                    if is_pair_occupied(phi, j):
-                        t1 += ham[1][i,j]
+                    if is_pair_occupied(slater_det, j):
+                        t1 += 4*two[i, j, i, j] - 2*two[i, j, j, i]
 
                 for a in range(self.norbs):
-                    if not is_pair_occupied(phi, a):
-                        excitation = excite_pairs(phi, i, a)
-                        t2 += ham[2][i,a]*self.overlap(excitation, C)
+                    if not is_pair_occupied(slater_det, a):
+                        excitation = excite_pairs(slater_det, i, a)
+                        t2 += two[i, i, a, a]*self.overlap(excitation, gem_coeff)
+        return (t0 + t1)*self.overlap(slater_det, gem_coeff) + t2
 
-        return (t0 + t1)*self.overlap(phi, C) + t2
+    def brute_phi_H_psi(self, slater_det, gem_coeff, one, two):
+        """ Integrates the Slater determinant with a Geminal wavefunction
 
+        Parameters
+        ----------
+        slater_det : int
+        gem_coeff : np.ndarray(P,K)
+        one : np.ndarray(K,K)
+            One electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+        two : np.ndarray(K,K,K,K)
+            Two electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+            In physicist's notation
+
+        Returns
+        -------
+        integral : float
+
+        Notes
+        -----
+        Assume molecular orbitals are restricted spatial orbitals
+        Makes no assumption about the slater_det structure and brute forces
+        One and Two electron integrals are expressed wrt spatial orbitals.
+        Assumes the one and two electron integrals are Hermitian
+        """
+        # Check if one and two electron integrals are expressed wrt spatial mo's
+        assert one.shape == tuple([self.norbs]*2),\
+            ('One electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        assert two.shape == tuple([self.norbs]*4),\
+            ('Two electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        # Check if Hermitian
+        assert np.allclose(one, one.T), 'One electron integral matrix is not symmetric'
+        assert np.allclose(two, np.einsum('jilk', two)),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <ji|lk>'
+             " or is not in physicist's notation")
+        assert np.allclose(two, np.conjugate(np.einsum('klij', two))),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <kl|ij>^*'
+             " or is not in physicist's notation")
+        # spin indices
+        ind_occ = [i for i in range(2*self.norbs) if is_occupied(slater_det, i)]
+        ind_vir = [i for i in range(2*self.norbs) if not is_occupied(slater_det, i)]
+        one_elec_part = 0
+        coulomb = 0
+        exchange = 0
+        for ind_last_occ_used, i in enumerate(ind_occ):
+            # add index i to ind_vir because excitation to same orbital is possible
+            for ind_last_vir_used, k in enumerate(ind_vir+[i]):
+                single_excitation = excite_orbs(slater_det, i, k)
+                one_elec_part += one[i//2, k//2]*self.overlap(single_excitation, gem_coeff)
+                for j in ind_occ[ind_last_occ_used+1:]:
+                    # add index i and j to ind_vir because excitation to same orbital is possible
+                    for l in (ind_vir+[i, j])[ind_last_vir_used+1:]:
+                        double_excitation = excite_orbs(single_excitation, j, l)
+                        overlap = self.overlap(double_excitation, gem_coeff)
+                        if overlap == 0:
+                            continue
+                        print(i/2,j/2,k/2,l/2)
+                        # in \braket{ij|kl},
+                        # i and k must have the same spin
+                        # j and l must have the same spin
+                        if i%2 == k%2 and j%2 == l%2:
+                            coulomb += two[i//2, j//2, k//2, l//2]*overlap
+                        # in \braket{ij|lk},
+                        # i and l must have the same spin
+                        # j and k must have the same spin
+                        if i%2 == l%2 and j%2 == k%2:
+                            exchange -= two[i//2, j//2, l//2, k//2]*overlap
+        print(one_elec_part, coulomb+exchange)
+        return one_elec_part + coulomb + exchange
 
     def construct_guess(self, x0):
         C = x0.reshape(self.npairs, self.norbs)
         return C
 
 
-    def nonlin(self, x0, ham, proj):
+    def nonlin(self, x0, one, two, proj):
         C = self.construct_guess(x0)
         vec = [self.overlap(self.ground, C) - 1.0]
-        energy = self.phi_H_psi(self.ground, C, ham)
+        energy = self.phi_H_psi(self.ground, C, one, two)
         for phi in proj:
             tmp = energy*self.overlap(phi, C) 
-            tmp -= self.phi_H_psi(phi, C, ham)
+            tmp -= self.phi_H_psi(phi, C, one, two)
             vec.append(tmp)
             if len(vec) == x0.size:
                 break
         return vec
 
 
-    def lstsq(self, x0, ham, proj):
+    def lstsq(self, x0, one, two, proj):
         C = self.construct_guess(x0)
         Hvec = np.zeros(len(proj))
         Svec = np.zeros(len(proj))
         for i in range(len(proj)):
-            Hvec[i] = self.phi_H_psi(proj[i], C, ham)
+            Hvec[i] = self.phi_H_psi(proj[i], C, one, two)
             Svec[i] = self.overlap(proj[i], C)
-        numerator = Hvec - self.phi_H_psi(self.ground, C, ham)*Svec
+        numerator = Hvec - self.phi_H_psi(self.ground, C, one, two)*Svec
         numerator = numerator.dot(numerator)
         denominator = Svec.dot(Svec)
         return numerator/denominator
@@ -483,24 +641,6 @@ class APIG(object):
         C = self.construct_guess(x0)
         return np.abs(self.overlap(self.ground, C) - 1.0)
 
-
-    def reduce_hamiltonian(self, one, two):
-
-        dp = np.zeros(one.shape[0])
-        for p in range(dp.shape[0]):
-            dp[p] += 2*one[p,p] + two[p,p,p,p]
-
-        dpq = np.zeros(one.shape)
-        for p in range(dpq.shape[0]):
-            for q in range(dpq.shape[1]):
-                dpq[p,q] += 4*two[p,q,p,q] - 2*two[p,q,q,p]
-
-        gpq = np.zeros(one.shape)
-        for p in range(gpq.shape[0]):
-            for q in range(gpq.shape[0]):
-                gpq[p,q] = two[p,p,q,q]
-
-        return dp, dpq, gpq
 
 
 class AP1roG(APIG):
@@ -577,12 +717,12 @@ class AP1roG(APIG):
                 raise Exception(str(excite_count))
 
 
-    def nonlin(self, x0, ham, proj):
+    def nonlin(self, x0, one, two, proj):
         C = self.construct_guess(x0)
         vec = []
         for phi in proj:
-            tmp = self.phi_H_psi(self.ground, C, ham)*self.overlap(phi, C) 
-            tmp -= self.phi_H_psi(phi, C, ham)
+            tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C) 
+            tmp -= self.phi_H_psi(phi, C, one, two)
             vec.append(tmp**2)
             if len(vec) == x0.size:
                 break

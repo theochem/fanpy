@@ -60,7 +60,7 @@ def test_init():
         gem = APIG(1, 2, [0b0111])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem = APIG(1, 2, [0b0101])
+        gem = APIG(3, 6, [0b0101])
     assert check_if_exception_raised(f, AssertionError)
     def f():
         gem = APIG(1, 2, [0b110000])
@@ -121,10 +121,12 @@ def test_setters_getters():
         gem.pspace = tuple([0b01])
     assert check_if_exception_raised(f, AssertionError)
     def f():
-        gem.pspace = tuple([0b10111])
-    assert check_if_exception_raised(f, AssertionError)
-    def f():
         gem.pspace = tuple([0b1100000011])
+    assert check_if_exception_raised(f, AssertionError)
+    gem.npairs = 3
+    gem.norbs = 6
+    def f():
+        gem.pspace = tuple([0b10111])
     assert check_if_exception_raised(f, AssertionError)
 
 def test_generate_pspace():
@@ -182,7 +184,6 @@ def test_generate_pspace():
                for pairs in combinations(range(gem.norbs), gem.npairs)]
     for i in pspace:
         assert i in all_sds
-test_generate_pspace()
 
 def test_permanent():
     """ test permanent
@@ -218,6 +219,118 @@ def test_overlap():
     sd = 0b110011001100
     assert gem.overlap(sd, coeff) == gem.permanent(coeff[:, [1, 3, 5]])
 
+def test_double_phi_H_psi():
+    """ Tests, APIG.double_phi_H_psi
+    """
+    gem = APIG(2, 4)
+    sd = 0b1111
+    coeff = np.eye(2,4)
+    one_non = np.random.rand(4,4)
+    one = one_non + one_non.T
+    two_non = np.random.rand(4,4,4,4)
+    two = two_non + np.einsum('jilk', two_non)
+    two = two + np.einsum('klij', two)
+    # Non Hermitian one
+    f = lambda: gem.double_phi_H_psi(sd, coeff, one_non, two)
+    assert check_if_exception_raised(f, AssertionError)
+    # Non Hermitian two
+    f = lambda: gem.double_phi_H_psi(sd, coeff, one, two_non)
+    assert check_if_exception_raised(f, AssertionError)
+    # Wavefunction is HF ground state
+    # Projecting onto HF ground state
+    coeff = np.eye(2,4)
+    '''
+        H = \sum_i (2*h_{ii} + V_{i\bar{i}i\bar{i}}) +
+            \sum_{ij} (4*V_{ijij} - 2*V_{ijji} +
+            \sum_{ia} V_{i\bar{i}a\bar{a}}
+    '''
+    # h_{ii} + h_{\bar{i}\bar{i}}
+    integral_one = 2*(one[0,0] + one[1,1])
+    # V_{i\bar{i}i\bar{i}
+    integral_two = two[0,0,0,0] + two[1,1,1,1]
+    # 4*V_{ijij} - 2*V_{ijji}
+    integral_two += 4*two[0,1,0,1] - 2*two[0,1,1,0]
+    # V_{i\bar{i}a\bar{a}}
+    # none because excitations of gs sd has zero overlap with this wavefunction
+    assert np.allclose(gem.double_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    # Wavefunction is a combination of HF ground, Excited states (to 2nd orbital)
+    # Projecting onto HF ground state
+    coeff[:, 2] = 1
+    integral_two += two[0,0,2,2]+two[1,1,2,2]
+    assert np.allclose(gem.double_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    # Wavefunction is a combination of HF ground, Excited states (to 2nd and 3rd orbitals)
+    # Projecting onto HF ground state
+    coeff[:, 3] = 1
+    integral_two += two[0,0,3,3]+two[1,1,3,3]
+    assert np.allclose(gem.double_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+
+def test_brute_phi_H_psi():
+    # Same test as test_double_phi_H_psi for pair occupied slater determinant
+    gem = APIG(2, 4)
+    sd = 0b1111
+    one = np.random.rand(4,4)
+    two = np.random.rand(4,4,4,4)
+    one_non = np.random.rand(4,4)
+    one = one_non + one_non.T
+    two_non = np.random.rand(4,4,4,4)
+    two = two_non + np.einsum('jilk', two_non)
+    two = two + np.einsum('klij', two)
+    # Wavefunction is HF ground state
+    # Projecting onto HF ground state
+    coeff = np.eye(2,4)
+    '''
+        H = \sum_i (2*h_{ii} + V_{i\bar{i}i\bar{i}}) +
+            \sum_{ij} (4*V_{ijij} - 2*V_{ijji} +
+            \sum_{ia} V_{i\bar{i}a\bar{a}}
+    '''
+    #  h_{ii} + h_{\bar{i}\bar{i}}
+    integral_one = 2*(one[0,0] + one[1,1])
+    #  V_{i\bar{i}i\bar{i}
+    integral_two = two[0,0,0,0] + two[1,1,1,1]
+    #  4*V_{ijij} - 2*V_{ijji}
+    integral_two += 4*two[0,1,0,1] - 2*two[0,1,1,0]
+    #  V_{i\bar{i}a\bar{a}}
+    #  none because excitations of gs sd has zero overlap with this wavefunction
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    #  Second test
+    coeff[:, 2] = 1
+    integral_two += two[0,0,2,2] + two[1,1,2,2]
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    #  Third test
+    coeff[:, 3] = 1
+    integral_two += two[0,0,3,3] + two[1,1,3,3]
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    # Non pair occupied slater determinant
+    sd = 0b010111
+    #  First test
+    coeff = np.eye(2,4)
+    ''' \sum_ij <00010111|h_ij a_i^\dagger a_j|00001111>
+         = <00010111| h_00 + h_\bar{00} + h_11 + h_22 |00001111> +
+           <00001111| h_2\bar{1} |00001111>
+         = h_2\bar{1}
+    '''
+    integral_one = one[2,1]
+    ''' \sum_ijkl <00010111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|00001111>
+         = <00010111| g_0\bar{0}0\bar{0} + g_0101 + g_0202 + g_\bar{0}1\bar{0}1 + g_\bar{0}2\bar{0}2 |00001111> +
+           <00001111| g_020\bar{1} + g_\bar{0}2\bar{01} + g_121\bar{1} |00001111>
+         = <00001111| V_020\bar{1} + V_\bar{0}2\bar{01} + V_121\bar{1} |00001111> +
+           <00001111| V_02\bar{1}0 + V_\bar{0}2\bar{10} + V_12\bar{1}1 |00001111>
+    '''
+    integral_two = two[0,2,0,1] + two[0,2,0,1] + two[1,2,1,1]
+    integral_two -= two[0,2,1,0] + two[0,2,1,0] + two[1,2,1,1]
+    print(integral_two)
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    #  Second test
+    coeff[:, 2] = 1
+    integral_two += two[0,0,2,2]+two[1,1,2,2]
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+    #  Third test
+    coeff[:, 3] = 1
+    integral_two += two[0,0,3,3]+two[1,1,3,3]
+    assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+test_brute_phi_H_psi()
+import sys
+sys.exit()
 '''
 test_init()
 test_setters_getters()
@@ -225,7 +338,6 @@ test_generate_pspace()
 test_permanent()
 test_overlap()
 '''
-
 # Define user input
 fn = 'test/h4.xyz'
 basis = '6-31g'
@@ -261,7 +373,6 @@ guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
 #guess = guess.ravel()
 gem = APIG(nocc, basis.nbasis)
 #gem = AP1roG(nocc, basis.nbasis)
-ham = gem.reduce_hamiltonian(*inpt['ham'][0:2])
 backup = copy(guess)
 
 # Run the optimization
@@ -276,7 +387,7 @@ print(inpt['coeffs'])
 print(inpt['energy'])# + inpt['ham'][2])
 print("GEMINAL")
 print(gem.coeffs)
-print(gem.phi_H_psi(gem.ground, gem.coeffs, ham) + inpt['ham'][2])
+print(gem.phi_H_psi(gem.ground, gem.coeffs, *inpt['ham'][0:2]) + inpt['ham'][2])
 print("OLP:\t{}".format(gem.overlap(gem.ground, gem.coeffs)))
 
 
