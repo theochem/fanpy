@@ -201,6 +201,24 @@ def test_permanent():
     matrix = np.arange(1, 10).reshape((3,3))
     assert APIG.permanent(matrix) == 450
 
+def test_permanent_derivative():
+    """ test partial derivative of permanent wrt one of its elements
+    """
+    # zero matrix
+    matrix = np.zeros((6,6))
+    assert APIG.permanent_derivative(matrix,5,0) == 0
+    # identity matrix
+    matrix = np.identity(6)
+    assert APIG.permanent_derivative(matrix,3,2) == 0
+    assert APIG.permanent_derivative(matrix,3,3) == 1
+    # one matrix
+    matrix = np.zeros((6,6)) + 1
+    assert APIG.permanent_derivative(matrix,5,5) == 2
+    # random matrix
+    matrix = np.arange(1, 10).reshape((3,3))
+    assert APIG.permanent_derivative(matrix,1,2) == 22
+
+
 def test_overlap():
     """ Tests APIG.overlap
     """
@@ -336,6 +354,7 @@ test_init()
 test_setters_getters()
 test_generate_pspace()
 test_permanent()
+test_permanent_derivative()
 test_overlap()
 '''
 # Define user input

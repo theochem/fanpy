@@ -388,6 +388,51 @@ class APIG(object):
             permanent += np.product(matrix[row_indices, col_indices])
         return permanent
 
+    @staticmethod
+    def permanent_derivative(matrix, i, j):
+        """ Calculates the partial derivative of a permanent with respect to one of its
+        coefficients
+
+        Parameters
+        ----------
+        matrix : np.ndarray(N,N)
+            Two dimensional square numpy array
+        i : int
+            `i` in the indices (i, j) of the coefficient with respect to which the partial
+            derivative is computed
+        j : int
+            See `i`.
+
+        Returns
+        -------
+        derivative : float
+
+        Raises
+        ------
+        AssertionError
+            If matrix is not square
+        """
+        assert matrix.shape[0] is matrix.shape[1], \
+            "Cannot compute the permanent of a non-square matrix."
+        # Permanent is invariant wrt row/column exchange; put coefficient (i,j) at (0,0)
+        rows = list(range(matrix.shape[0]))
+        cols = list(range(matrix.shape[1]))
+        if i is not 0:
+            rows[0], rows[i] = rows[i], rows[0]
+        if j is not 0:
+            cols[0], cols[j] = cols[j], cols[0]
+        # Get values of the permutations that include the coefficient (i,j) by
+        # multiplying along left- and right- hand diagonals, wrapping around where
+        # necessary.  Don't actually include coeff (i,j) since it is differentiated out.
+        left = matrix.shape[1] - 1
+        right = 1
+        prod_l = prod_r = 1
+        for row in range(1,matrix.shape[0]):
+            prod_l *= matrix[rows,:][:,cols][row, left]
+            prod_r *= matrix[rows,:][:,cols][row, right]
+            left -= 1
+            right += 1
+        return prod_l + prod_r
 
     def overlap(self, slater_det, gem_coeff):
         """ Calculate the overlap between a slater determinant and geminal wavefunction
