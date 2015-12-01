@@ -223,9 +223,9 @@ def test_permanent_derivative():
     apig = APIG(4,7)
     C = np.random.rand(4,7)
     # coefficient not in included column
-    apig.overlap(0b111100110011, C, derivative=True, indices=(2,6)) == 0
+    assert apig.overlap(0b111100110011, C, derivative=True, indices=(2,6)) == 0
     # coefficient in included column
-    apig.overlap(0b111100110011, C, derivative=True, indices=(2,4)) > 0.0
+    assert 1.0 > apig.overlap(0b111100110011, C, derivative=True, indices=(2,4)) > 0.0
     #
     # AP1roG permanent_derivative in AP1roG.overlap
     #
