@@ -388,8 +388,7 @@ class APIG(object):
             permanent += np.product(matrix[row_indices, col_indices])
         return permanent
 
-    @staticmethod
-    def permanent_derivative(matrix, i, j):
+    def permanent_derivative(self, matrix, i, j):
         """ Calculates the partial derivative of a permanent with respect to one of its
         coefficients
 
@@ -414,6 +413,7 @@ class APIG(object):
         """
         assert matrix.shape[0] is matrix.shape[1], \
             "Cannot compute the permanent of a non-square matrix."
+
         # Permanent is invariant wrt row/column exchange; put coefficient (i,j) at (0,0)
         rows = list(range(matrix.shape[0]))
         cols = list(range(matrix.shape[1]))
@@ -421,6 +421,7 @@ class APIG(object):
             rows[0], rows[i] = rows[i], rows[0]
         if j is not 0:
             cols[0], cols[j] = cols[j], cols[0]
+
         # Get values of the permutations that include the coefficient (i,j) by
         # multiplying along left- and right- hand diagonals, wrapping around where
         # necessary.  Don't actually include coeff (i,j) since it is differentiated out.
@@ -434,7 +435,7 @@ class APIG(object):
             right += 1
         return prod_l + prod_r
 
-    def overlap(self, slater_det, gem_coeff):
+    def overlap(self, slater_det, gem_coeff, derivative=False, indices=None):
         """ Calculate the overlap between a slater determinant and geminal wavefunction
 
         Parameters
@@ -444,6 +445,11 @@ class APIG(object):
             determinant
         gem_coeff : np.ndarray(P,K)
             Coefficient matrix for the geminal wavefunction
+        derivative : bool, optional
+            Whether to compute the partial derivative of the overlap with respect to a
+            geminal coefficient, rather than the overlap itself.
+        indices : 2-tuple of ints, optional
+            If taking the derivative, with respect to which coefficient?
 
         Returns
         -------
@@ -465,6 +471,12 @@ class APIG(object):
         # Else
         else:
             ind_occ = [i for i in range(self.norbs) if is_pair_occupied(slater_det, i)]
+            # If we're taking a derivative wrt a coefficient appearing in the permanent:
+            if derivative and (indices[1] in ind_occ):
+                indices = (indices[0],ind_occ.index(indices[1]))
+                return self.permanent_derivative(gem_coeff[:, ind_occ], *indices)
+            # If not deriving wrt a coefficient appearing in the permanent,just return
+            # the permanent
             return self.permanent(gem_coeff[:, ind_occ])
 
     def phi_H_psi(self, slater_det, gem_coeff, one, two):
@@ -520,7 +532,7 @@ class APIG(object):
         and since the alpha and beta parts are identical
 
         ..math::
-       
+
         H = \sum_i (2*h_{ii} + V_{i\bar{i}i\bar{i}}) +
             \sum_{ij} (4*V_{ijij} - 2*V_{ijji} +
             \sum_{ia} V_{i\bar{i}a\bar{a}}
@@ -651,6 +663,7 @@ class APIG(object):
         print(one_elec_part, coulomb+exchange)
         return one_elec_part + coulomb + exchange
 
+
     def construct_guess(self, x0):
         C = x0.reshape(self.npairs, self.norbs)
         return C
@@ -661,12 +674,77 @@ class APIG(object):
         vec = [self.overlap(self.ground, C) - 1.0]
         energy = self.phi_H_psi(self.ground, C, one, two)
         for phi in proj:
-            tmp = energy*self.overlap(phi, C) 
+            tmp = energy*self.overlap(phi, C)
             tmp -= self.phi_H_psi(phi, C, one, two)
             vec.append(tmp)
             if len(vec) == x0.size:
                 break
         return vec
+
+
+    def jacobian(self, gem_coeff, one, two, proj):
+        """ Constructs the Jacobian of the function `nonlin`:
+
+        Assuming that the molecular orbitals are spatial orbitals,
+        the only integral elements that contribute are:
+
+        Parameters
+        ----------
+        slater_det : int
+        gem_coeff : np.ndarray(P,K)
+        one : np.ndarray(K,K)
+            One electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+        two : np.ndarray(K,K,K,K)
+            Two electron integral in the orthogonal spatial basis from which the
+            geminals are constructed
+        slater_det : int
+            Integer that, in binary, describes the orbitals used to make the Slater
+            determinant
+
+        Returns
+        -------
+        jac : np.ndarray(n_pspace,P,K)
+            The Jacobian of the geminal coefficients for the Projected Schrodinger
+            Equation.  A 4-index tensor.
+        """
+
+        # Initialize Jacobian tensor and some temporary storage
+        # (J)_dij = d(F_d)/d(c_ij)
+        jac   = np.zeros((len(proj),self.npairs, self.norbs))
+        tmp_jac = np.zeros((len(proj),self.npairs, self.norbs))
+
+        # The objective functions {F_d} are of this form:
+        # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
+        #           + <phi0|H|psi>*(d<phi'|psi>/dc_ij) - d<phi'|H|psi>/dc_ij
+
+        # Compute the undifferentiated parts
+        for i in range(self.npairs):
+            for j in range(self.norbs):
+                for d in range(len(proj)):
+                    jac[d,i,j] = self.overlap(proj[d], gem_coeff)
+                    tmp_jac[d,i,j] = self.phi_H_psi(self.ground, gem_coeff, one, two)
+
+        # Compute the differentiated parts; this works by overwriting the geminal's
+        # `overlap` method to be the method that describes its PrSchEq's partial
+        # derivative wrt coefficient c_ij; we must back up the original method
+        tmp_olp = self.overlap
+        for i in range(self.npairs):
+            for j in range(self.norbs):
+                # Overwrite `overlap` to take the correct partial derivative
+                coords = (i, j)
+                def olp_der(sd, gc, coords=coords):
+                    return tmp_olp(sd, gc, derivative=True, indices=coords)
+                self.overlap = olp_der
+                # Compute the differentiated parts
+                for d in range(len(proj)):
+                    jac[d,i,j] *= self.phi_H_psi(self.ground, gem_coeff, one, two)
+                    jac[d,i,j] += tmp_jac[d,i,j]*self.overlap(proj[d], gem_coeff)
+                    jac[d,i,j] -= self.phi_H_psi(proj[d], gem_coeff, one, two)
+
+        # Replace the original `overlap` method and return the Jacobian
+        self.overlap = tmp_olp
+        return jac
 
 
     def lstsq(self, x0, one, two, proj):
@@ -694,8 +772,8 @@ class AP1roG(APIG):
         C = np.eye(self.npairs, M=self.norbs)
         C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
         return C
-   
-   
+
+
     @property
     def coeffs(self):
         return self._coeffs
@@ -731,11 +809,16 @@ class AP1roG(APIG):
         # Uniquify
         return list(set(pspace))
 
-    def overlap(self, phi, matrix):
+    def overlap(self, phi, matrix, derivative=False, indices=None):
         if phi == 0:
             return 0
         elif phi not in self.pspace:
             return 0
+        #elif derivative and indices[1] in ?????:
+            #????
+            #????
+            #????
+            #return ???
         else:
             from_index = []
             to_index = []
@@ -766,7 +849,7 @@ class AP1roG(APIG):
         C = self.construct_guess(x0)
         vec = []
         for phi in proj:
-            tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C) 
+            tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C)
             tmp -= self.phi_H_psi(phi, C, one, two)
             vec.append(tmp**2)
             if len(vec) == x0.size:

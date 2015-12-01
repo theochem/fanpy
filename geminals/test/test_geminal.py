@@ -346,6 +346,20 @@ def test_brute_phi_H_psi():
     coeff[:, 3] = 1
     integral_two += two[0,0,3,3]+two[1,1,3,3]
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
+
+def test_jacobian():
+    """ Tests, APIG.jacobian()
+    """
+    npairs = 3
+    norbs = 9
+    gem = APIG(npairs, norbs)
+    coeffs = np.ones((npairs, norbs))
+    one = np.ones((norbs, norbs))
+    two = np.ones((norbs, norbs, norbs, norbs))
+    jac = gem.jacobian(coeffs, one, two, gem.pspace)
+    assert jac.shape == (len(gem.pspace), gem.npairs, gem.norbs)
+test_jacobian()
+
 test_brute_phi_H_psi()
 import sys
 sys.exit()
