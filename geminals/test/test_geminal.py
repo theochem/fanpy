@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy as copy
 from itertools import combinations
+from newton import newton
 from scipy.optimize import root as quasinewton
 from geminal import APIG, AP1roG
 from horton_wrapper import *
@@ -406,8 +407,7 @@ def test_jacobian():
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
     jac = gem.nonlin_jac(coeffs, one, two, gem.pspace)
-    #print(jac)
-    assert jac.shape == (len(gem.pspace), gem.npairs*gem.norbs)
+    assert jac.shape == (gem.npairs*gem.norbs, gem.npairs*gem.norbs)
 
 test_init()
 test_setters_getters()
@@ -424,10 +424,10 @@ sys.exit()
 
 # Define user input
 fn = 'test/h4.xyz'
-basis = '6-31g'
+basis = 'sto-3g'
 nocc = 2
 maxiter = 100
-solver=quasinewton
+solver=newton
 #solver=lstsq
 
 options = { 'options': { 'maxiter':maxiter,
@@ -449,10 +449,13 @@ inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
 basis  = inpt['basis']
 coeffs = inpt['coeffs']
 energy = inpt['energy']
+one = inpt['ham'][0]
+two = inpt['ham'][1]
 core = inpt['ham'][2]
-guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
-#guess = 0.050*(2.0*(np.random.rand(nocc*(basis.nbasis - nocc)) - 1.0))
+#guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
+#guess = 0.050*(2.0*(np.random.rand(nocc*basis.nbasis) - 1.0))
 #guess = np.eye(nocc, M=basis.nbasis)
+guess = np.ones(nocc*basis.nbasis)
 #guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
 #guess = guess.ravel()
 gem = APIG(nocc, basis.nbasis)

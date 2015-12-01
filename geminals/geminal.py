@@ -113,8 +113,6 @@ class APIG(object):
                 jac = self.nonlin_jac
 
         # Run the solver (includes intemediate normalization)
-        print(solver)
-        print(objective)
         result = solver(objective, x0, jac=jac, args=(one, two, proj), **options)
 
         # Update the optimized coefficients
@@ -690,7 +688,7 @@ class APIG(object):
             vec.append(tmp)
             if len(vec) == x0.size:
                 break
-        return vec
+        return np.array(vec)
 
 
     def nonlin_jac(self, x0, one, two, proj):
@@ -719,8 +717,8 @@ class APIG(object):
 
         # Initialize Jacobian tensor and some temporary values
         # (J)_dij = d(F_d)/d(c_ij)
-        jac = np.zeros((len(proj),self.npairs*self.norbs))
-        phi_psi_tmp = np.zeros(len(proj))
+        jac = np.zeros((x0.size, x0.size))
+        phi_psi_tmp = np.zeros(x0.size)
         C = x0.reshape(self.npairs, self.norbs)
 
         # The objective functions {F_d} are of this form:
@@ -729,25 +727,26 @@ class APIG(object):
 
         # Compute the undifferentiated parts
         energy = self.phi_H_psi(self.ground, C, one, two)
-        for d in range(len(proj)):
-            phi_psi_tmp[d] = self.overlap(self.ground, C)
+        for d in range(x0.size):
+            phi_psi_tmp[d] = self.overlap(proj[d], C)
 
         # Compute the differentiated parts; this works by overwriting the geminal's
         # `overlap` method to be the method that describes its PrSchEq's partial
         # derivative wrt coefficient c_ij; we must back up the original method
         tmp_olp = self.overlap
         count = 0
+
+        # Overwrite `overlap` to take the correct partial derivative
         for i in range(self.npairs):
             for j in range(self.norbs):
-                # Overwrite `overlap` to take the correct partial derivative
                 coords = (i, j)
                 def olp_der(sd, gc, overwrite=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=overwrite)
                 self.overlap = olp_der
+
                 # Compute the differentiated parts and construct the whole Jacobian
-                for d in range(len(proj)):
-                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two) \
-                                   * phi_psi_tmp[d] \
+                for d in range(x0.size):
+                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
                                    + energy*self.overlap(proj[d], C) \
                                    - self.phi_H_psi(proj[d], C, one, two)
                 count += 1
