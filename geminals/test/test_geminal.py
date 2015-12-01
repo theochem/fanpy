@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 from copy import deepcopy as copy
 from itertools import combinations
 from scipy.optimize import root as quasinewton
-from geminal import APIG
+from geminal import APIG, AP1roG
 from horton_wrapper import *
 from random import shuffle
 from slater_det import excite_pairs, excite_orbs
@@ -217,6 +217,27 @@ def test_permanent_derivative():
     # random matrix
     matrix = np.arange(1, 10).reshape((3,3))
     assert APIG.permanent_derivative(matrix,1,2) == 22
+    #
+    # APIG permanent_derivative in APIG.overlap
+    #
+    apig = APIG(4,7)
+    C = np.random.rand(4,7)
+    # coefficient not in included column
+    apig.overlap(0b111100110011, C, derivative=True, indices=(2,6)) == 0
+    # coefficient in included column
+    apig.overlap(0b111100110011, C, derivative=True, indices=(2,4)) > 0.0
+    #
+    # AP1roG permanent_derivative in AP1roG.overlap
+    #
+    ap1rog = AP1roG(3,9)
+    C = np.random.rand(3,9)
+    C[:,:3] = np.eye(3)
+    # no excitation
+    assert ap1rog.overlap(0b111111, C, derivative=True, indices=(2,2)) == 1
+    assert ap1rog.overlap(0b111111, C, derivative=True, indices=(1,2)) == 0
+    # single excitation
+    assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(2,3)) == 1
+    assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(3,2)) == 0
 
 
 def test_overlap():
@@ -376,21 +397,18 @@ def test_brute_phi_H_psi():
 def test_jacobian():
     """ Tests, APIG.jacobian()
     """
+    # Test that it works
     npairs = 3
     norbs = 9
     gem = APIG(npairs, norbs)
-    coeffs = np.ones((npairs, norbs))
+    coeffs = np.zeros((npairs, norbs))
+    coeffs[:,:npairs] += np.eye(npairs)
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
     jac = gem.jacobian(coeffs, one, two, gem.pspace)
+    print(jac)
     assert jac.shape == (len(gem.pspace), gem.npairs*gem.norbs)
-test_jacobian()
 
-test_brute_phi_H_psi()
-import sys
-sys.exit()
-
-'''
 test_init()
 test_setters_getters()
 test_generate_pspace()
@@ -399,7 +417,10 @@ test_permanent_derivative()
 test_overlap()
 test_double_phi_H_psi()
 test_brute_phi_H_psi()
-'''
+test_jacobian()
+
+import sys
+sys.exit()
 
 # Define user input
 fn = 'test/h4.xyz'

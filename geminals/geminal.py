@@ -391,7 +391,8 @@ class APIG(object):
             permanent += np.product(matrix[row_indices, col_indices])
         return permanent
 
-    def permanent_derivative(self, matrix, i, j):
+    @staticmethod
+    def permanent_derivative(matrix, i, j):
         """ Calculates the partial derivative of a permanent with respect to one of its
         coefficients
 
@@ -475,9 +476,11 @@ class APIG(object):
         else:
             ind_occ = [i for i in range(self.norbs) if is_pair_occupied(slater_det, i)]
             # If we're taking a derivative wrt a coefficient appearing in the permanent:
-            if derivative and (indices[1] in ind_occ):
-                indices = (indices[0],ind_occ.index(indices[1]))
-                return self.permanent_derivative(gem_coeff[:, ind_occ], *indices)
+            if derivative:
+                if indices[1] in ind_occ:
+                    indices = (indices[0],ind_occ.index(indices[1]))
+                    return self.permanent_derivative(gem_coeff[:, ind_occ], *indices)
+                return 0
             # If not deriving wrt a coefficient appearing in the permanent,just return
             # the permanent
             return self.permanent(gem_coeff[:, ind_occ])
@@ -822,16 +825,12 @@ class AP1roG(APIG):
         # Uniquify
         return list(set(pspace))
 
+
     def overlap(self, phi, matrix, derivative=False, indices=None):
         if phi == 0:
             return 0
         elif phi not in self.pspace:
             return 0
-        #elif derivative and indices[1] in ?????:
-            #????
-            #????
-            #????
-            #return ???
         else:
             from_index = []
             to_index = []
@@ -841,14 +840,32 @@ class AP1roG(APIG):
                     excite_count += 1
                     from_index.append(i)
             for i in range(self.npairs, self.norbs):
-                if not is_pair_occupied(phi, i):
+                if is_pair_occupied(phi, i):
                     to_index.append(i)
 
             if excite_count == 0:
+                if derivative:
+                    if (indices[1] < self.npairs) and (indices[0] == indices[1]):
+                        return 1
+                    return 0
                 return 1
             elif excite_count == 1:
+                if derivative:
+                    if indices == (from_index[0], to_index[0]):
+                        return 1
+                    return 0
                 return matrix[from_index[0], to_index[0]]
             elif excite_count == 2:
+                if derivative:
+                    if indices == (from_index[0], to_index[0]):
+                        return matrix[from_index[1], to_index[1]]
+                    elif indices == (from_index[1], to_index[1]):
+                        return matrix[from_index[0], to_index[0]]
+                    elif indices == (from_index[0], to_index[1]):
+                        return matrix[from_index[1], to_index[0]]
+                    elif indices == (from_index[1], to_index[0]):
+                        return matrix[from_index[0], to_index[1]]
+                    return 0
                 overlap = matrix[from_index[0], to_index[0]] * \
                           matrix[from_index[1], to_index[1]]
                 overlap -= matrix[from_index[0], to_index[1]] * \
