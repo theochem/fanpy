@@ -313,38 +313,64 @@ def test_brute_phi_H_psi():
     #  Second test
     coeff[:, 2] = 1
     integral_two += two[0,0,2,2] + two[1,1,2,2]
+    print(integral_one, integral_two)
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
     #  Third test
     coeff[:, 3] = 1
     integral_two += two[0,0,3,3] + two[1,1,3,3]
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
-    # Non pair occupied slater determinant
-    sd = 0b010111
-    #  First test
+    # Non pair occupied slater determinant (beta to beta excitation)
+    sd = 0b100111
+    # Wavefunction is a combination of HF ground
+    # Projecting onto single excitation of HF ground
     coeff = np.eye(2,4)
-    ''' \sum_ij <00010111|h_ij a_i^\dagger a_j|00001111>
-         = <00010111| h_00 + h_\bar{00} + h_11 + h_22 |00001111> +
-           <00001111| h_2\bar{1} |00001111>
-         = h_2\bar{1}
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|00001111>
+         = <00001111| h_\bar{21} |00001111>
+        h_ij = 0 if i and k do not have the same spin
     '''
     integral_one = one[2,1]
-    ''' \sum_ijkl <00010111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|00001111>
-         = <00010111| g_0\bar{0}0\bar{0} + g_0101 + g_0202 + g_\bar{0}1\bar{0}1 + g_\bar{0}2\bar{0}2 |00001111> +
-           <00001111| g_020\bar{1} + g_\bar{0}2\bar{01} + g_121\bar{1} |00001111>
-         = <00001111| V_020\bar{1} + V_\bar{0}2\bar{01} + V_121\bar{1} |00001111> +
-           <00001111| V_02\bar{1}0 + V_\bar{0}2\bar{10} + V_12\bar{1}1 |00001111>
+    ''' \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|00001111>
+         = <00001111| g_0\bar{2}0\bar{1} + g_\bar{0201} + g_1\bar{2}1\bar{1} |00001111>
+         = <00001111| V_0\bar{2}0\bar{1} + V_\bar{0201} + V_1\bar{2}1\bar{1} - V_\bar{0210}|00001111> -
+       V_ijkl = 0 if i and k do not have the same spin and
+                  if j and l do not have the same spin
     '''
-    integral_two = two[0,2,0,1] + two[0,2,0,1] + two[1,2,1,1]
-    integral_two -= two[0,2,1,0] + two[0,2,1,0] + two[1,2,1,1]
-    print(integral_two)
+    integral_two = two[0,2,0,1] + two[0,2,0,1] + two[1,2,1,1] - two[0,2,1,0]
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
-    #  Second test
+    # Wavefunction is a combination of HF ground, Excited states (to 2nd orbital)
+    # Projecting onto single excitation of HF ground
     coeff[:, 2] = 1
-    integral_two += two[0,0,2,2]+two[1,1,2,2]
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|00110011>
+         = <00100111| h_12 |00110011>
+        \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|00110011>
+         = <00110011| g_0102 + g_\bar{0}1\bar{0}2 + g_1\bar{2}2\bar{2} |00110011>
+         = <00110011| V_0102 + V_\bar{0}1\bar{0}2 + V_1\bar{2}2\bar{2} - V_0120 |00110011>
+    '''
+    integral_one += one[1,2]
+    integral_two += two[0,1,0,2] + two[0,1,0,2] + two[1,2,2,2] - two[0,1,2,0]
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|00111100> = 0
+        \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|00111100>
+         = <00111100| g_0\bar{01}2 |00111100>
+         = <00110011| V_0\bar{01}2 - V_0\bar{0}2\bar{1} |00110011>
+         = -<00110011| V_0\bar{0}2\bar{1} |00110011>
+    '''
+    integral_two -= two[0,0,2,1]
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
-    #  Third test
+    # Wavefunction is a combination of HF ground, Excited states (to 2nd and 3rd orbitals)
+    # Projecting onto single excitation of HF ground
     coeff[:, 3] = 1
-    integral_two += two[0,0,3,3]+two[1,1,3,3]
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|11000011> = 0
+        \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|11000011>
+         = <11000011| g_1\bar{2}3\bar{3} |11000011>
+         = <11000011| V_1\bar{2}3\bar{3} |11000011>
+    '''
+    integral_two += two[1,2,3,3]
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|11001100> =0
+        \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|11001100> = 0
+    '''
+    ''' \sum_ij <00100111|h_ij a_i^\dagger a_j|11110000> = 0
+        \sum_ijkl <00100111|g_ijkl a_i^\dagger a_k^\dagger a_j a_l|11110000> = 0
+    '''
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
 
 def test_jacobian():
@@ -363,6 +389,7 @@ test_jacobian()
 test_brute_phi_H_psi()
 import sys
 sys.exit()
+
 '''
 test_init()
 test_setters_getters()
@@ -370,7 +397,10 @@ test_generate_pspace()
 test_permanent()
 test_permanent_derivative()
 test_overlap()
+test_double_phi_H_psi()
+test_brute_phi_H_psi()
 '''
+
 # Define user input
 fn = 'test/h4.xyz'
 basis = '6-31g'

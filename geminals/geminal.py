@@ -634,22 +634,28 @@ class APIG(object):
         # spin indices
         ind_occ = [i for i in range(2*self.norbs) if is_occupied(slater_det, i)]
         ind_vir = [i for i in range(2*self.norbs) if not is_occupied(slater_det, i)]
-        one_elec_part = 0
-        coulomb = 0
-        exchange = 0
-        for ind_last_occ_used, i in enumerate(ind_occ):
+        one_elec_part = 0.0
+        coulomb = 0.0
+        exchange = 0.0
+        ind_first_occ = 0
+        for i in ind_occ:
+            ind_first_vir = 0
             # add index i to ind_vir because excitation to same orbital is possible
-            for ind_last_vir_used, k in enumerate(ind_vir+[i]):
+            temp1_ind_vir = sorted(ind_vir+[i])
+            for k in temp1_ind_vir:
                 single_excitation = excite_orbs(slater_det, i, k)
-                one_elec_part += one[i//2, k//2]*self.overlap(single_excitation, gem_coeff)
-                for j in ind_occ[ind_last_occ_used+1:]:
+                if i%2 == k%2:
+                    one_elec_part += one[i//2, k//2]*self.overlap(single_excitation, gem_coeff)
+                # avoid repetition by making j>i
+                for j in ind_occ[ind_first_occ+1:]:
                     # add index i and j to ind_vir because excitation to same orbital is possible
-                    for l in (ind_vir+[i, j])[ind_last_vir_used+1:]:
+                    # avoid repetition by making l>k
+                    temp2_ind_vir = sorted([j] + temp1_ind_vir[ind_first_vir+1:])
+                    for l in temp2_ind_vir:
                         double_excitation = excite_orbs(single_excitation, j, l)
                         overlap = self.overlap(double_excitation, gem_coeff)
                         if overlap == 0:
                             continue
-                        print(i/2,j/2,k/2,l/2)
                         # in \braket{ij|kl},
                         # i and k must have the same spin
                         # j and l must have the same spin
@@ -660,7 +666,8 @@ class APIG(object):
                         # j and k must have the same spin
                         if i%2 == l%2 and j%2 == k%2:
                             exchange -= two[i//2, j//2, l//2, k//2]*overlap
-        print(one_elec_part, coulomb+exchange)
+                ind_first_vir += 1
+            ind_first_occ += 1
         return one_elec_part + coulomb + exchange
 
 
