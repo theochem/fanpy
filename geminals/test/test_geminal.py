@@ -383,7 +383,7 @@ def test_jacobian():
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
     jac = gem.jacobian(coeffs, one, two, gem.pspace)
-    assert jac.shape == (len(gem.pspace), gem.npairs, gem.norbs)
+    assert jac.shape == (len(gem.pspace), gem.npairs*gem.norbs)
 test_jacobian()
 
 test_brute_phi_H_psi()

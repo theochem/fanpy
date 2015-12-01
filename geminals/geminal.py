@@ -102,6 +102,9 @@ class APIG(object):
             # Doing the least-squares method
             objective = self.lstsq
             options['tol'] = 1.0e-9
+        elif solver is newton:
+            # Using Newton's method; 
+            pass
         else:
             # Doing the nonlinear-system method, so check for over/under-determination
             objective = self.nonlin
@@ -698,7 +701,8 @@ class APIG(object):
         Parameters
         ----------
         slater_det : int
-        gem_coeff : np.ndarray(P,K)
+        gem_coeff : np.ndarray(P*K)
+            The (raveled) geminal coefficient matrix.
         one : np.ndarray(K,K)
             One electron integral in the orthogonal spatial basis from which the
             geminals are constructed
@@ -711,31 +715,31 @@ class APIG(object):
 
         Returns
         -------
-        jac : np.ndarray(n_pspace,P,K)
-            The Jacobian of the geminal coefficients for the Projected Schrodinger
-            Equation.  A 4-index tensor.
+        jac : np.ndarray(n_pspace,P*K)
+            The Jacobian of the (raveled) geminal coefficients for the Projected
+            Schrodinger Equation.
         """
 
-        # Initialize Jacobian tensor and some temporary storage
+        # Initialize Jacobian tensor and some temporary values
         # (J)_dij = d(F_d)/d(c_ij)
-        jac   = np.zeros((len(proj),self.npairs, self.norbs))
-        tmp_jac = np.zeros((len(proj),self.npairs, self.norbs))
+        jac = np.zeros((len(proj),self.npairs*self.norbs))
+        phi_psi_tmp = np.zeros(len(proj))
+        C = gem_coeff.reshape(self.npairs, self.norbs)
 
         # The objective functions {F_d} are of this form:
         # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
         #           + <phi0|H|psi>*(d<phi'|psi>/dc_ij) - d<phi'|H|psi>/dc_ij
 
         # Compute the undifferentiated parts
-        for i in range(self.npairs):
-            for j in range(self.norbs):
-                for d in range(len(proj)):
-                    jac[d,i,j] = self.overlap(proj[d], gem_coeff)
-                    tmp_jac[d,i,j] = self.phi_H_psi(self.ground, gem_coeff, one, two)
+        energy = self.phi_H_psi(self.ground, C, one, two)
+        for d in range(len(proj)):
+            phi_psi_tmp[d] = self.overlap(self.ground, C)
 
         # Compute the differentiated parts; this works by overwriting the geminal's
         # `overlap` method to be the method that describes its PrSchEq's partial
         # derivative wrt coefficient c_ij; we must back up the original method
         tmp_olp = self.overlap
+        count = 0
         for i in range(self.npairs):
             for j in range(self.norbs):
                 # Overwrite `overlap` to take the correct partial derivative
@@ -743,11 +747,13 @@ class APIG(object):
                 def olp_der(sd, gc, coords=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=coords)
                 self.overlap = olp_der
-                # Compute the differentiated parts
+                # Compute the differentiated parts and construct the whole Jacobian
                 for d in range(len(proj)):
-                    jac[d,i,j] *= self.phi_H_psi(self.ground, gem_coeff, one, two)
-                    jac[d,i,j] += tmp_jac[d,i,j]*self.overlap(proj[d], gem_coeff)
-                    jac[d,i,j] -= self.phi_H_psi(proj[d], gem_coeff, one, two)
+                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two) \
+                                   * phi_psi_tmp[d] \
+                                   + energy*self.overlap(proj[d], C) \
+                                   - self.phi_H_psi(proj[d], C, one, two)
+                count += 1
 
         # Replace the original `overlap` method and return the Jacobian
         self.overlap = tmp_olp
