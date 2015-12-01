@@ -94,17 +94,12 @@ class APIG(object):
             options = {}
         if not proj:
             proj = self.pspace
-        if jac:
-            raise NotImplementedError
 
         # Solve for geminal coefficients
         if solver is lstsq:
             # Doing the least-squares method
             objective = self.lstsq
             options['tol'] = 1.0e-9
-        elif solver is newton:
-            # Using Newton's method; 
-            pass
         else:
             # Doing the nonlinear-system method, so check for over/under-determination
             objective = self.nonlin
@@ -113,6 +108,9 @@ class APIG(object):
                 print("Using the first {} determinants in 'proj'.".format(len(x0)))
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
+            # Using Newton's method; 
+            if solver is newton:
+                jac = self.nonlin_jac
 
         # Run the solver (includes intemediate normalization)
         print(solver)
@@ -695,7 +693,7 @@ class APIG(object):
         return vec
 
 
-    def jacobian(self, gem_coeff, one, two, proj):
+    def nonlin_jac(self, x0, one, two, proj):
         """ Constructs the Jacobian of the function `nonlin`:
 
         Assuming that the molecular orbitals are spatial orbitals,
@@ -703,8 +701,7 @@ class APIG(object):
 
         Parameters
         ----------
-        slater_det : int
-        gem_coeff : np.ndarray(P*K)
+        x0 : np.ndarray(P*K)
             The (raveled) geminal coefficient matrix.
         one : np.ndarray(K,K)
             One electron integral in the orthogonal spatial basis from which the
@@ -712,9 +709,6 @@ class APIG(object):
         two : np.ndarray(K,K,K,K)
             Two electron integral in the orthogonal spatial basis from which the
             geminals are constructed
-        slater_det : int
-            Integer that, in binary, describes the orbitals used to make the Slater
-            determinant
 
         Returns
         -------
@@ -727,7 +721,7 @@ class APIG(object):
         # (J)_dij = d(F_d)/d(c_ij)
         jac = np.zeros((len(proj),self.npairs*self.norbs))
         phi_psi_tmp = np.zeros(len(proj))
-        C = gem_coeff.reshape(self.npairs, self.norbs)
+        C = x0.reshape(self.npairs, self.norbs)
 
         # The objective functions {F_d} are of this form:
         # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
@@ -747,8 +741,8 @@ class APIG(object):
             for j in range(self.norbs):
                 # Overwrite `overlap` to take the correct partial derivative
                 coords = (i, j)
-                def olp_der(sd, gc, coords=coords):
-                    return tmp_olp(sd, gc, derivative=True, indices=coords)
+                def olp_der(sd, gc, overwrite=coords):
+                    return tmp_olp(sd, gc, derivative=True, indices=overwrite)
                 self.overlap = olp_der
                 # Compute the differentiated parts and construct the whole Jacobian
                 for d in range(len(proj)):

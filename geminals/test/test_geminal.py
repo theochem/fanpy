@@ -151,7 +151,7 @@ def test_generate_pspace():
                                      0b010111, 0b01000111, 0b011101)
     # 2 occupied, 3 virtuals (Enough SD with single excitation)
     gem = APIG(2, 5, [0b1111])
-    print([bin(i) for i in gem.generate_pspace()])
+    #print([bin(i) for i in gem.generate_pspace()])
     assert gem.generate_pspace() == (0b1111, 0b110011, 0b11000011, 0b1100000011,
                                      0b111100, 0b11001100, 0b1100001100,
                                      0b11110000, 0b1100110000,
@@ -334,7 +334,7 @@ def test_brute_phi_H_psi():
     #  Second test
     coeff[:, 2] = 1
     integral_two += two[0,0,2,2] + two[1,1,2,2]
-    print(integral_one, integral_two)
+    #print(integral_one, integral_two)
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
     #  Third test
     coeff[:, 3] = 1
@@ -405,8 +405,8 @@ def test_jacobian():
     coeffs[:,:npairs] += np.eye(npairs)
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
-    jac = gem.jacobian(coeffs, one, two, gem.pspace)
-    print(jac)
+    jac = gem.nonlin_jac(coeffs, one, two, gem.pspace)
+    #print(jac)
     assert jac.shape == (len(gem.pspace), gem.npairs*gem.norbs)
 
 test_init()
