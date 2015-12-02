@@ -14,7 +14,7 @@ from horton.meanfield.observable import RDirectTerm, RExchangeTerm, RTwoIndexTer
 from horton.orbital_utils import transform_integrals
 
 
-def from_horton(fn=None, basis=None, nocc=None, guess=None):
+def from_horton(fn=None, basis=None, nocc=None, guess='apig'):
     """Computes Geminal-class-compatible information about a molecule's wavefunction from
     HORTON.
 
@@ -27,7 +27,7 @@ def from_horton(fn=None, basis=None, nocc=None, guess=None):
     nocc :
         The number of occupied orbitals.
     guess : str, optional
-        The type of guess for the coefficients to make.  One of `None` or 'ap1rog'.
+        The type of guess for the coefficients to make.  One of `apig` or 'ap1rog'.
 
     Returns
     -------
@@ -73,11 +73,11 @@ def from_horton(fn=None, basis=None, nocc=None, guess=None):
     one_mo, two_mo = transform_integrals(one, two, 'tensordot', orb)
 
     #RAp1rog only returns the 'A' block from the [I|A]-shaped coefficient matrix
-    if guess is 'ap1rog':
-        coeffs = cblock._array
-    elif guess is None:
+    if guess is 'apig':
         coeffs = np.eye(nocc, obasis.nbasis)
         coeffs[:,nocc:] += cblock._array
+    elif guess is 'ap1rog':
+        coeffs = cblock._array
     else:
         raise NotImplementedError
 
