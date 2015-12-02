@@ -6,14 +6,14 @@
 
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+from inspect import ismethod
 from copy import deepcopy as copy
 from itertools import combinations
 from newton import newton
-from scipy.optimize import root as quasinewton
-from geminal import APIG, AP1roG
-from horton_wrapper import *
-from random import shuffle
+from geminal import APIG, AP1roG, quasinewton, lstsq
 from slater_det import excite_pairs, excite_orbs
+from horton_wrapper import from_horton
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
@@ -402,12 +402,58 @@ def test_jacobian():
     npairs = 3
     norbs = 9
     gem = APIG(npairs, norbs)
-    coeffs = np.zeros((npairs, norbs))
+    coeffs = np.ones((npairs, norbs))
     coeffs[:,:npairs] += np.eye(npairs)
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
+    fun = gem.nonlin(coeffs, one, two, gem.pspace)
     jac = gem.nonlin_jac(coeffs, one, two, gem.pspace)
-    assert jac.shape == (gem.npairs*gem.norbs, gem.npairs*gem.norbs)
+    assert jac.shape == (fun.size, coeffs.size)
+    # Test that overlap gets restored as the proper instancemethod after nonlin_jac()
+    # is called
+    assert ismethod(gem.overlap)
+
+def test_APIG_quasinewton():
+    """
+    """
+    # Define user input
+    fn = 'test/h4.xyz'
+    basis = '3-21g'
+    nocc = 2
+    # Make geminal guess from HORTON's AP1roG module
+    ht_out = from_horton(fn=fn, basis=basis, nocc=nocc, guess='apig')
+    basis  = ht_out['basis']
+    core = ht_out['ham'][2]
+    one = ht_out['ham'][0]
+    two = ht_out['ham'][1]
+    energy_old = ht_out['energy']
+    coeffs_old = ht_out['coeffs'].ravel()
+    coeffs_old += 2*(0.01*np.random.rand(coeffs_old.size) - 0.005)
+    coeffs = copy(coeffs_old)
+    options = { 'options': { 'maxiter': 30,
+                             'disp': True,
+                             'xatol': 1.0e-12,
+                             'fatol': 1.0e-12,
+                           },
+                'jac' : True,
+                'method' : 'krylov',
+              }
+    # Optimize with quasinewton method
+    gem = APIG(nocc, basis.nbasis)
+    for i in range(3): # It's still not consistent... give it 3 chances
+        result_qn = gem(coeffs, one, two, solver=quasinewton, **options)
+        if result_qn['success']:
+            break
+    assert result_qn['success']
+    energy = gem.phi_H_psi(gem.ground, gem.coeffs, one, two) + core
+    olp = gem.overlap(gem.ground, gem.coeffs)
+    """
+    str0 = "GUESS\n{}\n{}\n".format(coeffs_old, energy_old)
+    str1 = "GEMINAL\n{}\n{}\n".format(gem.coeffs, energy)
+    str2 = "OVERLAP: {}".format(olp)
+    print(str0 + str1 + str2)
+    """
+
 
 test_init()
 test_setters_getters()
@@ -418,64 +464,7 @@ test_overlap()
 test_double_phi_H_psi()
 test_brute_phi_H_psi()
 test_jacobian()
-
-import sys
-sys.exit()
-
-# Define user input
-fn = 'test/h4.xyz'
-basis = 'sto-3g'
-nocc = 2
-maxiter = 100
-solver=newton
-#solver=lstsq
-
-options = { 'options': { 'maxiter':maxiter,
-                         'disp': True,
-                         'xatol': 1.0e-12,
-                         'fatol': 1.0e-12,
-                         #'line_search': 'wolfe',
-                         #'eps': 1.0e-12,
-                         #'factor': 0.1,
-                       },
-          }
-
-if solver is quasinewton:
-    options['method'] = 'krylov'
-
-# Make geminal, and guess, from HORTON's AP1roG module
-inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess=None)
-#inpt = from_horton(fn=fn, basis=basis, nocc=nocc, guess='ap1rog')
-basis  = inpt['basis']
-coeffs = inpt['coeffs']
-energy = inpt['energy']
-one = inpt['ham'][0]
-two = inpt['ham'][1]
-core = inpt['ham'][2]
-#guess = coeffs.ravel() #- 0.01*np.random.rand(nocc*basis.nbasis)
-#guess = 0.050*(2.0*(np.random.rand(nocc*basis.nbasis) - 1.0))
-#guess = np.eye(nocc, M=basis.nbasis)
-guess = np.ones(nocc*basis.nbasis)
-#guess[:,nocc:] = 0.02*(np.random.rand(nocc, basis.nbasis - nocc) - 1.0)
-#guess = guess.ravel()
-gem = APIG(nocc, basis.nbasis)
-#gem = AP1roG(nocc, basis.nbasis)
-backup = copy(guess)
-
-# Run the optimization
-print("**********energy**********")
-#print(gem.phi_H_psi(min(gem.pspace), coeffs, ham) + inpt['ham'][2])
-#print("Guess:\n{}".format(guess))
-
-result = gem(guess, *inpt['ham'][:2], solver=solver, options=options)
-
-print("GUESS")
-print(inpt['coeffs'])
-print(inpt['energy'])# + inpt['ham'][2])
-print("GEMINAL")
-print(gem.coeffs)
-print(gem.phi_H_psi(gem.ground, gem.coeffs, *inpt['ham'][0:2]) + inpt['ham'][2])
-print("OLP:\t{}".format(gem.overlap(gem.ground, gem.coeffs)))
+test_APIG_quasinewton()
 
 
 # vim: set textwidth=90 :
