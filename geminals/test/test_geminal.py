@@ -428,22 +428,18 @@ def test_APIG_quasinewton():
     two = ht_out['ham'][1]
     energy_old = ht_out['energy']
     coeffs_old = ht_out['coeffs'].ravel()
-    coeffs_old += 2*(0.01*np.random.rand(coeffs_old.size) - 0.005)
+    coeffs_old += 2*(0.001*np.random.rand(coeffs_old.size) - 0.0005)
     coeffs = copy(coeffs_old)
-    options = { 'options': { 'maxiter': 30,
-                             'disp': True,
-                             'xatol': 1.0e-12,
-                             'fatol': 1.0e-12,
+    options = { 'options': { 'maxfev': 250*coeffs.size,
+                             'xatol': 1.0e-9,
+                             'fatol': 1.0e-9,
                            },
                 'jac' : True,
-                'method' : 'krylov',
+                'method' : 'hybr',
               }
     # Optimize with quasinewton method
     gem = APIG(nocc, basis.nbasis)
-    for i in range(3): # It's still not consistent... give it 3 chances
-        result_qn = gem(coeffs, one, two, solver=quasinewton, **options)
-        if result_qn['success']:
-            break
+    result_qn = gem(coeffs, one, two, solver=quasinewton, **options)
     assert result_qn['success']
     energy = gem.phi_H_psi(gem.ground, gem.coeffs, one, two) + core
     olp = gem.overlap(gem.ground, gem.coeffs)
