@@ -4,8 +4,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-
-#def newton(fun, x0, jac=None, tol=1.0e-6, maxiter=1000, args=None):
 def newton(fun, x0, jac=None, args=None, **options):
     """
     Finds the roots of a non-linear set of equations using the Newton-Raphson method,
@@ -25,6 +23,16 @@ def newton(fun, x0, jac=None, args=None, **options):
     options : dict, optional
         Some Newton-solver specific options that have default values.
 
+    Options
+    -------
+    tol : float
+        If `fun` does not change by at least this much between iterations, then the system
+        is considered converged and this function returns successfully.
+    maxiter : int
+        The maximum number of iterations this function will try before giving up.
+    disp : bool
+        If True, the solver will print out its progress at every iteration.
+
     Returns
     -------
     result : dict
@@ -32,29 +40,39 @@ def newton(fun, x0, jac=None, args=None, **options):
 
     """
 
-    assert jac is not None, "The Jacobian must be specified for the Newton method."
+    assert jac, "The Jacobian must be specified for the Newton method."
 
     defaults = { 'tol': 1.0e-6,
                  'maxiter': 100,
+                 'disp': False,
                }
     defaults.update(options)
     tol = defaults['tol']
     maxiter = defaults['maxiter']
+    disp = defaults['disp']
+    if disp:
+        def display(it, fval, dt):
+            print("Iter: {},\t|F(x)| = {},\tChange: {}".format(it, abs(fval), dt))
+    else:
+        def display(*anything):
+            pass
     if args:
-        objective = lambda x0: fun(x0, *args)
-        jacobian = lambda x0: jac(x0, *args)
+        objective = lambda x: fun(x, *args)
+        jacobian = lambda x: jac(x, *args)
     else:
         objective = fun
         jacobian = jac
-
     success = True
     nit = maxiter
+    fx = jx = None
 
     for i in range(maxiter):
 
         # Get fun(x) first, so we can check convergence
         fx = objective(x0)
-        if np.sqrt(np.abs(fx.dot(fx))) < tol:
+        delta = np.sqrt(np.abs(fx.dot(fx)))
+        display(i, fx, delta)
+        if delta < tol:
             nit = i + 1
             break
 
@@ -62,8 +80,16 @@ def newton(fun, x0, jac=None, args=None, **options):
         jx = jacobian(x0)
 
         # x_new = x_old - inv(J(x))*F(x)
-        # J(x)*(x_new - x_old) = -F(x) ==> of the form Ax = b
-        x0 += np.linalg.solve(jx,-fx)
+        # J(x)*(x_old - x_new) = F(x) ==> of the form Ax = b
+        try:
+            x0 -= np.linalg.solve(jx,fx)
+        except np.linalg.linalg.LinAlgError:
+            # Jacobian went singular (this happens for some functions around the
+            # solution...); use the pseudoinverse from SVD instead
+            u, jxinv, v = np.linalg.svd(jx)
+            jxinv **= -1
+            jxinv = u.dot(jxinv.dot(v))
+            x0 -= jxinv.dot(fx)
 
     # If for loop finishes, we did not converge
     else:
