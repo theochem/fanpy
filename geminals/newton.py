@@ -25,8 +25,11 @@ def newton(fun, x0, jac=None, args=None, **options):
 
     Options
     -------
-    tol : float
+    ftol : float
         If `fun` does not change by at least this much between iterations, then the system
+        is considered converged and this function returns successfully.
+    xtol : float
+        If `x0` does not change by at least this much between iterations, then the system
         is considered converged and this function returns successfully.
     maxiter : int
         The maximum number of iterations this function will try before giving up.
@@ -42,17 +45,20 @@ def newton(fun, x0, jac=None, args=None, **options):
 
     assert jac, "The Jacobian must be specified for the Newton method."
 
-    defaults = { 'tol': 1.0e-6,
+    defaults = { 'ftol': 1.0e-6,
+                 'xtol': 1.0e-6,
                  'maxiter': 100,
                  'disp': False,
                }
     defaults.update(options)
-    tol = defaults['tol']
+    ftol = defaults['ftol']
+    xtol = defaults['xtol']
     maxiter = defaults['maxiter']
     disp = defaults['disp']
     if disp:
-        def display(it, fval, dt):
-            print("Iter: {},\t|F(x)| = {},\tChange: {}".format(it, abs(fval), dt))
+        def display(it, fval, df, dx):
+            print("Iter: {},\t|F(x)| = {},\tF change: {},\tx change: {}" \
+                .format(it, abs(fval), df, dx))
     else:
         def display(*anything):
             pass
@@ -64,15 +70,17 @@ def newton(fun, x0, jac=None, args=None, **options):
         jacobian = jac
     success = True
     nit = maxiter
-    fx = jx = None
+    fx = jx = deltaf = deltax = None
+    deltaxvec = np.ones(x0.size)
 
     for i in range(maxiter):
 
         # Get fun(x) first, so we can check convergence
         fx = objective(x0)
-        delta = np.sqrt(np.abs(fx.dot(fx)))
-        display(i, fx, delta)
-        if delta < tol:
+        deltax = np.sqrt(np.abs(deltaxvec.dot(deltaxvec)))
+        deltaf = np.sqrt(np.abs(fx.dot(fx)))
+        display(i, fx, deltaf, deltax)
+        if (deltaf < ftol) or (deltax < xtol):
             nit = i + 1
             break
 
@@ -82,14 +90,15 @@ def newton(fun, x0, jac=None, args=None, **options):
         # x_new = x_old - inv(J(x))*F(x)
         # J(x)*(x_old - x_new) = F(x) ==> of the form Ax = b
         try:
-            x0 -= np.linalg.solve(jx,fx)
+            deltaxvec = np.linalg.solve(jx,fx)
         except np.linalg.linalg.LinAlgError:
             # Jacobian went singular (this happens for some functions around the
             # solution...); use the pseudoinverse from SVD instead
             u, jxinv, v = np.linalg.svd(jx)
             jxinv **= -1
             jxinv = u.dot(jxinv.dot(v))
-            x0 -= jxinv.dot(fx)
+            deltaxvec = jxinv.dot(fx)
+        x0 -= deltaxvec
 
     # If for loop finishes, we did not converge
     else:
