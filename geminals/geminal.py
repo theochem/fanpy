@@ -84,22 +84,23 @@ class APIG(object):
                      'options': None,
                    }
         defaults.update(kwargs)
-        jac = defaults['jac']
-        proj = defaults['proj']
-        solver = defaults['solver']
-        options = defaults['options']
 
         # Check options
-        if not options:
-            options = {}
+        jac = None
+        if defaults['jac']:
+            jac = self.nonlin_jac
+        proj = defaults['proj']
         if not proj:
             proj = self.pspace
+        solveropts = defaults['options']
+        if not solveropts:
+            solveropts = {}
 
         # Solve for geminal coefficients
+        solver = defaults['solver']
         if solver is lstsq:
             # Doing the least-squares method
             objective = self.lstsq
-            options['tol'] = 1.0e-9
         else:
             # Doing the nonlinear-system method, so check for over/under-determination
             objective = self.nonlin
@@ -109,11 +110,11 @@ class APIG(object):
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
             # Using Newton's method; 
-            if solver is newton:
-                jac = self.nonlin_jac
+            #if defaults['jac'] or (solver is newton):
+                #defaults['jac'] = self.nonlin_jac
 
         # Run the solver (includes intemediate normalization)
-        result = solver(objective, x0, jac=jac, args=(one, two, proj), **options)
+        result = solver(objective, x0, jac=jac, args=(one, two, proj), options=solveropts)
 
         # Update the optimized coefficients
         self.coeffs = result['x']
@@ -255,7 +256,7 @@ class APIG(object):
             # Check that there are no orbitals are used that are outside of the
             # specified number (norbs)
             index_last_spin = len(bin_string)-1-bin_string.index('1')
-            index_last_spatial = (index_last_spin)//2
+            index_last_spatial = index_last_spin//2
             assert index_last_spatial < self.norbs,\
             ('Given Slater determinant contains orbitals whose indices exceed the '
              'given number of spatial orbitals')
@@ -355,8 +356,8 @@ class APIG(object):
         assert len(list_sd) == len(set(list_sd)),\
             ('Woops, something went wrong. Same Slater determinant was generated '
              'more than once')
-        assert len(list_sd) >= num_needed,\
-            ('Could not generate enough Slater determinants')
+        assert len(list_sd) >= num_needed, \
+            'Could not generate enough Slater determinants'
         # Truncate and return
         return tuple(list_sd[:num_needed])
 
@@ -743,12 +744,13 @@ class APIG(object):
                 def olp_der(sd, gc, overwrite=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=overwrite)
                 self.overlap = olp_der
+                jac[0, count] = self.overlap(self.ground, C)
 
                 # Compute the differentiated parts and construct the whole Jacobian
-                for d in range(x0.size):
-                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
-                                   + energy*self.overlap(proj[d], C) \
-                                   - self.phi_H_psi(proj[d], C, one, two)
+                for d in range(x0.size - 1):
+                    jac[d + 1,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
+                                     + energy*self.overlap(proj[d], C) \
+                                     - self.phi_H_psi(proj[d], C, one, two)
                 count += 1
 
         # Replace the original `overlap` method and return the Jacobian
@@ -877,7 +879,7 @@ class AP1roG(APIG):
             vec.append(tmp**2)
             if len(vec) == x0.size:
                 break
-        return vec
+        return np.array(vec)
 
 
 # vim: set textwidth=90 :
