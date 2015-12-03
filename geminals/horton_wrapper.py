@@ -13,7 +13,6 @@ from horton.meanfield import guess_core_hamiltonian, PlainSCFSolver, REffHam
 from horton.meanfield.observable import RDirectTerm, RExchangeTerm, RTwoIndexTerm
 from horton.orbital_utils import transform_integrals
 
-
 def from_horton(fn=None, basis=None, nocc=None, guess='apig'):
     """Computes Geminal-class-compatible information about a molecule's wavefunction from
     HORTON.
@@ -88,6 +87,5 @@ def from_horton(fn=None, basis=None, nocc=None, guess='apig'):
              'energy': energy,
              'coeffs': coeffs,
            }
-
 
 # vim: set textwidth=90 :

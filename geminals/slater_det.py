@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 """ Module for containing Slater determinant related things.
 
 It may be useful to create a Slaterdeterminant class that contains these binary
@@ -33,6 +35,7 @@ def remove_orbs(bin_sd, *indices):
             return None
     return bin_sd
 
+
 def add_orbs(bin_sd, *indices):
     """ Adds orbitals to Slater determinant specifies by indices
 
@@ -59,6 +62,7 @@ def add_orbs(bin_sd, *indices):
         else:
             bin_sd |= 1 << vir_index
     return bin_sd
+
 
 def excite_orbs(bin_sd, *indices):
     """ Excites orbitals in Slater determinant
@@ -136,6 +140,7 @@ def remove_pairs(bin_sd, *indices):
         bin_sd = remove_orbs(bin_sd, alpha_index, beta_index)
     return bin_sd
 
+
 def add_pairs(bin_sd, *indices):
     """ Adds alpha and beta orbitals from Slater determinent specified by indices
 
@@ -174,6 +179,7 @@ def add_pairs(bin_sd, *indices):
         beta_index = spatial_index*2 + 1
         bin_sd = add_orbs(bin_sd, alpha_index, beta_index)
     return bin_sd
+
 
 def excite_pairs(bin_sd, *indices):
     """ Excites the alpha beta pairs of a Slater determinant
@@ -227,6 +233,7 @@ def excite_pairs(bin_sd, *indices):
     bin_sd = add_pairs(bin_sd, *indices[halfway:])
     return bin_sd
 
+
 def is_occupied(bin_sd, orb_index):
     """ Checks if orbital is used in the slater determinant
 
@@ -250,6 +257,7 @@ def is_occupied(bin_sd, orb_index):
         return None
     else:
         return bool(bin_sd & (1 << orb_index))
+
 
 def is_pair_occupied(bin_sd, orb_index):
     """ Checks if both alpha and beta orbital pair is used in the slater determinant
@@ -282,3 +290,5 @@ def is_pair_occupied(bin_sd, orb_index):
     break
     """
     return is_occupied(bin_sd, 2*orb_index) and is_occupied(bin_sd, 2*orb_index+1)
+
+# vim: set textwidth=90 :

@@ -2,9 +2,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from newton import newton
 import numpy as np
 import numpy.testing as npt
+from test.common import run_tests
+from newton import newton
 from scipy.optimize import rosen, rosen_der
 
 def test_wellbehaved_system():
@@ -37,8 +38,10 @@ def test_additional_arguments():
     r_newton = newton(fun, guess, jac=jac, args=(True, 1, {'a':'b'}))
     npt.assert_allclose(r_newton['x'], answer, atol=0.001, rtol=0)
 
-test_wellbehaved_system()
-test_additional_arguments()
+tests = [ test_wellbehaved_system,
+          test_additional_arguments,
+        ]
 
+run_tests(tests)
 
 # vim: set textwidth=90 :

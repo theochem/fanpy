@@ -6,7 +6,6 @@ import numpy as np
 from copy import deepcopy as copy
 from scipy.optimize import minimize_scalar
 
-
 class JacobiOptimizer(object):
     """Jacobi-like optimizer of a function of a vector (or one-index array).
 
@@ -37,7 +36,6 @@ class JacobiOptimizer(object):
 
     # Define constants
     twopi = 2*np.pi
-
 
     def __init__(self, matrix='nonorthogonal', searcher=minimize_scalar):
         """Initializes the JacobiOptimizer instance.
@@ -180,6 +178,5 @@ class JacobiOptimizer(object):
                       }
 
         return self.result
-
 
 # vim: set textwidth=90 :

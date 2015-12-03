@@ -1,6 +1,6 @@
-""" Tests for slater_det.py
-"""
+#!/usr/bin/env python2
 
+from test.common import run_tests
 from slater_det import remove_orbs, add_orbs, excite_orbs, is_occupied
 from slater_det import remove_pairs, add_pairs, excite_pairs, is_pair_occupied
 
@@ -159,9 +159,15 @@ def test_is_pair_occupied():
     assert not is_pair_occupied(0b11111100, 0)
     assert not is_pair_occupied(0b11111100, 4)
     assert not is_pair_occupied(0b11111100, 9)
-test_remove_orbs()
-test_add_orbs()
-test_excite_orbs()
-test_remove_pairs()
-test_add_pairs()
-test_excite_pairs()
+
+tests = [ test_remove_orbs,
+          test_add_orbs,
+          test_excite_orbs,
+          test_remove_pairs,
+          test_add_pairs,
+          test_excite_pairs,
+        ]
+
+run_tests(tests)
+
+# vim: set textwidth=90 :

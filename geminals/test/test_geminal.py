@@ -6,15 +6,14 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import numpy.testing as npt
-from inspect import ismethod
 from test.common import slow, run_tests, deriv_check
+from inspect import ismethod
 from copy import deepcopy as copy
 from itertools import combinations
 from newton import newton
 from geminal import APIG, AP1roG, quasinewton, lstsq
 from slater_det import excite_pairs, excite_orbs
 from horton_wrapper import from_horton
-
 
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
@@ -241,7 +240,6 @@ def test_permanent_derivative():
     assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(2,3)) == 1
     assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(3,2)) == 0
 
-
 def test_overlap():
     """ Tests APIG.overlap
     """
@@ -455,7 +453,7 @@ def test_AP1roG_jacobian_finite_difference():
     two = ht_out['ham'][1]
     fun = lambda x : gem.nonlin(x, one, two, gem.pspace)
     jac = lambda x : gem.nonlin_jac(x, one, two, gem.pspace)
-    deriv_check(fun, jac, x0, verbose=True)
+    deriv_check(fun, jac, x0)
 
 @slow
 def test_APIG_quasinewton():
@@ -553,8 +551,7 @@ tests = [ test_init,
           test_APIG_quasinewton,
           test_AP1roG_quasinewton,
         ]
-# Parse the cmd line flags and run fast and/or `@slow`-marked tests
-run_tests(tests)
 
+run_tests(tests)
 
 # vim: set textwidth=90 :

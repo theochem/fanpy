@@ -112,5 +112,4 @@ def newton(fun, x0, jac=None, args=None, **options):
              'nit': nit,
            }
 
-
 # vim: set textwidth=90 :

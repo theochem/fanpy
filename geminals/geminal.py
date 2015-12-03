@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 import numpy as np
 from math import factorial
 from itertools import combinations, permutations
@@ -55,6 +56,7 @@ class APIG(object):
             The 1's in the odd positions describe beta orbitals
             By default, a projection space is generated using generate_pspace
         """
+
         assert isinstance(npairs, int)
         assert isinstance(norbs, int)
 
@@ -109,9 +111,6 @@ class APIG(object):
                 print("Using the first {} determinants in 'proj'.".format(len(x0)))
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
-            # Using Newton's method;
-            #if defaults['jac'] or (solver is newton):
-                #defaults['jac'] = self.nonlin_jac
 
         # Run the solver (includes intemediate normalization)
         result = solver(objective, x0, jac=jac, args=(one, two, proj), options=solveropts)
@@ -388,6 +387,7 @@ class APIG(object):
             permanent += np.product(matrix[row_indices, col_indices])
         return permanent
 
+
     @staticmethod
     def permanent_derivative(matrix, i, j):
         """ Calculates the partial derivative of a permanent with respect to one of its
@@ -436,6 +436,7 @@ class APIG(object):
             right += 1
         return prod_l + prod_r
 
+
     def overlap(self, slater_det, gem_coeff, derivative=False, indices=None):
         """ Calculate the overlap between a slater determinant and geminal wavefunction
 
@@ -482,6 +483,7 @@ class APIG(object):
             # the permanent
             return self.permanent(gem_coeff[:, ind_occ])
 
+
     def phi_H_psi(self, slater_det, gem_coeff, one, two):
         """ Integrates the Slater determinant with a Geminal wavefunction
 
@@ -515,6 +517,7 @@ class APIG(object):
             return self.double_phi_H_psi(slater_det, gem_coeff, one, two)
         else:
             return self.brute_phi_H_psi(slater_det, gem_coeff, one, two)
+
 
     def double_phi_H_psi(self, slater_det, gem_coeff, one, two):
         """ Integrates the Slater determinant with a Geminal wavefunction
@@ -592,6 +595,7 @@ class APIG(object):
                         excitation = excite_pairs(slater_det, i, a)
                         t2 += two[i, i, a, a]*self.overlap(excitation, gem_coeff)
         return (t0 + t1)*self.overlap(slater_det, gem_coeff) + t2
+
 
     def brute_phi_H_psi(self, slater_det, gem_coeff, one, two):
         """ Integrates the Slater determinant with a Geminal wavefunction
@@ -781,12 +785,6 @@ class APIG(object):
 
 class AP1roG(APIG):
 
-    def construct_guess(self, x0):
-        C = np.eye(self.npairs, M=self.norbs)
-        C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
-        return C
-
-
     @property
     def coeffs(self):
         return self._coeffs
@@ -872,6 +870,12 @@ class AP1roG(APIG):
                 raise Exception(str(excite_count))
 
 
+    def construct_guess(self, x0):
+        C = np.eye(self.npairs, M=self.norbs)
+        C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
+        return C
+
+
     def nonlin(self, x0, one, two, proj):
         """See APIG.nonlin().
         """
@@ -928,6 +932,5 @@ class AP1roG(APIG):
         # Replace the original `overlap` method and return the Jacobian
         self.overlap = tmp_olp
         return jac
-
 
 # vim: set textwidth=90 :
