@@ -2,12 +2,11 @@
 
 """
 
-#!/usr/bin/env python2
-
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from inspect import ismethod
+from test.common import slow, run_tests, deriv_check
 from copy import deepcopy as copy
 from itertools import combinations
 from newton import newton
@@ -396,7 +395,6 @@ def test_brute_phi_H_psi():
     '''
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
 
-from horton.test.common import check_delta
 def test_jacobian():
     """ Tests, APIG.jacobian()
     Ideally, this whole module should be *optionally* dependent on HORTON.  I just pulled
@@ -417,18 +415,21 @@ def test_jacobian():
     # Test that overlap gets restored as the proper instancemethod after nonlin_jac()
     # is called
     assert ismethod(gem.overlap)
+
+@slow
+def test_jacobian_finite_difference():
     # Test that the analytical nonlin_jac() matches a finite-difference approximation of
     # the Jacobian of nonlin()
-    ht_out = from_horton(fn='test/li2.xyz', basis='sto-3g', nocc=2, guess='apig')
+    ht_out = from_horton(fn='test/h4.xyz', basis='sto-3g', nocc=2, guess='apig')
     gem = APIG(2, ht_out['basis'].nbasis)
     x0 = ht_out['coeffs'].ravel()
     one = ht_out['ham'][0]
     two = ht_out['ham'][1]
     fun = lambda x : gem.nonlin(x, one, two, gem.pspace)
     jac = lambda x : gem.nonlin_jac(x, one, two, gem.pspace)
-    dxs = [ 2.0e-21*i for i in range(-21,21,2) ]
-    check_delta(fun, jac, x0, dxs)
+    deriv_check(fun, jac, x0)
 
+@slow
 def test_APIG_quasinewton():
     """
     """
@@ -443,12 +444,12 @@ def test_APIG_quasinewton():
     one = ht_out['ham'][0]
     two = ht_out['ham'][1]
     energy_old = ht_out['energy']
-    coeffs_old = ht_out['coeffs'].ravel()
-    coeffs_old += 2*(0.001*np.random.rand(coeffs_old.size) - 0.0005)
+    coeffs_old = ht_out['coeffs']
+    coeffs_old[:,:nocc] -= np.eye(nocc)*0.05
     coeffs = copy(coeffs_old)
     options = { 'options': { 'maxfev': 250*coeffs.size,
-                             'xatol': 1.0e-9,
-                             'fatol': 1.0e-9,
+                             'xatol': 1.0e-12,
+                             'fatol': 1.0e-12,
                            },
                 'jac' : True,
                 'method' : 'hybr',
@@ -466,17 +467,20 @@ def test_APIG_quasinewton():
     print(str0 + str1 + str2)
     """
 
-
-test_init()
-test_setters_getters()
-test_generate_pspace()
-test_permanent()
-test_permanent_derivative()
-test_overlap()
-test_double_phi_H_psi()
-test_brute_phi_H_psi()
-test_jacobian()
-test_APIG_quasinewton()
+tests = [ test_init,
+          test_setters_getters,
+          test_generate_pspace,
+          test_permanent,
+          test_permanent_derivative,
+          test_overlap,
+          test_double_phi_H_psi,
+          test_brute_phi_H_psi,
+          test_jacobian,
+          test_jacobian_finite_difference,
+          test_APIG_quasinewton,
+        ]
+# Parse the cmd line flags and run fast and/or `@slow`-marked tests
+run_tests(tests)
 
 
 # vim: set textwidth=90 :
