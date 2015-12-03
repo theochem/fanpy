@@ -720,7 +720,7 @@ class APIG(object):
         # (J)_dij = d(F_d)/d(c_ij)
         jac = np.zeros((x0.size, x0.size))
         phi_psi_tmp = np.zeros(x0.size)
-        C = x0.reshape(self.npairs, self.norbs)
+        C = self.construct_guess(x0)
 
         # The objective functions {F_d} are of this form:
         # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
@@ -842,7 +842,7 @@ class AP1roG(APIG):
 
             if excite_count == 0:
                 if derivative:
-                    if (indices[1] < self.npairs) and (indices[0] == indices[1]):
+                    if indices[0] == indices[1]:
                         return 1
                     return 0
                 return 1
@@ -859,9 +859,9 @@ class AP1roG(APIG):
                     elif indices == (from_index[1], to_index[1]):
                         return matrix[from_index[0], to_index[0]]
                     elif indices == (from_index[0], to_index[1]):
-                        return matrix[from_index[1], to_index[0]]
+                        return -matrix[from_index[1], to_index[0]]
                     elif indices == (from_index[1], to_index[0]):
-                        return matrix[from_index[0], to_index[1]]
+                        return -matrix[from_index[0], to_index[1]]
                     return 0
                 overlap = matrix[from_index[0], to_index[0]] * \
                           matrix[from_index[1], to_index[1]]
@@ -880,7 +880,7 @@ class AP1roG(APIG):
         for phi in proj:
             tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C)
             tmp -= self.phi_H_psi(phi, C, one, two)
-            vec.append(tmp**2)
+            vec.append(tmp)
             if len(vec) == x0.size:
                 break
         return np.array(vec)
@@ -893,7 +893,7 @@ class AP1roG(APIG):
         # (J)_dij = d(F_d)/d(c_ij)
         jac = np.zeros((x0.size, x0.size))
         phi_psi_tmp = np.zeros(x0.size)
-        C = x0.reshape(self.npairs, self.norbs - self.npairs)
+        C = self.construct_guess(x0)
 
         # The objective functions {F_d} are of this form:
         # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
@@ -912,7 +912,7 @@ class AP1roG(APIG):
 
         # Overwrite `overlap` to take the correct partial derivative
         for i in range(self.npairs):
-            for j in range(self.norbs):
+            for j in range(self.npairs, self.norbs):
                 coords = (i, j)
                 def olp_der(sd, gc, overwrite=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=overwrite)
@@ -927,9 +927,7 @@ class AP1roG(APIG):
 
         # Replace the original `overlap` method and return the Jacobian
         self.overlap = tmp_olp
-        # Finite difference verification tells me that my Jacobian is exactly double the
-        # size it should be.  This is a mystery that must be solved...
-        return jac/2.0
+        return jac
 
 
 # vim: set textwidth=90 :
