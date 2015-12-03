@@ -109,7 +109,7 @@ class APIG(object):
                 print("Using the first {} determinants in 'proj'.".format(len(x0)))
             elif len(proj) < len(x0):
                 raise ValueError("'proj' is too short, the system is underdetermined.")
-            # Using Newton's method; 
+            # Using Newton's method;
             #if defaults['jac'] or (solver is newton):
                 #defaults['jac'] = self.nonlin_jac
 
@@ -755,7 +755,9 @@ class APIG(object):
 
         # Replace the original `overlap` method and return the Jacobian
         self.overlap = tmp_olp
-        return jac
+        # Finite difference verification tells me that my Jacobian is exactly double the
+        # size it should be.  This is a mystery that must be solved...
+        return jac/2.0
 
 
     def lstsq(self, x0, one, two, proj):
@@ -871,6 +873,8 @@ class AP1roG(APIG):
 
 
     def nonlin(self, x0, one, two, proj):
+        """See APIG.nonlin().
+        """
         C = self.construct_guess(x0)
         vec = []
         for phi in proj:
@@ -880,6 +884,52 @@ class AP1roG(APIG):
             if len(vec) == x0.size:
                 break
         return np.array(vec)
+
+
+    def nonlin_jac(self, x0, one, two, proj):
+        """See APIG.nonlin_jac().
+        """
+        # Initialize Jacobian tensor and some temporary values
+        # (J)_dij = d(F_d)/d(c_ij)
+        jac = np.zeros((x0.size, x0.size))
+        phi_psi_tmp = np.zeros(x0.size)
+        C = x0.reshape(self.npairs, self.norbs - self.npairs)
+
+        # The objective functions {F_d} are of this form:
+        # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
+        #           + <phi0|H|psi>*(d<phi'|psi>/dc_ij) - d<phi'|H|psi>/dc_ij
+
+        # Compute the undifferentiated parts
+        energy = self.phi_H_psi(self.ground, C, one, two)
+        for d in range(x0.size):
+            phi_psi_tmp[d] = self.overlap(proj[d], C)
+
+        # Compute the differentiated parts; this works by overwriting the geminal's
+        # `overlap` method to be the method that describes its PrSchEq's partial
+        # derivative wrt coefficient c_ij; we must back up the original method
+        tmp_olp = self.overlap
+        count = 0
+
+        # Overwrite `overlap` to take the correct partial derivative
+        for i in range(self.npairs):
+            for j in range(self.norbs):
+                coords = (i, j)
+                def olp_der(sd, gc, overwrite=coords):
+                    return tmp_olp(sd, gc, derivative=True, indices=overwrite)
+                self.overlap = olp_der
+
+                # Compute the differentiated parts and construct the whole Jacobian
+                for d in range(x0.size):
+                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
+                                     + energy*self.overlap(proj[d], C) \
+                                     - self.phi_H_psi(proj[d], C, one, two)
+                count += 1
+
+        # Replace the original `overlap` method and return the Jacobian
+        self.overlap = tmp_olp
+        # Finite difference verification tells me that my Jacobian is exactly double the
+        # size it should be.  This is a mystery that must be solved...
+        return jac/2.0
 
 
 # vim: set textwidth=90 :
