@@ -15,6 +15,7 @@ from geminal import APIG, AP1roG, quasinewton, lstsq
 from slater_det import excite_pairs, excite_orbs
 from horton_wrapper import from_horton
 
+
 def check_if_exception_raised(func, exception):
     """ Passes if given exception is raised
 
@@ -395,8 +396,12 @@ def test_brute_phi_H_psi():
     '''
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
 
+from horton.test.common import check_delta
 def test_jacobian():
     """ Tests, APIG.jacobian()
+    Ideally, this whole module should be *optionally* dependent on HORTON.  I just pulled
+    in horton.test.common to write this test easily.  This needs to be replaced by
+    something sci/numpy-ish or something in-house.
     """
     # Test that it works
     npairs = 3
@@ -412,6 +417,17 @@ def test_jacobian():
     # Test that overlap gets restored as the proper instancemethod after nonlin_jac()
     # is called
     assert ismethod(gem.overlap)
+    # Test that the analytical nonlin_jac() matches a finite-difference approximation of
+    # the Jacobian of nonlin()
+    ht_out = from_horton(fn='test/li2.xyz', basis='sto-3g', nocc=2, guess='apig')
+    gem = APIG(2, ht_out['basis'].nbasis)
+    x0 = ht_out['coeffs'].ravel()
+    one = ht_out['ham'][0]
+    two = ht_out['ham'][1]
+    fun = lambda x : gem.nonlin(x, one, two, gem.pspace)
+    jac = lambda x : gem.nonlin_jac(x, one, two, gem.pspace)
+    dxs = [ 2.0e-21*i for i in range(-21,21,2) ]
+    check_delta(fun, jac, x0, dxs)
 
 def test_APIG_quasinewton():
     """

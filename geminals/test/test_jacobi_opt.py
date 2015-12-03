@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from JacobiOpt import *
+from jacobi_opt import *
 import numpy.testing as npt
 from scipy.optimize import rosen
 
