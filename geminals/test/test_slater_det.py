@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
 
-from test.common import run_tests
+from test.common import *
 from slater_det import remove_orbs, add_orbs, excite_orbs, is_occupied
 from slater_det import remove_pairs, add_pairs, excite_pairs, is_pair_occupied
 
+@test
 def test_remove_orbs():
     """ Test remove_orbs function
     """
@@ -26,6 +27,7 @@ def test_remove_orbs():
     n = 9999999
     assert remove_orbs(0b1 | 1 << n, n) == 0b1
 
+@test
 def test_add_orbs():
     """ Test add_orbs function
     """
@@ -50,6 +52,7 @@ def test_add_orbs():
     n = 9999999
     assert add_orbs(0b1, n) == 0b1 | 1 << n
 
+@test
 def test_excite_orbs():
     """ Test excite_orbs function
     """
@@ -69,6 +72,7 @@ def test_excite_orbs():
     assert excite_orbs(0b111100, 0, 0) is None
     assert excite_orbs(0b111100, 3, 3, 3, 3) is None
 
+@test
 def test_remove_pairs():
     """ Test remove_pairs function
     """
@@ -91,6 +95,7 @@ def test_remove_pairs():
     n = 999999
     assert remove_pairs(0b1 | 0b11 << n*2, n) == 0b1
 
+@test
 def test_add_pairs():
     """ Test add_pairs function
     """
@@ -116,6 +121,7 @@ def test_add_pairs():
     n = 9999999
     assert add_pairs(0b1, n) == 0b1 | 0b11 << n*2
 
+@test
 def test_excite_pairs():
     """ Test excite_pairs function
     """
@@ -139,6 +145,7 @@ def test_excite_pairs():
     assert excite_pairs(0b111100, 0, 0) is None
     assert excite_pairs(0b111100, 1, 1, 1, 1) is None
 
+@test
 def test_is_occupied():
     """ Test is_occupied function
     """
@@ -149,6 +156,7 @@ def test_is_occupied():
     assert not is_occupied(0b100100, 6)
     assert not is_occupied(0b100100, 0)
 
+@test
 def test_is_pair_occupied():
     """ Test is_pair_occupied function
     """
@@ -160,14 +168,6 @@ def test_is_pair_occupied():
     assert not is_pair_occupied(0b11111100, 4)
     assert not is_pair_occupied(0b11111100, 9)
 
-tests = [ test_remove_orbs,
-          test_add_orbs,
-          test_excite_orbs,
-          test_remove_pairs,
-          test_add_pairs,
-          test_excite_pairs,
-        ]
-
-run_tests(tests)
+run_tests()
 
 # vim: set textwidth=90 :

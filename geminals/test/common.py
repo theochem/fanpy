@@ -5,41 +5,83 @@ from __future__ import absolute_import, division, print_function
 import sys
 import numpy as np
 
+#
+# Utilities for running tests
+#
 
-def slow(obj):
-    """Decorator to mark a calleable with the 'SLOWTEST' attribute.
+_common_tests = []
+
+def _test_decorator(obj, slow=False):
+    """Decorator to add a function to the test suite and, optionally, to mark it as a slow
+    test.
     """
-    def slow_wrapper(*args, **kwargs):
+    def test_wrapper(*args, **kwargs):
         return obj(*args, **kwargs)
-    setattr(slow_wrapper, 'SLOWTEST', True)
-    return slow_wrapper
+    if slow:
+        setattr(test_wrapper, '_slowtest', True)
+    _common_tests.append(test_wrapper)
+    return test_wrapper
 
+test = lambda obj : _test_decorator(obj, slow=False)
+slow = lambda obj : _test_decorator(obj, slow=True)
+fast = test
 
-def _parse_slow_opts(args=sys.argv):
+def _parse_test_opts():
     opts = {'fast': True, 'slow': False}
-    if '--slow' in args or '-s' in args:
+    if '--slow' in sys.argv or '-s' in sys.argv:
         opts['fast'] = False
         opts['slow'] = True
-    if '--all' in args or '-a' in args:
+    elif '--all' in sys.argv or '-a' in sys.argv:
         opts['slow'] = True
+    elif len(sys.argv) > 1:
+        print("\nUsage: {} (--slow/-s | --all/-a).\n".format(sys.argv[0]))
+        sys.exit(1)
     return opts
 
-
-def run_tests(tests):
+def run_tests():
     """Run fast and/or slow tests depending on whether or not they have the 'SLOWTEST'
     attribute.
     """
-    opts = _parse_slow_opts()
+    opts = _parse_test_opts()
     fast = opts['fast']
     slow = opts['slow']
-    for test in tests:
+    for test in _common_tests:
         try:
-            run = getattr(test, 'SLOWTEST') and slow
+            run = getattr(test, '_slowtest') and slow
         except AttributeError:
             run = fast
         finally:
             if run:
                 test()
+
+#
+# Testing functions
+#
+
+def check_if_exception_raised(func, exception):
+    """ Passes if given exception is raised
+
+    Parameter
+    ---------
+    func : function object
+        Function that contains the desired test code
+    exception : Exception
+        Exception that is raised
+
+    Returns
+    -------
+    bool
+        True if Exception is raised
+        False if Exception is not raised
+    """
+    try:
+        func()
+    except exception:
+        return True
+    except:
+        return False
+    else:
+        return False
 
 # Stolen from Toon's romin (https://github.com/QuantumElephant/romin)
 def deriv_error(f, g, x, eps_x=1e-4, order=8):
@@ -86,7 +128,6 @@ def deriv_error(f, g, x, eps_x=1e-4, order=8):
     delta_approx = np.tensordot(weights, derivs, axes=1)*eps_x
     # Done
     return delta, delta_approx
-
 
 # Stolen from Toon's romin (https://github.com/QuantumElephant/romin)
 def deriv_error_array(f, g, x, eps_x=1e-4, order=8, nrep=None):
@@ -140,7 +181,6 @@ def deriv_error_array(f, g, x, eps_x=1e-4, order=8, nrep=None):
         # Collect results
         results.append(deriv_error(f_scan, g_scan, 0.0, eps_x, order))
     return results
-
 
 # Stolen from Toon's romin (https://github.com/QuantumElephant/romin)
 def deriv_check(f, g, xs, eps_x=1e-4, order=8, nrep=None, rel_ftol=1e-3, discard=0.1,
@@ -209,7 +249,6 @@ def deriv_check(f, g, xs, eps_x=1e-4, order=8, nrep=None, rel_ftol=1e-3, discard
     # final test
     assert np.all(abs(deltas - deltas_approx) <= rel_ftol*abs(deltas))
 
-
 # Stolen from Toon's romin (https://github.com/QuantumElephant/romin)
 # Gauss-Legendre quadrature grids (points and weights) for different orders.
 gauss_legendre = {
@@ -238,6 +277,5 @@ gauss_legendre = {
                    1.246289712555339e-01, 9.515851168249277e-02, 6.225352393864789e-02,
                    2.715245941175409e-02])),
 }
-
 
 # vim: set textwidth=90 :

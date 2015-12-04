@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy.testing as npt
-from test.common import slow, run_tests
+from test.common import *
 from jacobi_opt import *
 from scipy.optimize import rosen
 
@@ -16,9 +16,6 @@ def test_simple_nonorthogonal_jacobi():
     r_rosen = JacobiOptimizer()(guess, rosen)
     npt.assert_allclose(guess, answer, atol=tol, rtol=0)
 
-tests = [ test_simple_nonorthogonsl_jacobi,
-        ]
-
-run_tests(tests)
+run_tests()
 
 # vim: set textwidth=90 :
