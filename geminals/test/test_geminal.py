@@ -417,7 +417,7 @@ def test_AP1roG_jacobian():
     npairs = 3
     norbs = 9
     gem = AP1roG(npairs, norbs)
-    coeffs = np.ones((npairs, norbs - npairs))
+    coeffs = np.random.rand(npairs*(norbs - npairs)).reshape(npairs, norbs - npairs)
     one = np.ones((norbs, norbs))
     two = np.ones((norbs, norbs, norbs, norbs))
     fun = gem.nonlin(coeffs, one, two, gem.pspace)
@@ -437,8 +437,9 @@ def test_AP1roG_jacobian_finite_difference():
     x0 = ht_out['coeffs'].ravel()
     one = ht_out['ham'][0]
     two = ht_out['ham'][1]
-    fun = lambda x : gem.nonlin(x, one, two, gem.pspace)
-    jac = lambda x : gem.nonlin_jac(x, one, two, gem.pspace)
+    proj = [ i for i in gem.pspace if i is not gem.ground ]
+    fun = lambda x : gem.nonlin(x, one, two, proj)
+    jac = lambda x : gem.nonlin_jac(x, one, two, proj)
     # The crazy conditions on this are because the derivative checker sucks at this
     # particular Jacobian... who knows why?
     deriv_check(fun, jac, x0, verbose=True, order=16, eps_x=1.0e-6, discard=0.90)

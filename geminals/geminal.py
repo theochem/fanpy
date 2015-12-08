@@ -7,6 +7,7 @@ from itertools import combinations, permutations
 from scipy.optimize import root
 from slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied
 
+
 class APIG(object):
     """
     Attributes
@@ -23,7 +24,6 @@ class APIG(object):
         The 1's in the even positions describe alpha orbitals
         The 1's in the odd positions describe beta orbitals
 
-
     Notes
     -----
     Slater determinants are expressed by an integer that, in binary form,
@@ -38,9 +38,13 @@ class APIG(object):
     The number of electrons is assumed to be even
     """
 
+    # Class-wise behaviour-defining variables
+    _exclude_ground = False
+    _normalize = True
+
+
     def __init__(self, npairs, norbs, pspace=None):
         """
-
         Parameters
         ----------
         npairs : int
@@ -56,29 +60,21 @@ class APIG(object):
             By default, a projection space is generated using generate_pspace
         """
 
-        assert isinstance(npairs, int)
-        assert isinstance(norbs, int)
-
-        # initialize "private" variables
-        self._npairs = npairs
-        self._norbs = norbs
-        self._pspace = pspace
+        # Private variables
+        self._npairs = None
+        self._norbs = None
+        self._pspace = None
         self._coeffs = None
 
-        # check if the assigned values follow the desired conditions (using the setter)
-        self.npairs = npairs
+        # Assign the attributes their values using the setters
         self.norbs = norbs
-        if pspace is not None:
-            assert hasattr(pspace, '__iter__')
-            self.pspace = pspace
-        else:
-            self.pspace = self.generate_pspace()
+        self.npairs = npairs
+        self.pspace = pspace if pspace else self.generate_pspace()
 
 
     def __call__(self, x0, one, two, **kwargs):
 
-        # Default options
-
+        # Update default options
         defaults = {
                      'jac': None,
                      'proj': None,
@@ -92,27 +88,26 @@ class APIG(object):
                      }
         solveropts.update(defaults['options'])
 
-        # Check options
-
+        # Process `jac` options
         jac = defaults['jac']
         if jac:
             jac = self.nonlin_jac
 
+        # Process `proj` options
         proj = defaults['proj']
         if not proj:
-            proj = self.pspace
-
-        if len(proj) > len(x0):
-            print("Warning: length of 'proj' should be length of guess, 'P*K'.")
-            print("Using the first {} determinants in 'proj'.".format(len(x0)))
-        elif len(proj) < len(x0):
+            proj = list(self.pspace)
+            proj.remove(self.ground)
+        #if self._exclude_ground:
+            #proj = list(proj)
+            #proj.remove(self.ground)
+        if len(proj) < x0.size:
             raise ValueError("'proj' is too short, the system is underdetermined.")
 
         # Run the solver
-
         result = root( self.nonlin,
                        x0,
-                       jac=self.nonlin_jac, 
+                       jac=jac,
                        args=(one, two, proj),
                        options=solveropts,
                      )
@@ -125,19 +120,25 @@ class APIG(object):
 
         # Display some information
         if solveropts['disp']:
-            print(10*"=" + " \"OLSENS\" RESULTS " + 10*"=")
+            print(10*"=" + " OLSENS RESULTS " + 10*"=")
             print("Number of objective function evaluations: {}".format(result['nfev']))
             print("Number of Jacobian evaluations: {}".format(result['njev']))
-            # Use logarithmic determinant routine to postpone over/underflow
-            jac_detsign, jac_lndet = np.linalg.slogdet(result['fjac'])
-            print("Determinant J(C_opt): {}".format(jac_detsign*np.exp(jac_lndet)))
-            # max(SIGMA)/min(SIGMA) should be ~1 if converged
-            trash_u, svd_jac, trash_v = np.linalg.svd(result['fjac'])
-            singularity = max(svd_jac)/min(svd_jac)
-            print("Singularity (closer to 1 is better): {}".format(singularity))
-            print(10*"=" + " \"OLSENS\" RESULTS " + 10*"=")
+            svd_u, svd_jac, svd_v = np.linalg.svd(result['fjac'])
+            svd_value = max(svd_jac)/min(svd_jac)
+            print("max(SVD)/min(SVD) [closer to 1 is better]: {}".format(svd_value))
+            print(10*"=" + "================" + 10*"=")
 
         return result
+
+
+    @property
+    def _row_indices(self):
+        return (0,self.npairs)
+
+
+    @property
+    def _col_indices(self):
+        return (0,self.norbs)
 
 
     @property
@@ -149,6 +150,7 @@ class APIG(object):
         npairs : int
             Number of electron pairs
         """
+
         return self._npairs
 
 
@@ -167,25 +169,14 @@ class APIG(object):
             If number of electron pairs is a float
             If number of electron pairs is less than or equal to zero
             If fractional number of electron pairs is given
-
         """
+
         assert isinstance(value, int), 'There can only be integral number of electron pairs'
         assert value > 0, 'Number of electron pairs cannot be less than or equal to zero'
-        assert value <= self._norbs,\
+        assert value <= self.norbs,\
         'Number of number of electron pairs must be less than the number of spatial orbitals'
         self._npairs = value
 
-
-    @property
-    def nelec(self):
-        """ Number of electrons
-
-        Returns
-        -------
-        nelec : int
-            Number of electrons
-        """
-        return 2*self.npairs
 
     @property
     def norbs(self):
@@ -196,6 +187,7 @@ class APIG(object):
         norbs : int
             Number of spatial orbitals
         """
+
         return self._norbs
 
 
@@ -213,9 +205,11 @@ class APIG(object):
         AssertionError
             If fractional number of spatial orbitals is given
         """
-        assert isinstance(value, int), 'There can only be integral number of spatial orbitals'
-        assert value >= self.npairs,\
-        'Number of spatial orbitals must be greater than the number of electron pairs'
+
+        assert isinstance(value, int), \
+            "There can only be integral number of spatial orbitals"
+        assert value >= self.npairs, \
+            "Number of spatial orbitals must be greater than the number of electron pairs"
         self._norbs = value
 
 
@@ -231,6 +225,7 @@ class APIG(object):
         The 1's in the odd positions describe beta orbitals
 
         """
+
         return self._pspace
 
 
@@ -254,17 +249,19 @@ class APIG(object):
             both occupied)
             If any of the Slater determinants has spin orbitals whose indices exceed the given
             number of spatial orbitals
-
         """
+
+        assert hasattr(list_sds, '__iter__')
+
         for sd in list_sds:
             bin_string = bin(sd)[2:]
             # Add zeros on the left so that bin_string has even numbers
             bin_string = '0'*(len(bin_string)%2) + bin_string
             # Check that number of orbitals used to create spin orbitals is equal to number
             # of electrons
-            assert bin_string.count('1') == self.nelec,\
-            ('Given Slater determinant does not contain the same number of orbitals '
-             'as the given number of electrons')
+            assert bin_string.count('1') == self.nelec, \
+            'Given Slater determinant does not contain the same number of orbitals as the given number of electrons'
+
             # Check that adjacent orbitals in the Slater determinant are alpha beta pairs
             # i.e. all spatial orbitals are doubly occupied
             # There must be single excitations if number of electron pairs <= 2
@@ -272,6 +269,7 @@ class APIG(object):
                 alpha_occ = bin_string[0::2]
                 beta_occ = bin_string[1::2]
                 assert alpha_occ == beta_occ, "Given Slater determinant is unrestricted"
+
             # Check that there are no orbitals are used that are outside of the
             # specified number (norbs)
             index_last_spin = len(bin_string)-1-bin_string.index('1')
@@ -279,11 +277,26 @@ class APIG(object):
             assert index_last_spatial < self.norbs,\
             ('Given Slater determinant contains orbitals whose indices exceed the '
              'given number of spatial orbitals')
+
         self._pspace = tuple(list_sds)
+
+
+    @property
+    def nelec(self):
+        """ Number of electrons
+
+        Returns
+        -------
+        nelec : int
+            Number of electrons
+        """
+
+        return 2*self.npairs
+
 
     @property
     def ground(self):
-        return int(2*self.npairs*'1', 2)
+        return int(2*self.npairs*"1", 2)
 
     @property
     def coeffs(self):
@@ -495,7 +508,7 @@ class APIG(object):
             if derivative:
                 if indices[1] in ind_occ:
                     indices = (indices[0],ind_occ.index(indices[1]))
-                    return self.permanent_derivative(gem_coeff[:, ind_occ], *indices)
+                    return self.permanent_derivative(gem_coeff[:, ind_occ], *indices)/2.0
                 return 0
             # If not deriving wrt a coefficient appearing in the permanent,just return
             # the permanent
@@ -702,15 +715,19 @@ class APIG(object):
 
 
     def nonlin(self, x0, one, two, proj):
+
+        # Handle differences in indexing between geminal methods
+        eqn_offset = int(self._normalize)
+    
         C = self.construct_guess(x0)
-        vec = [self.overlap(self.ground, C) - 1.0]
         energy = self.phi_H_psi(self.ground, C, one, two)
-        for phi in proj:
-            tmp = energy*self.overlap(phi, C)
-            tmp -= self.phi_H_psi(phi, C, one, two)
-            vec.append(tmp)
-            if len(vec) == x0.size:
-                break
+        vec = np.zeros(x0.size)
+        if self._normalize:
+            vec[0] = self.overlap(self.ground, C) - 1.0
+
+        for d in range(x0.size - eqn_offset):
+            vec[d + eqn_offset] = energy*self.overlap(proj[d], C) - self.phi_H_psi(proj[d], C, one, two)
+
         return np.array(vec)
 
 
@@ -738,6 +755,9 @@ class APIG(object):
             Schrodinger Equation.
         """
 
+        # Handle differences in indexing between geminal methods
+        eqn_offset = int(self._normalize)
+
         # Initialize Jacobian tensor and some temporary values
         # (J)_dij = d(F_d)/d(c_ij)
         jac = np.zeros((x0.size, x0.size))
@@ -757,51 +777,49 @@ class APIG(object):
         # `overlap` method to be the method that describes its PrSchEq's partial
         # derivative wrt coefficient c_ij; we must back up the original method
         tmp_olp = self.overlap
-        count = 0
 
         # Overwrite `overlap` to take the correct partial derivative
-        for i in range(self.npairs):
-            for j in range(self.norbs):
+        count = 0
+        for i in range(*self._row_indices):
+            for j in range(*self._col_indices):
                 coords = (i, j)
                 def olp_der(sd, gc, overwrite=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=overwrite)
                 self.overlap = olp_der
-                jac[0, count] = self.overlap(self.ground, C)
+                if self._normalize:
+                    jac[0, count] = self.overlap(self.ground, C)
 
                 # Compute the differentiated parts and construct the whole Jacobian
-                for d in range(x0.size - 1):
-                    jac[d + 1,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
-                                     + energy*self.overlap(proj[d], C) \
-                                     - self.phi_H_psi(proj[d], C, one, two)
+                for d in range(x0.size - eqn_offset):
+                    jac[d + eqn_offset, count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
+                                               + energy*self.overlap(proj[d], C) \
+                                               - self.phi_H_psi(proj[d], C, one, two)
                 count += 1
 
         # Replace the original `overlap` method and return the Jacobian
         self.overlap = tmp_olp
-        # Finite difference verification tells me that my Jacobian is exactly double the
-        # size it should be.  This is a mystery that must be solved...
-        return jac/2.0
 
-
-    def lstsq(self, x0, one, two, proj):
-        C = self.construct_guess(x0)
-        Hvec = np.zeros(len(proj))
-        Svec = np.zeros(len(proj))
-        for i in range(len(proj)):
-            Hvec[i] = self.phi_H_psi(proj[i], C, one, two)
-            Svec[i] = self.overlap(proj[i], C)
-        numerator = Hvec - self.phi_H_psi(self.ground, C, one, two)*Svec
-        numerator = numerator.dot(numerator)
-        denominator = Svec.dot(Svec)
-        return numerator/denominator
-
-
-    def normalize(self, x0):
-        C = self.construct_guess(x0)
-        return np.abs(self.overlap(self.ground, C) - 1.0)
+        # If gg/def overlap
+        return jac
 
 
 
 class AP1roG(APIG):
+   
+    # Class-wide variables for class behaviour
+    _exclude_ground = True
+    _normalize = False
+
+
+    @property
+    def _row_indices(self):
+        return (0,self.npairs)
+
+
+    @property
+    def _col_indices(self):
+        return (self.npairs,self.norbs)
+
 
     @property
     def coeffs(self):
@@ -810,12 +828,13 @@ class AP1roG(APIG):
 
     @coeffs.setter
     def coeffs(self, value):
-        assert value.size == self.npairs*(self.norbs - self.npairs),\
+        assert value.size == self.npairs*(self.norbs - self.npairs), \
                 ('Given geminals coefficient matrix does not have the right number of '
                  'coefficients')
         coeffs = np.eye(self.npairs, M=self.norbs)
         coeffs[:,self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
         self._coeffs = coeffs
+
 
     def generate_pspace(self):
         """ Generates the projection space
@@ -835,7 +854,13 @@ class AP1roG(APIG):
             # pspace = all single pair excitations
                 pspace.append(excite_pairs(base, i, unoccup))
         # Uniquify
-        return list(set(pspace))
+        return tuple(set(pspace))
+
+
+    def construct_guess(self, x0):
+        C = np.eye(self.npairs, M=self.norbs)
+        C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
+        return C
 
 
     def overlap(self, phi, matrix, derivative=False, indices=None):
@@ -886,73 +911,5 @@ class AP1roG(APIG):
             else:
                 raise Exception(str(excite_count))
 
-
-    def construct_guess(self, x0):
-        C = np.eye(self.npairs, M=self.norbs)
-        C[:,self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
-        return C
-
-
-    def nonlin(self, x0, one, two, proj):
-        """See APIG.nonlin().
-        """
-        C = self.construct_guess(x0)
-        vec = []
-        for phi in proj:
-            if phi == self.ground: continue
-            tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C)
-            tmp -= self.phi_H_psi(phi, C, one, two)
-            vec.append(tmp)
-            if len(vec) == x0.size:
-                break
-        return np.array(vec)
-
-
-    def nonlin_jac(self, x0, one, two, proj):
-        """See APIG.nonlin_jac().
-        """
-        # Initialize Jacobian tensor and some temporary values
-        # (J)_dij = d(F_d)/d(c_ij)
-        jac = np.zeros((x0.size, x0.size))
-        phi_psi_tmp = np.zeros(x0.size)
-        C = self.construct_guess(x0)
-
-        # The objective functions {F_d} are of this form:
-        # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
-        #           + <phi0|H|psi>*(d<phi'|psi>/dc_ij) - d<phi'|H|psi>/dc_ij
-
-        # Compute the undifferentiated parts
-        energy = self.phi_H_psi(self.ground, C, one, two)
-        for d in range(x0.size):
-            phi_psi_tmp[d] = self.overlap(proj[d], C)
-
-        # Compute the differentiated parts; this works by overwriting the geminal's
-        # `overlap` method to be the method that describes its PrSchEq's partial
-        # derivative wrt coefficient c_ij; we must back up the original method
-        tmp_olp = self.overlap
-        count = 0
-
-        # Overwrite `overlap` to take the correct partial derivative
-        for i in range(self.npairs):
-            for j in range(self.npairs, self.norbs):
-                coords = (i, j)
-                def olp_der(sd, gc, overwrite=coords):
-                    return tmp_olp(sd, gc, derivative=True, indices=overwrite)
-                self.overlap = olp_der
-
-                # Compute the differentiated parts and construct the whole Jacobian
-                offset = 0
-                for d in range(x0.size):
-                    if proj[d] == self.ground:
-                        offset += 1
-                        continue
-                    jac[d - offset,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
-                                     + energy*self.overlap(proj[d], C) \
-                                     - self.phi_H_psi(proj[d], C, one, two)
-                count += 1
-
-        # Replace the original `overlap` method and return the Jacobian
-        self.overlap = tmp_olp
-        return jac
 
 # vim: set textwidth=90 :
