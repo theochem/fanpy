@@ -14,7 +14,7 @@ from geminal import APIG, AP1roG
 from slater_det import excite_pairs, excite_orbs
 from horton_wrapper import from_horton
 
-@test
+#@test
 def test_init():
     """ Check if initialization with bad values raises error
     """
@@ -42,7 +42,7 @@ def test_init():
         gem = APIG(1, 2, [0b110000])
     assert check_if_exception_raised(f, AssertionError)
 
-@test
+#@test
 def test_setters_getters():
     """ Check if setters and getters are working properly
     """
@@ -106,7 +106,7 @@ def test_setters_getters():
         gem.pspace = tuple([0b10111])
     assert check_if_exception_raised(f, AssertionError)
 
-@test
+#@test
 def test_generate_pspace():
     """ test APIG.generate_pspace
     """
@@ -163,7 +163,7 @@ def test_generate_pspace():
     for i in pspace:
         assert i in all_sds
 
-@test
+#@test
 def test_permanent():
     """ test permanent
     """
@@ -180,7 +180,7 @@ def test_permanent():
     matrix = np.arange(1, 10).reshape((3,3))
     assert APIG.permanent(matrix) == 450
 
-@test
+#@test
 def test_permanent_derivative():
     """ test partial derivative of permanent wrt one of its elements
     """
@@ -219,7 +219,7 @@ def test_permanent_derivative():
     assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(2,3)) == 1
     assert ap1rog.overlap(0b11001111, C, derivative=True, indices=(3,2)) == 0
 
-@test
+#@test
 def test_overlap():
     """ Tests APIG.overlap
     """
@@ -238,7 +238,7 @@ def test_overlap():
     sd = 0b110011001100
     assert gem.overlap(sd, coeff) == gem.permanent(coeff[:, [1, 3, 5]])
 
-@test
+#@test
 def test_double_phi_H_psi():
     """ Tests, APIG.double_phi_H_psi
     """
@@ -284,7 +284,7 @@ def test_double_phi_H_psi():
     integral_two += two[0,0,3,3]+two[1,1,3,3]
     assert np.allclose(gem.double_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
 
-@test
+#@test
 def test_brute_phi_H_psi():
     # Same test as test_double_phi_H_psi for pair occupied slater determinant
     gem = APIG(2, 4)
@@ -376,7 +376,7 @@ def test_brute_phi_H_psi():
     '''
     assert np.allclose(gem.brute_phi_H_psi(sd, coeff, one, two), integral_one + integral_two)
 
-@test
+#@test
 def test_APIG_jacobian():
     """ Tests, APIG.jacobian()
     """
@@ -396,7 +396,7 @@ def test_APIG_jacobian():
     # is called
     assert ismethod(gem.overlap)
 
-@slow
+#@slow
 def test_APIG_jacobian_finite_difference():
     # Test that the analytical nonlin_jac() matches a finite-difference approximation of
     # the Jacobian of nonlin()
@@ -409,7 +409,7 @@ def test_APIG_jacobian_finite_difference():
     jac = lambda x : gem.nonlin_jac(x, one, two, gem.pspace)
     deriv_check(fun, jac, x0)
 
-@test
+#@test
 def test_AP1roG_jacobian():
     """ Tests, AP1roG.jacobian()
     """
@@ -428,7 +428,7 @@ def test_AP1roG_jacobian():
     # is called
     assert ismethod(gem.overlap)
 
-@slow
+#@slow
 def test_AP1roG_jacobian_finite_difference():
     # Test that the analytical nonlin_jac() matches a finite-difference approximation of
     # the Jacobian of nonlin()
@@ -442,7 +442,7 @@ def test_AP1roG_jacobian_finite_difference():
     jac = lambda x : gem.nonlin_jac(x, one, two, proj)
     # The crazy conditions on this are because the derivative checker sucks at this
     # particular Jacobian... who knows why?
-    deriv_check(fun, jac, x0, verbose=True, order=16, eps_x=1.0e-6, discard=0.90)
+    deriv_check(fun, jac, x0, verbose=True)#, order=16, eps_x=1.0e-6, discard=0.90)
 
 @slow
 def test_APIG_quasinewton():
@@ -467,8 +467,8 @@ def test_APIG_quasinewton():
                 'method' : 'hybr',
               }
     # Optimize with quasinewton method
-    gem = APIG(nocc, basis.nbasis)
-    result_qn = gem(coeffs, one, two, **options)
+    gem = APIG(nocc, basis.nbasis, ham=(one, two))
+    result_qn = gem(**options)
     assert result_qn['success']
     #energy = gem.phi_H_psi(gem.ground, gem.coeffs, one, two) + core
     #olp = gem.overlap(gem.ground, gem.coeffs)
@@ -485,6 +485,9 @@ def test_AP1roG_quasinewton():
     fn = 'test/li2.xyz'
     basis = '3-21g'
     nocc = 3
+    #fn = 'test/h2.xyz'
+    #basis = 'sto-3g'
+    #nocc = 1
     # Make geminal guess from HORTON's AP1roG module
     ht_out = from_horton(fn=fn, basis=basis, nocc=nocc, guess='ap1rog')
     basis  = ht_out['basis']
@@ -493,7 +496,7 @@ def test_AP1roG_quasinewton():
     two = ht_out['ham'][1]
     energy_old = ht_out['energy']
     coeffs_ht = ht_out['coeffs']
-    coeffs_old = 0.001*(2*(np.random.rand(nocc, basis.nbasis - nocc) - 0.5))
+    coeffs_old = 0.01*(2*(np.random.rand(nocc, basis.nbasis - nocc) - 0.5))
     coeffs_old = coeffs_old.ravel()
     coeffs = copy(coeffs_old)
     options = { 'options': { 'disp': True, },
@@ -501,8 +504,8 @@ def test_AP1roG_quasinewton():
                 'method' : 'hybr',
               }
     # Optimize with quasinewton method
-    gem = AP1roG(nocc, basis.nbasis)
-    result_qn = gem(coeffs, one, two, **options)
+    gem = AP1roG(nocc, basis.nbasis, ham=(one, two))
+    result_qn = gem(**options)
     assert result_qn['success']
     npt.assert_allclose(gem.coeffs[:,gem.npairs:], coeffs_ht, rtol=5.0e-2)
     #energy = gem.phi_H_psi(gem.ground, gem.coeffs, one, two) + core

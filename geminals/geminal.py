@@ -43,7 +43,7 @@ class APIG(object):
     _normalize = True
 
 
-    def __init__(self, npairs, norbs, pspace=None):
+    def __init__(self, npairs, norbs, ham=None, pspace=None):
         """
         Parameters
         ----------
@@ -51,6 +51,8 @@ class APIG(object):
             Number of electron pairs
         norbs : int
             Number of spatial orbitals
+        ham : 2-tuple of np.ndarrays
+            writing docs sucks...
         pspace : {None, iterable of int}
             Projection space
             Iterable of integers that, in binary, describes which spin orbitals are
@@ -63,30 +65,43 @@ class APIG(object):
         # Private variables
         self._npairs = None
         self._norbs = None
+        self._ham = None
         self._pspace = None
         self._coeffs = None
+        self._coeffs_optimized = False
+        self._orbitals_optimized = False
 
         # Assign the attributes their values using the setters
         self.norbs = norbs
         self.npairs = npairs
+        self.ham = ham
         self.pspace = pspace if pspace else self.generate_pspace()
 
 
-    def __call__(self, x0, one, two, **kwargs):
+    def __call__(self, **kwargs):
 
         # Update default options
         defaults = {
+                     'x0': None,
                      'jac': None,
                      'proj': None,
                      'options': None,
+                     'verbose': False,
                    }
-        defaults.update(kwargs)
+        if kwargs:
+            defaults.update(kwargs)
         solveropts = {
                        'xatol': 1.0e-12,
                        'method': 'hybr',
-                       'disp': False,
                      }
-        solveropts.update(defaults['options'])
+        if defaults['options']:
+            solveropts.update(defaults['options'])
+
+        # Process `x0` (coefficients guess) options
+        x0 = defaults['x0']
+        # "is None" must be explicit here because np.ndarrays overwrite boolean ops
+        if x0 is None:
+            x0 = self.generate_guess()
 
         # Process `jac` options
         jac = defaults['jac']
@@ -98,9 +113,6 @@ class APIG(object):
         if not proj:
             proj = list(self.pspace)
             proj.remove(self.ground)
-        #if self._exclude_ground:
-            #proj = list(proj)
-            #proj.remove(self.ground)
         if len(proj) < x0.size:
             raise ValueError("'proj' is too short, the system is underdetermined.")
 
@@ -108,7 +120,7 @@ class APIG(object):
         result = root( self.nonlin,
                        x0,
                        jac=jac,
-                       args=(one, two, proj),
+                       args=(proj,),
                        options=solveropts,
                      )
 
@@ -119,10 +131,11 @@ class APIG(object):
             print("Warning: solution did not converge; coefficients were not updated.")
 
         # Display some information
-        if solveropts['disp']:
+        if defaults['verbose']:
             print(10*"=" + " OLSENS RESULTS " + 10*"=")
             print("Number of objective function evaluations: {}".format(result['nfev']))
-            print("Number of Jacobian evaluations: {}".format(result['njev']))
+            if 'njev' in result:
+                print("Number of Jacobian evaluations: {}".format(result['njev']))
             svd_u, svd_jac, svd_v = np.linalg.svd(result['fjac'])
             svd_value = max(svd_jac)/min(svd_jac)
             print("max(SVD)/min(SVD) [closer to 1 is better]: {}".format(svd_value))
@@ -133,12 +146,12 @@ class APIG(object):
 
     @property
     def _row_indices(self):
-        return (0,self.npairs)
+        return range(0,self.npairs)
 
 
     @property
     def _col_indices(self):
-        return (0,self.norbs)
+        return range(0,self.norbs)
 
 
     @property
@@ -211,6 +224,39 @@ class APIG(object):
         assert value >= self.npairs, \
             "Number of spatial orbitals must be greater than the number of electron pairs"
         self._norbs = value
+
+
+    @property
+    def ham(self):
+        return self._ham
+
+
+    @ham.setter
+    def ham(self, value):
+        # Check if one and two electron integrals are expressed wrt spatial mo's
+        assert (4 > len(value) > 1), \
+            "`ham` is too long (2 or 3 elements expected, {} given.".format(len(value))
+        assert isinstance(value[0], np.ndarray) and isinstance(value[1], np.ndarray), \
+                "One- and two- electron integrals must be numpy ndarrays."
+        if len(value) == 3:
+            assert isinstance(value[2], float), \
+                "If core energy is specified, it must be a float."
+        assert value[0].shape == tuple([self.norbs]*2),\
+            ('One electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        assert value[1].shape == tuple([self.norbs]*4),\
+            ('Two electron integral is not expressed with respect to the right'
+             ' number of spatial molecular orbitals')
+        # Check if Hermitian
+        assert np.allclose(value[0], value[0].T), \
+            'One electron integral matrix is not symmetric'
+        assert np.allclose(value[1], np.einsum('jilk', value[1])),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <ji|lk>'
+             " or is not in physicist's notation")
+        assert np.allclose(value[1], np.conjugate(np.einsum('klij', value[1]))),\
+            ('Two electron integral matrix does not satisfy <ij|kl> = <kl|ij>^*'
+             " or is not in physicist's notation")
+        self._ham = value
 
 
     @property
@@ -392,6 +438,14 @@ class APIG(object):
         return tuple(list_sd[:num_needed])
 
 
+    def generate_guess(self):
+        print("Generating guess from AP1roG...")
+        gem = AP1roG(self.npairs, self.norbs, ham=self.ham)
+        gem()
+        print("AP1roG guess for APIG generated.")
+        return gem.coeffs.ravel()
+
+
     @staticmethod
     def permanent(matrix):
         """ Calculates the permanent of a matrix
@@ -515,7 +569,7 @@ class APIG(object):
             return self.permanent(gem_coeff[:, ind_occ])
 
 
-    def phi_H_psi(self, slater_det, gem_coeff, one, two):
+    def phi_H_psi(self, slater_det, gem_coeff):
         """ Integrates the Slater determinant with a Geminal wavefunction
 
         Parameters
@@ -538,19 +592,21 @@ class APIG(object):
         Assume molecular orbitals are restricted spatial orbitals
 
         """
+
         bin_string = bin(slater_det)[2:]
         # Add zeros on the left so that bin_string has even numbers
         bin_string = '0'*(len(bin_string)%2) + bin_string
         alpha_occ = bin_string[0::2]
         beta_occ = bin_string[1::2]
+
         # if all the occupied spin orbitals are alpha beta pairs
         if alpha_occ == beta_occ:
-            return self.double_phi_H_psi(slater_det, gem_coeff, one, two)
+            return self.double_phi_H_psi(slater_det, gem_coeff)
         else:
-            return self.brute_phi_H_psi(slater_det, gem_coeff, one, two)
+            return self.brute_phi_H_psi(slater_det, gem_coeff)
 
 
-    def double_phi_H_psi(self, slater_det, gem_coeff, one, two):
+    def double_phi_H_psi(self, slater_det, gem_coeff):
         """ Integrates the Slater determinant with a Geminal wavefunction
 
         Assuming that the molecular orbitals are spatial orbitals,
@@ -595,40 +651,33 @@ class APIG(object):
         Assumes that the Slater determinant is a pairwise excitation of the ground
         state HF Slater determinant
         """
-        # Check if one and two electron integrals are expressed wrt spatial mo's
-        assert one.shape == tuple([self.norbs]*2),\
-            ('One electron integral is not expressed with respect to the right'
-             ' number of spatial molecular orbitals')
-        assert two.shape == tuple([self.norbs]*4),\
-            ('Two electron integral is not expressed with respect to the right'
-             ' number of spatial molecular orbitals')
-        # Check if Hermitian
-        assert np.allclose(one, one.T), 'One electron integral matrix is not symmetric'
-        assert np.allclose(two, np.einsum('jilk', two)),\
-            ('Two electron integral matrix does not satisfy <ij|kl> = <ji|lk>'
-             " or is not in physicist's notation")
-        assert np.allclose(two, np.conjugate(np.einsum('klij', two))),\
-            ('Two electron integral matrix does not satisfy <ij|kl> = <kl|ij>^*'
-             " or is not in physicist's notation")
-        t0 = 0.0
-        t1 = 0.0
-        t2 = 0.0
+
+        one, two = self.ham
+
+        one_elec_part = 0.0
+        coulomb  = 0.0
+        exchange = 0.0
+        
+        olp = self.overlap(slater_det, gem_coeff)
         for i in range(self.norbs):
             if is_pair_occupied(slater_det, i):
-                t0 += 2*one[i, i] + two[i, i, i, i]
+                one_elec_part += 2*one[i, i]*olp
+                coulomb  += two[i, i, i, i]*olp
 
                 for j in range(i + 1, self.norbs):
                     if is_pair_occupied(slater_det, j):
-                        t1 += 4*two[i, j, i, j] - 2*two[i, j, j, i]
+                        coulomb  += 4*two[i, j, i, j]*olp
+                        exchange -= 2*two[i, j, j, i]*olp
 
                 for a in range(self.norbs):
                     if not is_pair_occupied(slater_det, a):
                         excitation = excite_pairs(slater_det, i, a)
-                        t2 += two[i, i, a, a]*self.overlap(excitation, gem_coeff)
-        return (t0 + t1)*self.overlap(slater_det, gem_coeff) + t2
+                        coulomb += two[i, i, a, a]*self.overlap(excitation, gem_coeff)
+
+        return one_elec_part + coulomb + exchange
 
 
-    def brute_phi_H_psi(self, slater_det, gem_coeff, one, two):
+    def brute_phi_H_psi(self, slater_det, gem_coeff):
         """ Integrates the Slater determinant with a Geminal wavefunction
 
         Parameters
@@ -654,21 +703,9 @@ class APIG(object):
         One and Two electron integrals are expressed wrt spatial orbitals.
         Assumes the one and two electron integrals are Hermitian
         """
-        # Check if one and two electron integrals are expressed wrt spatial mo's
-        assert one.shape == tuple([self.norbs]*2),\
-            ('One electron integral is not expressed with respect to the right'
-             ' number of spatial molecular orbitals')
-        assert two.shape == tuple([self.norbs]*4),\
-            ('Two electron integral is not expressed with respect to the right'
-             ' number of spatial molecular orbitals')
-        # Check if Hermitian
-        assert np.allclose(one, one.T), 'One electron integral matrix is not symmetric'
-        assert np.allclose(two, np.einsum('jilk', two)),\
-            ('Two electron integral matrix does not satisfy <ij|kl> = <ji|lk>'
-             " or is not in physicist's notation")
-        assert np.allclose(two, np.conjugate(np.einsum('klij', two))),\
-            ('Two electron integral matrix does not satisfy <ij|kl> = <kl|ij>^*'
-             " or is not in physicist's notation")
+
+        one, two = self.ham
+
         # spin indices
         ind_occ = [i for i in range(2*self.norbs) if is_occupied(slater_det, i)]
         ind_vir = [i for i in range(2*self.norbs) if not is_occupied(slater_det, i)]
@@ -714,24 +751,26 @@ class APIG(object):
         return C
 
 
-    def nonlin(self, x0, one, two, proj):
+    def nonlin(self, x0, proj):
+
+        one, two = self.ham
 
         # Handle differences in indexing between geminal methods
         eqn_offset = int(self._normalize)
-    
+
         C = self.construct_guess(x0)
-        energy = self.phi_H_psi(self.ground, C, one, two)
+        energy = self.phi_H_psi(self.ground, C)
         vec = np.zeros(x0.size)
         if self._normalize:
             vec[0] = self.overlap(self.ground, C) - 1.0
 
         for d in range(x0.size - eqn_offset):
-            vec[d + eqn_offset] = energy*self.overlap(proj[d], C) - self.phi_H_psi(proj[d], C, one, two)
+            vec[d + eqn_offset] = energy*self.overlap(proj[d], C) - self.phi_H_psi(proj[d], C)
 
         return np.array(vec)
 
 
-    def nonlin_jac(self, x0, one, two, proj):
+    def nonlin_jac(self, x0, proj):
         """ Constructs the Jacobian of the function `nonlin`:
 
         Assuming that the molecular orbitals are spatial orbitals,
@@ -755,6 +794,8 @@ class APIG(object):
             Schrodinger Equation.
         """
 
+        one, two = self.ham
+
         # Handle differences in indexing between geminal methods
         eqn_offset = int(self._normalize)
 
@@ -769,7 +810,7 @@ class APIG(object):
         #           + <phi0|H|psi>*(d<phi'|psi>/dc_ij) - d<phi'|H|psi>/dc_ij
 
         # Compute the undifferentiated parts
-        energy = self.phi_H_psi(self.ground, C, one, two)
+        energy = self.phi_H_psi(self.ground, C)
         for d in range(x0.size):
             phi_psi_tmp[d] = self.overlap(proj[d], C)
 
@@ -780,8 +821,8 @@ class APIG(object):
 
         # Overwrite `overlap` to take the correct partial derivative
         count = 0
-        for i in range(*self._row_indices):
-            for j in range(*self._col_indices):
+        for i in self._row_indices:
+            for j in self._col_indices:
                 coords = (i, j)
                 def olp_der(sd, gc, overwrite=coords):
                     return tmp_olp(sd, gc, derivative=True, indices=overwrite)
@@ -791,9 +832,9 @@ class APIG(object):
 
                 # Compute the differentiated parts and construct the whole Jacobian
                 for d in range(x0.size - eqn_offset):
-                    jac[d + eqn_offset, count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
+                    jac[d + eqn_offset, count] = self.phi_H_psi(self.ground, C)*phi_psi_tmp[d] \
                                                + energy*self.overlap(proj[d], C) \
-                                               - self.phi_H_psi(proj[d], C, one, two)
+                                               - self.phi_H_psi(proj[d], C)
                 count += 1
 
         # Replace the original `overlap` method and return the Jacobian
@@ -805,7 +846,7 @@ class APIG(object):
 
 
 class AP1roG(APIG):
-   
+
     # Class-wide variables for class behaviour
     _exclude_ground = True
     _normalize = False
@@ -813,12 +854,12 @@ class AP1roG(APIG):
 
     @property
     def _row_indices(self):
-        return (0,self.npairs)
+        return range(0,self.npairs)
 
 
     @property
     def _col_indices(self):
-        return (self.npairs,self.norbs)
+        return range(self.npairs,self.norbs)
 
 
     @property
@@ -855,6 +896,11 @@ class AP1roG(APIG):
                 pspace.append(excite_pairs(base, i, unoccup))
         # Uniquify
         return tuple(set(pspace))
+
+
+    def generate_guess(self):
+        params = self.npairs*(self.norbs - self.npairs)
+        return (2.0/np.around(10*params, -1))*(np.random.rand(params) - 0.5)
 
 
     def construct_guess(self, x0):
