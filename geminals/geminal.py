@@ -1,11 +1,10 @@
+#!/usr/bin/env python2
+
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from math import factorial
 from itertools import combinations, permutations
-from newton import newton
-from scipy.optimize import root as quasinewton
-from scipy.optimize import minimize as lstsq
+from scipy.optimize import root
 from slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied
 
 class APIG(object):
@@ -79,44 +78,65 @@ class APIG(object):
     def __call__(self, x0, one, two, **kwargs):
 
         # Default options
+
         defaults = {
                      'jac': None,
                      'proj': None,
-                     'solver': quasinewton,
                      'options': None,
                    }
         defaults.update(kwargs)
+        solveropts = {
+                       'xatol': 1.0e-12,
+                       'method': 'hybr',
+                       'disp': False,
+                     }
+        solveropts.update(defaults['options'])
 
         # Check options
-        jac = None
-        if defaults['jac']:
+
+        jac = defaults['jac']
+        if jac:
             jac = self.nonlin_jac
+
         proj = defaults['proj']
         if not proj:
             proj = self.pspace
-        solveropts = defaults['options']
-        if not solveropts:
-            solveropts = {}
 
-        # Solve for geminal coefficients
-        solver = defaults['solver']
-        if solver is lstsq:
-            # Doing the least-squares method
-            objective = self.lstsq
+        if len(proj) > len(x0):
+            print("Warning: length of 'proj' should be length of guess, 'P*K'.")
+            print("Using the first {} determinants in 'proj'.".format(len(x0)))
+        elif len(proj) < len(x0):
+            raise ValueError("'proj' is too short, the system is underdetermined.")
+
+        # Run the solver
+
+        result = root( self.nonlin,
+                       x0,
+                       jac=self.nonlin_jac, 
+                       args=(one, two, proj),
+                       options=solveropts,
+                     )
+
+        # Update if successful, or else print a warning
+        if result['success']:
+            self.coeffs = result['x']
         else:
-            # Doing the nonlinear-system method, so check for over/under-determination
-            objective = self.nonlin
-            if len(proj) > len(x0):
-                print("Warning: length of 'proj' should be length of guess, 'P*K'.")
-                print("Using the first {} determinants in 'proj'.".format(len(x0)))
-            elif len(proj) < len(x0):
-                raise ValueError("'proj' is too short, the system is underdetermined.")
+            print("Warning: solution did not converge; coefficients were not updated.")
 
-        # Run the solver (includes intemediate normalization)
-        result = solver(objective, x0, jac=jac, args=(one, two, proj), options=solveropts)
+        # Display some information
+        if solveropts['disp']:
+            print(10*"=" + " \"OLSENS\" RESULTS " + 10*"=")
+            print("Number of objective function evaluations: {}".format(result['nfev']))
+            print("Number of Jacobian evaluations: {}".format(result['njev']))
+            # Use logarithmic determinant routine to postpone over/underflow
+            jac_detsign, jac_lndet = np.linalg.slogdet(result['fjac'])
+            print("Determinant J(C_opt): {}".format(jac_detsign*np.exp(jac_lndet)))
+            # max(SIGMA)/min(SIGMA) should be ~1 if converged
+            trash_u, svd_jac, trash_v = np.linalg.svd(result['fjac'])
+            singularity = max(svd_jac)/min(svd_jac)
+            print("Singularity (closer to 1 is better): {}".format(singularity))
+            print(10*"=" + " \"OLSENS\" RESULTS " + 10*"=")
 
-        # Update the optimized coefficients
-        self.coeffs = result['x']
         return result
 
 
@@ -261,11 +281,9 @@ class APIG(object):
              'given number of spatial orbitals')
         self._pspace = tuple(list_sds)
 
-
     @property
     def ground(self):
-        return min(self.pspace)
-
+        return int(2*self.npairs*'1', 2)
 
     @property
     def coeffs(self):
@@ -328,7 +346,7 @@ class APIG(object):
         num_needed = self.npairs*self.norbs+1
         # Add pair excitations
         num_excited = 1
-        num_combs = lambda n, r: factorial(n)/factorial(r)/factorial(n-r)
+        num_combs = lambda n, r: np.math.factorial(n)/np.math.factorial(r)/np.math.factorial(n-r)
         while len(list_sd) < num_needed and num_excited <= len(ind_occ):
             # Find out what is the smallest number of frontier orbitals (HOMOS and LUMOs)
             # that can be used
@@ -799,7 +817,6 @@ class AP1roG(APIG):
         coeffs[:,self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
         self._coeffs = coeffs
 
-
     def generate_pspace(self):
         """ Generates the projection space
 
@@ -882,6 +899,7 @@ class AP1roG(APIG):
         C = self.construct_guess(x0)
         vec = []
         for phi in proj:
+            if phi == self.ground: continue
             tmp = self.phi_H_psi(self.ground, C, one, two)*self.overlap(phi, C)
             tmp -= self.phi_H_psi(phi, C, one, two)
             vec.append(tmp)
@@ -923,8 +941,12 @@ class AP1roG(APIG):
                 self.overlap = olp_der
 
                 # Compute the differentiated parts and construct the whole Jacobian
+                offset = 0
                 for d in range(x0.size):
-                    jac[d,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
+                    if proj[d] == self.ground:
+                        offset += 1
+                        continue
+                    jac[d - offset,count] = self.phi_H_psi(self.ground, C, one, two)*phi_psi_tmp[d] \
                                      + energy*self.overlap(proj[d], C) \
                                      - self.phi_H_psi(proj[d], C, one, two)
                 count += 1

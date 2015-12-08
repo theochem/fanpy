@@ -12,7 +12,7 @@ from scipy.optimize import rosen, rosen_der
 def test_wellbehaved_system():
     """
     """
-    guess  = np.array([0.686, 1.371])
+    guess  = np.array([0.678, 1.432])
     answer = np.array([1.0, 1.0])
     lin = lambda x : x[0] - x[1]
     lin_der = lambda x : [1, -1]

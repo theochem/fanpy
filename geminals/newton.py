@@ -3,6 +3,8 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+from copy import deepcopy as copy
+from scipy.optimize import minimize_scalar, minimize
 
 def newton(fun, x0, jac=None, args=None, **options):
     """
@@ -47,14 +49,15 @@ def newton(fun, x0, jac=None, args=None, **options):
 
     defaults = { 'ftol': 1.0e-6,
                  'xtol': 1.0e-6,
-                 'maxiter': 100,
+                 'maxiter': 10000,
                  'disp': False,
                }
     defaults.update(options)
-    ftol = defaults['ftol']
-    xtol = defaults['xtol']
+    ftol = defaults['ftol']**2
+    xtol = defaults['xtol']**2
     maxiter = defaults['maxiter']
     disp = defaults['disp']
+
     if disp:
         def display(it, fval, df, dx):
             print("Iter: {},\t|F(x)| = {},\tF change: {},\tx change: {}" \
@@ -62,49 +65,74 @@ def newton(fun, x0, jac=None, args=None, **options):
     else:
         def display(*anything):
             pass
+
     if args:
         objective = lambda x: fun(x, *args)
         jacobian = lambda x: jac(x, *args)
     else:
         objective = fun
         jacobian = jac
+
+    def obj_scalar(x):
+        tmp = objective(x)
+        return 0.5*np.abs(tmp.dot(tmp))
+
+    def gradient(x):
+        tmp = jacobian(x)
+        if len(tmp.shape) > 1:
+            return np.array([ np.abs(tmp[:,i].dot(tmp[:,i])) for i in range(tmp.shape[1]) ])
+        else:
+            return np.abs(tmp.dot(tmp))
+
     success = True
     nit = maxiter
-    fx = jx = deltaf = deltax = None
-    deltaxvec = np.ones(x0.size)
+    fx_old = np.inf
+    x0_old = np.inf
 
-    for i in range(maxiter):
+    for iter in range(maxiter):
 
-        # Get fun(x) first, so we can check convergence
         fx = objective(x0)
-        deltax = np.sqrt(np.abs(deltaxvec.dot(deltaxvec)))
-        deltaf = np.sqrt(np.abs(fx.dot(fx)))
-        display(i, fx, deltaf, deltax)
-        if (deltaf < ftol) or (deltax < xtol):
-            nit = i + 1
-            break
-
-        # Not converged, so we need jac(x)
         jx = jacobian(x0)
 
-        # x_new = x_old - inv(J(x))*F(x)
-        # J(x)*(x_old - x_new) = F(x) ==> of the form Ax = b
+        deltaf = np.abs(fx - fx_old)
+        deltax = np.abs(x0 - x0_old)
+        if deltaf.dot(deltaf) < ftol or deltax.dot(deltax) < xtol:
+            nit = iter + 1
+            break
+
         try:
-            deltaxvec = np.linalg.solve(jx,fx)
+            deltaxvec = np.linalg.solve(jx,-fx)
+
         except np.linalg.linalg.LinAlgError:
-            # Jacobian went singular (this happens for some functions around the
-            # solution...); use the pseudoinverse from SVD instead
+            print("INVERSION EXCEPTION")
             u, jxinv, v = np.linalg.svd(jx)
             jxinv **= -1
             jxinv = u.dot(jxinv.dot(v))
-            deltaxvec = jxinv.dot(fx)
-        x0 -= deltaxvec
+            deltaxvec = jxinv.dot(-fx)
 
-    # If for loop finishes, we did not converge
+        def search_obj(alpha):
+            return obj_scalar(x0 + alpha*deltaxvec)
+
+        search_result = minimize_scalar(search_obj,tol=1.0e-12)#,bounds=(-0.1,0.1))
+        alpha = search_result.x
+        print(alpha)
+
+        fx_old = copy(fx)
+        x0_old = copy(x0)
+        x0 += alpha*deltaxvec
+        print(x0)
+
+        cond_0_l = obj_scalar(x0 + alpha*deltaxvec)
+        cond_0_r = obj_scalar(x0) + 0.1*alpha*gradient(x0).transpose().dot(deltaxvec)
+        cond_1_l = np.abs(gradient(x0 + alpha*deltaxvec).transpose().dot(deltaxvec))
+        cond_1_r = 0.1*np.abs(gradient(x0).transpose().dot(deltaxvec))
+        if np.all(cond_0_l <= cond_0_r) and np.all(cond_1_l <= cond_1_r):
+            nit = iter
+            break
+
     else:
         success = False
 
-    # Return the results in a SciPy-compatible format
     return { 'x': x0,
              'success': success,
              'fun': fx,

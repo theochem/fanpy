@@ -83,6 +83,21 @@ def check_if_exception_raised(func, exception):
     else:
         return False
 
+def is_singular(matrix, tol=1.0e-12):
+    '''Check if a matrix is singular.
+    '''
+
+    # Non-square matrix is singular
+    if (len(matrix.shape) != 2) or (matrix.shape[0] != matrix.shape[1]):
+        return True
+    # Singular matrix has determinant equal to 0; use logarithmic determinant routine to
+    # postpone over/underflow
+    sgn, det = np.linalg.slogdet(matrix)
+    if np.exp(det) < tol:
+        return True
+    # It passes
+    return False
+
 # Stolen from Toon's romin (https://github.com/QuantumElephant/romin)
 def deriv_error(f, g, x, eps_x=1e-4, order=8):
     '''Compute the error between difference of f at two points and its FD approximation
