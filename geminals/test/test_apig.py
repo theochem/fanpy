@@ -5,6 +5,7 @@ Unit tests for geminals.apig.APIG.
 
 from __future__ import absolute_import, division, print_function
 import numpy as np
+from romin import deriv_check
 from geminals.apig import APIG
 from geminals.horton_wrapper import ap1rog_from_horton
 from geminals.slater_det import excite_orbs, add_pairs, excite_pairs
