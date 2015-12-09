@@ -27,14 +27,14 @@ class APIG(object):
         The number of spatial orbitals in the geminal wavefunction.
     nelec : int
         The number of electrons in the geminal wavefunction (2 * npairs).
-    coeffs : 2-index np.ndarray
-        The optimized geminal coefficient matrix.
-    _coeffs_optimized : bool
-        Whether the geminal coefficient matrix has already been optimized.
     ham : tuple of a 2-index np.ndarray, a 4-index np.ndarray
         The two- and four- electron integral Hamiltonian matrices.
     core_energy : float
         The core energy of the system.
+    coeffs : 2-index np.ndarray
+        The optimized geminal coefficient matrix.
+    _coeffs_optimized : bool
+        Whether the geminal coefficient matrix has already been optimized.
     pspace : iterable of ints.
         An iterable of integers that, in binary representation, describe the Slater
         determinants in the geminal wavefunction's projection space.
@@ -128,7 +128,7 @@ class APIG(object):
     # Special methods
     #
 
-    def __init__(self, npairs, norbs, coeffs=None, ham=None, pspace=None):
+    def __init__(self, npairs, norbs, ham=None, coeffs=None, pspace=None):
         """
         Initialize the APIG instance.  See APIG class documentation.
 
@@ -148,8 +148,8 @@ class APIG(object):
         # Assign attributes their values using their setters
         self.norbs = norbs
         self.npairs = npairs
-        self.coeffs = coeffs
         self.ham = ham
+        self.coeffs = coeffs
         self.pspace = pspace if pspace else self.generate_pspace()
 
     #
@@ -818,8 +818,6 @@ class APIG(object):
 
     @pspace.setter
     def pspace(self, value):
-        assert hasattr(value, "__iter__"), \
-            "The projection space must be iterable."
         for phi in value:
             bin_phi = bin(phi)[2:]
             # Pad `bin_phi` with zeroes on the left so that it is of even length
