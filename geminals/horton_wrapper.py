@@ -77,10 +77,10 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
 
     # RAp1rog only returns the "A" block from the [I|A]-shaped coefficient matrix
     guess = guess.lower()
-    if guess is "apig":
+    if guess == "apig":
         coeffs = np.eye(npairs, obasis.nbasis)
         coeffs[:, npairs:] += cblock._array
-    elif guess is "ap1rog":
+    elif guess == "ap1rog":
         coeffs = cblock._array
     else:
         raise NotImplementedError
