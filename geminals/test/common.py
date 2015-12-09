@@ -79,7 +79,8 @@ def run_tests():
 
     """
     options = _parse_test_options()
-    for fun in _common_tests:
+    while _common_tests:
+        fun = _common_tests.pop()
         try:
             run = getattr(fun, "_slowtest") and options["slow"]
         except AttributeError:
@@ -119,6 +120,43 @@ def raises_exception(fun, exception=Exception):
         return False
     else:
         return False
+
+
+def make_hermitian(matrix):
+    """
+    Make a matrix or 4-index tensor Hermitian.
+
+    Parameters
+    ----------
+    matrix: 2-index np.ndarray or 4-index np.ndarray
+        The matrix to be made Hermitian.
+
+    Returns
+    -------
+    hermitian: 2-index np.ndarray or 4-index np.ndarray
+        The Hermitian matrix.
+
+    Raises
+    ------
+    AssertionError
+        If the matrix is not square (or hypercubic).
+    TypeError
+        If the matrix is not a 2- or 4- index tensor.
+
+    """
+
+    assert np.allclose(*matrix.shape) and len(matrix.shape) % 2 == 0, \
+        "A non-square matrix cannot be made Hermitian."
+
+    hermitian = np.zeros(matrix.shape)
+    if len(matrix.shape) == 2:
+        hermitian += matrix + matrix.transpose()
+    elif len(matrix.shape) == 4:
+        hermitian += matrix + np.einsum("jilk", matrix)
+        hermitian += np.einsum("klij", hermitian)
+    else:
+        raise TypeError("Only two- and four- index tensors can be made Hermitian.")
+    return hermitian
 
 
 def is_singular(matrix, tol=1.0e-12):
