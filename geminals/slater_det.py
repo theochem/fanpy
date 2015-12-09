@@ -8,6 +8,15 @@ orbitals from which they are constructed
 
 """
 
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+
+def n_choose_k(n, r):
+    """
+    """
+    return np.math.factorial(n) / np.math.factorial(r) / np.math.factorial(n - r)
+
 def remove_orbs(bin_sd, *indices):
     """ Removes orbitals from Slater determinent specifies by indices
 
