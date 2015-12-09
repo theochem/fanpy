@@ -1,303 +1,171 @@
-#!/usr/bin/env python2
-
-""" Module for containing Slater determinant related things.
-
-It may be useful to create a Slaterdeterminant class that contains these binary
-representations of the Slater determinant and contains information on the
-orbitals from which they are constructed
+"""
+Functions for treatment of Slater determinants as binary integers.
 
 """
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
 
-def n_choose_k(n, r):
+def remove_orbs(phi, *indices):
     """
-    """
-    return np.math.factorial(n) / np.math.factorial(r) / np.math.factorial(n - r)
-
-def remove_orbs(bin_sd, *indices):
-    """ Removes orbitals from Slater determinent specifies by indices
+    Remove an electron from spin-orbitals in a Slater determinant.
 
     Parameters
     ----------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        Slater determinant
-
-    indices : list of int
-        List of indices that describes the orbital that will be removed
-        Start from 0
+    phi : int
+        An integer that, in binary representation, describes the Slater determinant.
+    indices : iterable of ints
+        Iterable of the indices of the orbitals from which an electron is to be removed.
 
     Returns
     -------
-    bin_sd : int
-        Integer that in binary form describes the Slater determinant that with
-        the specified orbitals removed
-        Zero if the selected orbitals are not occupied
+    phi : int
+
+    Notes
+    -----
+    Attempting to remove an electron from an unoccupied orbital annihilates the Slater
+    determinant.  This is represented by returning None.
+
     """
+
     for occ_index in indices:
-        if is_occupied(bin_sd, occ_index):
-            bin_sd &= ~(1 << occ_index)
+        if is_occupied(phi, occ_index):
+            phi &= ~(1 << occ_index)
         else:
             return None
-    return bin_sd
+    return phi
 
 
-def add_orbs(bin_sd, *indices):
-    """ Adds orbitals to Slater determinant specifies by indices
-
-    Parameters
-    ----------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        Slater determinant
-
-    indices : list of int
-        List of indices that describes the orbital that will be removed
-        Start from 0
-
-    Returns
-    -------
-    bin_sd : int
-        Integer that in binary form describes the Slater determinant that with
-        the specified orbitals removed
-        Zero if the selected orbitals are occupied
+def add_orbs(phi, *indices):
     """
-    for vir_index in indices:
-        if bin_sd is None or is_occupied(bin_sd, vir_index):
+    Add an electron to spin-orbitals in a Slater determinant.
+
+    See remove_orbs().
+
+    Notes
+    -----
+    Attempting to create an electron in an occupied orbital annihilates the Slater
+    determinant.  This is represented by returning None.
+
+    """
+
+    for virt_index in indices:
+        if phi is None or is_occupied(phi, virt_index):
             return None
         else:
-            bin_sd |= 1 << vir_index
-    return bin_sd
+            phi |= 1 << virt_index
+    return phi
 
 
-def excite_orbs(bin_sd, *indices):
-    """ Excites orbitals in Slater determinant
+def excite_orbs(phi, *indices):
+    """
+    Excite electrons in a Slater determinant.
 
-    Parameters
-    ----------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        Slater determinant
-
-    indices : list of int
-        First half contains the indices for the occupied orbitals
-        Second half contains the indices for the unoccupied orbitals
-        Occupied orbitals are replaced by the unoccupied orbitals
-        Start from 0
-
-    Returns
-    -------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        excited Slater determinant
+    See remove_orbs() and add_orbs().
 
     Raises
     ------
     AssertionError
-        If indices do not have even number of elements (i.e. cannot be divided
-        in half)
+        If indices do not have even number of elements (i.e., cannot be divided in half to
+        obtain an equal number of annihilation and creation indices).
+
     """
+
     assert (len(indices) % 2) == 0, \
         "An equal number of annihilations and creations must occur."
-    halfway = len(indices)//2
-    # Remove occupieds
-    bin_sd = remove_orbs(bin_sd, *indices[:halfway])
-    # Add virtuals
-    bin_sd = add_orbs(bin_sd, *indices[halfway:])
-    return bin_sd
+    frontier = len(indices) // 2
+    phi = remove_orbs(phi, *indices[:frontier])
+    phi = add_orbs(phi, *indices[frontier:])
+    return phi
 
 
-def remove_pairs(bin_sd, *indices):
-    """ Removes alpha and beta orbitals from Slater determinent specified by indices
-
-    Parameters
-    ----------
-    bin_sd : int
-        Integer that in binary form describes the spin orbitals used to make the
-        Slater determinant
-        Even indices from the right (starting from 0) describe the alpha orbitals
-        Odd indices from the right (starting from 0) describe the beta orbitals
-
-    indices : list of int
-        List of indices that describes the spatial orbital that will be removed
-        Start from 0
-
-    Returns
-    -------
-    bin_sd : int
-        Integer that in binary form describes the Slater determinant that with
-        the specified orbitals removed
-        Zero if the selected orbitals are not occupied
-
-    Example
-    -------
-    remove_pairs(bin_sd, 0) would remove the 0th spatial orbital, i.e. 0th and
-    1st spin orbital, or 0th alpha and 0th beta orbitals.
-
-    Note
-    ----
-    This code ASSUMES a certain structure for the Slater determinant indexing.
-    If the alpha and beta orbitals are ordered differently, then this code will
-    break
+def remove_pairs(phi, *indices):
     """
+    Remove an alpha/beta electron pair from spatial orbitals in a Slater determinant.
+
+    See remove_orbs().
+
+    """
+
     for spatial_index in indices:
-        alpha_index = spatial_index*2
-        beta_index = spatial_index*2 + 1
-        bin_sd = remove_orbs(bin_sd, alpha_index, beta_index)
-    return bin_sd
+        alpha_index = spatial_index * 2
+        beta_index = spatial_index * 2 + 1
+        phi = remove_orbs(phi, alpha_index, beta_index)
+    return phi
 
 
-def add_pairs(bin_sd, *indices):
-    """ Adds alpha and beta orbitals from Slater determinent specified by indices
-
-    Parameters
-    ----------
-    bin_sd : int
-        Integer that in binary form describes the spin orbitals used to make the
-        Slater determinant
-        Even indices from the right (starting from 0) describe the alpha orbitals
-        Odd indices from the right (starting from 0) describe the beta orbitals
-
-    indices : list of int
-        List of indices that describes the spatial orbital that will be added
-        Start from 0
-
-    Returns
-    -------
-    bin_sd : int
-        Integer that in binary form describes the Slater determinant that with
-        the specified orbitals addd
-        Zero if the selected orbitals are not occupied
-
-    Example
-    -------
-    add_pairs(bin_sd, 0) would add the 0th spatial orbital, i.e. 0th and
-    1st spin orbital, or 0th alpha and 0th beta orbitals.
-
-    Note
-    ----
-    This code ASSUMES a certain structure for the Slater determinant indexing.
-    If the alpha and beta orbitals are ordered differently, then this code will
-    break
+def add_pairs(phi, *indices):
     """
+    Remove an alpha/beta electron pair from spatial orbitals in a Slater determinant.
+
+    See add_orbs().
+
+    """
+
     for spatial_index in indices:
-        alpha_index = spatial_index*2
-        beta_index = spatial_index*2 + 1
-        bin_sd = add_orbs(bin_sd, alpha_index, beta_index)
-    return bin_sd
+        alpha_index = spatial_index * 2
+        beta_index = spatial_index * 2 + 1
+        phi = add_orbs(phi, alpha_index, beta_index)
+    return phi
 
 
-def excite_pairs(bin_sd, *indices):
-    """ Excites the alpha beta pairs of a Slater determinant
+def excite_pairs(phi, *indices):
+    """
+    Excite alpha/beta electron pairs in a Slater determinant.
 
-    Parameters
-    ----------
-    bin_sd : int
-        Integer that in binary form describes the spin orbitals used to make the
-        Slater determinant
-        Even indices from the right (starting from 0) describe the alpha orbitals
-        Odd indices from the right (starting from 0) describe the beta orbitals
-
-    indices : list of int
-        First half contains the indices for the occupied spatial orbitals
-        Second half contains the indices for the unoccupied spatial orbitals
-        Occupied spatial orbitals are replaced by the unoccupied spatial orbitals
-        Start from 0
-
-    Returns
-    -------
-    bin_sd : int
-        Integer that in binary form describes the spin orbitals used to make the
-        excited Slater determinant
-
-    Raises
-    ------
-    AssertionError
-        If indices do not have even number of elements (i.e. cannot be divided
-        in half)
-
-    Example
-    -------
-    excite_pairs(bin_sd, 0, 1) would replace the 0th spatial orbital with the
-    1st spatial orbital, i.e. 0th and 1st spin orbital, or 0th alpha and 0th
-    beta orbitals are replaced with the 2nd and 3rd spin orbitals, or the 1st
-    alpha and beta orbitals
-
-    Note
-    ----
-    This code ASSUMES a certain structure for the Slater determinant indexing.
-    If the alpha and beta orbitals are ordered differently, then this code will
-    break
+    See remove_pairs() and add_pairs().
 
     """
-    assert (len(indices) % 2) == 0, \
+
+    assert len(indices) % 2 == 0, \
         "An equal number of annihilations and creations must occur."
-    halfway = len(indices)//2
-    # Remove occupieds
-    bin_sd = remove_pairs(bin_sd, *indices[:halfway])
-    # Add virtuals
-    bin_sd = add_pairs(bin_sd, *indices[halfway:])
-    return bin_sd
+    frontier = len(indices) // 2
+    phi = remove_pairs(phi, *indices[:frontier])
+    phi = add_pairs(phi, *indices[frontier:])
+    return phi
 
 
-def is_occupied(bin_sd, orb_index):
-    """ Checks if orbital is used in the slater determinant
+def is_occupied(phi, index):
+    """
+    Check if a spin-orbital is occupied in a Slater determinant.
 
     Parameters
     ----------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        Slater determinant
-
-    orb_index : int
-        Index of the orbital that is checked
-        Starts from 0
+    phi : int
+        An integer that, in binary representation, describes the Slater determinant.
+    index : int
+        The index of the spin-orbital to check.
 
     Returns
     -------
-    bool
-        True if orbital is in SD
-        False if orbital is not in SD
+    occupancy : bool
+
     """
-    if bin_sd is None:
+
+    if phi is None:
         return None
     else:
-        return bool(bin_sd & (1 << orb_index))
+        return bool(phi & (1 << index))
 
 
-def is_pair_occupied(bin_sd, orb_index):
-    """ Checks if both alpha and beta orbital pair is used in the slater determinant
+def is_pair_occupied(phi, index):
+    """
+    Check if an alpha/beta orbital pair are both occupied in a slater determinant.
 
     Parameters
     ----------
-    bin_sd : int
-        Integer that in binary form describes the orbitals used to make the
-        Slater determinant
-
-    orb_index : int
-        Index of the spatial orbital that is checked
-        Starts from 0
+    phi : int
+        An integer that, in binary representation, describes the Slater determinant.
+    index : int
+        The index of the spatial orbital to check (spin-orbitals 2*index and
+        (2*index + 1) are checked).
 
     Returns
     -------
-    bool
-        True if both alpha and beta orbitals are in SD
-        False if not both alpha and beta orbitals are not in SD
+    occupancy : bool
 
-    Example
-    -------
-    is_pair_occupied(bin_sd, 0) would check if the 0th spatial orbital is included,
-    i.e. 0th and 1st spin orbitals, or 0th alpha and beta orbitals
-
-    Note
-    ----
-    This code ASSUMES a certain structure for the Slater determinant indexing.
-    If the alpha and beta orbitals are ordered differently, then this code will
-    break
     """
-    return is_occupied(bin_sd, 2*orb_index) and is_occupied(bin_sd, 2*orb_index+1)
+
+    return is_occupied(phi, 2 * index) and is_occupied(phi, 2 * index + 1)
 
 # vim: set textwidth=90 :

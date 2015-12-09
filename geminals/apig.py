@@ -1,10 +1,15 @@
-#!/usr/bin/env python2
+"""
+Geminal wavefunction classes.
+
+"""
 
 from __future__ import absolute_import, division, print_function
 from itertools import combinations, permutations
 import numpy as np
+from scipy.misc import comb
 from scipy.optimize import root
-from slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied, n_choose_k
+from geminals.slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied
+
 
 #
 # APIG class
@@ -333,7 +338,7 @@ class APIG(object):
         while len(pspace) < min_rank and ind_excited <= len(ind_occ):
             # Determine the smallest usable set of frontier (HOMO/LUMO) orbitals
             for i in range(2, len(ind_occ) + 1):
-                if n_choose_k(i, 2) ** 2 >= min_rank - len(pspace):
+                if comb(i, 2, exact=True) ** 2 >= min_rank - len(pspace):
                     nfrontier = i
                     break
             else:
@@ -530,7 +535,7 @@ class APIG(object):
             phi = self.ground
         if coeffs is None:
             assert self._coeffs_optimized, \
-               "The geminal coefficient matrix has not yet been optimized."
+                "The geminal coefficient matrix has not yet been optimized."
             coeffs = self._coeffs
 
         # Do the fast pairwise calculation if possible
@@ -664,7 +669,7 @@ class APIG(object):
 
         for d in range(x0.size - eqn_offset):
             objective[d + eqn_offset] = energy * self.overlap(pspace[d], coeffs) \
-                - sum(self.compute_energy(pspace[d], coeffs))
+                                        - sum(self.compute_energy(pspace[d], coeffs))
 
         return objective
 
@@ -753,9 +758,9 @@ class APIG(object):
     @norbs.setter
     def norbs(self, value):
         assert isinstance(value, int), \
-            "There can only be integral number of spatial orbitals"
+            "There can only be integral number of spatial orbitals."
         assert value >= self.npairs, \
-            "Number of spatial orbitals must be greater than the number of electron pairs"
+            "Number of spatial orbitals must be greater than the number of electron pairs."
 
         self._norbs = value
 
@@ -768,7 +773,7 @@ class APIG(object):
         if value is None:
             return
         elif len(value.shape) == 1:
-            assert value.size == self.npairs*self.norbs, \
+            assert value.size == self.npairs * self.norbs, \
                 "The guess `x0` is not the correct size for the geminal coefficient matrix."
             self._coeffs = value.reshape(self.npairs, self.norbs)
         else:
@@ -784,8 +789,7 @@ class APIG(object):
     @ham.setter
     def ham(self, value):
         assert (4 > len(value) > 1), \
-            "The specified `ham` is too long (2 or 3 elements expected, {} given.".format(
-                len(value))
+            "The specified `ham` is too long (2 or 3 elements expected, {} given.".format(len(value))
         assert isinstance(value[0], np.ndarray) and isinstance(value[1], np.ndarray), \
             "One- and two- electron integrals (ham[0:2]) must be NumPy arrays."
         if len(value) == 3:
@@ -846,6 +850,7 @@ class APIG(object):
         if self.core_energy:
             energies["core"] = self.core_energy
         return energies
+
 
 #
 # AP1roG class
@@ -1005,12 +1010,12 @@ class AP1roG(APIG):
                 return 0
             # If we're not deriving
             overlap = coeffs[from_index[0], to_index[0]] \
-                * coeffs[from_index[1], to_index[1]]
+                      * coeffs[from_index[1], to_index[1]]
             overlap -= coeffs[from_index[0], to_index[1]] \
-                * coeffs[from_index[1], to_index[0]]
+                       * coeffs[from_index[1], to_index[0]]
             return overlap
 
         # If something went wrong
-        raise Exception("A Slater det. was too excited for our AP1roG permanent algorithm to handle!")
+        raise Exception("The AP1roG implementation cannot handle pair excitations of higher order than 2.")
 
 # vim: set textwidth=90 :
