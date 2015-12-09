@@ -334,8 +334,8 @@ def test_energy():
     gem = APIG(npairs, norbs, ham, coeffs=coeffs)
     one_electron = 2 * (ham[0][0, 0] + ham[0][1, 1])
     two_electron = 4 * ham[1][0, 1, 0, 1] - 2 * ham[1][0, 1, 1, 0] \
-                   + ham[1][0, 0, 0, 0] + ham[1][1, 1, 1, 1] \
-                   + ham[1][0, 0, 2, 2] + ham[1][1, 1, 2, 2]
+        + ham[1][0, 0, 0, 0] + ham[1][1, 1, 1, 1] \
+        + ham[1][0, 0, 2, 2] + ham[1][1, 1, 2, 2]
 
     # Verify each energy computation backend
     actual_energy = one_electron + two_electron

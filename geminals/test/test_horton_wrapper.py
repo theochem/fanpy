@@ -9,5 +9,5 @@ def basic_test():
     from_horton(fn='test/h2.xyz', basis='3-21g', nocc=1)
 
 run_tests()
- 
+
 # vim: set textwidth=90 :

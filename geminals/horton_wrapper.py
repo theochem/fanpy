@@ -59,7 +59,7 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
              RDirectTerm(two, "hartree"),
              RExchangeTerm(two, "x_hf"),
              RTwoIndexTerm(na, "ne"),
-             ]
+            ]
     ham = REffHam(terms, external)
     guess_core_hamiltonian(olp, kin, na, orb)
 
@@ -90,6 +90,6 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
             "ham": (one_mo[0]._array, two_mo[0]._array, external["nn"]),
             "energy": energy,
             "coeffs": coeffs,
-            }
+           }
 
 # vim: set textwidth=90 :
