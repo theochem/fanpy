@@ -4,13 +4,13 @@ Unit tests for geminals.horton_wrapper.
 """
 
 from __future__ import absolute_import, division, print_function
-from test.common import *
-from horton_wrapper import ap1rog_from_horton
+from geminals.test.common import *
+from geminals.horton_wrapper import ap1rog_from_horton
 
 
 @test
 def basic_test():
-    ap1rog_from_horton(fn="test/h2.xyz", basis="3-21g", nocc=1)
+    ap1rog_from_horton(fn="test/h2.xyz", basis="3-21g", npairs=1)
 
 
 run_tests()
