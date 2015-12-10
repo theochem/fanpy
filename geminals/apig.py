@@ -1,5 +1,5 @@
 """
-Geminal wavefunction classes.
+APIG geminal wavefunction class.
 
 """
 
@@ -8,12 +8,8 @@ from itertools import combinations, permutations
 import numpy as np
 from scipy.misc import comb
 from scipy.optimize import root
-from geminals.slater_det import excite_orbs, excite_pairs, is_pair_occupied, is_occupied
+from geminals.slater_det import excite_orbs, excite_pairs, is_occupied, is_pair_occupied
 
-
-#
-# APIG class
-#
 
 class APIG(object):
     """
@@ -214,8 +210,7 @@ class APIG(object):
         solver_defaults.update(defaults["solver_opts"])
         x0 = defaults["x0"] if defaults["x0"] is not None else self._generate_x0()
         proj = defaults["proj"] if defaults["proj"] is not None else self.pspace
-        jac = defaults["jac"] if defaults["jac"] else self.nonlin_jac
-        jac = False
+        jac = self.nonlin_jac if defaults["jac"] else False
 
         # Handle projection space behaviour
         if self._exclude_ground:
@@ -225,23 +220,19 @@ class APIG(object):
             "The nonlinear system is underdetermined because the specified projection space is too small."
 
         # Run the solver
-        result = root(self.nonlin,
-                      x0,
-                      jac=jac,
-                      args=(proj,),
-                      options=solver_defaults,
-                     )
+        print("Optimizing geminal coefficients...")
+        result = root(self.nonlin, x0, jac=jac, args=(proj,), options=solver_defaults)
 
         # Update instance with optimized coefficients if successful, or else print a
         # warning
         if result["success"]:
             self.coeffs = result["x"]
             self._coeffs_optimized = True
+            print("Coefficient optimization was successful.")
         else:
             print("Warning: solution did not converge; coefficients were not updated.")
 
         # Display some information
-        print("Coefficient optimization was successful.")
         if defaults["verbose"]:
             print("Number of objective function evaluations: {}".format(result["nfev"]))
             if "njev" in result:
@@ -254,20 +245,21 @@ class APIG(object):
 
     def _generate_x0(self):
         """
-        Construct an initial guess at the optimal APIG geminal coefficients from AP1roG.
+        Construct an initial guess at the optimal APIG geminal coefficients.
 
         Returns
         -------
         x0 : 2-index np.ndarray
-            The optimized coefficients of the corresponding AP1roG instance.
+            The guess at the coefficients.
 
         """
 
-        print("Generating guess from AP1roG...")
-        gem = AP1roG(self.npairs, self.norbs, ham=self.ham)
-        gem.solve_coeffs()
-        print("AP1roG guess for APIG generated.")
-        return gem.coeffs.ravel()
+        params = self.npairs * (self.norbs - self.npairs)
+        params = 2.0 / np.around(10 * params, decimals=-1)
+        params = params * np.random.rand(self.npairs, self.norbs - self.npairs)
+        x0 = np.eye(self.npairs, M=self.norbs)
+        x0[:, self.npairs:] += params
+        return x0.ravel()
 
     def _construct_coeffs(self, x0):
         """
@@ -292,8 +284,8 @@ class APIG(object):
         """
         Generate an appropriate projection space.
 
-        (David's out-of-date) Notes
-        ---------------------------
+        Notes
+        -----
         We need to have an `npairs * norbs`-dimensional projection space.  First is the
         ground state HF slater determinant (using the first npair spatial orbitals) [1].
         Then, all single pair excitations from any occupieds to any virtuals (ordered HOMO
@@ -618,17 +610,20 @@ class APIG(object):
                 # Avoid repetition by ensuring  `j > i` is satisfied
                 for j in ind_occ[ind_first_occ + 1:]:
                     # Add indices `i` and `j` to `ind_virt` because excitation to same
-                    # orbital is possible, and avoid repetition by ensuring `l > k` is satisfied
+                    # orbital is possible, and avoid repetition by ensuring `l > k` is
+                    # satisfied
                     tmp_ind_virt_2 = sorted([j] + tmp_ind_virt_1[ind_first_virt + 1:])
                     for l in tmp_ind_virt_2:
                         double_excitation = excite_orbs(single_excitation, j, l)
                         overlap = self.overlap(double_excitation, coeffs)
                         if overlap == 0:
                             continue
-                        # In <ij|kl>, `i` and `k` must have the same spin, as must `j` and `l`
+                        # In <ij|kl>, `i` and `k` must have the same spin, as must
+                        # `j` and `l`
                         if i % 2 == k % 2 and j % 2 == l % 2:
                             coulomb += two[i // 2, j // 2, k // 2, l // 2] * overlap
-                        # In <ij|lk>, `i` and `l` must have the same spin, as must `j` and `k`
+                        # In <ij|lk>, `i` and `l` must have the same spin, as must
+                        # `j` and `k`
                         if i % 2 == l % 2 and j % 2 == k % 2:
                             exchange -= two[i // 2, j // 2, l // 2, k // 2] * overlap
 
@@ -848,172 +843,5 @@ class APIG(object):
         if self.core_energy:
             energies["core"] = self.core_energy
         return energies
-
-
-#
-# AP1roG class
-#
-
-class AP1roG(APIG):
-    """
-    A restricted antisymmetrized product of one reference orbital geminals ((R)AP1roG)
-    implementation.
-
-    See APIG class documentation.
-
-    """
-
-    #
-    # Class-wide (behaviour-changing) attributes and properties
-    #
-
-    _exclude_ground = True
-    _normalize = False
-
-    @property
-    def _row_indices(self):
-        return range(0, self.npairs)
-
-    @property
-    def _col_indices(self):
-        return range(self.npairs, self.norbs)
-
-    @property
-    def coeffs(self):
-        return self._coeffs
-
-    @coeffs.setter
-    def coeffs(self, value):
-        if value is None:
-            return
-        elif len(value.shape) == 1:
-            assert value.size == self.npairs * (self.norbs - self.npairs), \
-                "The guess `x0` is not the correct size for the geminal coefficient matrix."
-            coeffs = np.eye(self.npairs, M=self.norbs)
-            coeffs[:, self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
-            self._coeffs = coeffs
-        else:
-            assert value.shape == (self.npairs, self.norbs), \
-                "The specified geminal coefficient matrix must have shape (npairs, norbs)."
-            self._coeffs = value
-        self._coeffs_optimized = True
-
-    #
-    # Methods
-    #
-
-    def generate_pspace(self):
-        """
-        See APIG.generate_pspace().
-
-        """
-
-        ground = self.ground
-        pspace = [ground]
-
-        # Return a tuple of all unique pair excitations
-        for unoccup in range(self.npairs, self.norbs):
-            for i in range(self.npairs):
-                pspace.append(excite_pairs(ground, i, unoccup))
-        return tuple(set(pspace))
-
-    def _generate_x0(self):
-        """
-        Generates an appropriately-scaled random guess at the optimal geminal
-        coefficients.
-
-        Returns
-        -------
-        x0 : 1-index np.ndarray
-
-        """
-
-        params = self.npairs * (self.norbs - self.npairs)
-        return (2.0 / np.around(10 * params, decimals=-1)) * (np.random.rand(params) - 0.5)
-
-    def _construct_coeffs(self, x0):
-        """
-        See APIG._construct_coeffs().
-
-        """
-
-        coeffs = np.eye(self.npairs, M=self.norbs)
-        coeffs[:, self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
-        return coeffs
-
-    def overlap(self, phi, coeffs=None):
-        """
-        See APIG.overlap().
-
-        """
-
-        if coeffs is None:
-            assert self._coeffs_optimized, \
-                "The geminal coefficient matrix has not yet been optimized."
-            coeffs = self.coeffs
-
-        # If bad Slater determinant
-        if phi == 0:
-            return 0
-        elif phi not in self.pspace:
-            return 0
-
-        # If good Slater determinant, get the pair-excitation indices
-        from_index = []
-        to_index = []
-        excite_count = 0
-        for i in range(self.npairs):
-            if not is_pair_occupied(phi, i):
-                excite_count += 1
-                from_index.append(i)
-        for i in range(self.npairs, self.norbs):
-            if is_pair_occupied(phi, i):
-                to_index.append(i)
-
-        # If it's not excited
-        if excite_count == 0:
-            if self._overlap_derivative:
-                # If deriving wrt one of the diagonal entries of the identity block
-                if self._overlap_indices[0] == self._overlap_indices[1]:
-                    return 1
-                # If deriving wrt one of the non-diagonals of the identity block
-                return 0
-            # If not deriving
-            return 1
-
-        # If it's singly pair-excited
-        elif excite_count == 1:
-            if self._overlap_derivative:
-                # If the coefficient wrt which we are deriving appears in the permanent
-                if self._overlap_indices == (from_index[0], to_index[0]):
-                    return 1
-                # If it doesn't appear in the permanent
-                return 0
-            # If we're not deriving
-            return coeffs[from_index[0], to_index[0]]
-
-        # If it's doubly pair-excited
-        elif excite_count == 2:
-            if self._overlap_derivative:
-                # If the coefficient wrt which we are deriving appears in the permanent
-                if self._overlap_indices == (from_index[0], to_index[0]):
-                    return coeffs[from_index[1], to_index[1]]
-                elif self._overlap_indices == (from_index[1], to_index[1]):
-                    return coeffs[from_index[0], to_index[0]]
-                elif self._overlap_indices == (from_index[0], to_index[1]):
-                    return -coeffs[from_index[1], to_index[0]]
-                elif self._overlap_indices == (from_index[1], to_index[0]):
-                    return -coeffs[from_index[0], to_index[1]]
-                # If it doesn't appear in the permanent
-                return 0
-            # If we're not deriving
-            overlap = coeffs[from_index[0], to_index[0]] \
-                * coeffs[from_index[1], to_index[1]]
-            overlap -= coeffs[from_index[0], to_index[1]] \
-                * coeffs[from_index[1], to_index[0]]
-            return overlap
-
-        # If something went wrong
-        raise Exception("The AP1roG implementation cannot handle pair excitations of higher order than 2.")
 
 # vim: set textwidth=90 :

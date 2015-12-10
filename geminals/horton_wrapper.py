@@ -55,11 +55,12 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers, lf)
     two = obasis.compute_electron_repulsion(lf)
     external = {"nn": compute_nucnuc(mol.coordinates, mol.pseudo_numbers)}
-    terms = [RTwoIndexTerm(kin, "kin"),
-             RDirectTerm(two, "hartree"),
-             RExchangeTerm(two, "x_hf"),
-             RTwoIndexTerm(na, "ne"),
-            ]
+    terms = [
+        RTwoIndexTerm(kin, "kin"),
+        RDirectTerm(two, "hartree"),
+        RExchangeTerm(two, "x_hf"),
+        RTwoIndexTerm(na, "ne"),
+    ]
     ham = REffHam(terms, external)
     guess_core_hamiltonian(olp, kin, na, orb)
 
@@ -85,11 +86,12 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     else:
         raise NotImplementedError
 
-    return {"mol": mol,
-            "basis": obasis,
-            "ham": (one_mo[0]._array, two_mo[0]._array, external["nn"]),
-            "energy": energy,
-            "coeffs": coeffs,
-           }
+    return {
+        "mol": mol,
+        "basis": obasis,
+        "ham": (one_mo[0]._array, two_mo[0]._array, external["nn"]),
+        "energy": energy,
+        "coeffs": coeffs,
+    }
 
 # vim: set textwidth=90 :

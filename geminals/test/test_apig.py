@@ -164,6 +164,24 @@ def test_properties():
 
 
 @test
+def test_generate_x0_and_coeffs():
+    """
+    Test APIG._generate_x0() and APIG._construct_coeffs().
+
+    """
+
+    npairs = 3
+    norbs = 6
+    ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
+    gem = APIG(npairs, norbs, ham)
+    x0 = gem._generate_x0()
+    assert x0.shape == (x0.size,) == (npairs * norbs,)
+    coeffs = gem._construct_coeffs(x0)
+    assert coeffs.shape == (npairs, norbs)
+    assert np.allclose(x0, coeffs.ravel())
+
+
+@test
 def test_generate_pspace():
     """
     Test APIG.generate_pspace().
@@ -275,7 +293,7 @@ def test_overlap():
     # Partial derivative of overlap
     gem._overlap_derivative = True
 
-    # Differentiated cofficient's corresponds to occupied orbital
+    # Differentiated cofficient's column corresponds to occupied orbital
     gem._overlap_indices = (0, 1)
     assert 1.0 > gem.overlap(phi, coeffs) > 0.0
 
@@ -372,16 +390,16 @@ def test_solve():
 
     """
 
-    fn = 'test/h2.xyz'
-    basis = 'cc-pvdz'
-    npairs = 2
-    horton_result = ap1rog_from_horton(fn=fn, basis=basis, npairs=npairs, guess='apig')
-    horton_basis = horton_result['basis']
-    horton_ham = horton_result['ham']
-    horton_coeffs = horton_result['coeffs'].ravel()
+    fn = "test/h2.xyz"
+    basis = "cc-pvdz"
+    npairs = 1
+    horton_result = ap1rog_from_horton(fn=fn, basis=basis, npairs=npairs, guess="apig")
+    horton_basis = horton_result["basis"]
+    horton_ham = horton_result["ham"]
+    horton_coeffs = horton_result["coeffs"].ravel()
     gem = APIG(npairs, horton_basis.nbasis, horton_ham)
-    apig_result = gem.solve_coeffs(x0=horton_coeffs)
-    assert apig_result['success']
+    apig_result = gem.solve_coeffs(x0=horton_coeffs, verbose=True)
+    assert apig_result["success"]
 
 
 @test
