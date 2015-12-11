@@ -179,8 +179,6 @@ def test_solve():
     gem = AP1roG(npairs, horton_basis.nbasis, horton_ham)
     ap1rog_result = gem.solve_coeffs()
     assert ap1rog_result["success"]
-    print(horton_result["energy"], gem.energy)
-    print(gem.coeffs[:, npairs:], horton_coeffs)
     assert np.allclose(gem.coeffs[:, npairs:], horton_coeffs, atol=1.0e-3)
     assert np.allclose(horton_energy, gem.energy)
 
@@ -195,7 +193,7 @@ def test_nonlin_jac():
 
     fn = "test/h2.xyz"
     basis = "3-21g"
-    npairs = 2
+    npairs = 3
     horton_result = ap1rog_from_horton(fn=fn, basis=basis, npairs=npairs, guess="ap1rog")
     horton_basis = horton_result["basis"]
     horton_ham = horton_result["ham"]
@@ -203,8 +201,7 @@ def test_nonlin_jac():
     gem = AP1roG(npairs, horton_basis.nbasis, horton_ham)
     fun = lambda x: gem.nonlin(x, gem.pspace)
     jac = lambda x: gem.nonlin_jac(x, gem.pspace)
-    # Discard most values because romin thinks 0 != 0 (this is a bug in romin!)
-    deriv_check(fun, jac, x0, discard=0.8)
+    deriv_check(fun, jac, x0)
 
 
 run_tests()
