@@ -68,7 +68,8 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     guess_core_hamiltonian(olp, kin, na, orb)
 
     # Do Hartree-Fock SCF
-    PlainSCFSolver(1.0e-6)(ham, lf, olp, occ_model, orb)
+    if guess:
+        PlainSCFSolver(1.0e-6)(ham, lf, olp, occ_model, orb)
 
     # Get initial guess at energy, coefficients from AP1roG
     one = kin
@@ -83,7 +84,6 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     one_mo, two_mo = transform_integrals(one, two, "tensordot", orb)
 
     # RAp1rog only returns the "A" block from the [I|A]-shaped coefficient matrix
-    guess = guess.lower()
     if guess == "apig":
         coeffs = np.eye(npairs, obasis.nbasis)
         coeffs[:, npairs:] += cblock._array
