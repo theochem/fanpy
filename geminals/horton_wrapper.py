@@ -29,8 +29,8 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     npairs : int
         The number of occupied orbitals.
     guess : str, optional
-        The type of geminal coefficient matrix guess to return.  One of "apig" or
-        "ap1rog".  Defaults to "apig".
+        The type of geminal coefficient matrix guess to return.  One of "apig", "ap1rog",
+        or None.  Defaults to "apig".
 
     Returns
     -------
@@ -73,8 +73,11 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     # Get initial guess at energy, coefficients from AP1roG
     one = kin
     one.iadd(na)
-    ap1rog = RAp1rog(lf, occ_model)
-    energy, cblock = ap1rog(one, two, external["nn"], orb, olp, False)
+    if guess:
+        ap1rog = RAp1rog(lf, occ_model)
+        energy, cblock = ap1rog(one, two, external["nn"], orb, olp, False)
+    else:
+        energy = None
 
     # Transform the one- and two- electron integrals into the MO basis
     one_mo, two_mo = transform_integrals(one, two, "tensordot", orb)
@@ -87,7 +90,7 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     elif guess == "ap1rog":
         coeffs = cblock._array
     else:
-        raise NotImplementedError
+        coeffs = None
 
     return {
         "mol": mol,
