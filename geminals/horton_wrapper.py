@@ -41,7 +41,10 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     """
 
     # Load the molecule and basis set from file
-    mol = IOData.from_file(context.get_fn(fn))
+    try:
+        mol = IOData.from_file(fn)
+    except IOError:
+        mol = IOData.from_file(context.get_fn(fn))
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
 
     # Fill in the orbital expansion and overlap
