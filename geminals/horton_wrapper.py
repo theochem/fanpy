@@ -16,7 +16,7 @@ from horton.meanfield.observable import RDirectTerm, RExchangeTerm, RTwoIndexTer
 from horton.orbital_utils import transform_integrals
 
 
-def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
+def ap1rog_from_horton(fn=None, basis=None, npairs=None, scf=True, opt=False, guess="apig"):
     """
     Compute information about a molecule's AP1roG wavefunction with HORTON.
 
@@ -28,6 +28,10 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
         The basis set to use for the orbitals.
     npairs : int
         The number of occupied orbitals.
+    scf : bool
+        Whether to do a Hartree-Fock SCF.
+    opt : bool
+        Whether to optimize the orbitals using the vOO-AP1roG method.
     guess : str, optional
         The type of geminal coefficient matrix guess to return.  One of "apig", "ap1rog",
         or None.  Defaults to "apig".
@@ -68,7 +72,7 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     guess_core_hamiltonian(olp, kin, na, orb)
 
     # Do Hartree-Fock SCF
-    if guess:
+    if scf:
         PlainSCFSolver(1.0e-6)(ham, lf, olp, occ_model, orb)
 
     # Get initial guess at energy, coefficients from AP1roG
@@ -76,7 +80,8 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     one.iadd(na)
     if guess:
         ap1rog = RAp1rog(lf, occ_model)
-        energy, cblock = ap1rog(one, two, external["nn"], orb, olp, False)
+        ap1rog_result = ap1rog(one, two, external["nn"], orb, olp, opt)
+        energy, cblock = ap1rog_result[:2]
     else:
         energy = None
 
@@ -95,6 +100,7 @@ def ap1rog_from_horton(fn=None, basis=None, npairs=None, guess="apig"):
     return {
         "mol": mol,
         "basis": obasis,
+        "orb": orb.coeffs,
         "ham": (one_mo[0]._array, two_mo[0]._array, external["nn"]),
         "energy": energy,
         "coeffs": coeffs,
