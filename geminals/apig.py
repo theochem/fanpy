@@ -31,6 +31,10 @@ class APIG(object):
         The optimized geminal coefficient matrix.
     _coeffs_optimized : bool
         Whether the geminal coefficient matrix has already been optimized.
+    _is_complex : bool
+        Whether the geminal coefficient matrix is complex
+        Set to True if coeffs is complex
+        Forces coefficients to be complex if True
     pspace : iterable of ints.
         An iterable of integers that, in binary representation, describe the Slater
         determinants in the geminal wavefunction's projection space.
@@ -103,6 +107,13 @@ class APIG(object):
     spin orbitals are ordered by the alpha beta pairs).  The number of electrons is
     assumed to be even.
 
+    Behaviour for complex inputs
+    ----------------------------
+    If self._is_complex is True, then all self._coeffs assigned will be turned complex
+    If self._coeffs is assigned to a complex array, then self_is_complex will be
+    assigned True
+
+
     """
 
     #
@@ -124,9 +135,25 @@ class APIG(object):
     # Special methods
     #
 
-    def __init__(self, npairs, norbs, ham=None, coeffs=None, pspace=None):
-        """
-        Initialize the APIG instance.  See APIG class documentation.
+    def __init__(self, npairs, norbs, ham=None, coeffs=None, pspace=None, is_complex=False):
+        """ Initialize the APIG instance
+
+        Parameters
+        ----------
+        npairs : int
+            Number of electron pairs in the geminal wavefunction.
+        norbs : int
+            Number of spatial orbitals in the geminal wavefunction.
+        ham : tuple of a 2-index np.ndarray, a 4-index np.ndarray
+            The two- and four- electron integral Hamiltonian matrices in molecular
+            orbital basis
+        coeffs : np.ndarray(P,K)
+            Initial guess for the geminal coefficient matrix.
+        pspace : iterable of ints.
+            An iterable of integers that, in binary representation, describe the Slater
+            determinants in the geminal wavefunction's projection space.
+        is_complex : bool
+            Flag for complex coefficient matrix
 
         """
 
@@ -140,6 +167,7 @@ class APIG(object):
         self._core_energy = 0
         self._overlap_derivative = False
         self._overlap_indices = None
+        self._is_complex = is_complex
 
         # Assign attributes their values using their setters
         self.norbs = norbs
@@ -253,13 +281,16 @@ class APIG(object):
             The guess at the coefficients.
 
         """
-
-        params = self.npairs * (self.norbs - self.npairs)
-        params = 2.0 / np.around(10 * params, decimals=-1)
-        params = params * np.random.rand(self.npairs, self.norbs - self.npairs)
-        x0 = np.eye(self.npairs, M=self.norbs)
-        x0[:, self.npairs:] += params
-        return x0.ravel()
+        if not self._is_complex:
+            params = self.npairs * (self.norbs - self.npairs)
+            scale = 2.0 / np.around(10 * params, decimals=-1)
+            x0 = np.hstack((np.identity(self.npairs),
+                            scale*np.random.rand(self.npairs, self.norbs - self.npairs)))
+            return x0.ravel()
+        else:
+            x0 = self._generate_x0(is_complex=False)*1j
+            x0 += self._generate_x0(is_complex=False)
+            return x0
 
     def _construct_coeffs(self, x0):
         """
@@ -655,18 +686,20 @@ class APIG(object):
 
         # Handle differences in indexing between geminal methods
         eqn_offset = int(self._normalize)
-
         coeffs = self._construct_coeffs(x0)
         energy = sum(self.compute_energy(self.ground, coeffs))
         objective = np.zeros(x0.size)
-        if self._normalize:
-            objective[0] = self.overlap(self.ground, coeffs) - 1.0
+        if x0.dtype == 'float':
+            # intermediate normalization
+            if self._normalize:
+                objective[0] = self.overlap(self.ground, coeffs) - 1.0
+            for d in range(x0.size - eqn_offset):
+                objective[d + eqn_offset] = (energy*self.overlap(pspace[d], coeffs)
+                                             -sum(self.compute_energy(pspace[d], coeffs)))
+            return objective
+        elif x0.dtype == 'complex':
+            raise NotImplementedError
 
-        for d in range(x0.size - eqn_offset):
-            objective[d + eqn_offset] = energy * self.overlap(pspace[d], coeffs) \
-                - sum(self.compute_energy(pspace[d], coeffs))
-
-        return objective
 
     def nonlin_jac(self, x0, pspace):
         """
@@ -775,6 +808,10 @@ class APIG(object):
             assert value.shape == (self.npairs, self.norbs), \
                 "The specified geminal coefficient matrix must have shape (npairs, norbs)."
             self._coeffs = value
+        if self._coeffs.dtype == 'complex':
+            self._is_complex = True
+        elif self._is_complex:
+            self._coeffs += 0j
         self._coeffs_optimized = True
 
     @property
