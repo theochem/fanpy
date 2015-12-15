@@ -60,8 +60,9 @@ class APr2G(APIG):
 
         """
 
-        x0 = no idea how this works
-        return something
+        # This is NOT a good guess, it's a placeholder!
+        x0 = 2.0*(np.random.rand(2 * self.norbs + self.npairs) - 0.5)
+        return x0
 
     def _construct_coeffs(self, x0):
         """
@@ -75,59 +76,47 @@ class APr2G(APIG):
                 coeffs[i, j] = x0[j] / (x0[self.norbs + j] - x0[2 * self.norbs + i])
         return coeffs
 
-    def overlap(self, phi, coeffs=None):
+    @staticmethod
+    def permanent(matrix):
         """
-        See APIG.overlap().
+        Compute the permanent of a rank-two matrix, using Borchardt's theorem.
+
+        Parameters
+        ----------
+        matrix : 2-index np.ndarray
+            The rank-two matrix whose permanent is to be computed.
+
+        Returns
+        -------
+        permanent : float
 
         """
 
-        if coeffs is None:
-            assert self._coeffs_optimized, \
-                "The geminal coefficient matrix has not yet been optimized."
-            coeffs = self.coeffs
+        return np.linalg.det(matrix * matrix)/np.linalg.det(matrix)
 
-        # If bad Slater determinant
-        if phi == 0:
-            return 0
-        elif phi not in self.pspace:
-            return 0
+    @staticmethod
+    def permanent_derivative(matrix, i, j):
+        """
+        Compute the partial derivative of a permanent of a rank-two matrix with respect to
+        one of its coefficients, using Borchardt's theorem for permanent evaluation with
+        the Sherman-Morrison update formula for inverses of rank-one matrices.
 
-        # If good Slater determinant, get the pair-excitation indices
-        from_index = []
-        to_index = []
-        excite_count = 0
-        for i in range(self.npairs):
-            if not is_pair_occupied(phi, i):
-                excite_count += 1
-                from_index.append(i)
-        for i in range(self.npairs, self.norbs):
-            if is_pair_occupied(phi, i):
-                to_index.append(i)
+        Parameters
+        ----------
+        matrix : 2-index np.ndarray
+            The rank-two matrix whose permanent is to be computed.
+        i : int
+            `i` in the indices (i, j) of the coefficient with respect to which the partial
+            derivative is computed.
+        j : int
+            See `i`.  This is `j`.
 
-        # If it's not excited
-        if excite_count == 0:
-            # If deriving wrt one of the non-diagonals of the identity block
-            if self._overlap_derivative and self._overlap_indices[0] != self._overlap_indices[1]:
-                return 0
-            # If not deriving, or if deriving wrt a diagonal
-            return 1
+        Returns
+        -------
+        derivative : float
 
-        # If it's singly pair-excited
-        if excite_count == 1:
-            # If deriving
-            if self._overlap_derivative:
-                # If the coefficient wrt which we are deriving is substituted in
-                if self._overlap_indices == (from_index[0], to_index[0]):
-                    return 1
-                # If deriving wrt an element of the identity matrix
-                if self._overlap_indices[0] == self._overlap_indices[1]:
-                    return coeffs[from_index[0], to_index[0]]
-                # If deriving wrt another element
-                return 0
-            # If we're not deriving
-            return coeffs[from_index[0], to_index[0]]
+        """
 
-        # If something went wrong
-        raise ValueError("The AP1roG implementation cannot handle multiple pair excitations.")
+        pass
 
 # vim: set textwidth=90 :
