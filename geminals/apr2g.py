@@ -22,15 +22,8 @@ class APr2G(APIG):
     #
 
     _exclude_ground = False
+    _is_complex = True
     _normalize = True
-
-    @property
-    def _row_indices(self):
-        return range(0, self.npairs)
-
-    @property
-    def _col_indices(self):
-        return range(0, self.norbs)
 
     @property
     def params(self):
@@ -136,18 +129,18 @@ class APr2G(APIG):
         else:
             # Here, we try to solve Ax = 0 where
             # A
-            A = np.array([])
+            A = np.zeros((0, 2*model_coeffs.shape[0] + model_coeffs.shape[1]))
             for row_ind, row in enumerate(model_coeffs):
-                temp = np.array([])
+                temp = np.empty((model_coeffs.shape[1], 0))
                 # temporary column of ones
                 temp_col_ones = np.zeros(model_coeffs.T.shape)
                 temp_col_ones[:, row_ind] = 1
                 # coefficients for zetas
-                temp = temp.hstack((temp, temp_col_ones))
+                temp = np.hstack((temp, temp_col_ones))
                 # coefficients for epsilons
-                temp = temp.hstack((temp, -temp_col_ones*row.reshape(row.size, 1)))
+                temp = np.hstack((temp, -temp_col_ones*row.reshape(row.size, 1)))
                 # coefficients for lambdas
-                temp = temp.hstack((temp, np.identity(-row)))
+                temp = np.hstack((temp, np.diag(-row)))
                 A = np.vstack((A, temp))
             # b
             b = np.zeros((A.shape[0], 1))
@@ -181,7 +174,7 @@ class APr2G(APIG):
 
         if self.norbs <= self.npairs + 2:
             # Use APIG's generate_pspace()
-            return super().generate_pspace(self)
+            return super(APr2G, self).generate_pspace()
 
         ground = self.ground
         pspace = [ground]
