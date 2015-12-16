@@ -287,7 +287,7 @@ class APIG(object):
         scale = 0.2 / params
         def scaled_random():
             random_nums = scale*(np.random.rand(self.npairs, self.norbs-self.npairs)-0.5)
-            return random_nums.ravel()
+            return random_nums
         if not self._is_complex:
             x0 = np.hstack((np.identity(self.npairs), scaled_random()))
             return x0.ravel()

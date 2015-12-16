@@ -41,16 +41,26 @@ class AP1roG(APIG):
     def coeffs(self, value):
         if value is None:
             return
-        elif len(value.shape) == 1:
+        elif len(value.shape) == 1 and not self._is_complex:
             assert value.size == self.npairs * (self.norbs - self.npairs), \
                 "The guess `x0` is not the correct size for the geminal coefficient matrix."
-            coeffs = np.eye(self.npairs, M=self.norbs)
-            coeffs[:, self.npairs:] += value.reshape(self.npairs, self.norbs - self.npairs)
-            self._coeffs = coeffs
+            self._coeffs = np.hstack((np.identity(self.npairs),
+                                      value.reshape(self.npairs, self.norbs-self.npairs)))
+        elif len(value.shape) == 1 and self._is_complex:
+            assert value.size == 2*self.npairs*(self.norbs-self.npairs), \
+                "The guess `x0` is not the correct size for the geminal coefficient matrix."
+            coeffs_real = value[:value.size/2].reshape(self.npairs, self.norbs-self.npairs)
+            coeffs_imag = value[value.size/2:].reshape(self.npairs, self.norbs-self.npairs)
+            self._coeffs = np.hstack((np.identity(self.npairs),
+                                      coeffs_real+coeffs_imag*1j))
         else:
             assert value.shape == (self.npairs, self.norbs), \
                 "The specified geminal coefficient matrix must have shape (npairs, norbs)."
             self._coeffs = value
+        if self._coeffs.dtype == 'complex':
+            self._is_complex = True
+        elif self._is_complex:
+            self._coeffs += 0j
         self._coeffs_optimized = True
 
     #
@@ -62,10 +72,17 @@ class AP1roG(APIG):
         See APIG._generate_x0().
 
         """
-
         params = self.npairs * (self.norbs - self.npairs)
-        scale = 2.0 / np.around(10 * params, decimals=-1)
-        return scale * (np.random.rand(params) - 0.5)
+        scale = 0.2 / params
+        def scaled_random():
+            random_nums = scale*(np.random.rand(self.npairs, self.norbs-self.npairs)-0.5)
+            return random_nums.ravel()
+        if not self._is_complex:
+            return scaled_random()
+        else:
+            x0_real = scaled_random()
+            x0_imag = scaled_random()
+            return np.hstack((x0_real, x0_imag))
 
     def generate_pspace(self):
         """
@@ -87,9 +104,20 @@ class AP1roG(APIG):
         See APIG._construct_coeffs().
 
         """
-
-        coeffs = np.eye(self.npairs, M=self.norbs)
-        coeffs[:, self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
+        if not self._is_complex:
+            coeffs = np.eye(self.npairs, M=self.norbs)
+            coeffs[:, self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
+        else:
+            coeffs = np.eye(self.npairs, M=self.norbs, dtype='complex')
+            # Instead of dividing coeffs into a real and imaginary part and adding
+            # them, we add the real part to the imaginary part
+            # Imaginary part is assigned first because this forces the numpy array
+            # to be complex
+            coeffs[:, self.npairs:] += 1j*(x0[x0.size/2:]).reshape(self.npairs,
+                                                                  self.norbs-self.npairs)
+            # Add the real part
+            coeffs[:, self.npairs:] += (x0[:x0.size/2]).reshape(self.npairs,
+                                                                self.norbs-self.npairs)
         return coeffs
 
     def overlap(self, phi, coeffs=None):
