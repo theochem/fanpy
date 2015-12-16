@@ -33,6 +33,16 @@ class APr2G(APIG):
         return range(0, self.norbs)
 
     @property
+    def params(self):
+        return self._params
+
+    @params.setter
+    def params(self, value):
+        assert len(value) == value.shape[0] == 2 * self.norbs + self.npairs, \
+            "The `params` (zeta|epsilon|lambda)^T should be of length (2K + P)."
+        self._params = value
+
+    @property
     def coeffs(self):
         return self._coeffs
 
@@ -40,14 +50,9 @@ class APr2G(APIG):
     def coeffs(self, value):
         if value is None:
             return
-        elif len(value.shape) == 1:
-            assert value.size == (2 * self.norbs + self.npairs), \
-                "The guess `x0` is not the correct size for the geminal coefficient matrix."
-            self._coeffs = self._construct_coeffs(value)
-        else:
-            assert value.shape == (self.npairs, self.norbs), \
-                "The specified geminal coefficient matrix must have shape (npairs, norbs)."
-            self._coeffs = value
+        assert len(value) == value.shape[0] == 2 * self.norbs + self.npairs, \
+            "APr2G coefficients can only be constructed from the parameters."
+        self._coeffs = self._construct_coeffs(value)
         self._coeffs_optimized = True
 
     #
@@ -162,47 +167,142 @@ class APr2G(APIG):
                 coeffs[i, j] = x0[j] / (x0[self.norbs + j] - x0[2 * self.norbs + i])
         return coeffs
 
-    @staticmethod
-    def permanent(matrix):
+    def overlap(self, phi, coeffs=None):
         """
-        Compute the permanent of a rank-two matrix, using Borchardt's theorem.
+        Compute the overlap of the APr2G wavefunction with a Slater determinant (or its
+        derivative wrt one of the Borchardt parameters), using Borchardt's
+        theorem and Jacobi's formula
 
         Parameters
         ----------
-        matrix : 2-index np.ndarray
-            The rank-two matrix whose permanent is to be computed.
+        phi : int
+            The Slater determinant (the int's binary representation) whose overlap with
+            the APr2G wavefunction is to be computed.
+
+        coeffs : 1-index np.ndarray, optional
+            In APr2G (and *only* in APr2G), the keyword argument `coeffs` represents the
+            parameters vector (zeta|epsilon|lambda)^T.  Defaults to the APr2G instance's
+            optimized parameters.
 
         Returns
         -------
-        permanent : float
+        overlap : float
+
+        Raises
+        ------
+        AssertionError
+            If `coeffs` is not given, but the coefficients have not yet been optimized.
 
         """
 
-        return np.linalg.det(matrix * matrix)/np.linalg.det(matrix)
+        if coeffs is None:
+            assert self._coeffs_optimized, \
+                "The geminal coefficeint matrix has not yet been optimized."
+            coeffs = self.params
 
-    @staticmethod
-    def permanent_derivative(matrix, i, j):
-        """
-        Compute the partial derivative of a permanent of a rank-two matrix with respect to
-        one of its coefficients, using Borchardt's theorem for permanent evaluation with
-        the Sherman-Morrison update formula for inverses of rank-one matrices.
+        # If the Slater determinant is bad
+        if phi == 0:
+            return 0
+        elif phi not in self.pspace:
+            return 0
 
-        Parameters
-        ----------
-        matrix : 2-index np.ndarray
-            The rank-two matrix whose permanent is to be computed.
-        i : int
-            `i` in the indices (i, j) of the coefficient with respect to which the partial
-            derivative is computed.
-        j : int
-            See `i`.  This is `j`.
+        # If the Slater det. and geminal wavefcuntion have a different number of electrons
+        elif bin(phi).count("1") != self.nelec:
+            return 0
 
-        Returns
-        -------
-        derivative : float
+        # If the Slater determinant is non-singlet
+        elif any(is_occupied(phi, i * 2) != is_occupied(phi, i * 2 + 1) for i in range(self.norbs)):
+            return 0
 
-        """
+        ind_occ = [i for i in range(self.norbs) if is_pair_occupied(phi, i)]
 
-        pass
+        # Debug
+        assert len(ind_occ) == self.npairs, \
+            "A Slater determinant with the wrong number of electrons made it through."
+
+        # Construct the square coefficient matrix, its Hadamard square, and their
+        # determinants
+        matrix = self._construct_coeffs(coeffs)[:, ind_occ]
+        det_matrix = np.linalg.det(matrix)
+        hadamard = matrix**2
+        det_hadamard = np.linalg.det(hadamard)
+
+        # If taking the derivative
+        if self._overlap_derivative:
+
+            # Evaluate the inverses of the matrix and its Hadamard square
+            inv_matrix = np.linalg.inv(matrix)
+            inv_hadamard = np.linalg.inv(hadamard)
+
+            # Take the derivative of `matrix` and `hadamard` wrt a parameter in
+            # (\zeta_j, \epsilon_j, \lambda_i) using Jacobi's formula
+            deriv_matrix = np.zeros(self.npairs, self.npairs)
+            deriv_hadamard = np.zeros(self.npairs, self.npairs)
+
+            # d(X)/d(\zeta_j)
+            if self._overlap_indices < self.norbs:
+                # Turn the _`overlap_indices` into the correct `j`
+                j_deriv = self._overlap_indices
+                for i in range(self.npairs):
+                    for j in range(self.npairs):
+                        zeta_j = coeffs[ind_occ[j]]
+                        epsilon_j = coeffs[self.norbs + ind_occ[j]]
+                        lambda_i = coeffs[2 * self.norbs + ind_occ[i]]
+                        # \zeta_j appears in the matrix element
+                        if j == j_deriv:
+                            deriv_matrix[i, j] = 1 / (epsilon_j - lambda_i)
+                            deriv_hadamard[i, j] = 2 * zeta_j / ((epsilon_j - lambda_i)**2)
+                        # \zeta_j does not appear in the matrix element
+                        else:
+                            deriv_matrix[i, j] = 0.
+                            deriv_hadamard[i, j] = 0.
+
+            # d(X)/d(\epsilon_j)
+            elif self._overlap_indices < 2 * self.norbs:
+                # Turn the _`overlap_indices` into the correct `j`
+                j_deriv = self._overlap_indices - self.norbs
+                for i in range(self.npairs):
+                    for j in range(self.npairs):
+                        zeta_j = coeffs[ind_occ[j]]
+                        epsilon_j = coeffs[self.norbs + ind_occ[j]]
+                        lambda_i = coeffs[2 * self.norbs + ind_occ[i]]
+                        # \epsilon_j appears in the matrix element
+                        if j == j_deriv:
+                            deriv_matrix[i, j] = -zeta_j / ((epsilon_j - lambda_i)**2)
+                            deriv_hadamard[i, j] = -2 * (zeta_j**2) / ((epsilon_j - lambda_i)**3)
+                        # \epsilon_j does not appear in the matrix element
+                        else:
+                            deriv_matrix[i, j] = 0.
+                            deriv_hadamard[i, j] = 0.
+
+            # d(X)/d(\lambda_i)
+            else:
+                i_deriv = self._overlap_indices - 2 * self.norbs
+                # Turn the _`overlap_indices` into the correct `i`
+                for i in range(self.npairs):
+                    for j in range(self.npairs):
+                        zeta_j = coeffs[ind_occ[j]]
+                        epsilon_j = coeffs[self.norbs + ind_occ[j]]
+                        lambda_i = coeffs[2 * self.norbs + ind_occ[i]]
+                        # \lambda_i appears in the matrix element
+                        if i == i_deriv:
+                            deriv_matrix[i, j] = zeta_j / ((epsilon_j - lambda_i)**2)
+                            deriv_hadamard[i, j] = 2 * (zeta_j**2) / ((epsilon_j - lambda_i)**3)
+                        # \lambda_i does not appear in the matrix element
+                        else:
+                            deriv_matrix[i, j] = 0.
+                            deriv_hadamard[i, j] = 0.
+
+            # Evaluate d(permanent)/dq
+            overlap = np.trace(inv_hadamard.dot(deriv_hadamard))
+            overlap -= np.trace(deriv_matrix.dot(inv_matrix))
+            overlap *= det_hadamard / det_matrix
+
+        # If not taking the derivative
+        else:
+            # Evaluate the permanent by Borchardt's theorem
+            overlap = det_hadamard / det_matrix
+
+        return overlap
 
 # vim: set textwidth=90 :
