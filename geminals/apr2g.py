@@ -167,6 +167,31 @@ class APr2G(APIG):
                 coeffs[i, j] = x0[j] / (x0[self.norbs + j] - x0[2 * self.norbs + i])
         return coeffs
 
+    def generate_pspace(self):
+        """
+        See APIG.generate_pspace().
+
+        Notes
+        -----
+        If K > P + 2, then AP1roG has more free parameters than APr2G, and AP1roG's
+        generate_pspace() can also be used to AP2rG.  However, if K <= P + 2, then APr2G
+        has more free parameters than AP1roG, and APIG's generate_pspace() must be used.
+
+        """
+
+        if self.norbs <= self.npairs + 2:
+            # Use APIG's generate_pspace()
+            return super().generate_pspace(self)
+
+        ground = self.ground
+        pspace = [ground]
+
+        # Return a tuple of all unique pair excitations
+        for unoccup in range(self.npairs, self.norbs):
+            for i in range(self.npairs):
+                pspace.append(excite_pairs(ground, i, unoccup))
+        return tuple(set(pspace))
+
     def overlap(self, phi, coeffs=None):
         """
         Compute the overlap of the APr2G wavefunction with a Slater determinant (or its
