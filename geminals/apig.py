@@ -244,8 +244,10 @@ class APIG(object):
         if self._exclude_ground:
             proj = list(proj)
             proj.remove(self.ground)
-        assert len(proj) >= len(x0), \
-            "The nonlinear system is underdetermined because the specified projection space is too small."
+        assert ((len(proj) >= x0.size/2 and self._is_complex) or
+                (len(proj) >= x0.size and not self._is_complex)), \
+            ("The nonlinear system is underdetermined because the specified"
+             " projection space is too small.")
 
         # Run the solver
         print("Optimizing geminal coefficients...")
@@ -277,24 +279,26 @@ class APIG(object):
 
         Returns
         -------
-        x0 : 2-index np.ndarray
+        x0 : 1-index np.ndarray
             The guess at the coefficients.
 
         """
+        params = self.npairs * (self.norbs - self.npairs)
+        scale = 0.2 / params
+        def scaled_random():
+            random_nums = scale*(np.random.rand(self.npairs, self.norbs-self.npairs)-0.5)
+            return random_nums.ravel()
         if not self._is_complex:
-            params = self.npairs * (self.norbs - self.npairs)
-            scale = 2.0 / np.around(10 * params, decimals=-1)
-            x0 = np.hstack((np.identity(self.npairs),
-                            scale*np.random.rand(self.npairs, self.norbs - self.npairs)))
+            x0 = np.hstack((np.identity(self.npairs), scaled_random()))
             return x0.ravel()
         else:
-            x0 = self._generate_x0(is_complex=False)*1j
-            x0 += self._generate_x0(is_complex=False)
-            return x0
+            x0_real = np.hstack((np.identity(self.npairs), scaled_random())).ravel()
+            x0_imag = np.hstack((np.identity(self.npairs), scaled_random())).ravel()
+            return np.hstack((x0_real, x0_imag))
 
     def _construct_coeffs(self, x0):
         """
-        Construct a geminal coefficient matrix from a guess `x0`.
+
 
         Parameters
         ----------
@@ -307,8 +311,17 @@ class APIG(object):
             `x0` as a coefficient matrix.
 
         """
-
-        coeffs = x0.reshape(self.npairs, self.norbs)
+        coeffs = None
+        if not self._is_complex:
+            coeffs = x0.reshape(self.npairs, self.norbs)
+        else:
+            # Instead of dividing coeffs into a real and imaginary part and adding
+            # them, we add the real part to the imaginary part
+            # Imaginary part is assigned first because this forces the numpy array
+            # to be complex
+            coeffs = (x0[x0.size//2:]).reshape(self.npairs, self.norbs)*1j
+            # Add the real part
+            coeffs += (x0[:x0.size//2]).reshape(self.npairs, self.norbs)
         return coeffs
 
     def generate_pspace(self):
@@ -683,23 +696,39 @@ class APIG(object):
             The objective function of the nonlinear system.
 
         """
-
         # Handle differences in indexing between geminal methods
-        eqn_offset = int(self._normalize)
+        eqn_offset = int(self._normalize)*(int(self._is_complex)+1)
         coeffs = self._construct_coeffs(x0)
         energy = sum(self.compute_energy(self.ground, coeffs))
         objective = np.zeros(x0.size)
-        if x0.dtype == 'float':
+        if not self._is_complex:
             # intermediate normalization
             if self._normalize:
                 objective[0] = self.overlap(self.ground, coeffs) - 1.0
             for d in range(x0.size - eqn_offset):
                 objective[d + eqn_offset] = (energy*self.overlap(pspace[d], coeffs)
                                              -sum(self.compute_energy(pspace[d], coeffs)))
-            return objective
-        elif x0.dtype == 'complex':
-            raise NotImplementedError
-
+        else:
+            # Not too sure what to do here
+            # Either make the real part = 1
+            #if self._normalize:
+            #    objective[0] = self.overlap(self.ground, coeffs) - 1.0
+            # Or make the norm = 1
+            #if self._normalize:
+            #    objective[0] = np.absolute(self.overlap(self.ground, coeffs) - 1.0)
+            # Or make real part = 1, imag part = 0
+            if self._normalize:
+                objective[0] = np.real(self.overlap(self.ground, coeffs)-1)
+                objective[1] = np.imag(self.overlap(self.ground, coeffs))
+            for d in range((x0.size - eqn_offset)//2):
+                # Complex
+                comp_eqn = (energy*self.overlap(pspace[d], coeffs)
+                            -sum(self.compute_energy(pspace[d], coeffs)))
+                # Real part
+                objective[(d+0) + eqn_offset] = np.real(comp_eqn)
+                # Imaginary part
+                objective[(d+x0.size//2) + eqn_offset] = np.imag(comp_eqn)
+        return objective
 
     def nonlin_jac(self, x0, pspace):
         """
@@ -713,13 +742,12 @@ class APIG(object):
         """
 
         # Handle differences in indexing between geminal methods
-        eqn_offset = int(self._normalize)
+        eqn_offset = int(self._normalize) + int(self._is_complex)
 
         # Initialize Jacobian and some temporary values
         # (J)_dij = d(F_d)/d(c_ij)
-        jac = np.zeros((x0.size, x0.size))
-        energy_tmp = np.zeros(x0.size)
         coeffs = self._construct_coeffs(x0)
+        jac = np.zeros((x0.size, x0.size))
 
         # The objective functions {F_d} are of this form:
         # F_d = (d<phi0|H|psi>/dc_ij)*<phi'|psi>/dc_ij
@@ -727,8 +755,14 @@ class APIG(object):
 
         # Compute the undifferentiated parts
         energy = sum(self.compute_energy(self.ground, coeffs))
-        for d in range(x0.size):
-            energy_tmp[d] = self.overlap(pspace[d], coeffs)
+        if not self._is_complex:
+            energy_tmp = np.zeros(x0.size)
+            for d in range(x0.size):
+                energy_tmp[d] = self.overlap(pspace[d], coeffs)
+        else:
+            energy_tmp = np.zeros(x0.size//2)
+            for d in range(x0.size//2):
+                energy_tmp[d] = self.overlap(pspace[d], coeffs)
 
         # Overwrite APIG.overlap()-related attributes in order to take the correct partial
         # derivatives
@@ -737,15 +771,29 @@ class APIG(object):
         for i in self._row_indices:
             for j in self._col_indices:
                 self._overlap_indices = (i, j)
-                if self._normalize:
-                    jac[0, count] = self.overlap(self.ground, coeffs)
-                # Compute the differentiated parts and construct the whole Jacobian
-                for d in range(x0.size - eqn_offset):
-                    jac[d + eqn_offset, count] = \
-                        sum(self.compute_energy(self.ground, coeffs)) \
-                        * energy_tmp[d] \
-                        + energy * self.overlap(pspace[d], coeffs) \
-                        - sum(self.compute_energy(pspace[d], coeffs))
+                if not self._is_complex:
+                    if self._normalize:
+                        jac[0, count] = self.overlap(self.ground, coeffs)
+                    # Compute the differentiated parts and construct the whole Jacobian
+                    for d in range(x0.size - eqn_offset):
+                        jac[d + eqn_offset, count] = \
+                            sum(self.compute_energy(self.ground, coeffs)) \
+                            * energy_tmp[d] \
+                            + energy * self.overlap(pspace[d], coeffs) \
+                            - sum(self.compute_energy(pspace[d], coeffs))
+                else:
+                    if self._normalize:
+                        derivative = self.overlap(self.ground, coeffs)
+                        jac[0, count] = np.real(derivative)
+                        jac[1, count] = np.imag(derivative)
+                    # Compute the differentiated parts and construct the whole Jacobian
+                    for d in range((x0.size-eqn_offset)//2):
+                        derivative = (sum(self.compute_energy(self.ground, coeffs))
+                                      *energy_tmp[d]
+                                      +energy*self.overlap(pspace[d], coeffs)
+                                      -sum(self.compute_energy(pspace[d], coeffs)))
+                        jac[d+eqn_offset, count] = np.real(derivative)
+                        jac[d+eqn_offset+x0.size//2, count+x0.size//2] = np.imag(derivative)
                 count += 1
 
         # Replace the original APIG.overlap()-attributes and return the Jacobian
@@ -800,10 +848,16 @@ class APIG(object):
     def coeffs(self, value):
         if value is None:
             return
-        elif len(value.shape) == 1:
+        elif len(value.shape) == 1 and not self._is_complex:
             assert value.size == self.npairs * self.norbs, \
                 "The guess `x0` is not the correct size for the geminal coefficient matrix."
             self._coeffs = value.reshape(self.npairs, self.norbs)
+        elif len(value.shape) == 1 and self._is_complex:
+            assert value.size == 2*self.npairs*self.norbs, \
+                "The guess `x0` is not the correct size for the geminal coefficient matrix."
+            coeffs_real = value[:value.size/2].reshape(self.npairs, self.norbs)
+            coeffs_imag = value[value.size/2:].reshape(self.npairs, self.norbs)
+            self._coeffs = coeffs_real+coeffs_imag*1j
         else:
             assert value.shape == (self.npairs, self.norbs), \
                 "The specified geminal coefficient matrix must have shape (npairs, norbs)."
