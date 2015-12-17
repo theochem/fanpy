@@ -359,8 +359,11 @@ class APIG(object):
 
         """
 
+        # Will there be complex coefficients?
+        complex_mod = 2 if self._is_complex else 1
+
         # Find the minimum rank of a non-underdetermined system
-        min_rank = self.npairs * self.norbs + int(self._exclude_ground)
+        min_rank = complex_mod * (self.npairs * self.norbs + int(self._exclude_ground))
 
         # Find the ground state and occupied/virtual indices
         ground = self.ground
@@ -390,7 +393,7 @@ class APIG(object):
 
         # Add single excitations (necessary for systems with less than two electron pairs
         # and probably for some minimal basis set cases) by exciting betas to alphas
-        if self.npairs <= 2:
+        if self.npairs <= complex_mod * 2:
             for i in ind_occ:
                 for j in ind_virt:
                     pspace.append(excite_orbs(ground, i * 2 + 1, j * 2))
