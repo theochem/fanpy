@@ -6,7 +6,7 @@ APr2G geminal wavefunction class.
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from geminals.apig import APIG
-from geminals.slater_det import excite_pairs, is_pair_occupied
+from geminals.slater_det import excite_pairs, is_occupied, is_pair_occupied
 
 
 class APr2G(APIG):
@@ -125,7 +125,7 @@ class APr2G(APIG):
 
         # This is NOT a good guess, it's a placeholder!
         if model_coeffs is None:
-            x0 = 2.0*(np.random.rand(2 * self.norbs + self.npairs) - 0.5)
+            x0 = 2.0*(np.random.rand(2*(2 * self.norbs + self.npairs)) - 0.5)
         else:
             # Here, we try to solve Ax = 0 where
             # A
@@ -172,8 +172,9 @@ class APr2G(APIG):
 
         """
 
-        if self.norbs <= self.npairs + 2:
+        if True: #self.norbs <= self.npairs + 2:
             # Use APIG's generate_pspace()
+            self._is_complex = True
             return super(APr2G, self).generate_pspace()
 
         ground = self.ground
@@ -217,6 +218,8 @@ class APr2G(APIG):
             assert self._coeffs_optimized, \
                 "The geminal coefficeint matrix has not yet been optimized."
             coeffs = self.params
+
+        coeffs = self._params
 
         # If the Slater determinant is bad
         if phi == 0:
@@ -322,5 +325,46 @@ class APr2G(APIG):
             overlap = det_hadamard / det_matrix
 
         return overlap
+
+    def nonlin(self, x0, pspace):
+        """
+        Construct the nonlinear system of equation which will be used to optimize the
+        geminal coefficients.
+
+        Parameters
+        ----------
+        x0 : 1-index np.ndarray
+            A guess at the optimal geminal coefficients.
+
+        pspace : iterable of ints
+            Iterable of integers that, in binary, describes which spin orbitals are used
+            to build the Slater determinant.
+
+        Returns
+        -------
+        objective : 1-index np.ndarray
+            The objective function of the nonlinear system.
+
+        """
+        # Handle differences in indexing between geminal methods
+        coeffs = self._construct_coeffs(x0)
+        self._params = x0
+        energy = sum(self.compute_energy(self.ground, coeffs))
+        objective = np.zeros(x0.size)
+        objective[0] = np.real(self.overlap(self.ground, coeffs) - 1)
+        objective[1] = np.imag(self.overlap(self.ground, coeffs))
+        d_index = 0
+        o_index = 2
+        while o_index < objective.size:
+            # Complex
+            comp_eqn = (energy*self.overlap(pspace[d_index], coeffs)
+                        -sum(self.compute_energy(pspace[d_index], coeffs)))
+            # Real part
+            objective[o_index] = np.real(comp_eqn)
+            # Imaginary part
+            objective[o_index + 1] = np.imag(comp_eqn)
+            d_index += 1
+            o_index += 2
+        return objective
 
 # vim: set textwidth=90 :
