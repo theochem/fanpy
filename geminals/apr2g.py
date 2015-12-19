@@ -58,8 +58,8 @@ class APr2G(APIG):
         If model_coeffs is given, we try to find a set of coefficients such that
         is as closely satisfied as possible, using least squares method
         ..math::
-            C_{ij} &= \frac{\zeta_i}{\epsilon_i + \lambda_j}\\
-            0 &= \zeta_i - C_{ij} \epsilon_i - C_{ij} \lambda_j\\
+            C_{ij} &= \frac{\zeta_j}{\epsilon_j + \lambda_i}\\
+            0 &= \zeta_j - C_{ij} \epsilon_j - C_{ij} \lambda_i\\
         This is a set of linear equations. These equations will be solved by least
         squares method.
 
@@ -67,23 +67,23 @@ class APr2G(APIG):
         and the unknowns are
         ..math::
             x = \begin{bmatrix}
-            \zeta_1 \\ \vdots\\ \zeta_P\\
-            \epsilon_1 \\ \vdots\\ \epsilon_P\\
-            \lambda_1 \\ \vdots\\ \lambda_K\\
+            \zeta_1 \\ \vdots\\ \zeta_K\\
+            \epsilon_1 \\ \vdots\\ \epsilon_K\\
+            \lambda_1 \\ \vdots\\ \lambda_P\\
             \end{bmatrix},
         then A must be
         ..math::
             A = \begin{bmatrix}
-            1 & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 & -C_{11} & 0 \dots & 0\\
-            1 & 0 & \dots & 0 & -C_{12} & 0 & \dots & 0 & 0 & -C_{12} & \dots & 0\\
-            \vdots & & & & & & & & & & &\\
-            1 & 0 & \dots & 0 & -C_{1K} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{1K}\\
-            0 & 1 & \dots & 0 & 0 & -C_{2K} & \dots & 0 & -C_{21} & 0 \dots & 0\\
-            \vdots & & & & & & & & & & &\\
-            0 & 1 & \dots & 0 & 0 & -C_{2K} & \dots & 0 & 0 & 0 & \dots & -C_{2K}\\
-            \vdots & & & & & & & & & & &\\
-            0 & 0 & \dots & 1 & 0 & 0 & \dots & -C_{P1} & -C_{P1} & 0 \dots & 0\\
-            \vdots & & & & & & & & & & &\\
+            1 & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0\\
+            0 & 1 & \dots & 0 & 0 & -C_{12} & \dots & 0 & -C_{12} & 0 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+            0 & 0 & \dots & 1 & 0 & 0 & \dots & -C_{1K} & -C_{1K} & 0 & \dots & 0\\
+            1 & 0 & \dots & 0 & -C_{21} & 0 & \dots & 0 & 0 & -C_{21} & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+            0 & 0 & \dots & 1 & 0 & 0 & \dots & -C_{2K} & 0 & -C_{2K} & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+            1 & 0 & \dots & 0 & -C_{P1} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{PK}\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
             0 & 0 & \dots & 1 & 0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & -C_{PK}\\
             \end{bmatrix}
 
@@ -105,21 +105,21 @@ class APr2G(APIG):
 
         ..math::
             A = \begin{bmatrix}
-            1 & 0 & -C_{11} & 0 & -C_{11} & 0 & 0 & 0\\
-            1 & 0 & -C_{12} & 0 & 0 & -C_{12} & 0 & 0\\
-            1 & 0 & -C_{13} & 0 & 0 & 0 & -C_{13} & 0\\
-            1 & 0 & -C_{14} & 0 & 0 & 0 & 0 & -C_{14}\\
-            0 & 1 & 0 & -C_{21} & -C_{21} & 0 & 0 & 0\\
-            0 & 1 & 0 & -C_{22} & 0 & -C_{22} & 0 & 0\\
-            0 & 1 & 0 & -C_{23} & 0 & 0 & -C_{23} & 0\\
-            0 & 1 & 0 & -C_{24} & 0 & 0 & 0 & -C_{24}\\
+            1 & 0 & 0 & 0 & -C_{11} & 0 & 0 & 0 & -C_{11} & 0\\
+            0 & 1 & 0 & 0 & 0 & -C_{12} & 0 & 0 & -C_{12} & 0\\
+            0 & 0 & 1 & 0 & 0 & 0 & -C_{13} & 0 & -C_{13} & 0\\
+            0 & 0 & 0 & 1 & 0 & 0 & 0 & -C_{14} & -C_{14} & 0\\
+            1 & 0 & 0 & 0 & -C_{21} & 0 & 0 & 0 & 0 & -C_{21} \\
+            0 & 1 & 0 & 0 & 0 & -C_{22} & 0 & 0 & 0 & -C_{22} \\
+            0 & 0 & 1 & 0 & 0 & 0 & -C_{23} & 0 & 0 & -C_{23} \\
+            0 & 0 & 0 & 1 & 0 & 0 & 0 & -C_{24} & 0 & -C_{24} \\
             \end{bmatrix}
 
         ..math::
             x = \begin{bmatrix}
-            \zeta_1 \\ \zeta_2\\
-            \epsilon_1 \\ \epsilon_2\\
-            \lambda_1 \\ \lambda_2 \\ \lambda_3 \\ \lambda_4\\
+            \zeta_1 \\ \zeta_2\\ \zeta_3 \\ \zeta_4\\
+            \epsilon_1 \\ \epsilon_2\\ \epsilon_3\\ \epsilon_4\\
+            \lambda_1 \\ \lambda_2 \\
             \end{bmatrix}
         """
 
@@ -129,23 +129,56 @@ class APr2G(APIG):
         else:
             # Here, we try to solve Ax = 0 where
             # A
-            A = np.zeros((0, 2*model_coeffs.shape[0] + model_coeffs.shape[1]))
+            A = np.empty((0, 2*model_coeffs.shape[1] + model_coeffs.shape[0]))
             for row_ind, row in enumerate(model_coeffs):
                 temp = np.empty((model_coeffs.shape[1], 0))
-                # temporary column of ones
-                temp_col_ones = np.zeros(model_coeffs.T.shape)
-                temp_col_ones[:, row_ind] = 1
                 # coefficients for zetas
-                temp = np.hstack((temp, temp_col_ones))
+                temp = np.hstack((temp, np.identity(row.size)))
                 # coefficients for epsilons
-                temp = np.hstack((temp, -temp_col_ones*row.reshape(row.size, 1)))
+                temp = np.hstack((temp, -row*np.identity(row.size)))
                 # coefficients for lambdas
-                temp = np.hstack((temp, np.diag(-row)))
+                temp_zeros = np.zeros(model_coeffs.T.shape)
+                temp_zeros[:, row_ind] = row
+                temp = np.hstack((temp, temp_zeros))
                 A = np.vstack((A, temp))
             # b
             b = np.zeros((A.shape[0], 1))
-            # Ax = b, solve for x by least squares
-            x0 = np.linalg.lstsq(A, b)
+            # Select method here
+            method = 'set variables'
+            if method == 'svd':
+                # Ax = b, solve for x by svd
+                u, s, vT = np.linalg.svd(A)
+                # Select here
+                n = 5
+                assert np.all(s[-n:] < 0.1)
+                b = np.vstack([np.ones((model_coeffs.shape[1], 1)),
+                               np.sort(np.random.rand(model_coeffs.shape[1], 1)*100),
+                               np.random.rand(model_coeffs.shape[0], 1)])
+                lin_comb = np.linalg.lstsq(vT[-n:-1].T, b)[0]
+                print(vT[-n:].T)
+                x0 = vT[-n:-1].T.dot(lin_comb)
+            elif method == 'set variables':
+                # Turn equation heterogeneous (Set one variables)
+                # Select indices here
+                indices = list(range(model_coeffs.shape[0]))
+                indices += [model_coeffs.shape[1], model_coeffs.shape[1]*2-1]
+                row_indices = np.zeros(np.prod(model_coeffs.shape)).astype(bool)
+                for i in indices:
+                    row_indices[i::model_coeffs.shape[1]] = True
+                var_indices = np.zeros(model_coeffs.shape[1]*2 + model_coeffs.shape[0]).astype(bool)
+                var_indices[indices] = True
+                # Select values here
+                var_values = np.array([1]*model_coeffs.shape[0] + [1, 100])
+                b[row_indices, 0] -= np.sum(A[:, var_indices]*var_values, axis=1)[row_indices]
+                x0 = np.zeros(A.shape[1])
+                x0[var_indices] = var_values
+                x0[-var_indices] = np.linalg.lstsq(A[:, -var_indices], b)[0]
+                x0 = x0.reshape((A.shape[1], 1))
+            else:
+                x0 = np.linalg.lstsq(A, b)[0]
+        lambdas = x0[model_coeffs.shape[1]*2:]
+        epsilons = x0[model_coeffs.shape[1]:model_coeffs.shape[1]+model_coeffs.shape[0]]
+        assert np.all(epsilons-lambdas > 1e-9)
         return x0
 
     def _construct_coeffs(self, x0):
