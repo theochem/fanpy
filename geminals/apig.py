@@ -913,8 +913,8 @@ class APIG(object):
             bin_phi = ("0" * (len(bin_phi) % 2)) + bin_phi
             assert bin_phi.count("1") == self.nelec, \
                 "Slater det. {} does not contain the same number of occupied spin-orbitals as number of electrons.".format(bin_phi)
-            # if self.npairs > 2:
-            assert bin_phi[0::2] == bin_phi[1::2], \
+            # For systems with more than 2 electron pairs, pair wise excitations are enough to generate the pspace
+            assert bin_phi[0::2] == bin_phi[1::2] or self.npairs <= 2, \
                 "Slater det. {} is unrestricted.".format(bin_phi)
             index_last_spin = len(bin_phi) - 1 - bin_phi.index("1")
             index_last_spatial = index_last_spin // 2
