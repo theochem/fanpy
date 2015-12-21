@@ -52,7 +52,7 @@ class APr2G(APIG):
     # Methods
     #
 
-    def _generate_x0(self, model_coeffs=None):
+    def _generate_x0(self, model_coeffs=None, energy_first=1, energy_last=100):
         """ Generates an initial guess
 
         If model_coeffs is given, we try to find a set of coefficients such that
@@ -168,7 +168,7 @@ class APr2G(APIG):
                 var_indices = np.zeros(model_coeffs.shape[1]*2 + model_coeffs.shape[0]).astype(bool)
                 var_indices[indices] = True
                 # Select values here
-                var_values = np.array([1]*model_coeffs.shape[0] + [1, 100])
+                var_values = np.array([1]*model_coeffs.shape[0] + [energy_first, energy_last])
                 b[row_indices, 0] -= np.sum(A[:, var_indices]*var_values, axis=1)[row_indices]
                 x0 = np.zeros(A.shape[1])
                 x0[var_indices] = var_values
@@ -176,6 +176,8 @@ class APr2G(APIG):
                 x0 = x0.reshape((A.shape[1], 1))
             else:
                 x0 = np.linalg.lstsq(A, b)[0]
+            diff = (np.sum(((model_coeffs - self._construct_coeffs(x0))/model_coeffs.size)**2))**0.5
+            print('Difference with the initial coefficient: {0}'.format(diff))
         lambdas = x0[model_coeffs.shape[1]*2:]
         epsilons = x0[model_coeffs.shape[1]:model_coeffs.shape[1]+model_coeffs.shape[0]]
         assert np.all(epsilons-lambdas > 1e-9)
