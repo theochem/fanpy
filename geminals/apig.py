@@ -473,19 +473,7 @@ class APIG(object):
             rows[0], rows[i] = rows[i], rows[0]
         if j is not 0:
             cols[0], cols[j] = cols[j], cols[0]
-
-        # Get values of the permutations that include the coefficient (i,j) by
-        # multiplying along left- and right- hand diagonals, wrapping around where
-        # necessary.  Don't actually include coeff (i,j) since it is differentiated out.
-        left = matrix.shape[1] - 1
-        right = 1
-        prod_l = prod_r = 1
-        for row in range(1, matrix.shape[0]):
-            prod_l *= matrix[rows, :][:, cols][row, left]
-            prod_r *= matrix[rows, :][:, cols][row, right]
-            left -= 1
-            right += 1
-        return prod_l + prod_r
+        return APIG.permanent(matrix[rows[1:], :][:, cols[1:]])
 
     def overlap(self, phi, coeffs=None):
         """
