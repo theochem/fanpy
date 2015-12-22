@@ -21,8 +21,8 @@ class FancyCI(object):
     norbs : int
         Number of spin orbitals in the wavefunction.
     ham : tuple of a 2-index np.ndarray, a 4-index np.ndarray
-        The two- and four- electron integral Hamiltonian matrices in spatial
-        molecular orbital basis.
+        The two- and four- electron integral Hamiltonian matrices in spatial or
+        spin molecular orbital basis.
     params : np.ndarray(M,)
         Parameters that control the behaviour of the function
     pspace : iterable of ints.
@@ -96,7 +96,7 @@ class FancyCI(object):
     #
 
     def __init__(self, nelec, norbs, ham, init_params=None, pspace=None,
-                 is_complex=False, ham_is_spatial=True):
+                 is_complex=False, is_spatial=True):
         """
         Initialize the ProjSchrMethod instance.
 
@@ -116,8 +116,8 @@ class FancyCI(object):
             determinants in the wavefunction's projection space.
         is_complex : bool
             Flag for complex coefficient matrix
-        ham_is_spatial : bool
-            Flag for integrals in spatial molecular orbital basis
+        is_spatial : bool
+            Flag for spatial molecular orbital basis
 
         """
         # Initialize private variables
@@ -134,11 +134,21 @@ class FancyCI(object):
         self.pspace = pspace if pspace else self.generate_pspace()
         # Flags
         self._is_complex = is_complex
-        self._ham_is_spatial = ham_is_spatial
+        self._is_spatial = is_spatial
 
     #
     # Properties
     #
+
+    @property
+    def offset_spatial(self):
+        """ Corrects number of orbitals when they are spatial
+
+        """
+        if self._is_spatial:
+            return 2
+        else:
+            return 1
 
     @property
     def nelec(self):
@@ -160,7 +170,7 @@ class FancyCI(object):
             "The number of electrons must be an integer."
         assert value > 0, \
             "The number of electrons must be greater than zero."
-        assert value <= self.norbs, \
+        assert value <= self.norbs*self.offset_spatial, \
             "The number of electrons must be less or equal to the number of spin orbitals."
         self._nelec = value
 
@@ -192,7 +202,7 @@ class FancyCI(object):
         assert isinstance(value, int) and value > 0, \
             "Number of spatial orbitals must be a positive integer."
         assert value >= self.nelec, \
-            "Number of spatial orbitals must be greater than the number of electron pairs."
+            "Number of spatial orbitals must be greater than the number of electrons."
         self._norbs = value
 
     @property
@@ -288,10 +298,9 @@ class FancyCI(object):
                 ("Slater det. {0} does not contain the same number of occupied"
                  " spin-orbitals as number of electrons.".format(bin_phi))
             index_last_spin = len(bin_phi) - 1 - bin_phi.index("1")
-            index_last_spatial = index_last_spin // 2
-            assert index_last_spatial < self.norbs, \
+            assert index_last_spin < self.norbs*self.offset_spatial, \
                 ("Slater det. {0} contains orbitals whose indices exceed the"
-                 " specified number of spatial orbitals.".format(bin_phi))
+                 " specified number of orbitals.".format(bin_phi))
         self._pspace = tuple(value)
 
     @property
@@ -338,9 +347,9 @@ class FancyCI(object):
         # Find the ground state and occupied/virtual indices
         ground = self.ground_sd
         pspace = [ground]
-        ind_occ = [i for i in range(self.norbs) if is_occupied(ground, i)]
+        ind_occ = [i for i in range(self.norbs*self.offset_spatial) if is_occupied(ground, i)]
         ind_occ.reverse()  # reverse ordering to put HOMOs first
-        ind_vir = [i for i in range(self.norbs) if not is_occupied(ground, i)]
+        ind_vir = [i for i in range(self.norbs*self.offset_spatial) if not is_occupied(ground, i)]
         # Add Single excitations
         for i in ind_occ:
             for j in ind_vir:
@@ -365,7 +374,7 @@ class FancyCI(object):
 
         """
         num_params = self.params.size
-        scale = 0.2 / params
+        scale = 0.2 / num_params
         def scaled_random():
             random_nums = scale*(np.random.rand(num_params)-0.5)
             random_nums[0] = 1
@@ -507,10 +516,10 @@ class FancyCI(object):
         # Set divisor
         # One if hamiltonian is epxressed wrt spin orbitals
         # Two if hamiltonian is expressed wrt spatial orbitals
-        div = int(self._ham_is_spatial)+1
+        div = int(self._is_spatial)+1
         # Get spin indices
-        ind_occ = [i for i in range(2*self.norbs) if is_occupied(phi, i)]
-        ind_vir = [i for i in range(2*self.norbs) if not is_occupied(phi, i)]
+        ind_occ = [i for i in range(self.norbs*self.offset_spatial) if is_occupied(phi, i)]
+        ind_vir = [i for i in range(self.norbs*self.offset_spatial) if not is_occupied(phi, i)]
 
         for i in ind_occ:
             ind_first_vir = 0
