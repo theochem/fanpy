@@ -120,9 +120,12 @@ class FancyCI(object):
             Flag for spatial molecular orbital basis
 
         """
+        # Flags
+        self._is_complex = is_complex
+        self._is_spatial = is_spatial
         # Initialize private variables
-        self._nelec = None
-        self._norbs = None
+        self._nelec = nelec
+        self._norbs = norbs
         self._ham = None
         self._params = None
         self._pspace = None
@@ -130,11 +133,8 @@ class FancyCI(object):
         self.nelec = nelec
         self.norbs = norbs
         self.ham = ham
-        self.params = init_params
-        self.pspace = pspace if pspace else self.generate_pspace()
-        # Flags
-        self._is_complex = is_complex
-        self._is_spatial = is_spatial
+        self.params = init_params if init_params is not None else self._generate_init()
+        self.pspace = pspace if pspace is not None else self.generate_pspace()
 
     #
     # Properties
@@ -290,6 +290,7 @@ class FancyCI(object):
             as the number of electrons
             If given Slater determinant is expressed wrt an orbital that doesn't exist
         """
+        assert hasattr(value, '__iter__')
         for phi in value:
             bin_phi = bin(phi)[2:]
             # Pad `bin_phi` with zeroes on the left so that it is of even length
@@ -307,7 +308,7 @@ class FancyCI(object):
     def energy(self):
         """ Total energy of the system
         """
-        return sum(self.compute_energy()) + self.core_energy
+        return sum(self.compute_energy(self.ground_sd, self.params)) + self.core_energy
 
     @property
     def energies(self):
@@ -363,9 +364,14 @@ class FancyCI(object):
             "generate_pspace() is making duplicate Slater determinants.  This shouldn't happen!"
         return tuple(pspace)
 
-    def _generate_init(self):
+    def _generate_init(self, num_params=None):
         """
         Construct an initial guess
+
+        Parameters
+        ----------
+        num_params : int
+            Number of parameters
 
         Returns
         -------
@@ -373,7 +379,9 @@ class FancyCI(object):
             Guess at the parameters
 
         """
-        num_params = self.params.size
+        if num_params is None:
+            # FIXME: This doesn't really matter, but I needed it to run the tests
+            num_params = self.norbs
         scale = 0.2 / num_params
         def scaled_random():
             random_nums = scale*(np.random.rand(num_params)-0.5)
@@ -438,6 +446,7 @@ class FancyCI(object):
         ------
         NotImplementedError
         """
+        assert 0 <= index < params.size
         raise NotImplementedError
 
     def overlap(self, phi, params, differentiate_wrt=None):
@@ -464,9 +473,6 @@ class FancyCI(object):
             return 0
         # If the Slater det. and wavefuntion have a different number of electrons
         elif bin(phi).count("1") != self.nelec:
-            return 0
-        # If Slater determinant is outside of projection space
-        elif phi not in self.pspace:
             return 0
         elif differentiate_wrt is None:
             return self.the_function(params, phi)
