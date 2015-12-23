@@ -139,6 +139,16 @@ class FancyCI(object):
     #
     # Properties
     #
+    @property
+    def num_params(self):
+        """ Number of parameters needed
+
+        Note
+        ----
+        Arbitrary here. Number of orbitals was used because some number was needed to run the tests
+        """
+        # FIXME: Need to get rid of arbitrary num_params here. Should be replaced with a NotImplementedError
+        return self.norbs
 
     @property
     def offset_spatial(self):
@@ -224,9 +234,8 @@ class FancyCI(object):
         """
         assert isinstance(value, np.ndarray) and len(value.shape) == 1,\
             'Parameters must be given as a one dimensional numpy array'
-        if self.params is not None:
-            assert self.params.size == value.size or 2*self.params.size == value.size,\
-                'Given parameters do not match the size of the stored parameters'
+        assert value.size == self.norbs,\
+            'Number of given parameters is different from the number of parameters needed'
         if self._is_complex and 2*self.params.size == value.size:
             self._params = np.hstack((np.real(value), np.imag(value)))
         else:
@@ -342,7 +351,7 @@ class FancyCI(object):
         Raises
         ------
         AssertionError
-            
+            If duplicate Slater determinants were generated
         """
 
         # Find the ground state and occupied/virtual indices
@@ -364,14 +373,9 @@ class FancyCI(object):
             "generate_pspace() is making duplicate Slater determinants.  This shouldn't happen!"
         return tuple(pspace)
 
-    def _generate_init(self, num_params=None):
+    def _generate_init(self):
         """
         Construct an initial guess
-
-        Parameters
-        ----------
-        num_params : int
-            Number of parameters
 
         Returns
         -------
@@ -379,12 +383,9 @@ class FancyCI(object):
             Guess at the parameters
 
         """
-        if num_params is None:
-            # FIXME: This doesn't really matter, but I needed it to run the tests
-            num_params = self.norbs
-        scale = 0.2 / num_params
+        scale = 0.2 / self.num_params
         def scaled_random():
-            random_nums = scale*(np.random.rand(num_params)-0.5)
+            random_nums = scale*(np.random.rand(self.num_params)-0.5)
             random_nums[0] = 1
             return random_nums
         if not self._is_complex:
@@ -664,32 +665,27 @@ class FancyCI(object):
                     jac[i+eqn_offset+x0.size//2, j+x0.size//2] = np.imag(derivative)
         return jac
 
-    def solve_coeffs(self, **kwargs):
+    def solve_params(self, **kwargs):
         """
-        Optimize the geminal coefficients.
+        Optimize the parameters
 
         Parameters
         ----------
-        kwargs : dict, optional
-            The options whose defaults should be overridden.  See "Defaults" section.
-
-        Defaults
-        --------
         x0 : 1-index np.ndarray, optional
-            An initial guess at the optimal geminal coefficient matrix.  Has shape equal
-            to APIG.coeffs.ravel().  Defaults to the optimized coefficients of the
-            corresponding AP1roG instance.
-        proj : indexable of ints, optional
-            The user can opt to specify the projection space used to construct the
-            nonlinear system.  Defaults to the class' own projection space generator (see
-            `cls.generate_pspace`).
+            An initial guess at the optimal parameters.
+            Defaults to `cls._generate_init()`
+        pspace : iterable of ints, optional
+            Projection space used to construct the nonlinear equations
+            Defaults to `cls.generate_pspace`
         jac : bool, optional
             Whether to use the Jacobian to solve the nonlinear system.  This is, at a low
             level, the choice of whether to use MINPACK's hybrdj (True) or hybrd (False)
-            subroutines for Powell's method.  Defaults to True.
+            subroutines for Powell's method.
+            Defaults to True.
         solver_opts : dict, optional
             Additional options to pass to the internal solver, which is SciPy's interface
-            to MINPACK.  See scipy.optimize.root.  Defaults to some sane choices.
+            to MINPACK.  See scipy.optimize.root.
+            Defaults to xatol=1.0e-12, method="hybr"
         verbose : bool, optional
             Whether to print information about the optimization after its termination.
             Defaults to False.
@@ -708,8 +704,8 @@ class FancyCI(object):
 
         # Specify and override default options
         defaults = {
-            "x0": None,
-            "proj": None,
+            "init_guess": None,
+            "pspace": None,
             "jac": True,
             "solver_opts": {},
             "verbose": False,
@@ -720,22 +716,22 @@ class FancyCI(object):
             "method": "hybr",
         }
         solver_defaults.update(defaults["solver_opts"])
-        x0 = defaults["x0"] if defaults["x0"] is not None else self._generate_x0()
-        proj = defaults["proj"] if defaults["proj"] is not None else self.pspace
+        x0 = defaults["x0"] if defaults["x0"] is not None else self._generate_init()
+        pspace = defaults["pspace"] if defaults["pspace"] is not None else self.pspace
         jac = self.nonlin_jac if defaults["jac"] else False
 
-        # Handle projection space behaviour
+        # Handle projeection space behaviour
         if self._exclude_ground:
-            proj = list(proj)
-            proj.remove(self.ground_sd)
-        assert ((len(proj) >= x0.size/2 and self._is_complex) or
-                (len(proj) >= x0.size and not self._is_complex)), \
+            pspace = list(pspace)
+            pspace.remove(self.ground_sd)
+        assert ((len(pspace) >= x0.size/2 and self._is_complex) or
+                (len(pspace) >= x0.size and not self._is_complex)), \
             ("The nonlinear system is underdetermined because the specified"
              " projection space is too small.")
 
         # Run the solver
-        print("Optimizing geminal coefficients...")
-        result = root(self.nonlin, x0, jac=jac, args=(proj,), options=solver_defaults)
+        print("Optimizing {0} parameters...".format(self.__class__.__name__))
+        result = root(self.nonlin, x0, jac=jac, args=(pspace,), options=solver_defaults)
 
         # Update instance with optimized coefficients if successful, or else print a
         # warning
