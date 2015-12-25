@@ -79,7 +79,7 @@ def run_tests():
 
     """
     options = _parse_test_options()
-    while _common_tests:
+    while reversed(_common_tests):
         fun = _common_tests.pop()
         try:
             run = getattr(fun, "_slowtest") and options["slow"]
