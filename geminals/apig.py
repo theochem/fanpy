@@ -134,7 +134,7 @@ class APIG(FancyCI):
         """ Number of parameters needed
 
         """
-        return self.npairs*self.norbs
+        return self.npairs*self.norbs*self.offset_complex
 
     @property
     def npairs(self):
@@ -516,6 +516,15 @@ class APIG(FancyCI):
         NotImplementedError
         """
         assert 0 <= index < params.size
+        if self._is_complex:
+            # Instead of dividing params into a real and imaginary part and adding
+            # them, we add the real part to the imaginary part
+            # Imaginary part is assigned first because this forces the numpy array
+            # to be complex
+            temp_params = 1j*params[params.size//2:]
+            # Add the real part
+            temp_params += params[:params.size//2]
+            params = temp_params
         i, j = np.unravel_index(index, (self.npairs, self.norbs))
         if is_pair_occupied(elec_config, j):
             matrix = params.reshape(self.npairs, self.norbs)

@@ -221,7 +221,7 @@ class FancyCI(object):
         """
         assert isinstance(value, int) and value > 0, \
             "Number of spatial orbitals must be a positive integer."
-        assert value >= self.nelec, \
+        assert value*self.offset_spatial >= self.nelec, \
             "Number of spatial orbitals must be greater than the number of electrons."
         self._norbs = value
 
