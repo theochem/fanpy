@@ -52,7 +52,7 @@ class FancyCI(object):
     -------
     __init__
         Initialize the ProjSchrMethod instance.
-    solve_coeffs
+    solve_params
         Optimize the coefficients.
     _generate_init
         Generate a guess at the optimal coefficients.
@@ -98,7 +98,7 @@ class FancyCI(object):
     def __init__(self, nelec, norbs, ham, init_params=None, pspace=None,
                  is_complex=False, is_spatial=True):
         """
-        Initialize the ProjSchrMethod instance.
+        Initialize the FancyCI instance.
 
         Parameters
         ----------
@@ -140,17 +140,6 @@ class FancyCI(object):
     # Properties
     #
     @property
-    def num_params(self):
-        """ Number of parameters needed
-
-        Note
-        ----
-        Arbitrary here. Number of orbitals was used because some number was needed to run the tests
-        """
-        # FIXME: Need to get rid of arbitrary num_params here. Should be replaced with a NotImplementedError
-        return self.norbs
-
-    @property
     def offset_spatial(self):
         """ Corrects number of orbitals when they are spatial
 
@@ -159,6 +148,27 @@ class FancyCI(object):
             return 2
         else:
             return 1
+
+    @property
+    def offset_complex(self):
+        """ Corrects number of orbitals when they are complex
+
+        """
+        if self._is_complex:
+            return 2
+        else:
+            return 1
+
+    @property
+    def num_params(self):
+        """ Number of parameters needed
+
+        Note
+        ----
+        Arbitrary here. Number of orbitals was used because some number was needed to run the tests
+        """
+        # FIXME: Need to get rid of arbitrary num_params here. Should be replaced with a NotImplementedError
+        return self.norbs*self.offset_complex
 
     @property
     def nelec(self):
@@ -231,15 +241,17 @@ class FancyCI(object):
             If value is not a one dimensional numpy array
             If value does not have the same size as the parameters
 
+        Note
+        ----
+        If the parameters are complex, then the given value must separate the real
+        and the imaginary parts, and connect the real part with the imaginary part
+        into a one dimensional array
         """
         assert isinstance(value, np.ndarray) and len(value.shape) == 1,\
             'Parameters must be given as a one dimensional numpy array'
-        assert value.size == self.norbs,\
+        assert value.size == self.num_params,\
             'Number of given parameters is different from the number of parameters needed'
-        if self._is_complex and 2*self.params.size == value.size:
-            self._params = np.hstack((np.real(value), np.imag(value)))
-        else:
-            self._params = value
+        self._params = value
 
     @property
     def ham(self):
@@ -271,9 +283,9 @@ class FancyCI(object):
         if len(value) == 3:
             assert isinstance(value[2], float), "The core energy must be a float."
         assert value[0].shape == tuple([self.norbs] * 2), \
-            "The one-electron integral is not expressed wrt to the right number of spatial MOs."
+            "The one-electron integral is not expressed wrt to the right number of MOs."
         assert value[1].shape == tuple([self.norbs] * 4), \
-            "The one-electron integral is not expressed wrt to the right number of spatial MOs."
+            "The one-electron integral is not expressed wrt to the right number of MOs."
         assert np.allclose(value[0], value[0].T), \
             "The one-electron integral matrix is not Hermitian."
         assert np.allclose(value[1], np.einsum("jilk", value[1])), \
@@ -323,7 +335,7 @@ class FancyCI(object):
     def energies(self):
         """ Energies of the system, separated into a dictionary
         """
-        one_electron, coulomb, exchange = self.compute_energy()
+        one_electron, coulomb, exchange = self.compute_energy(self.ground_sd, self.params)
         energies = {
             "one_electron": one_electron,
             "coulomb": coulomb,
@@ -506,7 +518,7 @@ class FancyCI(object):
         Raises
         ------
         AssertionError
-            If `coeffs` is not specified and self.coeffs is None
+            If `params` is not specified and self.params is None
 
         Notes
         -----
@@ -523,11 +535,10 @@ class FancyCI(object):
         # Set divisor
         # One if hamiltonian is epxressed wrt spin orbitals
         # Two if hamiltonian is expressed wrt spatial orbitals
-        div = int(self._is_spatial)+1
+        div = self.offset_spatial
         # Get spin indices
-        ind_occ = [i for i in range(self.norbs*self.offset_spatial) if is_occupied(phi, i)]
-        ind_vir = [i for i in range(self.norbs*self.offset_spatial) if not is_occupied(phi, i)]
-
+        ind_occ = [i for i in range(self.norbs*div) if is_occupied(phi, i)]
+        ind_vir = [i for i in range(self.norbs*div) if not is_occupied(phi, i)]
         for i in ind_occ:
             ind_first_vir = 0
             # Add `i` to `ind_vir` because excitation to same orbital is possible
@@ -623,7 +634,7 @@ class FancyCI(object):
                 objective[(d+guess.size//2) + eqn_offset] = np.imag(comp_eqn)
         return objective
 
-    def nonlin_jac(self, x0, pspace):
+    def nonlin_jac(self, params, pspace):
         """
         Construct the Jacobian.
 
@@ -642,27 +653,26 @@ class FancyCI(object):
             eqn_offset += 1
 
         # (J)_dij = d(F_d)/d(c_ij)
-        coeffs = self._construct_coeffs(x0)
-        jac = np.zeros((x0.size, x0.size))
-        ground_energy = sum(self.compute_energy(self.ground_sd, coeffs))
+        jac = np.zeros((params.size, params.size))
+        ground_energy = sum(self.compute_energy(self.ground_sd, params))
 
-        for j in range(x0.size):
+        for j in range(params.size):
             if not self._is_complex:
                 if self._normalize:
-                    jac[0, j] = self.overlap(self.ground_sd, coeffs, j)
-                for i in range(x0.size-eqn_offset):
-                    jac[i+eqn_offset, j] = (self.compute_energy(pspace[i], coeffs, j) +
-                                            ground_energy*self.overlap(pspace[i], coeffs, j))
+                    jac[0, j] = self.overlap(self.ground_sd, params, j)
+                for i in range(params.size-eqn_offset):
+                    jac[i+eqn_offset, j] = (sum(self.compute_energy(pspace[i], params, j)) +
+                                            ground_energy*self.overlap(pspace[i], params, j))
             else:
                 if self._normalize:
-                    derivative = self.overlap(self.ground_sd, coeffs, j)
+                    derivative = self.overlap(self.ground_sd, params, j)
                     jac[0, j] = np.real(derivative)
                     jac[1, j] = np.imag(derivative)
-                for i in range((x0.size-eqn_offset)//2):
-                    derivative = (self.compute_energy(pspace[i], coeffs, j) +
-                                  ground_energy*self.overlap(pspace[i], coeffs, j))
+                for i in range((params.size-eqn_offset)//2):
+                    derivative = (sum(self.compute_energy(pspace[i], params, j)) +
+                                  ground_energy*self.overlap(pspace[i], params, j))
                     jac[i+eqn_offset, j] = np.real(derivative)
-                    jac[i+eqn_offset+x0.size//2, j+x0.size//2] = np.imag(derivative)
+                    jac[i+eqn_offset+params.size//2, j+params.size//2] = np.imag(derivative)
         return jac
 
     def solve_params(self, **kwargs):
@@ -736,8 +746,7 @@ class FancyCI(object):
         # Update instance with optimized coefficients if successful, or else print a
         # warning
         if result["success"]:
-            self.coeffs = result["x"]
-            self._coeffs_optimized = True
+            self.params = result["x"]
             print("Coefficient optimization was successful.")
         else:
             print("Warning: solution did not converge; coefficients were not updated.")

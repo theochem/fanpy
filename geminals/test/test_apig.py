@@ -77,31 +77,31 @@ def test_init():
 
     assert raises_exception(f, AssertionError)
 
-    # coeffs of wrong dimension
+    # params of wrong dimension
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
-    coeffs = np.ones((npairs + 1, norbs))
+    params = np.ones((npairs + 1, norbs))
 
     def f():
-        gem = APIG(npairs, norbs, ham, coeffs=coeffs)
+        gem = APIG(npairs, norbs, ham, init_params=params)
 
     assert raises_exception(f, AssertionError)
 
-    # Non-np.ndarray coeffs
-    coeffs = 1
+    # Non-np.ndarray params
+    params = 1
 
     def f():
-        gem = APIG(npairs, norbs, ham, coeffs=coeffs)
+        gem = APIG(npairs, norbs, ham, init_params=params)
 
-    assert raises_exception(f, AttributeError)
+    assert raises_exception(f, AssertionError)
 
     # pspace of wrong type
-    coeffs = np.ones((npairs, norbs))
+    params = np.ones((npairs, norbs))
     pspace = 1
 
     def f():
         gem = APIG(npairs, norbs, ham, pspace=pspace)
 
-    assert raises_exception(f, TypeError)
+    assert raises_exception(f, AssertionError)
 
     # Slater det. with wrong number of electrons in pspace
     pspace = list(APIG(npairs, norbs, ham).pspace)
@@ -145,28 +145,23 @@ def test_properties():
     npairs = 2
     norbs = 5
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)), 1.0)
-    coeffs = np.ones((npairs, norbs))
+    params = np.ones((npairs, norbs))
     pspace = APIG(npairs, norbs, ham).pspace
-    gem = APIG(npairs, norbs, ham, coeffs=coeffs, pspace=pspace)
+    gem = APIG(npairs, norbs, ham, init_params=params, pspace=pspace)
     assert gem._npairs == npairs
     assert gem.nelec == npairs * 2
     assert gem._norbs == norbs
-    assert gem._ham == ham[:2]
-    assert gem._core_energy == gem.core_energy == ham[2]
-    assert np.allclose(gem._coeffs, coeffs)
-    assert gem._coeffs_optimized
+    assert gem._ham == ham
+    assert gem._ham[2] == gem.core_energy == ham[2]
+    assert np.allclose(gem._params, params.ravel())
     assert sorted(gem._pspace) == sorted(pspace)
-    assert gem.ground == min(pspace)
-    assert not gem._exclude_ground
-    assert gem._normalize
-    assert list(gem._row_indices) == list(range(npairs))
-    assert list(gem._col_indices) == list(range(norbs))
+    assert gem.ground_sd == min(pspace)
 
 
 @test
-def test_generate_x0_and_coeffs():
+def test_generate_x0_and_params():
     """
-    Test APIG._generate_x0() and APIG._construct_coeffs().
+    Test APIG._generate_x0() and APIG._construct_params().
 
     """
 
@@ -174,11 +169,8 @@ def test_generate_x0_and_coeffs():
     norbs = 6
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
     gem = APIG(npairs, norbs, ham)
-    x0 = gem._generate_x0()
+    x0 = gem._generate_init()
     assert x0.shape == (x0.size,) == (npairs * norbs,)
-    coeffs = gem._construct_coeffs(x0)
-    assert coeffs.shape == (npairs, norbs)
-    assert np.allclose(x0, coeffs.ravel())
 
 
 @test
@@ -239,25 +231,18 @@ def test_permanent():
     # Zero matrix
     matrix = np.zeros((6, 6))
     assert APIG.permanent(matrix) == 0
-    assert APIG.permanent_derivative(matrix, 5, 0) == 0
 
     # Identity matrix
     matrix = np.eye(6)
     assert APIG.permanent(matrix) == 1
-    # Derivative wrt a diagonal element
-    assert APIG.permanent_derivative(matrix, 3, 2) == 0
-    # Derivative wrt a non-diagonal element
-    assert APIG.permanent_derivative(matrix, 3, 3) == 1
 
     # One matrix
     matrix = np.ones((6, 6))
     assert APIG.permanent(matrix) == np.math.factorial(6)
-    assert APIG.permanent_derivative(matrix, 5, 5) == 2
 
     # Another matrix, hand-checked
     matrix = np.arange(1, 10).reshape((3, 3))
     assert APIG.permanent(matrix) == 450
-    assert APIG.permanent_derivative(matrix, 1, 2) == 22
 
 
 @test
@@ -271,35 +256,32 @@ def test_overlap():
     norbs = 6
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
     gem = APIG(npairs, norbs, ham)
-    coeffs = np.random.rand(npairs, norbs)
+    params = np.random.rand(npairs*norbs)
+    matrix = params.reshape(npairs, norbs)
 
     # Bad Slater determinant
     phi = None
-    assert gem.overlap(phi, coeffs) == 0
+    assert gem.overlap(phi, params) == 0
 
     # Slater determinant with different number of electrons
     phi = int("1" * (2 * npairs + 1), 2)
-    assert gem.overlap(phi, coeffs) == 0
+    assert gem.overlap(phi, params) == 0
 
     # Ground-state Slater determinant
     phi = int("1" * 2 * npairs, 2)
-    assert gem.overlap(phi, coeffs) == gem.permanent(coeffs[:, :npairs])
+    assert gem.overlap(phi, params) == gem.permanent(matrix[:, :npairs])
 
     # Excited Slater determinant
     phi = int("1100" * npairs, 2)
-    cols = list(gem._col_indices)[1::2]
-    assert gem.overlap(phi, coeffs) == gem.permanent(coeffs[:, cols])
+    cols = [1, 3, 5]
+    assert gem.overlap(phi, params) == gem.permanent(matrix[:, cols])
 
     # Partial derivative of overlap
-    gem._overlap_derivative = True
-
     # Differentiated cofficient's column corresponds to occupied orbital
-    gem._overlap_indices = (0, 1)
-    assert 1.0 > gem.overlap(phi, coeffs) > 0.0
+    assert 1.0 > gem.overlap(phi, params, 1) > 0.0
 
     # Differentiated cofficient's column does not correspond to occupied orbital
-    gem._overlap_indices = (0, 0)
-    assert gem.overlap(phi, coeffs) == 0
+    assert gem.overlap(phi, params, 0) == 0
 
 
 @test
@@ -317,9 +299,9 @@ def test_energy():
     one_ham = make_hermitian(np.random.rand(norbs, norbs))
     two_ham = make_hermitian(np.random.rand(norbs, norbs, norbs, norbs))
     ham = (one_ham, two_ham)
-    coeffs = np.eye(npairs, M=norbs)
+    params = np.eye(npairs, M=norbs)
 
-    gem = APIG(npairs, norbs, ham, coeffs=coeffs)
+    gem = APIG(npairs, norbs, ham, init_params=params)
 
     # h_{ii} + h_{\bar{i}\bar{i}}
     one_electron = sum(2 * ham[0][i, i] for i in range(npairs))
@@ -331,9 +313,9 @@ def test_energy():
 
     # Verify each energy computation backend
     actual_energy = one_electron + two_electron
-    computed_energy = sum(gem._double_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(gem.compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
-    computed_energy = sum(gem._brute_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(super(APIG, gem).compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
     computed_energies = gem.energies
     assert np.allclose(computed_energies["one_electron"], one_electron)
@@ -347,9 +329,9 @@ def test_energy():
     one_ham = make_hermitian(np.random.rand(norbs, norbs))
     two_ham = make_hermitian(np.random.rand(norbs, norbs, norbs, norbs))
     ham = (one_ham, two_ham)
-    coeffs = np.eye(npairs, M=norbs)
-    coeffs[:, 2] = 1
-    gem = APIG(npairs, norbs, ham, coeffs=coeffs)
+    params = np.eye(npairs, M=norbs)
+    params[:, 2] = 1
+    gem = APIG(npairs, norbs, ham, init_params=params)
     one_electron = 2 * (ham[0][0, 0] + ham[0][1, 1])
     two_electron = 4 * ham[1][0, 1, 0, 1] - 2 * ham[1][0, 1, 1, 0] \
         + ham[1][0, 0, 0, 0] + ham[1][1, 1, 1, 1] \
@@ -357,9 +339,9 @@ def test_energy():
 
     # Verify each energy computation backend
     actual_energy = one_electron + two_electron
-    computed_energy = sum(gem._double_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(gem.compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
-    computed_energy = sum(gem._brute_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(super(APIG, gem).compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
     computed_energies = gem.energies
     assert np.allclose(computed_energies["one_electron"], one_electron)
@@ -367,15 +349,15 @@ def test_energy():
 
     # Add a double pair-excitation to the second and third spatial orbitals to the
     # previous wavefunction; project onto HF ground state
-    coeffs[:, 3] = 1
-    gem = APIG(npairs, norbs, ham, coeffs=coeffs)
+    params[:, 3] = 1
+    gem = APIG(npairs, norbs, ham, init_params=params)
     two_electron += ham[1][0, 0, 3, 3] + ham[1][1, 1, 3, 3]
 
     # Verify each energy computation backend
     actual_energy = one_electron + two_electron
-    computed_energy = sum(gem._double_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(gem.compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
-    computed_energy = sum(gem._brute_compute_energy(gem.ground, coeffs))
+    computed_energy = sum(super(APIG, gem).compute_energy(gem.ground_sd, params))
     assert np.allclose(computed_energy, actual_energy)
     computed_energies = gem.energies
     assert np.allclose(computed_energies["one_electron"], one_electron)
@@ -385,7 +367,7 @@ def test_energy():
 @test
 def test_solve():
     """
-    Test APIG.solve_coeffs() and APIG.nonlin() by using them to optimize some APIG
+    Test APIG.solve_params() and APIG.nonlin() by using them to optimize some APIG
     coefficients, using output from HORTON as input to the APIG instance.
 
     """
@@ -396,9 +378,9 @@ def test_solve():
     horton_result = ap1rog_from_horton(fn=fn, basis=basis, npairs=npairs, guess="apig")
     horton_basis = horton_result["basis"]
     horton_ham = horton_result["ham"]
-    horton_coeffs = horton_result["coeffs"].ravel()
+    horton_params = horton_result["coeffs"].ravel()
     gem = APIG(npairs, horton_basis.nbasis, horton_ham)
-    apig_result = gem.solve_coeffs(x0=horton_coeffs, verbose=True)
+    apig_result = gem.solve_params(x0=horton_params, verbose=True)
     assert apig_result["success"]
 
 
@@ -416,17 +398,13 @@ def test_nonlin_jac_basic():
     norbs = 9
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
     gem = APIG(npairs, norbs, ham)
-    coeffs = np.random.rand(npairs * norbs).reshape(npairs, norbs)
-    coeffs[:, :npairs] += np.eye(npairs)
-    x0 = coeffs.ravel()
+    params = np.random.rand(npairs * norbs).reshape(npairs, norbs)
+    params[:, :npairs] += np.eye(npairs)
+    x0 = params.ravel()
     fun = gem.nonlin(x0, gem.pspace)
     jac = gem.nonlin_jac(x0, gem.pspace)
-    assert jac.shape == (fun.size, coeffs.size)
+    assert jac.shape == (fun.size, params.size)
     assert not is_singular(jac)
-
-    # Check that nonlin_jac() returns the APIG instance to its proper state
-    assert not gem._overlap_derivative and not gem._overlap_indices
-
 
 @slow
 def test_nonlin_jac_slow():
@@ -442,9 +420,9 @@ def test_nonlin_jac_slow():
     two_ham = make_hermitian(np.random.rand(norbs, norbs, norbs, norbs))
     ham = (one_ham, two_ham)
     gem = APIG(npairs, norbs, ham)
-    coeffs = np.random.rand(npairs * norbs).reshape(npairs, norbs)
-    coeffs[:, :npairs] += np.eye(npairs)
-    x0 = coeffs.ravel()
+    params = np.random.rand(npairs * norbs).reshape(npairs, norbs)
+    params[:, :npairs] += np.eye(npairs)
+    x0 = params.ravel()
     fun = lambda x: gem.nonlin(x, gem.pspace)
     jac = lambda x: gem.nonlin_jac(x, gem.pspace)
     deriv_check(fun, jac, x0)
