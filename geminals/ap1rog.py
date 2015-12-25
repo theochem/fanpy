@@ -26,63 +26,16 @@ class AP1roG(APIG):
     _normalize = False
 
     @property
-    def _row_indices(self):
-        return range(0, self.npairs)
+    def num_params(self):
+        """ Number of parameters needed
 
-    @property
-    def _col_indices(self):
-        return range(self.npairs, self.norbs)
+        """
+        return self.npairs*(self.norbs-self.npairs)*self.offset_complex
 
-    @property
-    def coeffs(self):
-        return self._coeffs
-
-    @coeffs.setter
-    def coeffs(self, value):
-        if value is None:
-            return
-        elif len(value.shape) == 1 and not self._is_complex:
-            assert value.size == self.npairs * (self.norbs - self.npairs), \
-                "The guess `x0` is not the correct size for the geminal coefficient matrix."
-            self._coeffs = np.hstack((np.identity(self.npairs),
-                                      value.reshape(self.npairs, self.norbs-self.npairs)))
-        elif len(value.shape) == 1 and self._is_complex:
-            assert value.size == 2*self.npairs*(self.norbs-self.npairs), \
-                "The guess `x0` is not the correct size for the geminal coefficient matrix."
-            coeffs_real = value[:value.size/2].reshape(self.npairs, self.norbs-self.npairs)
-            coeffs_imag = value[value.size/2:].reshape(self.npairs, self.norbs-self.npairs)
-            self._coeffs = np.hstack((np.identity(self.npairs),
-                                      coeffs_real+coeffs_imag*1j))
-        else:
-            assert value.shape == (self.npairs, self.norbs), \
-                "The specified geminal coefficient matrix must have shape (npairs, norbs)."
-            self._coeffs = value
-        if self._coeffs.dtype == 'complex':
-            self._is_complex = True
-        elif self._is_complex:
-            self._coeffs += 0j
-        self._coeffs_optimized = True
 
     #
     # Methods
     #
-
-    def _generate_x0(self):
-        """
-        See APIG._generate_x0().
-
-        """
-        params = self.npairs * (self.norbs - self.npairs)
-        scale = 0.2 / params
-        def scaled_random():
-            random_nums = scale*(np.random.rand(self.npairs, self.norbs-self.npairs)-0.5)
-            return random_nums.ravel()
-        if not self._is_complex:
-            return scaled_random()
-        else:
-            x0_real = scaled_random()
-            x0_imag = scaled_random()
-            return np.hstack((x0_real, x0_imag))
 
     def generate_pspace(self):
         """
@@ -90,7 +43,7 @@ class AP1roG(APIG):
 
         """
 
-        ground = self.ground
+        ground = self.ground_sd
         pspace = [ground]
 
         # Return a tuple of all unique pair excitations
@@ -99,80 +52,104 @@ class AP1roG(APIG):
                 pspace.append(excite_pairs(ground, i, unoccup))
         return tuple(set(pspace))
 
-    def _construct_coeffs(self, x0):
-        """
-        See APIG._construct_coeffs().
+    def the_function(self, params, elec_config):
+        """ The function that assigns a coefficient to a given configuration given some
+        parameters
 
+        Parameters
+        ----------
+        params : np.ndarray(M,)
+            Parameters that describe the APIG geminal
+        elec_config : int
+            Slater determinant that corresponds to certain electron configuration
+
+        Returns
+        -------
+        coefficient : float
+            Coefficient of thet specified Slater determinant
+
+        Raises
+        ------
+        NotImplementedError
         """
-        if not self._is_complex:
-            coeffs = np.eye(self.npairs, M=self.norbs)
-            coeffs[:, self.npairs:] += x0.reshape(self.npairs, self.norbs - self.npairs)
-        else:
-            coeffs = np.eye(self.npairs, M=self.norbs, dtype='complex')
-            # Instead of dividing coeffs into a real and imaginary part and adding
+        if self._is_complex:
+            # Instead of dividing params into a real and imaginary part and adding
             # them, we add the real part to the imaginary part
             # Imaginary part is assigned first because this forces the numpy array
             # to be complex
-            coeffs[:, self.npairs:] += 1j*(x0[x0.size/2:]).reshape(self.npairs,
-                                                                  self.norbs-self.npairs)
+            temp_params = 1j*params[params.size//2:]
             # Add the real part
-            coeffs[:, self.npairs:] += (x0[:x0.size/2]).reshape(self.npairs,
-                                                                self.norbs-self.npairs)
-        return coeffs
-
-    def overlap(self, phi, coeffs=None):
-        """
-        See APIG.overlap().
-
-        """
-
-        if coeffs is None:
-            assert self._coeffs_optimized, \
-                "The geminal coefficient matrix has not yet been optimized."
-            coeffs = self.coeffs
-
-        # If bad Slater determinant
-        if phi == 0:
-            return 0
-        elif phi not in self.pspace:
-            return 0
-
-        # If good Slater determinant, get the pair-excitation indices
-        from_index = []
-        to_index = []
-        excite_count = 0
+            temp_params += params[:params.size//2]
+            params = temp_params
+        # TODO: make some sort of determinant "difference"
+        excite_from = []
+        excite_to = []
         for i in range(self.npairs):
-            if not is_pair_occupied(phi, i):
-                excite_count += 1
-                from_index.append(i)
+            if not is_pair_occupied(elec_config, i):
+                excite_from.append(i)
         for i in range(self.npairs, self.norbs):
-            if is_pair_occupied(phi, i):
-                to_index.append(i)
+            if is_pair_occupied(elec_config, i):
+                excite_to.append(i)
+        excite_count = len(excite_to)
 
-        # If it's not excited
+        assert excite_count in [0, 1]
         if excite_count == 0:
-            # If deriving wrt one of the non-diagonals of the identity block
-            if self._overlap_derivative and self._overlap_indices[0] != self._overlap_indices[1]:
-                return 0
-            # If not deriving, or if deriving wrt a diagonal
             return 1
+        elif excite_count == 1:
+            return params[excite_from[0]*(self.norbs-self.npairs)+(excite_to[0]-self.npairs)]
 
-        # If it's singly pair-excited
-        if excite_count == 1:
-            # If deriving
-            if self._overlap_derivative:
-                # If the coefficient wrt which we are deriving is substituted in
-                if self._overlap_indices == (from_index[0], to_index[0]):
-                    return 1
-                # If deriving wrt an element of the identity matrix
-                if self._overlap_indices[0] == self._overlap_indices[1]:
-                    return coeffs[from_index[0], to_index[0]]
-                # If deriving wrt another element
+    def differentiate_the_function(self, params, elec_config, index):
+        """ Differentiates the function wrt to a specific parameter
+
+        Parameters
+        ----------
+        params : np.ndarray(M,)
+            Set of numbers
+        elec_config : int
+            Slater determinant that corresponds to certain electron configuration
+        index : int
+            Index of the parameter with which we are differentiating
+
+        Returns
+        -------
+        coefficient : float
+            Coefficient of thet specified Slater determinant
+
+        Raises
+        ------
+        NotImplementedError
+        """
+        assert 0 <= index < params.size
+        if self._is_complex:
+            # Instead of dividing params into a real and imaginary part and adding
+            # them, we add the real part to the imaginary part
+            # Imaginary part is assigned first because this forces the numpy array
+            # to be complex
+            temp_params = 1j*params[params.size//2:]
+            # Add the real part
+            temp_params += params[:params.size//2]
+            params = temp_params
+        # TODO: make some sort of determinant "difference"
+        excite_from = []
+        excite_to = []
+        for i in range(self.npairs):
+            if not is_pair_occupied(elec_config, i):
+                excite_from.append(i)
+        for i in range(self.npairs, self.norbs):
+            if is_pair_occupied(elec_config, i):
+                excite_to.append(i)
+        excite_count = len(excite_to)
+
+        assert excite_count in [0, 1]
+        i, j = np.unravel_index(index, (self.npairs, self.norbs-self.npairs))
+        if excite_count == 0:
+            return 0
+        elif excite_count == 1:
+            # If the coefficient wrt which we are deriving is substituted in
+            if i == excite_from[0] and j == excite_to[0]-self.npairs:
+                return 1
+            # If deriving wrt another element
+            else:
                 return 0
-            # If we're not deriving
-            return coeffs[from_index[0], to_index[0]]
-
-        # If something went wrong
-        raise ValueError("The AP1roG implementation cannot handle multiple pair excitations.")
 
 # vim: set textwidth=90 :
