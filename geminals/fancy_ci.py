@@ -656,21 +656,23 @@ class FancyCI(object):
         jac = np.zeros((params.size, params.size))
         ground_energy = sum(self.compute_energy(self.ground_sd, params))
 
-        for j in range(params.size):
-            if not self._is_complex:
-                if self._normalize:
-                    jac[0, j] = self.overlap(self.ground_sd, params, j)
-                for i in range(params.size-eqn_offset):
-                    jac[i+eqn_offset, j] = (sum(self.compute_energy(pspace[i], params, j)) +
-                                            ground_energy*self.overlap(pspace[i], params, j))
-            else:
-                if self._normalize:
-                    derivative = self.overlap(self.ground_sd, params, j)
-                    jac[0, j] = np.real(derivative)
-                    jac[1, j] = np.imag(derivative)
-                for i in range((params.size-eqn_offset)//2):
-                    derivative = (sum(self.compute_energy(pspace[i], params, j)) +
-                                  ground_energy*self.overlap(pspace[i], params, j))
+        for i in range((params.size-eqn_offset)//self.offset_complex):
+            overlap_phi = self.overlap(pspace[i], params)
+            for j in range(params.size):
+                if not self._is_complex:
+                    if self._normalize:
+                        jac[0, j] = self.overlap(self.ground_sd, params, j)
+                    jac[i+eqn_offset, j] = (ground_energy*self.overlap(pspace[i], params, j) +
+                                            sum(self.compute_energy(self.ground_sd, params, j))*overlap_phi -
+                                            sum(self.compute_energy(pspace[i], params, j)))
+                else:
+                    if self._normalize:
+                        derivative = self.overlap(self.ground_sd, params, j)
+                        jac[0, j] = np.real(derivative)
+                        jac[1, j] = np.imag(derivative)
+                    derivative = (ground_energy*self.overlap(pspace[i], params, j) +
+                                  sum(self.compute_energy(self.ground_sd, params, j))*overlap_phi -
+                                  sum(self.compute_energy(pspace[i], params, j)))
                     jac[i+eqn_offset, j] = np.real(derivative)
                     jac[i+eqn_offset+params.size//2, j+params.size//2] = np.imag(derivative)
         return jac

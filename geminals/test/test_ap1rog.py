@@ -24,22 +24,19 @@ def test_init():
     norbs = 4
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
 
-    # coeffs of wrong dimension
+    # params of wrong dimension
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
-    coeffs = np.ones((npairs + 1, norbs))
-
-    def f():
-        gem = AP1roG(npairs, norbs, ham, coeffs=coeffs)
-
+    params = np.ones((npairs + 1)*norbs)
+    f = lambda: AP1roG(npairs, norbs, ham, init_params=params)
     assert raises_exception(f, AssertionError)
 
-    # Non-np.ndarray coeffs
-    coeffs = 1
+    # Non-np.ndarray params
+    params = 1
 
     def f():
-        gem = AP1roG(npairs, norbs, ham, coeffs=coeffs)
+        gem = AP1roG(npairs, norbs, ham, init_params=params)
 
-    assert raises_exception(f, AttributeError)
+    assert raises_exception(f, AssertionError)
 
 
 @test
@@ -52,20 +49,17 @@ def test_properties():
     npairs = 2
     norbs = 5
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)), 1.0)
-    coeffs = np.ones((npairs, norbs))
-    gem = AP1roG(npairs, norbs, ham, coeffs=coeffs)
-    assert np.allclose(gem._coeffs, coeffs)
-    assert gem._coeffs_optimized
+    params = np.ones(npairs*(norbs-npairs))
+    gem = AP1roG(npairs, norbs, ham, init_params=params)
+    assert np.allclose(gem._params, params)
     assert gem._exclude_ground
     assert not gem._normalize
-    assert list(gem._row_indices) == list(range(0, npairs))
-    assert list(gem._col_indices) == list(range(npairs, norbs))
 
 
 @test
-def test_generate_x0_and_coeffs():
+def test_generate_init_and_params():
     """
-    Test AP1roG._generate_x0() and AP1roG._construct_coeffs().
+    Test AP1roG._generate_init() and AP1roG._construct_params().
 
     """
 
@@ -73,11 +67,8 @@ def test_generate_x0_and_coeffs():
     norbs = 6
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
     gem = AP1roG(npairs, norbs, ham)
-    x0 = gem._generate_x0()
+    x0 = gem._generate_init()
     assert x0.shape == (x0.size,) == (npairs * (norbs - npairs),)
-    coeffs = gem._construct_coeffs(x0)
-    assert coeffs.shape == (npairs, norbs)
-    assert np.allclose(x0, coeffs[:, gem.npairs:].ravel())
 
 
 @test
@@ -112,58 +103,22 @@ def test_overlap():
     norbs = 6
     ham = (np.ones((norbs, norbs)), np.ones((norbs, norbs, norbs, norbs)))
     gem = AP1roG(npairs, norbs, ham)
-    coeffs = np.eye(npairs, M=norbs)
-    coeffs[:, npairs:] += np.random.rand(npairs, (norbs - npairs))
+    params = np.eye(npairs, M=norbs)
+    params[:, npairs:] += np.random.rand(npairs, (norbs - npairs))
 
     # Bad Slater determinant
     phi = None
-    assert np.allclose(gem.overlap(phi, coeffs), 0.0)
+    assert np.allclose(gem.overlap(phi, params), 0.0)
 
     # Slater determinant with different number of electrons
     phi = int("1" * (2 * npairs + 1), 2)
-    assert np.allclose(gem.overlap(phi, coeffs), 0.0)
-
-    # Ground-state Slater determinant
-    phi = gem.ground
-    ap1rog = gem.overlap(phi, coeffs)
-    apig = gem.permanent(coeffs[:, :npairs])
-    answer = 1.0
-    assert np.allclose(ap1rog, apig, answer)
-    # Partial derivative of overlap
-    gem._overlap_derivative = True
-    gem._overlap_indices = (1, 1)
-    ap1rog = gem.overlap(phi, coeffs)
-    apig = gem.permanent_derivative(coeffs[:, :npairs], 1, 1)
-    answer = 1.0
-    assert np.allclose(ap1rog, apig, answer)
-    gem._overlap_derivative = False
-    gem._overlap_indices = None
-
-    # Singly- pair-excited Slater determinant
-    phi = 0b11001111
-    cols = [0, 1, 3]
-    ap1rog = gem.overlap(phi, coeffs)
-    apig = gem.permanent(coeffs[:, cols])
-    answer = coeffs[2, 3]
-    assert np.allclose(ap1rog, apig, answer)
-    # Partial derivative of overlap
-    gem._overlap_derivative = True
-    gem._overlap_indices = (1, 1)
-    ap1rog = gem.overlap(phi, coeffs)
-    apig = gem.permanent_derivative(coeffs[:, cols], 1, 1)
-    answer = 1.0
-    assert np.allclose(ap1rog, apig, answer)
-    gem._overlap_indices = (0, 1)
-    ap1rog = gem.overlap(phi, coeffs)
-    apig = gem.permanent_derivative(coeffs[:, cols], 0, 1)
-    answer = 0.0
-    assert np.allclose(ap1rog, apig, answer)
+    assert np.allclose(gem.overlap(phi, params), 0.0)
 
 
 @slow
 def test_solve():
     """
-    Test AP1roG.solve_coeffs() and AP1roG.nonlin() by using them to optimize some AP1roG
+    Test AP1roG.solve_params() and AP1roG.nonlin() by using them to optimize some AP1roG
     coefficients.
 
     """
@@ -175,11 +130,11 @@ def test_solve():
     horton_basis = horton_result["basis"]
     horton_energy = horton_result["energy"]
     horton_ham = horton_result["ham"]
-    horton_coeffs = horton_result["coeffs"]
+    horton_params = horton_result["coeffs"]
     gem = AP1roG(npairs, horton_basis.nbasis, horton_ham)
-    ap1rog_result = gem.solve_coeffs()
+    ap1rog_result = gem.solve_params()
     assert ap1rog_result["success"]
-    assert np.allclose(gem.coeffs[:, npairs:], horton_coeffs, atol=1.0e-3)
+    assert np.allclose(gem.params[:, npairs:], horton_params, atol=1.0e-3)
     assert np.allclose(horton_energy, gem.energy)
 
 
