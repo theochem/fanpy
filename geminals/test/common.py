@@ -79,8 +79,8 @@ def run_tests():
 
     """
     options = _parse_test_options()
-    while reversed(_common_tests):
-        fun = _common_tests.pop()
+    while _common_tests:
+        fun = _common_tests.pop(0)
         try:
             run = getattr(fun, "_slowtest") and options["slow"]
         except AttributeError:
