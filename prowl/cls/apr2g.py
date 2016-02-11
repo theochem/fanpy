@@ -15,16 +15,15 @@ class APr2G(APIG):
 
     # Properties
     dtype = np.complex128
-    @property
-    def bounds(self):
-        ubound = np.ones(self.x.shape)
-        ubound[self.k:] *= np.inf
-        lbound = ubound.copy()
-        lbound *= -1
-        return (lbound, ubound)
+    #@property
+    #def bounds(self):
+        #ubound = np.ones(self.x.shape)
+        #ubound[self.k:] *= np.inf
+        #lbound = ubound.copy()
+        #lbound *= -1
+        #return (lbound, ubound)
 
     # Bind methods
-    _update_C = apr2g._update_C
     generate_guess = apr2g.generate_guess
     generate_pspace = ap1rog.generate_pspace
     generate_view = apr2g.generate_view

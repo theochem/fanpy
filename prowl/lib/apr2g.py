@@ -14,11 +14,10 @@ def generate_guess(self):
 
     """
 
-    x = np.empty((2 * self.k + self.p), dtype=self.dtype)
-    x += np.random.rand(2 * self.k + self.p)
+    x = np.zeros((self.p + 2 * self.k), dtype=self.dtype)
+    x += np.random.rand(x.size)
     if self.dtype == np.complex128:
-        x += np.random.rand(2 * self.k + self.p) * 1j
-        x /= np.max(np.abs(np.real(x)))
+        x += np.random.rand(x.size) * 1j
 
     return x
 
@@ -46,7 +45,6 @@ def hamiltonian_deriv(self, sd, c):
     ----------
     sd : int
         The Slater Determinant against which to project.
-    c : int
 
     Returns
     -------
@@ -96,8 +94,8 @@ def jacobian(self, x):
 
     # Update the coefficient vector (and the `_C` matrix cache in APr2G)
     self.x[:] = x
-    self._C[:] = permanent.borchardt_factor(self.C, self.p)
-    jac = np.empty((len(self.pspace) + 2, x.size), dtype=x.dtype)
+    self._C[:] = permanent.cauchy_factor(self.C, self.p)
+    jac = np.empty((len(self.pspace) + 1, x.size), dtype=x.dtype)
 
     # Intialize constant "variables"
     energy = sum(self.hamiltonian(self.ground))
@@ -112,22 +110,10 @@ def jacobian(self, x):
         # Impose d<HF|Psi> == 0
         jac[-1, c] = d_olp
 
-        # Impose dC[0, 0] == 0
-        if c == 0:
-            tmp = 1 / (self.x[self.k] + self.x[2 * self.k])
-        elif c == self.k:
-            tmp = self.x[0] / (1 + self.x[2 * self.k])
-        elif c == 2 * self.k:
-            tmp = self.x[0] / (1 + self.x[self.k])
-        else:
-            tmp = 0
-        jac[-2, c] = tmp
-
         # Impose (for all SDs in `pspace`) d(<SD|H|Psi> - E<SD|H|Psi>) == 0
         for i, sd in enumerate(self.pspace):
-            d_tmp = sum(self.hamiltonian_deriv(sd, c)) \
+            jac[i, c] = sum(self.hamiltonian_deriv(sd, c)) \
                 - energy * self.overlap_deriv(sd, c) - d_energy * self.overlap(sd)
-            jac[i, c] = d_tmp
 
     return jac * 0.5
 
@@ -146,18 +132,15 @@ def objective(self, x):
 
     # Update the coefficient vector (and the `_C` matrix cache in APr2G)
     self.x[:] = x
-    self._update_C()
+    self._C[:] = permanent.cauchy_factor(self.C, self.p)
 
     # Intialize needed variables
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
+    obj = np.empty((len(self.pspace) + 1), dtype=x.dtype)
 
     # Impose <HF|Psi> == 1
     obj[-1] = olp - 1.0
-
-    # Impose C[0, 0] == 1
-    obj[-2] = self._C[0, 0] - 1.0
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):
@@ -189,7 +172,7 @@ def overlap(self, sd):
 
     # Evaluate the overlap
     occ = [i for i in range(self.k) if slater.occupation_pair(sd, i)]
-    return permanent.borchardt(self._C[:, occ])
+    return permanent.apr2g(self.x, self.p, occ)
 
 
 def overlap_deriv(self, sd, c):
@@ -214,26 +197,11 @@ def overlap_deriv(self, sd, c):
     elif any(slater.occupation(sd, 2 * i)  != slater.occupation(sd, 2 * i + 1) for i in range(self.k)):
         return 0
 
-    # Evaluate the overlap
+    # Get occupied orbitals, i.e., columns
     occ = [i for i in range(self.k) if slater.occupation_pair(sd, i)]
-    if c not in occ and (c - self.k) not in occ and (c - 2 * self.k) not in occ:
+
+    # Evaluate the overlap
+    if c not in occ and (c - self.p) not in occ and (c - self.p - self.k) not in occ:
         return 0
     else:
-        cols = []
-        cols.extend(occ)
-        cols.extend([i + self.k for i in occ])
-        cols.extend(list(range(2 * self.k, 2 * self.k + self.p)))
-        nc = cols.index(c)
-        return permanent.borchardt_deriv(self._C[:, occ], self.C[cols], nc)
-
-
-def _update_C(self):
-    """
-    Compute the matrix corresponding to the shape of the
-    Borchardt-decomposed coefficient array.
-
-    """
-
-    for i in range(self.p):
-        for j in range(self.k):
-            self._C[i, j] = self.x[j] / (self.x[1 * self.k + j] + self.x[2 * self.k + i])
+        return permanent.apr2g_deriv(self.x, self.p, occ, c)

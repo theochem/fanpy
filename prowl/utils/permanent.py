@@ -56,153 +56,144 @@ def dense_deriv(matrix, x, y):
     return deriv
 
 
-def borchardt(matrix):
-    """
-    Compute the permanent of a Borchardt/Cauchy matrix.
+def adjugate(matrix):
 
-    Parameters
-    ----------
-    matrix : 2-index np.ndarray
-        A square matrix.
+    # If matrix only has one row
+    if matrix.size == 1:
+        return np.array([1])
 
-    Returns
-    -------
-    permanent : number
+    # Get row and column slice lists
+    rows = list(range(matrix.shape[0]))
+    cols = list(range(matrix.shape[1]))
 
-    """
-
-    return np.linalg.det(matrix ** 2) / np.linalg.det(matrix)
-
-
-def borchardt_deriv(matrix, x, c):
-    """
-    Compute the partial derivative of the permanent of a Cauchy matrix.
-
-    Parameters
-    ----------
-    matrix : 2-index np.ndarray
-        A square matrix.
-    x : 1-d np.ndarray
-        The coefficient vector corresponding to the Cauchy matrix.
-    c : int
-        The coefficient with respect to which to differentiate.
-
-    Returns
-    -------
-    deriv : number
-
-    """
-
-    p = matrix.shape[0]
-    k = matrix.shape[1]
-
-    # Compute elementwise square
-    ewsquare = matrix.copy()
-    ewsquare **= 2
-
-    # Compute determinants
-    det_matrix = np.linalg.det(matrix)
-    det_ewsquare = np.linalg.det(ewsquare)
-    inv_det_matrix = 1 / det_matrix
-
-    # Compute adjoints
-    adj_matrix = np.empty(matrix.shape, dtype=matrix.dtype)
-    adj_ewsquare = np.empty(ewsquare.shape, dtype=matrix.dtype)
-    for i in range(p):
-        for j in range(k):
+    # Compute the adjugate matrix
+    adj = np.empty_like(matrix)
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            rows.remove(i)
+            cols.remove(j)
             sgn = -1 if ((i + j) % 2) else 1
-            xlist = list(range(p))
-            xlist.remove(i)
-            xlist = np.array(xlist)[:, np.newaxis]
-            ylist = list(range(k))
-            ylist.remove(j)
-            adj_matrix[j, i] = sgn * np.linalg.det(matrix[xlist, ylist])
-            adj_ewsquare[j, i] = sgn * np.linalg.det(ewsquare[xlist, ylist])
+            t_rows = np.array(rows)[:, np.newaxis]
+            adj[j, i] = sgn * np.linalg.det(matrix[t_rows, cols])
+            rows.insert(i, i)
+            cols.insert(j, j)
 
-    # Compute derivative of `matrix` and `ewsquare`
-    d_matrix = np.zeros(matrix.shape, dtype=matrix.dtype)
-    d_ewsquare = np.zeros(ewsquare.shape, dtype=ewsquare.dtype)
-    # If deriving wrt {z_j}
-    if c < k:
-        for i in range(p):
-            d_matrix[i, c] = 1 / (x[2 * k + i] + x[k + c])
-            d_ewsquare[i, c] = 2 * x[c] / ((x[2 * k + i] + x[k + c]) ** 2)
-    # If deriving wrt {e_j}
-    elif c < 2 * k:
-        for i in range(p):
-            d_matrix[i, c - k] = -x[c - k] / ((x[2 * k + i] + x[c]) ** 2)
-            d_ewsquare[i, c - k] = -2 * (x[c - k] ** 2) / ((x[2 * k + i] + x[c]) ** 3)
-    # If deriving wrt {l_p}
-    else:
-        for j in range(k):
-            d_matrix[c - 2 * k, j] = -x[j] / ((x[c] + x[k + j]) ** 2)
-            d_ewsquare[c - 2 * k, j] = -2 * (x[j] ** 2) / ((x[c] + x[k + j]) ** 3)
-
-    # Compute total derivative
-    deriv = np.trace(adj_ewsquare.dot(d_ewsquare)) \
-        - det_ewsquare * inv_det_matrix * np.trace(adj_matrix.dot(d_matrix))
-    deriv *= inv_det_matrix
-
-    return deriv
+    return adj
 
 
-def borchardt_solve(matrix, x):
-    """
-    Obtain the Cauchy matrix parameters for a matrix.
+def apr2g(x, p, cols):
 
-    Parameters
-    ----------
-    matrix : 2-index np.ndarray
-        The matrix to be fitted.
-    x : 1-index np.ndarray
-        An initial guess at the Cauchy matrix parameters.
-
-    Returns
-    -------
-    x : 1-index np.ndarray
-
-    """
-
-    def solve(x):
-        p = matrix.shape[0]
-        k = matrix.shape[1]
-        obj = []
-        for i in range(p):
-            for j in range(k):
-                obj.append(matrix[i, j] - x[j] / (x[k + j] + x[2 * k + i]))
-        return np.array(obj, dtype=x.dtype)
-
-    ubound = np.ones(x.shape)
-    ubound[matrix.shape[1]:] *= np.inf
-    lbound = ubound.copy()
-    lbound *= -1
-
-    solution = least_squares(solve, x, bounds=(lbound, ubound))
-
-    return solution["x"]
-
-
-def borchardt_factor(x, p):
-    """
-    Factor a vector of Cauchy matrix parameters into the Cauchy matrix.
-
-    Parameters
-    ----------
-    x : 1-index np.ndarray
-        A vector of Cauchy matrix parameters.
-    p : int
-        The number of rows in the Cauchy matrix.
-
-    Returns
-    -------
-    matrix : 2-index np.ndarray
-
-    """
-
+    # |C|+ == |F|*|diag(zetas)|
     k = (x.size - p) // 2
-    matrix = np.empty((p, k), dtype=x.dtype)
+    F = faribault_factor(x, p, cols)
+    zeta_indices = [p + k + c for c in cols]
+
+    return np.linalg.det(F) * np.prod(x[zeta_indices])
+
+
+def apr2g_deriv(x, p, cols, dx):
+
+    # Initialize structures and check for d|C|+/dx == 0
+    k = (x.size - p) // 2
+    zeta_indices = [p + k + c for c in cols]
+    indices = list(range(p))
+    indices.extend([p + c for c in cols])
+    indices.extend(zeta_indices)
+    if dx not in indices:
+        return 0
+
+    # Initialize Faribault matrix
+    F = faribault_factor(x, p, cols)
+
+    # `dx` is a denominator parameter
+    dF = np.zeros((p, p))
+    if dx < (p + k):
+
+        # `dx` is lambda
+        if dx < p:
+            # Update lambda-containing terms
+            for i in range(p):
+                dF[i, i] = -1 / ((x[dx] - x[p + i]) ** 2)
+
+        # `dx` is epsilon
+        else:
+            for i in range(p):
+                for j in range(p):
+                    # `dx` == `i`
+                    if i == (dx - p):
+                        # Update diagonal terms
+                        if i == j:
+                            for l in range(p):
+                                dF[i, i] += 1 / ((x[l] - x[dx]) ** 2)
+                                if l != i:
+                                    dF[i, i] += -1 / ((x[dx] - x[p + l]) ** 2)
+                        # Update off-diagonal terms
+                        else:
+                            dF[i, j] = -1 / ((x[dx] - x[p + j]) ** 2)
+                    # `dx` == `j`
+                    elif j == (dx - p):
+                        # Update off-diagonal terms
+                        if i != j:
+                            dF[i, j] = 1 / ((x[p + i] - x[dx]) ** 2)
+                    # `dx` != `i`, `dx` != `j`
+                    else:
+                        # Update diagonal terms (off-diagonals are zero)
+                        if i == j:
+                            dF[i, i] = 1 / ((x[p + i] - x[dx]) ** 2)
+
+        # Use Jacobi's formula for denominator `dx`s, then multiply by the zetas
+        return np.trace(adjugate(F).dot(dF)) * np.prod(x[zeta_indices])
+
+    # `dx` is a numerator parameter; just remove the zeta `dx`
+    else:
+        dx_index = dx - p - k
+        zetas = np.diag(x[(p + k):].copy())
+        dzetas = zetas.copy()
+        dzetas[dx_index, dx_index] = 1
+        return np.linalg.det(F) * np.trace(adjugate(zetas).dot(dzetas))
+
+
+def cauchy_factor(x, p):
+
+    # Initialize the Cauchy matrix
+    k = (x.size - p) // 2
+    C = np.empty((p, k), dtype=x.dtype)
+
+    # Compute the terms
     for i in range(p):
         for j in range(k):
-            matrix[i, j] = x[j] / (x[2 * k + i] + x[k + j])
-  
-    return matrix
+            C[i, j] = x[p + k + j] / (x[i] - x[p + j])
+
+    # Done
+    return C
+
+
+def faribault_factor(x0, p, cols):
+
+    # Get the appropriate slice of `x0`
+    k = (x0.size - p) // 2
+    indices = list(range(p))
+    indices.extend([p + c for c in cols])
+    #indices.extend([p + k + c for c in cols])
+    x = x0[indices]
+
+    # Initialize the Faribault matrix
+    F = np.empty((p, p), dtype=x.dtype)
+
+    # Compute the diagonal terms
+    for i in range(p):
+        for j in range(p):
+            if i != j:
+                F[i, j] = 1 / (x[p + i] - x[p + j])
+
+    # Compute the off-diagonal terms
+    for i in range(p):
+        tmp = 0
+        for l in range(p):
+            tmp += 1 / (x[l] - x[p + i])
+            if l != i:
+                tmp += 1 / (x[p + i] - x[p + l])
+        F[i, i] = tmp
+
+    # Done
+    return F
