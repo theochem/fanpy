@@ -17,8 +17,7 @@ def generate_guess(self):
 
     x = np.zeros((self.p + 2 * self.k), dtype=self.dtype)
     x += np.random.rand(x.size)
-    if self.dtype == np.complex128:
-        x += np.random.rand(x.size) * 1j
+    x[self.p:(self.p + self.k)] *= -1
 
     return x
 
@@ -95,8 +94,8 @@ def jacobian(self, x):
 
     # Update the coefficient vector (and the `_C` matrix cache in APr2G)
     self.x[:] = x
-    self._C[:] = permanent.cauchy_factor(self.C, self.p)
-    jac = np.empty((len(self.pspace) + 1, x.size), dtype=x.dtype)
+    self._C[:] = permanent.cauchy_factor(self.x, self.p)
+    jac = np.empty((len(self.pspace) + 2, x.size), dtype=x.dtype)
 
     # Intialize constant "variables"
     energy = sum(self.hamiltonian(self.ground))
@@ -109,8 +108,15 @@ def jacobian(self, x):
         d_energy = sum(self.hamiltonian_deriv(self.ground, c))
 
         # Impose <HF|Psi> == 1, C[0, 0] == 1
-        jac[-1] = olp
-        jac[-2] = self._C[0, 0]
+        jac[-1, c] = d_olp
+        if c == 0:
+            jac[-2, c] = -self.x[self.p + self.k] / ((self.x[0] - self.x[self.p]) ** 2)
+        elif c == self.p:
+            jac[-2, c] = self.x[self.p + self.k] / ((self.x[0] - self.x[self.p]) ** 2)
+        elif c == (self.p + self.k):
+            jac[-2, c] = 1 / (self.x[0] - self.x[self.p])
+        else:
+            jac[-2, c] = 0
 
         # Impose (for all SDs in `pspace`) d(<SD|H|Psi> - E<SD|H|Psi>) == 0
         for i, sd in enumerate(self.pspace):
@@ -134,7 +140,7 @@ def objective(self, x):
 
     # Update the coefficient vector (and the `_C` matrix cache in APr2G)
     self.x[:] = x
-    self._C[:] = permanent.cauchy_factor(self.C, self.p)
+    self._C[:] = permanent.cauchy_factor(self.x, self.p)
 
     # Intialize needed variables
     olp = self.overlap(self.ground)
@@ -204,10 +210,12 @@ def overlap_deriv(self, sd, c):
     occ = [i for i in range(self.k) if slater.occupation_pair(sd, i)]
 
     # Evaluate the overlap
-    if c not in occ and (c - self.p) not in occ and (c - self.p - self.k) not in occ:
+    indices = list(range(self.p))
+    indices.extend([self.p + i for i in occ])
+    indices.extend([self.p + self.k + i for i in occ])
+    if c not in indices:
         return 0
-    else:
-        return permanent.apr2g_deriv(self.x, self.p, occ, c)
+    return permanent.apr2g_deriv(self.x, self.p, occ, c)
 
 
 def solve(self, **kwargs):
