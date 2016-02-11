@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import sys
 import numpy as np
 from ..utils import permanent, slater
 
@@ -107,8 +108,9 @@ def jacobian(self, x):
         d_olp = self.overlap_deriv(self.ground, c)
         d_energy = sum(self.hamiltonian_deriv(self.ground, c))
 
-        # Impose d<HF|Psi> == 0
-        jac[-1, c] = d_olp
+        # Impose <HF|Psi> == 1, C[0, 0] == 1
+        jac[-1] = olp
+        jac[-2] = self._C[0, 0]
 
         # Impose (for all SDs in `pspace`) d(<SD|H|Psi> - E<SD|H|Psi>) == 0
         for i, sd in enumerate(self.pspace):
@@ -137,10 +139,11 @@ def objective(self, x):
     # Intialize needed variables
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty((len(self.pspace) + 1), dtype=x.dtype)
+    obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
 
-    # Impose <HF|Psi> == 1
+    # Impose <HF|Psi> == 1, C[0, 0] == 1
     obj[-1] = olp - 1.0
+    obj[-2] = self._C[0, 0] - 1.0
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):
@@ -205,3 +208,27 @@ def overlap_deriv(self, sd, c):
         return 0
     else:
         return permanent.apr2g_deriv(self.x, self.p, occ, c)
+
+
+def solve(self, **kwargs):
+    """
+    Optimize `self.objective(x)` to solve the coefficient vector.
+    See `prowl.Base`.
+
+    """
+
+    # If APr2G has more parameters than APIG (for small `p`s and `k`s),
+    # we need to restrict some of the parameters manually
+    ubound = np.ones_like(self.x) * np.inf
+    ubound[(self.p + self.k):] = 1
+    lbound = -ubound
+    if (self.p < 3) or (self.p > 2 and self.k < (self.p / (self.p - 2))):
+        machine_eps = sys.float_info.epsilon
+        extras = self.p + 2 * self.k - self.p * self.k
+        for i in range(extras, self.p):
+            ubound[i] = 1.0 + 10 * machine_eps
+            lbound[i] = 1.0 - 10 * machine_eps
+            self.x[i] = 1.0
+    self.bounds = (lbound, ubound)
+
+    return super(self.__class__, self).solve(**kwargs)

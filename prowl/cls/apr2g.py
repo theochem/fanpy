@@ -15,13 +15,7 @@ class APr2G(APIG):
 
     # Properties
     dtype = np.complex128
-    #@property
-    #def bounds(self):
-        #ubound = np.ones(self.x.shape)
-        #ubound[self.k:] *= np.inf
-        #lbound = ubound.copy()
-        #lbound *= -1
-        #return (lbound, ubound)
+    bounds = (-np.inf, np.inf)
 
     # Bind methods
     generate_guess = apr2g.generate_guess
@@ -32,3 +26,4 @@ class APr2G(APIG):
     objective = apr2g.objective
     overlap = apr2g.overlap
     overlap_deriv = apr2g.overlap_deriv
+    solve = apr2g.solve
