@@ -81,7 +81,13 @@ def adjugate(matrix):
     return adj
 
 
-def apr2g(x, p, cols):
+def apr2g(matrix):
+
+    return np.linalg.det(matrix ** 2) / np.linalg.det(matrix)
+
+
+
+def apr2g_bak(x, p, cols):
 
     # |C|+ == |F|*|diag(zetas)|
     k = (x.size - p) // 2

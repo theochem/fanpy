@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import sys
 import numpy as np
 from ..utils import permanent, slater
 
@@ -107,6 +108,7 @@ def jacobian(self, x):
 
     # Intialize constant "variables"
     zeta_indices = list(range(self.p + self.k, 2 * self.p + self.k))
+    olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
 
     # Loop through all coefficients
@@ -117,19 +119,26 @@ def jacobian(self, x):
         d_energy = sum(self.hamiltonian_deriv(self.ground, c))
 
         # Impose some normalization constraints (this is currently incorrect)
-        jac[-1, c] = d_olp
         if c < self.p:
-            jac[-2, c] = -np.prod(x[zeta_indices]) \
-                / (np.prod([(x[i] - x[self.p + i]) for i in range(self.p) if i != c]) \
-                    * ((x[c] - x[self.p + c]) ** 2))
+            jac[-1, c] = -(x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
+                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
+            jac[-2, c] = -np.prod([self._C[i, i] for i in range(self.p) if i != c]) \
+                * (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
+                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
         elif self.p < c < 2 * self.p:
-            jac[-2, c] = np.prod(x[zeta_indices]) \
-                / (np.prod([(x[i] - x[self.p + i]) for i in range(self.p) if i != c]) \
-                    * ((x[c] - x[self.p + c]) ** 2))
+            jac[-1, c] = (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
+                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
+            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p) if i != c]) \
+                * (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
+                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
         elif (self.p + self.k) < c < (2 * self.p + self.k):
-            jac[-2, c] = np.prod([x[i] for i in zeta_indices if i != c]) \
-                / np.prod([(x[i] - x[self.p + i]) for i in range(self.p)])
+            jac[-1, c] = (1 / (x[c] - x[self.p + c])) / olp \
+                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
+            jac[-2, c] = (np.prod([self.x[self.p + self.k + i] for i in range(self.p) if i != c]) \
+                / np.prod([1 / (self.x[i] + self.x[self.p + i]) for i in range(self.p)])) / olp \
+                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
         else:
+            jac[-1, c] = 0
             jac[-2, c] = 0
 
         # Impose (for all SDs in `pspace`) d(<SD|H|Psi> - E<SD|H|Psi>) == 0
@@ -137,11 +146,11 @@ def jacobian(self, x):
             jac[i, c] = sum(self.hamiltonian_deriv(sd, c)) \
                 - energy * self.overlap_deriv(sd, c) - d_energy * self.overlap(sd)
 
-    ## Fix NaNs (not sure if we can avoid this... but we'll try)
-    #for i in range(jac.shape[0]):
-    #    for j in range(jac.shape[1]):
-    #        if not np.isfinite(jac[i, j]):
-    #            jac[i, j] = 0.0
+    # Fix NaNs (not sure if we can avoid this... but we'll try)
+    for i in range(jac.shape[0]):
+        for j in range(jac.shape[1]):
+            if not np.isfinite(jac[i, j]):
+                jac[i, j] = 0
 
     return jac * 0.5
 
@@ -207,7 +216,7 @@ def overlap(self, sd):
 
     # Evaluate the overlap
     occ = [i for i in range(self.k) if slater.occupation_pair(sd, i)]
-    return permanent.apr2g(self.x, self.p, occ)
+    return permanent.apr2g(self._C[:, occ])#self.x, self.p, occ)
 
 
 def overlap_deriv(self, sd, c):
@@ -251,9 +260,12 @@ def solve(self, **kwargs):
 
     """
 
+    eps = 10 * sys.float_info.epsilon
     ubound = np.ones_like(self.x) * np.inf
-    ubound[self.p + self.k] = 1
-    self.bounds = (-ubound, ubound)
-    self.x[self.p + self.k] = 1
+    lbound = -ubound
+    #ubound[self.p + self.k] = 1 + eps
+    #lbound[self.p + self.k] = 1 - eps
+    self.bounds = (lbound, ubound)
+    #self.x[self.p + self.k] = 1
 
     return super(self.__class__, self).solve(**kwargs)
