@@ -91,7 +91,65 @@ def apr2g(x, p, cols):
     return np.linalg.det(F) * np.prod(x[zeta_indices])
 
 
-def apr2g_deriv(x, p, cols, dx):
+def apr2g_deriv(matrix, x, p, cols, dx):
+    """
+    Compute the partial derivative of the permanent of a Cauchy matrix.
+
+    """
+
+    # Initialize structures and check for d|C|+/dx == 0
+    k = matrix.shape[1]
+    indices = list(range(p))
+    indices.extend([p + c for c in cols])
+    indices.extend([p + k + c for c in cols])
+    if dx not in indices:
+        return 0
+    dx = indices.index(dx)
+    xnew = x[indices]
+
+    # Compute square matrix slice and its elementwise square
+    matrix = matrix[:, cols]
+    ewsquare = matrix.copy()
+    ewsquare **= 2
+
+    # Compute determinants
+    det_matrix = np.linalg.det(matrix)
+    det_ewsquare = np.linalg.det(ewsquare)
+
+    # Compute adjoints
+    adj_matrix = adjugate(matrix)
+    adj_ewsquare = adjugate(ewsquare)
+
+    # Compute derivative of `matrix` and `ewsquare`
+    d_matrix = np.zeros_like(matrix)
+    d_ewsquare = np.zeros_like(ewsquare)
+    for i in range(p):
+        for j in range(p):
+            # If deriving wrt {l_i}
+            if dx == i:
+                d_matrix[i, j] = -xnew[2 * p + j] / ((xnew[p] - xnew[p + j]) ** 2)
+                d_ewsquare[i, j] = -2 * (xnew[2 * p + j] ** 2) / ((xnew[p] - xnew[p + j]) ** 3)
+            # If deriving wrt {e_j}
+            elif dx == (p + j):
+                d_matrix[i, j] = xnew[2 * p + j] / ((xnew[p] - xnew[p + j]) ** 2)
+                d_ewsquare[i, j] = 2 * (xnew[2 * p + j] ** 2) / ((xnew[p] - xnew[p + j]) ** 3)
+            # If deriving wrt {z_j}
+            elif dx == (2 * p + j):
+                d_matrix[i, j] = 1 / (xnew[p] - xnew[p + j])
+                d_ewsquare[i, j] = 2 * xnew[2 * p + j] / ((xnew[p] - xnew[p + j]) ** 2)
+            # Else
+            else:
+                d_matrix[i, j] = 0
+                d_ewsquare[i, j] = 0
+
+    # Compute total derivative
+    deriv = np.trace(adj_ewsquare.dot(d_ewsquare)) / det_matrix \
+        - det_ewsquare * (1 / (det_matrix ** 2)) * np.trace(adj_matrix.dot(d_matrix))
+
+    return deriv
+
+
+def apr2g_deriv_bak(x, p, cols, dx):
 
     # Initialize structures and check for d|C|+/dx == 0
     k = (x.size - p) // 2

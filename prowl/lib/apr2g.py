@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-import sys
 import numpy as np
 from ..utils import permanent, slater
 
@@ -15,9 +14,18 @@ def generate_guess(self):
 
     """
 
-    x = np.zeros((self.p + 2 * self.k), dtype=self.dtype)
-    x += np.random.rand(x.size)
-    x[self.p:(self.p + self.k)] *= -1
+    x = np.ones((self.p + 2 * self.k), dtype=self.dtype)
+
+    # Lambdas in ascending order
+    for i in range(self.p):
+        x[i] = i + 1
+
+    # Epsilons in step with the lambdas
+    x[self.p] = 0
+    for j in range(1, self.p):
+        x[self.p + j] = 0.5 * (x[j - 1] + x[j])
+    for j in range(self.p, self.k):
+        x[self.p + j] = self.p + j
 
     return x
 
@@ -98,6 +106,7 @@ def jacobian(self, x):
     jac = np.empty((len(self.pspace) + 2, x.size), dtype=x.dtype)
 
     # Intialize constant "variables"
+    zeta_indices = list(range(self.p + self.k, 2 * self.p + self.k))
     energy = sum(self.hamiltonian(self.ground))
 
     # Loop through all coefficients
@@ -107,14 +116,19 @@ def jacobian(self, x):
         d_olp = self.overlap_deriv(self.ground, c)
         d_energy = sum(self.hamiltonian_deriv(self.ground, c))
 
-        # Impose <HF|Psi> == 1, C[0, 0] == 1
+        # Impose some normalization constraints (this is currently incorrect)
         jac[-1, c] = d_olp
-        if c == 0:
-            jac[-2, c] = -self.x[self.p + self.k] / ((self.x[0] - self.x[self.p]) ** 2)
-        elif c == self.p:
-            jac[-2, c] = self.x[self.p + self.k] / ((self.x[0] - self.x[self.p]) ** 2)
-        elif c == (self.p + self.k):
-            jac[-2, c] = 1 / (self.x[0] - self.x[self.p])
+        if c < self.p:
+            jac[-2, c] = -np.prod(x[zeta_indices]) \
+                / (np.prod([(x[i] - x[self.p + i]) for i in range(self.p) if i != c]) \
+                    * ((x[c] - x[self.p + c]) ** 2))
+        elif self.p < c < 2 * self.p:
+            jac[-2, c] = np.prod(x[zeta_indices]) \
+                / (np.prod([(x[i] - x[self.p + i]) for i in range(self.p) if i != c]) \
+                    * ((x[c] - x[self.p + c]) ** 2))
+        elif (self.p + self.k) < c < (2 * self.p + self.k):
+            jac[-2, c] = np.prod([x[i] for i in zeta_indices if i != c]) \
+                / np.prod([(x[i] - x[self.p + i]) for i in range(self.p)])
         else:
             jac[-2, c] = 0
 
@@ -122,6 +136,12 @@ def jacobian(self, x):
         for i, sd in enumerate(self.pspace):
             jac[i, c] = sum(self.hamiltonian_deriv(sd, c)) \
                 - energy * self.overlap_deriv(sd, c) - d_energy * self.overlap(sd)
+
+    ## Fix NaNs (not sure if we can avoid this... but we'll try)
+    #for i in range(jac.shape[0]):
+    #    for j in range(jac.shape[1]):
+    #        if not np.isfinite(jac[i, j]):
+    #            jac[i, j] = 0.0
 
     return jac * 0.5
 
@@ -136,6 +156,12 @@ def objective(self, x):
     x : 1-index np.ndarray
         The coefficient vector.
 
+    Notes
+    -----
+    Dividing by the ground-state overlap is good.  Doing it in the normalization
+    equations seems to be enough, but if that changes, we could divide the
+    projected Schrodinger equations by the overlap.
+
     """
 
     # Update the coefficient vector (and the `_C` matrix cache in APr2G)
@@ -147,9 +173,9 @@ def objective(self, x):
     energy = sum(self.hamiltonian(self.ground))
     obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
 
-    # Impose <HF|Psi> == 1, C[0, 0] == 1
-    obj[-1] = olp - 1.0
-    obj[-2] = self._C[0, 0] - 1.0
+    # Impose some normalization constraints
+    obj[-1] = (np.trace(self._C[:, :self.p]) - self.p) / olp
+    obj[-2] = (np.prod(np.diag(self._C[:, :self.p])) - 1.0) / olp
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):
@@ -215,7 +241,7 @@ def overlap_deriv(self, sd, c):
     indices.extend([self.p + self.k + i for i in occ])
     if c not in indices:
         return 0
-    return permanent.apr2g_deriv(self.x, self.p, occ, c)
+    return permanent.apr2g_deriv(self._C, self.x, self.p, occ, c)
 
 
 def solve(self, **kwargs):
@@ -225,18 +251,9 @@ def solve(self, **kwargs):
 
     """
 
-    # If APr2G has more parameters than APIG (for small `p`s and `k`s),
-    # we need to restrict some of the parameters manually
     ubound = np.ones_like(self.x) * np.inf
-    ubound[(self.p + self.k):] = 1
-    lbound = -ubound
-    if (self.p < 3) or (self.p > 2 and self.k < (self.p / (self.p - 2))):
-        machine_eps = sys.float_info.epsilon
-        extras = self.p + 2 * self.k - self.p * self.k
-        for i in range(extras, self.p):
-            ubound[i] = 1.0 + 10 * machine_eps
-            lbound[i] = 1.0 - 10 * machine_eps
-            self.x[i] = 1.0
-    self.bounds = (lbound, ubound)
+    ubound[self.p + self.k] = 1
+    self.bounds = (-ubound, ubound)
+    self.x[self.p + self.k] = 1
 
     return super(self.__class__, self).solve(**kwargs)
