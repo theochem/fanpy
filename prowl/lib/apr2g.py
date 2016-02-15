@@ -20,6 +20,7 @@ def generate_guess(self):
     # Lambdas in ascending order
     for i in range(self.p):
         x[i] = i + 1
+        #x[i] = (i + 1) * self.p / 2
 
     # Epsilons in step with the lambdas
     x[self.p] = 0
@@ -27,6 +28,15 @@ def generate_guess(self):
         x[self.p + j] = 0.5 * (x[j - 1] + x[j])
     for j in range(self.p, self.k):
         x[self.p + j] = self.p + j
+
+    # Zetas in descending order
+    for j in range(self.k):
+        x[self.p + self.k + j] = 1.0
+
+    # Add noise
+    x += (np.random.rand(x.size) - 0.5) * 2.0e-3
+    if x.dtype == np.complex128:
+        x += (np.random.rand(x.size) - 0.5) * 2.0e-6j
 
     return x
 
@@ -183,12 +193,13 @@ def objective(self, x):
     obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
 
     # Impose some normalization constraints
-    obj[-1] = (np.trace(self._C[:, :self.p]) - self.p) / olp
-    obj[-2] = (np.prod(np.diag(self._C[:, :self.p])) - 1.0) / olp
+    # NOTE: multiplied these by self.p to increase their weightings
+    obj[-1] = self.p * (np.trace(self._C[:, :self.p]) - self.p) / olp
+    obj[-2] = self.p * (np.prod(np.diag(self._C[:, :self.p])) - 1) / olp
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):
-        obj[i] = sum(self.hamiltonian(sd)) - energy * self.overlap(sd)
+        obj[i] = (sum(self.hamiltonian(sd)) - energy * self.overlap(sd)) / olp
 
     return obj
 
@@ -263,9 +274,16 @@ def solve(self, **kwargs):
     eps = 10 * sys.float_info.epsilon
     ubound = np.ones_like(self.x) * np.inf
     lbound = -ubound
+    # NOTE: need to test bounds further
     #ubound[self.p + self.k] = 1 + eps
     #lbound[self.p + self.k] = 1 - eps
-    self.bounds = (lbound, ubound)
     #self.x[self.p + self.k] = 1
+    #extra_apig_params = self.p + 2 * self.k - self.p * self.k - 1
+    #if self.p >= extra_apig_params > 0:
+        #for i in range(extra_apig_params):
+            #ubound[i] = i + 1 + eps#self.x[i] + eps
+            #lbound[i] = i + 1 - eps#self.x[i] - eps
+            #self.x[i] = i + 1
+    self.bounds = (lbound, ubound)
 
     return super(self.__class__, self).solve(**kwargs)
