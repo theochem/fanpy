@@ -34,9 +34,9 @@ def generate_guess(self):
         x[self.p + self.k + j] = 1.0
 
     # Add noise
-    x += (np.random.rand(x.size) - 0.5) * 2.0e-3
+    #x += (np.random.rand(x.size) - 0.5) * 2.0e-3
     if x.dtype == np.complex128:
-        x += (np.random.rand(x.size) - 0.5) * 2.0e-6j
+        x += (np.random.rand(x.size) - 0.5) * 1.0e-2j
 
     return x
 
@@ -130,37 +130,32 @@ def jacobian(self, x):
 
         # Impose some normalization constraints (this is currently incorrect)
         if c < self.p:
-            jac[-1, c] = -(x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
-                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
-            jac[-2, c] = -np.prod([self._C[i, i] for i in range(self.p) if i != c]) \
-                * (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
-                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
+            jac[-1, c] = -self.x[self.p + self.k + c] / ((self.x[c] - self.x[self.p + c]) ** 2)
+            jac[-2, c] = -np.prod([self._C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
         elif self.p < c < 2 * self.p:
-            jac[-1, c] = (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
-                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
-            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p) if i != c]) \
-                * (x[self.p + self.k + c] / ((x[c] - x[self.p + c]) ** 2)) / olp \
-                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
+            jac[-1, c] = self.x[self.p + self.k + c] / ((self.x[c] - self.x[self.p + c]) ** 2)
+            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
         elif (self.p + self.k) < c < (2 * self.p + self.k):
-            jac[-1, c] = (1 / (x[c] - x[self.p + c])) / olp \
-                - (np.trace(self._C[:, :self.p]) - self.p) * d_olp / (olp ** 2)
-            jac[-2, c] = (np.prod([self.x[self.p + self.k + i] for i in range(self.p) if i != c]) \
-                / np.prod([1 / (self.x[i] + self.x[self.p + i]) for i in range(self.p)])) / olp \
-                - (np.prod([self._C[i, i] for i in range(self.p)]) - 1) * d_olp / (olp ** 2)
+            jac[-1, c] = 1 / (self.x[c] - self.x[self.p + c])
+            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p) if i != c]) / (self.x[c] - self.x[self.p + c])
         else:
             jac[-1, c] = 0
             jac[-2, c] = 0
+        jac[-1, c] *= self.p
+        jac[-2, c] *= self.p
 
         # Impose (for all SDs in `pspace`) d(<SD|H|Psi> - E<SD|H|Psi>) == 0
         for i, sd in enumerate(self.pspace):
-            jac[i, c] = sum(self.hamiltonian_deriv(sd, c)) \
-                - energy * self.overlap_deriv(sd, c) - d_energy * self.overlap(sd)
+            sd_olp = self.overlap(sd)
+            sd_d_olp = self.overlap_deriv(sd, c)
+            jac[i, c] = (olp * sum(self.hamiltonian_deriv(sd, c)) - d_olp * sum(self.hamiltonian(sd))) / olp ** 2 \
+                - (olp * sd_olp * d_energy + energy * olp * sd_d_olp - energy * sd_olp * d_olp) / olp ** 2
 
     # Fix NaNs (not sure if we can avoid this... but we'll try)
     for i in range(jac.shape[0]):
         for j in range(jac.shape[1]):
             if not np.isfinite(jac[i, j]):
-                jac[i, j] = 0
+                jac[i, j] = 0.0
 
     return jac * 0.5
 
@@ -193,9 +188,12 @@ def objective(self, x):
     obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
 
     # Impose some normalization constraints
-    # NOTE: multiplied these by self.p to increase their weightings
-    obj[-1] = self.p * (np.trace(self._C[:, :self.p]) - self.p) / olp
-    obj[-2] = self.p * (np.prod(np.diag(self._C[:, :self.p])) - 1) / olp
+    # NOTE: divide these by olp, it might help.
+    obj[-1] = np.sum([self._C[i, i] for i in range(self.p)]) - self.p
+    obj[-2] = np.prod([self._C[i, i] for i in range(self.p)]) - 1
+    #obj[-2] = np.prod(self._C[:, :self.p]) - 1
+    obj[-1] *= self.p
+    obj[-2] *= self.p
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):
@@ -272,7 +270,8 @@ def solve(self, **kwargs):
     """
 
     eps = 10 * sys.float_info.epsilon
-    ubound = np.ones_like(self.x) * np.inf
+    ubound = np.ones_like(self.x)
+    ubound[:(self.p + self.k)] *= np.inf
     lbound = -ubound
     # NOTE: need to test bounds further
     #ubound[self.p + self.k] = 1 + eps
