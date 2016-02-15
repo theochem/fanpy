@@ -273,16 +273,6 @@ def solve(self, **kwargs):
     ubound = np.ones_like(self.x)
     ubound[:(self.p + self.k)] *= np.inf
     lbound = -ubound
-    # NOTE: need to test bounds further
-    #ubound[self.p + self.k] = 1 + eps
-    #lbound[self.p + self.k] = 1 - eps
-    #self.x[self.p + self.k] = 1
-    #extra_apig_params = self.p + 2 * self.k - self.p * self.k - 1
-    #if self.p >= extra_apig_params > 0:
-        #for i in range(extra_apig_params):
-            #ubound[i] = i + 1 + eps#self.x[i] + eps
-            #lbound[i] = i + 1 - eps#self.x[i] - eps
-            #self.x[i] = i + 1
-    self.bounds = (lbound, ubound)
+    # NOTE: need to test bounds further and restrict for small systems
 
     return super(self.__class__, self).solve(**kwargs)
