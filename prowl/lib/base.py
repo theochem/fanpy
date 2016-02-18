@@ -25,9 +25,9 @@ def __init__(self, n, H, G, x=None, pspace=None, dtype=None):
 
     """
 
-    self.n = n
-    self.k = H.shape[0]
-    self.p = int(n // 2)
+    self.n = self.n if hasattr(self, "n") else n
+    self.k = self.k if hasattr(self, "k") else H.shape[0]
+    self.p = self.p if hasattr(self, "p") else int(n // 2)
 
     self.H = H
     self.G = G

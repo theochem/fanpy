@@ -21,7 +21,7 @@ def dense(matrix):
     """
 
     permanent = 0
-    view = matrix if matrix.shape[0] < matrix.shape[1] else matrix.transpose()
+    view = matrix if matrix.shape[0] <= matrix.shape[1] else matrix.transpose()
     rows = list(range(view.shape[0]))
     columns = list(range(view.shape[1]))
     for cols in permutations(columns, r=view.shape[0]):
@@ -51,7 +51,7 @@ def dense_deriv(matrix, x, y):
     """
 
     deriv = 0
-    if matrix.shape[0] < matrix.shape[1]:
+    if matrix.shape[0] <= matrix.shape[1]:
         view = matrix
     else:
         view = matrix.transpose()
