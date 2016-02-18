@@ -21,9 +21,11 @@ def dense(matrix):
     """
 
     permanent = 0
-    rows = range(matrix.shape[0])
-    for cols in permutations(rows):
-        permanent += np.product(matrix[rows, cols])
+    view = matrix if matrix.shape[0] < matrix.shape[1] else matrix.transpose()
+    rows = list(range(view.shape[0]))
+    columns = list(range(view.shape[1]))
+    for cols in permutations(columns, r=view.shape[0]):
+        permanent += np.product(view[rows, cols])
 
     return permanent
 
@@ -49,9 +51,15 @@ def dense_deriv(matrix, x, y):
     """
 
     deriv = 0
-    rows = list(range(matrix.shape[0]))
-    for cols in (i for i in permutations(rows) if i[x] == y):
-        deriv += np.product([matrix[rows[i], cols[i]] for i in rows if i != x])
+    if matrix.shape[0] < matrix.shape[1]:
+        view = matrix
+    else:
+        view = matrix.transpose()
+        x, y = y, x
+    rows = list(range(view.shape[0]))
+    columns = list(range(view.shape[1]))
+    for cols in (i for i in permutations(columns, r=view.shape[0]) if i[x] == y):
+        deriv += np.product([view[rows[i], cols[i]] for i in rows if i != x])
 
     return deriv
 
