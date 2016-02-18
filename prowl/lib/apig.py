@@ -55,8 +55,8 @@ def generate_pspace(self):
     pspace = [ground]
 
     # Get occupied (HOMOs first!) and virtual indices
-    occ = list(range(self.p - 1, -1, -1))
-    vir = list(range(self.p, self.k))
+    occ = list(range(self.n // 2 - 1, -1, -1))
+    vir = list(range(self.n // 2, self.k))
 
     # Add pair excitations
     nexc = 1
