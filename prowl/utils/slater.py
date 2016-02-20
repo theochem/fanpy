@@ -133,3 +133,24 @@ def number(sd):
                 ones += 1
             sd >>= 1
         return ones
+
+
+def create_multiple(sd, *indices):
+    """
+    Create multiple electrons in a Slater determinant.
+    See `prowl.utils.slater.annihilate`.
+
+    """
+    for index in indices:
+        sd = create(sd, index)
+    return sd
+
+def create_multiple_pairs(sd, *indices):
+    """
+    Create multiple electron pairs in a Slater determinant.
+    See `prowl.utils.slater.annihilate`.
+
+    """
+    for index in indices:
+        sd = create_pair(sd, index)
+    return sd
