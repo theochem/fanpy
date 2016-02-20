@@ -26,3 +26,4 @@ class APIG(Base):
     objective = apig.objective
     overlap = apig.overlap
     overlap_deriv = apig.overlap_deriv
+    truncate = apig.truncate
