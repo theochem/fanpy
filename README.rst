@@ -1,13 +1,11 @@
 Projectively-Optimized Wavefunction Library (PrOWL)
 ---------------------------------------------------
 
-Hopefully this one doesn't suck as hard.
-
 Currently does:
     * APIG
     * AP1roG
     * APr2G
-    * "fancyCI" (soon!)
+    * Particle number symmetry-broken AP*G
 
 Will do in the future:
     * APseq#G

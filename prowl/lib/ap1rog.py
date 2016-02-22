@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from itertools import combinations
 import numpy as np
 from ..utils import slater
+from ..utils import permanent
 
 
 def generate_guess(self):
@@ -171,17 +172,8 @@ def overlap(self, sd):
     # If `sd` is not excited
     if nexc == 0:
         return 1.0
-    # If `sd` is singly pair-excited
-    elif nexc == 1:
-        return self.C[occ[0], vir[0]]
-    # If `sd` is doubly pair-excited
-    elif nexc == 2:
-        return self.C[occ[0], vir[0]] * self.C[occ[1], vir[1]] \
-            + self.C[occ[0], vir[1]] * self.C[occ[1], vir[0]]
-    # Handle non-(singly/doubly) pair-excited Slater determinants
     else:
-        raise ValueError("Invalid Slater determinant; can't handle more than "
-            "2x pair excitation")
+        return permanent.dense(self.C[occ][:, vir])
 
 
 def overlap_deriv(self, sd, x, y):
@@ -217,34 +209,7 @@ def overlap_deriv(self, sd, x, y):
         if slater.occupation_pair(sd, i):
             vir.append(i - self.p)
 
-    # If `sd` is not excited
-    if nexc == 0:
-        return 0.0
-    # If `sd` is singly pair-excited
-    elif nexc == 1:
-        if y == vir[0] and x == occ[0]:
-                return 1.0
-        else:
-            return 0.0
-    # If `sd` is doubly pair-excited
-    elif nexc == 2:
-        if y == vir[0]:
-            if x == occ[0]:
-                return self.C[occ[1], vir[1]]
-            elif x == occ[1]:
-                return self.C[occ[0], vir[1]]
-            else:
-                return 0.0
-        elif y == vir[1]:
-            if x == occ[0]:
-                return self.C[occ[1], vir[0]]
-            elif x == occ[1]:
-                return self.C[occ[0], vir[0]]
-            else:
-                return 0.0
-        else:
-            return 0.0
-    # Handle non-(singly/doubly) pair-excited Slater determinants
+    if x in occ and y in vir:
+        return permanent.dense_deriv(self.C[occ][:, vir], occ.index(x), vir.index(y))
     else:
-        raise ValueError("Invalid Slater determinant; can't handle more than "
-            "2x pair excitation")
+        return 0.0
