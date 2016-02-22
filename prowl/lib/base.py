@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import least_squares
 
 
-def __init__(self, n, H, G, p=None, x=None, pspace=None, dtype=None):
+def __init__(self, n, H, G, dtype=None, p=None, pspace=None, seq=None, x=None):
     """
     Initialize the base wavefunction class.
 
@@ -25,17 +25,23 @@ def __init__(self, n, H, G, p=None, x=None, pspace=None, dtype=None):
 
     """
 
+    # System attributes
     self.n = n
     self.k = H.shape[0]
-    self.p = n // 2 if p is None else p
-
     self.H = H
     self.G = G
 
+    # Algorithm attributes
+    self.p = n // 2 if p is None else p
+    if seq:
+        self.seq = seq
+
+    # Coefficient attributes
     self.dtype = self.dtype if dtype is None else dtype
     self.x = self.generate_guess() if x is None else x
     self.C = self.generate_view()
 
+    # Projection space attributes
     self.pspace = self.generate_pspace() if pspace is None else pspace
     self.ground = min(self.pspace)
 
