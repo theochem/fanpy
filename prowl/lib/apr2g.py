@@ -20,7 +20,6 @@ def generate_guess(self):
     # Lambdas in ascending order
     for i in range(self.p):
         x[i] = i + 1
-        #x[i] = (i + 1) * self.p / 2
 
     # Epsilons in step with the lambdas
     x[self.p] = 0
@@ -34,7 +33,7 @@ def generate_guess(self):
         x[self.p + self.k + j] = 1.0
 
     # Add noise
-    #x += (np.random.rand(x.size) - 0.5) * 2.0e-3
+    x += (np.random.rand(x.size) - 0.5) * 2.0e-3
     if x.dtype == np.complex128:
         x += (np.random.rand(x.size) - 0.5) * 1.0e-2j
 
@@ -51,9 +50,7 @@ def generate_view(self):
 
     """
 
-    # Initialize `_C`, the cached value of the recomposed Cauchy matrix
-    self._C = np.empty((self.p, self.k), dtype=self.dtype)
-    return self.x
+    return np.empty((self.p, self.k), dtype=self.dtype)
 
 
 def hamiltonian_deriv(self, sd, c):
@@ -111,12 +108,12 @@ def jacobian(self, x):
 
     """
 
-    # Update the coefficient vector (and the `_C` matrix cache in APr2G)
+    # Update the coefficient vector (and the `C` matrix cache in APr2G)
     self.x[:] = x
-    self._C[:] = permanent.cauchy_factor(self.x, self.p)
+    self.C[:, :] = permanent.cauchy_factor(self.x, self.p)
     jac = np.empty((len(self.pspace) + 2, x.size), dtype=x.dtype)
 
-    # Intialize constant "variables"
+    # Intialize unchanging variables
     zeta_indices = list(range(self.p + self.k, 2 * self.p + self.k))
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
@@ -124,20 +121,20 @@ def jacobian(self, x):
     # Loop through all coefficients
     for c in range(x.size):
 
-        # Intialize differentiated variables
+        # Update changing variables
         d_olp = self.overlap_deriv(self.ground, c)
         d_energy = sum(self.hamiltonian_deriv(self.ground, c))
 
         # Impose some normalization constraints (this is currently incorrect)
         if c < self.p:
             jac[-1, c] = -self.x[self.p + self.k + c] / ((self.x[c] - self.x[self.p + c]) ** 2)
-            jac[-2, c] = -np.prod([self._C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
+            jac[-2, c] = -np.prod([self.C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
         elif self.p < c < 2 * self.p:
             jac[-1, c] = self.x[self.p + self.k + c] / ((self.x[c] - self.x[self.p + c]) ** 2)
-            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
+            jac[-2, c] = np.prod([self.C[i, i] for i in range(self.p)]) / (self.x[c] - self.x[self.p + c])
         elif (self.p + self.k) < c < (2 * self.p + self.k):
             jac[-1, c] = 1 / (self.x[c] - self.x[self.p + c])
-            jac[-2, c] = np.prod([self._C[i, i] for i in range(self.p) if i != c]) / (self.x[c] - self.x[self.p + c])
+            jac[-2, c] = np.prod([self.C[i, i] for i in range(self.p) if i != c]) / (self.x[c] - self.x[self.p + c])
         else:
             jac[-1, c] = 0
             jac[-2, c] = 0
@@ -178,9 +175,9 @@ def objective(self, x):
 
     """
 
-    # Update the coefficient vector (and the `_C` matrix cache in APr2G)
+    # Update the coefficient vector (and the `C` matrix cache in APr2G)
     self.x[:] = x
-    self._C[:] = permanent.cauchy_factor(self.x, self.p)
+    self.C[:, :] = permanent.cauchy_factor(self.x, self.p)
 
     # Intialize needed variables
     olp = self.overlap(self.ground)
@@ -189,9 +186,9 @@ def objective(self, x):
 
     # Impose some normalization constraints
     # NOTE: divide these by olp, it might help.
-    obj[-1] = np.sum([self._C[i, i] for i in range(self.p)]) - self.p
-    obj[-2] = np.prod([self._C[i, i] for i in range(self.p)]) - 1
-    #obj[-2] = np.prod(self._C[:, :self.p]) - 1
+    obj[-1] = np.sum([self.C[i, i] for i in range(self.p)]) - self.p
+    obj[-2] = np.prod([self.C[i, i] for i in range(self.p)]) - 1
+    #obj[-2] = np.prod(self.C[:, :self.p]) - 1
     obj[-1] *= self.p
     obj[-2] *= self.p
 
@@ -225,7 +222,7 @@ def overlap(self, sd):
 
     # Evaluate the overlap
     occ = [i for i in range(self.k) if slater.occupation_pair(sd, i)]
-    return permanent.apr2g(self._C[:, occ])#self.x, self.p, occ)
+    return permanent.apr2g(self.C[:, occ])#self.x, self.p, occ)
 
 
 def overlap_deriv(self, sd, c):
@@ -259,7 +256,7 @@ def overlap_deriv(self, sd, c):
     indices.extend([self.p + self.k + i for i in occ])
     if c not in indices:
         return 0
-    return permanent.apr2g_deriv(self._C, self.x, self.p, occ, c)
+    return permanent.apr2g_deriv(self.C, self.x, self.p, occ, c)
 
 
 def solve(self, **kwargs):

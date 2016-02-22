@@ -1,17 +1,28 @@
 Projectively-Optimized Wavefunction Library (PrOWL)
----------------------------------------------------
+===================================================
 
-Currently does:
-    * APIG
-    * AP1roG
-    * APr2G
-    * Particle number symmetry-broken AP*G
+Wavefunctions
+-------------
 
-Will do in the future:
-    * APseq#G
-    * APset#G
-    * Open-shell AP*G
-    * Dynamic correlation on AP*G
-    * CI and/or CC
+    R : Restricted
+
+    P : Particle-number symmetry broken
+
+    * APIG      (R, P)
+    * AP1roG    (R, P)
+    * APr2G     (R, P)
+    * APseqG    (R, P)
+
+Goals
+-----
+
+    O : Open-shell
+
+    U : Unrestricted
+
+    S : Spin symmetry-broken
+
+    * APsetG
+    * Composite particle CI/CC
     * Orbital optimization
     * Density matrices

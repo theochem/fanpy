@@ -143,33 +143,3 @@ def cauchy_factor(x, p):
 
     # Done
     return C
-
-
-def faribault_factor(x0, p, cols):
-
-    # Get the appropriate slice of `x0`
-    k = (x0.size - p) // 2
-    indices = list(range(p))
-    indices.extend([p + c for c in cols])
-    x = x0[indices]
-
-    # Initialize the Faribault matrix
-    F = np.empty((p, p), dtype=x.dtype)
-
-    # Compute the off-diagonal terms
-    for i in range(p):
-        for j in range(p):
-            if i != j:
-                F[i, j] = 1 / (x[p + i] - x[p + j])
-
-    # Compute the diagonal terms
-    for i in range(p):
-        tmp = 0
-        for l in range(p):
-            if l != i:
-                tmp += 1 / (x[p + i] - x[p + l])
-            tmp += 1 / (x[l] - x[p + i])
-        F[i, i] = tmp
-
-    # Done
-    return F

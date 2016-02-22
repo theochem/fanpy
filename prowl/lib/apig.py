@@ -209,26 +209,28 @@ def jacobian(self, x):
 
     # Update the coefficient vector
     self.x[:] = x
-    jac = np.empty((len(self.pspace) + 2, self.x.size), dtype=x.dtype)
+    jac = np.empty((len(self.pspace), self.x.size), dtype=x.dtype)
+
+    # Intialize unchanging variables
+    energy = sum(self.hamiltonian(self.ground))
 
     # Loop through all coefficients
     c = 0
-    for i in range(self.p):
-        for j in range(self.k):
+    for i in range(self.C.shape[0]):
+        for j in range(self.C.shape[1]):
 
-            # Intialize needed variables
-            energy = sum(self.hamiltonian(self.ground))
+            # Update changing variables
             d_olp = self.overlap_deriv(self.ground, i, j)
             d_energy = sum(self.hamiltonian_deriv(self.ground, i, j))
 
             # Impose d<HF|Psi> == 1 + 0j
-            jac[-1, c] = d_olp
+            #jac[-1, c] = d_olp
 
             # Impose dC[0, 0] == 1 + 0j
-            if c == 0:
-                jac[-2, c] = 1
-            else:
-                jac[-2, c] = 0
+            #if c == 0:
+                #jac[-2, c] = 1
+            #else:
+                #jac[-2, c] = 0
 
             # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
             for k, sd in enumerate(self.pspace):
@@ -239,9 +241,7 @@ def jacobian(self, x):
             # Move to the next coefficient
             c += 1
 
-    # The Jacobian was exactly half of what finite difference told me it should
-    # have been... so I fixed it... don't know why though.
-    return jac * 0.5
+    return jac
 
 
 def objective(self, x):
@@ -262,13 +262,13 @@ def objective(self, x):
     # Intialize needed variables
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty((len(self.pspace) + 2), dtype=x.dtype)
+    obj = np.empty(len(self.pspace), dtype=x.dtype)
 
     # Impose <HF|Psi> == 1
-    obj[-1] = olp - 1.0
+    #obj[-1] = olp - 1.0
 
     # Impose C[0, 0] == 1 + 0j
-    obj[-2] = self.x[0] - 1.0
+    #obj[-2] = self.x[0] - 1.0
 
     # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
     for i, sd in enumerate(self.pspace):

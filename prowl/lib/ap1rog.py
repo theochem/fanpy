@@ -36,8 +36,8 @@ def generate_pspace(self):
     # Determine the ground state, occupied (HOMOs first!) and virtual indices
     ground = sum(2 ** i for i in range(self.n))
     pspace = [ground]
-    occ = list(range(self.p - 1, -1, -1))
-    vir = list(range(self.p, self.k))
+    occ = list(range(self.n // 2 - 1, -1, -1))
+    vir = list(range(self.n // 2, self.k))
 
     # Add all single (and double, if necessary) pair excitations
     for nexc in (1, 2):
@@ -68,72 +68,6 @@ def generate_view(self):
     """
 
     return self.x.reshape(self.p, self.k - self.p)
-
-
-def jacobian(self, x):
-    """
-    Compute the Jacobian of the objective function.
-
-    Parameters
-    ----------
-    x : 1-index np.ndarray
-        The coefficient vector.
-
-    """
-
-    # Update the coefficient vector
-    self.x[:] = x
-    jac = np.empty((len(self.pspace), x.size), dtype=x.dtype)
-
-    # Intialize constant "variables"
-    energy = sum(self.hamiltonian(self.ground))
-
-    # Loop through all coefficients
-    c = 0
-
-    for i in range(self.p):
-        for j in range(self.k - self.p):
-
-            # Intialize differentiated variables
-            d_olp = self.overlap_deriv(self.ground, i, j)
-            d_energy = sum(self.hamiltonian_deriv(self.ground, i, j))
-
-            # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
-            for k, sd in enumerate(self.pspace):
-                d_tmp = sum(self.hamiltonian_deriv(sd, i, j)) \
-                    - energy * self.overlap_deriv(sd, i, j) - d_energy * self.overlap(sd)
-                jac[k, c] = d_tmp
-
-            # Move to the next coefficient
-            c += 1
-
-    return jac * 0.5
-
-
-def objective(self, x):
-    """
-    Compute the objective function for solving the coefficient vector.
-    The function is of the form "<sd|H|Psi> - E<sd|Psi> == 0 for all sd in pspace".
-
-    Parameters
-    ----------
-    x : 1-index np.ndarray
-        The coefficient vector.
-
-    """
-
-    # Update the coefficient vector
-    self.x[:] = x
-
-    # Initialize needed variables
-    energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty((len(self.pspace),), dtype=x.dtype)
-
-    # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|Psi> == 0
-    for i, sd in enumerate(self.pspace):
-        obj[i] = sum(self.hamiltonian(sd)) - energy * self.overlap(sd)
-
-    return obj
 
 
 def overlap(self, sd):
@@ -198,12 +132,10 @@ def overlap_deriv(self, sd, x, y):
         return 0.0
 
     # Evaluate the overlap
-    nexc = 0
     occ = []
     vir = []
     for i in range(self.p):
         if not slater.occupation_pair(sd, i):
-            nexc += 1
             occ.append(i)
     for i in range(self.p, self.k):
         if slater.occupation_pair(sd, i):

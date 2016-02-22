@@ -20,7 +20,5 @@ class AP1roG(APIG):
     generate_guess = ap1rog.generate_guess
     generate_pspace = ap1rog.generate_pspace
     generate_view = ap1rog.generate_view
-    jacobian = ap1rog.jacobian
-    objective = ap1rog.objective
     overlap = ap1rog.overlap
     overlap_deriv = ap1rog.overlap_deriv
