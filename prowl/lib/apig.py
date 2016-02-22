@@ -17,8 +17,7 @@ def generate_guess(self):
 
     """
 
-    # `np.complex128` arrays are partitioned into columns like this:
-    # [[Re][Im][Re][Im]...]; generate an array to handle this
+    # Generate an empty array of the appropriate shape
     x = np.zeros((self.p, self.k), dtype=self.dtype)
 
     # Add the real identity
