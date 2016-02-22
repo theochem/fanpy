@@ -331,8 +331,8 @@ def overlap_deriv(self, sd, x, y):
     else:
         return permanent.dense_deriv(self.C[:, occ], x, occ.index(y))
 
-def truncate(self, val_threshold=1e-4):
-    """ Truncates the CI expansion of APIG wavefunction such that the overlap between the
+def truncate(self, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
+    """ Truncates the CI expansion of wavefunction such that the overlap between the
     truncated and the original wavefunction is close enough to 1
 
     Uses "inequality of Hadamard type for permanents"
@@ -342,8 +342,13 @@ def truncate(self, val_threshold=1e-4):
 
     Parameters
     ----------
-    threshold : float
-        Limit for the absolute difference between 1 and the overlap between the
+    val_threshold : float
+        Limit for the estimated absolute contribution of the slater determinant to the
+        wavefunction
+    num_threshold : int
+        Limit for the number of determinants
+    err_threshold : float
+        Limit for the estimated absolute difference between 1 and the overlap between the
         truncated and original wavefunction
 
     Returns
@@ -358,15 +363,14 @@ def truncate(self, val_threshold=1e-4):
      * http://arxiv.org/pdf/math/0508096v1.pdf
 
     """
+    print('Truncating AP1roG Wavefunction...')
     # assume wavefunction is converged
-    # norms of each column
     # i'm guessing the generate_view gives the converged coefficients
     coeffs = self.generate_view()
+    # norms of each column
     col_norms = np.linalg.norm(coeffs, axis=0)
-    print(col_norms)
     # orbital indices sorted from largest to smallest norm
     orb_indices = np.argsort(col_norms)[::-1].tolist()
-    print(orb_indices)
     # order column norms from largest to smallest norm
     col_norms = col_norms[orb_indices].tolist()
 
@@ -382,23 +386,37 @@ def truncate(self, val_threshold=1e-4):
     upper_lim = np.prod([col_norms[j] for j in indices])
     assert upper_lim > val_threshold
     sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
-    while True:
+    last_limit_over_threshold = False
+    while len(sds) <= num_threshold:
+        # find the index to iterate
         for i in reversed(range(r)):
             if indices[i] != i + n - r:
                 break
         else:
-            return sds
-        indices[i] += 1
-        for j in range(i+1, r):
-            indices[j] = indices[j-1] + 1
+            break
+        # find next set of indices
+        if not last_limit_over_threshold or i == 0:
+            indices[i] += 1
+            for j in range(i+1, r):
+                indices[j] = indices[j-1] + 1
+        elif i >= 1:
+            indices[i-1] += 1
+            for j in range(i, r):
+                indices[j] = indices[j-1] + 1
+        last_limit_over_threshold = False
+        # append
         upper_lim = np.prod([col_norms[j] for j in indices])
         if upper_lim > val_threshold:
             sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
         else:
-            #error += upper_lim of next one * num remaining in this sequence
-            if i >= 1:
-                indices[i-1] += 1
-                for j in range(i, r):
-                    indices[j] = indices[j-1] + 1
-            else:
-                return sds
+            last_limit_over_threshold = True
+    else: # if len(sds) > num_threshold
+        print('Warning: Limit for the number of Slater Determinants, '+
+              '{0}, was reached. '.format(num_threshold)+
+              'You might want to have a higher num_threshold or a lower val_threshold')
+    num_remaining = comb(n, r) - len(sds)
+    # TODO: need a smarter way of estimating the error
+    overlap_error = num_remaining*val_threshold**2
+    if overlap_error > err_threshold:
+        print('Warning: Estimated error exceeds the err_threshold, {0}.'.format(err_threshold))
+    return sds
