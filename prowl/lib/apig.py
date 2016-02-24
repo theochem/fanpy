@@ -420,3 +420,55 @@ def truncate(self, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
     if overlap_error > err_threshold:
         print('Warning: Estimated error exceeds the err_threshold, {0}.'.format(err_threshold))
     return sds
+
+def density_matrix(self, val_threshold=1e-4):
+    """
+    Returns the second order density matrix
+
+    Parameters
+    ----------
+    a : int
+    b : int
+    c : int
+    d : int
+    val_threshold : float
+
+    """
+    # assume wavefunction is converged
+    # i'm guessing the generate_view gives the converged coefficients
+    coeffs = self.generate_view()
+    coeffs = np.hstack((np.identity(self.p), self.generate_view())) # this is the only part that is different
+    # norms of each column
+    col_norms = np.linalg.norm(coeffs, axis=0)
+
+    largest_val = np.prod(col_norms[np.argpartition(col_norms, -self.p)][-self.p:])
+    #sds = self.truncate(val_threshold=val_threshold/largest_val,
+    #                           num_threshold=num_threshold)
+    sds = (slater.create_multiple_pairs(0, *i) for i in combinations(range(self.k), self.p))
+
+    # TODO: check!
+    density_matrix = np.zeros([self.k]*4)
+    for a in range(self.k):
+        for c in range(self.k):
+            # number of terms used to get density matrix element
+            num_used = 0
+            for sd in sds:
+                if slater.occupation_pair(sd, a):
+                    shared_sd_indices = [i for i in range(self.k) if slater.occupation_pair(sd, i) and i!=a]
+                    upper_lim = np.prod(col_norms[shared_sd_indices])**2
+                    upper_lim *= col_norms[a]
+                    upper_lim *= col_norms[c]
+                    if upper_lim > val_threshold:
+                        if not slater.occupation_pair(sd, c):
+                            density_matrix[a, a, c, c] += self.overlap(sd)*self.overlap(slater.excite_pair(sd, a, c))
+                        else:
+                            density_matrix[a, c, c, a] += self.overlap(sd)**2
+                            density_matrix[a, c, a, c] += density_matrix[a, c, c, a]
+                            density_matrix[c, a, c, a] += density_matrix[a, c, c, a]
+                            density_matrix[c, a, a, c] += density_matrix[a, c, c, a]
+                        num_used += 1
+            # number of double excitations available
+            num_avail = self.p*(self.k-self.p)*comb(self.k, self.p)
+            #TODO: need a better way of calculating error
+            error = (num_avail-num_used)*val_threshold
+    return density_matrix
