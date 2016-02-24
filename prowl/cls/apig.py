@@ -27,3 +27,4 @@ class APIG(Base):
     overlap = apig.overlap
     overlap_deriv = apig.overlap_deriv
     truncate = apig.truncate
+    density_matrix = apig.density_matrix
