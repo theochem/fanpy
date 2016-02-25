@@ -20,16 +20,15 @@ def generate_guess(self):
     columns = 2 * self.k * self.seq - (self.seq ** 2 + self.seq) // 2
     x = np.zeros((self.p, columns), dtype=self.dtype)
 
-    # Add the real identity
-    x[:, :self.p] += np.eye(self.p)
-
     # Add random noise
-    x[:, :] += (0.2 / x.size) * (np.random.rand(self.p, columns) - 0.5)
+    x[:, :] += (1. / x.size) * (np.random.rand(self.p, columns) - 0.5)
     if self.dtype == np.complex128:
-        x[:, :] += (0.2 / x.size) * (np.random.rand(self.p, columns) - 0.5) * 1j
+        x[:, :] += (0.02 / x.size) * (np.random.rand(self.p, columns) - 0.5) * 1j
 
     # Normalize
     x[:, :] /= np.max(x)
+    for i, j in enumerate(range(self.seq)):
+        x[i, j] = 1.
 
     # Make it a vector
     x = x.ravel()
@@ -49,28 +48,29 @@ def generate_pspace(self):
     """
 
     params = self.x.size
-    ground = "0" * (2 * self.k - self.n) + "1" * self.n
-    tmp = list(permutations(ground))
-    tmp = map(lambda x: "".join(x), tmp)
-    tmp = list(set(tmp))
-    pspace = []
-    for i in tmp:
-        count = 0
-        start = False
-        use = True
-        for j in i:
-            if j is "0" and start:
-                count += 1
-            else:
-                count = 0
-            if count > self.seq:
-                use = False
+    ground = sum([2 ** i for i in range(self.n)])
+    pspace = [ground]
+
+    # Loop through permuted Slater determinants
+    for perm in permutations(list(range(2 * self.k)), r=self.n):
+        new_sd = sum([2 ** i for i in perm])
+        sd = new_sd
+
+        # Check for sequential occupations
+        columns = []
+        offset = 0
+        for s in range(1, self.seq + 1):
+            for i in range(2 * self.k - s):
+                if slater.occupation(sd, i) and slater.occupation(sd, i + s):
+                    columns.append(2 * self.k * (s - 1) + i + offset)
+                    sd = slater.annihilate(sd, i)
+                    sd = slater.annihilate(sd, i + s)
+            offset = -(s ** 2 + s) // 2
+        if sd == 0 and new_sd not in pspace:
+            pspace.append(new_sd)
+            if len(pspace) >= 1.5 * params:
                 break
-        if use:
-            pspace.append(int(i, base=2))
-            if len(pspace) >= params:
-                break
-    
+
     pspace.sort()
     return pspace
 
@@ -223,7 +223,7 @@ def jacobian(self, x):
 
     # Update the coefficient vector
     self.x[:] = x
-    jac = np.empty((len(self.pspace), self.x.size), dtype=x.dtype)
+    jac = np.empty((len(self.pspace) + 1, self.x.size), dtype=x.dtype)
 
     # Intialize unchanging variables
     energy = sum(self.hamiltonian(self.ground))
@@ -238,7 +238,7 @@ def jacobian(self, x):
             d_energy = sum(self.hamiltonian_deriv(self.ground, i, j))
 
             # Impose d<HF|Psi> == 1 + 0j
-            #jac[-1, c] = d_olp
+            jac[-1, c] = d_olp
 
             # Impose dC[0, 0] == 1 + 0j
             #if c == 0:
@@ -276,10 +276,10 @@ def objective(self, x):
     # Intialize needed variables
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty(len(self.pspace), dtype=x.dtype)
+    obj = np.empty(len(self.pspace) + 1, dtype=x.dtype)
 
     # Impose <HF|Psi> == 1
-    #obj[-1] = olp - 1.0
+    obj[-1] = olp - 1.0
 
     # Impose C[0, 0] == 1 + 0j
     #obj[-2] = self.x[0] - 1.0

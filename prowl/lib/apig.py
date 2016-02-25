@@ -208,7 +208,7 @@ def jacobian(self, x):
 
     # Update the coefficient vector
     self.x[:] = x
-    jac = np.empty((len(self.pspace), self.x.size), dtype=x.dtype)
+    jac = np.empty((len(self.pspace) + 1, self.x.size), dtype=x.dtype)
 
     # Intialize unchanging variables
     energy = sum(self.hamiltonian(self.ground))
@@ -223,7 +223,7 @@ def jacobian(self, x):
             d_energy = sum(self.hamiltonian_deriv(self.ground, i, j))
 
             # Impose d<HF|Psi> == 1 + 0j
-            #jac[-1, c] = d_olp
+            jac[-1, c] = d_olp
 
             # Impose dC[0, 0] == 1 + 0j
             #if c == 0:
@@ -261,10 +261,10 @@ def objective(self, x):
     # Intialize needed variables
     olp = self.overlap(self.ground)
     energy = sum(self.hamiltonian(self.ground))
-    obj = np.empty(len(self.pspace), dtype=x.dtype)
+    obj = np.empty(len(self.pspace) + 1, dtype=x.dtype)
 
     # Impose <HF|Psi> == 1
-    #obj[-1] = olp - 1.0
+    obj[-1] = olp - 1.0
 
     # Impose C[0, 0] == 1 + 0j
     #obj[-2] = self.x[0] - 1.0

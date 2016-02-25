@@ -19,7 +19,7 @@ class APseqG(Base):
 
     # Bind methods
     generate_guess = apseqg.generate_guess
-    generate_pspace = apig.generate_pspace
+    generate_pspace = apseqg.generate_pspace
     generate_view = apseqg.generate_view
     hamiltonian = apseqg.hamiltonian
     hamiltonian_deriv = apseqg.hamiltonian_deriv

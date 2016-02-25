@@ -99,9 +99,9 @@ def solve(self, **kwargs):
     options = {
         "jac": self.jacobian,
         "bounds": self.bounds,
-        "xtol": 1.0e-9,
-        "ftol": 1.0e-9,
-        "gtol": 1.0e-9,
+        "xtol": 1.0e-15,
+        "ftol": 1.0e-15,
+        "gtol": 1.0e-15,
     }
     options.update(kwargs)
 
