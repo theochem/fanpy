@@ -21,13 +21,13 @@ def generate_guess(self):
     x = np.zeros((self.p, columns), dtype=self.dtype)
 
     # Add random noise
-    x[:, :] += (1. / x.size) * (np.random.rand(self.p, columns) - 0.5)
+    x[:, :] += (2.0e-1 / x.size) * (np.random.rand(self.p, columns) - 0.5)
     if self.dtype == np.complex128:
-        x[:, :] += (0.02 / x.size) * (np.random.rand(self.p, columns) - 0.5) * 1j
+        x[:, :] += (2.0e-3 / x.size) * (np.random.rand(self.p, columns) - 0.5) * 1j
 
     # Normalize
     x[:, :] /= np.max(x)
-    for i, j in enumerate(range(self.seq)):
+    for i, j in enumerate(range(self.n // 2)):
         x[i, j] = 1.
 
     # Make it a vector
@@ -51,25 +51,35 @@ def generate_pspace(self):
     ground = sum([2 ** i for i in range(self.n)])
     pspace = [ground]
 
-    # Loop through permuted Slater determinants
-    for perm in permutations(list(range(2 * self.k)), r=self.n):
-        new_sd = sum([2 ** i for i in perm])
-        sd = new_sd
+    # Generate single, double, triple, etc., excitations
+    for nexc in range(1, self.n + 1):
+        for occ in permutations(list(range(self.n)), r=nexc): # HOMOs first
+            for vir in permutations(list(range(self.n, 2 * self.k)), r=nexc):
 
-        # Check for sequential occupations
-        columns = []
-        offset = 0
-        for s in range(1, self.seq + 1):
-            for i in range(2 * self.k - s):
-                if slater.occupation(sd, i) and slater.occupation(sd, i + s):
-                    columns.append(2 * self.k * (s - 1) + i + offset)
-                    sd = slater.annihilate(sd, i)
-                    sd = slater.annihilate(sd, i + s)
-            offset = -(s ** 2 + s) // 2
-        if sd == 0 and new_sd not in pspace:
-            pspace.append(new_sd)
-            if len(pspace) >= 1.5 * params:
-                break
+                # Excite from the ground state
+                new_sd = ground
+                for i, a in zip(occ, vir):
+                    new_sd = slater.excite(new_sd, i, a)
+
+                # Check for sequential occupations
+                sd = new_sd
+                offset = 0
+                columns = []
+                for s in range(1, self.seq + 1):
+                    for i in range(2 * self.k - s):
+                        if slater.occupation(sd, i) and slater.occupation(sd, i + s):
+                            columns.append(2 * self.k * (s - 1) + i + offset)
+                            sd = slater.annihilate(sd, i)
+                            sd = slater.annihilate(sd, i + s)
+                    offset = -(s ** 2 + s) // 2
+
+                # Add the SD to `pspace` if it satisfies the requirements
+                if sd == 0 and new_sd is not None and new_sd not in pspace:
+                    pspace.append(new_sd)
+
+        # Break when we have enough SDs
+        if len(pspace) >= params:
+            break
 
     pspace.sort()
     return pspace
