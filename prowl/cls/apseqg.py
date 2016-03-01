@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from ..lib import apseqg
-from ..lib import apig
 from .base import Base
 
 
