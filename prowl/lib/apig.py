@@ -330,7 +330,7 @@ def overlap_deriv(self, sd, x, y):
     else:
         return permanent.dense_deriv(self.C[:, occ], x, occ.index(y))
 
-def truncate(self, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
+def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
     """ Truncates the CI expansion of wavefunction such that the overlap between the
     truncated and the original wavefunction is close enough to 1
 
@@ -341,6 +341,8 @@ def truncate(self, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
 
     Parameters
     ----------
+    coeffs : np.ndarray(self.p, self.k)
+        Coefficient matrix of the geminals
     val_threshold : float
         Limit for the estimated absolute contribution of the slater determinant to the
         wavefunction
@@ -362,12 +364,10 @@ def truncate(self, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
      * http://arxiv.org/pdf/math/0508096v1.pdf
 
     """
+    assert coeffs.shape==(self.p, self.k), 'Shape of the coefficient matrix is not P*K'
     print('Truncating AP1roG Wavefunction...')
-    # assume wavefunction is converged
-    # i'm guessing the generate_view gives the converged coefficients
-    coeffs = self.generate_view()
     # norms of each column
-    col_norms = np.linalg.norm(coeffs, axis=0)
+    col_norms = np.sum(np.abs(coeffs), axis=0)
     # orbital indices sorted from largest to smallest norm
     orb_indices = np.argsort(col_norms)[::-1].tolist()
     # order column norms from largest to smallest norm

@@ -22,4 +22,3 @@ class AP1roG(APIG):
     generate_view = ap1rog.generate_view
     overlap = ap1rog.overlap
     overlap_deriv = ap1rog.overlap_deriv
-    truncate = ap1rog.truncate
