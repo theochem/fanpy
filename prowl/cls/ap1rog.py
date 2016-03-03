@@ -24,4 +24,3 @@ class AP1roG(APIG):
     objective = ap1rog.objective
     overlap = ap1rog.overlap
     overlap_deriv = ap1rog.overlap_deriv
-    truncate = ap1rog.truncate
