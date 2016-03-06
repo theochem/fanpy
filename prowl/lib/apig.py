@@ -355,15 +355,15 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
     Returns
     -------
     slater_dets : list(M,)
-        slater determinants (in integer form) in the truncated wavefunction
-    error : float
-        error associated with the truncation
+        List of Slater determinants (in integer form) in the truncated
+        wavefunction ordered from largest to smallest estimated contribution
 
     References
     ----------
      * http://arxiv.org/pdf/math/0508096v1.pdf
 
     """
+    # TODO: Make this pretty
     assert coeffs.shape==(self.p, self.k), 'Shape of the coefficient matrix is not P*K'
     print('Truncating AP1roG Wavefunction...')
     # norms of each column
@@ -375,6 +375,8 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
 
     # list of slater determinants
     sds = []
+    # list of upper limits of each slater determinants
+    upper_lims = []
 
     # copied from combination code from itertools
     n = self.k
@@ -386,88 +388,145 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
     assert upper_lim > val_threshold
     sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
     last_limit_over_threshold = False
+    overlap_error = 0
     while len(sds) <= num_threshold:
         # find the index to iterate
         for i in reversed(range(r)):
             if indices[i] != i + n - r:
-                break
+                break # break for loop
         else:
-            break
+            break # break while loop
         # find next set of indices
+        # normal incrementing (last val not over threshold or incrementing first index)
         if not last_limit_over_threshold or i == 0:
+            # find errors
+            if last_limit_over_threshold:
+              temp = [col_norms[j]**2 for j in indices]
+              temp2 = np.prod(temp[:i+1])
+              for j in range(i+1, r):
+                  temp2 *= np.sum(temp[j:])
+              overlap_error += temp2
+            # increment
             indices[i] += 1
             for j in range(i+1, r):
                 indices[j] = indices[j-1] + 1
-        elif i >= 1:
+        # skipping steps if last value is over threshold
+        # the first condition is not necessary but included for readability
+        elif last_limit_over_threshold and i >= 1:
+            # find the errors
+            temp = [col_norms[j]**2 for j in indices]
+            temp2 = np.prod(temp[:i])
+            for j in range(i, r):
+                temp2 *= np.sum(temp[j:])
+            overlap_error += temp2
+            # increment
             indices[i-1] += 1
             for j in range(i, r):
                 indices[j] = indices[j-1] + 1
         last_limit_over_threshold = False
-        # append
+        # check the upper limit
         upper_lim = np.prod([col_norms[j] for j in indices])
+        # append if upper_limit is greater than threshold
         if upper_lim > val_threshold:
             sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
+            upper_lims.append(upper_lim)
+        # otherwise, set flag that would skip some increments
         else:
             last_limit_over_threshold = True
-    else: # if len(sds) > num_threshold
+    else: # if len(sds) > num_threshold (didn't break out of while loop)
         print('Warning: Limit for the number of Slater Determinants, '+
               '{0}, was reached. '.format(num_threshold)+
               'You might want to have a higher num_threshold or a lower val_threshold')
     num_remaining = comb(n, r) - len(sds)
     # TODO: need a smarter way of estimating the error
-    overlap_error = num_remaining*val_threshold**2
+    overlap_error = min(overlap_error, num_remaining*val_threshold**2)
+    print('overlap error: {0}'.format(overlap_error))
     if overlap_error > err_threshold:
         print('Warning: Estimated error exceeds the err_threshold, {0}.'.format(err_threshold))
+    # NOTE: Is this necessary?
+    # sort slater determinants by upper limits
+    sds_lims = sorted(zip(sds, upper_lims), key=lambda x:x[1], reverse=True)
+    sds = zip(*sds_lims)[0]
     return sds
 
-def density_matrix(self, val_threshold=1e-4):
-    """
-    Returns the second order density matrix
+def density_matrix(self, coeffs, val_threshold=1e-4):
+    """ Returns the first and second order density matrices
 
-    Parameters
+    Second order density matrix uses the following notation:
+    ..math::
+        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+    There seems to be another notation that is used:
+    ..math::
+        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+    Both of these are implemented, but the second notation is commented out.
+
+    Paramaters
     ----------
-    a : int
-    b : int
-    c : int
-    d : int
+    coeffs : np.ndarray(self.p, self.k)
+        Geminals coefficient matrix
     val_threshold : float
+        If the term has weight that is less than this threshold, it is discarded
 
+    Returns
+    -------
+    one_density : np.ndarray(self.k, self.k)
+        One electron density matrix
+    two_density : np.ndarray(self.k, self.k, self.k, self.k)
+        Two electron density matrix
     """
-    # assume wavefunction is converged
-    # i'm guessing the generate_view gives the converged coefficients
-    coeffs = self.generate_view()
-    coeffs = np.hstack((np.identity(self.p), self.generate_view())) # this is the only part that is different
-    # norms of each column
-    col_norms = np.linalg.norm(coeffs, axis=0)
+    col_norms = np.sum(np.abs(coeffs), axis=0)
+    print(col_norms)
 
     largest_val = np.prod(col_norms[np.argpartition(col_norms, -self.p)][-self.p:])
-    #sds = self.truncate(val_threshold=val_threshold/largest_val,
-    #                           num_threshold=num_threshold)
-    sds = (slater.create_multiple_pairs(0, *i) for i in combinations(range(self.k), self.p))
+    sds = self.truncate(coeffs,
+                        val_threshold=val_threshold/largest_val,
+                        num_threshold=100000)
 
-    # TODO: check!
-    density_matrix = np.zeros([self.k]*4)
-    for a in range(self.k):
-        for c in range(self.k):
-            # number of terms used to get density matrix element
+    one_density = np.zeros([self.k]*2)
+    for i in range(self.k):
+        for sd in sds:
+            if slater.occupation_pair(sd, i):
+                one_density[i, i] += 2*self.overlap(sd)**2
+    two_density = np.zeros([self.k]*4)
+    for i in range(self.k):
+        for j in range(self.k):
             num_used = 0
             for sd in sds:
-                if slater.occupation_pair(sd, a):
-                    shared_sd_indices = [i for i in range(self.k) if slater.occupation_pair(sd, i) and i!=a]
-                    upper_lim = np.prod(col_norms[shared_sd_indices])**2
-                    upper_lim *= col_norms[a]
-                    upper_lim *= col_norms[c]
-                    if upper_lim > val_threshold:
-                        if not slater.occupation_pair(sd, c):
-                            density_matrix[a, a, c, c] += self.overlap(sd)*self.overlap(slater.excite_pair(sd, a, c))
-                        else:
-                            density_matrix[a, c, c, a] += self.overlap(sd)**2
-                            density_matrix[a, c, a, c] += density_matrix[a, c, c, a]
-                            density_matrix[c, a, c, a] += density_matrix[a, c, c, a]
-                            density_matrix[c, a, a, c] += density_matrix[a, c, c, a]
-                        num_used += 1
+                # i is always occupied
+                if not slater.occupation_pair(sd, i):
+                    continue
+                shared_sd_indices = [a for a in range(self.k)
+                                     if slater.occupation_pair(sd, a) and a not in [i,j]]
+                upper_lim = np.prod(col_norms[shared_sd_indices])
+                upper_lim *= col_norms[i]
+                upper_lim *= col_norms[j]
+                if upper_lim > val_threshold:
+                    olp = self.overlap(sd)
+                    # if i and j are equal and both occupied
+                    if i == j:
+                        two_density[i, i, i, i] += 2*olp**2
+                    # if i is occupied and j is virtual
+                    elif not slater.occupation_pair(sd, j):
+                        exc = slater.excite_pair(sd, i, j)
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                        two_density[i, j, i, j] += 2*olp*self.overlap(exc)
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                        #two_density[i, i, j, j] += 2*olp*self.overlap(exc)
+                    # if i and j are occupied and i < j
+                    elif i < j:
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                        two_density[i, i, j, j] += 4*olp**2
+                        two_density[j, i, i, j] -= 2*olp**2
+                        two_density[i, j, j, i] -= 2*olp**2
+                        two_density[j, j, i, i] += 4*olp**2
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                        #two_density[i, j, i, j] += 4*olp**2
+                        #two_density[j, j, i, i] -= 2*olp**2
+                        #two_density[i, i, j, j] -= 2*olp**2
+                        #two_density[j, i, j, i] += 4*olp**2
+                    num_used += 1
             # number of double excitations available
             num_avail = self.p*(self.k-self.p)*comb(self.k, self.p)
             #TODO: need a better way of calculating error
             error = (num_avail-num_used)*val_threshold
-    return density_matrix
+    return one_density, two_density
