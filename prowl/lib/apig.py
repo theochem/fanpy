@@ -476,19 +476,24 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
         Two electron density matrix
     """
     col_norms = np.sum(np.abs(coeffs), axis=0)
-    print(col_norms)
-
     largest_val = np.prod(col_norms[np.argpartition(col_norms, -self.p)][-self.p:])
+    # Discard all slater determinants whose weight won't be large enough to pass
+    # the val_threshold
+    sd_weight_threshold = val_threshold/largest_val
     sds = self.truncate(coeffs,
-                        val_threshold=val_threshold/largest_val,
+                        val_threshold=sd_weight_threshold,
                         num_threshold=100000)
 
     one_density = np.zeros([self.k]*2)
+    one_density_error = np.zeros([self.k]*2)
     for i in range(self.k):
         for sd in sds:
             if slater.occupation_pair(sd, i):
-                one_density[i, i] += 2*self.overlap(sd)**2
+                olp = self.overlap(sd)
+                one_density[i, i] += 2*olp**2
+                #one_density_error[i, i] += 2*(olp*sd_weight_threshold + sd_weight_threshold**2)
     two_density = np.zeros([self.k]*4)
+    two_density_error = np.zeros([self.k]*4)
     for i in range(self.k):
         for j in range(self.k):
             num_used = 0
@@ -498,23 +503,41 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
                     continue
                 shared_sd_indices = [a for a in range(self.k)
                                      if slater.occupation_pair(sd, a) and a not in [i,j]]
-                upper_lim = np.prod(col_norms[shared_sd_indices])
-                upper_lim *= col_norms[i]
-                upper_lim *= col_norms[j]
-                if upper_lim > val_threshold:
-                    olp = self.overlap(sd)
-                    # if i and j are equal and both occupied
-                    if i == j:
-                        two_density[i, i, i, i] += 2*olp**2
-                    # if i is occupied and j is virtual
-                    elif not slater.occupation_pair(sd, j):
+                left_upper_lim = np.prod(col_norms[shared_sd_indices])
+                left_upper_lim *= col_norms[i]
+                right_upper_lim = np.prod(col_norms[shared_sd_indices])
+                right_upper_lim *= col_norms[j]
+                upper_lim = left_upper_lim * right_upper_lim
+                truncation_error = 2*(left_upper_lim+right_upper_lim)*sd_weight_threshold
+                truncation_error += 2*sd_weight_threshold**2
+                # if i and j are equal and both occupied
+                if i == j:
+                    if upper_lim > val_threshold:
+                        two_density[i, i, i, i] += 2*self.overlap(sd)**2
+                    else:
+                        two_density_error[i, i, i, i] += 2*upper_lim
+                    #two_density_error[i, i, i, i] += 2*truncation_error
+                # if i is occupied and j is virtual
+                elif not slater.occupation_pair(sd, j):
+                    if upper_lim > val_threshold:
                         exc = slater.excite_pair(sd, i, j)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        two_density[i, j, i, j] += 2*olp*self.overlap(exc)
+                        two_density[i, j, i, j] += 2*self.overlap(sd)*self.overlap(exc)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        #two_density[i, i, j, j] += 2*olp*self.overlap(exc)
-                    # if i and j are occupied and i < j
-                    elif i < j:
+                        #two_density[i, i, j, j] += 2*self.overlap(sd)*self.overlap(exc)
+                    else:
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                        two_density_error[i, j, i, j] += 2*upper_lim
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                        #two_density_error[i, i, j, j] += 2*upper_lim
+                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                    #two_density_error[i, j, i, j] += 2*truncation_error
+                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                    #two_density_error[i, i, j, j] += truncation_error
+                # if i and j are occupied and i < j
+                elif i < j:
+                    if upper_lim > val_threshold:
+                        olp = self.overlap(sd)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
                         two_density[i, i, j, j] += 4*olp**2
                         two_density[j, i, i, j] -= 2*olp**2
@@ -525,9 +548,25 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
                         #two_density[j, j, i, i] -= 2*olp**2
                         #two_density[i, i, j, j] -= 2*olp**2
                         #two_density[j, i, j, i] += 4*olp**2
-                    num_used += 1
-            # number of double excitations available
-            num_avail = self.p*(self.k-self.p)*comb(self.k, self.p)
-            #TODO: need a better way of calculating error
-            error = (num_avail-num_used)*val_threshold
-    return one_density, two_density
+                    else:
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                        two_density_error[i, i, j, j] += 4*upper_lim
+                        two_density_error[j, i, i, j] -= 2*upper_lim
+                        two_density_error[i, j, j, i] -= 2*upper_lim
+                        two_density_error[j, j, i, i] += 4*upper_lim
+                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                        #two_density_error[i, j, i, j] += 4*upper_lim
+                        #two_density_error[j, j, i, i] -= 2*upper_lim
+                        #two_density_error[i, i, j, j] -= 2*upper_lim
+                        #two_density_error[j, i, j, i] += 4*upper_lim
+                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+                    #two_density_error[i, i, j, j] += 4*truncation_error
+                    #two_density_error[j, i, i, j] -= 2*truncation_error
+                    #two_density_error[i, j, j, i] -= 2*truncation_error
+                    #two_density_error[j, j, i, i] += 4*truncation_error
+                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+                    #two_density_error[i, j, i, j] += 4*truncation_error
+                    #two_density_error[j, j, i, i] -= 2*truncation_error
+                    #two_density_error[i, i, j, j] -= 2*truncation_error
+                    #two_density_error[j, i, j, i] += 4*upper_lim
+    return one_density, one_density_error, two_density, two_density_error
