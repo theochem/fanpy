@@ -158,7 +158,39 @@ def hamiltonian(self, sd):
 
             ind_first_vir += 1
         ind_first_occ += 1
-
+    '''
+    for i in range(2*self.k):
+        for k in range(2*self.k):
+            single_excitation = slater.excite(sd, i, k)
+            if i % 2 == k % 2 and single_excitation:
+                one_electron += self.H[i // 2, k // 2] * self.overlap(single_excitation)
+            for j in range(2*self.k):
+                if i == j:
+                    continue
+                for l in range(2*self.k):
+                    if k == l:
+                        continue
+                    double_excitation = slater.annihilate(slater.annihilate(sd, i), j)
+                    double_excitation = slater.create(slater.create(double_excitation, k), l)
+                    if not double_excitation:
+                        continue
+                    olp = self.overlap(double_excitation)
+                    if olp == 0:
+                        continue
+                    sign = 1
+                    if i>j:
+                        sign *= -1
+                    if k>l:
+                        sign *= -1
+                    # In <ij|kl>, `i` and `k` must have the same spin, as must
+                    # `j` and `l`
+                    if i % 2 == k % 2 and j % 2 == l % 2:
+                        coulomb += sign*0.5*self.G[i // 2, j // 2, k // 2, l // 2] * olp
+                    # In <ij|lk>, `i` and `l` must have the same spin, as must
+                    # `j` and `k`
+                    #if i % 2 == l % 2 and j % 2 == k % 2:
+                    #    exchange -= 0.5*self.G[i // 2, j // 2, l // 2, k // 2] * olp
+    '''
     return one_electron, coulomb, exchange
 
 
@@ -243,23 +275,19 @@ def jacobian(self, x):
     energy = sum(self.hamiltonian(self.ground))
 
     # Loop through all coefficients
-    c = 0
     for i in range(self.x.size):
         # Update changing variables
         d_olp = self.overlap_deriv(self.ground, i)
         d_energy = sum(self.hamiltonian_deriv(self.ground, i))
 
         # Impose d<HF|Psi> == 1 + 0j
-        jac[-1, c] = d_olp
+        jac[-1, i] = d_olp
 
         # Impose (for all SDs in `pspace`) <SD|H|Psi> - E<SD|H|Psi> == 0
         for k, sd in enumerate(self.pspace):
             d_tmp = sum(self.hamiltonian_deriv(sd, i)) \
                 - energy * self.overlap_deriv(sd, i) - d_energy * self.overlap(sd)
-            jac[k, c] = d_tmp
-
-        # Move to the next coefficient
-        c += 1
+            jac[k, i] = d_tmp
 
     return jac
 
@@ -305,13 +333,6 @@ def overlap(self, sd):
 
     """
 
-    # If the Slater determinant is bad
-    if sd is None:
-        return 0
-    # If the SD and the wavefunction have a different number of electrons
-    elif slater.number(sd) != self.n:
-        return 0
-    # else
     try:
         return self.x[self.pspace.index(sd)]
     except ValueError:
@@ -333,4 +354,207 @@ def overlap_deriv(self, sd, i):
         return 1
     else:
         return 0
-    
+
+
+def solve_variationally_2(self):
+    """ Solves for the coefficients variationally (by solving the eigenvalue problem)
+
+    """
+
+    H = np.zeros([self.x.size]*2)
+    check1 = [[[] for i in range(self.x.size)] for j in range(self.x.size)]
+    check2 = [[[] for i in range(self.x.size)] for j in range(self.x.size)]
+    for x in range(self.x.size):
+        for y in range(self.x.size):
+            if x == y:
+                continue
+            sd_left, sd_right = self.pspace[x], self.pspace[y]
+            # number of orbitals that are not shared by the two determinants
+            difference = [a for a in range(2*self.k)
+                          if slater.occupation(sd_left^sd_right, a)]
+            left_difference = [a for a in difference if slater.occupation(sd_left, a)]
+            right_difference = [a for a in difference if slater.occupation(sd_right, a)]
+            if x==y: continue
+            ind_occ = [i for i in range(2 * self.k) if slater.occupation(sd_left, i)]
+            ind_vir = [i for i in range(2 * self.k) if not slater.occupation(sd_left, i)]
+            ind_first_occ = 0
+            num = 0
+            for i in ind_occ: 
+                ind_first_vir = 0
+                # Add `i` to `ind_vir` because excitation to same orbital is possible
+                tmp_ind_vir_1 = sorted(ind_vir + [i])
+
+                for k in tmp_ind_vir_1:
+                    single_excitation = slater.excite(sd_left, i, k)
+                    if i % 2 == k % 2 and single_excitation == sd_right:
+                        check1[x][y].append((i,k))
+                        num += self.H[i // 2, k // 2]
+                    # Avoid repetition by ensuring  `j > i` is satisfied
+                    for j in ind_occ[ind_first_occ + 1:]:
+                        # Add indices `i` and `j` to `ind_vir` because excitation to same
+                        # orbital is possible, and avoid repetition by ensuring `l > k` is
+                        # satisfied
+                        tmp_ind_vir_2 = sorted([j] + tmp_ind_vir_1[ind_first_vir + 1:])
+                        for l in tmp_ind_vir_2:
+                            double_excitation = slater.excite(single_excitation, j, l)
+                            if double_excitation != sd_right:
+                                continue
+                            #if l == i: print (i,j,k,l)
+                            # In <ij|kl>, `i` and `k` must have the same spin, as must
+                            # `j` and `l`
+                            if i % 2 == k % 2 and j % 2 == l % 2:
+                                num += self.G[i // 2, j // 2, k // 2, l // 2]
+                                check2[x][y].append((i,j,k,l,'+'))
+                            # In <ij|lk>, `i` and `l` must have the same spin, as must
+                            # `j` and `k`
+                            if i % 2 == l % 2 and j % 2 == k % 2:
+                                num -= self.G[i // 2, j // 2, l // 2, k // 2]
+                                check2[x][y].append((i,j,l,k,'-'))
+
+                    ind_first_vir += 1
+                ind_first_occ += 1
+
+
+                H[x, y] = num
+    #H += H.T
+    # if they're the same
+    for x in range(self.x.size):
+        ind_occ = [i for i in range(2*self.k) if slater.occupation(self.pspace[x], i)]
+        for ind, i in enumerate(ind_occ):
+            H[x, x] += self.H[i//2, i//2]
+            for j in ind_occ[ind+1:]:
+                H[x, x] += self.G[i // 2, j // 2, i // 2, j // 2]
+                if i%2 == j%2:
+                    H[x, x] -= self.G[i // 2, j // 2, j // 2, i // 2]
+    print(np.sum(np.abs(H-H.T)))
+    print(np.sum(np.sum(H*self.x, axis=1)-
+          np.array([sum(self.hamiltonian(sd)) for sd in self.pspace])))
+    print('Solving the System Variationally...')
+    results = np.linalg.eigh(H)
+    self.x = results[1][:, 0].ravel()
+    return results, check1, check2
+
+def solve_variationally(self):
+    """ Solves for the coefficients variationally (by solving the eigenvalue problem)
+
+    """
+    print('Constructing the Hamiltonian Matrix...')
+    H = np.zeros([self.x.size]*2)
+    for x in range(self.x.size):
+        for y in range(x, self.x.size):
+            sd_left, sd_right = self.pspace[x], self.pspace[y]
+            # number of orbitals that are not shared by the two determinants
+            difference = [a for a in range(2*self.k)
+                          if slater.occupation(sd_left^sd_right, a)]
+            left_difference = [a for a in difference if slater.occupation(sd_left, a)]
+            right_difference = [a for a in difference if slater.occupation(sd_right, a)]
+            # if odd number of orbitals are different
+            if (len(difference) % 2 != 0 or
+            # if more than double excitation
+                len(difference)//2 > 2 or
+            # if particle number violating excitation
+                len(left_difference) != len(right_difference)):
+                continue
+            # if double excitation
+            elif len(difference)//2 == 2:
+                i, j = left_difference
+                k, l = right_difference
+                # In <ij|kl>, `i` and `k` must have the same spin, as must
+                # `j` and `l`
+                if i % 2 == k % 2 and j % 2 == l % 2:
+                    H[x, y] += self.G[i // 2, j // 2, k // 2, l // 2]
+                    #H[x, y] += self.G[j // 2, i // 2, l // 2, k // 2]
+                    H[y, x] += self.G[k // 2, l // 2, i // 2, j // 2]
+                    #H[y, x] += self.G[l // 2, k // 2, j // 2, i // 2]
+                # In <ij|lk>, `i` and `l` must have the same spin, as must
+                # `j` and `k`
+                if i % 2 == l % 2 and j % 2 == k % 2:
+                    H[x, y] -= self.G[i // 2, j // 2, l // 2, k // 2]
+                    #H[x, y] -= self.G[j // 2, i // 2, k // 2, l // 2]
+                    H[y, x] -= self.G[k // 2, l // 2, j // 2, i // 2]
+                    #H[y, x] -= self.G[l // 2, k // 2, i // 2, j // 2]
+            # if single excitation
+            elif len(difference)//2 == 1:
+                i = left_difference[0]
+                k = right_difference[0]
+                if i % 2 == k % 2:
+                    H[x, y] += self.H[i // 2, k // 2]
+                    H[y, x] += self.H[k // 2, i // 2]
+                ind_occ = [a for a in range(2*self.k) if
+                           slater.occupation(sd_left, a) and a != i]
+                for j in ind_occ:
+                    '''
+                    if i%2 == k%2:
+                        H[x, y] += self.G[i//2, j//2, k//2, j//2]
+                        H[y, x] += self.G[i//2, j//2, k//2, j//2]
+                    if i%2 == j%2 == k%2:
+                        H[x, y] -= self.G[i//2, j//2, j//2, k//2]
+                        H[y, x] -= self.G[k//2, j//2, j//2, i//2]
+                    indices = [i, j, k, j]
+                    if indices[0]%2 == indices[2]%2 and indices[1]%2 == indices[3]%2:
+                        H[x, y] += self.G[indices[0]//2, indices[1]//2, indices[2]//2, indices[3]//2]
+                        check2[x][y].append((indices[0], indices[1], indices[2], indices[3],'+'))
+                    if indices[0]%2 == indices[3]%2 and indices[1]%2 == indices[2]%2:
+                        H[x, y] -= self.G[indices[0]//2, indices[1]//2, indices[3]//2, indices[2]//2]
+                        check2[x][y].append((indices[0], indices[1], indices[3], indices[2],'-'))
+                    if i%2 == k%2:
+                        if i<j:
+                            H[x, y] += self.G[i // 2, j // 2, k // 2, j // 2]
+                            H[y, x] += self.G[k // 2, j // 2, i // 2, j // 2]
+                        else:
+                            if j<k:
+                                H[x, y] += self.G[j // 2, i // 2, j // 2, k // 2]
+                                H[y, x] += self.G[j // 2, k // 2, j // 2, i // 2]
+                            else:
+                                H[x, y] -= self.G[j // 2, i // 2, j // 2, k // 2]
+                                H[y, x] -= self.G[j // 2, k // 2, j // 2, i // 2]
+                    if i%2 == j%2 and j%2 == k%2:
+                        if i<j:
+                            H[x, y] -= self.G[i // 2, j // 2, j // 2, k // 2]
+                            H[y, x] -= self.G[k // 2, j // 2, j // 2, i // 2]
+                        else:
+                            if j<k:
+                                H[x, y] -= self.G[j // 2, i // 2, k // 2, j // 2]
+                                H[y, x] -= self.G[j // 2, k // 2, i // 2, j // 2]
+                            else:
+                                H[x, y] += self.G[j // 2, i // 2, k // 2, j // 2]
+                                H[y, x] += self.G[j // 2, k // 2, i // 2, j // 2]
+                    '''
+                    # In <ij|kl>, `i` and `k` must have the same spin, as must
+                    # `j` and `l`
+                    if i % 2 == k % 2:
+                        H[x, y] += self.G[i // 2, j // 2, k // 2, j // 2]
+                        #H[x, y] += self.G[j // 2, i // 2, j // 2, k // 2]
+                        H[y, x] += self.G[k // 2, j // 2, i // 2, j // 2]
+                        #H[y, x] += self.G[j // 2, k // 2, j // 2, i // 2]
+                    # In <ij|lk>, `i` and `l` must have the same spin, as must
+                    # `j` and `k`
+                    if i % 2 == j % 2 and j % 2 == k % 2:
+                        H[x, y] -= self.G[i // 2, j // 2, j // 2, k // 2]
+                        #H[x, y] -= self.G[j // 2, i // 2, k // 2, j // 2]
+                        H[y, x] -= self.G[k // 2, j // 2, j // 2, i // 2]
+                        #H[y, x] -= self.G[j // 2, k // 2, i // 2, j // 2]
+            # if they're the same
+            elif len(difference)//2 == 0:
+                ind_occ = [a for a in range(2*self.k) if slater.occupation(sd_left, a)]
+                for ind, i in enumerate(ind_occ):
+                    H[x, x] += self.H[i//2, i//2]
+                    for j in ind_occ[ind+1:]:
+                        H[x, x] += self.G[i // 2, j // 2, i // 2, j // 2]
+                        #H[x, x] += self.G[j // 2, i // 2, j // 2, i // 2]
+                        if i%2 == j%2:
+                            H[x, x] -= self.G[i // 2, j // 2, j // 2, i // 2]
+                            #H[x, x] -= self.G[j // 2, i // 2, i // 2, j // 2]
+    results = np.linalg.eigh(H)
+    self.x = results[1][:, 0].ravel()
+    print('Is the diagonal okay?', np.diag(H))
+    print('Is it Hermitian?', np.sum(np.abs(H-H.T)))
+    print('Is the energy correct?')
+    print(np.sum(np.abs(np.sum(H*self.x, axis=1)-
+                        np.array([sum(self.hamiltonian(sd)) for sd in self.pspace]))))
+    print(np.sum(np.abs(np.sum(((H*self.x).T*self.x).T, axis=1)-
+                        np.array([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))))
+    print(sum([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))
+    print(np.sum(((H*self.x).T*self.x).T,))
+    print('Solving the System Variationally...')
+    return results

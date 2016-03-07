@@ -13,7 +13,7 @@ class CI(Base):
     """
 
     # Properties
-    dtype = np.complex128
+    dtype = np.float64
     bounds = (-1, 1)
 
     # Bind methods
@@ -26,3 +26,5 @@ class CI(Base):
     objective = ci.objective
     overlap = ci.overlap
     overlap_deriv = ci.overlap_deriv
+    solve_variationally = ci.solve_variationally
+    solve_variationally_2 = ci.solve_variationally_2
