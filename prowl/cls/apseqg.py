@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from ..lib import apseqg
 from ..lib import apig
+from ..lib import ci
 from .base import Base
 
 
@@ -21,8 +22,8 @@ class APseqG(Base):
     generate_guess = apseqg.generate_guess
     generate_pspace = apseqg.generate_pspace
     generate_view = apseqg.generate_view
-    hamiltonian = apseqg.hamiltonian
-    hamiltonian_deriv = apseqg.hamiltonian_deriv
+    hamiltonian = ci.hamiltonian
+    hamiltonian_deriv = ci.hamiltonian_deriv
     jacobian = apseqg.jacobian
     objective = apseqg.objective
     overlap = apseqg.overlap
