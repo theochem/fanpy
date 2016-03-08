@@ -27,4 +27,4 @@ class CI(Base):
     overlap = ci.overlap
     overlap_deriv = ci.overlap_deriv
     solve_variationally = ci.solve_variationally
-    solve_variationally_2 = ci.solve_variationally_2
+    hamiltonian_sd = ci.hamiltonian_sd
