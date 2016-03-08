@@ -129,7 +129,7 @@ def hamiltonian(self, sd):
     for i in ind_occ:
         ind_first_vir = 0
         # Add `i` to `ind_vir` because excitation to same orbital is possible
-        tmp_ind_vir_1 = sorted(ind_vir + [i])
+        tmp_ind_vir_1 = [i]+ind_vir
 
         for k in tmp_ind_vir_1:
             single_excitation = slater.excite(sd, i, k)
@@ -140,7 +140,7 @@ def hamiltonian(self, sd):
                 # Add indices `i` and `j` to `ind_vir` because excitation to same
                 # orbital is possible, and avoid repetition by ensuring `l > k` is
                 # satisfied
-                tmp_ind_vir_2 = sorted([j] + tmp_ind_vir_1[ind_first_vir + 1:])
+                tmp_ind_vir_2 = [j]+tmp_ind_vir_1[ind_first_vir + 1:]
                 for l in tmp_ind_vir_2:
                     double_excitation = slater.excite(single_excitation, j, l)
                     olp = self.overlap(double_excitation)
@@ -190,7 +190,7 @@ def hamiltonian_deriv(self, sd, index):
     for i in ind_occ:
         ind_first_vir = 0
         # Add `i` to `ind_vir` because excitation to same orbital is possible
-        tmp_ind_vir_1 = sorted(ind_vir + [i])
+        tmp_ind_vir_1 = [i]+ind_vir
 
         for k in tmp_ind_vir_1:
             single_excitation = slater.excite(sd, i, k)
@@ -201,7 +201,7 @@ def hamiltonian_deriv(self, sd, index):
                 # Add indices `i` and `j` to `ind_vir` because excitation to same
                 # orbital is possible, and avoid repetition by ensuring `l > k` is
                 # satisfied
-                tmp_ind_vir_2 = sorted([j] + tmp_ind_vir_1[ind_first_vir + 1:])
+                tmp_ind_vir_2 = [j]+tmp_ind_vir_1[ind_first_vir + 1:]
                 for l in tmp_ind_vir_2:
                     double_excitation = slater.excite(single_excitation, j, l)
                     olp = self.overlap_deriv(double_excitation, index)
@@ -334,15 +334,18 @@ def solve_variationally(self):
             H[y, x] = H[x, y]
     results = np.linalg.eigh(H)
     self.x = results[1][:, 0].ravel()
-    print('Is the diagonal okay?', np.diag(H))
+    print('Is the diagonal okay?')
+    print(np.diag(H))
     print('Is it Hermitian?', np.sum(np.abs(H-H.T)))
     print('Is the energy correct?')
     #print(np.sum(np.abs(np.sum(H*self.x, axis=1)-
     #                    np.array([sum(self.hamiltonian(sd)) for sd in self.pspace]))))
     #print(np.sum(np.abs(np.sum(((H*self.x).T*self.x).T, axis=1)-
     #                    np.array([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))))
-    #print(sum([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))
-    print(np.sum(((H*self.x).T*self.x).T,))
+    print('  energy from hamiltonian matrix:',
+          np.sum(((H*self.x).T*self.x).T))
+    print('  energy from hamiltonian method:',
+          sum([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))
     print('Solving the System Variationally...')
     return results
 
