@@ -325,6 +325,14 @@ def overlap_deriv(self, sd, i):
 def solve_variationally(self):
     """ Solves for the coefficients variationally (by solving the eigenvalue problem)
 
+
+    Returns
+    -------
+    energies : np.ndarray
+        Ground state and the excited state energies
+    ci_vectors : np.ndarray
+        CI vectors such that the columns is an eigenvector i corresponding to the eigenvalue i
+
     """
     print('Constructing the Hamiltonian Matrix...')
     H = np.zeros([self.x.size]*2)
@@ -351,6 +359,20 @@ def solve_variationally(self):
 
 
 def hamiltonian_sd(self, sd1, sd2):
+    """ Returns the < SD1 | H | SD2 >
+
+    Parameters
+    ----------
+    sd1 : int
+        Integer that describes the Slater determinant
+    sd2 : int
+        Integer that describes the Slater determinant
+
+    Returns
+    -------
+    integral : float
+
+    """
     output = 0
     # orbitals that are not shared by the two determinants
     diff = [a for a in range(2*self.k)
