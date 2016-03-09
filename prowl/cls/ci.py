@@ -28,3 +28,4 @@ class CI(Base):
     overlap_deriv = ci.overlap_deriv
     solve_variationally = ci.solve_variationally
     hamiltonian_sd = ci.hamiltonian_sd
+    density_matrix = ci.density_matrix

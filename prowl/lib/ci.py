@@ -344,40 +344,40 @@ def solve_variationally(self):
     #                    np.array([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))))
     print('  energy from hamiltonian matrix:',
           np.sum(((H*self.x).T*self.x).T))
-    print('  energy from hamiltonian method:',
-          sum([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))
+    #print('  energy from hamiltonian method:',
+    #      sum([sum(self.hamiltonian(sd))*self.overlap(sd) for sd in self.pspace]))
     print('Solving the System Variationally...')
     return results
 
 
 def hamiltonian_sd(self, sd1, sd2):
     output = 0
-    # number of orbitals that are not shared by the two determinants
-    difference = [a for a in range(2*self.k)
+    # orbitals that are not shared by the two determinants
+    diff = [a for a in range(2*self.k)
                   if slater.occupation(sd1^sd2, a)]
-    left_difference = [a for a in difference if slater.occupation(sd1, a)]
-    right_difference = [a for a in difference if slater.occupation(sd2, a)]
+    left_diff = [a for a in diff if slater.occupation(sd1, a)]
+    right_diff = [a for a in diff if slater.occupation(sd2, a)]
     # if odd number of orbitals are different
     # if more than double excitation
     # if particle number violating excitation
-    if (len(difference) % 2 != 0 or
-        len(difference)//2 > 2 or
-        len(left_difference) != len(right_difference)):
+    if (len(diff) % 2 != 0 or
+        len(diff)//2 > 2 or
+        len(left_diff) != len(right_diff)):
         return 0
     # if double excitation
-    elif len(difference)//2 == 2:
-        i, j = left_difference
-        k, l = right_difference
+    elif len(diff)//2 == 2:
+        i, j = left_diff
+        k, l = right_diff
         if i % 2 == k % 2 and j % 2 == l % 2:
             output += self.G[i // 2, j // 2, k // 2, l // 2]
         if i % 2 == l % 2 and j % 2 == k % 2:
             output -= self.G[i // 2, j // 2, l // 2, k // 2]
     # if single excitation
-    elif len(difference)//2 == 1:
+    elif len(diff)//2 == 1:
         #if sd1 == self.ground or sd2 == self.ground:
         #    return 0
-        i = left_difference[0]
-        k = right_difference[0]
+        i = left_diff[0]
+        k = right_diff[0]
         if i % 2 == k % 2:
             output += self.H[i // 2, k // 2]
         ind_occ = [a for a in range(2*self.k) if
@@ -388,7 +388,7 @@ def hamiltonian_sd(self, sd1, sd2):
             if i % 2 == j % 2 and j % 2 == k % 2:
                 output -= self.G[i // 2, j // 2, j // 2, k // 2]
     # if they're the same
-    elif len(difference)//2 == 0:
+    elif len(diff)//2 == 0:
         ind_occ = [a for a in range(2*self.k) if slater.occupation(sd1, a)]
         for ind, i in enumerate(ind_occ):
             output += self.H[i//2, i//2]
@@ -397,3 +397,112 @@ def hamiltonian_sd(self, sd1, sd2):
                 if i%2 == j%2:
                     output -= self.G[i // 2, j // 2, j // 2, i // 2]
     return output
+
+
+def density_matrix(self, val_threshold=1e-4):
+    """ Returns the first and second order density matrices
+
+    Second order density matrix uses the Physicist's notation:
+    ..math::
+        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+    Chemist's notation is also implemented
+    ..math::
+        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+    but is commented out
+
+    Paramaters
+    ----------
+    val_threshold : float
+        If the term has weight that is less than this threshold, it is discarded
+
+    Returns
+    -------
+    one_density : np.ndarray(self.k, self.k)
+        One electron density matrix
+    two_density : np.ndarray(self.k, self.k, self.k, self.k)
+        Two electron density matrix
+    """
+    temp_sorting = sorted(zip(self.x, self.pspace), key=lambda x: x[0], reverse=True)
+    sorted_x, sorted_sd = zip(*temp_sorting)
+
+    one_density = np.zeros([self.k]*2)
+    two_density = np.zeros([self.k]*4)
+    for a, sd1 in enumerate(sorted_sd):
+        for b, sd2 in enumerate(sorted_sd[a:]):
+            b += a
+            if abs(sorted_x[a]*sorted_x[b]) < val_threshold:
+                break
+            num = sorted_x[a]*sorted_x[b]
+            # orbitals that are not shared by the two determinants
+            diff = [c for c in range(2*self.k)
+                          if slater.occupation(sd1^sd2, c)]
+            left_diff = [c for c in diff if slater.occupation(sd1, c)]
+            right_diff = [c for c in diff if slater.occupation(sd2, c)]
+            if (len(right_diff) != len(left_diff) or len(left_diff)>2):
+                continue
+            # if double excitation
+            elif len(left_diff) == 2:
+                i, j = left_diff
+                k, l = right_diff
+                if i % 2 == k % 2 and j % 2 == l % 2:
+                    #two_density[i // 2, k // 2, l // 2, j // 2] += num
+                    #two_density[j // 2, l // 2, k // 2, i // 2] += num
+                    #two_density[k // 2, i // 2, j // 2, l // 2] += num
+                    #two_density[l // 2, j // 2, i // 2, k // 2] += num
+                    two_density[i // 2, j // 2, k // 2, l // 2] += num
+                    two_density[j // 2, i // 2, l // 2, k // 2] += num
+                    two_density[k // 2, l // 2, i // 2, j // 2] += num
+                    two_density[l // 2, k // 2, j // 2, i // 2] += num
+                if i % 2 == l % 2 and j % 2 == k % 2:
+                    #two_density[i // 2, l // 2, k // 2, j // 2] -= num
+                    #two_density[j // 2, k // 2, l // 2, i // 2] -= num
+                    #two_density[k // 2, j // 2, i // 2, l // 2] -= num
+                    #two_density[l // 2, i // 2, j // 2, k // 2] -= num
+                    two_density[i // 2, j // 2, l // 2, k // 2] -= num
+                    two_density[j // 2, i // 2, k // 2, l // 2] -= num
+                    two_density[k // 2, l // 2, j // 2, i // 2] -= num
+                    two_density[l // 2, k // 2, i // 2, j // 2] -= num
+            # if single excitation
+            elif len(left_diff) == 1:
+                i = left_diff[0]
+                k = right_diff[0]
+                if i % 2 == k % 2:
+                    one_density[i // 2, k // 2] += num
+                    one_density[k // 2, i // 2] += num
+                ind_occ = [c for c in range(2*self.k) if
+                           slater.occupation(sd1, c) and c != i]
+                for j in ind_occ:
+                    if i % 2 == k % 2:
+                        #two_density[i // 2, k // 2, j // 2, j // 2] += num
+                        #two_density[j // 2, j // 2, k // 2, i // 2] += num
+                        #two_density[k // 2, i // 2, j // 2, j // 2] += num
+                        #two_density[j // 2, j // 2, i // 2, k // 2] += num
+                        two_density[i // 2, j // 2, k // 2, j // 2] += num
+                        two_density[j // 2, i // 2, j // 2, k // 2] += num
+                        two_density[k // 2, j // 2, i // 2, j // 2] += num
+                        two_density[j // 2, k // 2, j // 2, i // 2] += num
+                    if i % 2 == j % 2 and j % 2 == k % 2:
+                        #two_density[i // 2, j // 2, k // 2, j // 2] -= num
+                        #two_density[j // 2, k // 2, j // 2, i // 2] -= num
+                        #two_density[k // 2, j // 2, i // 2, j // 2] -= num
+                        #two_density[j // 2, i // 2, j // 2, k // 2] -= num
+                        two_density[i // 2, j // 2, j // 2, k // 2] -= num
+                        two_density[j // 2, i // 2, k // 2, j // 2] -= num
+                        two_density[k // 2, j // 2, j // 2, i // 2] -= num
+                        two_density[j // 2, k // 2, i // 2, j // 2] -= num
+            # if they're the same
+            elif len(left_diff) == 0:
+                ind_occ = [c for c in range(2*self.k) if slater.occupation(sd1, c)]
+                for ind, i in enumerate(ind_occ):
+                    one_density[i//2, i//2] += num
+                    for j in ind_occ[ind+1:]:
+                        #two_density[i // 2, i // 2, j // 2, j // 2] += num
+                        #two_density[j // 2, j // 2, i // 2, i // 2] += num
+                        two_density[i // 2, j // 2, i // 2, j // 2] += num
+                        two_density[j // 2, i // 2, j // 2, i // 2] += num
+                        if i%2 == j%2:
+                            #two_density[i // 2, j // 2, i // 2, j // 2] -= num
+                            #two_density[j // 2, i // 2, j // 2, i // 2] -= num
+                            two_density[i // 2, j // 2, j // 2, i // 2] -= num
+                            two_density[j // 2, i // 2, i // 2, j // 2] -= num
+    return one_density, two_density
