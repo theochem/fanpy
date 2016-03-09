@@ -405,11 +405,11 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
         if not last_limit_over_threshold or i == 0:
             # find errors
             if last_limit_over_threshold:
-              temp = [col_norms[j]**2 for j in indices]
-              temp2 = np.prod(temp[:i+1])
-              for j in range(i+1, r):
-                  temp2 *= np.sum(temp[j:])
-              overlap_error += temp2
+                temp_norms = col_norms[indices]**2
+                temp_error = np.prod(temp_norms[:i])
+                for j in range(i, r):
+                    temp_error *= np.sum(temp_norms[j:])
+                overlap_error += temp_error
             # increment
             indices[i] += 1
             for j in range(i+1, r):

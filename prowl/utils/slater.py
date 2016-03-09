@@ -129,7 +129,7 @@ def number(sd):
     else:
         ones = 0
         while sd > 0:
-            if (sd & 1) is 1:
+            if (sd & 1) == 1:
                 ones += 1
             sd >>= 1
         return ones
