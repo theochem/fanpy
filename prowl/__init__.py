@@ -7,6 +7,7 @@ from .cls.ap1rog import AP1roG
 from .cls.apr2g import APr2G
 from .cls.apseqg import APseqG
 from .cls.ci import CI
+from .cls.doci import DOCI
 
 # Import utilities
 from .utils import horton
@@ -22,6 +23,7 @@ __all__ = [
     "APr2G",
     "APseqG",
     "CI",
+    "DOCI",
     "horton",
     "parser",
     "permanent",
