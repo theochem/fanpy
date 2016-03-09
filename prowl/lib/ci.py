@@ -333,7 +333,7 @@ def solve_variationally(self):
             H[x, y] = self.hamiltonian_sd(self.pspace[x], self.pspace[y])
             H[y, x] = H[x, y]
     results = np.linalg.eigh(H)
-    self.x = results[1][:, 0].ravel()
+    self.x = results[1][:, 0]
     print('Is the diagonal okay?')
     print(np.diag(H))
     print('Is it Hermitian?', np.sum(np.abs(H-H.T)))
@@ -506,3 +506,49 @@ def density_matrix(self, val_threshold=1e-4):
                             two_density[i // 2, j // 2, j // 2, i // 2] -= num
                             two_density[j // 2, i // 2, i // 2, j // 2] -= num
     return one_density, two_density
+
+def cepa0(self, exc=0, conv_threshold=1e-9):
+    """ Finds the CEPA0 wavefunction
+
+    Paramaters
+    ----------
+    exc : int
+        Level of the excited state (Default: ground state)
+    conv_threshold : float
+        Convergence threshold for the energy
+
+    Returns
+    -------
+    energy : float
+        Converged energy
+    vec : np.ndarray()
+        Converged CI vector
+    """
+    # construct hamiltonian
+    H = np.zeros([self.x.size]*2)
+    for x in range(self.x.size):
+        for y in range(x, self.x.size):
+            H[x, y] = self.hamiltonian_sd(self.pspace[x], self.pspace[y])
+            H[y, x] = H[x, y]
+    # define reference (SD with largest contribution)
+    ref_ind = np.argmax(np.abs(self.x))
+    ref_energy = H[ref_ind, ref_ind]
+    # first iteration
+    results = np.linalg.eigh(H)
+    self.x = results[1][:, exc]
+    #self.x /= self.x[ref_ind]
+    corr_energy = results[0][exc] - ref_energy
+    prev_energy = 0
+    # iterate until convergence
+    while abs(prev_energy-corr_energy) > conv_threshold:
+        print(corr_energy, results[0][exc])
+        shift = np.ones(self.x.size)*corr_energy
+        shift[ref_ind] = 0.0
+        results = np.linalg.eigh(H + np.diag(shift))
+        self.x = results[1][:, exc]
+        #ref_ind = np.argmax(np.abs(self.x))
+        #ref_energy = H[ref_ind, ref_ind]
+        #self.x /= self.x[ref_ind]
+        prev_energy = corr_energy
+        corr_energy = results[0][exc] - ref_energy
+    return results[0][exc], results[1][exc]

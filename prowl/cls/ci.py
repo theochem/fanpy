@@ -29,3 +29,4 @@ class CI(Base):
     solve_variationally = ci.solve_variationally
     hamiltonian_sd = ci.hamiltonian_sd
     density_matrix = ci.density_matrix
+    cepa0 = ci.cepa0
