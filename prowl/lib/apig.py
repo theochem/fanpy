@@ -492,8 +492,8 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
     two_density = np.zeros([self.k]*4)
     for i in range(self.k):
         for j in range(i, self.k):
-            num_used = 0
             for sd in sds:
+
                 # i is always occupied
                 if not slater.occupation_pair(sd, i):
                     continue
@@ -510,12 +510,13 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
                 elif not slater.occupation_pair(sd, j):
                     if upper_lim > val_threshold:
                         exc = slater.excite_pair(sd, i, j)
+                        olps = self.overlap(sd)*self.overlap(exc)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        #two_density[i, j, i, j] += 2*self.overlap(sd)*self.overlap(exc)
-                        #two_density[j, i, j, i] += 2*self.overlap(sd)*self.overlap(exc)
+                        #two_density[i, j, i, j] += 2*olps
+                        #two_density[j, i, j, i] += 2*olps
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        two_density[i, i, j, j] += 2*self.overlap(sd)*self.overlap(exc)
-                        two_density[j, j, i, i] += 2*self.overlap(sd)*self.overlap(exc)
+                        two_density[i, i, j, j] += 2*olps
+                        two_density[j, j, i, i] += 2*olps
                 # if i and j are occupied and i < j
                 else:
                     if upper_lim > val_threshold:

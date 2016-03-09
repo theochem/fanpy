@@ -21,3 +21,4 @@ class DOCI(CI):
     generate_pspace = doci.generate_pspace
     hamiltonian = apig.hamiltonian
     hamiltonian_deriv = apig.hamiltonian_deriv
+    density_matrix = doci.density_matrix
