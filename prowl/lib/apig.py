@@ -331,8 +331,8 @@ def overlap_deriv(self, sd, x, y):
         return permanent.dense_deriv(self.C[:, occ], x, occ.index(y))
 
 def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold=1000):
-    """ Truncates the CI expansion of wavefunction such that the overlap between the
-    truncated and the original wavefunction is close enough to 1
+    """ Truncates the CI expansion of the APIG type wavefunctions such that the overlap
+    between the truncated and the original wavefunction is close enough to 1
 
     Uses "inequality of Hadamard type for permanents"
     ..math::
@@ -369,14 +369,12 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
     # norms of each column
     col_norms = np.sum(np.abs(coeffs), axis=0)
     # orbital indices sorted from largest to smallest norm
-    orb_indices = np.argsort(col_norms)[::-1].tolist()
+    orb_indices = np.argsort(col_norms)[::-1]
     # order column norms from largest to smallest norm
-    col_norms = col_norms[orb_indices].tolist()
+    col_norms = col_norms[orb_indices]
 
     # list of slater determinants
     sds = []
-    # list of upper limits of each slater determinants
-    upper_lims = []
 
     # copied from combination code from itertools
     n = self.k
@@ -384,20 +382,26 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
     assert r <= n
     indices = range(r)
 
-    upper_lim = np.prod([col_norms[j] for j in indices])
-    assert upper_lim > val_threshold
-    sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
+    upper_lim = np.prod(col_norms[indices])
+    assert upper_lim > val_threshold, 'None of the coefficients are above the threshold'
+    sds.append(slater.create_multiple_pairs(0, *orb_indices[indices]))
+    # this is used to skip the next few determinants since the coefficient are in approx
+    # decreasing order
     last_limit_over_threshold = False
+    # this is used to keep track of all the coefficients we are throwing away
     overlap_error = 0
     while len(sds) <= num_threshold:
-        # find the index to iterate
+        # find the index to increment
         for i in reversed(range(r)):
+            # if the index can be incremented
             if indices[i] != i + n - r:
-                break # break for loop
+                break # break out of for loop
+        # if all the indices cannot be incremented
         else:
-            break # break while loop
-        # find next set of indices
-        # normal incrementing (last val not over threshold or incrementing first index)
+            break # break out of while loop
+        # find next set of indices (by incrementing)
+        # if last determinant was not over the threshold or we're incrementing the first
+        # first index
         if not last_limit_over_threshold or i == 0:
             # find errors
             if last_limit_over_threshold:
@@ -414,22 +418,22 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
         # the first condition is not necessary but included for readability
         elif last_limit_over_threshold and i >= 1:
             # find the errors
-            temp = [col_norms[j]**2 for j in indices]
-            temp2 = np.prod(temp[:i])
+            temp_norms = col_norms[indices]**2
+            temp_error = np.prod(temp_norms[:i])
             for j in range(i, r):
-                temp2 *= np.sum(temp[j:])
-            overlap_error += temp2
+                temp_error *= np.sum(temp_norms[j:])
+            overlap_error += temp_error
             # increment
             indices[i-1] += 1
             for j in range(i, r):
                 indices[j] = indices[j-1] + 1
+        # reset the flag
         last_limit_over_threshold = False
         # check the upper limit
-        upper_lim = np.prod([col_norms[j] for j in indices])
+        upper_lim = np.prod(col_norms[indices])
         # append if upper_limit is greater than threshold
         if upper_lim > val_threshold:
-            sds.append(slater.create_multiple_pairs(0, *(orb_indices[j] for j in indices)))
-            upper_lims.append(upper_lim)
+            sds.append(slater.create_multiple_pairs(0, *orb_indices[indices]))
         # otherwise, set flag that would skip some increments
         else:
             last_limit_over_threshold = True
@@ -443,22 +447,18 @@ def truncate(self, coeffs, val_threshold=1e-5, err_threshold=1e-6, num_threshold
     print('overlap error: {0}'.format(overlap_error))
     if overlap_error > err_threshold:
         print('Warning: Estimated error exceeds the err_threshold, {0}.'.format(err_threshold))
-    # NOTE: Is this necessary?
-    # sort slater determinants by upper limits
-    sds_lims = sorted(zip(sds, upper_lims), key=lambda x:x[1], reverse=True)
-    sds = zip(*sds_lims)[0]
     return sds
 
 def density_matrix(self, coeffs, val_threshold=1e-4):
     """ Returns the first and second order density matrices
 
-    Second order density matrix uses the following notation:
+    Second order density matrix uses the Physicist's notation:
     ..math::
         \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-    There seems to be another notation that is used:
+    Chemist's notation is also implemented
     ..math::
         \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-    Both of these are implemented, but the second notation is commented out.
+    but is commented out
 
     Paramaters
     ----------
@@ -484,15 +484,12 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
                         num_threshold=100000)
 
     one_density = np.zeros([self.k]*2)
-    one_density_error = np.zeros([self.k]*2)
     for i in range(self.k):
         for sd in sds:
             if slater.occupation_pair(sd, i):
                 olp = self.overlap(sd)
                 one_density[i, i] += 2*olp**2
-                #one_density_error[i, i] += 2*(olp*sd_weight_threshold + sd_weight_threshold**2)
     two_density = np.zeros([self.k]*4)
-    two_density_error = np.zeros([self.k]*4)
     for i in range(self.k):
         for j in range(self.k):
             num_used = 0
@@ -502,70 +499,33 @@ def density_matrix(self, coeffs, val_threshold=1e-4):
                     continue
                 shared_sd_indices = [a for a in range(self.k)
                                      if slater.occupation_pair(sd, a) and a not in [i,j]]
-                left_upper_lim = np.prod(col_norms[shared_sd_indices])
-                left_upper_lim *= col_norms[i]
-                right_upper_lim = np.prod(col_norms[shared_sd_indices])
-                right_upper_lim *= col_norms[j]
-                upper_lim = left_upper_lim * right_upper_lim
-                truncation_error = 2*(left_upper_lim+right_upper_lim)*sd_weight_threshold
-                truncation_error += 2*sd_weight_threshold**2
+                upper_lim = np.prod(col_norms[shared_sd_indices])**2
+                upper_lim *= col_norms[i]
+                upper_lim *= col_norms[j]
                 # if i and j are equal and both occupied
                 if i == j:
                     if upper_lim > val_threshold:
                         two_density[i, i, i, i] += 2*self.overlap(sd)**2
-                    else:
-                        two_density_error[i, i, i, i] += 2*upper_lim
-                    #two_density_error[i, i, i, i] += 2*truncation_error
                 # if i is occupied and j is virtual
                 elif not slater.occupation_pair(sd, j):
                     if upper_lim > val_threshold:
                         exc = slater.excite_pair(sd, i, j)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        two_density[i, j, i, j] += 2*self.overlap(sd)*self.overlap(exc)
+                        #two_density[i, j, i, j] += 2*self.overlap(sd)*self.overlap(exc)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        #two_density[i, i, j, j] += 2*self.overlap(sd)*self.overlap(exc)
-                    else:
-                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        two_density_error[i, j, i, j] += 2*upper_lim
-                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        #two_density_error[i, i, j, j] += 2*upper_lim
-                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                    #two_density_error[i, j, i, j] += 2*truncation_error
-                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                    #two_density_error[i, i, j, j] += truncation_error
+                        two_density[i, i, j, j] += 2*self.overlap(sd)*self.overlap(exc)
                 # if i and j are occupied and i < j
                 elif i < j:
                     if upper_lim > val_threshold:
                         olp = self.overlap(sd)
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        two_density[i, i, j, j] += 4*olp**2
-                        two_density[j, i, i, j] -= 2*olp**2
-                        two_density[i, j, j, i] -= 2*olp**2
-                        two_density[j, j, i, i] += 4*olp**2
+                        #two_density[i, i, j, j] += 4*olp**2
+                        #two_density[j, i, i, j] -= 2*olp**2
+                        #two_density[i, j, j, i] -= 2*olp**2
+                        #two_density[j, j, i, i] += 4*olp**2
                         #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        #two_density[i, j, i, j] += 4*olp**2
-                        #two_density[j, j, i, i] -= 2*olp**2
-                        #two_density[i, i, j, j] -= 2*olp**2
-                        #two_density[j, i, j, i] += 4*olp**2
-                    else:
-                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                        two_density_error[i, i, j, j] += 4*upper_lim
-                        two_density_error[j, i, i, j] -= 2*upper_lim
-                        two_density_error[i, j, j, i] -= 2*upper_lim
-                        two_density_error[j, j, i, i] += 4*upper_lim
-                        #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                        #two_density_error[i, j, i, j] += 4*upper_lim
-                        #two_density_error[j, j, i, i] -= 2*upper_lim
-                        #two_density_error[i, i, j, j] -= 2*upper_lim
-                        #two_density_error[j, i, j, i] += 4*upper_lim
-                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-                    #two_density_error[i, i, j, j] += 4*truncation_error
-                    #two_density_error[j, i, i, j] -= 2*truncation_error
-                    #two_density_error[i, j, j, i] -= 2*truncation_error
-                    #two_density_error[j, j, i, i] += 4*truncation_error
-                    #\Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-                    #two_density_error[i, j, i, j] += 4*truncation_error
-                    #two_density_error[j, j, i, i] -= 2*truncation_error
-                    #two_density_error[i, i, j, j] -= 2*truncation_error
-                    #two_density_error[j, i, j, i] += 4*upper_lim
-    return one_density, one_density_error, two_density, two_density_error
+                        two_density[i, j, i, j] += 4*olp**2
+                        two_density[j, j, i, i] -= 2*olp**2
+                        two_density[i, i, j, j] -= 2*olp**2
+                        two_density[j, i, j, i] += 4*olp**2
+    return one_density, two_density
