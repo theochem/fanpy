@@ -9,6 +9,13 @@ class Ap1rog(Apig):
 
     _normalize = False
 
+    _solver_options = Apig._solver_options.copy()
+    _solver_options.update({
+        "ftol": 1.0e-15,
+        "gtol": 1.0e-15,
+        "xtol": 1.0e-15,
+    })
+
     def _make_npspace(self):
         """
         Number of Slater determinants in the projection space.
