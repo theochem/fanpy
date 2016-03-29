@@ -6,6 +6,10 @@ from apig import Apig
 
 
 class Ap1rog(Apig):
+    """
+    Antisymmetrized Product of One Reference Orbital Geminals wavefunction.
+
+    """
 
     _normalize = False
 
@@ -85,6 +89,11 @@ class Ap1rog(Apig):
         return self.x.reshape(self.npair, self.nbasis - self.npair)
 
     def _compute_overlap(self, index, deriv=None):
+        """
+        Compute the overlap of the indexth Slater determinant in the cache.
+
+        """
+
 
         if deriv:
             nexc = self.index_gen[index, 0]
@@ -103,6 +112,21 @@ class Ap1rog(Apig):
             cols = self.index_gen[index, (1 + self.npair):(1 + self.npair + nexc)].tolist()
             olp = self.permanent(self.C[rows][:, cols])
             return olp
+
+    def to_apig(self, dtype=None):
+        """
+        Initialize an APIG wavefunction instance using this AP1roG instance's coefficient vector as
+        the initial guess for the APIG coefficient vector.
+
+        """
+
+        dtype = self.dtype if dtype is None else dtype
+        extra = self.npspace - self._make_npspace()
+        x = np.zeros((self.npair, self.nbasis), dtype=dtype)
+        x[:, :self.npair] += np.eye(self.npair)
+        x[:, self.npair:] += self.C
+        x = x.ravel()
+        return Apig(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
 
 
 # vim: set nowrap textwidth=100 cc=101 :

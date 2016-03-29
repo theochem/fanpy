@@ -9,6 +9,10 @@ import f90perm
 
 
 class Apig(object):
+    """
+    Antisymmetrized Product of Interacting Geminals wavefunction.
+
+    """
 
     _normalize = True
 
@@ -23,7 +27,7 @@ class Apig(object):
 
     permanent = staticmethod(f90perm.ryser)
 
-    def __init__(self, nelec, H, G, dtype=np.float64, extra=0):
+    def __init__(self, nelec, H, G, dtype=np.float64, extra=0, x=None):
         """
         Initialize the APIG wavefunction instance.
 
@@ -72,7 +76,7 @@ class Apig(object):
         self.dcache_values = np.zeros((self.nsd,) + self.dim_deriv, dtype=self.dtype)
 
         # Initialize geminal coefficient vector/matrix
-        self.x = self._make_x()
+        self.x = self._make_x() if x is None else x
         self.C = self._make_C()
 
     def __call__(self, **kwargs):
@@ -297,6 +301,10 @@ class Apig(object):
         return self.x.reshape(self.npair, self.nbasis)
 
     def _compute_overlap(self, index, deriv=None):
+        """
+        Compute the overlap of the indexth Slater determinant in the cache.
+
+        """
 
         if deriv:
             cache_index = (index,) + deriv
