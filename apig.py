@@ -473,5 +473,43 @@ class Apig(object):
         # Jacobian is 2x too large (why?)
         return 0.5 * jac
 
+    def to_apr2g(self, instance=False, dtype=None):
+        """
+        Initialize an APr2G wavefunction instance using this APIG instance's coefficient vector as
+        the initial guess for the APr2G coefficient vector.
+
+        """
+
+        # Construct a least-squares augmented matrix
+        dtype = self.dtype if dtype is None else dtype
+        A = np.zeros((self.C.size, self.npair + 2 * self.nbasis), dtype=dtype)
+        lambdas = A[:,:self.npair]
+        epsilons = A[:,self.npair:(self.npair + self.nbasis)]
+        zetas = A[:,(self.npair + self.nbasis):]
+        for i in range(self.npair):
+            j = i * self.nbasis
+            lambdas[j:(j + self.nbasis), i] = self.C[i, :]
+            epsilons[j:(j + self.nbasis), :] = np.diag(-self.C[i, :])
+            zetas[j:(j + self.nbasis), :] = -np.eye(self.nbasis)
+
+        # Solve the least-squares system
+        sol = np.linalg.lstsq(A[:, :-1], -A[:, -1])[0]
+        x = np.zeros(sol.size + 1, dtype=sol.dtype)
+        x[:-1] = sol
+        x[-1] = 1
+
+        # Return the coefficient vector or a new Apr2g instance
+        if instance:
+            extra = self.npspace - self._make_npspace()
+            pass #return Apr2g(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
+        else:
+            #return x
+            cauchy = np.zeros_like(self.C)
+            for i in range(self.npair):
+                for j in range(self.nbasis):
+                    cauchy[i, j] = x[self.npair + self.nbasis + j] / (x[i] - x[self.npair + j])
+            err = (cauchy - self.C) / self.C
+            return x, cauchy, err
+
 
 # vim: set nowrap textwidth=100 cc=101 :

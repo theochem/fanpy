@@ -113,7 +113,7 @@ class Ap1rog(Apig):
             olp = self.permanent(self.C[rows][:, cols])
             return olp
 
-    def to_apig(self, dtype=None):
+    def to_apig(self, instance=False, dtype=None):
         """
         Initialize an APIG wavefunction instance using this AP1roG instance's coefficient vector as
         the initial guess for the APIG coefficient vector.
@@ -121,12 +121,31 @@ class Ap1rog(Apig):
         """
 
         dtype = self.dtype if dtype is None else dtype
-        extra = self.npspace - self._make_npspace()
         x = np.zeros((self.npair, self.nbasis), dtype=dtype)
         x[:, :self.npair] += np.eye(self.npair)
         x[:, self.npair:] += self.C
         x = x.ravel()
-        return Apig(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
+        if instance:
+            extra = self.npspace - self._make_npspace()
+            return Apig(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
+        else:
+            return x
+
+    def to_apr2g(self, instance=False, dtype=None):
+        """
+        Initialize an APr2G wavefunction instance using this AP1roG instance's coefficient vector as
+        the initial guess for the APr2G coefficient vector.
+
+        """
+
+        # Determine parameters needed to initialize the APr2G instance
+        dtype = self.dtype if dtype is None else dtype
+
+        # Construct an APIG coefficient matrix
+        apig = self.to_apig(instance=True, dtype=dtype)
+
+        # Construct an APr2G coefficient vector or instance by calling Apig's to_apr2g
+        return apig.to_apr2g(instance=instance, dtype=dtype)
 
 
 # vim: set nowrap textwidth=100 cc=101 :
