@@ -14,6 +14,8 @@ class Apig(object):
 
     """
 
+    name = "apig"
+
     _normalize = True
 
     _solver_options = {
@@ -300,6 +302,26 @@ class Apig(object):
 
         return self.x.reshape(self.npair, self.nbasis)
 
+    def _convert_to_apig(self, dtype=None):
+        """
+        Initialize an APIG coefficient matrix from this APIG instance.
+
+        """
+
+        dtype = self.dtype if dtype is None else dtype
+        matrix = np.empty(self.C.shape, dtype=dtype)
+        matrix[...] = self.C[...]
+        return matrix
+
+    @staticmethod
+    def _convert_from_apig(npair, nbasis, matrix):
+        """
+        Initialize an APIG coefficient vector from the APIG matrix.
+
+        """
+
+        return matrix.ravel()
+
     def _compute_overlap(self, index, deriv=None):
         """
         Compute the overlap of the indexth Slater determinant in the cache.
@@ -473,43 +495,26 @@ class Apig(object):
         # Jacobian is 2x too large (why?)
         return 0.5 * jac
 
-    def to_apr2g(self, instance=False, dtype=None):
+    def convert(self, cls=None, instance=True, dtype=None):
         """
-        Initialize an APr2G wavefunction instance using this APIG instance's coefficient vector as
-        the initial guess for the APr2G coefficient vector.
+        Convert this APIG instance's coefficient vector to another type of coefficient vector.
 
         """
 
-        # Construct a least-squares augmented matrix
+        cls = Apig if cls is None else cls
         dtype = self.dtype if dtype is None else dtype
-        A = np.zeros((self.C.size, self.npair + 2 * self.nbasis), dtype=dtype)
-        lambdas = A[:,:self.npair]
-        epsilons = A[:,self.npair:(self.npair + self.nbasis)]
-        zetas = A[:,(self.npair + self.nbasis):]
-        for i in range(self.npair):
-            j = i * self.nbasis
-            lambdas[j:(j + self.nbasis), i] = self.C[i, :]
-            epsilons[j:(j + self.nbasis), :] = np.diag(-self.C[i, :])
-            zetas[j:(j + self.nbasis), :] = -np.eye(self.nbasis)
-
-        # Solve the least-squares system
-        sol = np.linalg.lstsq(A[:, :-1], -A[:, -1])[0]
-        x = np.zeros(sol.size + 1, dtype=sol.dtype)
-        x[:-1] = sol
-        x[-1] = 1
-
-        # Return the coefficient vector or a new Apr2g instance
+        matrix = self._convert_to_apig(dtype=dtype)
+        newx = cls._convert_from_apig(self.npair, self.nbasis, matrix)
         if instance:
-            extra = self.npspace - self._make_npspace()
-            pass #return Apr2g(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
+            args = (self.nelec, self.H, self.G)
+            kwargs = {
+                "dtype": dtype,
+                "extra": self.npspace - self._make_npspace(),
+                "x": newx,
+            }
+            return cls(*args, **kwargs)
         else:
-            #return x
-            cauchy = np.zeros_like(self.C)
-            for i in range(self.npair):
-                for j in range(self.nbasis):
-                    cauchy[i, j] = x[self.npair + self.nbasis + j] / (x[i] - x[self.npair + j])
-            err = (cauchy - self.C) / self.C
-            return x, cauchy, err
+            return newx
 
 
 # vim: set nowrap textwidth=100 cc=101 :

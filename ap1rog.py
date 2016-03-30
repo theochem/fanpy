@@ -88,12 +88,32 @@ class Ap1rog(Apig):
 
         return self.x.reshape(self.npair, self.nbasis - self.npair)
 
+    def _convert_to_apig(self, dtype=None):
+        """
+        Initialize an APIG coefficient matrix from this AP1roG instance.
+
+        """
+
+        dtype = self.dtype if dtype is None else dtype
+        matrix = np.zeros((self.npair, self.nbasis), dtype=dtype)
+        matrix[:, :self.npair] += np.eye(self.npair)
+        matrix[:, self.npair:] += self.C
+        return matrix
+
+    @staticmethod
+    def _convert_from_apig(npair, nbasis, matrix):
+        """
+        Initialize an AP1roG coeficient vector from the APIG matrix.
+
+        """
+
+        return matrix[:, npair:].ravel()
+
     def _compute_overlap(self, index, deriv=None):
         """
         Compute the overlap of the indexth Slater determinant in the cache.
 
         """
-
 
         if deriv:
             nexc = self.index_gen[index, 0]
@@ -112,40 +132,6 @@ class Ap1rog(Apig):
             cols = self.index_gen[index, (1 + self.npair):(1 + self.npair + nexc)].tolist()
             olp = self.permanent(self.C[rows][:, cols])
             return olp
-
-    def to_apig(self, instance=False, dtype=None):
-        """
-        Initialize an APIG wavefunction instance using this AP1roG instance's coefficient vector as
-        the initial guess for the APIG coefficient vector.
-
-        """
-
-        dtype = self.dtype if dtype is None else dtype
-        x = np.zeros((self.npair, self.nbasis), dtype=dtype)
-        x[:, :self.npair] += np.eye(self.npair)
-        x[:, self.npair:] += self.C
-        x = x.ravel()
-        if instance:
-            extra = self.npspace - self._make_npspace()
-            return Apig(self.nelec, self.H, self.G, dtype=dtype, extra=extra, x=x)
-        else:
-            return x
-
-    def to_apr2g(self, instance=False, dtype=None):
-        """
-        Initialize an APr2G wavefunction instance using this AP1roG instance's coefficient vector as
-        the initial guess for the APr2G coefficient vector.
-
-        """
-
-        # Determine parameters needed to initialize the APr2G instance
-        dtype = self.dtype if dtype is None else dtype
-
-        # Construct an APIG coefficient matrix
-        apig = self.to_apig(instance=True, dtype=dtype)
-
-        # Construct an APr2G coefficient vector or instance by calling Apig's to_apr2g
-        return apig.to_apr2g(instance=instance, dtype=dtype)
 
 
 # vim: set nowrap textwidth=100 cc=101 :
