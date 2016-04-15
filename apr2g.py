@@ -41,6 +41,33 @@ class Apr2g(Apig):
 
         return (self.npair + 2 * self.nbasis,)
 
+    def _make_x(self):
+        """
+        Generate an initial guess at the geminal coefficient vector.
+
+        """
+
+        x = np.ones((self.npair + 2 * self.nbasis), dtype=self.dtype)
+
+        # The epsilon parameters are close to the orbital energies
+        sep = self.npair + self.nbasis
+        epsilons = x[self.npair:sep]
+        for i in range(self.nbasis):
+            epsilons[i] = self.H[i, i]
+
+        # The lambda parameters are of the same magnitude as the epsilon parameters
+        lambdas = x[:self.npair]
+        lambdas[0] = 0.5 * epsilons[0]
+        for i in range(1, self.npair):
+            lambdas[i] = 0.5 * (lambdas[i - 1] + epsilons[i])
+
+        # Add noise
+        x += 2.0e-3 * (np.random.rand(x.size) - 0.5)
+        if x.dtype == np.complex128:
+            x += 2.0e-2 * (np.random.rand(x.size) - 0.5) * 1j
+
+        return x
+
     def _make_C(self):
         """
         Generate a representation of the geminal coefficient matrix.
@@ -68,21 +95,23 @@ class Apr2g(Apig):
         """
 
         # Construct a least-squares augmented matrix
-        A = np.zeros((matrix.size, npair + 2 * nbasis), dtype=matrix.dtype)
-        lambdas = A[:,:npair]
-        epsilons = A[:,npair:(npair + nbasis)]
-        zetas = A[:,(npair + nbasis):]
+        A = np.zeros((matrix.size + 1, npair + 2 * nbasis), dtype=matrix.dtype)
+        lambdas = A[:, :npair]
+        epsilons = A[:, npair:(npair + nbasis)]
+        zetas = A[:, (npair + nbasis):(npair + 2 * nbasis)]
         for i in range(npair):
             j = i * nbasis
             lambdas[j:(j + nbasis), i] = matrix[i, :]
             epsilons[j:(j + nbasis), :] = np.diag(-matrix[i, :])
             zetas[j:(j + nbasis), :] = -np.eye(nbasis)
+        A[-1, (npair + nbasis)] = -1000
+        b = np.zeros((matrix.size + 1), dtype=matrix.dtype)
+        b[-1] = 1000
 
         # Solve the least-squares system
-        sol = np.linalg.lstsq(A[:, :-1], -A[:, -1])[0]
-        x = np.zeros(sol.size + 1, dtype=sol.dtype)
-        x[:-1] = sol
-        x[-1] = 1
+        sol = np.linalg.lstsq(A, b)[0]
+        x = np.zeros(sol.size, dtype=sol.dtype)
+        x[:] = sol
         return x
 
     def update_x(self, x):
@@ -96,6 +125,101 @@ class Apr2g(Apig):
         for i in range(self.npair):
             for j in range(self.nbasis):
                 self.C[i, j] = self.x[sep + j] / (self.x[i] - self.x[self.npair + j])
+
+    def _compute_overlap(self, index, deriv=None):
+        """
+        Compute the overlap of the indexth Slater determinant in the cache.
+
+        """
+
+        if deriv:
+            cache_index = (index,) + deriv
+            if self.dcache_status[cache_index]:
+                return self.dcache_values[cache_index]
+            else:
+                dolp = self._compute_perm_deriv(index, deriv)
+                self.dcache_status[cache_index] = True
+                self.dcache_values[cache_index] = dolp
+                return dolp
+        else:
+            if self.ocache_status[index]:
+                return self.ocache_values[index]
+            else:
+                olp = self.permanent(self.C[:, self.index_gen[index]])
+                self.ocache_status[index] = True
+                self.ocache_values[index] = olp
+                return olp
+
+    @staticmethod
+    def permanent(matrix):
+        """
+        Compute the permanent of an inverse-rank-2 matrix by Borchardt's theorem.
+
+        """
+
+        return np.linalg.det(matrix ** 2) / np.linalg.det(matrix)
+
+    def _compute_perm_deriv(self, index, deriv):
+        """
+        Compute the partial permanent of an inverse-rank-2 matrix with respect to one of its Cauchy
+        parameters by Jacobi's formula.
+
+        """
+
+        # Check that the derived parameter appears in the permanent
+        d = deriv[0]
+        sep = self.npair + self.nbasis
+        cols = self.index_gen[index].tolist()
+        if d >= sep and (d - sep) not in cols:
+            return 0.
+        elif d >= self.npair and (d - self.npair) not in cols:
+            return 0.
+
+        # Assign parameters to conventient variables
+        lambdas = self.x[:self.npair]
+        epsilons = self.x[self.npair:sep][cols]
+        zetas = self.x[sep:][cols]
+
+        # Compute matrices
+        matrix = self.C[:, cols]
+        matrix_sq = matrix.copy() ** 2
+
+        # Compute matrix determinants
+        det_matrix = np.linalg.det(matrix)
+        det_matrix_sq = np.linalg.det(matrix_sq)
+
+        # Compute matrix adjoints
+        adj_matrix = np.linalg.inv(matrix) * det_matrix
+        adj_matrix_sq = np.linalg.inv(matrix_sq) * det_matrix_sq
+
+        # Compute matrix derivatives
+        dmatrix, dmatrix_sq = map(np.zeros_like, (matrix, matrix_sq))
+        # d in lambdas
+        if d < self.npair:
+            for i in range(self.npair):
+                denom = lambdas[d] - epsilons[i]
+                dmatrix[d, i] = -1 * zetas[i] / (denom ** 2)
+                dmatrix_sq[d, i] = -2 * (zetas[i] ** 2) / (denom ** 3)
+        # d in epsilons
+        elif d < sep:
+            d = cols.index(d - self.npair)
+            for i in range(self.npair):
+                denom = lambdas[d] - epsilons[i]
+                dmatrix[d, i] = zetas[i] / (denom ** 2)
+                dmatrix_sq[d, i] = 2 * (zetas[i] ** 2) / (denom ** 3)
+        # d in zetas
+        else:
+            d = cols.index(d - sep)
+            for i in range(self.npair):
+                denom = lambdas[d] - epsilons[i]
+                dmatrix[d, i] = 1. / denom
+                dmatrix_sq[d, i] = 2 * zetas[i] / (denom ** 2)
+
+        # Compute total derivative
+        dperm = np.trace(adj_matrix_sq.dot(dmatrix_sq))
+        dperm -= (det_matrix_sq / det_matrix) * np.trace(adj_matrix.dot(dmatrix))
+        dperm /= det_matrix
+        return dperm
 
 
 # vim: set nowrap textwidth=100 cc=101 :
