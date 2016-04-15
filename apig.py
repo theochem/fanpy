@@ -27,9 +27,7 @@ class Apig(object):
         "xtol":    1.0e-12,
     }
 
-    permanent = staticmethod(f90perm.ryser)
-
-    def __init__(self, nelec, H, G, dtype=np.float64, extra=0, x=None):
+    def __init__(self, nelec, H, G, dtype=np.float64, extra=0, ngem=None, x=None):
         """
         Initialize the APIG wavefunction instance.
 
@@ -43,6 +41,7 @@ class Apig(object):
 
         # Set number of electron pairs and number of spatial basis functions
         self.npair  = nelec // 2
+        self.ngem = ngem if ngem else self.npair
         self.nbasis = H.shape[0]
 
         # Set Slater determinant counts
@@ -72,10 +71,8 @@ class Apig(object):
         self.dir_ham = self._make_dir_ham()
 
         # Initialize Slater determinant overlap caching
-        self.ocache_status = np.zeros(self.nsd, dtype=bool)
-        self.ocache_values = np.zeros(self.nsd, dtype=self.dtype)
-        self.dcache_status = np.zeros((self.nsd,) + self.dim_deriv, dtype=bool)
-        self.dcache_values = np.zeros((self.nsd,) + self.dim_deriv, dtype=self.dtype)
+        self.ocache_status, self.ocache_values = self._make_ocache()
+        self.dcache_status, self.dcache_values = self._make_dcache()
 
         # Initialize geminal coefficient vector/matrix
         self.x = self._make_x() if x is None else x
@@ -103,7 +100,7 @@ class Apig(object):
 
         """
 
-        return self.npair * self.nbasis
+        return self.ngem * self.nbasis
 
     def _make_nhspace(self):
         """
@@ -120,7 +117,7 @@ class Apig(object):
 
         """
 
-        return (self.npair, self.nbasis)
+        return (self.ngem, self.nbasis)
 
     def _make_dim_obj(self):
         """
@@ -274,6 +271,26 @@ class Apig(object):
                 dir_ham[i_pspace, i_hspace] = value
         return dir_ham
 
+    def _make_ocache(self):
+        """
+        Construct the Slater determinant overlap cache.
+
+        """
+
+        status = np.zeros(self.nsd, dtype=bool)
+        values = np.zeros(self.nsd, dtype=self.dtype)
+        return status, values
+
+    def _make_dcache(self):
+        """
+        Construct the Slater determinant overlap derivative cache.
+
+        """
+
+        status = np.zeros((self.nsd,) + self.dim_deriv, dtype=bool)
+        values = np.zeros((self.nsd,) + self.dim_deriv, dtype=self.dtype)
+        return status, values
+
     def _make_x(self):
         """
         Generate an initial guess at the geminal coefficient vector.
@@ -281,13 +298,13 @@ class Apig(object):
         """
 
         # Generate identity matrix of proper shape and dtype
-        x = np.zeros((self.npair, self.nbasis), dtype=self.dtype)
-        x[:, :] += np.eye(self.npair, self.nbasis)
+        x = np.zeros((self.ngem, self.nbasis), dtype=self.dtype)
+        x[:, :] += np.eye(self.ngem, self.nbasis)
 
         # Add random noise (real, and complex if necessary)
-        x[:, :] += (0.2 / x.size) * (np.random.rand(self.npair, self.nbasis) - 0.5)
+        x[:, :] += (0.2 / x.size) * (np.random.rand(self.ngem, self.nbasis) - 0.5)
         if self.dtype == np.complex128:
-            x[:, :] += (0.02j / x.size) * (np.random.rand(self.npair, self.nbasis) - 0.5)
+            x[:, :] += (0.02j / x.size) * (np.random.rand(self.ngem, self.nbasis) - 0.5)
 
         # Normalize and return the raveled matrix as a vector
         x[:, :] /= np.max(np.abs(x))
@@ -300,7 +317,7 @@ class Apig(object):
 
         """
 
-        return self.x.reshape(self.npair, self.nbasis)
+        return self.x.reshape(self.ngem, self.nbasis)
 
     def _convert_to_apig(self, dtype=None):
         """
@@ -314,7 +331,7 @@ class Apig(object):
         return matrix
 
     @staticmethod
-    def _convert_from_apig(npair, nbasis, matrix):
+    def _convert_from_apig(ngem, nbasis, matrix):
         """
         Initialize an APIG coefficient vector from the APIG matrix.
 
@@ -337,7 +354,7 @@ class Apig(object):
                 if deriv[1] not in cols:
                     dolp = 0.
                 else:
-                    rows = list(range(self.npair))
+                    rows = list(range(self.ngem))
                     rows.remove(deriv[0])
                     cols.remove(deriv[1])
                     dolp = self.permanent(self.C[rows][:, cols])
@@ -495,26 +512,53 @@ class Apig(object):
         # Jacobian is 2x too large (why?)
         return 0.5 * jac
 
-    def convert(self, cls=None, instance=True, dtype=None):
+    def convert(self, cls, instance=True, dtype=None):
         """
         Convert this APIG instance's coefficient vector to another type of coefficient vector.
 
         """
 
-        cls = Apig if cls is None else cls
         dtype = self.dtype if dtype is None else dtype
         matrix = self._convert_to_apig(dtype=dtype)
-        newx = cls._convert_from_apig(self.npair, self.nbasis, matrix)
+        newx = cls._convert_from_apig(self.ngem, self.nbasis, matrix)
         if instance:
             args = (self.nelec, self.H, self.G)
             kwargs = {
                 "dtype": dtype,
                 "extra": self.npspace - self._make_npspace(),
+                "ngem": self.ngem,
                 "x": newx,
             }
-            return cls(*args, **kwargs)
+            geminal = cls(*args, **kwargs)
+            geminal.update_x(geminal.x)
+            return geminal
         else:
             return newx
+
+    def permanent(self, matrix):
+        """
+        Evaluate the permanent of a square matrix.
+
+        """
+
+        if matrix.shape[0] == matrix.shape[1]:
+            return f90perm.ryser(matrix)
+        else:
+            return self._permanent_rectangular(matrix)
+
+    def _permanent_rectangular(self, matrix):
+        """
+        Evaluate the permanent of a rectangular matrix.
+
+        """
+
+        perm = 0
+        view = matrix if matrix.shape[0] <= matrix.shape[1] else matrix.transpose()
+        rows = list(range(view.shape[0]))
+        columns = list(range(view.shape[1]))
+        for cols in permutations(columns, r=view.shape[0]):
+            perm += np.product(view[rows, cols])
+        return perm
 
 
 # vim: set nowrap textwidth=100 cc=101 :
