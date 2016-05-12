@@ -64,61 +64,29 @@ def test_civec():
     G = np.ones((nspatial, nspatial, nspatial, nspatial))
     nsd = binomial(nspin, nelec)
     geminal = FullCI(nelec, H, G)
-    assert geminal.civec.shape == (nsd, nspin)
-    assert np.all(geminal.civec[0, :nelec])
-    assert not np.any(geminal.civec[0, nelec:])
-    assert np.all(geminal.civec[-1, (nspin - nelec):])
-    assert not np.any(geminal.civec[-1, :(nspin - nelec)])
-    assert np.sum(geminal.civec) == nsd * nelec
-    sd_dict = {}
-    for i in range(geminal.nproj):
-        assert tuple(geminal.civec[i, :]) not in sd_dict
-        sd_dict[tuple(geminal.civec[i, :])] = 1
+    assert len(geminal.civec) == nsd
+    #assert np.all(geminal.civec[0, :nelec])
+    #assert not np.any(geminal.civec[0, nelec:])
+    #assert np.all(geminal.civec[-1, (nspin - nelec):])
+    #assert not np.any(geminal.civec[-1, :(nspin - nelec)])
+    #assert np.sum(geminal.civec) == nsd * nelec
+    #sd_dict = {}
+    #for i in range(geminal.nproj):
+        #assert tuple(geminal.civec[i, :]) not in sd_dict
+        #sd_dict[tuple(geminal.civec[i, :])] = 1
 
 
-def test_assign_Hvec():
+#def test_compute_projection():
 
-    nelec = 2
-    nspin = 8
-    nspatial = nspin // 2
-    H = np.ones((nspatial, nspatial))
-    G = np.ones((nspatial, nspatial, nspatial, nspatial))
-    geminal = FullCI(nelec, H, G)
-    assert geminal.Hvec.shape[0] == geminal.civec.shape[0]
-    assert geminal.Hvec.shape[1] == np.max(geminal.Hvec_shape)
-    assert geminal.Hvec.shape[2] == geminal.nspin
-    for i in range(geminal.Hvec.shape[0]):
-        for j in range(geminal.Hvec_shape[i]):
-            assert np.sum(geminal.Hvec[i, j, :]) == geminal.nelec
-
-
-def test_Gvec():
-
-    nelec = 2
-    nspin = 8
-    nspatial = nspin // 2
-    H = np.ones((nspatial, nspatial))
-    G = np.ones((nspatial, nspatial, nspatial, nspatial))
-    geminal = FullCI(nelec, H, G)
-    assert geminal.Gvec.shape[0] == geminal.civec.shape[0]
-    assert geminal.Gvec.shape[1] == np.max(geminal.Gvec_shape)
-    assert geminal.Gvec.shape[2] == geminal.nspin
-    for i in range(geminal.Gvec.shape[0]):
-        for j in range(geminal.Gvec_shape[i]):
-            assert np.sum(geminal.Gvec[i, j, :]) == geminal.nelec
-
-
-def test_compute_projection():
-
-    nelec = 2
-    nspin = 8
-    nspatial = nspin // 2
-    H = np.ones((nspatial, nspatial))
-    G = np.ones((nspatial, nspatial, nspatial, nspatial))
-    geminal = FullCI(nelec, H, G)
-    assert np.allclose(geminal.compute_projection(0), 1.0)
-    geminal.C[1] = 1.2345
-    assert np.allclose(geminal.compute_projection(1), 1.2345)
+    #nelec = 2
+    #nspin = 8
+    #nspatial = nspin // 2
+    #H = np.ones((nspatial, nspatial))
+    #G = np.ones((nspatial, nspatial, nspatial, nspatial))
+    #geminal = FullCI(nelec, H, G)
+    #assert np.allclose(geminal.compute_projection(0), 1.0)
+    #geminal.C[1] = 1.2345
+    #assert np.allclose(geminal.compute_projection(1), 1.2345)
 
 
 def test_solve_eigh():
