@@ -3,11 +3,12 @@ from __future__ import absolute_import, division, print_function
 from itertools import combinations, product
 
 import numpy as np
-import gmpy2
+from scipy.sparse.linalg import eigsh
 from scipy.linalg import eigh
 
 from .wavefunction import Wavefunction
 from .math import binomial
+from . import slater
 
 
 class FullCI(Wavefunction):
@@ -140,12 +141,12 @@ class FullCI(Wavefunction):
     # Solver methods
     #
 
-    def _solve_eigh(self, **kwargs):
+    def _solve_eigh(self, which='LM', **kwargs):
         """ Solves for the ground state using eigenvalue decomposition
         """
 
         ci_matrix = self.compute_ci_matrix()
-        result = eigh(ci_matrix, **kwargs)
+        result = eigsh(ci_matrix, 1, which=which, **kwargs)
         del ci_matrix
 
         self.C[...] = result[1][:, 0]
@@ -224,10 +225,7 @@ class FullCI(Wavefunction):
         # ASSUME: certain structure for civec
         # spin orbitals are shuffled (alpha1, beta1, alph2, beta2, etc)
         # spin orbitals are ordered by energy
-        ground = gmpy2.mpz(0)
-        for i in range(nelec):
-            # Add electrons
-            ground |= 1 << i
+        ground = slater.ground(nelec)
         civec.append(ground)
 
         count = 1
@@ -235,13 +233,8 @@ class FullCI(Wavefunction):
             occ_combinations = combinations(reversed(range(nelec)), nexc)
             vir_combinations = combinations(range(nelec, nspin), nexc)
             for occ, vir in product(occ_combinations, vir_combinations):
-                sd = ground
-                for i in occ:
-                    # Remove electrons
-                    sd &= ~(1 << i)
-                for a in vir:
-                    # Add electrons
-                    sd |= 1 << a
+                sd = slater.annihilate(ground, *occ)
+                sd = slater.create(ground, *vir)
                 civec.append(sd)
                 count += 1
                 if count == self.nproj:
@@ -264,32 +257,19 @@ class FullCI(Wavefunction):
 
         # Loop only over upper triangular
         for nsd0, sd0 in enumerate(self.civec):
-            #for nsd1, sd1 in enumerate(self.civec[(nsd0):]):
-            for nsd1, sd1 in enumerate(self.civec):
+            for nsd1, sd1 in enumerate(self.civec[nsd0:]):
+            #for nsd1, sd1 in enumerate(self.civec):
 
-                mask = sd0 ^ sd1
-                mask_sd0 = sd0 & mask
-                mask_sd1 = sd1 & mask
+                diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
+                shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
 
-                diff_sd0 = []
-                bit = -1
-                while True:
-                    bit = gmpy2.bit_scan1(mask_sd0, bit + 1)
-                    if bit is None: break
-                    else: diff_sd0.append(bit)
-                diff_sd1 = []
-                bit = -1
-                while True:
-                    bit = gmpy2.bit_scan1(mask_sd1, bit + 1)
-                    if bit is None: break
-                    else: diff_sd1.append(bit)
-                   
-                if gmpy2.popcount(mask_sd0) != gmpy2.popcount(mask_sd1):
+                if len(diff_sd0) != len(diff_sd1):
                     continue
                 else:
-                    diffcount = gmpy2.popcount(mask)
+                    diff_order = len(diff_sd0)
 
-                if diffcount == 4:
+                # two sd's are different by double excitation
+                if diff_order == 2:
                     i, j = diff_sd0
                     k, l = diff_sd1
                     if i % 2 == k % 2 and j % 2 == l % 2:
@@ -299,18 +279,15 @@ class FullCI(Wavefunction):
                         I, J, K, L = i // 2, j // 2, k // 2, l // 2
                         ci_matrix[nsd0, nsd1] -= G[I, J, L, K]
 
-                elif diffcount == 2:
-                    occ = []
-                    bit = -1
-                    while True:
-                        bit = gmpy2.bit_scan1(mask_sd0, bit + 1)
-                        if bit is None: break
-                        else: occ.append(bit)
-                    i, k = diff_sd0[0], diff_sd1[0]
-                    if i % nspatial == k % nspatial:
+                # two sd's are different by single excitation
+                elif diff_order == 1:
+                    i, = diff_sd0
+                    k, = diff_sd1
+                    # if the spins match
+                    if i % 2 == k % 2:
                         I, K = i // 2, k // 2
                         ci_matrix[nsd0, nsd1] += H[I, K]
-                        for j in occ:
+                        for j in shared_indices:
                             if j != i:
                                 if i % 2 == k % 2:
                                     J = j // 2
@@ -318,17 +295,12 @@ class FullCI(Wavefunction):
                                     if i % 2 == j % 2:
                                         ci_matrix[nsd0, nsd1] -= G[I, J, J, K]
 
-                elif diffcount == 0:
-                    occ = []
-                    bit = -1
-                    while True:
-                        bit = gmpy2.bit_scan1(mask_sd0, bit + 1)
-                        if bit is None: break
-                        else: occ.append(bit)
-                    for ic, i in enumerate(occ):
+                # two sd's are the same
+                elif diff_order == 0:
+                    for ic, i in enumerate(shared_indices):
                         I = i // 2
                         ci_matrix[nsd0, nsd1] += H[I, I]
-                        for j in occ[(ic + 1):]:
+                        for j in shared_indices[ic+1:]:
                             J = j // 2
                             ci_matrix[nsd0, nsd1] += G[I, J, I, J]
                             if i % 2 == j % 2:
@@ -345,7 +317,7 @@ class FullCI(Wavefunction):
             return self.cache.get(sd, self.C[self.civec.index(sd)])
         else:
             return self.d_cache.get(sd, self._compute_projection_deriv(sd, deriv))
-                    
+
     def _compute_projection_deriv(self, sd, deriv):
 
         return 1.0 if deriv == self.civec.index(sd) else 0.0

@@ -64,53 +64,6 @@ def total_occ(sd):
     else:
         return gmpy2.popcount(sd)
 
-def occ_indices(sd):
-    """
-    Returns indices of all of the occupied orbitals
-
-    Parameters
-    ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-
-    Returns
-    -------
-    occ_indices : list of int
-        List of indices that corresponds to the occupied orbitals
-
-    """
-    if sd is None:
-        return []
-    output = [gmpy2.bit_scan1(sd, 0)]
-    while output[-1] is not None:
-        output.append(gmpy2.bit_scan1(sd, output[-1]+1))
-    return output[:-1]
-
-def vir_indices(sd, k):
-    """
-    Returns indices of all of the virtual orbitals
-
-    Parameters
-    ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    k : int
-        Total number of orbitals
-
-    Returns
-    -------
-    occ_indices : list of int
-        List of indices that corresponds to the virtual orbitals
-
-    """
-    # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if sd is None or k <= 0:
-        return []
-    output = [gmpy2.bit_scan0(sd, 0)]
-    while output[-1] < k:
-        output.append(gmpy2.bit_scan0(sd, output[-1]+1))
-    return output[:-1]
-
 def annihilate(sd, *indices):
     """
     Annihilates an electron in the orbital `i` in a Slater determinant.
@@ -211,3 +164,94 @@ def ground(n):
     is composed of the orbitals with the lowest energy
     """
     return gmpy2.bit_mask(n)
+
+def occ_indices(sd):
+    """
+    Returns indices of all of the occupied orbitals
+
+    Parameters
+    ----------
+    sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    Returns
+    -------
+    occ_indices : tuple of int
+        Tuple of indices that corresponds to the occupied orbitals
+
+    """
+    if sd is None:
+        return []
+    output = [gmpy2.bit_scan1(sd, 0)]
+    while output[-1] is not None:
+        output.append(gmpy2.bit_scan1(sd, output[-1]+1))
+    return tuple(output[:-1])
+
+def vir_indices(sd, k):
+    """
+    Returns indices of all of the virtual orbitals
+
+    Parameters
+    ----------
+    sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    k : int
+        Total number of orbitals
+
+    Returns
+    -------
+    occ_indices : tuple of int
+        Tuple of indices that corresponds to the virtual orbitals
+
+    """
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    if sd is None or k <= 0:
+        return []
+    output = [gmpy2.bit_scan0(sd, 0)]
+    while output[-1] < k:
+        output.append(gmpy2.bit_scan0(sd, output[-1]+1))
+    return tuple(output[:-1])
+
+def shared(sd1, sd2):
+    """
+    Finds the orbitals shared between two Slater determinants
+
+    Parameters
+    ----------
+    sd1 : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd2 : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    Returns
+    -------
+    tuple of ints
+        Tuple of ints are the indices of the occupied orbitals shared by the two
+        Slater determinants
+    """
+    return sd1 & sd2
+
+def diff(sd1, sd2):
+    """
+    Returns the difference between two Slater determinants
+
+    Parameters
+    ----------
+    sd1 : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd2 : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    Returns
+    -------
+    2-tuple of tuple of ints
+        First tuple of ints are the indices of the occupied orbitals of sd1 that
+        are not occupied in sd2
+        Second tuple of ints are the indices of the occupied orbitals of sd2 that
+        are not occupied in sd1
+
+    """
+    sd_diff = sd1 ^ sd2
+    sd1_diff = sd_diff & sd1
+    sd2_diff = sd_diff & sd2
+    return (occ_indices(sd1_diff), occ_indices(sd2_diff))
