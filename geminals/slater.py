@@ -23,6 +23,12 @@ shared
     Returns indices of all orbitals shared between two Slater determinants
 diff
     Returns the difference between two Slater determinants
+combine_spin
+    Constructs a Slater determinant in block form from alpha and beta occupations
+interleave
+    Converts Slater determinants from block form to shuffled form
+deinterleave
+    Converts Slater determinants from shuffled form to block form
 """
 
 def occ(sd, i):
@@ -267,3 +273,112 @@ def diff(sd1, sd2):
     sd1_diff = sd_diff & sd1
     sd2_diff = sd_diff & sd2
     return (occ_indices(sd1_diff), occ_indices(sd2_diff))
+
+def combine_spin(alpha_bits, beta_bits, norbs):
+    """ Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
+
+    Parameters
+    ----------
+    alpha_bits : int
+        Integer that describes the occupation of alpha spin orbitals as a bitstring
+    beta_bits : int
+        Integer that describes the occupation of beta spin orbitals as a bitstring
+    norbs : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    block_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Indices less than norbs correspond to the alpha spin orbitals
+        Indices greater than or equal to norbs correspond to the beta spin orbitals
+
+    Note
+    ----
+    Erratic behaviour if the total number of spatial orbitals is less than the the
+    actual number (i.e. if there are any occupied orbitals with indices greater than
+    norbs)
+    """
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    return alpha_bits | (beta_bits << norbs)
+
+def interleave(block_sd, norbs):
+    """ Turns sd from block form to the shuffled form
+
+    Block form:
+        alpha1, alpha2, ..., beta1, beta2, ...
+    Shuffled form:
+        alpha1, beta1, alpha2, beta2, ...
+
+    Parameters
+    ----------
+    block_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Indices less than norbs correspond to the alpha spin orbitals
+        Indices greater than or equal to norbs correspond to the beta spin orbitals
+    norbs : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    shuffled_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Odd indices correspond to the alpha spin orbitals
+        Even indices correspond to the beta spin orbitals
+
+    Note
+    ----
+    Erratic behaviour if the total number of spatial orbitals is less than the the
+    actual number (i.e. if there are any occupied orbitals with indices greater than
+    norbs)
+    """
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    shuffled_sd = gmpy2.mpz(0)
+    for i in range(norbs):
+        if gmpy2.bit_test(block_sd, i):
+            shuffled_sd |= 1 << 2*i
+        if gmpy2.bit_test(block_sd, i+norbs):
+            shuffled_sd |= 1 << 2*i+1
+    return shuffled_sd
+
+def deinterleave(shuffled_sd, norbs):
+    """ Turns sd from shuffled form to the block form
+
+    Shuffled form:
+        alpha1, beta1, alpha2, beta2, ...
+    Block form:
+        alpha1, alpha2, ..., beta1, beta2, ...
+
+    Parameters
+    ----------
+    shuffled_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Odd indices correspond to the alpha spin orbitals
+        Even indices correspond to the beta spin orbitals
+    norbs : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    block_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Indices less than norbs correspond to the alpha spin orbitals
+        Indices greater than or equal to norbs correspond to the beta spin orbitals
+
+    Note
+    ----
+    Erratic behaviour if the total number of spatial orbitals is less than the the
+    actual number (i.e. if there are any occupied orbitals with indices greater than
+    norbs)
+    """
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    block_sd = gmpy2.mpz(0)
+    for i in range(norbs):
+        if gmpy2.bit_test(shuffled_sd, 2*i):
+            block_sd |= 1 << i
+        if gmpy2.bit_test(shuffled_sd, 2*i+1):
+            block_sd |= 1 << i+norbs
+    return block_sd
