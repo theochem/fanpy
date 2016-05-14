@@ -33,9 +33,9 @@ class DOCI(FullCI):
         civec = []
 
         # ASSUME: certain structure for civec
-        # spin orbitals are shuffled (alpha1, beta1, alph2, beta2, etc)
+        # spin orbitals are grouped by spin(alpha1, alpha2, ..., beta1, beta2, ...)
         # spin orbitals are ordered by energy
-        ground = slater.ground(nelec)
+        ground = slater.ground(nelec, 2*nspatial)
         civec.append(ground)
 
         count = 1
@@ -43,8 +43,8 @@ class DOCI(FullCI):
             occ_combinations = combinations(reversed(range(npair)), nexc)
             vir_combinations = combinations(range(npair, nspatial), nexc)
             for occ, vir in product(occ_combinations, vir_combinations):
-                occ = [2*i for i in occ] + [2*i+1 for i in occ]
-                vir = [2*a for a in vir] + [2*a+1 for a in vir]
+                occ = [i for i in occ] + [i+nspatial for i in occ]
+                vir = [a for a in vir] + [a+nspatial for a in vir]
                 sd = slater.annihilate(ground, *occ)
                 sd = slater.create(ground, *vir)
                 civec.append(sd)

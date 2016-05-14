@@ -225,13 +225,16 @@ class FullCI(Wavefunction):
         # ASSUME: certain structure for civec
         # spin orbitals are shuffled (alpha1, beta1, alph2, beta2, etc)
         # spin orbitals are ordered by energy
-        ground = slater.ground(nelec)
+        ground = slater.ground(nelec, nspin)
         civec.append(ground)
+        # FIXME: need to reorder occ_indices to prioritize certain excitations
+        occ_indices = slater.occ_indices(ground)
+        vir_indices = slater.vir_indices(ground, nspin)
 
         count = 1
         for nexc in range(1, nelec + 1):
-            occ_combinations = combinations(reversed(range(nelec)), nexc)
-            vir_combinations = combinations(range(nelec, nspin), nexc)
+            occ_combinations = combinations(occ_indices, nexc)
+            vir_combinations = combinations(vir_indices, nexc)
             for occ, vir in product(occ_combinations, vir_combinations):
                 sd = slater.annihilate(ground, *occ)
                 sd = slater.create(ground, *vir)
@@ -253,13 +256,41 @@ class FullCI(Wavefunction):
         G = self.G
         civec = self.civec
 
+        def is_alpha(i):
+            """ Checks if index `i` belongs to an alpha spin orbital
+
+            Parameter
+            ---------
+            i : int
+                Index of the spin orbital in the Slater determinant
+
+            """
+            if i < nspatial:
+                return True
+            else:
+                return False
+
+        def spatial_index(i):
+            """ Returns the index of the spatial orbital that corresponds to the
+            spin orbital `i`
+
+            Parameter
+            ---------
+            i : int
+                Index of the spin orbital in the Slater determinant
+            """
+            if is_alpha(i):
+                return i
+            else:
+                return i-nspatial
+
+
         ci_matrix = np.zeros((nproj, nproj), dtype=self.dtype)
 
         # Loop only over upper triangular
         for nsd0, sd0 in enumerate(self.civec):
             for nsd1, sd1 in enumerate(self.civec[nsd0:]):
             #for nsd1, sd1 in enumerate(self.civec):
-
                 diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
                 shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
 
@@ -272,25 +303,28 @@ class FullCI(Wavefunction):
                 if diff_order == 2:
                     i, j = diff_sd0
                     k, l = diff_sd1
-                    if i % 2 == k % 2 and j % 2 == l % 2:
-                        I, J, K, L = i // 2, j // 2, k // 2, l // 2
+                    I = spatial_index(i)
+                    J = spatial_index(j)
+                    K = spatial_index(k)
+                    L = spatial_index(l)
+                    if is_alpha(i) == is_alpha(k) and is_alpha(j) == is_alpha(l):
                         ci_matrix[nsd0, nsd1] += G[I, J, K, L]
                     if i % 2 == l % 2 and j % 2 == k % 2:
-                        I, J, K, L = i // 2, j // 2, k // 2, l // 2
                         ci_matrix[nsd0, nsd1] -= G[I, J, L, K]
 
                 # two sd's are different by single excitation
                 elif diff_order == 1:
                     i, = diff_sd0
                     k, = diff_sd1
+                    I = spatial_index(i)
+                    K = spatial_index(k)
                     # if the spins match
                     if i % 2 == k % 2:
-                        I, K = i // 2, k // 2
                         ci_matrix[nsd0, nsd1] += H[I, K]
                         for j in shared_indices:
                             if j != i:
                                 if i % 2 == k % 2:
-                                    J = j // 2
+                                    J = spatial_index(j)
                                     ci_matrix[nsd0, nsd1] += G[I, J, K, J]
                                     if i % 2 == j % 2:
                                         ci_matrix[nsd0, nsd1] -= G[I, J, J, K]
@@ -298,10 +332,10 @@ class FullCI(Wavefunction):
                 # two sd's are the same
                 elif diff_order == 0:
                     for ic, i in enumerate(shared_indices):
-                        I = i // 2
+                        I = spatial_index(i)
                         ci_matrix[nsd0, nsd1] += H[I, I]
                         for j in shared_indices[ic+1:]:
-                            J = j // 2
+                            J = spatial_index(j)
                             ci_matrix[nsd0, nsd1] += G[I, J, I, J]
                             if i % 2 == j % 2:
                                 ci_matrix[nsd0, nsd1] -= G[I, J, J, I]

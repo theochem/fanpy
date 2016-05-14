@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
 import slater as sd
+from common import raises_exception
 
 
 def test_occ():
@@ -26,36 +27,6 @@ def test_total_occ():
     assert sd.total_occ(0b1000000) == 1
     assert sd.total_occ(0b1010000) == 2
     assert sd.total_occ(0b1010100) == 3
-
-def test_occ_indices():
-    """
-    Test sd.occ_indices
-    """
-    assert sd.occ_indices(None) == []
-    assert sd.occ_indices(0) == []
-    assert sd.occ_indices(0b0) == []
-
-    assert sd.occ_indices(0b1000000) == [6]
-    assert sd.occ_indices(0b1010000) == [4,6]
-    assert sd.occ_indices(0b1010100) == [2,4,6]
-
-def test_vir_indices():
-    """
-    Test sd.vir_indices
-    """
-    assert sd.vir_indices(None, 0) == []
-
-    assert sd.vir_indices(0, 3) == [0,1,2]
-    assert sd.vir_indices(0b0, 4) == [0,1,2,3]
-
-    assert sd.vir_indices(0b10000, 7) == [0,1,2,3,5,6]
-    assert sd.vir_indices(0b10000, 6) == [0,1,2,3,5]
-    assert sd.vir_indices(0b10000, 5) == [0,1,2,3]
-    # FIXME: notice that number of orbitals can be less than the highest occupied index
-    assert sd.vir_indices(0b10000, 4) == [0,1,2,3]
-    assert sd.vir_indices(0b10000, 3) == [0,1,2]
-    assert sd.vir_indices(0b10000, 2) == [0,1]
-    assert sd.vir_indices(0b10000, 1) == [0]
 
 def test_annihilate():
     """
@@ -145,17 +116,60 @@ def test_ground():
     Test sd.ground
 
     """
-    assert sd.ground(1) == 0b1
-    assert sd.ground(2) == 0b11
-    assert sd.ground(3) == 0b111
-    assert sd.ground(5) == 0b11111
-    assert sd.ground(8) == 0b11111111
+    raises_exception(lambda : sd.ground(2, 1))
+    print(sd.ground(2, 2))
+    assert sd.ground(2, 2) == 0b11
+    raises_exception(lambda : sd.ground(2, 3))
+    assert sd.ground(2, 4) == 0b0101
+    assert sd.ground(2, 6) == 0b001001
+    assert sd.ground(2, 8) == 0b00010001
+    raises_exception(lambda : sd.ground(3, 2))
+    assert sd.ground(3, 4) == 0b0111
+    assert sd.ground(3, 6) == 0b001011
 
-test_occ()
-test_total_occ()
-test_occ_indices()
-test_vir_indices()
-test_annihilate()
-test_create()
-test_excite()
-test_ground()
+def test_occ_indices():
+    """
+    Test sd.occ_indices
+    """
+    assert sd.occ_indices(None) == ()
+    assert sd.occ_indices(0) == ()
+    assert sd.occ_indices(0b0) == ()
+
+    assert sd.occ_indices(0b1000000) == (6,)
+    assert sd.occ_indices(0b1010000) == (4,6)
+    assert sd.occ_indices(0b1010100) == (2,4,6)
+
+def test_vir_indices():
+    """
+    Test sd.vir_indices
+    """
+    assert sd.vir_indices(None, 0) == ()
+
+    assert sd.vir_indices(0, 3) == (0,1,2)
+    assert sd.vir_indices(0b0, 4) == (0,1,2,3)
+
+    assert sd.vir_indices(0b10000, 7) == (0,1,2,3,5,6)
+    assert sd.vir_indices(0b10000, 6) == (0,1,2,3,5)
+    assert sd.vir_indices(0b10000, 5) == (0,1,2,3)
+    # FIXME: notice that number of orbitals can be less than the highest occupied index
+    assert sd.vir_indices(0b10000, 4) == (0,1,2,3)
+    assert sd.vir_indices(0b10000, 3) == (0,1,2)
+    assert sd.vir_indices(0b10000, 2) == (0,1)
+    assert sd.vir_indices(0b10000, 1) == (0,)
+
+def test_shared():
+    """
+    Test sd.shared
+    """
+    assert sd.shared(0b001, 0b000) == 0
+    assert sd.shared(0b111, 0b001) == 0b001
+    assert sd.shared(0b111, 0b101) == 0b101
+
+def test_diff():
+    """
+    Test sd.diff
+    """
+    assert sd.diff(0b001, 0b000) == ((0,), ())
+    assert sd.diff(0b001, 0b001) == ((), ())
+    assert sd.diff(0b011, 0b101) == ((1,), (2,))
+    assert sd.diff(0b101, 0b011) == ((2,), (1,))

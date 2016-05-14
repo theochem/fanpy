@@ -7,10 +7,6 @@ occ
     Check if an orbital is occupied in a Slater determinant
 total_occ
     Returns the total number of occupied orbitals in a Slater determinant
-occ_indices
-    Returns indices of all of the occupied orbitals
-vir_indices
-    Returns indices of all of the virtual orbitals
 annihilate
     Removes an electron in a Slater determinant
 create
@@ -19,6 +15,14 @@ excite
     Excites an electron from one orbital to another in a Slater determinant
 ground
     Creates a Slater determinant at the ground state
+occ_indices
+    Returns indices of all of the occupied orbitals
+vir_indices
+    Returns indices of all of the virtual orbitals
+shared
+    Returns indices of all orbitals shared between two Slater determinants
+diff
+    Returns the difference between two Slater determinants
 """
 
 def occ(sd, i):
@@ -144,14 +148,16 @@ def excite(sd, *indices):
     sd = create(sd, *indices[len(indices)//2:])
     return sd
 
-def ground(n):
+def ground(n, norbs):
     """
-    Creates a ground state Slater determinant (no occupied orbitals)
+    Creates a ground state Slater determinant (no occupied spin-orbitals)
 
     Parameters
     ----------
     n : int
-        Number of occupied orbitals
+        Number of occupied spin-orbitals
+    norbs : int
+        Total number of spin-orbitals
 
     Returns
     -------
@@ -160,10 +166,16 @@ def ground(n):
 
     Note
     ----
-    Assumes that the orbitals are ordered by energy and that the ground state Slater determinant
+    Assumes that the spin-orbitals are ordered by energy and that the ground state Slater determinant
     is composed of the orbitals with the lowest energy
+    Orders the alpha orbitals first, then the beta orbitals
+    If the number of electrons is odd, then the last electron is put into an alpha orbital
     """
-    return gmpy2.bit_mask(n)
+    assert n<=norbs, 'Number of occupied spin-orbitals must be less than the total number of spin-orbitals'
+    assert norbs%2 == 0, 'Total number of spin-orbitals must be even'
+    alpha_bits = gmpy2.bit_mask(n//2+n%2)
+    beta_bits = gmpy2.bit_mask(n//2) << (norbs//2)
+    return alpha_bits | beta_bits
 
 def occ_indices(sd):
     """
@@ -181,13 +193,13 @@ def occ_indices(sd):
 
     """
     if sd is None:
-        return []
+        return ()
     output = [gmpy2.bit_scan1(sd, 0)]
     while output[-1] is not None:
         output.append(gmpy2.bit_scan1(sd, output[-1]+1))
     return tuple(output[:-1])
 
-def vir_indices(sd, k):
+def vir_indices(sd, norbs):
     """
     Returns indices of all of the virtual orbitals
 
@@ -195,7 +207,7 @@ def vir_indices(sd, k):
     ----------
     sd : int
         Integer that describes the occupation of a Slater determinant as a bitstring
-    k : int
+    norbs : int
         Total number of orbitals
 
     Returns
@@ -205,10 +217,10 @@ def vir_indices(sd, k):
 
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if sd is None or k <= 0:
-        return []
+    if sd is None or norbs <= 0:
+        return ()
     output = [gmpy2.bit_scan0(sd, 0)]
-    while output[-1] < k:
+    while output[-1] < norbs:
         output.append(gmpy2.bit_scan0(sd, output[-1]+1))
     return tuple(output[:-1])
 
