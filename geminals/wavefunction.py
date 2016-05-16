@@ -68,9 +68,6 @@ class Wavefunction(object):
         nuc_nuc=None,
         nparticle=None,
         odd_nelec=None,
-        nproj=None,
-        naproj=None,
-        nrproj=None,
     ):
         """
 
@@ -108,7 +105,16 @@ class Wavefunction(object):
         self.assign_dtype(dtype)
         self.assign_integrals(H, G, nuc_nuc=nuc_nuc)
         self.assign_particles(nelec, nparticle=nparticle, odd_nelec=odd_nelec)
-        self.assign_nproj(nproj=nproj, naproj=naproj, nrproj=nrproj)
+
+    def __call__(self,  method="default", **kwargs):
+        """ Optimize coefficients
+        """
+        methods = self._methods
+        if method in methods:
+            method = methods[method.lower()]
+            return method(**kwargs)
+        else:
+            raise ValueError("method must be one of {0}".format(methods.keys()))
 
     #
     # Assignment methods
@@ -225,6 +231,7 @@ class Wavefunction(object):
             Odd number of electrons "remaining"
             Only when nelec is even
         """
+        # NOTE: should this be moved to proj_wavefunction?
 
         if not isinstance(nelec, int):
             raise TypeError("nelec must be of type {0}".format(int))
@@ -252,46 +259,6 @@ class Wavefunction(object):
         self.nparticle = nparticle
         # FIXME: turn into property
         self.ngeminal = nparticle // 2
-
-    def assign_nproj(self, nproj=None, naproj=None, nrproj=None):
-        """ Sets number of projection determinants
-
-        Parameters
-        ----------
-        nproj : int
-            Number of projection states
-        naproj : FIXME
-        nrproj : FIXME
-        """
-
-        #NOTE: there is an order to the assignme
-
-        if nproj is None:
-            # FIXME: needs to be defined (abstract property)
-            nproj = self._nproj_default
-
-        elif nproj is not None:
-            if not isinstance(nproj, int):
-                raise TypeError("nproj must be of type {0}".format(int))
-
-            if sum(not i is None for i in (naproj, nrproj)) <= 1:
-                raise ValueError("At most one of (naproj, nrproj) should be specified")
-
-            if naproj is not None:
-                if not isinstance(naproj, int):
-                    raise TypeError("naproj must be of type {0}".format(int))
-                else:
-                    nproj += naproj
-
-            if nrproj is not None:
-                if not isinstance(nrproj, float):
-                    raise TypeError("nrproj must be of type {0}".format(float))
-                elif nrproj < 1.0:
-                    raise ValueError("nrproj must be greater than 1.0")
-                else:
-                    nproj = np.round(nrproj * nproj)
-
-        self.nproj = nproj
 
     #
     # Other methods
