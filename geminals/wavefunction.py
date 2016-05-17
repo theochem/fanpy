@@ -1,12 +1,9 @@
 from __future__ import absolute_import, division, print_function
+from abc import ABCMeta
 import re
 
 import numpy as np
 
-from .math import binomial
-
-
-# TODO: turn into abstract class
 # TODO: add custom exception class
 class Wavefunction(object):
     """ Wavefunction class
@@ -52,6 +49,25 @@ class Wavefunction(object):
     _nproj_default : int
         Default dimension of projection space
     """
+    __metaclass__ = ABCMeta
+
+    #
+    # Default attribute values
+    #
+    @abstractproperty
+    def _methods(self):
+        """ Dictionary of methods for solving the wavefunction
+
+        Returns
+        -------
+        methods : dict
+            Dictionary of the form {'method name':method}
+            Must have key "default"
+        """
+        # this is an example
+        def example_method():
+            pass
+        return {"default": example_method}
 
     #
     # Special methods
@@ -109,18 +125,16 @@ class Wavefunction(object):
     def __call__(self,  method="default", **kwargs):
         """ Optimize coefficients
         """
-        methods = self._methods
-        if method in methods:
-            method = methods[method.lower()]
-            return method(**kwargs)
+        if method in self._methods:
+            optimizer = self._methods[method.lower()]
+            return optimizer(**kwargs)
         else:
-            raise ValueError("method must be one of {0}".format(methods.keys()))
+            raise ValueError("method must be one of {0}".format(self._methods.keys()))
 
     #
     # Assignment methods
     #
 
-    # TODO: replace assignment methods with setters?
     def assign_dtype(self, dtype):
         """ Sets the data type of the parameters
 

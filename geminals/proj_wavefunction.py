@@ -3,8 +3,6 @@ from __future__ import absolute_import, division, print_function
 from itertools import combinations, product
 
 import numpy as np
-from scipy.sparse.linalg import eigsh
-from scipy.linalg import eigh
 
 from .wavefunction import Wavefunction
 from .math import binomial
@@ -74,7 +72,7 @@ class ProjectionWavefunction(Wavefunction):
     # Default attribute values
     #
 
-    @property
+    @abstractproperty
     def _nproj_default(self):
 
         return binomial(self.nspin, self.nelec)
@@ -82,7 +80,7 @@ class ProjectionWavefunction(Wavefunction):
     @property
     def _methods(self):
 
-        return {"default": self._solve_eigh}
+        raise NotImplementedError
 
     #
     # Special methods
@@ -212,61 +210,20 @@ class ProjectionWavefunction(Wavefunction):
     # Computation methods
     #
 
+    @abstractmethod
     def compute_civec(self):
-        """ Generates Slater determinants
-
-        Number of Slater determinants generated is determined strictly by the size of the
-        projection space (self.nproj). First row corresponds to the ground state SD, then
-        the next few rows are the first excited, then the second excited, etc
-
-        Returns
-        -------
-        civec : np.ndarray(nproj, nspin)
-            Boolean array that describes the occupations of the Slater determinants
-            Each row is a Slater determinant
-            Each column is the index of the spin orbital
-
+        """ Generates projection space
         """
-        #FIXME: code repeated in ci_wavefunction.py
-        #FIXME: turn into abstract method
+        pass
 
-        nspin = self.nspin
-        nelec = self.nelec
+    @abstrctmethod
+    def compute_overlap(self):
+        pass
 
-        civec = []
-
-        # ASSUME: certain structure for civec
-        # spin orbitals are shuffled (alpha1, beta1, alph2, beta2, etc)
-        # spin orbitals are ordered by energy
-        ground = slater.ground(nelec, nspin)
-        civec.append(ground)
-        # FIXME: need to reorder occ_indices to prioritize certain excitations
-        occ_indices = slater.occ_indices(ground)
-        vir_indices = slater.vir_indices(ground, nspin)
-
-        count = 1
-        for nexc in range(1, nelec + 1):
-            occ_combinations = combinations(occ_indices, nexc)
-            vir_combinations = combinations(vir_indices, nexc)
-            for occ, vir in product(occ_combinations, vir_combinations):
-                sd = slater.annihilate(ground, *occ)
-                sd = slater.create(ground, *vir)
-                civec.append(sd)
-                count += 1
-                if count == self.nproj:
-                    return civec
-        else:
-            return civec
-
+    @abstractmethod
     def compute_projection(self, sd, deriv=None):
-        #FIXME: turn into abstract method
+        pass
 
-        if deriv is None:
-            return self.cache.get(sd, self.C[self.civec.index(sd)])
-        else:
-            return self.d_cache.get(sd, self._compute_projection_deriv(sd, deriv))
-
+    @abstractmethod
     def _compute_projection_deriv(self, sd, deriv):
-        #FIXME: turn into abstract method
-
-        return 1.0 if deriv == self.civec.index(sd) else 0.0
+        pass
