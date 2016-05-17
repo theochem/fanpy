@@ -35,13 +35,17 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
     -------
     civec : list of ints
         Integer that describes the occupation of a Slater determinant as a bitstring
+
+    Note
+    ----
+    Crashes if order of excitation is less than 0
     """
     nspatial = self.nspatial
     nelec = self.nelec
     civec = []
     if exc_orders == []:
         exc_orders = range(1, nelec + 1)
-    assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
+    # assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
 
     # ASSUME: certain structure for civec
     # spin orbitals are ordered by energy
@@ -96,6 +100,9 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
     civec : list of ints
         Integer that describes the occupation of a Slater determinant as a bitstring
 
+    Note
+    ----
+    Crashes if order of excitation is less than 0
     """
     nspatial = self.nspatial
     nelec = self.nelec
@@ -103,7 +110,7 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
     civec = []
     if exc_orders == []:
         exc_orders = range(1, npair + 1)
-    assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
+    # assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
     # ASSUME: certain structure for civec
     # spin orbitals are ordered by energy
     ground = slater.ground(nelec, 2*nspatial)
