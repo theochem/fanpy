@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, print_function
-from abc import ABCMeta
+from abc import ABCMeta, abstractproperty
 import re
 
 import numpy as np
@@ -48,6 +48,7 @@ class Wavefunction(object):
     -------
     _nproj_default : int
         Default dimension of projection space
+    _energy
     """
     __metaclass__ = ABCMeta
 
@@ -116,7 +117,6 @@ class Wavefunction(object):
         nrproj : FIXME
 
         """
-
         # TODO: Implement loading H, G, and x from various file formats
         self.assign_dtype(dtype)
         self.assign_integrals(H, G, nuc_nuc=nuc_nuc)
@@ -287,3 +287,18 @@ class Wavefunction(object):
         for attr in dir(self):
             if regex.match(attr):
                 eval("self.{0} = self._unrestricted_{0}".format(attr))
+
+
+    #
+    # View methods
+    #
+    def compute_energy(self, sd=None, nuc_nuc=True, deriv=None):
+
+        nuc_nuc = self.nuc_nuc if nuc_nuc else 0.0
+
+        if sd is None:
+            return self._energy + nuc_nuc
+
+        else:
+            # TODO: ADD HAMILTONIANS
+            raise NotImplementedError

@@ -5,7 +5,6 @@ from itertools import combinations, product
 import numpy as np
 
 from .wavefunction import Wavefunction
-from .math import binomial
 from . import slater
 
 
@@ -74,8 +73,7 @@ class ProjectionWavefunction(Wavefunction):
 
     @abstractproperty
     def _nproj_default(self):
-
-        return binomial(self.nspin, self.nelec)
+        pass
 
     @property
     def _methods(self):

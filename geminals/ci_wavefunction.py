@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, print_function
-from abc import ABCMethod
+from abc import ABCMeta, abstractproperty, abstractmethod
 
 from itertools import combinations, product
 
@@ -7,8 +7,8 @@ import numpy as np
 from scipy.sparse.linalg import eigsh
 from scipy.linalg import eigh
 
-from .wavefunction import Wavefunction
-from . import slater
+from wavefunction import Wavefunction
+import slater
 
 
 class CIWavefunction(Wavefunction):
@@ -54,8 +54,21 @@ class CIWavefunction(Wavefunction):
         Default dimension of projection space
     _energy : float
         Electronic energy
+
+    Abstract Properties
+    -------------------
+    _nci_default : int
+        Number of Slater determinants
+
+    Abstract Methods
+    ----------------
+    compute_civec
+        Generates a list of Slater determinants
+    compute_ci_matrix
+        Generates the Hamiltonian matrix of the Slater determinants
     """
     # FIXME: turn C into property and have a better attribute name
+    __metaclass__ = ABCMeta
 
     #
     # Default attribute values
@@ -79,6 +92,12 @@ class CIWavefunction(Wavefunction):
 
         return {"default": self._solve_eigh}
 
+    @property
+    def C(self):
+        """ Coefficients for the Slater determinants
+        """
+        return self.sd_coeffs
+
     #
     # Special methods
     #
@@ -100,6 +119,7 @@ class CIWavefunction(Wavefunction):
     ):
 
         super(CIWavefunction, self).__init__(
+            nelec=nelec,
             H=H,
             G=G,
             dtype=dtype,
@@ -109,26 +129,29 @@ class CIWavefunction(Wavefunction):
         )
         self.assign_nci(nci=nci)
         self.assign_civec(civec=civec)
+        self.sd_coeffs = np.zeros(len(self.civec))
+        self._energy = 0.0
 
     #
     # Solver methods
     #
 
-    def _solve_eigh(self, which='LM', **kwargs):
+    def _solve_eigh(self, which='SA', **kwargs):
         """ Solves for the ground state using eigenvalue decomposition
         """
 
         ci_matrix = self.compute_ci_matrix()
         result = eigsh(ci_matrix, 1, which=which, **kwargs)
+        # result = eigh(ci_matrix, **kwargs)
         del ci_matrix
 
         self.C[...] = result[1][:, 0]
-        self._energy[...] = result[0][0]
+        self._energy = result[0][0]
 
         return result
 
     #
-    # Computation methods
+    # Assignment methods
     #
     def assign_nci(self, nci=None):
         """ Sets number of projection determinants
@@ -145,6 +168,21 @@ class CIWavefunction(Wavefunction):
             nci = self._nci_default
         self.nci = nci
 
+    def assign_civec(self, civec=None):
+
+        if civec is not None:
+            if not isinstance(civec, list):
+                raise TypeError("civec must be of type {0}".format(list))
+        else:
+            civec = self.compute_civec()
+
+        self.civec = civec
+        self.cache = {}
+        self.d_cache = {}
+
+    #
+    # Computation methods
+    #
     @abstractmethod
     def compute_civec(self):
         """ Generates Slater determinants
