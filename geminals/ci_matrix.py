@@ -219,7 +219,7 @@ def ci_matrix(self, orb_type):
 
     return ci_matrix
 
-def doci_matrix(self):
+def doci_matrix(self, orb_type):
     """ Returns Hamiltonian matrix in the doci Slater determinant basis
 
     ..math::
@@ -267,7 +267,7 @@ def doci_matrix(self):
                 elif spatial_index(i, ns) == spatial_index(l, ns) and spatial_index(j, ns)==spatial_index(k, ns):
                     doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
                 else:
-                    assert I==K and J==L, 'One (or both) of the Slater determinants, {0} or {1},'
+                    assert True, 'One (or both) of the Slater determinants, {0} or {1},'
                     'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
 
             # two sd's are the same

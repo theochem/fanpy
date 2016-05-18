@@ -1,55 +1,92 @@
 from __future__ import absolute_import, division, print_function
 
-from itertools import combinations, product
+from ci_wavefunction import CIWavefunction
+from math_tools import binomial
+from sd_list import doci_sd_list
+from ci_matrix import doci_matrix
 
-import numpy as np
+class DOCI(CIWavefunction):
+    """ Doubly Occupied Configuration Interaction Wavefunction
 
-from .fullci import FullCI
-from .math import binomial
-from . import slater
+    Contains the necessary information to variationally solve the CI wavefunction
 
+    Attributes
+    ----------
+    dtype : {np.float64, np.complex128}
+        Numpy data type
+    H : np.ndarray(K,K)
+        One electron integrals for the spatial orbitals
+    Ha : np.ndarray(K,K)
+        One electron integrals for the alpha spin orbitals
+    Hb : np.ndarray(K,K)
+        One electron integrals for the beta spin orbitals
+    G : np.ndarray(K,K,K,K)
+        Two electron integrals for the spatial orbitals
+    Ga : np.ndarray(K,K,K,K)
+        Two electron integrals for the alpha spin orbitals
+    Gb : np.ndarray(K,K,K,K)
+        Two electron integrals for the beta spin orbitals
+    nuc_nuc : float
+        Nuclear nuclear repulsion value
+    nspatial : int
+        Number of spatial orbitals
+    nspin : int
+        Number of spin orbitals (alpha and beta)
+    nelec : int
+        Number of electrons
+    npair : int
+        Number of electron pairs
+        Assumes that the number of electrons is even
+    nparticle : int
+        Number of quasiparticles (electrons)
+    ngeminal : int
+        Number of geminals
 
-class DOCI(FullCI):
+    Private
+    -------
+    _methods : dict
+        Default dimension of projection space
+    _energy : float
+        Electronic energy
+    _nci_default : int
+        Number of Slater determinants
 
-    #
-    # Default attribute values
-    #
-
+    Methods
+    -------
+    compute_civec
+        Generates a list of Slater determinants
+    compute_ci_matrix
+        Generates the Hamiltonian matrix of the Slater determinants
+    """
     @property
-    def _nproj_default(self):
+    def _nci_default(self):
+        """ Total number of configurations
 
+        """
         return binomial(self.nspatial, self.npair)
 
-    #
-    # Computation methods
-    #
-
     def compute_civec(self):
+        """ Generates Slater determinants
 
-        nelec = self.nelec
-        nspatial = self.nspatial
-        npair = self.npair
+        Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
+        state, next are the first excitations from exc_orders, then second excitation from
+        exc_orders, etc
 
-        civec = []
+        Returns
+        -------
+        civec : list of ints
+            Integer that describes the occupation of a Slater determinant as a bitstring
+        """
+        return doci_sd_list(self, self._nci_default)
 
-        # ASSUME: certain structure for civec
-        # spin orbitals are grouped by spin(alpha1, alpha2, ..., beta1, beta2, ...)
-        # spin orbitals are ordered by energy
-        ground = slater.ground(nelec, 2*nspatial)
-        civec.append(ground)
+    def compute_ci_matrix(self):
+        """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
 
-        count = 1
-        for nexc in range(1, npair + 1):
-            occ_combinations = combinations(reversed(range(npair)), nexc)
-            vir_combinations = combinations(range(npair, nspatial), nexc)
-            for occ, vir in product(occ_combinations, vir_combinations):
-                occ = [i for i in occ] + [i+nspatial for i in occ]
-                vir = [a for a in vir] + [a+nspatial for a in vir]
-                sd = slater.annihilate(ground, *occ)
-                sd = slater.create(ground, *vir)
-                civec.append(sd)
-                count += 1
-                if count == self.nproj:
-                    return civec
-        else:
-            return civec
+        ..math::
+            H_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
+
+        Returns
+        -------
+        matrix : np.ndarray(K, K)
+        """
+        return doci_matrix(self, 'restricted')
