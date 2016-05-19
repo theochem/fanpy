@@ -4,8 +4,6 @@ sys.path.append('../')
 from fci import FCI
 from hort import hartreefock
 
-from nose.tools import assert_raises
-
 def test_fci_wavefunction():
     #### H2 ####
     nelec = 2

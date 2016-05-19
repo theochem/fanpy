@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 import sd_list
-from common import raises_exception
+from nose.tools import assert_raises
 import gmpy2
 
 # A test wavefunction (must have nspatial, nelec, npair)
@@ -14,8 +14,8 @@ test = TestWavefunction()
 def test_ci_sd_list():
     """ Tests sd_list.ci_sd_list
     """
-    # assert raises_exception(lambda:sd_list.ci_sd_list(test, 0, [0]))
-    # assert raises_exception(lambda:sd_list.ci_sd_list(test, 0, [-1]))
+    # assert assert_raises(lambda:sd_list.ci_sd_list(test, 0, [0]))
+    # assert assert_raises(lambda:sd_list.ci_sd_list(test, 0, [-1]))
     assert sd_list.ci_sd_list(test, 0, []) == []
     assert sd_list.ci_sd_list(test, 1, []) == [gmpy2.mpz(0b011011)]
     assert sd_list.ci_sd_list(test, 2, []) == [gmpy2.mpz(0b011011), gmpy2.mpz(0b011101)]
@@ -70,8 +70,8 @@ test.nspatial = 4
 def test_doci_sd_list():
     """ Tests sd_list.doci_sd_list
     """
-    # assert raises_exception(lambda:sd_list.doci_sd_list(test, 0, [0]))
-    # assert raises_exception(lambda:sd_list.doci_sd_list(test, 0, [-1]))
+    # assert assert_raises(lambda:sd_list.doci_sd_list(test, 0, [0]))
+    # assert assert_raises(lambda:sd_list.doci_sd_list(test, 0, [-1]))
     assert sd_list.doci_sd_list(test, 0, []) == []
     assert sd_list.doci_sd_list(test, 1, []) == [gmpy2.mpz(0b00110011)]
     assert sd_list.doci_sd_list(test, 2, []) == [gmpy2.mpz(0b00110011), gmpy2.mpz(0b01010101)]

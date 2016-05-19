@@ -4,8 +4,6 @@ sys.path.append('../')
 from cisd import CISD
 from hort import hartreefock
 
-from nose.tools import assert_raises
-
 def test_cisd_wavefunction():
     #### H2 ####
     nelec = 2
