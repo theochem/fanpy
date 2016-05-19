@@ -48,7 +48,7 @@ class DOCI(CIWavefunction):
         Default dimension of projection space
     _energy : float
         Electronic energy
-    _nci_default : int
+    _nci : int
         Number of Slater determinants
 
     Methods
@@ -59,7 +59,7 @@ class DOCI(CIWavefunction):
         Generates the Hamiltonian matrix of the Slater determinants
     """
     @property
-    def _nci_default(self):
+    def _nci(self):
         """ Total number of configurations
 
         """
@@ -77,7 +77,7 @@ class DOCI(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return doci_sd_list(self, self._nci_default)
+        return doci_sd_list(self, self._nci)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
@@ -89,4 +89,4 @@ class DOCI(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return doci_matrix(self, 'restricted')
+        return doci_matrix(self, self.orb_type)

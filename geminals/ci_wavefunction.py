@@ -57,8 +57,8 @@ class CIWavefunction(Wavefunction):
 
     Abstract Properties
     -------------------
-    _nci_default : int
-        Number of Slater determinants
+    _nci : int
+        Total number of Slater determinants
 
     Abstract Methods
     ----------------
@@ -74,7 +74,7 @@ class CIWavefunction(Wavefunction):
     # Default attribute values
     #
     @abstractproperty
-    def _nci_default(self):
+    def _nci(self):
         """ Default number of configurations
 
         """
@@ -165,7 +165,7 @@ class CIWavefunction(Wavefunction):
         #NOTE: there is an order to the assignme
 
         if nci is None:
-            nci = self._nci_default
+            nci = self._nci
         self.nci = nci
 
     def assign_civec(self, civec=None):
