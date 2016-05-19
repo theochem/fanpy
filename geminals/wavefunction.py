@@ -43,6 +43,8 @@ class Wavefunction(object):
         Number of geminals
     nproj : int
         Dimension of the projection space
+    orb_type : {'restricted', 'unrestricted', 'generalized'}
+        Type of the orbital used in obtaining the one-electron and two-electron integrals
 
     Private
     -------
@@ -85,6 +87,7 @@ class Wavefunction(object):
         nuc_nuc=None,
         nparticle=None,
         odd_nelec=None,
+        orb_type=None,
     ):
         """
 
@@ -115,12 +118,16 @@ class Wavefunction(object):
             Number of projection states
         naproj : FIXME
         nrproj : FIXME
+        orb_type : {'restricted', 'unrestricted', 'generalized'}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is 'restricted'
 
         """
         # TODO: Implement loading H, G, and x from various file formats
         self.assign_dtype(dtype)
         self.assign_integrals(H, G, nuc_nuc=nuc_nuc)
         self.assign_particles(nelec, nparticle=nparticle, odd_nelec=odd_nelec)
+        self.assign_orb_type(orb_type)
 
     def __call__(self,  method="default", **kwargs):
         """ Optimize coefficients
@@ -273,6 +280,23 @@ class Wavefunction(object):
         self.nparticle = nparticle
         # FIXME: turn into property
         self.ngeminal = nparticle // 2
+
+    def assign_orb_type(self, orb_type):
+        """ Assigns the orbital type use to construct the one-electron and two-electron
+        integrals
+
+        Parameters
+        ----------
+        orb_type : {'restricted', 'unrestricted', 'generalized'}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is 'restricted'
+        """
+        if orb_type is None:
+            orb_type = 'restricted'
+        assert orb_type in ['restricted', 'unrestricted', 'generalized'], ''
+        'Unsupported orbital type {0}'.format(orb_type)
+        self.orb_type = orb_type
+
 
     #
     # Other methods
