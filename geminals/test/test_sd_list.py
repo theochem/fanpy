@@ -9,13 +9,13 @@ class TestWavefunction:
     nspatial = 3
     nelec = 4
     npair = 2
-test = TestWavefunction()
 
 def test_ci_sd_list():
     """ Tests sd_list.ci_sd_list
     """
-    # assert assert_raises(lambda:sd_list.ci_sd_list(test, 0, [0]))
-    # assert assert_raises(lambda:sd_list.ci_sd_list(test, 0, [-1]))
+    test = TestWavefunction()
+    # assert assert_raises(AssertionError, lambda:sd_list.ci_sd_list(test, 0, [0]))
+    # assert assert_raises(AssertionError, lambda:sd_list.ci_sd_list(test, 0, [-1]))
     assert sd_list.ci_sd_list(test, 0, []) == []
     assert sd_list.ci_sd_list(test, 1, []) == [gmpy2.mpz(0b011011)]
     assert sd_list.ci_sd_list(test, 2, []) == [gmpy2.mpz(0b011011), gmpy2.mpz(0b011101)]
@@ -66,12 +66,13 @@ def test_ci_sd_list():
                                                      gmpy2.mpz(0b010111),
                                                      gmpy2.mpz(0b110011),]
 
-test.nspatial = 4
 def test_doci_sd_list():
     """ Tests sd_list.doci_sd_list
     """
-    # assert assert_raises(lambda:sd_list.doci_sd_list(test, 0, [0]))
-    # assert assert_raises(lambda:sd_list.doci_sd_list(test, 0, [-1]))
+    test = TestWavefunction()
+    test.nspatial = 4
+    # assert assert_raises(AssertionError, lambda:sd_list.doci_sd_list(test, 0, [0]))
+    # assert assert_raises(AssertionError, lambda:sd_list.doci_sd_list(test, 0, [-1]))
     assert sd_list.doci_sd_list(test, 0, []) == []
     assert sd_list.doci_sd_list(test, 1, []) == [gmpy2.mpz(0b00110011)]
     assert sd_list.doci_sd_list(test, 2, []) == [gmpy2.mpz(0b00110011), gmpy2.mpz(0b01010101)]

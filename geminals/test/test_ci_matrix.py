@@ -10,11 +10,11 @@ def test_is_alpha():
     """
     Tests ci_matrix.is_alpha
     """
-    # assert assert_raises(lambda:ci_matrix.is_alpha(0, 0))
-    # assert assert_raises(lambda:ci_matrix.is_alpha(0, -1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.is_alpha(0, 0))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.is_alpha(0, -1))
     assert ci_matrix.is_alpha(0, 1) == True
-    # assert assert_raises(lambda:ci_matrix.is_alpha(-1, 1))
-    # assert assert_raises(lambda:ci_matrix.is_alpha(2, 1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.is_alpha(-1, 1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.is_alpha(2, 1))
     assert ci_matrix.is_alpha(1, 1) == False
 
     assert ci_matrix.is_alpha(0, 4) == True
@@ -30,11 +30,11 @@ def test_spatial_index():
     """
     Tests ci_matrix.spatial_index
     """
-    # assert assert_raises(lambda:ci_matrix.spatial_index(0, 0))
-    # assert assert_raises(lambda:ci_matrix.spatial_index(0, -1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.spatial_index(0, 0))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.spatial_index(0, -1))
     assert ci_matrix.spatial_index(0, 1) == 0
-    # assert assert_raises(lambda:ci_matrix.spatial_index(-1, 1))
-    # assert assert_raises(lambda:ci_matrix.spatial_index(2, 1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.spatial_index(-1, 1))
+    # assert assert_raises(AssertionError, lambda:ci_matrix.spatial_index(2, 1))
     assert ci_matrix.spatial_index(1, 1) == 0
 
     assert ci_matrix.spatial_index(0, 4) == 0

@@ -116,14 +116,14 @@ def test_ground():
     Test slater.ground
 
     """
-    assert_raises(lambda : slater.ground(2, 1))
+    assert_raises(AssertionError, lambda : slater.ground(2, 1))
     print(slater.ground(2, 2))
     assert slater.ground(2, 2) == 0b11
-    assert_raises(lambda : slater.ground(2, 3))
+    assert_raises(AssertionError, lambda : slater.ground(2, 3))
     assert slater.ground(2, 4) == 0b0101
     assert slater.ground(2, 6) == 0b001001
     assert slater.ground(2, 8) == 0b00010001
-    assert_raises(lambda : slater.ground(3, 2))
+    assert_raises(AssertionError, lambda : slater.ground(3, 2))
     assert slater.ground(3, 4) == 0b0111
     assert slater.ground(3, 6) == 0b001011
 
@@ -178,8 +178,8 @@ def test_combine_spin():
     """
     Test slater.combine_spin
     """
-    assert assert_raises(lambda:slater.combine_spin(0b0, 0b0, 0))
-    assert assert_raises(lambda:slater.combine_spin(0b0, 0b0, -1))
+    assert_raises(AssertionError, lambda:slater.combine_spin(0b0, 0b0, 0))
+    assert_raises(AssertionError, lambda:slater.combine_spin(0b0, 0b0, -1))
     assert slater.combine_spin(0b1, 0b0, 1) == 0b1
     assert slater.combine_spin(0b0, 0b1, 1) == 0b10
     assert slater.combine_spin(0b111, 0b0, 3) == 0b111
