@@ -111,8 +111,6 @@ class CIWavefunction(Wavefunction):
             # Arguments handled by base Wavefunction class
             dtype=None,
             nuc_nuc=None,
-            nparticle=None,
-            odd_nelec=None,
             # Arguments handled by FullCI class
             nci=None,
             civec=None,
@@ -124,8 +122,6 @@ class CIWavefunction(Wavefunction):
             G=G,
             dtype=dtype,
             nuc_nuc=nuc_nuc,
-            nparticle=nparticle,
-            odd_nelec=odd_nelec,
         )
         self.assign_nci(nci=nci)
         self.assign_civec(civec=civec)

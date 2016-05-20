@@ -56,7 +56,7 @@ def spatial_index(i, nspatial):
     else:
         return i-nspatial
 
-def get_H_value(H_matrix, i, k, orb_type):
+def get_H_value(H_matrices, i, k, orb_type):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
 
     ..math::
@@ -64,8 +64,9 @@ def get_H_value(H_matrix, i, k, orb_type):
 
     Parameters
     ----------
-    H_matrix : np.ndarray(K, K)
-        One electron integral matrix
+    H_matrices : tuple of np.ndarray(K, K)
+        One electron integral matrices
+        More than one if orbital is unrestricted
     i : int
         Index of the spin orbital
     k : int
@@ -81,30 +82,34 @@ def get_H_value(H_matrix, i, k, orb_type):
     Note
     ----
     Erratic behaviour if i or k (or their spatial index analog) is negative or
-    is larger than H_matrix
+    is larger than H_matrices
     """
     if orb_type == 'restricted':
-        # Assume that H_matrix is expressed wrt spatial orbitals
-        ns = H_matrix.shape[0]
+        # Assume that H_matrices are expressed wrt spatial orbitals
+        ns = H_matrices[0].shape[0]
         # if spins are the same
         if is_alpha(i, ns) == is_alpha(k, ns):
             I = spatial_index(i, ns)
             K = spatial_index(k, ns)
-            return H_matrix[I, K]
+            return H_matrices[0][I, K]
     elif orb_type == 'unrestricted':
-        # Assume that H_matrix is expressed wrt spin orbitals
-        ns = H_matrix.shape[0]//2
+        # Assume that H_matrices is expressed wrt spin orbitals
+        ns = H_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
-        if is_alpha(i, ns) == is_alpha(k, ns):
-            # ASSUME: H_matrix is a 2k x 2k matrix (where k is the number of spatial orbitals)
-            return H_matrix[i, k]
+        I = spatial_index(i, ns)
+        K = spatial_index(k, ns)
+        if is_alpha(i, ns) and is_alpha(k, ns):
+            return H_matrices[0][I, K]
+        elif not is_alpha(i, ns) and not is_alpha(k, ns):
+            print H_matrices[1]
+            return H_matrices[1][I, K]
     elif orb_type == 'generalized':
-        return H_matrix[i, k]
+        return H_matrices[0][i, k]
     else:
         raise AssertionError, 'Unknown orbital type, {0}'.format(orb_type)
     return 0.0
 
-def get_G_value(G_matrix, i, j, k, l, orb_type):
+def get_G_value(G_matrices, i, j, k, l, orb_type):
     """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
     # TODO: check ordering
@@ -114,8 +119,9 @@ def get_G_value(G_matrix, i, j, k, l, orb_type):
 
     Parameters
     ----------
-    G_matrix : np.ndarray(K, K, K, K)
-        Two electron integral matrix
+    G_matrices : tuple of np.ndarray(K, K, K, K)
+        Two electron integral matrices
+        More than one if orbital is unrestricted
     i : int
         Index of the spin orbital
     j : int
@@ -133,23 +139,34 @@ def get_G_value(G_matrix, i, j, k, l, orb_type):
         Value of the one electron hamiltonian
     """
     if orb_type == 'restricted':
-        # Assume that G_matrix is expressed wrt spatial orbitals
-        ns = G_matrix.shape[0]
+        # Assume that G_matrices is expressed wrt spatial orbitals
+        ns = G_matrices[0].shape[0]
         if is_alpha(i, ns) == is_alpha(k, ns) and is_alpha(j, ns) == is_alpha(l, ns):
             I = spatial_index(i, ns)
             J = spatial_index(j, ns)
             K = spatial_index(k, ns)
             L = spatial_index(l, ns)
-            return G_matrix[I, J, K, L]
+            return G_matrices[0][I, J, K, L]
     elif orb_type == 'unrestricted':
-        # Assume that H_matrix is expressed wrt spin orbitals
-        ns = G_matrix.shape[0]//2
+        # Assume that H_matrices is expressed wrt spin orbitals
+        ns = G_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
-        if is_alpha(i, ns) == is_alpha(k, ns) and is_alpha(j, ns) == is_alpha(l, ns):
-            # ASSUME: G_matrix is a 2k x 2k x 2k x 2k matrix (where k is the number of spatial orbitals)
-            return G_matrix[i, j, k, l]
+        I = spatial_index(i, ns)
+        J = spatial_index(j, ns)
+        K = spatial_index(k, ns)
+        L = spatial_index(l, ns)
+        if is_alpha(i, ns) and is_alpha(j, ns) and is_alpha(k, ns) and is_alpha(l, ns):
+            return G_matrices[0][I, J, K, L]
+        elif is_alpha(i, ns) and not is_alpha(j, ns) and is_alpha(k, ns) and not is_alpha(l, ns):
+            return G_matrices[1][I, J, K, L]
+        elif not is_alpha(i, ns) and is_alpha(j, ns) and not is_alpha(k, ns) and is_alpha(l, ns):
+            # FIXME: check the transposition
+            # take the appropraite transpose to get the beta alpha beta alpha form
+            return np.einsum('IJKL->JILK', G_matrices[1])[I, J, K, L]
+        elif not is_alpha(i, ns) and not is_alpha(j, ns) and not is_alpha(k, ns) and not is_alpha(l, ns):
+            return G_matrices[2][I, J, K, L]
     elif orb_type == 'generalized':
-        return G_matrix[i, j, k, l]
+        return G_matrices[0][i, j, k, l]
     return 0.0
 
 def ci_matrix(self, orb_type):

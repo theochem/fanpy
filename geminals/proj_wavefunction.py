@@ -58,12 +58,27 @@ class ProjectionWavefunction(Wavefunction):
 
     Private
     -------
-    _nproj_default : int
-        Default dimension of projection space
     _methods : dict
         Default dimension of projection space
     _energy : float
         Electronic energy
+
+    Abstract Property
+    -----------------
+    _nproj_default : int
+        Default number of projection states
+
+    Abstract Method
+    ---------------
+    compute_civec
+        Generates a list of states to project onto
+    compute_overlap
+        Computes the overlap of a Slater deteriminant with the wavefunction
+    compute_projection
+        Generates the appropriate nonlinear equation
+    _compute_projection_deriv
+        Computes derivative of projection
+
     """
     # FIXME: turn C into property and have a better attribute name
 
@@ -77,7 +92,6 @@ class ProjectionWavefunction(Wavefunction):
 
     @property
     def _methods(self):
-
         raise NotImplementedError
 
     #
@@ -93,8 +107,6 @@ class ProjectionWavefunction(Wavefunction):
         # Arguments handled by base Wavefunction class
         dtype=None,
         nuc_nuc=None,
-        nparticle=None,
-        odd_nelec=None,
         nproj=None,
         naproj=None,
         nrproj=None,
@@ -109,11 +121,6 @@ class ProjectionWavefunction(Wavefunction):
             G=G,
             dtype=dtype,
             nuc_nuc=nuc_nuc,
-            nparticle=nparticle,
-            odd_nelec=odd_nelec,
-            nproj=nproj,
-            naproj=naproj,
-            nrproj=nrproj,
         )
 
         self.assign_x(x=x)
@@ -178,7 +185,6 @@ class ProjectionWavefunction(Wavefunction):
         #NOTE: there is an order to the assignme
 
         if nproj is None:
-            # FIXME: needs to be defined (abstract property)
             nproj = self._nproj_default
 
         elif nproj is not None:
@@ -204,6 +210,25 @@ class ProjectionWavefunction(Wavefunction):
 
         self.nproj = nproj
 
+    def compute_energy(self, include_nuc=True, deriv=None):
+        """ Returns the energy of the system
+
+        Parameters
+        ----------
+        sd : int
+            Integer that describes the occupation of a Slater determinant as a bitstring
+            Slater determinant
+
+        """
+
+        nuc_nuc = self.nuc_nuc if nuc_nuc else 0.0
+
+        if sd is None:
+            return self._energy + nuc_nuc
+
+        else:
+            # TODO: ADD HAMILTONIANS
+            raise NotImplementedError
     #
     # Computation methods
     #
@@ -214,7 +239,7 @@ class ProjectionWavefunction(Wavefunction):
         """
         pass
 
-    @abstrctmethod
+    @abstractmethod
     def compute_overlap(self):
         pass
 

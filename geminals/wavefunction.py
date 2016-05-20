@@ -14,18 +14,15 @@ class Wavefunction(object):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K)
-        One electron integrals for the spatial orbitals
-    Ha : np.ndarray(K,K)
-        One electron integrals for the alpha spin orbitals
-    Hb : np.ndarray(K,K)
-        One electron integrals for the beta spin orbitals
-    G : np.ndarray(K,K,K,K)
-        Two electron integrals for the spatial orbitals
-    Ga : np.ndarray(K,K,K,K)
-        Two electron integrals for the alpha spin orbitals
-    Gb : np.ndarray(K,K,K,K)
-        Two electron integrals for the beta spin orbitals
+    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
+        and the (beta, beta) unrestricted orbitals
+    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        If tuple of np.ndarray (length 3), two electron integrals for the
+        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
+        (beta, beta, beta, beta) unrestricted orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
     nspatial : int
@@ -35,22 +32,19 @@ class Wavefunction(object):
     nelec : int
         Number of electrons
     npair : int
-        Number of electron pairs
-        Assumes that the number of electrons is even
-    nparticle : int
-        Number of quasiparticles (electrons)
-    ngeminal : int
-        Number of geminals
-    nproj : int
-        Dimension of the projection space
+        Number of electron pairs (rounded down)
     orb_type : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
 
     Private
     -------
-    _nproj_default : int
-        Default dimension of projection space
-    _energy
+    _energy : float
+        Electronic energy of the wavefunction
+
+    Abstract Property
+    -----------------
+    _methods : dict
+        Dictionary of methods that is used to solve the wavefunction
     """
     __metaclass__ = ABCMeta
 
@@ -85,8 +79,6 @@ class Wavefunction(object):
         # Arguments handled by base Wavefunction class
         dtype=None,
         nuc_nuc=None,
-        nparticle=None,
-        odd_nelec=None,
         orb_type=None,
     ):
         """
@@ -107,17 +99,10 @@ class Wavefunction(object):
 
         Optional Parameters
         -------------------
-        dtype : {np.float64, np.complex128}
+        dtype : {float, complex, np.float64, np.complex128}
             Numpy data type
         nuc_nuc : float
             Nuclear nuclear repulsion value
-        odd_nelec : int
-            Odd number of electrons "remaining"
-            Only when nelec is even
-        nproj : int
-            Number of projection states
-        naproj : FIXME
-        nrproj : FIXME
         orb_type : {'restricted', 'unrestricted', 'generalized'}
             Type of the orbital used in obtaining the one-electron and two-electron integrals
             Default is 'restricted'
@@ -125,9 +110,10 @@ class Wavefunction(object):
         """
         # TODO: Implement loading H, G, and x from various file formats
         self.assign_dtype(dtype)
-        self.assign_integrals(H, G, nuc_nuc=nuc_nuc)
-        self.assign_particles(nelec, nparticle=nparticle, odd_nelec=odd_nelec)
-        self.assign_orb_type(orb_type)
+        self.assign_integrals(H, G, orb_type=orb_type)
+        self.assign_nuc_nuc(nuc_nuc)
+        self.assign_nelec(nelec)
+        self._energy = 0.0
 
     def __call__(self,  method="default", **kwargs):
         """ Optimize coefficients
@@ -147,8 +133,9 @@ class Wavefunction(object):
 
         Parameters
         ----------
-        dtype : {np.float64, np.complex128}
+        dtype : {float, complex, np.float64, np.complex128}
             Numpy data type
+            If None then set to np.float64
         """
 
         if dtype is None:
@@ -158,171 +145,129 @@ class Wavefunction(object):
 
         self.dtype = dtype
 
-    def assign_integrals(self, H, G, nuc_nuc=None):
-        """ Sets one electron and two electron integrals, nuclear nuclear repulsion,
-        number of spatial and pin orbitals, and renames unrestricted methods
+    def assign_integrals(self, H, G, orb_type=None):
+        """ Sets one electron and two electron integrals and the orbital type
 
         Parameters
         ----------
         H : np.ndarray(K,K) or tuple np.ndarray(K,K)
-            If np.ndarray, one electron integrals for the spatial orbitals
-            If tuple of np.ndarray (length 2), one electron integrals for the alpha orbitals
-            and one electron integrals for the alpha orbitals
+            If np.ndarray, one electron integrals for the spatial or generalized orbitals
+            If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
+            and the (beta, beta) unrestricted orbitals
         G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
-            If np.ndarray, two electron integrals for the spatial orbitals
-            If tuple of np.ndarray (length 2), two electron integrals for the alpha orbitals
-            and two electron integrals for the alpha orbitals
-        nuc_nuc : float
-            Nuclear nuclear repulsion value
+            If np.ndarray, two electron integrals for the spatial or generalized orbitals
+            If tuple of np.ndarray (length 3), two electron integrals for the
+            (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
+            (beta, beta, beta, beta) unrestricted orbitals
+        orb_type : {'restricted', 'unrestricted', 'generalized'}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is 'restricted'
 
         """
-
-        # If unrestricted, H will be the tuple (Ha(lpha), Hb(eta)), and G, (Ga(lpha), Gb(eta))
-        if not isinstance(H, (np.ndarray, tuple)):
-            raise TypeError("H must be one of {0}".format((np.ndarray, tuple)))
-
-        if not isinstance(G, type(H)):
-            raise TypeError("G must be of the same type as H")
-
-        matrices = []
-        if isinstance(H, np.ndarray):
-            unrestricted = False
-            Ha = H
-            Hb = H
-            Ga = G
-            Gb = G
-            matrices = [H, G]
+        # NOTE: check symmetry?
+        # NOTE: assumes number of alpha and beta spin orbitals are equal
+        if isinstance(H, np.ndarray) and isinstance(G, np.ndarray):
+            if orb_type == 'unrestricted' :
+                raise TypeError('Integrals of unrestricted orbitals must be given as a tuple')
+            elif orb_type is None:
+                orb_type = 'restricted'
+            H = (H,)
+            G = (G,)
+        elif isinstance(H, tuple) and isinstance(G, tuple):
+            if orb_type in ['restricted', 'generalized']:
+                raise TypeError('Integrals of restricted and generalized orbitals must be given as a numpy array')
+            elif orb_type is None:
+                orb_type = 'unrestricted'
+            if len(H) != 2 and not all(isinstance(i, np.ndarray) for i in H):
+                raise TypeError('H as a tuple must contain two np.ndarray')
+            if len(G) != 3 and not all(isinstance(i, np.ndarray) for i in G):
+                raise TypeError('G as a tuple must contain three np.ndarray')
         else:
-            unrestricted = True
-            Ha, Hb = H
-            Ga, Gb = G
-            matrices = [Ha, Hb, Ga, Gb]
-
-        for matrix in matrices:
-            if not isinstance(matrix, np.ndarray):
-                raise TypeError("Integral matrices must be of type {0}".format(np.ndarray))
+            raise TypeError('H and G must be of the same type and be one of {0}'
+                            ''.format((np.ndarray, tuple)))
+        for matrix in H+G:
             if not matrix.dtype in (float, complex, np.float64, np.complex128):
                 raise TypeError("Integral matrices' dtypes must be one of {0}".format((float, complex, np.float64, np.complex128)))
             if not np.all(np.array(matrix.shape) == matrix.shape[0]):
                 raise ValueError("Integral matrices' dimensions must all be equal")
-            # NOTE: check symmetry?
-            # NOTE: assumes number of alpha and beta spin orbitals are equal
+        if orb_type not in ['restricted', 'unrestricted', 'generalized']:
+            raise ValueError('Orbital type must be one of {0}'.format(['restricted', 'unrestricted', 'generalized'])
+            )
 
-        if not Ha.shape + Hb.shape == Ga.shape == Gb.shape:
-            raise ValueError("Integral matrices shapes ({0}) are incompatible".format([matrix.shape for matrix in matrices]))
+        self.H = H
+        self.G = G
+        self.orb_type = orb_type
 
-        # NOTE: why Ha? is self.H and self.G only going to be used in the restricted case?
-        # NOTE: is Ha and Hb and Ga and Gb redundant?
-        self.H = Ha
-        self.Ha = Ha
-        self.Hb = Hb
-        self.G = Ga
-        self.Ga = Ga
-        self.Gb = Gb
+    def assign_nuc_nuc(self, nuc_nuc=None):
+        """ Sets the nuclear nuclear repulsion value
 
+        Parameters
+        ----------
+        nuc_nuc : float
+            Nuclear nuclear repulsion value
+            If None then set to 0.0
+        """
         if nuc_nuc is None:
             nuc_nuc = 0.0
         elif not isinstance(nuc_nuc, (float, np.float64)):
             raise TypeError("nuc_nuc integral must be one of {0}".format((float, np.float64)))
-
         self.nuc_nuc = nuc_nuc
 
-        # FIXME: turn into properties
-        nspatial = Ha.shape[0]
-        nspin = 2 * nspatial
-
-        self.nspatial = nspatial
-        self.nspin = nspin
-
-        # Indicate that the object is to use its "_unrestricted_*" methods where available
-        if unrestricted:
-            self._configure_unrestricted()
-
-    def assign_particles(self, nelec, nparticle=None, odd_nelec=None):
-        """ Sets the number of electrons and particles
+    def assign_nelec(self, nelec):
+        """ Sets the number of electrons
 
         Parameters
         ----------
         nelec : int
             Number of electrons
-            Assumes that the number of electrons is even
-        nparticle : int
-            Number of quasiparticles (electrons)
-        odd_nelec : int
-            Odd number of electrons "remaining"
-            Only when nelec is even
         """
-        # NOTE: should this be moved to proj_wavefunction?
-
         if not isinstance(nelec, int):
             raise TypeError("nelec must be of type {0}".format(int))
-        elif nelec < 0:
+        elif nelec <= 0:
             raise ValueError("nelec must be a positive integer")
-        elif odd_nelec is None and nelec % 2 != 0:
-            raise ValueError("nelec must be even unless odd_nelec is set")
-
-        # NOTE: what is this business with the odd_nelec?
         self.nelec = nelec
-        # NOTE: discards odd electrons here
-        # FIXME: turn into property
-        self.npair = nelec // 2
-
-        # NOTE: why?
-        if nparticle is None:
-            nparticle = nelec
-        elif not isinstance(nparticle, int):
-            raise TypeError("nparticle must be of type {0}".format(int))
-        elif nparticle < 0:
-            raise ValueError("nparticle must be a positive integer")
-        elif nparticle % 2 != 0:
-            raise ValueError("nparticle must be even")
-
-        self.nparticle = nparticle
-        # FIXME: turn into property
-        self.ngeminal = nparticle // 2
-
-    def assign_orb_type(self, orb_type):
-        """ Assigns the orbital type use to construct the one-electron and two-electron
-        integrals
-
-        Parameters
-        ----------
-        orb_type : {'restricted', 'unrestricted', 'generalized'}
-            Type of the orbital used in obtaining the one-electron and two-electron integrals
-            Default is 'restricted'
-        """
-        if orb_type is None:
-            orb_type = 'restricted'
-        assert orb_type in ['restricted', 'unrestricted', 'generalized'], ''
-        'Unsupported orbital type {0}'.format(orb_type)
-        self.orb_type = orb_type
-
-
-    #
-    # Other methods
-    #
-
-    def _configure_unrestricted(self):
-        """ Rename methods and attributes with "_restricted_" to "_unrestricted_"
-
-        """
-        regex = re.compile(r'^_restricted_')
-
-        for attr in dir(self):
-            if regex.match(attr):
-                eval("self.{0} = self._unrestricted_{0}".format(attr))
 
 
     #
     # View methods
     #
-    def compute_energy(self, sd=None, nuc_nuc=True, deriv=None):
+    def compute_energy(self, include_nuc=True):
+        """ Returns the energy of the system
 
-        nuc_nuc = self.nuc_nuc if nuc_nuc else 0.0
+        Parameters
+        ----------
+        include_nuc : bool
+            Flag to include nuclear nuclear repulsion
 
-        if sd is None:
-            return self._energy + nuc_nuc
+        Returns
+        -------
+        energy : float
+            Total energy if include_nuc is True
+            Electronic energy if include_nuc is False
+        """
+        nuc_nuc = self.nuc_nuc if include_nuc else 0.0
+        return self._energy + nuc_nuc
 
-        else:
-            # TODO: ADD HAMILTONIANS
-            raise NotImplementedError
+    #
+    # Properties
+    #
+    @property
+    def nspin(self):
+        """ Number of spin orbitals
+        """
+        if self.orb_type in ['restricted', 'unrestricted']:
+            return 2*self.H[0].shape[0]
+        elif self.orb_type == 'generalized':
+            return self.H[0].shape[0]
+
+    @property
+    def nspatial(self):
+        """ Number of spatial orbitals (rounded down from number of spin orbitals/2)
+        """
+        return self.nspin//2
+
+    @property
+    def npair(self):
+        """ Number of electron pairs (rounded down)
+        """
+        return self.nelec//2
