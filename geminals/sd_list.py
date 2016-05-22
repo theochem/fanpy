@@ -53,8 +53,9 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
     civec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
-    occ_indices = sorted(occ_indices, key=lambda x: x-nspatial if x>=nspatial else x, reverse=True)
     vir_indices = slater.vir_indices(ground, 2*nspatial)
+    # order by energy
+    occ_indices = sorted(occ_indices, key=lambda x: x-nspatial if x>=nspatial else x, reverse=True)
     vir_indices = sorted(vir_indices, key=lambda x: x-nspatial if x>=nspatial else x)
 
     count = 1

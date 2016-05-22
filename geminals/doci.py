@@ -77,7 +77,7 @@ class DOCI(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return doci_sd_list(self, self._nci)
+        return doci_sd_list(self, self.nci)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis

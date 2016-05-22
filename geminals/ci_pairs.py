@@ -1,13 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
 from ci_wavefunction import CIWavefunction
-from sd_list import ci_sd_list
-from ci_matrix import ci_matrix
+from sd_list import doci_sd_list
+from ci_matrix import doci_matrix
 from math_tools import binomial
 import slater
 
-class CISD(CIWavefunction):
-    """ Configuration Interaction Singles and Doubles Wavefunction
+class CIPairs(CIWavefunction):
+    """ Configuration Interaction Pairs (DOCI with only one pair excitation)
 
     Contains the necessary information to variationally solve the CI wavefunction
 
@@ -64,9 +64,8 @@ class CISD(CIWavefunction):
         """ Total number of configurations
 
         """
-        num_singles = binomial(self.nelec, 1)*binomial(self.nspin-self.nelec, 1)
-        num_doubles = binomial(self.nelec, 2)*binomial(self.nspin-self.nelec, 2)
-        return 1+num_singles+num_doubles
+        num_singles = binomial(self.npair, 1)*binomial(self.nspatial-self.npair, 1)
+        return 1+num_singles
 
     def compute_civec(self):
         """ Generates Slater determinants
@@ -80,7 +79,7 @@ class CISD(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return ci_sd_list(self, self.nci, [1, 2])
+        return doci_sd_list(self, self.nci, [1])
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
@@ -92,4 +91,4 @@ class CISD(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return ci_matrix(self, self.orb_type)
+        return doci_matrix(self, self.orb_type)
