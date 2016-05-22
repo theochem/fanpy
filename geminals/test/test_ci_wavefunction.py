@@ -65,3 +65,30 @@ def test_assign_civec():
     assert_raises(TypeError, lambda:test.assign_civec(0b1111))
     assert_raises(TypeError, lambda:test.assign_civec((0b1111)))
     assert_raises(TypeError, lambda:test.assign_civec('123'))
+
+def test_dict_sd_coeff():
+    """
+    Tests CIWavefunction.dict_sd_coeff
+    """
+    test = TestCIWavefunction()
+    test.civec = [0b1111, 0b110011]
+    test.sd_coeffs = np.arange(6).reshape(2,3)
+    # ground state
+    sd_coeff = test.dict_sd_coeff()
+    assert sd_coeff[0b1111] == 0
+    assert sd_coeff[0b110011] == 3
+    sd_coeff = test.dict_sd_coeff(exc_lvl=0)
+    assert sd_coeff[0b1111] == 0
+    assert sd_coeff[0b110011] == 3
+    # 1st excited
+    sd_coeff = test.dict_sd_coeff(exc_lvl=1)
+    assert sd_coeff[0b1111] == 1
+    assert sd_coeff[0b110011] == 4
+    # 2nd excited
+    sd_coeff = test.dict_sd_coeff(exc_lvl=2)
+    assert sd_coeff[0b1111] == 2
+    assert sd_coeff[0b110011] == 5
+    # bad excitation
+    assert_raises(TypeError, lambda:test.dict_sd_coeff(exc_lvl='2'))
+    assert_raises(TypeError, lambda:test.dict_sd_coeff(exc_lvl=2.0))
+    assert_raises(ValueError, lambda:test.dict_sd_coeff(exc_lvl=-2))

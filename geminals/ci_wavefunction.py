@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 from itertools import combinations, product
 
 import numpy as np
-from scipy.sparse.linalg import eigsh
 from scipy.linalg import eigh
 
 from wavefunction import Wavefunction
@@ -94,11 +93,25 @@ class CIWavefunction(Wavefunction):
 
         return {"default": self._solve_eigh}
 
-    @property
-    def C(self):
-        """ Coefficients for the Slater determinants
+    def dict_sd_coeff(self, exc_lvl=0):
+        """ Dictionary of the coefficient
+
+        Parameters
+        ----------
+        exc_lvl : int
+            Excitation level of the wavefunction
+            0 is the ground state wavefunction
+            1 is the first excited wavefunction
+
+        Returns
+        -------
+        Dictionary of SD to coefficient
         """
-        return self.sd_coeffs
+        if not isinstance(exc_lvl, int):
+            raise TypeError('Excitation level must be an integer')
+        if exc_lvl < 0:
+            raise ValueError('Excitation level cannot be negative')
+        return {sd:coeff for sd,coeff in zip(self.civec, self.sd_coeffs[:, exc_lvl].flat)}
 
     #
     # Special methods
@@ -127,7 +140,7 @@ class CIWavefunction(Wavefunction):
         )
         self.assign_nci(nci=nci)
         self.assign_civec(civec=civec)
-        self.sd_coeffs = np.zeros(len(self.civec))
+        self.sd_coeffs = np.zeros([self.nci, self.nci])
 
     #
     # Solver methods
@@ -138,12 +151,12 @@ class CIWavefunction(Wavefunction):
         """
 
         ci_matrix = self.compute_ci_matrix()
-        result = eigsh(ci_matrix, 1, which=which, **kwargs)
-        # result = eigh(ci_matrix, **kwargs)
+        result = eigh(ci_matrix, **kwargs)
         del ci_matrix
 
-        self.C[...] = result[1][:, 0]
-        self._energy = result[0][0]
+        # NOTE: overwrites last sd_coeffs
+        self.sd_coeffs = result[1]
+        self._energy = result[0]
 
         return result
 
@@ -216,3 +229,28 @@ class CIWavefunction(Wavefunction):
         matrix : np.ndarray(K, K)
         """
         pass
+
+    def compute_energy(self, include_nuc=True, exc_lvl=0):
+        """ Returns the energy of the system
+
+        Parameters
+        ----------
+        include_nuc : bool
+            Flag to include nuclear nuclear repulsion
+        exc_lvl : int
+            Excitation level of the wavefunction
+            0 is the ground state wavefunction
+            1 is the first excited wavefunction
+
+        Returns
+        -------
+        energy : float
+            Total energy if include_nuc is True
+            Electronic energy if include_nuc is False
+        """
+        if not isinstance(exc_lvl, int):
+            raise TypeError('Excitation level must be an integer')
+        if exc_lvl < 0:
+            raise ValueError('Excitation level cannot be negative')
+        nuc_nuc = self.nuc_nuc if include_nuc else 0.0
+        return self._energy[exc_lvl] + nuc_nuc
