@@ -49,6 +49,11 @@ def test_assign_integrals():
     test.assign_integrals(H, G)
     assert np.allclose(H, test.H)
     assert np.allclose(G, test.G)
+    H = (np.arange(100, dtype=float).reshape(10,10),)
+    G = (np.arange(10000, dtype=float).reshape(10,10,10,10),)
+    test.assign_integrals(H, G)
+    assert np.allclose(H, test.H)
+    assert np.allclose(G, test.G)
     # bad H type
     H = np.arange(100, dtype=float).reshape(10,10).tolist()
     G = np.arange(10000, dtype=float).reshape(10,10,10,10)
