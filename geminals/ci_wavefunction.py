@@ -47,6 +47,8 @@ class CIWavefunction(Wavefunction):
         Number of quasiparticles (electrons)
     ngeminal : int
         Number of geminals
+    nci : int
+        Number of (user-specified) Slater determinants
 
     Private
     -------
@@ -58,7 +60,7 @@ class CIWavefunction(Wavefunction):
     Abstract Properties
     -------------------
     _nci : int
-        Total number of Slater determinants
+        Total number of (default) Slater determinants
 
     Abstract Methods
     ----------------
@@ -126,7 +128,6 @@ class CIWavefunction(Wavefunction):
         self.assign_nci(nci=nci)
         self.assign_civec(civec=civec)
         self.sd_coeffs = np.zeros(len(self.civec))
-        self._energy = 0.0
 
     #
     # Solver methods
@@ -162,19 +163,24 @@ class CIWavefunction(Wavefunction):
 
         if nci is None:
             nci = self._nci
+        if not isinstance(nci, int):
+            raise TypeError('Number of determinants must be an integer')
         self.nci = nci
 
     def assign_civec(self, civec=None):
+        """ Sets the Slater determinants used in the wavefunction
 
-        if civec is not None:
-            if not isinstance(civec, list):
-                raise TypeError("civec must be of type {0}".format(list))
-        else:
+        Parameters
+        ----------
+        civec : iterable of int
+            List of Slater determinants (in the form of integers that describe
+            the occupation as a bitstring)
+        """
+        if civec is None:
             civec = self.compute_civec()
-
-        self.civec = civec
-        self.cache = {}
-        self.d_cache = {}
+        if not isinstance(civec, (list, tuple)):
+            raise TypeError("civec must be a list or a tuple")
+        self.civec = tuple(civec)
 
     #
     # Computation methods
