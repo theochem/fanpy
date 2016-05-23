@@ -25,6 +25,8 @@ diff
     Returns the difference between two Slater determinants
 combine_spin
     Constructs a Slater determinant in block form from alpha and beta occupations
+split_spin
+    Constructs the alpha and beta occupations from the Slater determinant
 interleave
     Converts Slater determinants from block form to shuffled form
 deinterleave
@@ -302,6 +304,37 @@ def combine_spin(alpha_bits, beta_bits, norbs):
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
     return alpha_bits | (beta_bits << norbs)
+
+def split_spin(block_sd, norbs):
+    """ Splits a Slater determinant into the alpha and beta parts
+
+    Parameters
+    ----------
+    block_sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Indices less than norbs correspond to the alpha spin orbitals
+        Indices greater than or equal to norbs correspond to the beta spin orbitals
+    norbs : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    alpha_bits : int
+        Integer that describes the occupation of alpha spin orbitals as a bitstring
+    beta_bits : int
+        Integer that describes the occupation of beta spin orbitals as a bitstring
+
+    Note
+    ----
+    Erratic behaviour if the total number of spatial orbitals is less than the the
+    actual number (i.e. if there are any occupied orbitals with indices greater than
+    norbs)
+    """
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    alpha_bits = gmpy2.t_mod_2exp(block_sd, norbs)
+    beta_bits = block_sd >> norbs
+    return (alpha_bits, beta_bits)
 
 def interleave(block_sd, norbs):
     """ Turns sd from block form to the shuffled form

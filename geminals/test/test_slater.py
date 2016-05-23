@@ -188,6 +188,20 @@ def test_combine_spin():
     assert slater.combine_spin(0b001, 0b011, 5) == 0b0001100001
     assert slater.combine_spin(0b000, 0b111, 5) == 0b0011100000
 
+def test_split_spin():
+    """
+    Test slater.split_spin
+    """
+    assert_raises(AssertionError, lambda:slater.split_spin(0b0, 0))
+    assert_raises(AssertionError, lambda:slater.split_spin(0b0, -1))
+    assert slater.split_spin(0b1, 1) == (0b1, 0b0)
+    assert slater.split_spin(0b10, 1) == (0b0, 0b1)
+    assert slater.split_spin(0b111, 3) == (0b111, 0b0)
+    assert slater.split_spin(0b111000, 3) == (0b000, 0b111)
+    assert slater.split_spin(0b0000100011, 5) == (0b011, 0b001)
+    assert slater.split_spin(0b0001100001, 5) == (0b001, 0b011)
+    assert slater.split_spin(0b0011100000, 5) == (0b000, 0b111)
+
 def test_interleave():
     """
     Test slater.interleave
