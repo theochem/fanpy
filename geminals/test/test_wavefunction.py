@@ -10,9 +10,13 @@ class TestWavefunction(Wavefunction):
     # overwrite to stop initialization
     def __init__(self):
         pass
+
     @property
     def _methods(self):
         pass
+
+    def compute_energy():
+        return 20
 
 def test_assign_dtype():
     """
@@ -123,16 +127,6 @@ def test_assign_nelec():
     assert_raises(TypeError, lambda:test.assign_nelec(2.0))
     assert_raises(ValueError, lambda:test.assign_nelec(0))
     assert_raises(ValueError, lambda:test.assign_nelec(-2))
-
-def test_compute_energy():
-    """
-    Tests Wavefunction.compute_energy
-    """
-    test = TestWavefunction()
-    test.assign_nuc_nuc(3.0)
-    test._energy = 4.0
-    assert test.compute_energy(include_nuc=False) == 4.0
-    assert test.compute_energy(include_nuc=True) == 7.0
 
 def test_nspin():
     """

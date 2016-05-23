@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, print_function
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty, abstractmethod
 import re
 
 import numpy as np
@@ -36,15 +36,15 @@ class Wavefunction(object):
     orb_type : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
 
-    Private
-    -------
-    _energy : float
-        Electronic energy of the wavefunction
-
     Abstract Property
     -----------------
     _methods : dict
         Dictionary of methods that is used to solve the wavefunction
+
+    Abstract Method
+    ---------------
+    compute_energy
+        Calculates the energy of the wavefunction
     """
     __metaclass__ = ABCMeta
 
@@ -248,16 +248,9 @@ class Wavefunction(object):
         self.nelec = nelec
 
 
-    #
-    # View methods
-    #
+    @abstractmethod
     def compute_energy(self, include_nuc=True):
         """ Returns the energy of the system
-
-        Parameters
-        ----------
-        include_nuc : bool
-            Flag to include nuclear nuclear repulsion
 
         Returns
         -------
@@ -266,7 +259,7 @@ class Wavefunction(object):
             Electronic energy if include_nuc is False
         """
         nuc_nuc = self.nuc_nuc if include_nuc else 0.0
-        return self._energy + nuc_nuc
+        pass
 
     #
     # Properties
