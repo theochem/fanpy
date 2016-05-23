@@ -171,9 +171,7 @@ class CIWavefunction(Wavefunction):
         nci : int
             Number of configuratons
         """
-
-        #NOTE: there is an order to the assignme
-
+        #FIXME: cyclic dependence on civec
         if nci is None:
             nci = self._nci
         if not isinstance(nci, int):
@@ -189,6 +187,7 @@ class CIWavefunction(Wavefunction):
             List of Slater determinants (in the form of integers that describe
             the occupation as a bitstring)
         """
+        #FIXME: cyclic dependence on nci
         if civec is None:
             civec = self.compute_civec()
         if not isinstance(civec, (list, tuple)):
@@ -208,10 +207,8 @@ class CIWavefunction(Wavefunction):
 
         Returns
         -------
-        civec : np.ndarray(nci, nspin)
-            Boolean array that describes the occupations of the Slater determinants
-            Each row is a Slater determinant
-            Each column is the index of the spin orbital
+        civec : list of ints
+            Integer that describes the occupation of a Slater determinant as a bitstring
 
         """
         pass
@@ -254,3 +251,54 @@ class CIWavefunction(Wavefunction):
             raise ValueError('Excitation level cannot be negative')
         nuc_nuc = self.nuc_nuc if include_nuc else 0.0
         return self._energy[exc_lvl] + nuc_nuc
+
+    def to_other(self, Other, exc_lvl=0):
+        """ Converts CIWavefunction to ProjWavefunction as best as possible
+
+        Parameters
+        ----------
+        Other : ProjWavefunction class
+            Class of the wavefunction to turn into
+        exc_lvl : int
+            Excitation level of the wavefunction
+            0 is the ground state wavefunction
+            1 is the first excited wavefunction
+
+        Returns
+        -------
+        new_instance : Other instance
+            Instance of the specified wavefunction with parameters/coefficients
+            that tries to resemble self
+        """
+        new_instance = Other(nelec=self.nelec,
+                             H=self.H,
+                             G=self.G,
+                             dtype=self.dtype,
+                             nuc_nuc=self.nuc_nuc,
+                             orbtype=self.orbtype,
+                             nproj=None,
+                             x=None,)
+        sd_coeff = dict_sd_coeff(self, exc_lvl=0)
+        def objective(x_vec):
+            """ Function to minimize
+
+            We will find the root of this function, which means that we find the
+            x_vec such that the objective gives back the smallest vector
+
+            parameters
+            ----------
+            x_vec : np.ndarray(K,)
+                One dimensional numpy array
+
+            Returns
+            -------
+            val : np.ndarray(K,)
+                One dimensional numpy array
+            """
+            val = np.empty(self.nci, dtype=self.dtype)
+            for i, sd in enumerate(self.civec):
+                val[i] =  new_instance.compute_overlap(sd) - sd_coeff[sd]
+            return val
+        result = least_squares(self.objective, new_instance.x)
+        new_instance.assign_civec(result.x)
+        return new_instance

@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 from itertools import combinations, product
 
@@ -70,7 +71,7 @@ class ProjectionWavefunction(Wavefunction):
 
     Abstract Method
     ---------------
-    compute_civec
+    compute_pspace
         Generates a list of states to project onto
     compute_overlap
         Computes the overlap of a Slater deteriminant with the wavefunction
@@ -81,6 +82,7 @@ class ProjectionWavefunction(Wavefunction):
 
     """
     # FIXME: turn C into property and have a better attribute name
+    __metaclass__ = ABCMeta
 
     #
     # Default attribute values
@@ -88,11 +90,30 @@ class ProjectionWavefunction(Wavefunction):
 
     @abstractproperty
     def _nproj_default(self):
+        """
+        Default number of Slater determinants in the projection space
+        """
         pass
 
     @property
     def _methods(self):
-        raise NotImplementedError
+        """ Dictionary of methods for solving the wavefunction
+
+        Returns
+        -------
+        methods : dict
+            "default" -> least squares nonlinear solver
+        """
+        return {"default": self._solve_least_squares}
+
+    #
+    # Properties
+    #
+    @property
+    def nparam(self):
+        """ Number of parameters
+        """
+        return self.params.size
 
     #
     # Special methods
@@ -108,14 +129,12 @@ class ProjectionWavefunction(Wavefunction):
         dtype=None,
         nuc_nuc=None,
         nproj=None,
-        naproj=None,
-        nrproj=None,
         # Arguments handled by FullCI class
-        x=None,
-        civec=None,
+        params=None,
+        pspace=None,
     ):
 
-        super(FullCI, self).__init__(
+        super(ProjWavefunction, self).__init__(
             nelec=nelec,
             H=H,
             G=G,
@@ -123,93 +142,119 @@ class ProjectionWavefunction(Wavefunction):
             nuc_nuc=nuc_nuc,
         )
 
-        self.assign_x(x=x)
-        self.assign_civec(civec=civec)
-        self.assign_nproj(nproj=nproj, naproj=naproj, nrproj=nrproj)
+        self.assign_params(params=params)
+        self.assign_pspace(pspace=pspace)
+        self.assign_nproj(nproj=nproj)
+
+    #
+    # Solver methods
+    #
+    def _solve_least_squares(self):
+        """
+        Optimize `self.objective(params)` to solve the coefficient vector.
+
+        Parameters
+        ----------
+        jacobian : bool, optional
+        If False, the Jacobian is not used in the optimization.
+        If False, it is not used.
+        kwargs : dict, optional
+        Keywords to pass to the internal solver, `scipy.optimize.leastsq`.
+
+        Returns
+        -------
+        result : tuple
+        See `scipy.optimize.leastsq` documentation.
+        """
+
+        # Update solver options
+        options = {
+            "jac": self.jacobian,
+            "bounds": self.bounds,
+            "xtol": 1.0e-15,
+            "ftol": 1.0e-15,
+            "gtol": 1.0e-15,
+        }
+        options.update(kwargs)
+        # Use appropriate Jacobian approximation if necessary
+        if not options["jac"]:
+            if self.dtype == np.complex128:
+                options["jac"] = "cs"
+            else:
+                options["jac"] = "3-point"
+                # Solve
+                result = least_squares(self.objective, self.x, **options)
+        return result
 
     #
     # Assignment methods
     #
 
-    def assign_x(self, x=None):
+    def assign_params(self, params=None):
+        """ Assigns the parameters to the wavefunction
+
+        Parameters
+        ----------
+        params : np.ndarray(K,)
+            Parameters of the wavefunction
+        """
 
         nparam = self._nproj_default + 1
+        # create a random guess
+        if params is None:
+            params = np.empty(nparam, dtype=self.dtype)
+            scale = 2.0/(nparam ** 2)
+            params[:-1] = scale*(np.random.random(nparam - 1) - 0.5)
+            if params.dtype == np.complex128:
+                params[:-1] = 1j*scale* (np.random.random(nparam - 1) - 0.5)
 
-        if x is not None:
-            if not isinstance(x, np.ndarray):
-                raise TypeError("x must be of type {0}".format(np.ndarray))
-            elif x.shape != (nparam,):
-                raise ValueError("x must be of length nparam ({0})".format(nparam))
-            elif x.dtype not in (float, complex, np.float64, np.complex128):
-                raise TypeError("x's dtype must be one of {0}".format((float, complex, np.float64, np.complex128)))
+        if not isinstance(params, np.ndarray):
+            raise TypeError("params must be of type {0}".format(np.ndarray))
+        elif params.shape != (nparam,):
+            raise ValueError("params must be of length nparam ({0})".format(nparam))
+        elif params.dtype not in (float, complex, np.float64, np.complex128):
+            raise TypeError("params's dtype must be one of {0}".format((float, complex, np.float64, np.complex128)))
 
-        else:
-            x = np.empty(nparam, dtype=self.dtype)
-            x[:-1] = 2.0 * (np.random.random(nparam - 1) - 0.5) / (nparam ** 2)
-            if x.dtype == np.complex128:
-                x[:-1] = 2.0j * (np.random.random(nparam - 1) - 0.5) / (nparam ** 2)
+        energy = params[-1, ...] # Use the Ellipsis to obtain a view
+        self.params = params
 
-        C = x[:-1]
-        C[0] = 1.0 # Intermediate normalization
-        energy = x[-1, ...] # Use the Ellipsis to obtain a view
+    def assign_pspace(self, pspace=None):
+        """ Sets the Slater determinants on which to project against
 
-        self.nparam = nparam
-        self.x = x
-        self.C = C
-        self._energy = energy
-
-    def assign_civec(self, civec=None):
-        #FIXME: code repeated in ci_wavefunction.py
-
-        if civec is not None:
-            if not isinstance(civec, list):
-                raise TypeError("civec must be of type {0}".format(list))
-        else:
-            civec = self.compute_civec()
-
-        self.civec = civec
+        Parameters
+        ----------
+        civec : iterable of int
+            List of Slater determinants (in the form of integers that describe
+            the occupation as a bitstring)
+        """
+        #FIXME: code repeated in ci_wavefunction.assign_civec
+        #FIXME: cyclic dependence on pspace
+        if pspace is None:
+            pspace = self.compute_pspace()
+        if not isinstance(pspace, (list, tuple)):
+            raise TypeError("pspace must be a list or a tuple")
+        self.pspace = tuple(pspace)
         self.cache = {}
         self.d_cache = {}
 
-    def assign_nproj(self, nproj=None, naproj=None, nrproj=None):
-        """ Sets number of projection determinants
+    def assign_nproj(self, nproj=None):
+        """ Sets number of Slater determinants on which to project against
 
         Parameters
         ----------
         nproj : int
             Number of projection states
-        naproj : FIXME
-        nrproj : FIXME
         """
-
-        #NOTE: there is an order to the assignme
-
+        #FIXME: cyclic dependence on nproj
         if nproj is None:
             nproj = self._nproj_default
-
-        elif nproj is not None:
-            if not isinstance(nproj, int):
-                raise TypeError("nproj must be of type {0}".format(int))
-
-            if sum(not i is None for i in (naproj, nrproj)) <= 1:
-                raise ValueError("At most one of (naproj, nrproj) should be specified")
-
-            if naproj is not None:
-                if not isinstance(naproj, int):
-                    raise TypeError("naproj must be of type {0}".format(int))
-                else:
-                    nproj += naproj
-
-            if nrproj is not None:
-                if not isinstance(nrproj, float):
-                    raise TypeError("nrproj must be of type {0}".format(float))
-                elif nrproj < 1.0:
-                    raise ValueError("nrproj must be greater than 1.0")
-                else:
-                    nproj = np.round(nrproj * nproj)
-
+        if not isinstance(nproj, int):
+            raise TypeError("nproj must be of type {0}".format(int))
         self.nproj = nproj
 
+    #
+    # Computation methods
+    #
     def compute_energy(self, include_nuc=True, deriv=None):
         """ Returns the energy of the system
 
@@ -229,13 +274,19 @@ class ProjectionWavefunction(Wavefunction):
         else:
             # TODO: ADD HAMILTONIANS
             raise NotImplementedError
-    #
-    # Computation methods
-    #
 
     @abstractmethod
-    def compute_civec(self):
-        """ Generates projection space
+    def compute_pspace(self):
+        """ Generates Slater determinants on which to project against
+
+        Number of Slater determinants generated is determined strictly by the size of the
+        projection space (self.nproj). First row corresponds to the ground state SD, then
+        the next few rows are the first excited, then the second excited, etc
+
+        Returns
+        -------
+        civec : list of ints
+            Integer that describes the occupation of a Slater determinant as a bitstring
         """
         pass
 
