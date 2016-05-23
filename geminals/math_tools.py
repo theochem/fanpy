@@ -54,7 +54,7 @@ def permanent_ryser(matrix):
         if m > n:
             matrix = matrix.transpose()
             m, n = n, m
-        A = np.pad(matrix, ((0, n - m), (0, 0)), mode="constant", constant_values=1.0)
+        A = np.pad(matrix, ((0, n - m), (0, 0)), mode="constant", constant_values=((0, 1.0), (0, 0)))
         factor = 1.0 / np.math.factorial(n - m)
     else:
         A = matrix
