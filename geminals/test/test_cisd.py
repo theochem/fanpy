@@ -13,6 +13,11 @@ def test_cisd_wavefunction():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    # compare HF numbers
+    print(cisd.compute_ci_matrix()[0,0])
+    print(cisd.compute_ci_matrix()[0,0]+cisd.nuc_nuc)
+    assert abs(cisd.compute_ci_matrix()[0,0]+cisd.nuc_nuc-(-1.131269841877) < 1e-8)
+    # solve
     cisd()
     # compare with number from Gaussian
     assert abs(cisd.compute_energy()-(-1.1651486697)) < 1e-7

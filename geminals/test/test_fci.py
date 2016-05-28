@@ -13,6 +13,10 @@ def test_fci_wavefunction():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     fci = FCI(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    # compare HF numbers
+    print(fci.compute_ci_matrix()[0,0])
+    print(fci.compute_ci_matrix()[0,0]+fci.nuc_nuc)
+    assert abs(fci.compute_ci_matrix()[0,0]+fci.nuc_nuc-(-1.131269841877) < 1e-8)
     fci()
     # compare with number from Gaussian
     assert abs(fci.compute_energy()-(-1.1651486697)) < 1e-7

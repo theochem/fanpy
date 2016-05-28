@@ -21,7 +21,6 @@ class TestCIWavefunction(CIWavefunction):
     def compute_ci_matrix(self):
         pass
 
-    pass
 def test_assign_nci():
     """
     Tests CIWavefunction.assign_nci

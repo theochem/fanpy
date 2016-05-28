@@ -248,6 +248,8 @@ def doci_matrix(self, orb_type):
         Instance of Wavefunction class
         Needs to have the following in __dict__:
             nci, nspatial, H, G, civec, dtype
+    orb_type : {'restricted', 'unrestricted', 'generalized'}
+        Flag that indicates the type of the orbital
 
     Returns
     -------

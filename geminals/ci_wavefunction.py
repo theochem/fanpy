@@ -141,6 +141,7 @@ class CIWavefunction(Wavefunction):
         self.assign_nci(nci=nci)
         self.assign_civec(civec=civec)
         self.sd_coeffs = np.zeros([self.nci, self.nci])
+        self._energy = np.zeros(self.nci)
 
     #
     # Solver methods

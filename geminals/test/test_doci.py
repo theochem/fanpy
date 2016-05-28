@@ -13,6 +13,10 @@ def test_doci_wavefunction():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     doci = DOCI(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    # compare HF numbers
+    print(doci.compute_ci_matrix()[0,0])
+    print(doci.compute_ci_matrix()[0,0]+doci.nuc_nuc)
+    assert abs(doci.compute_ci_matrix()[0,0]+doci.nuc_nuc-(-1.131269841877) < 1e-8)
     doci()
     print(doci.compute_energy())
 test_doci_wavefunction()
