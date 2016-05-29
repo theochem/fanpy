@@ -24,11 +24,18 @@ class TestProjectionWavefunction(ProjectionWavefunction):
     def compute_hamiltonian(self, sd, deriv=None):
         return 2
 
+    def normalize(self):
+        return 1.0
+
+    def template_params(self):
+        return None
+
 def test_assign_params():
     """
     Tests ProjectionWavefunction.assign_params
     """
     test = TestProjectionWavefunction()
+    test.energy_is_param = True
     # Assign random float
     test.dtype = np.float64
     test.assign_params()
@@ -132,11 +139,12 @@ def test_compute_energy():
     test.params = np.array([0,1,2,3,4])
     test.cache = {0b1111:1, 0b10111:2}
 
-    # sd is none
+    # energy is param
+    test.energy_is_param = True
     assert test.compute_energy() == test.params[-1] + test.nuc_nuc
     assert test.compute_energy(include_nuc=False) == test.params[-1]
     assert test.compute_energy(deriv=0) == 0
     assert test.compute_energy(deriv=4) == 1
-    # sd is int
+    # energy is not param
+    test.energy_is_param = False
     assert test.compute_energy(sd=0b1111, include_nuc=False) == 2
-test_compute_energy()

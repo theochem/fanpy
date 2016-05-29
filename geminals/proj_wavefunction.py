@@ -393,8 +393,10 @@ class ProjectionWavefunction(Wavefunction):
         nuc_nuc = 0.0
         if include_nuc and deriv is None:
             nuc_nuc = self.nuc_nuc
-        # if sd is None
-        if sd is None:
+        # if energy is a parameter
+        if self.energy_is_param:
+            if not sd is None:
+                print('Warning: Cannot specify Slater determinant to compute energy if energy is a parameter')
             # if not derivatized
             if deriv is None:
                 return self.params[-1]+nuc_nuc
@@ -403,30 +405,34 @@ class ProjectionWavefunction(Wavefunction):
                 return 1.0
             else:
                 return 0.0
-
-        # if sd is not None
-        if type(sd) in [int, type(mpz())]:
-            sd = (sd,)
-        if not isinstance(sd, (list, tuple)):
-            raise TypeError('Unsupported Slater determinant type {0}'.format(type(sd)))
-        if not all(type(i) in [int, type(mpz())] for i in sd):
-            raise TypeError('List of Slater determinants must all be of type int or gmpy2.mpz')
-
-        # if not derivatized
-        if deriv is None:
-            elec_energy = sum(self.overlap(i)*self.compute_hamiltonian(i) for i in sd)
-            elec_energy /= self.compute_norm(sd=sd)
-        # if derivatized
+        # if energy is not a parameter
         else:
-            olp = np.array([self.overlap(i) for i in sd])
-            d_olp = np.array([self.overlap(i, deriv=deriv) for i in sd])
-            ham = np.array([self.compute_hamiltonian(i) for i in sd])
-            d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in sd])
-            norm = self.compute_norm(sd=sd)
-            d_norm = self.compute_norm(sd=sd, deriv=deriv)
-            elec_energy = np.sum(d_olp*ham + olp*d_ham)/norm
-            elec_energy += np.sum(olp*ham)/(-norm**2)*d_norm
-        return elec_energy + nuc_nuc
+            # if sd is None
+            if sd is None:
+                sd = self.pspace[0]
+            # if sd is not None
+            if type(sd) in [int, type(mpz())]:
+                sd = (sd,)
+            if not isinstance(sd, (list, tuple)):
+                raise TypeError('Unsupported Slater determinant type {0}'.format(type(sd)))
+            if not all(type(i) in [int, type(mpz())] for i in sd):
+                raise TypeError('List of Slater determinants must all be of type int or gmpy2.mpz')
+
+            # if not derivatized
+            if deriv is None:
+                elec_energy = sum(self.overlap(i)*self.compute_hamiltonian(i) for i in sd)
+                elec_energy /= self.compute_norm(sd=sd)
+            # if derivatized
+            else:
+                olp = np.array([self.overlap(i) for i in sd])
+                d_olp = np.array([self.overlap(i, deriv=deriv) for i in sd])
+                ham = np.array([self.compute_hamiltonian(i) for i in sd])
+                d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in sd])
+                norm = self.compute_norm(sd=sd)
+                d_norm = self.compute_norm(sd=sd, deriv=deriv)
+                elec_energy = np.sum(d_olp*ham + olp*d_ham)/norm
+                elec_energy += np.sum(olp*ham)/(-norm**2)*d_norm
+            return elec_energy + nuc_nuc
 
     @abstractmethod
     def normalize(self):
