@@ -5,7 +5,7 @@ from horton import *
 
 def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver,
     nuc_nuc=True, tol=1.0e-12, horton_internal=False, **kwargs):
-
+    # FIXME: doesn't support unrestricted
     # Initialize molecule and basis set from specified file
     if isinstance(fn, IOData):
         mol = fn
@@ -15,9 +15,10 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver,
         except IOError:
             mol = IOData.from_file(fn)
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
+    npair = nelec // 2
 
     # Fill in orbital expansion and overlap
-    occ_model = AufbauOccModel(nelec // 2)
+    occ_model = AufbauOccModel(npair)
     lf = DenseLinalgFactory(obasis.nbasis)
     orb = lf.create_expansion(obasis.nbasis)
     olp = obasis.compute_overlap(lf)
@@ -28,8 +29,10 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver,
     two = obasis.compute_electron_repulsion(lf)
     external = {"nn": compute_nucnuc(mol.coordinates, mol.pseudo_numbers)}
     terms = [
-        RTwoIndexTerm(kin, "kin"),  RDirectTerm(two, "hartree"),
-        RExchangeTerm(two, "x_hf"), RTwoIndexTerm(na, "ne"),
+        RTwoIndexTerm(kin, "kin"),
+        RDirectTerm(two, "hartree"),
+        RExchangeTerm(two, "x_hf"),
+        RTwoIndexTerm(na, "ne"),
     ]
     ham = REffHam(terms, external)
     guess_core_hamiltonian(olp, kin, na, orb)
@@ -41,6 +44,10 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver,
         occ_model.assign(orb)
         dm = orb.to_dm()
         solver(tol)(ham, lf, olp, occ_model, dm, **kwargs)
+        # transform back to orbitals
+        fock_alpha = lf.create_two_index()
+        ham.compute_fock(fock_alpha)
+        orb.from_fock_and_dm(fock_alpha, dm, olp)
     else:
         raise_invalid_type("solver", solver, "callable")
     energy = ham.cache["energy"]
