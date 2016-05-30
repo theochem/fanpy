@@ -463,7 +463,6 @@ class ProjectionWavefunction(Wavefunction):
             Value of the function `g`
 
         """
-        self.normalize()
         # Update the coefficient vector
         self.params[:] = x
         # Clear cache
@@ -487,7 +486,6 @@ class ProjectionWavefunction(Wavefunction):
         return obj
 
     def jacobian(self, x):
-        self.normalize()
         # Update the coefficient vector
         self.params[:] = x
         # Clear cache
@@ -517,6 +515,5 @@ class ProjectionWavefunction(Wavefunction):
                 else:
                     jac[i, j] = self.compute_hamiltonian(sd, deriv=j) - self.overlap(sd)
             # Add normalization constraint
-            jac[-1] = self.compute_norm(sd=ref_sd, deriv=j) - 1
-
+            jac[-1, j] = self.compute_norm(sd=ref_sd, deriv=j)
         return jac
