@@ -1,10 +1,8 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
-
-import sys
-sys.path.append('../')
-from ci_wavefunction import CIWavefunction
 import numpy as np
+
+from ..ci_wavefunction import CIWavefunction
 
 class TestCIWavefunction(CIWavefunction):
     # overwrite to stop initialization

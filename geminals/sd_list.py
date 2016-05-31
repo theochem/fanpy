@@ -1,4 +1,4 @@
-import slater
+from . import slater
 from itertools import combinations, product
 
 """

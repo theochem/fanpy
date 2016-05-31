@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import sys
-sys.path.append('../')
-from cisd import CISD
-from hort import hartreefock
+from ..cisd import CISD
+from ..hort import hartreefock
 
 def test_cisd_wavefunction():
     #### H2 ####

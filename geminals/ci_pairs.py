@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
-from ci_wavefunction import CIWavefunction
-from sd_list import doci_sd_list
-from ci_matrix import doci_matrix
-from math_tools import binomial
-import slater
+from .math_tools import binomial
+from .ci_wavefunction import CIWavefunction
+from .sd_list import doci_sd_list
+from .ci_matrix import doci_matrix
+from . import slater
 
 class CIPairs(CIWavefunction):
     """ Configuration Interaction Pairs (DOCI with only one pair excitation)

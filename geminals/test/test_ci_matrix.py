@@ -1,10 +1,8 @@
+from nose.tools import assert_raises
 import numpy as np
 
-import sys
-sys.path.append('../')
-import ci_matrix
-import slater
-from nose.tools import assert_raises
+from .. import ci_matrix
+from .. import slater
 
 def test_is_alpha():
     """

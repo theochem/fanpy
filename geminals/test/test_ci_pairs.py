@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import sys
-sys.path.append('../')
-from ci_pairs import CIPairs
-from hort import hartreefock
+from ..ci_pairs import CIPairs
+from ..hort import hartreefock
 
 def test_cipairs_wavefunction():
     #### H2 ####

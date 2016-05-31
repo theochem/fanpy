@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from ci_wavefunction import CIWavefunction
-from sd_list import ci_sd_list
-from ci_matrix import ci_matrix
-from math_tools import binomial
+from .math_tools import binomial
+from .ci_wavefunction import CIWavefunction
+from .sd_list import ci_sd_list
+from .ci_matrix import ci_matrix
 
 class FCI(CIWavefunction):
     """ Full Configuration Interaction Wavefunction

@@ -1,12 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from proj_wavefunction import ProjectionWavefunction
-from sd_list import doci_sd_list
-from proj_hamiltonian import doci_hamiltonian, hamiltonian
-import slater
-from math_tools import permanent_ryser
 from gmpy2 import mpz
+
+from .proj_wavefunction import ProjectionWavefunction
+from . import slater
+from .sd_list import doci_sd_list
+from .proj_hamiltonian import doci_hamiltonian
+from .math_tools import permanent_ryser
 
 class APIG(ProjectionWavefunction):
     """ Antisymmetric Product of Interacting Geminals
@@ -58,8 +59,6 @@ class APIG(ProjectionWavefunction):
     def template_params(self):
         gem_coeffs = np.eye(self.npair, self.nspatial, dtype=self.dtype)
         params = gem_coeffs.flatten()
-        if self.energy_is_param:
-            params = np.hstack((params, 0.0))
         return params
 
     def compute_pspace(self):

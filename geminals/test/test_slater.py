@@ -1,8 +1,6 @@
-import sys
-sys.path.append('../')
-import slater
 from nose.tools import assert_raises
 
+from  .. import slater
 
 def test_occ():
     """

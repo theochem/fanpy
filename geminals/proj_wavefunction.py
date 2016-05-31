@@ -2,11 +2,11 @@ from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import numpy as np
-
-from wavefunction import Wavefunction
-import slater
 from gmpy2 import mpz
 from scipy.optimize import least_squares
+
+from .wavefunction import Wavefunction
+from . import slater
 
 
 class ProjectionWavefunction(Wavefunction):
@@ -219,7 +219,7 @@ class ProjectionWavefunction(Wavefunction):
             # set energy
             if self.energy_is_param:
                 energy_index = nparam - 1
-                params[energy_index] = 0.0
+                params = np.hstack((params, 0.0))
             else:
                 energy_index = nparam
             # add random noise to template

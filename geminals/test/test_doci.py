@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import sys
-sys.path.append('../')
-from doci import DOCI
-from hort import hartreefock
+from ..doci import DOCI
+from ..hort import hartreefock
 
 def test_doci_wavefunction():
     #### H2 ####

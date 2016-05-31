@@ -1,5 +1,5 @@
 import numpy as np
-import slater
+from . import slater
 
 def is_alpha(i, nspatial):
     """ Checks if index `i` belongs to an alpha spin orbital

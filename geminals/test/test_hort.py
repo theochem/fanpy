@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from geminals.hort import ap1rog, hartreefock
+from ..hort import ap1rog, hartreefock
 
 
 def test_hartreefock():

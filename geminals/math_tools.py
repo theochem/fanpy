@@ -1,9 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from itertools import permutations
-
 import numpy as np
 from scipy.misc import comb
+from itertools import permutations
 
 
 def binomial(n, k):

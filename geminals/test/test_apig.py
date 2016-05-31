@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import sys
-sys.path.append('../')
-from apig import APIG
-from hort import hartreefock
+from ..apig import APIG
+from ..hort import hartreefock
 
 import numpy as np
 
@@ -34,7 +32,6 @@ def test_apig_wavefunction():
     assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-1.86968284431)) < 1e-7
     # Solve with Jacobian not using energy as a parameter
     print('x'*30)
-    print(apig.params)
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
     apig()
     # FIXME: THESE TESTS FAIL!

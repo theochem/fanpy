@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from ci_wavefunction import CIWavefunction
-from math_tools import binomial
-from sd_list import doci_sd_list
-from ci_matrix import doci_matrix
+from .ci_wavefunction import CIWavefunction
+from .math_tools import binomial
+from .sd_list import doci_sd_list
+from .ci_matrix import doci_matrix
 
 class DOCI(CIWavefunction):
     """ Doubly Occupied Configuration Interaction Wavefunction

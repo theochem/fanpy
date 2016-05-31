@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractproperty, abstractmethod
 import re
-
 import numpy as np
 
 # TODO: add custom exception class

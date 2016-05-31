@@ -1,10 +1,8 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
-
-import sys
-sys.path.append('../')
-from proj_wavefunction import ProjectionWavefunction
 import numpy as np
+
+from ..proj_wavefunction import ProjectionWavefunction
 
 class TestProjectionWavefunction(ProjectionWavefunction):
     # overwrite to stop initialization
@@ -27,8 +25,9 @@ class TestProjectionWavefunction(ProjectionWavefunction):
     def normalize(self):
         return 1.0
 
+    @property
     def template_params(self):
-        return None
+        return [0, 0, 0, 0]
 
 def test_assign_params():
     """
@@ -46,7 +45,7 @@ def test_assign_params():
     assert np.all(np.real(test.params[:-1]) < 1/4.0)
     assert np.all(np.imag(test.params[:-1]) < 1/4.0)
     # Check energy
-    assert test.params[-1] == -1
+    assert test.params[-1] == 0.0
     # Assign params
     test.assign_params(np.array([0,1,2,3,4], dtype=np.float64))
     assert np.allclose(test.params, np.arange(5))
@@ -103,7 +102,7 @@ def test_overlap():
     # derivative
     test.H = np.arange(9).reshape(3,3)
     test.orb_type = 'restricted'
-    test.d_cache = {0b1001111:4, 0b10001111:5, 0b11001111:6, 0b1010111:7, 0b10010111:8}
+    test.d_cache = {(0b1111,0):4, (0b1111,1):5, (0b1111,2):6, (0b10111,0):7, (0b10111,1):8}
     assert test.overlap(0b1111, deriv=0) == 4
     assert test.overlap(0b1111, deriv=1) == 5
     assert test.overlap(0b1111, deriv=2) == 6

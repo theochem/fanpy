@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from geminals.math_tools import binomial, permanent_combinatoric, permanent_ryser
+from ..math_tools import binomial, permanent_combinatoric, permanent_ryser
 
 
 def test_binomial():
