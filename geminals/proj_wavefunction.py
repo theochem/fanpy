@@ -328,8 +328,7 @@ class ProjectionWavefunction(Wavefunction):
             else:
                 # construct new gmpy2.mpz to describe the slater determinant and
                 # derivation index
-                new_mpz = sd | (mpz(deriv+1) << self.nspin)
-                return self.d_cache[new_mpz]
+                return self.d_cache[(sd, deriv)]
         except KeyError:
             return self.compute_overlap(sd, deriv=deriv)
 
@@ -474,15 +473,17 @@ class ProjectionWavefunction(Wavefunction):
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
+            obj = np.empty(self.nproj+2, dtype=self.dtype)
         else:
             energy = self.compute_energy(sd=ref_sd)
+            obj = np.empty(self.nproj+1, dtype=self.dtype)
 
-        obj = np.empty(self.nproj+1, dtype=self.dtype)
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy*self.overlap(sd)
         # Add normalization constraint
-        obj[-1] = self.compute_norm(sd=ref_sd) - 1
+        obj[-1] = self.compute_norm(sd=ref_sd) - 1.0
+        # obj[-1] = self.overlap(ref_sd) - 1.0
         return obj
 
     def jacobian(self, x):
@@ -498,10 +499,11 @@ class ProjectionWavefunction(Wavefunction):
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
+            jac = np.empty((self.nproj+2, self.nparam), dtype=self.dtype)
         else:
             energy = self.compute_energy(sd=ref_sd)
+            jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
 
-        jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
         for j in range(self.nparam):
             if self.energy_is_param:
                 d_energy = 0.0
@@ -516,4 +518,5 @@ class ProjectionWavefunction(Wavefunction):
                     jac[i, j] = self.compute_hamiltonian(sd, deriv=j) - self.overlap(sd)
             # Add normalization constraint
             jac[-1, j] = self.compute_norm(sd=ref_sd, deriv=j)
+            # jac[-1, j] = self.overlap(ref_sd, deriv=j)
         return jac

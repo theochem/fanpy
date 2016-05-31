@@ -107,40 +107,11 @@ class APIG(ProjectionWavefunction):
                     val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
                 # construct new gmpy2.mpz to describe the slater determinant and
                 # derivation index
-                new_mpz = sd | (mpz(deriv+1) << self.nspin)
-                self.d_cache[new_mpz] = val
+                self.d_cache[(sd, deriv)] = val
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
         return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
-        # check with the old code
-        olp = self.overlap(sd, deriv=deriv)
-
-        one_electron = 0.0
-        coulomb = 0.0
-        coulomb_tmp = 0.0
-        exchange = 0.0
-
-        H = self.H[0]
-        G = self.G[0]
-        for i in range(self.nspatial):
-            if slater.occ(sd, i) and slater.occ(sd, i+self.nspatial):
-                one_electron += 2 * H[i, i]
-                coulomb += G[i, i, i, i]
-                for j in range( i + 1, self.nspatial):
-                    if slater.occ(sd, j) and slater.occ(sd, j+self.nspatial):
-                        coulomb += 4 * G[i, j, i, j]
-                        exchange -= 2 * G[i, j, j, i]
-                for j in range(self.nspatial):
-                    if not slater.occ(sd, j) and not slater.occ(sd, j+self.nspatial):
-                        exc = slater.excite(sd, i, i+self.nspatial, j, j+self.nspatial)
-                        coulomb_tmp += G[i, i, j, j] * self.overlap(exc, deriv=deriv)
-
-        one_electron *= olp
-        exchange *= olp
-        coulomb = coulomb * olp + coulomb_tmp
-
-        return one_electron + coulomb + exchange
 
     def normalize(self):
         # build geminal coefficient
