@@ -10,11 +10,11 @@ class TestProjectionWavefunction(ProjectionWavefunction):
         pass
 
     @property
-    def _nproj_default(self):
-        return 4
+    def template_params(self):
+        return np.empty(4)
 
-    def compute_pspace(self):
-        return [0b1111, 0b10111, 0b11011, 0b11101]
+    def compute_pspace(self, num_sd):
+        return [0b1111, 0b10111, 0b11011, 0b11101][:num_sd]
 
     def compute_overlap(self, sd, deriv=None):
         return 3
@@ -24,10 +24,6 @@ class TestProjectionWavefunction(ProjectionWavefunction):
 
     def normalize(self):
         return 1.0
-
-    @property
-    def template_params(self):
-        return [0, 0, 0, 0]
 
 def test_assign_params():
     """
@@ -42,6 +38,7 @@ def test_assign_params():
     # Assign random float
     test.dtype = np.complex128
     test.assign_params()
+    print(np.real(test.params[:-1]))
     assert np.all(np.real(test.params[:-1]) < 1/4.0)
     assert np.all(np.imag(test.params[:-1]) < 1/4.0)
     # Check energy
@@ -61,32 +58,27 @@ def test_assign_pspace():
     Tests ProjectionWavefunction.assign_pspace
     """
     test = TestProjectionWavefunction()
+    test.params = np.empty(4)
     # default assignment
     test.assign_pspace()
-    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)
+    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)[:3]
     # assign pspace
     test.assign_pspace([0b1111, 0b10111])
     assert test.pspace == (0b1111, 0b10111)
     test.assign_pspace((0b1111, 0b10111))
     assert test.pspace == (0b1111, 0b10111)
+    # assign int
+    test.assign_pspace(4)
+    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)
+    test.assign_pspace(3)
+    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)[:3]
+    test.assign_pspace(2)
+    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)[:2]
+    test.assign_pspace(1)
+    assert test.pspace == (0b1111, 0b10111, 0b11011, 0b11101)[:1]
     # bad pspace
     assert_raises(TypeError, lambda:test.assign_pspace('123'))
     assert_raises(ValueError, lambda:test.assign_pspace(['1', '2']))
-
-def test_assign_nproj():
-    """
-    Tests ProjectionWavefunction.assign_nproj
-    """
-    test = TestProjectionWavefunction()
-    # default assignment
-    test.assign_nproj()
-    assert test.nproj == 4
-    # assignment
-    test.assign_nproj(10)
-    assert test.nproj == 10
-    # bad assignment
-    assert_raises(TypeError, lambda:test.assign_nproj(10.0))
-    assert_raises(TypeError, lambda:test.assign_nproj('10'))
 
 def test_overlap():
     """

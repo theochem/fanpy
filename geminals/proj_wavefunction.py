@@ -85,11 +85,9 @@ class ProjectionWavefunction(Wavefunction):
     #
 
     @abstractproperty
-    def _nproj_default(self):
-        """
-        Default number of Slater determinants in the projection space
-        """
+    def template_params(self):
         pass
+
 
     @property
     def _methods(self):
@@ -118,6 +116,10 @@ class ProjectionWavefunction(Wavefunction):
         else:
             return self.nparam
 
+    @property
+    def nproj(self):
+        return len(self.pspace)
+
     #
     # Special methods
     #
@@ -131,7 +133,6 @@ class ProjectionWavefunction(Wavefunction):
         # Arguments handled by base Wavefunction class
         dtype=None,
         nuc_nuc=None,
-        nproj=None,
         # Arguments handled by FullCI class
         params=None,
         pspace=None,
@@ -147,7 +148,6 @@ class ProjectionWavefunction(Wavefunction):
         self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
-        self.assign_nproj(nproj=nproj)
         del self._energy
         self.cache = {}
         self.d_cache = {}
@@ -196,10 +196,6 @@ class ProjectionWavefunction(Wavefunction):
     #
     # Assignment methods
     #
-    @abstractproperty
-    def template_params(self):
-        pass
-
     def assign_params(self, params=None):
         """ Assigns the parameters to the wavefunction
 
@@ -209,13 +205,13 @@ class ProjectionWavefunction(Wavefunction):
         Parameters of the wavefunction
         """
         if self.energy_is_param:
-            nparam = self._nproj_default + 1
+            nparam = self.template_params.size + 1
         else:
-            nparam = self._nproj_default
+            nparam = self.template_params.size
         if params is None:
             params = self.template_params
             # set scale
-            scale = 1.0/(self._nproj_default)
+            scale = 1.0/(self.template_params.size)
             # set energy
             if self.energy_is_param:
                 energy_index = nparam - 1
@@ -223,9 +219,9 @@ class ProjectionWavefunction(Wavefunction):
             else:
                 energy_index = nparam
             # add random noise to template
-            params[:energy_index] += scale*(2*np.random.random(self._nproj_default) - 1)
+            params[:energy_index] += scale*(np.random.random(self.template_params.size) - 1)
             if params.dtype == np.complex128:
-                params[:energy_index] += 1j*scale*(2*np.random.random(self._nproj_default) - 1)
+                params[:energy_index] += 1j*scale*(np.random.random(self.template_params.size) - 1)
         if not isinstance(params, np.ndarray):
             raise TypeError("params must be of type {0}".format(np.ndarray))
         elif params.shape != (nparam,):
@@ -250,34 +246,22 @@ class ProjectionWavefunction(Wavefunction):
         #FIXME: code repeated in ci_wavefunction.assign_civec
         #FIXME: cyclic dependence on pspace
         if pspace is None:
-            pspace = self.compute_pspace()
-        if not isinstance(pspace, (list, tuple)):
-            raise TypeError("pspace must be a list or a tuple")
-        if not all(type(i) in [int, type(mpz())] for i in pspace):
-            raise ValueError('Each Slater determinant must be an integer or mpz object')
+            pspace = self.compute_pspace(self.nparam-1)
+        if isinstance(pspace, int):
+            pspace = self.compute_pspace(pspace)
+        elif isinstance(pspace, (list, tuple)):
+            if not all(type(i) in [int, type(mpz())] for i in pspace):
+                raise ValueError('Each Slater determinant must be an integer or mpz object')
+        else:
+            raise TypeError("pspace must be an int, list or tuple")
         self.pspace = tuple(pspace)
-
-    def assign_nproj(self, nproj=None):
-        """ Sets number of Slater determinants on which to project against
-
-        Parameters
-        ----------
-        nproj : int
-            Number of projection states
-        """
-        #FIXME: cyclic dependence on nproj
-        if nproj is None:
-            nproj = self._nproj_default
-        if not isinstance(nproj, int):
-            raise TypeError("nproj must be of type {0}".format(int))
-        self.nproj = nproj
 
     #
     # Computation methods
     #
 
     @abstractmethod
-    def compute_pspace(self):
+    def compute_pspace(self, num_sd):
         """ Generates Slater determinants on which to project against
 
         Number of Slater determinants generated is determined strictly by the size of the
@@ -454,7 +438,7 @@ class ProjectionWavefunction(Wavefunction):
         Parameters
         ----------
         x : 1-index np.ndarray
-            The coefficient vector.
+            The coefficient vector
 
         Returns
         -------
@@ -473,17 +457,15 @@ class ProjectionWavefunction(Wavefunction):
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
-            obj = np.empty(self.nproj+2, dtype=self.dtype)
         else:
             energy = self.compute_energy(sd=ref_sd)
-            obj = np.empty(self.nproj+1, dtype=self.dtype)
+        obj = np.empty(self.nproj+1, dtype=self.dtype)
 
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy*self.overlap(sd)
         # Add normalization constraint
         obj[-1] = self.compute_norm(sd=ref_sd) - 1.0
-        # obj[-1] = self.overlap(ref_sd) - 1.0
         return obj
 
     def jacobian(self, x):
@@ -499,10 +481,9 @@ class ProjectionWavefunction(Wavefunction):
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
-            jac = np.empty((self.nproj+2, self.nparam), dtype=self.dtype)
         else:
             energy = self.compute_energy(sd=ref_sd)
-            jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
+        jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
 
         for j in range(self.nparam):
             if self.energy_is_param:
@@ -518,5 +499,4 @@ class ProjectionWavefunction(Wavefunction):
                     jac[i, j] = self.compute_hamiltonian(sd, deriv=j) - self.overlap(sd)
             # Add normalization constraint
             jac[-1, j] = self.compute_norm(sd=ref_sd, deriv=j)
-            # jac[-1, j] = self.overlap(ref_sd, deriv=j)
         return jac
