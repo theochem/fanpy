@@ -6,7 +6,6 @@ from gmpy2 import mpz
 from scipy.optimize import least_squares
 
 from .wavefunction import Wavefunction
-from . import slater
 
 
 class ProjectionWavefunction(Wavefunction):
@@ -18,18 +17,15 @@ class ProjectionWavefunction(Wavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K)
-        One electron integrals for the spatial orbitals
-    Ha : np.ndarray(K,K)
-        One electron integrals for the alpha spin orbitals
-    Hb : np.ndarray(K,K)
-        One electron integrals for the beta spin orbitals
-    G : np.ndarray(K,K,K,K)
-        Two electron integrals for the spatial orbitals
-    Ga : np.ndarray(K,K,K,K)
-        Two electron integrals for the alpha spin orbitals
-    Gb : np.ndarray(K,K,K,K)
-        Two electron integrals for the beta spin orbitals
+    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
+        and the (beta, beta) unrestricted orbitals
+    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        If tuple of np.ndarray (length 3), two electron integrals for the
+        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
+        (beta, beta, beta, beta) unrestricted orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
     nspatial : int
@@ -39,56 +35,88 @@ class ProjectionWavefunction(Wavefunction):
     nelec : int
         Number of electrons
     npair : int
-        Number of electron pairs
-        Assumes that the number of electrons is even
-    nparticle : int
-        Number of quasiparticles (electrons)
-    ngeminal : int
-        Number of geminals
-    nproj : int
-        Dimension of the projection space
+        Number of electron pairs (rounded down)
+    orb_type : {'restricted', 'unrestricted', 'generalized'}
+        Type of the orbital used in obtaining the one-electron and two-electron integrals
     nparam : int
         Number of parameters
-    x : np.ndarray(K)
+    params : np.ndarray(K)
         Guess for the parameters
         Iteratively updated during convergence
         Initial guess before convergence
         Coefficients after convergence
-    jacobian
-        Returns the Jacobian of the parameters
-        Not an abstract method because the wavefunction can still be solved without it
+    cache : dict of mpz to float
+        Cache of the Slater determinant to the overlap of the wavefunction with this
+        Slater determinant
+    d_cache : dict of (mpz, int) to float
+        Cache of the Slater determinant to the derivative(with respect to some index)
+        of the overlap of the wavefunction with this Slater determinan
 
-    Private
+    Properties
+    ----------
+    _methods : dict of func
+        Dictionary of methods that are used to solve the wavefunction
+    nparam : int
+        Number of parameters used to define the wavefunction
+    nproj : int
+        Number of Slater determinants to project against
+    energy_index : int
+        Index of the energy in the list of parameters
+    ref_sd : int or list of int
+        Reference Slater determinants with respect to which the norm and the energy
+        are calculated
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Or list of integers
+
+    Methods
     -------
-    _methods : dict
-        Default dimension of projection space
 
     Abstract Property
     -----------------
-    _nproj_default : int
-        Default number of projection states
+    template_params : np.ndarray(K)
+        Default numpy array of parameters.
+        This will be used to determine the number of parameters
+        Initial guess, if not provided, will be obtained by adding random noise to
+        this template
 
     Abstract Method
     ---------------
     compute_pspace
-        Generates a list of states to project onto
+        Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
-        Computes the overlap of a Slater deteriminant with the wavefunction
+        Computes the overlap of the wavefunction with one or more Slater determinants
     compute_hamiltonian
-        Computes the hamiltonian of a Slater deteriminant with the wavefunction
+        Computes the hamiltonian of the wavefunction with respect to one or more Slater
+        determinants
+        By default, the energy is determined with respect to ref_sd
+    normalize
+        Normalizes the wavefunction (different definitions available)
+        By default, the norm should the projection against the ref_sd squared
     """
     # FIXME: turn C into property and have a better attribute name
     __metaclass__ = ABCMeta
 
     #
-    # Default attribute values
+    # Abstract Property
     #
-
     @abstractproperty
     def template_params(self):
+        """ Default numpy array of parameters.
+
+        This will be used to determine the number of parameters
+        Initial guess, if not provided, will be obtained by adding random noise to
+        this template
+
+        Returns
+        -------
+        template_params : np.ndarray(K, )
+            
+        """
         pass
 
-
+    #
+    # Properties
+    #
     @property
     def _methods(self):
         """ Dictionary of methods for solving the wavefunction
@@ -100,25 +128,52 @@ class ProjectionWavefunction(Wavefunction):
         """
         return {"default": self._solve_least_squares}
 
-    #
-    # Properties
-    #
     @property
     def nparam(self):
         """ Number of parameters
+
+        Returns
+        -------
+        nparam : int
         """
         return self.params.size
 
     @property
+    def nproj(self):
+        """ Number of Slater determinants to project against
+
+        Returns
+        -------
+        nproj : int
+        """
+        return len(self.pspace)
+
+    @property
     def energy_index(self):
+        """ Index of the energy in the list of parameters
+
+        Returns
+        -------
+        energy_index : int
+        """
         if self.energy_is_param:
             return self.nparam-1
         else:
             return self.nparam
 
     @property
-    def nproj(self):
-        return len(self.pspace)
+    def ref_sd(self):
+        """ Reference Slater determinant
+
+        You can overwrite this attribute if you want to change the reference Slater determinant
+
+        Returns
+        -------
+        ref_sd : int, list of int
+            Integer that describes the occupation of a Slater determinant as a bitstring
+            Or list of integers
+        """
+        return self.pspace[0]
 
     #
     # Special methods
@@ -202,7 +257,7 @@ class ProjectionWavefunction(Wavefunction):
         Parameters
         ----------
         params : np.ndarray(K,)
-        Parameters of the wavefunction
+            Parameters of the wavefunction
         """
         if self.energy_is_param:
             nparam = self.template_params.size + 1
@@ -239,12 +294,11 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        civec : iterable of int
-            List of Slater determinants (in the form of integers that describe
+        pspace : int, iterable of int, 
+            If iterable, then it is a list of Slater determinants (in the form of integers that describe
             the occupation as a bitstring)
+            If integer, then it is the number of Slater determinants to be generated
         """
-        #FIXME: code repeated in ci_wavefunction.assign_civec
-        #FIXME: cyclic dependence on pspace
         if pspace is None:
             pspace = self.compute_pspace(self.nparam-1)
         if isinstance(pspace, int):
@@ -252,36 +306,10 @@ class ProjectionWavefunction(Wavefunction):
         elif isinstance(pspace, (list, tuple)):
             if not all(type(i) in [int, type(mpz())] for i in pspace):
                 raise ValueError('Each Slater determinant must be an integer or mpz object')
+            pspace = [mpz(sd) for sd in pspace]
         else:
             raise TypeError("pspace must be an int, list or tuple")
         self.pspace = tuple(pspace)
-
-    #
-    # Computation methods
-    #
-
-    @abstractmethod
-    def compute_pspace(self, num_sd):
-        """ Generates Slater determinants on which to project against
-
-        Number of Slater determinants generated is determined strictly by the size of the
-        projection space (self.nproj). First row corresponds to the ground state SD, then
-        the next few rows are the first excited, then the second excited, etc
-
-        Returns
-        -------
-        civec : list of ints
-            Integer that describes the occupation of a Slater determinant as a bitstring
-        """
-        pass
-
-    @abstractmethod
-    def compute_overlap(self, sd, deriv=None):
-        pass
-
-    @abstractmethod
-    def compute_hamiltonian(self, sd, deriv=None):
-        pass
 
     #
     # View method
@@ -295,7 +323,7 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        sd : int
+        sd : int, mpz
             Slater Determinant against which to project.
         deriv : int
             Index of the parameter to derivatize
@@ -304,13 +332,13 @@ class ProjectionWavefunction(Wavefunction):
         Returns
         -------
         overlap : float
-            Overlap
         """
+        sd = mpz(sd)
         try:
             if deriv is None:
                 return self.cache[sd]
             else:
-                # construct new gmpy2.mpz to describe the slater determinant and
+                # construct new mpz to describe the slater determinant and
                 # derivation index
                 return self.d_cache[(sd, deriv)]
         except KeyError:
@@ -330,15 +358,32 @@ class ProjectionWavefunction(Wavefunction):
         ..math::
             \sum_i c_i \big< \Phi_i \big| \Psi \big> &= \sum_i c_i \sum_j c_j \big< \Phi_i \big| \Phi_j \big>\\
                                                      &= \sum_i c_i^2
+
+        Parameters
+        ----------
+        sd : int, mpz, iterable of (int, gmpy2.mpz)
+            If int or mpz, then an integer that describes the occupation of
+            a Slater determinant as a bitstring
+            If iterable, then list of integers that describes the occupation of
+            a Slater determinant as a bitstring
+        deriv : int
+            Index of the parameter to derivatize
+            Default is no derivatization
+
+        Returns
+        -------
+        norm : float
         """
         if sd is None:
-            sd = self.pspace[0]
+            sd = self.ref_sd
         if type(sd) in [int, type(mpz())]:
             sd = (sd,)
         if not isinstance(sd, (list, tuple)):
-            raise TypeError('Slater determinants must be given as an int or gmpy2.mpz or list/tuple of these')
+            raise TypeError('Slater determinants must be given as an int or mpz or list/tuple of these')
         if not all(type(i) in [int, type(mpz())] for i in sd):
-            raise TypeError('List of Slater determinants must all be of type int or gmpy2.mpz')
+            raise TypeError('List of Slater determinants must all be of type int or mpz')
+        # convert to mpz
+        sd = [mpz(i) for i in sd]
         # if not derivatized
         if deriv is None:
             return sum(self.overlap(i)**2 for i in sd)
@@ -354,24 +399,28 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        sd : int, gmpy2.mpz, list of int or gmpy2.mpz
-            Slater Determinant against which to project.
-            Default is the energy used to parameterize the system
-            If an int or gmpy2.mpz is given,
+        sd : int, mpz, list of (int, gmpy2.mpz)
+            If an int or mpz is given,
             ..math::
                 \frac{c_i \big< \Phi_i \big| H \big| \Psi \big>}{\big< \Phi_i \big| \Psi \big>}
             is calculated
-            If a list of int or gmpy2.mpz is given,
+            If a list of int or mpz is given,
             ..math::
-                \frac{\sum_i c_i \big< \Phi_i \big| H \big| \Psi \big>}{\sum_j \big< \Phi_j \big| \Psi \big>^2}
+                \frac{\sum_i \big< \Phi_i \big| \Psi \big> \big< \Phi_i \big| H \big| \Psi \big>}{\sum_j \big< \Phi_j \big| \Psi \big>^2}
             is calculated
+            This is only useful if the energy is not a parameter
+            Default is the self.ref_sd
         include_nuc : bool
             Flag to include nuclear nuclear repulsion
+        deriv : int
+            Index of the parameter to derivatize
+            Default is no derivatization
 
         Returns
         -------
         energy : float
-            Total energy if include_nuc is True
+            If include_nuc is True, then total energy
+            If include_nuc is False, then electronic energy
         """
         nuc_nuc = 0.0
         if include_nuc and deriv is None:
@@ -392,14 +441,16 @@ class ProjectionWavefunction(Wavefunction):
         else:
             # if sd is None
             if sd is None:
-                sd = self.pspace[0]
+                sd = self.ref_sd
             # if sd is not None
             if type(sd) in [int, type(mpz())]:
                 sd = (sd,)
             if not isinstance(sd, (list, tuple)):
                 raise TypeError('Unsupported Slater determinant type {0}'.format(type(sd)))
             if not all(type(i) in [int, type(mpz())] for i in sd):
-                raise TypeError('List of Slater determinants must all be of type int or gmpy2.mpz')
+                raise TypeError('List of Slater determinants must all be of type int or mpz')
+            # convert to mpz
+            sd = [mpz(i) for i in sd]
 
             # if not derivatized
             if deriv is None:
@@ -417,23 +468,24 @@ class ProjectionWavefunction(Wavefunction):
                 elec_energy += np.sum(olp*ham)/(-norm**2)*d_norm
             return elec_energy + nuc_nuc
 
-    @abstractmethod
-    def normalize(self):
-        pass
-
     #
     # Objective
     #
     def objective(self, x):
-        """ System of nonlinear functions to solve
+        """ System of nonlinear functions that corresponds to the projected Schrodinger equation
 
-        The solver likely solves for the root, so the system of equations will be
-        rearranged to zero
+        The set of equations is
         ..math::
-            f(x_1) - b_1 &= g(x_1)\\
-            f(x_2) - b_2 &= g(x_2)\\
-            f(x_3) - b_3 &= g(x_3)\\
-        and the solver solves for `x` such that the values of the function `g` is minimized
+            f_i(x) = \big< \Phi_i \big| H \big| \Psi \big> - E \big< \Phi_i \big| \Psi \big>
+        where :math:`E` is defined by ProjectionWavefunction.compute_energy.
+        An extra equation is added at the end so that the waavefunction is normalized
+        ..math::
+            f_{last} = norm - 1
+        where :math:`norm` is defined by ProjectionWavefunction.compute_norm.
+        This function will be zero if the function is normalized.
+        The solver solves for `x` such that 
+        ..math::
+            f_i(x) = 0
 
         Parameters
         ----------
@@ -442,8 +494,8 @@ class ProjectionWavefunction(Wavefunction):
 
         Returns
         -------
-        value : np.ndarray(self.nproj,)
-            Value of the function `g`
+        value : np.ndarray(self.nproj+1,)
+            Value of the function :math:`f`
 
         """
         # Update the coefficient vector
@@ -452,51 +504,83 @@ class ProjectionWavefunction(Wavefunction):
         self.cache = {}
         self.d_cache = {}
 
-        # set reference SD
-        ref_sd = self.pspace[0]
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
         else:
-            energy = self.compute_energy(sd=ref_sd)
+            energy = self.compute_energy()
         obj = np.empty(self.nproj+1, dtype=self.dtype)
 
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy*self.overlap(sd)
         # Add normalization constraint
-        obj[-1] = self.compute_norm(sd=ref_sd) - 1.0
+        obj[-1] = self.compute_norm(sd) - 1.0
         return obj
 
     def jacobian(self, x):
+        """ Jacobian of the objective function
+
+        A matrix is returned
+        ..math::
+            J_{ij}(\vec{x}) = \frac{\partial f_i(\vec{x})}{\partial x_j}
+        where different value is returned depending on the :math:`\vec{x}`
+
+        Parameters
+        ----------
+        x : 1-index np.ndarray
+            The coefficient vector
+
+        Returns
+        -------
+        value : np.ndarray(self.nproj+1, self.nparam)
+            Value of the Jacobian :math:`J_{ij}`
+
+        """
         # Update the coefficient vector
         self.params[:] = x
         # Clear cache
         self.cache = {}
         self.d_cache = {}
 
-        # set reference SD
-        ref_sd = self.pspace[0]
-
         # set energy
         if self.energy_is_param:
             energy = self.params[-1]
         else:
-            energy = self.compute_energy(sd=ref_sd)
+            energy = self.compute_energy()
         jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
 
         for j in range(self.nparam):
             if self.energy_is_param:
                 d_energy = 0.0
             else:
-                d_energy = self.compute_energy(sd=ref_sd, deriv=j)
+                d_energy = self.compute_energy(deriv=j)
             for i, sd in enumerate(self.pspace):
-                # <SD|H|Psi> - E<SD|H|Psi> == 0
+                # <SD|H|Psi> - E<SD|H|Psi> = 0
                 if j < self.energy_index:
                     jac[i, j] = (self.compute_hamiltonian(sd, deriv=j)
                                  -energy*self.overlap(sd, deriv=j)-d_energy*self.overlap(sd))
                 else:
                     jac[i, j] = self.compute_hamiltonian(sd, deriv=j) - self.overlap(sd)
             # Add normalization constraint
-            jac[-1, j] = self.compute_norm(sd=ref_sd, deriv=j)
+            jac[-1, j] = self.compute_norm(deriv=j)
         return jac
+
+    #
+    # Abstract Methods
+    #
+    @abstractmethod
+    def compute_pspace(self, num_sd):
+        pass
+
+    @abstractmethod
+    def compute_overlap(self, sd, deriv=None):
+        pass
+
+    @abstractmethod
+    def compute_hamiltonian(self, sd, deriv=None):
+        pass
+
+    @abstractmethod
+    def normalize(self):
+        pass

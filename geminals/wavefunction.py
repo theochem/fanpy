@@ -38,7 +38,7 @@ class Wavefunction(object):
     Abstract Property
     -----------------
     _methods : dict
-        Dictionary of methods that is used to solve the wavefunction
+        Dictionary of methods that are used to solve the wavefunction
 
     Abstract Method
     ---------------
