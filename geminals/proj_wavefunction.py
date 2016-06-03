@@ -391,7 +391,7 @@ class ProjectionWavefunction(Wavefunction):
         else:
             return sum(2*self.overlap(i)*self.overlap(i, deriv=deriv) for i in sd)
 
-    def compute_energy(self, include_nuc=True, sd=None, deriv=None):
+    def compute_energy(self, include_nuc=False, sd=None, deriv=None):
         """ Returns the energy of the system
 
         ..math::
@@ -412,6 +412,7 @@ class ProjectionWavefunction(Wavefunction):
             Default is the self.ref_sd
         include_nuc : bool
             Flag to include nuclear nuclear repulsion
+            Default is False
         deriv : int
             Index of the parameter to derivatize
             Default is no derivatization
@@ -421,9 +422,10 @@ class ProjectionWavefunction(Wavefunction):
         energy : float
             If include_nuc is True, then total energy
             If include_nuc is False, then electronic energy
+            Default is electronic energy
         """
         nuc_nuc = 0.0
-        if include_nuc and deriv is None:
+        if include_nuc:
             nuc_nuc = self.nuc_nuc
         # if energy is a parameter
         if self.energy_is_param:
@@ -505,17 +507,14 @@ class ProjectionWavefunction(Wavefunction):
         self.d_cache = {}
 
         # set energy
-        if self.energy_is_param:
-            energy = self.params[-1]
-        else:
-            energy = self.compute_energy()
+        energy = self.compute_energy()
         obj = np.empty(self.nproj+1, dtype=self.dtype)
 
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy*self.overlap(sd)
         # Add normalization constraint
-        obj[-1] = self.compute_norm(sd) - 1.0
+        obj[-1] = self.compute_norm() - 1.0
         return obj
 
     def jacobian(self, x):
@@ -544,24 +543,15 @@ class ProjectionWavefunction(Wavefunction):
         self.d_cache = {}
 
         # set energy
-        if self.energy_is_param:
-            energy = self.params[-1]
-        else:
-            energy = self.compute_energy()
+        energy = self.compute_energy()
         jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
 
         for j in range(self.nparam):
-            if self.energy_is_param:
-                d_energy = 0.0
-            else:
-                d_energy = self.compute_energy(deriv=j)
+            d_energy = self.compute_energy(deriv=j)
             for i, sd in enumerate(self.pspace):
                 # <SD|H|Psi> - E<SD|H|Psi> = 0
-                if j < self.energy_index:
-                    jac[i, j] = (self.compute_hamiltonian(sd, deriv=j)
-                                 -energy*self.overlap(sd, deriv=j)-d_energy*self.overlap(sd))
-                else:
-                    jac[i, j] = self.compute_hamiltonian(sd, deriv=j) - self.overlap(sd)
+                jac[i, j] = (self.compute_hamiltonian(sd, deriv=j)
+                                -energy*self.overlap(sd, deriv=j)-d_energy*self.overlap(sd))
             # Add normalization constraint
             jac[-1, j] = self.compute_norm(deriv=j)
         return jac

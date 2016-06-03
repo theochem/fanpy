@@ -49,19 +49,12 @@ class APIG(ProjectionWavefunction):
     -------
     """
     @property
-    def _nproj_default(self):
-        """
-        Default number of Slater determinants in the projection space
-        """
-        return self.npair*self.nspatial
-
-    @property
     def template_params(self):
         gem_coeffs = np.eye(self.npair, self.nspatial, dtype=self.dtype)
         params = gem_coeffs.flatten()
         return params
 
-    def compute_pspace(self):
+    def compute_pspace(self, num_sd):
         """ Generates Slater determinants on which to project against
 
         Number of Slater determinants generated is determined strictly by the size of the
@@ -73,7 +66,7 @@ class APIG(ProjectionWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return doci_sd_list(self, self._nproj_default)
+        return doci_sd_list(self, num_sd)
 
     def compute_overlap(self, sd, deriv=None):
         # get indices of the occupied orbitals
@@ -116,9 +109,9 @@ class APIG(ProjectionWavefunction):
         # build geminal coefficient
         gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.nspatial)
         # normalize the geminals
-        # norm = np.sum(gem_coeffs**2, axis=1)
-        # gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # gem_coeffs[norm<0, :] *= -1
+        norm = np.sum(gem_coeffs**2, axis=1)
+        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
+        gem_coeffs[norm<0, :] *= -1
         # normalize the wavefunction
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5/self.npair)

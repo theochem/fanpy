@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function
-from ..apig import APIG
-from ..hort import hartreefock
+from geminals.apig import APIG
+from geminals.hort import hartreefock
 
 import numpy as np
 
-def test_apig_wavefunction():
+def test_apig_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
     # Old Code Value : -1.86968284431
@@ -31,10 +31,10 @@ def test_apig_wavefunction():
     assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-1.86968284431)) < 1e-7
     assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-1.86968284431)) < 1e-7
     # Solve with Jacobian not using energy as a parameter
-    print('x'*30)
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
     apig()
     # FIXME: THESE TESTS FAIL!
+    print('overlaps', apig.overlap(apig.pspace[0]), apig.compute_overlap(apig.pspace[0]))
     print(apig.compute_energy(sd=apig.pspace[0], include_nuc=False), 'new code')
     print(-1.86968284431, 'old code')
     assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-1.86968284431)) < 1e-7
@@ -52,6 +52,7 @@ def test_apig_wavefunction():
     # assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-1.86968284431)) < 1e-4
     # assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-1.86968284431)) < 1e-4
 
+def test_apig_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719
     # Old Code Value : -8.96353105152
@@ -66,6 +67,8 @@ def test_apig_wavefunction():
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
     apig()
+    print(apig.compute_energy(include_nuc=False), 'new code')
+    print(-8.96353105152, 'old code')
     assert abs(apig.compute_energy(include_nuc=False)-(-8.96353105152)) < 1e-7
     # convert energy back into projection dependent (energy is not a parameter)
     apig.energy_is_param = False
@@ -76,8 +79,10 @@ def test_apig_wavefunction():
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
     apig()
     # FIXME: THESE TESTS FAIL!
-    # assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-8.96353105152)) < 1e-7
-    # assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-8.96353105152)) < 1e-7
+    print(apig.compute_energy(sd=apig.pspace[0], include_nuc=False), 'New Code')
+    print(-8.96353105152, 'Old Code')
+    assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-8.96353105152)) < 1e-7
+    assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-8.96353105152)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
     apig._solve_least_squares(jac=None)
@@ -89,5 +94,3 @@ def test_apig_wavefunction():
     # FIXME: THESE TESTS FAIL!
     # assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False)-(-8.96353105152)) < 1e-4
     # assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-8.96353105152)) < 1e-4
-test_apig_wavefunction()
-
