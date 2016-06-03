@@ -110,7 +110,7 @@ class ProjectionWavefunction(Wavefunction):
         Returns
         -------
         template_params : np.ndarray(K, )
-            
+
         """
         pass
 
@@ -294,7 +294,7 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        pspace : int, iterable of int, 
+        pspace : int, iterable of int,
             If iterable, then it is a list of Slater determinants (in the form of integers that describe
             the occupation as a bitstring)
             If integer, then it is the number of Slater determinants to be generated
@@ -485,7 +485,7 @@ class ProjectionWavefunction(Wavefunction):
             f_{last} = norm - 1
         where :math:`norm` is defined by ProjectionWavefunction.compute_norm.
         This function will be zero if the function is normalized.
-        The solver solves for `x` such that 
+        The solver solves for `x` such that
         ..math::
             f_i(x) = 0
 
@@ -561,16 +561,72 @@ class ProjectionWavefunction(Wavefunction):
     #
     @abstractmethod
     def compute_pspace(self, num_sd):
+        """ Generates Slater determinants to project onto
+
+        Parameters
+        ----------
+        num_sd : int
+            Number of Slater determinants to generate
+
+        Returns
+        -------
+        pspace : list of gmpy2.mpz
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
+            as a bitstring
+        """
         pass
 
     @abstractmethod
     def compute_overlap(self, sd, deriv=None):
+        """ Computes the overlap between the wavefunction and a Slater determinant
+
+        The results are cached in self.cache and self.d_cache.
+
+        Parameters
+        ----------
+        sd : int, gmpy2.mpz
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
+            as a bitstring
+        deriv : None, int
+            Index of the paramater to derivatize the overlap with respect to
+            Default is no derivatization
+
+        Returns
+        -------
+        overlap : float
+        """
+        # caching is done wrt mpz objects, so you should convert sd to mpz first
+        sd = gmpy2.mpz(sd)
         pass
 
     @abstractmethod
     def compute_hamiltonian(self, sd, deriv=None):
+        """ Computes the hamiltonian of the wavefunction with respect to a Slater
+        determinant
+
+        ..math::
+            \big< \Phi_i \big| H \big| \Psi \big>
+
+        Parameters
+        ----------
+        sd : int, gmpy2.mpz
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
+            as a bitstring
+        deriv : None, int
+            Index of the paramater to derivatize the overlap with respect to
+            Default is no derivatization
+
+        Returns
+        -------
+        float
+        """
         pass
 
     @abstractmethod
     def normalize(self):
+        """ Normalizes the wavefunction using the norm defined in
+        ProjectionWavefunction.compute_norm
+
+        Some of the cache are emptied because the parameters are rewritten
+        """
         pass
