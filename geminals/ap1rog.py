@@ -117,7 +117,7 @@ class AP1roG(ProjectionWavefunction):
             raise ValueError('Given Slater determinant, {0}, does not belong'
                              ' to the DOCI Slater determinants'.format(bin(sd)))
         # get indices of the virtual orbitals
-        vir_alpha_indices = slater.vir_indices(alpha_sd)
+        vir_alpha_indices = slater.vir_indices(alpha_sd, self.nspatial)
 
         # build geminal coefficient
         if self.energy_is_param:
@@ -127,26 +127,32 @@ class AP1roG(ProjectionWavefunction):
 
         val = 0.0
         # get the indices that need to be swapped from virtual to occupied 
-        vo_row = [i for i in occ_alpha_indices if i > vir_alpha_indices[0]]
-        vo_col = [j - self.npair for j in vir_alpha_indices]
+        vo_col = [i - self.npair for i in occ_alpha_indices if i > vir_alpha_indices[0]]
+        vo_row = range(len(vo_col))
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[vo_row],[:, vo_col])
+            if len(vo_row) == 0:
+                val = 1
+            else:
+                val = permanent_ryser(gem_coeffs[vo_row][:, vo_col])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            row_to_remove = deriv // self.nspatial
-            col_to_remove = deriv %  self.nspatial
-            if col_to_remove in vir_alpha_indices:
-                row_inds = [i for i in vo_row if i != row_to_remove]
-                col_inds = [i for i in vo_col if i != col_to_remove]
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
-                else:
-                    val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
-                # construct new gmpy2.mpz to describe the slater determinant and
-                # derivation index
-                self.d_cache[(sd, deriv)] = val
+            if len(vo_row) == 0:
+                val = 1
+            else:
+                row_to_remove = deriv // self.nspatial
+                col_to_remove = deriv %  self.nspatial
+                if col_to_remove in vir_alpha_indices:
+                    row_inds = [i for i in vo_row if i != row_to_remove]
+                    col_inds = [i for i in vo_col if i != col_to_remove]
+                    if len(row_inds) == 0 and len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+            # construct new gmpy2.mpz to describe the slater determinant and
+            # derivation index
+            self.d_cache[(sd, deriv)] = val
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
