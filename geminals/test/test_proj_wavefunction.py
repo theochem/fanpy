@@ -132,7 +132,7 @@ def test_compute_energy():
 
     # energy is param
     test.energy_is_param = True
-    assert test.compute_energy() == test.params[-1] + test.nuc_nuc
+    assert test.compute_energy() == test.params[-1]
     assert test.compute_energy(include_nuc=False) == test.params[-1]
     assert test.compute_energy(deriv=0) == 0
     assert test.compute_energy(deriv=4) == 1

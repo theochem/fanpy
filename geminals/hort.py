@@ -5,7 +5,7 @@ from horton import *
 
 def hartreefock(fn=None, basis=None, nelec=None,
                 solver=EDIIS2SCFSolver, tol=1.0e-12,
-                nuc_nuc=False, horton_internal=False,
+                nuc_nuc=True, horton_internal=False,
                 **kwargs):
     """ Runs a HF calculation using HORTON
 

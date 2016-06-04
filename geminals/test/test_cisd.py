@@ -12,8 +12,6 @@ def test_cisd_wavefunction():
     nuc_nuc = hf_dict["nuc_nuc"]
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # compare HF numbers
-    print(cisd.compute_ci_matrix()[0,0])
-    print(cisd.compute_ci_matrix()[0,0]+cisd.nuc_nuc)
     assert abs(cisd.compute_ci_matrix()[0,0]+cisd.nuc_nuc-(-1.131269841877) < 1e-8)
     # solve
     cisd()
@@ -21,14 +19,12 @@ def test_cisd_wavefunction():
     assert abs(cisd.compute_energy()-(-1.1651486697)) < 1e-7
     #### LiH ####
     nelec = 4
-    hf_dict = hartreefock(fn="./lih.xyz", basis="sto-6g", nelec=nelec)
+    hf_dict = hartreefock(fn="./lih.xyz", basis="6-31G", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     cisd()
-    print(cisd.compute_energy(), -7.9721005124)
-    assert abs(cisd.compute_energy()-(-7.9721005124)) < 1e-7
-
-test_cisd_wavefunction()
+    print(cisd.compute_energy(), -7.9980021297, -7.99800204, E_hf)
+    assert abs(cisd.compute_energy()-(-7.9980021297)) < 1e-7
