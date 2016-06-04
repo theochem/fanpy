@@ -127,8 +127,10 @@ class AP1roG(ProjectionWavefunction):
 
         val = 0.0
         # get the indices that need to be swapped from virtual to occupied 
-        vo_col = [i - self.npair for i in occ_alpha_indices if i > vir_alpha_indices[0]]
-        vo_row = range(len(vo_col))
+        vo_col = [i - self.npair for i in range(self.npair,self.nspatial) if i in occ_alpha_indices]
+        vo_row = [j for j in range(self.npair) if j in vir_alpha_indices]
+        assert len(vo_row) == len(vo_col)
+
         # if no derivatization
         if deriv is None:
             if len(vo_row) == 0:
