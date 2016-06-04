@@ -1,28 +1,20 @@
-Projectively-Optimized Wavefunction Library (PrOWL)
-===================================================
+APseqG, APsetG
+See open-shell paper.
 
-Wavefunctions
--------------
+APr2G
+http://www.sciencedirect.com/science/article/pii/S2210271X12004963
 
-    R : Restricted
+AP1roG
+http://pubs.acs.org/doi/ipdf/10.1021/ct300902c
 
-    P : Particle-number symmetry broken
+Mixed discriminant Ryser algorithm
+http://www.sciencedirect.com/science/article/pii/0024379589900098
 
-    * APIG      (R, P)
-    * AP1roG    (R, P)
-    * APr2G     (R, P)
-    * APseqG    (R, P)
+Permanent Ryser algorithm
+https://arxiv.org/abs/0904.3251
 
-Goals
------
+Rectangular Borchardt permanent
+http://arxiv.org/abs/math/0003072
 
-    O : Open-shell
-
-    U : Unrestricted
-
-    S : Spin symmetry-broken
-
-    * APsetG
-    * Composite particle CI/CC
-    * Orbital optimization
-    * Density matrices
+Permanent/mixed discriminant derivatives
+http://repository.uwyo.edu/ela/vol27/iss1/18/
