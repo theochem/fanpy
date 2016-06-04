@@ -77,7 +77,6 @@ class CIWavefunction(Wavefunction):
     @abstractproperty
     def _nci(self):
         """ Default number of configurations
-
         """
         pass
 
@@ -111,7 +110,7 @@ class CIWavefunction(Wavefunction):
             raise TypeError('Excitation level must be an integer')
         if exc_lvl < 0:
             raise ValueError('Excitation level cannot be negative')
-        return {sd:coeff for sd,coeff in zip(self.civec, self.sd_coeffs[:, exc_lvl].flat)}
+        return {sd: coeff for sd, coeff in zip(self.civec, self.sd_coeffs[:, exc_lvl].flat)}
 
     #
     # Special methods
@@ -150,7 +149,6 @@ class CIWavefunction(Wavefunction):
     def _solve_eigh(self, which='SA', **kwargs):
         """ Solves for the ground state using eigenvalue decomposition
         """
-
         ci_matrix = self.compute_ci_matrix()
         result = eigh(ci_matrix, **kwargs)
         del ci_matrix
@@ -213,7 +211,6 @@ class CIWavefunction(Wavefunction):
 
         """
         pass
-
 
     @abstractmethod
     def compute_ci_matrix(self):
@@ -298,7 +295,7 @@ class CIWavefunction(Wavefunction):
             """
             val = np.empty(self.nci, dtype=self.dtype)
             for i, sd in enumerate(self.civec):
-                val[i] =  new_instance.compute_overlap(sd) - sd_coeff[sd]
+                val[i] = new_instance.compute_overlap(sd) - sd_coeff[sd]
             return val
         result = least_squares(self.objective, new_instance.x)
         new_instance.assign_civec(result.x)

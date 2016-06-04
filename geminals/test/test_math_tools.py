@@ -7,9 +7,9 @@ from ..math_tools import binomial, permanent_combinatoric, permanent_ryser
 
 def test_binomial():
 
-    assert binomial(1000,    10) == 263409560461970212832400
+    assert binomial(1000, 10) == 263409560461970212832400
     assert binomial(1000.99, 10) == 263409560461970212832400
-    assert binomial(1001,    10) == 266067578226470416796400
+    assert binomial(1001, 10) == 266067578226470416796400
 
 
 def test_permanent_combinatoric():

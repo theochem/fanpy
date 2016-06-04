@@ -6,6 +6,7 @@ from .ci_matrix import ci_matrix
 from .math_tools import binomial
 from . import slater
 
+
 class CISD(CIWavefunction):
     """ Configuration Interaction Singles and Doubles Wavefunction
 
@@ -62,11 +63,10 @@ class CISD(CIWavefunction):
     @property
     def _nci(self):
         """ Total number of configurations
-
         """
-        num_singles = binomial(self.nelec, 1)*binomial(self.nspin-self.nelec, 1)
-        num_doubles = binomial(self.nelec, 2)*binomial(self.nspin-self.nelec, 2)
-        return 1+num_singles+num_doubles
+        num_singles = binomial(self.nelec, 1) * binomial(self.nspin - self.nelec, 1)
+        num_doubles = binomial(self.nelec, 2) * binomial(self.nspin - self.nelec, 2)
+        return 1 + num_singles + num_doubles
 
     def compute_civec(self):
         """ Generates Slater determinants

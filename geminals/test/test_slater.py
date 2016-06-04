@@ -1,11 +1,11 @@
 from nose.tools import assert_raises
 
-from  .. import slater
+from .. import slater
+
 
 def test_occ():
     """
     Test slater.occ
-
     """
     # Test occupancy
     assert slater.occ(0b100100, 2)
@@ -14,6 +14,7 @@ def test_occ():
     assert not slater.occ(0b100100, 6)
     assert not slater.occ(0b100100, 0)
 
+
 def test_total_occ():
     """
     Test slater.total_occ
@@ -21,15 +22,14 @@ def test_total_occ():
     assert slater.total_occ(None) == 0
     assert slater.total_occ(0) == 0
     assert slater.total_occ(0b0) == 0
-
     assert slater.total_occ(0b1000000) == 1
     assert slater.total_occ(0b1010000) == 2
     assert slater.total_occ(0b1010100) == 3
 
+
 def test_annihilate():
     """
     Test slater.annihilate.
-
     """
     # Remove orbitals that are not occupied
     assert slater.annihilate(0b00110, 0) is None
@@ -54,10 +54,10 @@ def test_annihilate():
     n = 9999999
     assert slater.annihilate(0b1 | 1 << n, n) == 0b1
 
+
 def test_create():
     """
     Test slater.create().
-
     """
     # Add orbitals that are not occupied
     assert slater.create(0b00110, 0) == 0b111
@@ -84,10 +84,10 @@ def test_create():
     n = 9999999
     assert slater.create(0b1, n) == 0b1 | 1 << n
 
+
 def test_excite():
     """
     Test excite().
-
     """
     # Excite spatial orbitals from occupied to virtual
     assert slater.excite(0b0001, 0, 1) == 0b10
@@ -109,21 +109,22 @@ def test_excite():
     assert slater.excite(0b111100, 0, 0) is None
     assert slater.excite(0b111100, 3, 3, 3, 3) is None
 
+
 def test_ground():
     """
     Test slater.ground
-
     """
-    assert_raises(AssertionError, lambda : slater.ground(2, 1))
+    assert_raises(AssertionError, lambda: slater.ground(2, 1))
     print(slater.ground(2, 2))
     assert slater.ground(2, 2) == 0b11
-    assert_raises(AssertionError, lambda : slater.ground(2, 3))
+    assert_raises(AssertionError, lambda: slater.ground(2, 3))
     assert slater.ground(2, 4) == 0b0101
     assert slater.ground(2, 6) == 0b001001
     assert slater.ground(2, 8) == 0b00010001
-    assert_raises(AssertionError, lambda : slater.ground(3, 2))
+    assert_raises(AssertionError, lambda: slater.ground(3, 2))
     assert slater.ground(3, 4) == 0b0111
     assert slater.ground(3, 6) == 0b001011
+
 
 def test_occ_indices():
     """
@@ -134,8 +135,9 @@ def test_occ_indices():
     assert slater.occ_indices(0b0) == ()
 
     assert slater.occ_indices(0b1000000) == (6,)
-    assert slater.occ_indices(0b1010000) == (4,6)
-    assert slater.occ_indices(0b1010100) == (2,4,6)
+    assert slater.occ_indices(0b1010000) == (4, 6)
+    assert slater.occ_indices(0b1010100) == (2, 4, 6)
+
 
 def test_vir_indices():
     """
@@ -143,17 +145,18 @@ def test_vir_indices():
     """
     assert slater.vir_indices(None, 0) == ()
 
-    assert slater.vir_indices(0, 3) == (0,1,2)
-    assert slater.vir_indices(0b0, 4) == (0,1,2,3)
+    assert slater.vir_indices(0, 3) == (0, 1, 2)
+    assert slater.vir_indices(0b0, 4) == (0, 1, 2, 3)
 
-    assert slater.vir_indices(0b10000, 7) == (0,1,2,3,5,6)
-    assert slater.vir_indices(0b10000, 6) == (0,1,2,3,5)
-    assert slater.vir_indices(0b10000, 5) == (0,1,2,3)
+    assert slater.vir_indices(0b10000, 7) == (0, 1, 2, 3, 5, 6)
+    assert slater.vir_indices(0b10000, 6) == (0, 1, 2, 3, 5)
+    assert slater.vir_indices(0b10000, 5) == (0, 1, 2, 3)
     # FIXME: notice that number of orbitals can be less than the highest occupied index
-    assert slater.vir_indices(0b10000, 4) == (0,1,2,3)
-    assert slater.vir_indices(0b10000, 3) == (0,1,2)
-    assert slater.vir_indices(0b10000, 2) == (0,1)
+    assert slater.vir_indices(0b10000, 4) == (0, 1, 2, 3)
+    assert slater.vir_indices(0b10000, 3) == (0, 1, 2)
+    assert slater.vir_indices(0b10000, 2) == (0, 1)
     assert slater.vir_indices(0b10000, 1) == (0,)
+
 
 def test_shared():
     """
@@ -162,6 +165,7 @@ def test_shared():
     assert slater.shared(0b001, 0b000) == 0
     assert slater.shared(0b111, 0b001) == 0b001
     assert slater.shared(0b111, 0b101) == 0b101
+
 
 def test_diff():
     """
@@ -172,12 +176,13 @@ def test_diff():
     assert slater.diff(0b011, 0b101) == ((1,), (2,))
     assert slater.diff(0b101, 0b011) == ((2,), (1,))
 
+
 def test_combine_spin():
     """
     Test slater.combine_spin
     """
-    assert_raises(AssertionError, lambda:slater.combine_spin(0b0, 0b0, 0))
-    assert_raises(AssertionError, lambda:slater.combine_spin(0b0, 0b0, -1))
+    assert_raises(AssertionError, lambda: slater.combine_spin(0b0, 0b0, 0))
+    assert_raises(AssertionError, lambda: slater.combine_spin(0b0, 0b0, -1))
     assert slater.combine_spin(0b1, 0b0, 1) == 0b1
     assert slater.combine_spin(0b0, 0b1, 1) == 0b10
     assert slater.combine_spin(0b111, 0b0, 3) == 0b111
@@ -186,12 +191,13 @@ def test_combine_spin():
     assert slater.combine_spin(0b001, 0b011, 5) == 0b0001100001
     assert slater.combine_spin(0b000, 0b111, 5) == 0b0011100000
 
+
 def test_split_spin():
     """
     Test slater.split_spin
     """
-    assert_raises(AssertionError, lambda:slater.split_spin(0b0, 0))
-    assert_raises(AssertionError, lambda:slater.split_spin(0b0, -1))
+    assert_raises(AssertionError, lambda: slater.split_spin(0b0, 0))
+    assert_raises(AssertionError, lambda: slater.split_spin(0b0, -1))
     assert slater.split_spin(0b1, 1) == (0b1, 0b0)
     assert slater.split_spin(0b10, 1) == (0b0, 0b1)
     assert slater.split_spin(0b111, 3) == (0b111, 0b0)
@@ -199,6 +205,7 @@ def test_split_spin():
     assert slater.split_spin(0b0000100011, 5) == (0b011, 0b001)
     assert slater.split_spin(0b0001100001, 5) == (0b001, 0b011)
     assert slater.split_spin(0b0011100000, 5) == (0b000, 0b111)
+
 
 def test_interleave():
     """
@@ -209,6 +216,7 @@ def test_interleave():
     assert slater.interleave(0b000011, 3) == 0b000101
     assert slater.interleave(0b0101, 2) == 0b0011
     assert slater.interleave(0b000101, 3) == 0b010001
+
 
 def test_deinterleave():
     """

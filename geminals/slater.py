@@ -33,6 +33,7 @@ deinterleave
     Converts Slater determinants from shuffled form to block form
 """
 
+
 def occ(sd, i):
     """
     Checks if a given Slater determinant has orbital `i` occupied.
@@ -49,12 +50,12 @@ def occ(sd, i):
     bool
         True if occupied
         False if not occupied
-
     """
     if sd is None:
         return False
     else:
         return gmpy2.bit_test(sd, i)
+
 
 def total_occ(sd):
     """
@@ -69,12 +70,12 @@ def total_occ(sd):
     -------
     int
         Number of occupied orbitals in Slater determinant
-
     """
     if sd is None:
         return 0
     else:
         return gmpy2.popcount(sd)
+
 
 def annihilate(sd, *indices):
     """
@@ -100,6 +101,7 @@ def annihilate(sd, *indices):
         else:
             return None
     return sd
+
 
 def create(sd, *indices):
     """
@@ -151,10 +153,11 @@ def excite(sd, *indices):
     AssertionError
         If the length of indices is not even
     """
-    assert (len(indices)%2)==0, "Unqual number of creators and annihilators"
-    sd = annihilate(sd, *indices[:len(indices)//2])
-    sd = create(sd, *indices[len(indices)//2:])
+    assert (len(indices) % 2) == 0, "Unqual number of creators and annihilators"
+    sd = annihilate(sd, *indices[:len(indices) // 2])
+    sd = create(sd, *indices[len(indices) // 2:])
     return sd
+
 
 def ground(n, norbs):
     """
@@ -179,11 +182,12 @@ def ground(n, norbs):
     Orders the alpha orbitals first, then the beta orbitals
     If the number of electrons is odd, then the last electron is put into an alpha orbital
     """
-    assert n<=norbs, 'Number of occupied spin-orbitals must be less than the total number of spin-orbitals'
-    assert norbs%2 == 0, 'Total number of spin-orbitals must be even'
-    alpha_bits = gmpy2.bit_mask(n//2+n%2)
-    beta_bits = gmpy2.bit_mask(n//2) << (norbs//2)
+    assert n <= norbs, 'Number of occupied spin-orbitals must be less than the total number of spin-orbitals'
+    assert norbs % 2 == 0, 'Total number of spin-orbitals must be even'
+    alpha_bits = gmpy2.bit_mask(n // 2 + n % 2)
+    beta_bits = gmpy2.bit_mask(n // 2) << (norbs // 2)
     return alpha_bits | beta_bits
+
 
 def occ_indices(sd):
     """
@@ -198,14 +202,14 @@ def occ_indices(sd):
     -------
     occ_indices : tuple of int
         Tuple of indices that corresponds to the occupied orbitals
-
     """
     if sd is None:
         return ()
     output = [gmpy2.bit_scan1(sd, 0)]
     while output[-1] is not None:
-        output.append(gmpy2.bit_scan1(sd, output[-1]+1))
+        output.append(gmpy2.bit_scan1(sd, output[-1] + 1))
     return tuple(output[:-1])
+
 
 def vir_indices(sd, norbs):
     """
@@ -222,15 +226,15 @@ def vir_indices(sd, norbs):
     -------
     occ_indices : tuple of int
         Tuple of indices that corresponds to the virtual orbitals
-
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if sd is None or norbs <= 0:
         return ()
     output = [gmpy2.bit_scan0(sd, 0)]
     while output[-1] < norbs:
-        output.append(gmpy2.bit_scan0(sd, output[-1]+1))
+        output.append(gmpy2.bit_scan0(sd, output[-1] + 1))
     return tuple(output[:-1])
+
 
 def shared(sd1, sd2):
     """
@@ -251,6 +255,7 @@ def shared(sd1, sd2):
     """
     return sd1 & sd2
 
+
 def diff(sd1, sd2):
     """
     Returns the difference between two Slater determinants
@@ -269,12 +274,12 @@ def diff(sd1, sd2):
         are not occupied in sd2
         Second tuple of ints are the indices of the occupied orbitals of sd2 that
         are not occupied in sd1
-
     """
     sd_diff = sd1 ^ sd2
     sd1_diff = sd_diff & sd1
     sd2_diff = sd_diff & sd2
     return (occ_indices(sd1_diff), occ_indices(sd2_diff))
+
 
 def combine_spin(alpha_bits, beta_bits, norbs):
     """ Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
@@ -304,6 +309,7 @@ def combine_spin(alpha_bits, beta_bits, norbs):
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
     return alpha_bits | (beta_bits << norbs)
+
 
 def split_spin(block_sd, norbs):
     """ Splits a Slater determinant into the alpha and beta parts
@@ -335,6 +341,7 @@ def split_spin(block_sd, norbs):
     alpha_bits = gmpy2.t_mod_2exp(block_sd, norbs)
     beta_bits = block_sd >> norbs
     return (alpha_bits, beta_bits)
+
 
 def interleave(block_sd, norbs):
     """ Turns sd from block form to the shuffled form
@@ -371,10 +378,11 @@ def interleave(block_sd, norbs):
     shuffled_sd = gmpy2.mpz(0)
     for i in range(norbs):
         if gmpy2.bit_test(block_sd, i):
-            shuffled_sd |= 1 << 2*i
-        if gmpy2.bit_test(block_sd, i+norbs):
-            shuffled_sd |= 1 << 2*i+1
+            shuffled_sd |= 1 << 2 * i
+        if gmpy2.bit_test(block_sd, i + norbs):
+            shuffled_sd |= 1 << 2 * i + 1
     return shuffled_sd
+
 
 def deinterleave(shuffled_sd, norbs):
     """ Turns sd from shuffled form to the block form
@@ -410,8 +418,8 @@ def deinterleave(shuffled_sd, norbs):
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
     block_sd = gmpy2.mpz(0)
     for i in range(norbs):
-        if gmpy2.bit_test(shuffled_sd, 2*i):
+        if gmpy2.bit_test(shuffled_sd, 2 * i):
             block_sd |= 1 << i
-        if gmpy2.bit_test(shuffled_sd, 2*i+1):
-            block_sd |= 1 << i+norbs
+        if gmpy2.bit_test(shuffled_sd, 2 * i + 1):
+            block_sd |= 1 << i + norbs
     return block_sd

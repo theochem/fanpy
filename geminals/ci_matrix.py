@@ -1,6 +1,7 @@
 import numpy as np
 from . import slater
 
+
 def is_alpha(i, nspatial):
     """ Checks if index `i` belongs to an alpha spin orbital
 
@@ -28,6 +29,7 @@ def is_alpha(i, nspatial):
     else:
         return False
 
+
 def spatial_index(i, nspatial):
     """ Returns the index of the spatial orbital that corresponds to the
     spin orbital `i`
@@ -54,7 +56,8 @@ def spatial_index(i, nspatial):
     if is_alpha(i, nspatial):
         return i
     else:
-        return i-nspatial
+        return i - nspatial
+
 
 def get_H_value(H_matrices, i, k, orb_type):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
@@ -109,12 +112,13 @@ def get_H_value(H_matrices, i, k, orb_type):
         raise AssertionError, 'Unknown orbital type, {0}'.format(orb_type)
     return 0.0
 
+
 def get_G_value(G_matrices, i, j, k, l, orb_type):
     """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
     # TODO: check ordering
     ..math::
-        \big< \theta \big | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \big> = 
+        \big< \theta \big | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \big> =
         \big< \phi_i \phi_j \big | \hat{g} | \phi_k \phi_l \big>
 
     Parameters
@@ -169,6 +173,7 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
         return G_matrices[0][i, j, k, l]
     return 0.0
 
+
 def ci_matrix(self, orb_type):
     """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
 
@@ -188,11 +193,10 @@ def ci_matrix(self, orb_type):
     -------
     matrix : np.ndarray(K, K)
     """
-
     H = self.H
     G = self.G
 
-    ci_matrix = np.zeros((self.nci,)*2, dtype=self.dtype)
+    ci_matrix = np.zeros((self.nci,) * 2, dtype=self.dtype)
 
     # Loop only over upper triangular
     for nsd0, sd0 in enumerate(self.civec):
@@ -227,7 +231,7 @@ def ci_matrix(self, orb_type):
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
                     ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
-                    for j in shared_indices[ic+1:]:
+                    for j in shared_indices[ic + 1:]:
                         ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
                         ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
 
@@ -235,6 +239,7 @@ def ci_matrix(self, orb_type):
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T
 
     return ci_matrix
+
 
 def doci_matrix(self, orb_type):
     """ Returns Hamiltonian matrix in the doci Slater determinant basis
@@ -255,12 +260,11 @@ def doci_matrix(self, orb_type):
     -------
     matrix : np.ndarray(K, K)
     """
-
     H = self.H
     G = self.G
     ns = self.nspatial
 
-    doci_matrix = np.zeros((self.nci,)*2, dtype=self.dtype)
+    doci_matrix = np.zeros((self.nci,) * 2, dtype=self.dtype)
 
     # Loop only over upper triangular
     for nsd0, sd0 in enumerate(self.civec):
@@ -274,26 +278,26 @@ def doci_matrix(self, orb_type):
             else:
                 diff_order = len(diff_sd0)
 
-            assert diff_order%2==0, 'One (or both) of the Slater determinants, {0} or {1},'
+            assert diff_order % 2 == 0, 'One (or both) of the Slater determinants, {0} or {1},'
             'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
 
             # two sd's are different by double excitation
             if diff_order == 2:
                 i, j = diff_sd0
                 k, l = diff_sd1
-                if spatial_index(i, ns) == spatial_index(k, ns) and spatial_index(j, ns)==spatial_index(l, ns):
+                if spatial_index(i, ns) == spatial_index(k, ns) and spatial_index(j, ns) == spatial_index(l, ns):
                     doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
-                elif spatial_index(i, ns) == spatial_index(l, ns) and spatial_index(j, ns)==spatial_index(k, ns):
+                elif spatial_index(i, ns) == spatial_index(l, ns) and spatial_index(j, ns) == spatial_index(k, ns):
                     doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
                 else:
                     assert True, 'One (or both) of the Slater determinants, {0} or {1},'
-                    'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
+                                 'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
 
             # two sd's are the same
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
                     doci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
-                    for j in shared_indices[ic+1:]:
+                    for j in shared_indices[ic + 1:]:
                         doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
                         doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
 

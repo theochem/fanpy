@@ -5,6 +5,7 @@ from .ci_wavefunction import CIWavefunction
 from .sd_list import ci_sd_list
 from .ci_matrix import ci_matrix
 
+
 class FCI(CIWavefunction):
     """ Full Configuration Interaction Wavefunction
 
@@ -61,7 +62,6 @@ class FCI(CIWavefunction):
     @property
     def _nci(self):
         """ Total number of configurations
-
         """
         return binomial(self.nspin, self.nelec)
 
