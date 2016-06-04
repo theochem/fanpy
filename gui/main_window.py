@@ -3,6 +3,7 @@ import wx
 from orbital_label_maker import EditableListCtrl
 import geminals
 
+
 class ProwlFrame(wx.Frame):
 
     def __init__(self):
@@ -33,17 +34,34 @@ class ProwlFrame(wx.Frame):
                        flag=wx.ALIGN_CENTER)
 
         # select method
-
+        button_method_select = wx.Button(
+            self, id=2, label='Select Method', pos=None, size=None)
+        self.Bind(wx.EVT_BUTTON, self.selete_method, button_method_select)
+        self.sizer.Add(button_method_select,
+                       proportion=0,
+                       flag=wx.ALIGN_CENTER)
         # select basis
-
+        button_basis_select = wx.Button(self, id=3, label='Select Basis', pos=None, size=None)
+        self.Bind(wx.EVT_BUTTON, self.selete_basis, button_basis_select)
+        self.sizer.Add(button_basis_select,
+                       proportion=0,
+                       flag=wx.ALIGN_CENTER)
         # select initial guess
-
+        button_initial_guess = wx.Button(self, id=4, label='Initialize Guess', pos=None, size=None)
+        self.Bind(wx.EVT_BUTTON, self.initial_guess, button_initial_guess)
+        self.sizer.Add(button_initial_guess,
+                       proportion=0,
+                       flag=wx.ALIGN_CENTER)
         # solve
-
+        button_solve = wx.Button(self, id=5, label='Solve It!', pos=None, size=None)
+        self.Bind(wx.EVT_BUTTON, self.solve, button_solve)
+        self.sizer.Add(button_solve,
+                       proportion=0,
+                       flag=wx.ALIGN_CENTER)
         # dials and shit
         self._max_orbital_sets = 1
         self.text = wx.TextCtrl(self, size=wx.DefaultSize, value=str(
-            self._max_orbital_sets), style=wx.TE_RIGHT|wx.TE_PROCESS_ENTER)
+            self._max_orbital_sets), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
         self.name_text = wx.StaticText(
             self, label="Total orbital sets", style=wx.TE_CENTRE | wx.ST_NO_AUTORESIZE)
         self.spin = wx.SpinButton(self, style=wx.SP_VERTICAL)
@@ -62,21 +80,25 @@ class ProwlFrame(wx.Frame):
         hsizer.Add(self.text, 1, wx.ALIGN_CENTER)
         hsizer.Add(self.spin, 0, wx.ALIGN_CENTER)
         hsizer.Add(self.empty, 4, wx.ALIGN_CENTER)
-        self.sizer.Add(hsizer, 1, wx.EXPAND|wx.ALIGN_CENTER)
+        self.sizer.Add(hsizer, 1, wx.EXPAND | wx.ALIGN_CENTER)
         # self.Bind(wx.EVT_SPIN, self.OnSpin, self.spin)
 
         # Checkbox MO
         self.check_mo = EditableListCtrl(self, 2)
-        self.check_mo.InsertColumn(0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
-        self.check_mo.InsertColumn(1, 'Spin', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
-        self.check_mo.InsertColumn(2, 'Occupations (in HF)', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
-        self.check_mo.InsertColumn(3, 'Energy', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(
+            0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(
+            1, 'Spin', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(
+            2, 'Occupations (in HF)', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(
+            3, 'Energy', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         self.check_mo.InsertColumn(4, 'Label', width=wx.LIST_AUTOSIZE)
 
         self.sizer.Add(self.check_mo,
-                    proportion=1,
-                    border=4,
-                    flag=wx.ALIGN_CENTER|wx.EXPAND)
+                       proportion=1,
+                       border=4,
+                       flag=wx.ALIGN_CENTER | wx.EXPAND)
 
         # select method
 
@@ -118,11 +140,23 @@ class ProwlFrame(wx.Frame):
                                                  "wfn files (*.wfn)|*.wfn|"
                                                  "wfx files (*.wfx)|*.wfx|"
                                                  "xyz files (*.xyz)|*.xyz"),
-                                       style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
             return     # the user changed idea...
         self.mol_path = openFileDialog.GetPath()
         ext = os.path.splitext(self.mol_path)
+
+    def selete_method(self, event):
+        pass
+
+    def selete_basis(self, event):
+        pass
+
+    def initial_guess(self, event):
+        pass
+
+    def solve(self, event):
+        pass
 
 # Run the program
 if __name__ == "__main__":
