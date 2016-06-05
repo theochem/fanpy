@@ -40,20 +40,40 @@ class ProwlFrame(wx.Frame):
         self.sizer.Add(button_method_select,
                        proportion=0,
                        flag=wx.ALIGN_CENTER)
+
+        method_dict = {'FCI': geminals.fci.FCI,
+                       'DOCI': geminals.doci.DOCI,
+                       'CISD': geminals.cisd.CISD,
+                       'CI Pairs': geminals.ci_pairs.CIPairs,
+                       'APIG': geminals.apig.APIG,
+                       # 'AP1roG': geminals.ap1rog.AP1roG,
+                       # 'APr2G': geminals.apr2g.APr2G,
+                       # 'APsetG': geminals.apsetg.APsetG,
+                       # 'APseqG': geminals.apseqg.APseqG,
+                       }
+
+        button_method_select = wx.ComboBox(
+            self, id=-1, value="", choices=method_dict.keys())
         # select basis
-        button_basis_select = wx.Button(self, id=3, label='Select Basis', pos=None, size=None)
+        button_basis_select = wx.Button(
+            self, id=-1, label='Select Basis', pos=None, size=None)
         self.Bind(wx.EVT_BUTTON, self.selete_basis, button_basis_select)
         self.sizer.Add(button_basis_select,
                        proportion=0,
                        flag=wx.ALIGN_CENTER)
+
+        # button_basis_select = wx.ComboBox(self, id=3, )
+
         # select initial guess
-        button_initial_guess = wx.Button(self, id=4, label='Initialize Guess', pos=None, size=None)
+        button_initial_guess = wx.Button(
+            self, id=4, label='Initialize Guess', pos=None, size=None)
         self.Bind(wx.EVT_BUTTON, self.initial_guess, button_initial_guess)
         self.sizer.Add(button_initial_guess,
                        proportion=0,
                        flag=wx.ALIGN_CENTER)
         # solve
-        button_solve = wx.Button(self, id=5, label='Solve It!', pos=None, size=None)
+        button_solve = wx.Button(
+            self, id=5, label='Solve It!', pos=None, size=None)
         self.Bind(wx.EVT_BUTTON, self.solve, button_solve)
         self.sizer.Add(button_solve,
                        proportion=0,
