@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 from .ci_wavefunction import CIWavefunction
 from .math_tools import binomial
 from .sd_list import generate_doci_sd_list
-from .ci_matrix import doci_matrix
+from .ci_matrix import make_doci_matrix
 
 
 class DOCI(CIWavefunction):
@@ -89,4 +89,4 @@ class DOCI(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return doci_matrix(self, self.orb_type)
+        return make_doci_matrix(self.H, self.G, self.civec, self.dtype, self.nspatial, self.orb_type)

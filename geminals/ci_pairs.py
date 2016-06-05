@@ -1,9 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
 from .math_tools import binomial
 from .ci_wavefunction import CIWavefunction
 from .sd_list import generate_doci_sd_list
-from .ci_matrix import doci_matrix
+from .ci_matrix import make_doci_matrix
 from . import slater
 
 
@@ -91,7 +92,7 @@ class CIPairs(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return doci_matrix(self, self.orb_type)
+        return make_doci_matrix(self.H, self.G, self.civec, self.dtype, self.nspatial, self.orb_type)
 
     def to_ap1rog(self, exc_lvl=0):
         """ Returns geminal matrix given then converged CIPairs wavefunction coefficients
@@ -111,7 +112,7 @@ class CIPairs(CIWavefunction):
         # dictionary of slater determinant to coefficient
         sd_coeffs = self.dict_sd_coeff(exc_lvl=exc_lvl)
         # ground state SD
-        ground = slater.ground(nelec, 2 * nspatial)
+        ground = slater.ground(self.nelec, 2 * self.nspatial)
         # fill empty geminal coefficient
         gem_coeffs = np.zeros((self.npair, self.nspatial - self.npair))
         for i in range(self.npair):

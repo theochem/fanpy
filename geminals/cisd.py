@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from .ci_wavefunction import CIWavefunction
 from .sd_list import generate_ci_sd_list
-from .ci_matrix import ci_matrix
+from .ci_matrix import make_ci_matrix
 from .math_tools import binomial
 from . import slater
 
@@ -92,4 +92,4 @@ class CISD(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return ci_matrix(self, self.orb_type)
+        return make_ci_matrix(self.H, self.G, self.civec, self.dtype, self.orb_type)
