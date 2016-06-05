@@ -30,27 +30,27 @@ def test_total_occ():
 
 def test_annihilate():
     """
-    Test slater.annihilate.
+    Test slater.annihilate
     """
-    # Remove orbitals that are not occupied
+    # Remove electron from orbitals that are not occupied
     assert slater.annihilate(0b00110, 0) is None
     assert slater.annihilate(0b00110, 3) is None
     assert slater.annihilate(0b00110, 4) is None
     assert slater.annihilate(0b00110, 5) is None
     assert slater.annihilate(0b00110, 6) is None
-
     # Remove orbitals that are occupied
     assert slater.annihilate(0b00110, 1) == 0b100
     assert slater.annihilate(0b00110, 2) == 0b010
-
     # Remove multiple orbitals
+    assert slater.annihilate(0b00110, 6, 0) is None
+    assert slater.annihilate(0b00110, 3, 6) is None
     assert slater.annihilate(0b01110, 1, 2) == 0b1000
     assert slater.annihilate(0b01110, 2, 1) == 0b1000
-
+    assert slater.annihilate(0b00110, 1, 6) is None
+    assert slater.annihilate(0b00110, 6, 1) is None
     # Remove orbital multiple times
     assert slater.annihilate(0b00110, 2, 2) is None
     assert slater.annihilate(0b00110, 1, 1) is None
-
     # Large index
     n = 9999999
     assert slater.annihilate(0b1 | 1 << n, n) == 0b1
@@ -58,29 +58,32 @@ def test_annihilate():
 
 def test_create():
     """
-    Test slater.create().
+    Test slater.create
     """
+    # Add orbitals to zero Slater determinant
+    assert slater.create(None, 0) is None
+    assert slater.create(None, 1, 2, 3) is None
+    # Add orbitals to vaccum
+    assert slater.create(0b0, 0, 4) == 0b10001
+    assert slater.create(0b0, 2, 3) == 0b1100
+    assert slater.create(0b0, 2, 3) == 0b01100
     # Add orbitals that are not occupied
     assert slater.create(0b00110, 0) == 0b111
     assert slater.create(0b00110, 3) == 0b1110
     assert slater.create(0b00110, 4) == 0b10110
     assert slater.create(0b00110, 5) == 0b100110
     assert slater.create(0b00110, 6) == 0b1000110
-
     # Add orbitals that are occupied
     assert slater.create(0b00110, 1) is None
     assert slater.create(0b00110, 2) is None
-
     # Add multiple orbitals
     assert slater.create(0b01000, 1, 2) == 0b1110
     assert slater.create(0b01000, 2, 1) == 0b1110
-
     # Add orbital multiple times
     assert slater.create(0b01100, 1, 1) is None
     assert slater.create(0b01010, 2, 2) is None
     assert slater.create(0b01100, 1, 1, 1) is None
     assert slater.create(0b01010, 2, 2, 2) is None
-
     # Large index
     n = 9999999
     assert slater.create(0b1, n) == 0b1 | 1 << n
@@ -88,23 +91,19 @@ def test_create():
 
 def test_excite():
     """
-    Test excite().
+    Test slate.excite
     """
     # Excite spatial orbitals from occupied to virtual
     assert slater.excite(0b0001, 0, 1) == 0b10
     assert slater.excite(0b0001, 0, 5) == 0b100000
     assert slater.excite(0b1000, 3, 0) == 0b1
-
     # Excite spatial orbitals from virtual to virtual
     assert slater.excite(0b00100, 0, 1) is None
     assert slater.excite(0b00100, 9999, 1) is None
-
     # Excite spatial orbitals from occupied to occupied
     assert slater.excite(0b1001, 3, 0) is None
-
     # Large index
     assert slater.excite(0b1001, 3, 999999) == 0b0001 | 1 << 999999
-
     # Excite to the same orbital
     assert slater.excite(0b111100, 3, 3) == 0b111100
     assert slater.excite(0b111100, 0, 0) is None
@@ -134,7 +133,6 @@ def test_occ_indices():
     assert slater.occ_indices(None) == ()
     assert slater.occ_indices(0) == ()
     assert slater.occ_indices(0b0) == ()
-
     assert slater.occ_indices(0b1000000) == (6,)
     assert slater.occ_indices(0b1010000) == (4, 6)
     assert slater.occ_indices(0b1010100) == (2, 4, 6)
@@ -145,10 +143,8 @@ def test_vir_indices():
     Test slater.vir_indices
     """
     assert slater.vir_indices(None, 0) == ()
-
     assert slater.vir_indices(0, 3) == (0, 1, 2)
     assert slater.vir_indices(0b0, 4) == (0, 1, 2, 3)
-
     assert slater.vir_indices(0b10000, 7) == (0, 1, 2, 3, 5, 6)
     assert slater.vir_indices(0b10000, 6) == (0, 1, 2, 3, 5)
     assert slater.vir_indices(0b10000, 5) == (0, 1, 2, 3)
