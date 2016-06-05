@@ -25,16 +25,35 @@ class Wavefunction(object):
         (beta, beta, beta, beta) unrestricted orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
-    nspatial : int
-        Number of spatial orbitals
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
-    npair : int
-        Number of electron pairs (rounded down)
     orb_type : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
+
+    Properties
+    ----------
+    nspin : int
+        Number of spin orbitals (alpha and beta)
+    nspatial : int
+        Number of spatial orbitals
+    npair : int
+        Number of electron pairs (rounded down)
+
+    Method
+    ------
+    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+        Initializes wavefunction
+    __call__(method="default", **kwargs)
+        Solves the wavefunction
+    assign_dtype(dtype)
+        Assigns the data type of parameters used to define the wavefunction
+    assign_integrals(H, G, orb_type=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+        (and the wavefunction)
+    assign_nuc_nuc(nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion
+    assign_nelec(nelec)
+        Assigns the number of electrons
 
     Abstract Property
     -----------------

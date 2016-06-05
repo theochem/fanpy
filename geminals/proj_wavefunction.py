@@ -28,18 +28,10 @@ class ProjectionWavefunction(Wavefunction):
         (beta, beta, beta, beta) unrestricted orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
-    nspatial : int
-        Number of spatial orbitals
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
-    npair : int
-        Number of electron pairs (rounded down)
     orb_type : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
-    nparam : int
-        Number of parameters
     params : np.ndarray(K)
         Guess for the parameters
         Iteratively updated during convergence
@@ -56,6 +48,12 @@ class ProjectionWavefunction(Wavefunction):
     ----------
     _methods : dict of func
         Dictionary of methods that are used to solve the wavefunction
+    nspin : int
+        Number of spin orbitals (alpha and beta)
+    nspatial : int
+        Number of spatial orbitals
+    npair : int
+        Number of electron pairs (rounded down)
     nparam : int
         Number of parameters used to define the wavefunction
     nproj : int
@@ -68,8 +66,40 @@ class ProjectionWavefunction(Wavefunction):
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
 
-    Methods
-    -------
+    Method
+    ------
+    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+        Initializes wavefunction
+    __call__(method="default", **kwargs)
+        Solves the wavefunction
+    assign_dtype(dtype)
+        Assigns the data type of parameters used to define the wavefunction
+    assign_integrals(H, G, orb_type=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+        (and the wavefunction)
+    assign_nuc_nuc(nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion
+    assign_nelec(nelec)
+        Assigns the number of electrons
+    _solve_least_squares(**kwargs)
+        Solves the system of nonliear equations (and the wavefunction) using
+        least squares method
+    assign_params(params=None)
+        Assigns the parameters used to describe the wavefunction.
+        Adds random noise from the template if necessary
+    assign_pspace(pspace=None)
+        Assigns projection space
+    overlap(sd, deriv=None)
+        Retrieves overlap from the cache if available, otherwise compute overlap
+    compute_norm(sd=None, deriv=None)
+        Computes the norm of the wavefunction
+    compute_energy(include_nuc=False, sd=None, deriv=None)
+        Computes the energy of the wavefunction
+    objective(x)
+        The objective (system of nonlinear equations) associated with the projected
+        Schrodinger equation
+    jacobian(x)
+        The Jacobian of the objective
 
     Abstract Property
     -----------------
