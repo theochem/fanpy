@@ -12,6 +12,14 @@ from .math_tools import permanent_ryser
 class AP1roG(ProjectionWavefunction):
     """ Antisymmetric Product of One-Reference-Orbital Geminals
 
+    ..math::
+        \big| \Psi_{\mathrm{AP1roG}} \big>
+        &= \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
+        &= \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> \\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big| \mathbf{m} \big>
+    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
+    Slater determinant (DOCI).
+
     Attributes
     ----------
     dtype : {np.float64, np.complex128}
@@ -28,27 +36,96 @@ class AP1roG(ProjectionWavefunction):
         Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
-    npair : int
-        Number of electron pairs
-        Assumes that the number of electrons is even
-    nparticle : int
-        Number of quasiparticles (electrons)
-    ngeminal : int
-        Number of geminals
-    nvirtual : int
-        Number of virtual orbitals
+    orb_type : {'restricted', 'unrestricted', 'generalized'}
+        Type of the orbital used in obtaining the one-electron and two-electron integrals
+    params : np.ndarray(K)
+        Guess for the parameters
+        Iteratively updated during convergence
+        Initial guess before convergence
+        Coefficients after convergence
+    cache : dict of mpz to float
+        Cache of the Slater determinant to the overlap of the wavefunction with this
+        Slater determinant
+    d_cache : dict of (mpz, int) to float
+        Cache of the Slater determinant to the derivative(with respect to some index)
+        of the overlap of the wavefunction with this Slater determinan
 
-    Private
-    -------
+    Properties
+    ----------
     _methods : dict
         Default dimension of projection space
     _energy : float
         Electronic energy
     _nci : int
         Number of Slater determinants
+    nspin : int
+        Number of spin orbitals (alpha and beta)
+    nspatial : int
+        Number of spatial orbitals
+    npair : int
+        Number of electron pairs (rounded down)
+    nparam : int
+        Number of parameters used to define the wavefunction
+    nproj : int
+        Number of Slater determinants to project against
+    energy_index : int
+        Index of the energy in the list of parameters
+    ref_sd : int or list of int
+        Reference Slater determinants with respect to which the norm and the energy
+        are calculated
+        Integer that describes the occupation of a Slater determinant as a bitstring
+        Or list of integers
+    template_params : np.ndarray(K)
+        Default numpy array of parameters.
+        This will be used to determine the number of parameters
+        Initial guess, if not provided, will be obtained by adding random noise to
+        this template
 
     Methods
     -------
+    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+        Initializes wavefunction
+    __call__(method="default", **kwargs)
+        Solves the wavefunction
+    assign_dtype(dtype)
+        Assigns the data type of parameters used to define the wavefunction
+    assign_integrals(H, G, orb_type=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+        (and the wavefunction)
+    assign_nuc_nuc(nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion
+    assign_nelec(nelec)
+        Assigns the number of electrons
+    _solve_least_squares(**kwargs)
+        Solves the system of nonliear equations (and the wavefunction) using
+        least squares method
+    assign_params(params=None)
+        Assigns the parameters used to describe the wavefunction.
+        Adds random noise from the template if necessary
+    assign_pspace(pspace=None)
+        Assigns projection space
+    overlap(sd, deriv=None)
+        Retrieves overlap from the cache if available, otherwise compute overlap
+    compute_norm(sd=None, deriv=None)
+        Computes the norm of the wavefunction
+    compute_energy(include_nuc=False, sd=None, deriv=None)
+        Computes the energy of the wavefunction
+    objective(x)
+        The objective (system of nonlinear equations) associated with the projected
+        Schrodinger equation
+    jacobian(x)
+        The Jacobian of the objective
+    compute_pspace
+        Generates a tuple of Slater determinants onto which the wavefunction is projected
+    compute_overlap
+        Computes the overlap of the wavefunction with one or more Slater determinants
+    compute_hamiltonian
+        Computes the hamiltonian of the wavefunction with respect to one or more Slater
+        determinants
+        By default, the energy is determined with respect to ref_sd
+    normalize
+        Normalizes the wavefunction (different definitions available)
+        By default, the norm should the projection against the ref_sd squared
     """
     @property
     def template_params(self):
@@ -93,6 +170,26 @@ class AP1roG(ProjectionWavefunction):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
+        ..math::
+            \big< \Phi_q^i \big| \Psi_{\mathrm{AP1roG}} \big>
+            &= \big< \Phi_q^i \big| \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
+            &= \big< \Phi_q^i \big| \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> = c_{q;i}^{(\mathrm{AP1roG})} \\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big < \Phi_q^i \big| \mathbf{m} \big> = | C(\Phi_q^i) |^+
+    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
+        Slater determinant (DOCI).
+    The geminal coefficient matrix :math:`\mathbf{C}`) of AP1roG links the geminals with the underlying one-particle basis functions and has the following form,
+
+    .. math::
+        :label: cia
+
+        \mathbf{C}_{\mathrm{AP1roG}}  =
+        \begin{pmatrix}
+            1      & 0       & \cdots & 0       & c_{1;P+1} & c_{1;P+2}&\cdots &c_{1;K}\\
+            0      & 1       & \cdots & 0       & c_{2;P+1} & c_{2;P+2}&\cdots &c_{2;K}\\
+            \vdots & \vdots  & \ddots & \vdots  & \vdots    & \vdots   &\ddots &\vdots\\
+            0      & 0       & \cdots & 1       & c_{P;P+1} & c_{P;P+2}&\cdots & c_{P;K}
+        \end{pmatrix}
+
 
         Parameters
         ----------
@@ -162,7 +259,7 @@ class AP1roG(ProjectionWavefunction):
         determinant
 
         ..math::
-            \big< \Phi_i \big| H \big| \Psi \big>
+            \big< \Phi_i \big| H \big| \Psi_{mathrm{AP1roG}} \big>
 
         Since only Slater determinants from DOCI will be used, we can use the DOCI
         Hamiltonian
