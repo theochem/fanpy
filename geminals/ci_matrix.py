@@ -104,7 +104,6 @@ def get_H_value(H_matrices, i, k, orb_type):
         if is_alpha(i, ns) and is_alpha(k, ns):
             return H_matrices[0][I, K]
         elif not is_alpha(i, ns) and not is_alpha(k, ns):
-            print H_matrices[1]
             return H_matrices[1][I, K]
     elif orb_type == 'generalized':
         return H_matrices[0][i, k]
@@ -291,7 +290,7 @@ def doci_matrix(self, orb_type):
                     doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
                 else:
                     assert True, 'One (or both) of the Slater determinants, {0} or {1},'
-                                 'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
+                    ' are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
 
             # two sd's are the same
             elif diff_order == 0:

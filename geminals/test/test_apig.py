@@ -3,7 +3,7 @@ from geminals.apig import APIG
 from geminals.hort import hartreefock
 
 import numpy as np
-
+np.random.seed(2012)
 
 def test_apig_wavefunction_h2():
     #### H2 ####
