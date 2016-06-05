@@ -148,3 +148,44 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
         indices_dict = {label_index:label for label, label_index in label_dict.items()}
         labels = [indices_dict[i] for i in range(len(indices_dict))]
         return label_indices_sep, labels
+
+class CalculationSettings(wx.Dialog):
+    def __init__(self, parent, title, pos = wx.DefaultPosition,
+                 size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE):
+        wx.Dialog.__init__(self, parent, -1, title, pos, size, style)
+
+        x, y = pos
+        if x == -1 and y == -1:
+            self.CenterOnScreen(wx.BOTH)
+
+        dlgsizer = wx.BoxSizer(wx.VERTICAL)
+
+        instruct_nelec = wx.StaticText(self, -1, 'Number of Electrons')
+        dlgsizer.Add(instruct_nelec, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        self.nelec_box = wx.TextCtrl(self, id=-1, style=wx.TE_CENTRE)
+        dlgsizer.Add(self.nelec_box, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        instruct_nelec = wx.StaticText(self, -1, 'Is Energy a Parameter?')
+        dlgsizer.Add(instruct_nelec, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        self.energy_is_param_box = wx.ListBox(parent=self,
+                                         id=-1,
+                                         pos=None,
+                                         size=None,
+                                         choices=['Yes', 'No'],
+                                         style=wx.LB_SINGLE)
+        self.energy_is_param_box.SetSelection(0)
+        dlgsizer.Add(self.energy_is_param_box, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        btnsizer = wx.StdDialogButtonSizer()
+        ok = wx.Button(self, wx.ID_OK, "OK")
+        ok.SetDefault()
+        btnsizer.AddButton(ok)
+        cancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        btnsizer.AddButton(cancel)
+        btnsizer.Realize()
+        dlgsizer.Add(btnsizer, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        self.SetSizer(dlgsizer)
+        self.Layout()
