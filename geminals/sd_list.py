@@ -12,6 +12,7 @@ doci_sd_list
 
 """
 
+
 def ci_sd_list(self, num_limit, exc_orders=[]):
     """ Generates Slater determinants
 
@@ -49,14 +50,14 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
 
     # ASSUME: certain structure for civec
     # spin orbitals are ordered by energy
-    ground = slater.ground(nelec, 2*nspatial)
+    ground = slater.ground(nelec, 2 * nspatial)
     civec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
-    vir_indices = slater.vir_indices(ground, 2*nspatial)
+    vir_indices = slater.vir_indices(ground, 2 * nspatial)
     # order by energy
-    occ_indices = sorted(occ_indices, key=lambda x: x-nspatial if x>=nspatial else x, reverse=True)
-    vir_indices = sorted(vir_indices, key=lambda x: x-nspatial if x>=nspatial else x)
+    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True)
+    vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
 
     count = 1
     for nexc in exc_orders:
@@ -114,7 +115,7 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
     # assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
     # ASSUME: certain structure for civec
     # spin orbitals are ordered by energy
-    ground = slater.ground(nelec, 2*nspatial)
+    ground = slater.ground(nelec, 2 * nspatial)
     civec.append(ground)
 
     count = 1
@@ -123,8 +124,8 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
         occ_combinations = combinations(reversed(range(npair)), nexc)
         vir_combinations = combinations(range(npair, nspatial), nexc)
         for occ, vir in product(occ_combinations, vir_combinations):
-            occ = [i for i in occ] + [i+nspatial for i in occ]
-            vir = [a for a in vir] + [a+nspatial for a in vir]
+            occ = [i for i in occ] + [i + nspatial for i in occ]
+            vir = [a for a in vir] + [a + nspatial for a in vir]
             sd = slater.annihilate(ground, *occ)
             sd = slater.create(sd, *vir)
             civec.append(sd)

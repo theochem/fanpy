@@ -5,6 +5,7 @@ from .math_tools import binomial
 from .sd_list import doci_sd_list
 from .ci_matrix import doci_matrix
 
+
 class DOCI(CIWavefunction):
     """ Doubly Occupied Configuration Interaction Wavefunction
 
@@ -61,7 +62,6 @@ class DOCI(CIWavefunction):
     @property
     def _nci(self):
         """ Total number of configurations
-
         """
         return binomial(self.nspatial, self.npair)
 

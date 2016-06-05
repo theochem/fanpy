@@ -98,7 +98,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
     one = kin
     one.iadd(na)
     one_mo, two_mo = transform_integrals(one, two, "tensordot", orb)
-    one_mo, two_mo =  one_mo[0]._array, two_mo[0]._array
+    one_mo, two_mo = one_mo[0]._array, two_mo[0]._array
 
     output = {
         # Collect HF energy and integrals
@@ -121,6 +121,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
         }
 
     return output
+
 
 def ap1rog(fn=None,
            basis=None, nelec=None, nuc_nuc=True,
@@ -199,6 +200,7 @@ def ap1rog(fn=None,
     if opt:
         output["lagrange"] = ap1rog_result[2]
     return output
+
 
 def gaussian_fchk(fchk_file, horton_internal=False):
     """ Extracts the appropriate data from Gaussian fchk file (using HORTON)

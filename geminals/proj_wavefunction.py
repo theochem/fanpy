@@ -157,7 +157,7 @@ class ProjectionWavefunction(Wavefunction):
         energy_index : int
         """
         if self.energy_is_param:
-            return self.nparam-1
+            return self.nparam - 1
         else:
             return self.nparam
 
@@ -266,7 +266,7 @@ class ProjectionWavefunction(Wavefunction):
         if params is None:
             params = self.template_params
             # set scale
-            scale = 1.0/(self.template_params.size)
+            scale = 1.0 / self.template_params.size
             # set energy
             if self.energy_is_param:
                 energy_index = nparam - 1
@@ -274,9 +274,9 @@ class ProjectionWavefunction(Wavefunction):
             else:
                 energy_index = nparam
             # add random noise to template
-            params[:energy_index] += scale*(np.random.random(self.template_params.size) - 1)
+            params[:energy_index] += scale * (np.random.random(self.template_params.size) - 1)
             if params.dtype == np.complex128:
-                params[:energy_index] += 1j*scale*(np.random.random(self.template_params.size) - 1)
+                params[:energy_index] += 1j * scale * (np.random.random(self.template_params.size) - 1)
         if not isinstance(params, np.ndarray):
             raise TypeError("params must be of type {0}".format(np.ndarray))
         elif params.shape != (nparam,):
@@ -287,7 +287,6 @@ class ProjectionWavefunction(Wavefunction):
         self.params = params
         self.cache = {}
         self.d_cache = {}
-
 
     def assign_pspace(self, pspace=None):
         """ Sets the Slater determinants on which to project against
@@ -300,7 +299,7 @@ class ProjectionWavefunction(Wavefunction):
             If integer, then it is the number of Slater determinants to be generated
         """
         if pspace is None:
-            pspace = self.compute_pspace(self.nparam-1)
+            pspace = self.compute_pspace(self.nparam - 1)
         if isinstance(pspace, int):
             pspace = self.compute_pspace(pspace)
         elif isinstance(pspace, (list, tuple)):
@@ -389,7 +388,7 @@ class ProjectionWavefunction(Wavefunction):
             return sum(self.overlap(i)**2 for i in sd)
         # if derivatized
         else:
-            return sum(2*self.overlap(i)*self.overlap(i, deriv=deriv) for i in sd)
+            return sum(2 * self.overlap(i) * self.overlap(i, deriv=deriv) for i in sd)
 
     def compute_energy(self, include_nuc=False, sd=None, deriv=None):
         """ Returns the energy of the system
@@ -429,11 +428,11 @@ class ProjectionWavefunction(Wavefunction):
             nuc_nuc = self.nuc_nuc
         # if energy is a parameter
         if self.energy_is_param:
-            if not sd is None:
+            if sd is not None:
                 print('Warning: Cannot specify Slater determinant to compute energy if energy is a parameter')
             # if not derivatized
             if deriv is None:
-                return self.params[-1]+nuc_nuc
+                return self.params[-1] + nuc_nuc
             # if derivatized
             elif deriv == self.energy_index:
                 return 1.0
@@ -456,7 +455,7 @@ class ProjectionWavefunction(Wavefunction):
 
             # if not derivatized
             if deriv is None:
-                elec_energy = sum(self.overlap(i)*self.compute_hamiltonian(i) for i in sd)
+                elec_energy = sum(self.overlap(i) * self.compute_hamiltonian(i) for i in sd)
                 elec_energy /= self.compute_norm(sd=sd)
             # if derivatized
             else:
@@ -466,8 +465,8 @@ class ProjectionWavefunction(Wavefunction):
                 d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in sd])
                 norm = self.compute_norm(sd=sd)
                 d_norm = self.compute_norm(sd=sd, deriv=deriv)
-                elec_energy = np.sum(d_olp*ham + olp*d_ham)/norm
-                elec_energy += np.sum(olp*ham)/(-norm**2)*d_norm
+                elec_energy = np.sum(d_olp * ham + olp * d_ham) / norm
+                elec_energy += np.sum(olp * ham) / (-norm**2) * d_norm
             return elec_energy + nuc_nuc
 
     #
@@ -508,11 +507,11 @@ class ProjectionWavefunction(Wavefunction):
 
         # set energy
         energy = self.compute_energy()
-        obj = np.empty(self.nproj+1, dtype=self.dtype)
+        obj = np.empty(self.nproj + 1, dtype=self.dtype)
 
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
-            obj[i] = self.compute_hamiltonian(sd) - energy*self.overlap(sd)
+            obj[i] = self.compute_hamiltonian(sd) - energy * self.overlap(sd)
         # Add normalization constraint
         obj[-1] = self.compute_norm() - 1.0
         return obj
@@ -544,14 +543,14 @@ class ProjectionWavefunction(Wavefunction):
 
         # set energy
         energy = self.compute_energy()
-        jac = np.empty((self.nproj+1, self.nparam), dtype=self.dtype)
+        jac = np.empty((self.nproj + 1, self.nparam), dtype=self.dtype)
 
         for j in range(self.nparam):
             d_energy = self.compute_energy(deriv=j)
             for i, sd in enumerate(self.pspace):
                 # <SD|H|Psi> - E<SD|H|Psi> = 0
-                jac[i, j] = (self.compute_hamiltonian(sd, deriv=j)
-                                -energy*self.overlap(sd, deriv=j)-d_energy*self.overlap(sd))
+                jac[i, j] = (self.compute_hamiltonian(sd, deriv=j) -
+                             energy * self.overlap(sd, deriv=j) - d_energy * self.overlap(sd))
             # Add normalization constraint
             jac[-1, j] = self.compute_norm(deriv=j)
         return jac

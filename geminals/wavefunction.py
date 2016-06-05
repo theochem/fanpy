@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 import re
 import numpy as np
 
+
 # TODO: add custom exception class
 class Wavefunction(object):
     """ Wavefunction class
@@ -114,7 +115,7 @@ class Wavefunction(object):
         self.assign_nelec(nelec)
         self._energy = 0.0
 
-    def __call__(self,  method="default", **kwargs):
+    def __call__(self, method="default", **kwargs):
         """ Optimize coefficients
         """
         if method in self._methods:
@@ -168,7 +169,7 @@ class Wavefunction(object):
         # If numpy array
         if isinstance(H, np.ndarray) and isinstance(G, np.ndarray):
             # must not be unrestricted
-            if orb_type == 'unrestricted' :
+            if orb_type == 'unrestricted':
                 raise TypeError('Integrals of unrestricted orbitals must be given as a tuple')
             elif orb_type is None:
                 orb_type = 'restricted'
@@ -176,7 +177,7 @@ class Wavefunction(object):
             G = (G,)
         # If tuple
         elif isinstance(H, tuple) and isinstance(G, tuple):
-            if not all(isinstance(i, np.ndarray) for i in H+G) :
+            if not all(isinstance(i, np.ndarray) for i in H + G):
                 raise TypeError('H and G as tuples must contain only np.ndarray')
             # tuple of one integrals
             if len(H) == 1 and len(G) == 1:
@@ -203,8 +204,8 @@ class Wavefunction(object):
         else:
             raise TypeError('H and G must be of the same type and be one of {0}'
                             ''.format((np.ndarray, tuple)))
-        for matrix in H+G:
-            if not matrix.dtype in (float, complex, np.float64, np.complex128):
+        for matrix in H + G:
+            if matrix.dtype not in (float, complex, np.float64, np.complex128):
                 raise TypeError('Integral matrices dtypes must be one of {0}'
                                 ''.format((float, complex, np.float64, np.complex128)))
             if not np.all(np.array(matrix.shape) == matrix.shape[0]):
@@ -246,7 +247,6 @@ class Wavefunction(object):
             raise ValueError("nelec must be a positive integer")
         self.nelec = nelec
 
-
     @abstractmethod
     def compute_energy(self, include_nuc=True):
         """ Returns the energy of the system
@@ -268,7 +268,7 @@ class Wavefunction(object):
         """ Number of spin orbitals
         """
         if self.orb_type in ['restricted', 'unrestricted']:
-            return 2*self.H[0].shape[0]
+            return 2 * self.H[0].shape[0]
         elif self.orb_type == 'generalized':
             return self.H[0].shape[0]
 
@@ -276,10 +276,10 @@ class Wavefunction(object):
     def nspatial(self):
         """ Number of spatial orbitals (rounded down from number of spin orbitals/2)
         """
-        return self.nspin//2
+        return self.nspin // 2
 
     @property
     def npair(self):
         """ Number of electron pairs (rounded down)
         """
-        return self.nelec//2
+        return self.nelec // 2

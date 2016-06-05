@@ -85,7 +85,7 @@ def permanent_ryser(matrix):
                 cur_value = graycode[n - 1]
             else:
                 cur_value = not \
-                (graycode[cur_position] and graycode[cur_position + 1])
+                            (graycode[cur_position] and graycode[cur_position + 1])
             if flag:
                 break
 

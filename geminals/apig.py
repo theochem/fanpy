@@ -9,6 +9,7 @@ from .sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
 from .math_tools import permanent_ryser
 
+
 class APIG(ProjectionWavefunction):
     """ Antisymmetric Product of Interacting Geminals
 
@@ -128,7 +129,7 @@ class APIG(ProjectionWavefunction):
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
             row_to_remove = deriv // self.nspatial
-            col_to_remove = deriv %  self.nspatial
+            col_to_remove = deriv % self.nspatial
             if col_to_remove in occ_alpha_indices:
                 row_inds = [i for i in range(self.npair) if i != row_to_remove]
                 col_inds = [i for i in occ_alpha_indices if i != col_to_remove]
@@ -178,10 +179,10 @@ class APIG(ProjectionWavefunction):
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
         # flip the negative norms
-        gem_coeffs[norm<0, :] *= -1
+        gem_coeffs[norm < 0, :] *= -1
         # normalize the wavefunction
         norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5/self.npair)
+        gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
         if self.energy_is_param:
             self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
@@ -192,5 +193,5 @@ class APIG(ProjectionWavefunction):
             del self.cache[sd]
             # This requires d_cache to be a dictionary of dictionary
             # self.d_cache[sd] = {}
-            for i in (j for j in self.d_cache.keys() if j[0]==sd):
+            for i in (j for j in self.d_cache.keys() if j[0] == sd):
                 del self.cache[i]

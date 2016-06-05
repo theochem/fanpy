@@ -6,6 +6,7 @@ from .sd_list import doci_sd_list
 from .ci_matrix import doci_matrix
 from . import slater
 
+
 class CIPairs(CIWavefunction):
     """ Configuration Interaction Pairs (DOCI with only one pair excitation)
 
@@ -62,10 +63,9 @@ class CIPairs(CIWavefunction):
     @property
     def _nci(self):
         """ Total number of configurations
-
         """
-        num_singles = binomial(self.npair, 1)*binomial(self.nspatial-self.npair, 1)
-        return 1+num_singles
+        num_singles = binomial(self.npair, 1) * binomial(self.nspatial - self.npair, 1)
+        return 1 + num_singles
 
     def compute_civec(self):
         """ Generates Slater determinants
@@ -111,9 +111,9 @@ class CIPairs(CIWavefunction):
         # dictionary of slater determinant to coefficient
         sd_coeffs = self.dict_sd_coeff(exc_lvl=exc_lvl)
         # ground state SD
-        ground = slater.ground(nelec, 2*nspatial)
+        ground = slater.ground(nelec, 2 * nspatial)
         # fill empty geminal coefficient
-        gem_coeffs = np.zeros((self.npair, self.nspatial-self.npair))
+        gem_coeffs = np.zeros((self.npair, self.nspatial - self.npair))
         for i in range(self.npair):
             for a in range(self.npair, self.nspatial):
                 # because first self.npair columns are removed

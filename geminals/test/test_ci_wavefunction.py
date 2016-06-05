@@ -4,6 +4,7 @@ import numpy as np
 
 from ..ci_wavefunction import CIWavefunction
 
+
 class TestCIWavefunction(CIWavefunction):
     # overwrite to stop initialization
     def __init__(self):
@@ -18,6 +19,7 @@ class TestCIWavefunction(CIWavefunction):
 
     def compute_ci_matrix(self):
         pass
+
 
 def test_assign_nci():
     """
@@ -36,7 +38,8 @@ def test_assign_nci():
     test.assign_nci(10)
     assert test.nci == 10
     # Other assigned
-    assert_raises(TypeError, lambda:test.assign_nci('123'))
+    assert_raises(TypeError, lambda: test.assign_nci('123'))
+
 
 def test_assign_civec():
     """
@@ -56,12 +59,13 @@ def test_assign_civec():
     assert test.civec == (0b1111,)
     # list assigned
     test.civec = None
-    test.assign_civec([0b1111,])
+    test.assign_civec([0b1111, ])
     assert test.civec == (0b1111,)
     # Other assigned
-    assert_raises(TypeError, lambda:test.assign_civec(0b1111))
-    assert_raises(TypeError, lambda:test.assign_civec((0b1111)))
-    assert_raises(TypeError, lambda:test.assign_civec('123'))
+    assert_raises(TypeError, lambda: test.assign_civec(0b1111))
+    assert_raises(TypeError, lambda: test.assign_civec((0b1111)))
+    assert_raises(TypeError, lambda: test.assign_civec('123'))
+
 
 def test_dict_sd_coeff():
     """
@@ -69,7 +73,7 @@ def test_dict_sd_coeff():
     """
     test = TestCIWavefunction()
     test.civec = [0b1111, 0b110011]
-    test.sd_coeffs = np.arange(6).reshape(2,3)
+    test.sd_coeffs = np.arange(6).reshape(2, 3)
     # ground state
     sd_coeff = test.dict_sd_coeff()
     assert sd_coeff[0b1111] == 0
@@ -86,6 +90,6 @@ def test_dict_sd_coeff():
     assert sd_coeff[0b1111] == 2
     assert sd_coeff[0b110011] == 5
     # bad excitation
-    assert_raises(TypeError, lambda:test.dict_sd_coeff(exc_lvl='2'))
-    assert_raises(TypeError, lambda:test.dict_sd_coeff(exc_lvl=2.0))
-    assert_raises(ValueError, lambda:test.dict_sd_coeff(exc_lvl=-2))
+    assert_raises(TypeError, lambda: test.dict_sd_coeff(exc_lvl='2'))
+    assert_raises(TypeError, lambda: test.dict_sd_coeff(exc_lvl=2.0))
+    assert_raises(ValueError, lambda: test.dict_sd_coeff(exc_lvl=-2))
