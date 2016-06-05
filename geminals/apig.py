@@ -5,7 +5,7 @@ from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
 from . import slater
-from .sd_list import doci_sd_list
+from .sd_list import generate_doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
 from .math_tools import permanent_ryser
 
@@ -160,7 +160,7 @@ class APIG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return doci_sd_list(self, num_sd)
+        return generate_doci_sd_list(self.nspatial, self.nelec, self.npair, num_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
