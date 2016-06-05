@@ -2,12 +2,12 @@ import numpy as np
 from . import slater
 
 
-def is_alpha(i, nspatial):
+def is_alpha(index, nspatial):
     """ Checks if index `i` belongs to an alpha spin orbital
 
     Parameter
     ---------
-    i : int
+    index : int
         Index of the spin orbital in the Slater determinant
     nspatial : int
         Number of spatial orbitals
@@ -24,10 +24,7 @@ def is_alpha(i, nspatial):
     """
     # assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
     # assert 0 <= i < 2*nspatial, 'Index must be between 0 and 2*nspatial-1'
-    if i < nspatial:
-        return True
-    else:
-        return False
+    return bool(index < nspatial)
 
 
 def spatial_index(i, nspatial):

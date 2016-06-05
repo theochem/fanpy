@@ -3,7 +3,7 @@ import gmpy2
 """
 Functions
 ---------
-occ
+is_occ
     Check if an orbital is occupied in a Slater determinant
 total_occ
     Returns the total number of occupied orbitals in a Slater determinant
@@ -34,16 +34,17 @@ deinterleave
 """
 
 
-def occ(sd, i):
+def is_occ(sd, index):
     """
-    Checks if a given Slater determinant has orbital `i` occupied.
+    Checks if specified orbital is occupied in a Slater determinant.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    i : int
-        Index for an occupied orbital
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `None`.
+    index : int
+        Index of orbital
 
     Returns
     -------
@@ -54,7 +55,7 @@ def occ(sd, i):
     if sd is None:
         return False
     else:
-        return gmpy2.bit_test(sd, i)
+        return gmpy2.bit_test(sd, index)
 
 
 def total_occ(sd):
@@ -96,7 +97,7 @@ def annihilate(sd, *indices):
     """
     for i in indices:
         # if orbital is occupied
-        if occ(sd, i):
+        if is_occ(sd, i):
             sd = gmpy2.bit_flip(sd, i)
         else:
             return None
@@ -121,7 +122,7 @@ def create(sd, *indices):
         If the orbital is occupied is annihilated, None is returned.
     """
     for i in indices:
-        if not occ(sd, i) and sd is not None:
+        if not is_occ(sd, i) and sd is not None:
             sd = gmpy2.bit_flip(sd, i)
         else:
             return None

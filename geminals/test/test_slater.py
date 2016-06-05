@@ -3,16 +3,17 @@ from nose.tools import assert_raises
 from .. import slater
 
 
-def test_occ():
+def test_is_occ():
     """
-    Test slater.occ
+    Test slater.is_occ
     """
-    # Test occupancy
-    assert slater.occ(0b100100, 2)
-    assert slater.occ(0b100100, 5)
-    assert not slater.occ(0b100100, 4)
-    assert not slater.occ(0b100100, 6)
-    assert not slater.occ(0b100100, 0)
+    assert slater.is_occ(0b100100, 2)
+    assert slater.is_occ(0b100100, 5)
+    assert not slater.is_occ(None, 0)
+    assert not slater.is_occ(None, 1)
+    assert not slater.is_occ(0b100100, 4)
+    assert not slater.is_occ(0b100100, 6)
+    assert not slater.is_occ(0b100100, 0)
 
 
 def test_total_occ():
