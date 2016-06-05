@@ -249,8 +249,8 @@ class ProwlFrame(wx.Frame):
             # FIXME: electron number setter
             self.data = geminals.hort.hartreefock(fn=self.mol_path, basis=basis, nelec=self.nelec, horton_internal=True)
         elif ext == '.fchk':
-            self.data = geminals.hort.gaussian_fchk(self.mol_path, basis=basis, horton_internal=True)
-        self.load_mol_checkbox(self.data['horton_internal']['orb'])
+            self.data = geminals.hort.gaussian_fchk(self.mol_path, horton_internal=True)
+        self.load_mol_checkbox(*self.data['horton_internal']['orb'])
         # if CI wavefunction
         if method in ci_methods:
             self.wavefunction = method_dict[method](nelec=self.nelec,

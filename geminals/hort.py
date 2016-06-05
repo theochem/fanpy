@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import numpy as np
 
 from horton import *
 
@@ -119,7 +120,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
             "one": one,
             "two": two,
             "nuc_nuc": external["nn"] if nuc_nuc else 0.0,
-            "orb": orb,
+            "orb": [orb,],
             "olp": olp,
         }
 
@@ -272,7 +273,6 @@ def gaussian_fchk(fchk_file, horton_internal=False):
             "lf": mol.lf,
             "one": one_mo,
             "two": two_mo,
-            "orb": orb,
-            "orb": tuple(exp.coeffs for exp in exps),
+            "orb": exps,
         }
     return output
