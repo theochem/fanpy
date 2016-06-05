@@ -158,23 +158,33 @@ def test_vir_indices():
     assert slater.vir_indices(0b10000, 1) == (0,)
 
 
-def test_shared():
+def test_shared_indices():
     """
-    Test slater.shared
+    Test slater.shared_indices
     """
-    assert slater.shared(0b001, 0b000) == 0
-    assert slater.shared(0b111, 0b001) == 0b001
-    assert slater.shared(0b111, 0b101) == 0b101
+    assert slater.shared_indices(None, None) == ()
+    assert slater.shared_indices(0b001, None) == ()
+    assert slater.shared_indices(None, 0b000) == ()
+    assert slater.shared_indices(0b001, 0b000) == ()
+    assert slater.shared_indices(0b111, 0b001) == (0,)
+    assert slater.shared_indices(0b111, 0b101) == (0, 2)
+    assert slater.shared_indices(0b111, 0b01101) == (0, 2)
+    assert slater.shared_indices(0b111110, 0b101100) == (2, 3, 5)
 
 
-def test_diff():
+def test_diff_indices():
     """
-    Test slater.diff
+    Test slater.diff_indices
     """
-    assert slater.diff(0b001, 0b000) == ((0,), ())
-    assert slater.diff(0b001, 0b001) == ((), ())
-    assert slater.diff(0b011, 0b101) == ((1,), (2,))
-    assert slater.diff(0b101, 0b011) == ((2,), (1,))
+    assert slater.diff_indices(None, None) == ((), ())
+    assert slater.diff_indices(None, 0b000) == ((), ())
+    assert slater.diff_indices(None, 0b010) == ((), (1,))
+    assert slater.diff_indices(0b001, None) == ((0,), ())
+    assert slater.diff_indices(0b001, 0b000) == ((0,), ())
+    assert slater.diff_indices(0b001, 0b001) == ((), ())
+    assert slater.diff_indices(0b011, 0b101) == ((1,), (2,))
+    assert slater.diff_indices(0b101, 0b011) == ((2,), (1,))
+    assert slater.diff_indices(0b111110, 0b101100) == ((1, 4), ())
 
 
 def test_combine_spin():

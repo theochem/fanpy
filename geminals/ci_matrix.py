@@ -197,12 +197,12 @@ def ci_matrix(self, orb_type):
 
     ci_matrix = np.zeros((self.nci,) * 2, dtype=self.dtype)
 
-    # Loop only over upper triangular
-    for nsd0, sd0 in enumerate(self.civec):
-        for nsd1, sd1 in enumerate(self.civec[nsd0:]):
-            nsd1 += nsd0
-            diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
-            shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
+    # Loop only over upper triangular elements
+    for index0, sd0 in enumerate(self.civec):
+        for index1, sd1 in enumerate(self.civec[index0:]):
+            index1 += index0
+            diff_sd0, diff_sd1 = slater.diff_indices(sd0, sd1)
+            shared_indices = slater.shared_indices(sd0, sd1)
 
             if len(diff_sd0) != len(diff_sd1):
                 continue
@@ -213,26 +213,26 @@ def ci_matrix(self, orb_type):
             if diff_order == 2:
                 i, j = diff_sd0
                 k, l = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
-                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
+                ci_matrix[index0, index1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
+                ci_matrix[index0, index1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
 
             # two sd's are different by single excitation
             elif diff_order == 1:
                 i, = diff_sd0
                 k, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_H_value(H, i, k, orb_type=orb_type)
+                ci_matrix[index0, index1] += get_H_value(H, i, k, orb_type=orb_type)
                 for j in shared_indices:
                     if j != i:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, j, orb_type=orb_type)
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, k, orb_type=orb_type)
+                        ci_matrix[index0, index1] += get_G_value(G, i, j, k, j, orb_type=orb_type)
+                        ci_matrix[index0, index1] -= get_G_value(G, i, j, j, k, orb_type=orb_type)
 
             # two sd's are the same
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
+                    ci_matrix[index0, index1] += get_H_value(H, i, i, orb_type=orb_type)
                     for j in shared_indices[ic + 1:]:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+                        ci_matrix[index0, index1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
+                        ci_matrix[index0, index1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
 
     # Make it Hermitian
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T
@@ -266,11 +266,11 @@ def doci_matrix(self, orb_type):
     doci_matrix = np.zeros((self.nci,) * 2, dtype=self.dtype)
 
     # Loop only over upper triangular
-    for nsd0, sd0 in enumerate(self.civec):
-        for nsd1, sd1 in enumerate(self.civec[nsd0:]):
-            nsd1 += nsd0
-            diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
-            shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
+    for index0, sd0 in enumerate(self.civec):
+        for index1, sd1 in enumerate(self.civec[index0:]):
+            index1 += index0
+            diff_sd0, diff_sd1 = slater.diff_indices(sd0, sd1)
+            shared_indices = slater.shared_indices(sd0, sd1)
 
             if len(diff_sd0) != len(diff_sd1):
                 continue
@@ -285,9 +285,9 @@ def doci_matrix(self, orb_type):
                 i, j = diff_sd0
                 k, l = diff_sd1
                 if spatial_index(i, ns) == spatial_index(k, ns) and spatial_index(j, ns) == spatial_index(l, ns):
-                    doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
+                    doci_matrix[index0, index1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
                 elif spatial_index(i, ns) == spatial_index(l, ns) and spatial_index(j, ns) == spatial_index(k, ns):
-                    doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
+                    doci_matrix[index0, index1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
                 else:
                     assert True, 'One (or both) of the Slater determinants, {0} or {1},'
                     ' are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
@@ -295,10 +295,10 @@ def doci_matrix(self, orb_type):
             # two sd's are the same
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
-                    doci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
+                    doci_matrix[index0, index1] += get_H_value(H, i, i, orb_type=orb_type)
                     for j in shared_indices[ic + 1:]:
-                        doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
-                        doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+                        doci_matrix[index0, index1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
+                        doci_matrix[index0, index1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
 
     # Make it Hermitian
     doci_matrix[:, :] = np.triu(doci_matrix) + np.tril(doci_matrix, -1)

@@ -236,49 +236,58 @@ def vir_indices(sd, norbs):
     return tuple(output[:-1])
 
 
-def shared(sd1, sd2):
+def shared_indices(sd1, sd2):
     """
-    Finds the orbitals shared between two Slater determinants
+    Returns tuple of orbital indices occupied in both Slater determinants
 
     Parameters
     ----------
     sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `None`.
     sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `None`.
 
     Returns
     -------
     tuple of ints
-        Tuple of ints are the indices of the occupied orbitals shared by the two
+        Tuple of ints representing the indices of the occupied orbitals shared by the two
         Slater determinants
     """
-    return sd1 & sd2
+    if (sd1 is None) or (sd2 is None):
+        return ()
+    sd_shared = sd1 & sd2
+    return occ_indices(sd_shared)
 
 
-def diff(sd1, sd2):
+def diff_indices(sd1, sd2):
     """
-    Returns the difference between two Slater determinants
+    Returns tuples of orbital indices occupied in one of the Slater determinants but not the other
 
     Parameters
     ----------
     sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `None`.
     sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `None`.
 
     Returns
     -------
     2-tuple of tuple of ints
-        First tuple of ints are the indices of the occupied orbitals of sd1 that
+        First tuple of ints represents the indices of the occupied orbitals of sd1 that
         are not occupied in sd2
-        Second tuple of ints are the indices of the occupied orbitals of sd2 that
+        Second tuple of ints represents the indices of the occupied orbitals of sd2 that
         are not occupied in sd1
     """
+    if (sd1 is None) or (sd2 is None):
+        return occ_indices(sd1), occ_indices(sd2)
     sd_diff = sd1 ^ sd2
     sd1_diff = sd_diff & sd1
     sd2_diff = sd_diff & sd2
-    return (occ_indices(sd1_diff), occ_indices(sd2_diff))
+    return occ_indices(sd1_diff), occ_indices(sd2_diff)
 
 
 def combine_spin(alpha_bits, beta_bits, norbs):
