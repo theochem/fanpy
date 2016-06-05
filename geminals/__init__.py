@@ -13,3 +13,4 @@ from . import fci, doci, cisd, ci_pairs
 from . import proj_wavefunction
 from . import proj_hamiltonian
 from . import apig
+from . import ap1rog
