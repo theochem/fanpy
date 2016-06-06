@@ -4,7 +4,7 @@ import glob
 import wx
 import numpy as np
 
-from orbital_label_maker import EditableListCtrl, CalculationSettings
+from orbital_label_maker import EditableListCtrl, CalculationSettings, OrbitalSelectionDialog
 
 import geminals
 import horton
@@ -250,6 +250,7 @@ class ProwlFrame(wx.Frame):
             self.data = geminals.hort.hartreefock(fn=self.mol_path, basis=basis, nelec=self.nelec, horton_internal=True)
         elif ext == '.fchk':
             self.data = geminals.hort.gaussian_fchk(self.mol_path, horton_internal=True)
+        print(self.data['horton_internal']['orb'], geminals.__file__)
         self.load_mol_checkbox(*self.data['horton_internal']['orb'])
         # if CI wavefunction
         if method in ci_methods:
@@ -283,6 +284,7 @@ class ProwlFrame(wx.Frame):
             return
 
         self.check_mo.DeleteAllItems()
+        occs[np.abs(occs)<1e-7] = 0
         for (index, spin, occ, energy) in zip(indices, spins, occs, energies):
             ind = self.check_mo.InsertStringItem(sys.maxint, str(index))
             self.check_mo.SetStringItem(ind, 1, spin)
@@ -293,8 +295,14 @@ class ProwlFrame(wx.Frame):
         self.sizer.Fit(self)
 
 
-    def select_orbitals(self):
-        pass
+    def select_orbitals(self, event):
+        method = self.method_select.GetStringSelection()
+        if method in ci_methods:
+            init_dialog = OrbitalSelectionDialog(self, 'Select your CAS orbital type', 'cas')
+        elif method in proj_methods:
+            init_dialog = OrbitalSelectionDialog(self, 'Divide your orbitals into sets', 'set')
+        if (init_dialog.ShowModal() == wx.ID_OK):
+            pass
 
     def solve(self, event):
         self.wavefunction()

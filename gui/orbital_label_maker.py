@@ -1,3 +1,4 @@
+import sys
 import wx
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin, TextEditMixin
 
@@ -45,7 +46,7 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
 
         # Find position of editor
         # from the columns
-        col = 6
+        col = 4
         x = self.col_loc
         delta_x = self.GetColumnWidth(col)
         y = self.GetItemRect(row)[1]
@@ -84,7 +85,7 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
     def CloseEditor(self, event):
         if event == wx.WXK_RETURN:
             row = self.SelectedRow
-            self.SetStringItem(row, 6, self.editor.GetValue())
+            self.SetStringItem(row, 4, self.editor.GetValue())
         self.editor.Hide()
         # NOTE: There is this bug that if event==wx.WXK_DOWN and self.SetFocus(),
         # the window actually loses focus. Not sure why this happens, but this
@@ -102,7 +103,7 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
         num_items = self.GetItemCount()
         for i in range(num_items):
             new_texts = [self.GetItemText(i, j) for j in indices]
-            self.SetStringItem(i, 6, '_'.join(new_texts))
+            self.SetStringItem(i, 4, '_'.join(new_texts))
 
     def get_labels(self):
         """ Returns the new indices for the
@@ -189,3 +190,96 @@ class CalculationSettings(wx.Dialog):
 
         self.SetSizer(dlgsizer)
         self.Layout()
+
+class OrbitalSelectionDialog(wx.Dialog):
+    def __init__(self, parent, title, sel_type='',
+                 pos=wx.DefaultPosition,
+                 size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE):
+        wx.Dialog.__init__(self, parent, -1, title, pos, size, style)
+
+        x, y = pos
+        if x == -1 and y == -1:
+            self.CenterOnScreen(wx.BOTH)
+
+        dlgsizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.check_mo = EditableListCtrl(self, -1, style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL)
+        self.check_mo.InsertColumn(0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(1, 'Spin', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(2, 'Occupations (in HF)', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.InsertColumn(3, 'Energy', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        if sel_type == 'set':
+            self.check_mo.InsertColumn(4, 'Set', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        elif sel_type == 'cas':
+            self.check_mo.InsertColumn(4, 'Type', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
+        self.check_mo.col_loc = sum(self.check_mo.GetColumnWidth(i) for i in range(5))
+
+        for i in range(parent.check_mo.GetItemCount()):
+            if parent.check_mo.GetItemText(i, col=1) == 'spatial':
+                # alphas
+                ind = self.check_mo.InsertStringItem(sys.maxint, str(i))
+                self.check_mo.SetStringItem(ind, 1, 'alpha')
+                self.check_mo.SetStringItem(ind, 2, str(float(parent.check_mo.GetItemText(i, col=2))/2))
+                self.check_mo.SetStringItem(ind, 3, parent.check_mo.GetItemText(i, col=3))
+                # betas
+                ind = self.check_mo.InsertStringItem(sys.maxint, str(i+parent.check_mo.GetItemCount()))
+                self.check_mo.SetStringItem(ind, 1, 'beta')
+                self.check_mo.SetStringItem(ind, 2, str(float(parent.check_mo.GetItemText(i, col=2))/2))
+                self.check_mo.SetStringItem(ind, 3, parent.check_mo.GetItemText(i, col=3))
+            else:
+                ind = self.check_mo.InsertStringItem(sys.maxint, str(i))
+                self.check_mo.SetStringItem(ind, 1, parent.check_mo.GetItemText(i, col=1))
+                self.check_mo.SetStringItem(ind, 2, parent.check_mo.GetItemText(i, col=2))
+                self.check_mo.SetStringItem(ind, 3, parent.check_mo.GetItemText(i, col=3))
+
+        if sel_type == 'set':
+            self.default_set()
+        elif sel_type == 'cas':
+            self.default_cas()
+
+        self.check_mo.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        self.check_mo.SetColumnWidth(3, wx.LIST_AUTOSIZE)
+
+        button_display_orbs = wx.Button(self,
+                                    id=-1,
+                                    label='Display Orbitals',
+                                    pos=None,
+                                    size=None)
+        self.Bind(wx.EVT_BUTTON, self.display_orbs, button_display_orbs)
+        dlgsizer.Add(button_display_orbs,
+                       proportion=0,
+                       flag=wx.ALIGN_CENTER)
+
+        dlgsizer.Add(self.check_mo,
+                       proportion=1,
+                       border=4,
+                       flag=wx.ALIGN_CENTER | wx.EXPAND)
+
+        btnsizer = wx.StdDialogButtonSizer()
+        ok = wx.Button(self, wx.ID_OK, "OK")
+        btnsizer.AddButton(ok)
+        cancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        btnsizer.AddButton(cancel)
+        btnsizer.Realize()
+        dlgsizer.Add(btnsizer, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+
+        self.SetSizer(dlgsizer)
+        dlgsizer.Fit(self)
+        self.Layout()
+
+    def default_cas(self):
+        for i in range(self.check_mo.GetItemCount()):
+            if float(self.check_mo.GetItemText(i, col=2)) > 0 :
+                self.check_mo.SetStringItem(i, 4, 'frozen')
+            else:
+                self.check_mo.SetStringItem(i, 4, 'virtual')
+
+    def default_set(self):
+        for i in range(self.check_mo.GetItemCount()):
+            if self.check_mo.GetItemText(i, col=1) == 'alpha':
+                self.check_mo.SetStringItem(i, 4, '1')
+            elif self.check_mo.GetItemText(i, col=1) == 'beta':
+                self.check_mo.SetStringItem(i, 4, '2')
+
+    def display_orbs(self, event):
+        pass
