@@ -1,6 +1,11 @@
 import sys
 import wx
+import numpy as np
+
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin, TextEditMixin
+from matplotlib_panel import CanvasPanel
+sys.path.append('/home/dkim/Work/mo_diagram')
+import graph, mo_diagram
 
 class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
     def __init__(self, parent, ID, ref_box=None,
@@ -201,7 +206,10 @@ class OrbitalSelectionDialog(wx.Dialog):
         if x == -1 and y == -1:
             self.CenterOnScreen(wx.BOTH)
 
-        dlgsizer = wx.BoxSizer(wx.VERTICAL)
+        self.dlgsizer = wx.BoxSizer(wx.VERTICAL)
+        self.boxsizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        box_one_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.check_mo = EditableListCtrl(self, -1, style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL)
         self.check_mo.InsertColumn(0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
@@ -240,20 +248,30 @@ class OrbitalSelectionDialog(wx.Dialog):
         self.check_mo.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         self.check_mo.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
-        button_display_orbs = wx.Button(self,
-                                    id=-1,
-                                    label='Display Orbitals',
-                                    pos=None,
-                                    size=None)
-        self.Bind(wx.EVT_BUTTON, self.display_orbs, button_display_orbs)
-        dlgsizer.Add(button_display_orbs,
-                       proportion=0,
-                       flag=wx.ALIGN_CENTER)
-
-        dlgsizer.Add(self.check_mo,
+        box_one_sizer.Add(self.check_mo,
                        proportion=1,
                        border=4,
-                       flag=wx.ALIGN_CENTER | wx.EXPAND)
+                       flag=wx.EXPAND)
+
+        box_two_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.graph_panel = CanvasPanel(self)
+        if sel_type == 'set':
+            self.graph_set()
+        elif sel_type == 'cas':
+            self.graph_cas()
+        box_two_sizer.Add(self.graph_panel)
+
+        # Add all the box sizers
+        self.boxsizer.Add(box_one_sizer,
+                          proportion=1,
+                          flag=wx.ALIGN_CENTER|wx.EXPAND)
+        self.boxsizer.Add(box_two_sizer,
+                          proportion=1,
+                          flag=wx.ALIGN_CENTER|wx.EXPAND)
+
+        self.dlgsizer.Add(self.boxsizer,
+                          proportion=1,
+                          flag=wx.ALIGN_CENTER|wx.EXPAND)
 
         btnsizer = wx.StdDialogButtonSizer()
         ok = wx.Button(self, wx.ID_OK, "OK")
@@ -261,10 +279,10 @@ class OrbitalSelectionDialog(wx.Dialog):
         cancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
         btnsizer.AddButton(cancel)
         btnsizer.Realize()
-        dlgsizer.Add(btnsizer, proportion=0, flag=wx.ALIGN_CENTER, border=4)
+        self.dlgsizer.Add(btnsizer, proportion=0, flag=wx.ALIGN_CENTER, border=4)
 
-        self.SetSizer(dlgsizer)
-        dlgsizer.Fit(self)
+        self.SetSizer(self.dlgsizer)
+        self.dlgsizer.Fit(self)
         self.Layout()
 
     def default_cas(self):
@@ -281,5 +299,22 @@ class OrbitalSelectionDialog(wx.Dialog):
             elif self.check_mo.GetItemText(i, col=1) == 'beta':
                 self.check_mo.SetStringItem(i, 4, '2')
 
-    def display_orbs(self, event):
-        pass
+    def graph_set(self):
+        num_points = self.check_mo.GetItemCount()
+        adjacency = np.ones((num_points, num_points), dtype=bool)
+        # orbitals within the same set are not connected
+        set_label = np.array([self.check_mo.GetItemText(i, col=4) for i in range(num_points)])
+        # select indices that are zero
+        zero_indices = set_label == set_label.reshape(num_points,1)
+        adjacency[zero_indices] = False
+        # FIXME: label the points
+        # FIXME: reorder the points so that the graph looks nicer
+        return self.graph_panel.draw(graph.generate_circle_graph, num_points=num_points, adjacency=adjacency)
+
+    def graph_cas(self):
+        num_points = self.check_mo.GetItemCount()
+        energies = np.array([float(self.check_mo.GetItemText(i, col=3)) for i in range(num_points)])
+        occupations = np.array([float(self.check_mo.GetItemText(i, col=2)) for i in range(num_points)])
+        print(energies)
+        print(occupations)
+        return self.graph_panel.draw(mo_diagram.generate_all_mo_diagrams, list_energies=[energies], list_occupations=[occupations])
