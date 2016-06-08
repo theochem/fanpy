@@ -233,7 +233,7 @@ class AP1roG(ProjectionWavefunction):
             if len(vo_row) == 0:
                 val = 1
             else:
-                val = permanent_ryser(gem_coeffs[vo_row][:, vo_col])
+                val = permanent_combinatoric(gem_coeffs[vo_row][:, vo_col])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
@@ -248,7 +248,7 @@ class AP1roG(ProjectionWavefunction):
                     if len(row_inds) == 0 and len(col_inds) == 0:
                         val = 1
                     else:
-                        val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+                        val = permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
             # construct new gmpy2.mpz to describe the slater determinant and
             # derivation index
             self.d_cache[(sd, deriv)] = val
