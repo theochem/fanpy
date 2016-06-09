@@ -3,7 +3,7 @@ import gmpy2
 """
 Functions
 ---------
-occ
+is_occ
     Check if an orbital is occupied in a Slater determinant
 total_occ
     Returns the total number of occupied orbitals in a Slater determinant
@@ -34,16 +34,17 @@ deinterleave
 """
 
 
-def occ(sd, i):
+def is_occ(sd, index):
     """
-    Checks if a given Slater determinant has orbital `i` occupied.
+    Checks if specified orbital is occupied in a Slater determinant.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    i : int
-        Index for an occupied orbital
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
+    index : int
+        Index of orbital
 
     Returns
     -------
@@ -54,7 +55,7 @@ def occ(sd, i):
     if sd is None:
         return False
     else:
-        return gmpy2.bit_test(sd, i)
+        return gmpy2.bit_test(sd, index)
 
 
 def total_occ(sd):
@@ -64,12 +65,13 @@ def total_occ(sd):
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
 
     Returns
     -------
     int
-        Number of occupied orbitals in Slater determinant
+        Total number of occupied spin orbitals
     """
     if sd is None:
         return 0
@@ -79,74 +81,80 @@ def total_occ(sd):
 
 def annihilate(sd, *indices):
     """
-    Annihilates an electron in the orbital `i` in a Slater determinant.
+    Annihilates electron(s) in specified spin orbital(s) in a Slater determinant.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     indices : int
-        The indices of the orbitals to annihilate
+        Indices of the spin orbitals to annihilate
 
     Returns
     -------
     sd : int or None
         Integer that describes the occupation of a Slater determinant as a bitstring
-        If the orbital is not occupied is annihilated, None is returned.
+        If an unoccupied orbital is annihilated or Slater determinant is zero, `None` is returned.
     """
-    for i in indices:
-        # if orbital is occupied
-        if occ(sd, i):
-            sd = gmpy2.bit_flip(sd, i)
+    for index in indices:
+        if is_occ(sd, index):
+            # change occupation number of occupied orbital from 1 to 0
+            sd = gmpy2.bit_flip(sd, index)
         else:
+            # orbital is unoccupied or Slater determinant is zero
             return None
     return sd
 
 
 def create(sd, *indices):
     """
-    Creates an electron in the orbital `i` in a Slater determinant.
+    Creates electron(s) in specified orbital(s) in a Slater determinant.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     indices : int
-        The indices of the orbitals to create
+        Indices of the spin orbitals to create
 
     Returns
     -------
     sd : int or None
         Integer that describes the occupation of a Slater determinant as a bitstring
-        If the orbital is occupied is annihilated, None is returned.
+        If an occupied orbital is created or Slater determinant is zero, `None` is returned.
     """
-    for i in indices:
-        if not occ(sd, i) and sd is not None:
-            sd = gmpy2.bit_flip(sd, i)
+    for index in indices:
+        if not is_occ(sd, index) and (sd is not None):
+            # change occupation number of unoccupied orbital from 0 to 1
+            sd = gmpy2.bit_flip(sd, index)
         else:
+            # orbital is already occupied or Slater determinant is zero
             return None
     return sd
 
 
 def excite(sd, *indices):
     """
-    Excite an electron in orbital `i` to orbital `a`.
+    Excites electron(s) from specified occupied orbitals to specified virtual orbitals.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     indices : int
-        The indices of the orbitals to annihilate and create
-        The first half contain indices of orbitals to annihilate
-        The second half contain indices of orbitals to create
+        Indices of the spin orbitals to annihilate and create
+        The first half of indices represents orbitals to annihilate
+        The second half of indices representa orbitals to create
 
     Returns
     -------
     excited_sd : int or None
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    If the orbital `i` is unoccupied or the orbital `a` is occupied,
-        None is returned
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        if any of the orbitals to annihilate (excite from) are unoccupied or any of the
+        orbitals to create (excite to) are occupied, `None` is returned.
 
     Raises
     ------
@@ -154,21 +162,25 @@ def excite(sd, *indices):
         If the length of indices is not even
     """
     assert (len(indices) % 2) == 0, "Unqual number of creators and annihilators"
-    sd = annihilate(sd, *indices[:len(indices) // 2])
-    sd = create(sd, *indices[len(indices) // 2:])
+    # number of electrons to excite
+    nexc = len(indices) // 2
+    # annihilate electrons in the first half of indicies
+    sd = annihilate(sd, *indices[:nexc])
+    # create electrons in the second half of indicies
+    sd = create(sd, *indices[nexc:])
     return sd
 
 
 def ground(n, norbs):
     """
-    Creates a ground state Slater determinant (no occupied spin-orbitals)
+    Creates an integer representing the ground state Slater determinant as a bitstring
 
     Parameters
     ----------
     n : int
-        Number of occupied spin-orbitals
+        Total number of occupied spin orbitals
     norbs : int
-        Total number of spin-orbitals
+        Total number of spin orbitals
 
     Returns
     -------
@@ -177,31 +189,35 @@ def ground(n, norbs):
 
     Note
     ----
-    Assumes that the spin-orbitals are ordered by energy and that the ground state Slater determinant
-    is composed of the orbitals with the lowest energy
-    Orders the alpha orbitals first, then the beta orbitals
-    If the number of electrons is odd, then the last electron is put into an alpha orbital
+    Ground state determinant is occupied according to aufbau principle. It is assumed that
+    spin orbitals are energy-ordered and the lowest spin orbitals are filled by alpha & beta
+    electrons. If the number of electrons is odd, the extra electron occupies an alpha spin
+    orbital; :math:`n_{alpha} >= n_{beta}`.
     """
-    assert n <= norbs, 'Number of occupied spin-orbitals must be less than the total number of spin-orbitals'
-    assert norbs % 2 == 0, 'Total number of spin-orbitals must be even'
-    alpha_bits = gmpy2.bit_mask(n // 2 + n % 2)
-    beta_bits = gmpy2.bit_mask(n // 2) << (norbs // 2)
+    assert n <= norbs, 'Number of occupied spin orbitals must be less than the total number of spin orbitals'
+    assert norbs % 2 == 0, 'Total number of spin orbitals must be even'
+    # Assign number of alpha and beta electrons; n_alpha >= n_beta
+    n_alpha = n // 2 + n % 2
+    n_beta = n // 2
+    alpha_bits = gmpy2.bit_mask(n_alpha)
+    beta_bits = gmpy2.bit_mask(n_beta) << (norbs // 2)
     return alpha_bits | beta_bits
 
 
 def occ_indices(sd):
     """
-    Returns indices of all of the occupied orbitals
+    Returns indices of occupied alpha and beta spin orbitals.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
 
     Returns
     -------
     occ_indices : tuple of int
-        Tuple of indices that corresponds to the occupied orbitals
+        Tuple of indices
     """
     if sd is None:
         return ()
@@ -213,19 +229,20 @@ def occ_indices(sd):
 
 def vir_indices(sd, norbs):
     """
-    Returns indices of all of the virtual orbitals
+    Returns indices of virtual (unoccupied) alpha and beta spin orbitals.
 
     Parameters
     ----------
     sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     norbs : int
-        Total number of orbitals
+        Total number of spin orbitals
 
     Returns
     -------
     occ_indices : tuple of int
-        Tuple of indices that corresponds to the virtual orbitals
+        Tuple of indices
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if sd is None or norbs <= 0:
@@ -236,53 +253,63 @@ def vir_indices(sd, norbs):
     return tuple(output[:-1])
 
 
-def shared(sd1, sd2):
+def shared_indices(sd1, sd2):
     """
-    Finds the orbitals shared between two Slater determinants
+    Returns tuple of orbital indices occupied in both Slater determinants
 
     Parameters
     ----------
     sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
 
     Returns
     -------
     tuple of ints
-        Tuple of ints are the indices of the occupied orbitals shared by the two
+        Tuple of ints representing the indices of the occupied orbitals shared by both
         Slater determinants
     """
-    return sd1 & sd2
+    if (sd1 is None) or (sd2 is None):
+        return ()
+    sd_shared = sd1 & sd2
+    return occ_indices(sd_shared)
 
 
-def diff(sd1, sd2):
+def diff_indices(sd1, sd2):
     """
-    Returns the difference between two Slater determinants
+    Returns tuples of orbital indices occupied in one of the Slater determinants but not the other
 
     Parameters
     ----------
     sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
     sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring;
+        vaccum is specified with `0b0`, and zero determinant with `None`.
 
     Returns
     -------
     2-tuple of tuple of ints
-        First tuple of ints are the indices of the occupied orbitals of sd1 that
+        First tuple of ints represents the indices of the occupied orbitals of sd1 that
         are not occupied in sd2
-        Second tuple of ints are the indices of the occupied orbitals of sd2 that
+        Second tuple of ints represents the indices of the occupied orbitals of sd2 that
         are not occupied in sd1
     """
+    if (sd1 is None) or (sd2 is None):
+        return occ_indices(sd1), occ_indices(sd2)
     sd_diff = sd1 ^ sd2
     sd1_diff = sd_diff & sd1
     sd2_diff = sd_diff & sd2
-    return (occ_indices(sd1_diff), occ_indices(sd2_diff))
+    return occ_indices(sd1_diff), occ_indices(sd2_diff)
 
 
 def combine_spin(alpha_bits, beta_bits, norbs):
-    """ Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
+    """
+    Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
 
     Parameters
     ----------
@@ -340,7 +367,7 @@ def split_spin(block_sd, norbs):
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
     alpha_bits = gmpy2.t_mod_2exp(block_sd, norbs)
     beta_bits = block_sd >> norbs
-    return (alpha_bits, beta_bits)
+    return alpha_bits, beta_bits
 
 
 def interleave(block_sd, norbs):

@@ -5,9 +5,10 @@ from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
 from . import slater
-from .sd_list import doci_sd_list
+from .sd_list import generate_doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
 from .math_tools import permanent_ryser
+
 
 class AP1roG(ProjectionWavefunction):
     """ Antisymmetric Product of One-Reference-Orbital Geminals
@@ -164,7 +165,7 @@ class AP1roG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return doci_sd_list(self, num_sd)
+        return generate_doci_sd_list(self.nspatial, self.nelec, self.npair, num_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
@@ -223,7 +224,7 @@ class AP1roG(ProjectionWavefunction):
             gem_coeffs = self.params.reshape(self.npair, self.nvirtual)
 
         val = 0.0
-        # get the indices that need to be swapped from virtual to occupied 
+        # get the indices that need to be swapped from virtual to occupied
         vo_col = [i - self.npair for i in range(self.npair,self.nspatial) if i in occ_alpha_indices]
         vo_row = [j for j in range(self.npair) if j in vir_alpha_indices]
         assert len(vo_row) == len(vo_col)
@@ -284,7 +285,7 @@ class AP1roG(ProjectionWavefunction):
         ProjectionWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
-        
+
         AP1roG is normalized by contruction.
         """
         pass

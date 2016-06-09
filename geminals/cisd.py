@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
 from .ci_wavefunction import CIWavefunction
-from .sd_list import ci_sd_list
-from .ci_matrix import ci_matrix
+from .sd_list import generate_ci_sd_list
+from .ci_matrix import make_ci_matrix
 from .math_tools import binomial
 from . import slater
 
@@ -80,7 +80,7 @@ class CISD(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return ci_sd_list(self, self.nci, [1, 2])
+        return generate_ci_sd_list(self.nspatial, self.nelec, self.nci, [1, 2])
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
@@ -92,4 +92,4 @@ class CISD(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return ci_matrix(self, self.orb_type)
+        return make_ci_matrix(self.H, self.G, self.civec, self.dtype, self.orb_type)
