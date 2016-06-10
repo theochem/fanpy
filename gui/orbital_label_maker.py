@@ -1,8 +1,10 @@
 import sys
 import wx
 import numpy as np
+from itertools import cycle
 
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin, TextEditMixin
+import matplotlib
 from matplotlib_panel import CanvasPanel
 sys.path.append('/home/dkim/Work/mo_diagram')
 import graph, mo_diagram
@@ -104,57 +106,6 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
             if self.IsSelected(i):
                 return i
 
-    def LabelByColumn(self, indices):
-        num_items = self.GetItemCount()
-        for i in range(num_items):
-            new_texts = [self.GetItemText(i, j) for j in indices]
-            self.SetStringItem(i, 4, '_'.join(new_texts))
-
-    def get_labels(self):
-        """ Returns the new indices for the
-
-        Returns
-        -------
-        label_indices_sep : list of list
-            List of indices that corresponds to the new label of the orbital
-            First list belongs to the spatial or alpha orbitals
-            Second list (if it exists) belongs to the beta orbitals
-        labels : list
-            Label of the new orbital (in the same order as the label indices)
-
-        Example
-        -------
-        If labels=['C0_AO(l=0)', 'C0_AO(l=1)'],
-        Then label indices [0, 0, 1, 1] would mean that the first two orbitals
-        are labeled with 'C0_A0(l=0)' and the last two orbitals are labeled with
-        'C0_AO(l=1)'
-        """
-        num_items = self.GetItemCount()
-        all_labels = [self.GetItemText(i, 6) for i in range(num_items)]
-        label_indices_sep = [[], []]
-        label_dict = {}
-        for i in range(num_items):
-            index = int(self.GetItemText(i, 0))
-            spin = self.GetItemText(i, 1)
-            label = self.GetItemText(i, 6)
-            try:
-                label_dict[label]
-            except KeyError:
-                label_dict[label] = len(label_dict)
-
-            if spin in ['spatial', 'alpha']:
-                label_indices_sep[0].append(label_dict[label])
-            elif spin in ['beta']:
-                label_indices_sep[1].append(label_dict[label])
-        # Rename unlabeled
-        if '' in label_dict:
-            label_dict['Unlabeled'] = label_dict.pop('')
-            # TODO: reorder Unlabeled to the end (reorder dictionary, relabel labels)
-        # Invert dictionary mapping
-        indices_dict = {label_index:label for label, label_index in label_dict.items()}
-        labels = [indices_dict[i] for i in range(len(indices_dict))]
-        return label_indices_sep, labels
-
 class CalculationSettings(wx.Dialog):
     def __init__(self, parent, title, pos = wx.DefaultPosition,
                  size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE):
@@ -212,6 +163,7 @@ class OrbitalSelectionDialog(wx.Dialog):
         box_one_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.check_mo = EditableListCtrl(self, -1, style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL)
+        # add the columns
         self.check_mo.InsertColumn(0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         self.check_mo.InsertColumn(1, 'Spin', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         self.check_mo.InsertColumn(2, 'Occupations (in HF)', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
@@ -240,6 +192,20 @@ class OrbitalSelectionDialog(wx.Dialog):
                 self.check_mo.SetStringItem(ind, 2, parent.check_mo.GetItemText(i, col=2))
                 self.check_mo.SetStringItem(ind, 3, parent.check_mo.GetItemText(i, col=3))
 
+        # over write old close edit event handlign
+        def new_close_editor(self_elc, event):
+            EditableListCtrl.CloseEditor(self_elc, event)
+            col_orbtype = {'frozen':'red', 'active':'blue', 'virtual':'green'}
+            row_ind = self_elc.SelectedRow
+            try:
+                color = col_orbtype[self_elc.GetItemText(row_ind, 4)]
+                self.graph_panel.axes.lines[row_ind].set_color(color)
+                self.graph_panel.figure.canvas.draw()
+            except KeyError:
+                print 'ERROR'
+                return
+        self.check_mo.CloseEditor = lambda event: new_close_editor(self.check_mo, event)
+
         if sel_type == 'set':
             self.default_set()
         elif sel_type == 'cas':
@@ -257,8 +223,10 @@ class OrbitalSelectionDialog(wx.Dialog):
         self.graph_panel = CanvasPanel(self)
         if sel_type == 'set':
             self.graph_set()
+            self.graph_panel.canvas.mpl_connect('pick_event', self.select_set)
         elif sel_type == 'cas':
             self.graph_cas()
+            self.graph_panel.canvas.mpl_connect('pick_event', self.select_cas)
         box_two_sizer.Add(self.graph_panel)
 
         # Add all the box sizers
@@ -315,6 +283,32 @@ class OrbitalSelectionDialog(wx.Dialog):
         num_points = self.check_mo.GetItemCount()
         energies = np.array([float(self.check_mo.GetItemText(i, col=3)) for i in range(num_points)])
         occupations = np.array([float(self.check_mo.GetItemText(i, col=2)) for i in range(num_points)])
-        print(energies)
-        print(occupations)
-        return self.graph_panel.draw(mo_diagram.generate_all_mo_diagrams, list_energies=[energies], list_occupations=[occupations])
+        self.graph_panel.draw(mo_diagram.generate_all_mo_diagrams, list_energies=[energies], list_occupations=[occupations], pick_event_energy=False)
+        # color the lines
+        col_orbtype = {'frozen':'red', 'active':'blue', 'virtual':'green'}
+        for i in range(num_points):
+            color = col_orbtype[self.check_mo.GetItemText(i, col=4)]
+            self.graph_panel.axes.lines[i].set_color(color)
+
+        self.graph_panel.axes.legend([matplotlib.lines.Line2D([], [], color='red'),
+                                      matplotlib.lines.Line2D([], [], color='blue'),
+                                      matplotlib.lines.Line2D([], [], color='green')],
+                                     ['Frozen',
+                                      'Active',
+                                      'Virtual'])
+
+    def select_set(self, event):
+        # not sure if this is useful
+        print(event)
+
+    def select_cas(self, event):
+        # cycles in the opposite direction of what is written
+        color_cycle = ['green', 'blue', 'red']
+        orbtype_col = {'red':'frozen', 'blue':'active', 'green':'virtual'}
+        thisline = event.artist
+        index = self.graph_panel.axes.lines.index(thisline)
+        color = thisline.get_color()
+        thisline.set_color(color_cycle[color_cycle.index(color)-1])
+        self.graph_panel.figure.canvas.draw()
+        # set the text corresponding to the color
+        self.check_mo.SetStringItem(index, 4, orbtype_col[thisline.get_color()])
