@@ -4,7 +4,8 @@ import glob
 import wx
 import numpy as np
 
-from orbital_label_maker import EditableListCtrl, CalculationSettings, OrbitalSelectionDialog
+from orbital_selection import EditableListCtrl, OrbitalSelectionDialog
+from calc_setting import CalculationSettings
 
 import geminals
 import horton
