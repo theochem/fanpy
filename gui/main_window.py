@@ -301,7 +301,7 @@ class ProwlFrame(wx.Frame):
         if method in ci_methods:
             init_dialog = OrbitalSelectionDialog(self, 'Select your CAS orbital type', 'cas')
         elif method in proj_methods:
-            init_dialog = OrbitalSelectionDialog(self, 'Divide your orbitals into sets', 'set')
+            init_dialog = OrbitalSelectionDialog(self, 'Divide your orbitals into sets', 'connections')
         if (init_dialog.ShowModal() == wx.ID_OK):
             pass
 

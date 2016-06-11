@@ -14,6 +14,7 @@ class CanvasPanel(wx.Window):
         wx.Window.__init__(self, parent)
         self.figure = Figure()
         self.axes = self.figure.add_subplot(111)
+        self.plot = None
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
@@ -21,7 +22,7 @@ class CanvasPanel(wx.Window):
         self.Fit()
 
     def draw(self, f, **args):
-        f(self.figure, self.axes, **args)
+        self.plot = f(self.figure, self.axes, **args)
 
 # if __name__ == "__main__":
 #     app = wx.App()
