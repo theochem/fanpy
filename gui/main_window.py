@@ -64,11 +64,26 @@ class ProwlFrame(wx.Frame):
     check_mo : wx.ListCtrl
         Frame (ListCtrl) for displaying the orbital information (index, spin, occupation, energy)
 
-    Properties
-    ----------
-
     Methods
     -------
+    load_mol_checkbox
+        Loads check_mo from the given orbital information
+
+    Event Handlers
+    --------------
+    load_mol
+        Loads the molecular file path
+    initial_guess
+        Loads the initial guess
+        Not Implemented
+    set_calc_settings
+        Sets the calculations settings
+    initialize
+        Initializes the wavefunction
+    select_orbitals
+        Selects the orbitals
+    solve
+        Solves the wavefunction
 
     """
 
@@ -203,6 +218,13 @@ class ProwlFrame(wx.Frame):
         self.Show()
 
     def load_mol(self, event):
+        """ Loads molecule file path upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in loading the molecule
+        """
         openFileDialog = wx.FileDialog(self,
                                        message="Open mol file",
                                        defaultDir="",
@@ -214,19 +236,33 @@ class ProwlFrame(wx.Frame):
                                                  ),
                                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
-            return     # the user changed idea...
+            return
         self.mol_path = openFileDialog.GetPath()
 
     def initial_guess(self, event):
-        pass
+        """ Loads an initial guess upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in loading the molecule
+        """
+        raise NotImplementedError
 
     def set_calc_settings(self, event):
+        """ Opens dialog for calculation settings upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in opening the calculation setting dialog
+        """
         init_dialog = CalculationSettings(self,
                                           title='Set Calculation Settings',
                                           size=(200,225)
         )
         if (init_dialog.ShowModal() == wx.ID_OK):
-            nelec = init_dialog.nelec_box.GetLineText(0)
+            nelec = init_dialog.nelec_box.GetValue()
             try:
                 # FIXME: ugly
                 if float(nelec) != int(nelec):
@@ -241,6 +277,13 @@ class ProwlFrame(wx.Frame):
                 self.energy_is_param = False
 
     def initialize(self, event):
+        """ Initialized wavefunction upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in wavefunction initialization
+        """
         method = self.method_select.GetStringSelection()
         basis = self.basis_select.GetStringSelection()
         if self.mol_path == '' or method == '' or basis == '':
@@ -270,8 +313,23 @@ class ProwlFrame(wx.Frame):
                                                     G=self.data['G'],
                                                     nuc_nuc=self.data['nuc_nuc'],
                                                     energy_is_param=self.energy_is_param)
+        else:
+            raise_error(self, 'Unsuppported wavefunction, {0}'.format(method))
 
     def load_mol_checkbox(self, exp_alpha, exp_beta=None):
+        """ Loads the self.check_mo given the orbital informations
+
+        Parameters
+        ----------
+        exp_alpha : horton.matrix.dense.DenseExpansion
+            Instance that contains the orbital information in HORTON
+            If exp_beta is None, then exp_alpha corresponds to the spatial orbitals
+            If exp_beta is not None, then exp_alpha corresponds to the alpha orbitals
+        exp_beta : horton.matrix.dense.DenseExpansion
+            Instance that contains the orbital information in HORTON
+            Corresponds to beta orbitals
+        """
+        # load info
         if exp_beta is None:
             indices = range(exp_alpha.nfn)
             spins = ['spatial']*exp_alpha.nfn
@@ -288,7 +346,7 @@ class ProwlFrame(wx.Frame):
             spins, indices, occs, energies = zip(*sorted_info)
         else:
             return
-
+        # reset check_mo
         self.check_mo.DeleteAllItems()
         occs[np.abs(occs)<1e-7] = 0
         for (index, spin, occ, energy) in zip(indices, spins, occs, energies):
@@ -302,15 +360,47 @@ class ProwlFrame(wx.Frame):
 
 
     def select_orbitals(self, event):
+        """ Opens dialog for selecting orbitals upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in selecting the orbitals
+        """
+        # check if we can select yet
+        if not isinstance(self.wavefunction, geminals.wavefunction.Wavefunction):
+            raise_error(self, 'Wavefunction needs to be initialized.')
+            return
+        # if orbitals dont need selecting:
+        #     raise_error(self, 'Orbital selection not needed.')
+        #     return
+        # make dialog
         method = self.method_select.GetStringSelection()
         if method in ci_methods:
             init_dialog = OrbitalSelectionDialog(self, 'Select your CAS orbital type', 'cas')
         elif method in proj_methods:
             init_dialog = OrbitalSelectionDialog(self, 'Divide your orbitals into sets', 'connections')
+        # if cancel
         if (init_dialog.ShowModal() == wx.ID_OK):
-            pass
+            return
+        # FIXME: need behaviour after selection
 
     def solve(self, event):
+        """ Solves the wavefunction upon occurence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in solving the wavefunction
+        """
+        # check if we can select yet
+        if isinstance(self.wavefunction, geminals.Wavefunction):
+            raise_error(self, 'Wavefunction needs to be initialized.')
+            return
+        # if orbitals are selected
+        #     raise_error(self, 'Orbitals need to be selected.')
+        #     return
+        # solve
         self.wavefunction()
 
 

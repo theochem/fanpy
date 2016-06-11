@@ -9,55 +9,110 @@ sys.path.append('/home/dkim/Work/mo_diagram')
 import graph, mo_diagram
 
 class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
-    def __init__(self, parent, ID, ref_box=None,
+    """ Editable form of wx.ListCtrl. An "editor" box is made on top of the edited cell
+
+    By default (b/c this class is only used to edit orbitals), only the 4th column is edited
+
+    Attributes
+    ----------
+    edit_col : int
+        Column that is edited
+    editor : wx.TextCtrl
+        Editable text box that changes the cell content
+
+    Properties
+    ----------
+    SelectedRow : int
+        Index of the row that is selected
+    EditColumnLocation : int
+        Location of the editable column
+
+    Methods
+    -------
+    Editor
+        Creates an editor at the desired location
+
+    Event Handlers
+    --------------
+    Edit
+        Opens the editor upon selection
+    Browse
+        Move the editor around with keyboard
+    CloseEditor
+        Close the editor
+    CloseEditorKey
+        Close the editor with keyboard
+    """
+    def __init__(self, parent, ID=-1, edit_col=4,
                  pos=wx.DefaultPosition, size=wx.DefaultSize,
                  style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL):
+        """
+        Parameters
+        ----------
+        parent : wx.Frame
+            Frame that contains this frame
+        ID : int
+            ID of frame
+        edit_col : int
+            Column that will be edited
+        pos : wx.Point
+            Position of the dialog upon creation
+        size : wx.Size
+            Size of the the dialog upon creation
+        style : long
+            Flags for the style of the ListCtrl
+            wx.LC_REPORT
+                Single or multicolumn report view, with optional header.
+            wx.RAISED_BORDER
+                Raises the border of the frame
+            wx.LC_SINGLE_SEL
+                Single selection (default is multiple).
+        """
         wx.ListCtrl.__init__(self, parent, ID, pos, size, style)
         ListCtrlAutoWidthMixin.__init__(self)
+
+        self.edit_col = edit_col
         # editor
         self.editor = wx.TextCtrl(self, -1, style=wx.TE_LEFT)
         self.editor.SetBackgroundColour(self.editorBgColour)
         self.editor.SetForegroundColour(self.editorFgColour)
         self.editor.SetFont(self.GetFont())
-        self.editor.Bind(wx.EVT_CHAR, self.text_editor_input_key)
+        self.editor.Bind(wx.EVT_CHAR, self.CloseEditorKey)
         self.editor.Hide()
 
         #Buttons
         self.Bind(wx.EVT_LEFT_DCLICK, self.Edit, self)
         self.Bind(wx.EVT_CHAR, self.Browse, self)
 
-    def Edit(self, event):
-        row = self.SelectedRow
-        if isinstance(row, int):
-            self.Editor(row)
+    @property
+    def SelectedRow(self):
+        """ Index of the row that is selected
+        """
+        for i in range(self.ItemCount):
+            if self.IsSelected(i):
+                return i
 
-    def Browse(self, event):
-        self.editor.Hide()
-        keycode = event.GetKeyCode()
-        if keycode in [wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_DELETE, wx.WXK_BACK]:
-            row = self.SelectedRow
-            self.Edit(wx.EVT_LEFT_DCLICK)
-        if keycode == wx.WXK_ESCAPE:
-            self.CloseEditor(event)
-        event.Skip()
-
-    def text_editor_input_key(self, event):
-        keycode = event.GetKeyCode()
-        if keycode in [wx.WXK_ESCAPE, wx.WXK_RETURN, wx.WXK_DOWN, wx.WXK_UP,
-                       wx.WXK_PAGEDOWN, wx.WXK_PAGEUP]:
-            self.CloseEditor(keycode)
-        event.Skip()
+    @property
+    def EditColumnLocation(self):
+        """ Location of the editable column
+        """
+        return sum(self.GetColumnWidth(i) for i in range(self.edit_col))
 
     def Editor(self, row):
+        """ Opens the editor at the given row
 
-        # Find position of editor
-        # from the columns
-        col = 4
-        x = self.col_loc
+        Parameters
+        ----------
+        row : int
+            Index of the row at which we open the editor
+        """
+        # Find position and size of the editor
+        col = self.edit_col
+        x = self.EditColumnLocation
         delta_x = self.GetColumnWidth(col)
         y = self.GetItemRect(row)[1]
 
-        # from the scrolls
+        # deal with the changes in coordinate due to scrolling
         scrolloffset = self.GetScrollPos(wx.HORIZONTAL)
         if x+delta_x-scrolloffset > self.GetSize()[0]:
             if wx.Platform == "__WXMSW__":
@@ -81,6 +136,7 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
                 self.editor.Hide()
                 return
 
+        # open and initialize the editor
         self.editor.SetDimensions(x-scrolloffset, y, delta_x, 20)
         self.editor.SetValue(self.GetItem(row, col).GetText())
         self.editor.Show()
@@ -88,10 +144,45 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
         self.editor.SetSelection(-1,-1)
         self.editor.SetFocus()
 
+    def Edit(self, event):
+        """ Opens the editor at the selected row upon occurrence of the event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in editing the selected row
+        """
+        self.Editor(self.SelectedRow)
+
+    def Browse(self, event):
+        """ Moves the editor around depending on the keys that are pressed
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in the editor moving around
+            We are expecting wx.EVT_CHAR (key presses)
+        """
+        self.editor.Hide()
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_SPACE, wx.WXK_RETURN, wx.WXK_DELETE, wx.WXK_BACK]:
+            row = self.SelectedRow
+            self.Edit(wx.EVT_LEFT_DCLICK)
+        if keycode == wx.WXK_ESCAPE:
+            self.CloseEditor(event)
+        event.Skip()
+
     def CloseEditor(self, event):
+        """ Closes the editor upon the occurrence of the event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in the editor closing
+        """
         if event == wx.WXK_RETURN:
             row = self.SelectedRow
-            self.SetStringItem(row, 4, self.editor.GetValue())
+            self.SetStringItem(row, self.edit_col, self.editor.GetValue())
         self.editor.Hide()
         # NOTE: There is this bug that if event==wx.WXK_DOWN and self.SetFocus(),
         # the window actually loses focus. Not sure why this happens, but this
@@ -99,29 +190,104 @@ class EditableListCtrl(wx.ListCtrl, TextEditMixin, ListCtrlAutoWidthMixin):
         if event != wx.WXK_DOWN:
             self.SetFocus()
 
-    @property
-    def SelectedRow(self):
-        for i in range(self.ItemCount):
-            if self.IsSelected(i):
-                return i
+    def CloseEditorKey(self, event):
+        """ Closes editor depending on the keys that are pressed while the editor is open
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in the editor closing
+            We are expecting wx.EVT_CHAR (key presses)
+        """
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_ESCAPE, wx.WXK_RETURN, wx.WXK_DOWN, wx.WXK_UP,
+                       wx.WXK_PAGEDOWN, wx.WXK_PAGEUP]:
+            self.CloseEditor(keycode)
+        event.Skip()
 
 class OrbitalSelectionDialog(wx.Dialog):
+    """ Dialog for selecting orbitals
+
+    Attributes
+    ----------
+    dlgsizer : wx.BoxSizer
+        Dialog sizer
+    boxsizer : wx.BoxSizer
+        Sizer for the check_mo and the graph_panel
+    check_mo : EditableListCtrl
+        Chart of the orbital information, including the orbital selection criteria
+        which is editable
+    graph_panel : CanvasPanel
+        Matplotlib embedded into wx.Panel
+
+    Properties
+    ----------
+
+    Methods
+    -------
+    default_cas
+        Makes default selections for CAS type selections
+    default_set
+        Makes default selections for set type selections
+    default_connections
+        Makes default selections for connection type selections
+    graph_cas
+        Makes graph for the CAS type selection (mo diagram)
+    graph_set
+        Makes graph for the set type selection (k-partite graph)
+    graph_connections
+        Makes graph for the connection type selections (complete graph)
+    select_cas
+        Make changes to the chart after editing the graph
+    select_set
+        Make changes to the chart after editing the graph
+    select_connections
+        Make changes to the chart after editing the graph
+    cas_close_editor
+        Make changes to the graph after editing the chart
+    connections_close_editor
+        Make changes to the graph after editing the chart
+    """
     def __init__(self, parent, title, sel_type='',
                  pos=wx.DefaultPosition,
                  size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE):
+        """
+        Parameters
+        ----------
+        parent : wx.Frame
+            Frame that contains this frame
+        title : str
+            Title of the dialog
+        sel_type : {'cas', 'set', 'connections}
+            Criteria with which the orbitals will be selected
+        pos : wx.Point
+            Position of the dialog upon creation
+        size : wx.Size
+            Size of the the dialog upon creation
+        style : long
+            Flags for the style of the dialog box
+            wx.DEFAULT_DIALOG_STYLE
+                wx.CAPTION, wx.CLOSE_BOX, wx.SYSTEM_MENU
+            wx.CAPTION
+                Puts caption on dialog box
+            wx.CLOSE_BOX
+                Puts button for closing dialog box
+            WX.SYSTEM_MENU
+                Puts system menu
+        """
         wx.Dialog.__init__(self, parent, -1, title, pos, size, style)
 
+        # set position of dialog
         x, y = pos
         if x == -1 and y == -1:
             self.CenterOnScreen(wx.BOTH)
 
         self.dlgsizer = wx.BoxSizer(wx.VERTICAL)
+
         self.boxsizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        box_one_sizer = wx.BoxSizer(wx.VERTICAL)
-
+        # mo orbital info
         self.check_mo = EditableListCtrl(self, -1, style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL)
-        # add the columns
+        #  make columns
         self.check_mo.InsertColumn(0, 'Index', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         self.check_mo.InsertColumn(1, 'Spin', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         self.check_mo.InsertColumn(2, 'Occupations (in HF)', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
@@ -132,7 +298,7 @@ class OrbitalSelectionDialog(wx.Dialog):
             self.check_mo.InsertColumn(4, 'Set', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
         elif sel_type == 'connections':
             self.check_mo.InsertColumn(4, 'Connected Orbitals', format=wx.LIST_FORMAT_CENTER, width=wx.LIST_AUTOSIZE_USEHEADER)
-
+        #  fill columns
         for i in range(parent.check_mo.GetItemCount()):
             if parent.check_mo.GetItemText(i, col=1) == 'spatial':
                 # alphas
@@ -150,8 +316,11 @@ class OrbitalSelectionDialog(wx.Dialog):
                 self.check_mo.SetStringItem(ind, 1, parent.check_mo.GetItemText(i, col=1))
                 self.check_mo.SetStringItem(ind, 2, parent.check_mo.GetItemText(i, col=2))
                 self.check_mo.SetStringItem(ind, 3, parent.check_mo.GetItemText(i, col=3))
+        self.check_mo.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.check_mo.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        self.check_mo.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
-
+        # make the default selections
         if sel_type == 'cas':
             self.default_cas()
             # over write old close edit event handling
@@ -163,15 +332,14 @@ class OrbitalSelectionDialog(wx.Dialog):
             # over write old close edit event handling
             self.check_mo.CloseEditor = lambda event: self.cas_close_editor(self.check_mo, event)
             self.check_mo.CloseEditor = lambda event: self.connections_close_editor(self.check_mo, event)
-
-        self.check_mo.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         self.check_mo.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
-        box_one_sizer.Add(self.check_mo,
-                       proportion=1,
-                       border=4,
-                       flag=wx.EXPAND)
+        self.boxsizer.Add(self.check_mo,
+                          proportion=1,
+                          border=4,
+                          flag=wx.ALIGN_CENTER|wx.EXPAND)
 
+        # graph for visualizing/selecting orbitals
         box_two_sizer = wx.BoxSizer(wx.VERTICAL)
         self.graph_panel = CanvasPanel(self)
         if sel_type == 'cas':
@@ -183,21 +351,16 @@ class OrbitalSelectionDialog(wx.Dialog):
         elif sel_type == 'connections':
             self.graph_connections()
             self.graph_panel.canvas.mpl_connect('pick_event', self.select_connections)
-
-        box_two_sizer.Add(self.graph_panel)
+        self.boxsizer.Add(self.graph_panel,
+                          proportion=1,
+                          flag=wx.ALIGN_CENTER|wx.EXPAND)
 
         # Add all the box sizers
-        self.boxsizer.Add(box_one_sizer,
-                          proportion=1,
-                          flag=wx.ALIGN_CENTER|wx.EXPAND)
-        self.boxsizer.Add(box_two_sizer,
-                          proportion=1,
-                          flag=wx.ALIGN_CENTER|wx.EXPAND)
-
         self.dlgsizer.Add(self.boxsizer,
                           proportion=1,
                           flag=wx.ALIGN_CENTER|wx.EXPAND)
 
+        # add buttons
         btnsizer = wx.StdDialogButtonSizer()
         ok = wx.Button(self, wx.ID_OK, "OK")
         btnsizer.AddButton(ok)
@@ -206,16 +369,16 @@ class OrbitalSelectionDialog(wx.Dialog):
         btnsizer.Realize()
         self.dlgsizer.Add(btnsizer, proportion=0, flag=wx.ALIGN_CENTER, border=4)
 
+        # resize
         self.SetSizer(self.dlgsizer)
         self.dlgsizer.Fit(self)
         self.Layout()
 
-        # Set editor box location (needs to be done after resizing windows)
-        self.check_mo.col_loc = sum(self.check_mo.GetColumnWidth(i) for i in range(4))
-
-
 
     def default_cas(self):
+        """ Makes the default selections for the CAS type selections
+
+        """
         for i in range(self.check_mo.GetItemCount()):
             if float(self.check_mo.GetItemText(i, col=2)) > 0 :
                 self.check_mo.SetStringItem(i, 4, 'frozen')
@@ -223,6 +386,9 @@ class OrbitalSelectionDialog(wx.Dialog):
                 self.check_mo.SetStringItem(i, 4, 'virtual')
 
     def default_set(self):
+        """ Makes the default selections for the set type selections
+
+        """
         for i in range(self.check_mo.GetItemCount()):
             if self.check_mo.GetItemText(i, col=1) == 'alpha':
                 self.check_mo.SetStringItem(i, 4, '1')
@@ -238,6 +404,9 @@ class OrbitalSelectionDialog(wx.Dialog):
         self.adjacency = adjacency
 
     def default_connections(self):
+        """ Makes the default selections for the connection type selections
+
+        """
         num_points = self.check_mo.GetItemCount()
         # construct adjacency matrix
         adjacency = np.ones((num_points, num_points))
@@ -250,13 +419,12 @@ class OrbitalSelectionDialog(wx.Dialog):
             # fill column
             self.check_mo.SetStringItem(i, 4, ','.join(connected_indices.astype(str)))
 
-    def graph_set(self):
-        num_points = self.check_mo.GetItemCount()
-        # FIXME: label the points
-        # FIXME: reorder the points so that the graph looks nicer
-        return self.graph_panel.draw(graph.generate_circle_graph, num_points=num_points, adjacency=self.adjacency, on_alpha=1.0, off_alpha=0.1)
-
     def graph_cas(self):
+        """ Loads the molecular orbital diagram using Kumru's mo_diagram
+
+        Sets are different colors depending on the type of orbital
+
+        """
         num_points = self.check_mo.GetItemCount()
         energies = np.array([float(self.check_mo.GetItemText(i, col=3)) for i in range(num_points)])
         occupations = np.array([float(self.check_mo.GetItemText(i, col=2)) for i in range(num_points)])
@@ -274,17 +442,43 @@ class OrbitalSelectionDialog(wx.Dialog):
                                       'Active',
                                       'Virtual'])
 
-    def graph_connections(self):
+    def graph_set(self):
+        """ Loads the connectivity graph using Kumru's graph
+
+        Edges are turned on (opaque) when the we include the correlation between the
+        two vertices of the edge
+        Edges are turned off (transparent) when the we exclude the correlation between the
+        two vertices of the edge
+
+        Each orbital belongs to one of many sets
+        """
+        # FIXME: not completely implemented
         num_points = self.check_mo.GetItemCount()
         # FIXME: label the points
         # FIXME: reorder the points so that the graph looks nicer
         return self.graph_panel.draw(graph.generate_circle_graph, num_points=num_points, adjacency=self.adjacency, on_alpha=1.0, off_alpha=0.1)
 
-    def select_set(self, event):
-        # not sure if this is useful
-        pass
+    def graph_connections(self):
+        """ Loads the connectivity graph using Kumru's graph
+
+        Edges are turned on (opaque) when the we include the correlation between the
+        two vertices of the edge
+        Edges are turned off (transparent) when the we exclude the correlation between the
+        two vertices of the edge
+        """
+        num_points = self.check_mo.GetItemCount()
+        # FIXME: label the points
+        # FIXME: reorder the points so that the graph looks nicer
+        return self.graph_panel.draw(graph.generate_circle_graph, num_points=num_points, adjacency=self.adjacency, on_alpha=1.0, off_alpha=0.1)
 
     def select_cas(self, event):
+        """ Turns the graphical selection into the chart form upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in selecting CAS type orbitals
+        """
         # cycles in the opposite direction of what is written
         color_cycle = ['green', 'blue', 'red']
         orbtype_col = {'red':'frozen', 'blue':'active', 'green':'virtual'}
@@ -296,7 +490,24 @@ class OrbitalSelectionDialog(wx.Dialog):
         # set the text corresponding to the color
         self.check_mo.SetStringItem(index, 4, orbtype_col[thisline.get_color()])
 
+    def select_set(self, event):
+        """ Turns the graphical selection into the chart form upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in selecting set type orbitals
+        """
+        raise NotImplementedError
+
     def select_connections(self, event):
+        """ Turns the graphical selection into the chart form upon occurrence of event
+
+        Parameters
+        ----------
+        event : wx.Event
+            Event that results in selecting connections between orbitals
+        """
         thisline = event.artist
         points = thisline.get_xydata()
         # select the points used to construct the line
@@ -318,6 +529,15 @@ class OrbitalSelectionDialog(wx.Dialog):
             self.check_mo.SetStringItem(i, 4, ','.join(connected_indices.astype(str)))
 
     def cas_close_editor(self, self_elc, event):
+        """ Change the graph after editing the chart
+
+        Parameters
+        ----------
+        self_elc : EditableListCtrl
+            EditableListCtrl with which this method will replace CloseEditor
+        event : wx.Event
+            Event that results in closing the editor
+        """
         EditableListCtrl.CloseEditor(self_elc, event)
         col_orbtype = {'frozen':'red', 'active':'blue', 'virtual':'green'}
         row_ind = self_elc.SelectedRow
@@ -332,6 +552,15 @@ class OrbitalSelectionDialog(wx.Dialog):
             dlg.Destroy() # finally destroy it when finished.
 
     def connections_close_editor(self, self_elc, event):
+        """  Change the graph after editing the chart
+
+        Parameters
+        ----------
+        self_elc : EditableListCtrl
+            EditableListCtrl with which this method will replace CloseEditor
+        event : wx.Event
+            Event that results in closing the editor
+        """
         EditableListCtrl.CloseEditor(self_elc, event)
         row_ind = self_elc.SelectedRow
         connections = self_elc.GetItemText(row_ind, 4).split(',')
