@@ -12,6 +12,15 @@ import horton
 
 
 def raise_error(parent, msg):
+    """ Opens a MessageDialog with a message for the purpose of "raising" an error
+
+    Parameters
+    ----------
+    parent : wx.Frame
+        Parent of frame
+    msg : str
+        Message to be written
+    """
     dlg = wx.MessageDialog(parent, msg, "Error", wx.OK)
     dlg.ShowModal() # Show it
     dlg.Destroy() # finally destroy it when finished.
@@ -30,13 +39,45 @@ method_dict = {'FCI': geminals.fci.FCI,
 ci_methods = ['FCI', 'CISD', 'DOCI', 'CI Pairs',]
 proj_methods = ['APIG']
 class ProwlFrame(wx.Frame):
+    """
+
+    Attributes
+    ----------
+    mol_path : str
+        Absolute path of the molecule data file
+    nelec : int
+        Number of electrons
+    energy_is_param : bool
+        Flag for whether to make the energy a parameter
+    wavefunction : Wavefunction Instance
+        Instance of the appropriate wavefunction class
+    data : dict
+        Dictionary of the data from the geminals.hort
+    sizer : wx.BoxSizer
+        Sizer used to orient and reshape each frame used
+    method_select : wx.ComboBox
+        Frame (ComboBox) for selecting the wavefunction to be used for the calculation
+    basis_select : wx.ComboBox
+        Frame (ComboBox) for selecting the basis set used
+    nset_select : wx.SpinCtrl
+        Frame (SpinCtrl) for selecting the number of orbital sets
+    check_mo : wx.ListCtrl
+        Frame (ListCtrl) for displaying the orbital information (index, spin, occupation, energy)
+
+    Properties
+    ----------
+
+    Methods
+    -------
+
+    """
 
     def __init__(self):
+        # initializes frame
         wx.Frame.__init__(self, None, wx.ID_ANY, "PROWL GUI")
 
         # attributes
         self.mol_path = ''
-        self.mol_data = {}
         self.nelec = 0.0
         self.energy_is_param = False
         self.wavefunction = None
@@ -114,28 +155,9 @@ class ProwlFrame(wx.Frame):
         self.sizer.Add(self.name_text, 0, wx.ALIGN_CENTER)
 
         # dials and shit
-        self._max_orbital_sets = 1
-        self.text = wx.TextCtrl(self, size=wx.DefaultSize, value=str(
-            self._max_orbital_sets), style=wx.TE_CENTRE | wx.TE_PROCESS_ENTER)
-        self.spin = wx.SpinButton(self, style=wx.SP_VERTICAL)
-        self.spin.SetValue(self._max_orbital_sets)
-        self.spin.SetRange(1, 100)
+        self.nset_select = wx.SpinCtrl(self, value='1', initial=1, min=1, max=100, style=wx.SP_VERTICAL)
 
-        self.Bind(wx.EVT_SPIN_UP, self.spin_up, self.spin)
-        self.Bind(wx.EVT_SPIN_DOWN, self.spin_down, self.spin)
-        self.Bind(wx.EVT_TEXT_ENTER, self._text_enter, self.text)
-
-        self.empty = wx.StaticText(self,
-                                   size=wx.DefaultSize,
-                                   label="",
-                                   style=wx.TE_CENTRE)
-
-        hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer.Add(self.text, 0, wx.ALIGN_CENTER)
-        hsizer.Add(self.spin, 0, wx.ALIGN_CENTER)
-        hsizer.Add(self.empty, 0, wx.ALIGN_CENTER)
-        self.sizer.Add(hsizer, 0, wx.ALIGN_CENTER)
-        # self.Bind(wx.EVT_SPIN, self.OnSpin, self.spin)
+        self.sizer.Add(self.nset_select, 0, wx.ALIGN_CENTER)
 
         # Checkbox MO
         self.check_mo = wx.ListCtrl(self, -1, style=wx.LC_REPORT|wx.RAISED_BORDER|wx.LC_SINGLE_SEL)
@@ -179,22 +201,6 @@ class ProwlFrame(wx.Frame):
         self.SetAutoLayout(1)
         self.sizer.Fit(self)
         self.Show()
-
-    def refresh_spin_button_value(self):
-        self.text.SetValue(str(self._max_orbital_sets))
-
-    def spin_up(self, event):
-        self._max_orbital_sets += 1
-        self.refresh_spin_button_value()
-
-    def spin_down(self, event):
-        self._max_orbital_sets -= 1
-        self.refresh_spin_button_value()
-
-    def _text_enter(self, event):
-        value = self.text.GetValue()
-        self._max_orbital_sets = int(value)
-        self.refresh_spin_button_value()
 
     def load_mol(self, event):
         openFileDialog = wx.FileDialog(self,
@@ -245,13 +251,11 @@ class ProwlFrame(wx.Frame):
             return
         # Run HF
         ext = os.path.splitext(self.mol_path)[1]
-        print(ext)
         if ext == '.xyz':
             # FIXME: electron number setter
             self.data = geminals.hort.hartreefock(fn=self.mol_path, basis=basis, nelec=self.nelec, horton_internal=True)
         elif ext == '.fchk':
             self.data = geminals.hort.gaussian_fchk(self.mol_path, horton_internal=True)
-        print(self.data['horton_internal']['orb'], geminals.__file__)
         self.load_mol_checkbox(*self.data['horton_internal']['orb'])
         # if CI wavefunction
         if method in ci_methods:
@@ -259,6 +263,7 @@ class ProwlFrame(wx.Frame):
                                                     H=self.data['H'],
                                                     G=self.data['G'],
                                                     nuc_nuc=self.data['nuc_nuc'])
+        # if Projection Wavefunction
         elif method in proj_methods:
             self.wavefunction = method_dict[method](nelec=self.nelec,
                                                     H=self.data['H'],
