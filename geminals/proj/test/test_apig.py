@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
-from geminals.apig import APIG
-from geminals.hort import hartreefock
-
 import numpy as np
 np.random.seed(2012)
+
+from geminals.proj.apig import APIG
+from geminals.hort import hartreefock
 
 def test_apig_wavefunction_h2():
     #### H2 ####
@@ -11,7 +11,7 @@ def test_apig_wavefunction_h2():
     # Old Code Value : -1.86968284431
     # FCI Value :      -1.87832550029
     nelec = 2
-    hf_dict = hartreefock(fn="./h2.xyz", basis="6-31g**", nelec=nelec)
+    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -60,7 +60,7 @@ def test_apig_wavefunction_lih():
     # Old Code Value : -8.96353105152
     # FCI Value :      -8.96741814557
     nelec = 4
-    hf_dict = hartreefock(fn="./lih.xyz", basis="sto-6g", nelec=nelec)
+    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]

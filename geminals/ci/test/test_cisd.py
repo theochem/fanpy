@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
-from ..cisd import CISD
-from ..hort import hartreefock
+from geminals.ci.cisd import CISD
+from geminals.hort import hartreefock
 
 
 def test_cisd_wavefunction():
     #### H2 ####
     nelec = 2
-    hf_dict = hartreefock(fn="./h2.xyz", basis="6-31g**", nelec=nelec)
+    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -20,7 +20,7 @@ def test_cisd_wavefunction():
     assert abs(cisd.compute_energy() - (-1.1651486697)) < 1e-7
     #### LiH ####
     nelec = 4
-    hf_dict = hartreefock(fn="./lih.xyz", basis="6-31G", nelec=nelec)
+    hf_dict = hartreefock(fn="test/lih.xyz", basis="6-31G", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]

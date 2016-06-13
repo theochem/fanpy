@@ -6,8 +6,8 @@ from itertools import combinations, product
 import numpy as np
 from scipy.linalg import eigh
 
-from .wavefunction import Wavefunction
-from . import slater
+from ..wavefunction import Wavefunction
+from .. import slater
 
 
 class CIWavefunction(Wavefunction):

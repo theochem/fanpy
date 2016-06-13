@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 
-from ..wavefunction import Wavefunction
+from geminals.wavefunction import Wavefunction
 
 
 class TestWavefunction(Wavefunction):

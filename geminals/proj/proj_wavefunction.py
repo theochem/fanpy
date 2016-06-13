@@ -5,7 +5,7 @@ import numpy as np
 from gmpy2 import mpz
 from scipy.optimize import least_squares
 
-from .wavefunction import Wavefunction
+from ..wavefunction import Wavefunction
 
 
 class ProjectionWavefunction(Wavefunction):

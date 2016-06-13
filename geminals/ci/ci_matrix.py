@@ -1,5 +1,5 @@
 import numpy as np
-from . import slater
+from .. import slater
 
 
 def is_alpha(i, nspatial):

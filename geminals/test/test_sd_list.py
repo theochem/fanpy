@@ -1,7 +1,7 @@
 from nose.tools import assert_raises
 import gmpy2
 
-from .. import sd_list
+from geminals import sd_list
 
 
 # A test wavefunction (must have nspatial, nelec, npair)

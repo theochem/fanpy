@@ -1,8 +1,8 @@
 from itertools import combinations
 import numpy as np
 
-from . import slater
-from .ci_matrix import spatial_index, get_H_value, get_G_value
+from .. import slater
+from ..ci.ci_matrix import spatial_index, get_H_value, get_G_value
 
 
 def hamiltonian(self, sd, orb_type, deriv=None):

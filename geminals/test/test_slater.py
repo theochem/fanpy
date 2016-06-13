@@ -1,6 +1,6 @@
 from nose.tools import assert_raises
 
-from .. import slater
+from geminals import slater
 
 
 def test_occ():

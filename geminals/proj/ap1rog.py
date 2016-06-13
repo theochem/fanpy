@@ -4,19 +4,19 @@ import numpy as np
 from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
-from . import slater
-from .sd_list import doci_sd_list
+from .. import slater
+from ..sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
-from .math_tools import permanent_ryser
+from ..math_tools import permanent_ryser
 
-
-class APIG(ProjectionWavefunction):
-    """ Antisymmetric Product of Interacting Geminals
+class AP1roG(ProjectionWavefunction):
+    """ Antisymmetric Product of One-Reference-Orbital Geminals
 
     ..math::
-        \big| \Psi_{\mathrm{APIG}} \big>
-        &= \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
+        \big| \Psi_{\mathrm{AP1roG}} \big>
+        &= \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
+        &= \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> \\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big| \mathbf{m} \big>
     where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
     Slater determinant (DOCI).
 
@@ -24,17 +24,16 @@ class APIG(ProjectionWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
-        and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 3), two electron integrals for the
-        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
-        (beta, beta, beta, beta) unrestricted orbitals
+    H : tuple of np.ndarray(K,K)
+        One electron integrals for the spatial orbitals
+    G : tuple of np.ndarray(K,K,K,K)
+        Two electron integrals for the spatial orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
+    nspatial : int
+        Number of spatial orbitals
+    nspin : int
+        Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
     orb_type : {'restricted', 'unrestricted', 'generalized'}
@@ -53,8 +52,12 @@ class APIG(ProjectionWavefunction):
 
     Properties
     ----------
-    _methods : dict of func
-        Dictionary of methods that are used to solve the wavefunction
+    _methods : dict
+        Default dimension of projection space
+    _energy : float
+        Electronic energy
+    _nci : int
+        Number of Slater determinants
     nspin : int
         Number of spin orbitals (alpha and beta)
     nspatial : int
@@ -78,8 +81,8 @@ class APIG(ProjectionWavefunction):
         Initial guess, if not provided, will be obtained by adding random noise to
         this template
 
-    Method
-    ------
+    Methods
+    -------
     __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
@@ -137,7 +140,8 @@ class APIG(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        gem_coeffs = np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        self.nvirtual = self.nspatial - self.npair
+        gem_coeffs = np.eye(self.npair, self.nvirtual, dtype=self.dtype)
         params = gem_coeffs.flatten()
         return params
 
@@ -167,12 +171,25 @@ class APIG(ProjectionWavefunction):
 
         The results are cached in self.cache and self.d_cache.
         ..math::
-            \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
-            &= \big< \Phi_k \big| \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
-            &= | C(\Phi_k) |^+
-        where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
+            \big< \Phi_q^i \big| \Psi_{\mathrm{AP1roG}} \big>
+            &= \big< \Phi_q^i \big| \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
+            &= \big< \Phi_q^i \big| \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> = c_{q;i}^{(\mathrm{AP1roG})} \\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big < \Phi_q^i \big| \mathbf{m} \big> = | C(\Phi_q^i) |^+
+    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
         Slater determinant (DOCI).
+    The geminal coefficient matrix :math:`\mathbf{C}`) of AP1roG links the geminals with the underlying one-particle basis functions and has the following form,
+
+    .. math::
+        :label: cia
+
+        \mathbf{C}_{\mathrm{AP1roG}}  =
+        \begin{pmatrix}
+            1      & 0       & \cdots & 0       & c_{1;P+1} & c_{1;P+2}&\cdots &c_{1;K}\\
+            0      & 1       & \cdots & 0       & c_{2;P+1} & c_{2;P+2}&\cdots &c_{2;K}\\
+            \vdots & \vdots  & \ddots & \vdots  & \vdots    & \vdots   &\ddots &\vdots\\
+            0      & 0       & \cdots & 1       & c_{P;P+1} & c_{P;P+2}&\cdots & c_{P;K}
+        \end{pmatrix}
+
 
         Parameters
         ----------
@@ -196,32 +213,45 @@ class APIG(ProjectionWavefunction):
         if occ_alpha_indices != occ_beta_indices:
             raise ValueError('Given Slater determinant, {0}, does not belong'
                              ' to the DOCI Slater determinants'.format(bin(sd)))
+        # get indices of the virtual orbitals
+        vir_alpha_indices = slater.vir_indices(alpha_sd, self.nspatial)
 
         # build geminal coefficient
         if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
+            gem_coeffs = self.params[:-1].reshape(self.npair, self.nvirtual)
         else:
-            gem_coeffs = self.params.reshape(self.npair, self.nspatial)
+            gem_coeffs = self.params.reshape(self.npair, self.nvirtual)
 
         val = 0.0
+        # get the indices that need to be swapped from virtual to occupied 
+        vo_col = [i - self.npair for i in range(self.npair,self.nspatial) if i in occ_alpha_indices]
+        vo_row = [j for j in range(self.npair) if j in vir_alpha_indices]
+        assert len(vo_row) == len(vo_col)
+
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, occ_alpha_indices])
+            if len(vo_row) == 0:
+                val = 1
+            else:
+                val = permanent_combinatoric(gem_coeffs[vo_row][:, vo_col])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            row_to_remove = deriv // self.nspatial
-            col_to_remove = deriv % self.nspatial
-            if col_to_remove in occ_alpha_indices:
-                row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in occ_alpha_indices if i != col_to_remove]
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
-                else:
-                    val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
-                # construct new gmpy2.mpz to describe the slater determinant and
-                # derivation index
-                self.d_cache[(sd, deriv)] = val
+            if len(vo_row) == 0:
+                val = 1
+            else:
+                row_to_remove = deriv // self.nspatial
+                col_to_remove = deriv %  self.nspatial
+                if col_to_remove in vir_alpha_indices:
+                    row_inds = [i for i in vo_row if i != row_to_remove]
+                    col_inds = [i for i in vo_col if i != col_to_remove]
+                    if len(row_inds) == 0 and len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
+            # construct new gmpy2.mpz to describe the slater determinant and
+            # derivation index
+            self.d_cache[(sd, deriv)] = val
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
@@ -229,7 +259,7 @@ class APIG(ProjectionWavefunction):
         determinant
 
         ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{APIG}} \big>
+            \big< \Phi_i \big| H \big| \Psi_{mathrm{AP1roG}} \big>
 
         Since only Slater determinants from DOCI will be used, we can use the DOCI
         Hamiltonian
@@ -254,26 +284,7 @@ class APIG(ProjectionWavefunction):
         ProjectionWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
+        
+        AP1roG is normalized by contruction.
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.nspatial)
-        # normalize the geminals
-        norm = np.sum(gem_coeffs**2, axis=1)
-        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # flip the negative norms
-        gem_coeffs[norm < 0, :] *= -1
-        # normalize the wavefunction
-        norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5 / self.npair)
-        # set attributes
-        if self.energy_is_param:
-            self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
-        else:
-            self.params = gem_coeffs.flatten()
-        # FIXME: need smarter caching (just delete the ones affected)
-        for sd in self.ref_sd:
-            del self.cache[sd]
-            # This requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
-            for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.cache[i]
+        pass

@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from horton import *
+import os
 
+from horton import *
 
 def hartreefock(fn=None, basis=None, nelec=None,
                 solver=EDIIS2SCFSolver, tol=1.0e-12,
@@ -48,12 +49,14 @@ def hartreefock(fn=None, basis=None, nelec=None,
             "olp", horton.matrix.dense.DenseTwoIndex that contains the overlap matrix of
             the atomic orbitals
     """
+    data_dir = os.path.join(os.path.dirname(__file__), '../data')
+    file_path = os.path.join(data_dir, fn)
     # Initialize molecule and basis set from specified file
     if isinstance(fn, IOData):
         mol = fn
     else:
         try:
-            mol = IOData.from_file(context.get_fn(fn))
+            mol = IOData.from_file(file_path)
         except IOError:
             mol = IOData.from_file(fn)
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)

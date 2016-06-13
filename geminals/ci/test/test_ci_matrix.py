@@ -1,8 +1,8 @@
 from nose.tools import assert_raises
 import numpy as np
 
-from .. import ci_matrix
-from .. import slater
+from geminals.ci import ci_matrix
+from geminals import slater
 
 
 def test_is_alpha():

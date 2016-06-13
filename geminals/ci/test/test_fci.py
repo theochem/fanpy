@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
-from ..fci import FCI
-from ..hort import hartreefock
+from geminals.ci.fci import FCI
+from geminals.hort import hartreefock
 
 
 def test_fci_wavefunction():
     #### H2 ####
     nelec = 2
-    hf_dict = hartreefock(fn="./h2.xyz", basis="6-31g**", nelec=nelec)
+    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -19,7 +19,7 @@ def test_fci_wavefunction():
     assert abs(fci.compute_energy() - (-1.1651486697)) < 1e-7
     #### LiH ####
     nelec = 4
-    hf_dict = hartreefock(fn="./lih.xyz", basis="sto-6g", nelec=nelec)
+    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
