@@ -26,15 +26,15 @@ def raise_error(parent, msg):
     dlg.Destroy() # finally destroy it when finished.
 
 # FIXME: something more generalized
-method_dict = {'FCI': geminals.fci.FCI,
-               'DOCI': geminals.doci.DOCI,
-               'CISD': geminals.cisd.CISD,
-               'CI Pairs': geminals.ci_pairs.CIPairs,
-               'APIG': geminals.apig.APIG,
-               # 'AP1roG': geminals.ap1rog.AP1roG,
-               # 'APr2G': geminals.apr2g.APr2G,
-               # 'APsetG': geminals.apsetg.APsetG,
-               # 'APseqG': geminals.apseqg.APseqG,
+method_dict = {'FCI': geminals.ci.fci.FCI,
+               'DOCI': geminals.ci.doci.DOCI,
+               'CISD': geminals.ci.cisd.CISD,
+               'CI Pairs': geminals.ci.ci_pairs.CIPairs,
+               'APIG': geminals.proj.apig.APIG,
+               # 'AP1roG': geminals.proj.ap1rog.AP1roG,
+               # 'APr2G': geminals.proj.apr2g.APr2G,
+               # 'APsetG': geminals.proj.apsetg.APsetG,
+               # 'APseqG': geminals.proj.apseqg.APseqG,
 }
 ci_methods = ['FCI', 'CISD', 'DOCI', 'CI Pairs',]
 proj_methods = ['APIG']
@@ -394,7 +394,7 @@ class ProwlFrame(wx.Frame):
             Event that results in solving the wavefunction
         """
         # check if we can select yet
-        if isinstance(self.wavefunction, geminals.Wavefunction):
+        if isinstance(self.wavefunction, geminals.wavefunction.Wavefunction):
             raise_error(self, 'Wavefunction needs to be initialized.')
             return
         # if orbitals are selected
