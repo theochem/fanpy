@@ -1,10 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import itertools as it
 from gmpy2 import mpz
+from copy import deepcopy
 
 from .. import slater
-from ..sd_list import doci_sd_list
+from ..sd_list import doci_sd_list, ci_sd_list
 from ..math_tools import permanent_ryser
 from .proj_wavefunction import ProjectionWavefunction
 from .proj_hamiltonian import doci_hamiltonian
@@ -67,6 +69,26 @@ def ind_from_gem_to_orbs(k, nspin):
     # j = k - i*(i-1)/2
     # return (int(i), int(j))
 
+def generate_pairing_scheme(occ_indices):
+    # change indices into hashes (faster to delete)
+    if not isinstance(occ_indices, dict):
+        occ_indices = {i:None for i in occ_indices}
+    assert len(occ_indices) % 2 == 0
+    # select two
+    for pair in it.combinations(occ_indices.keys(), 2):
+        copy_indices = deepcopy(occ_indices)
+        del copy_indices[pair[0]]
+        del copy_indices[pair[1]]
+        if pair[0] > pair[1]:
+            pair = pair[::-1]
+        recurse = tuple(generate_pairing_scheme(copy_indices))
+        if len(recurse) >= 1:
+            yield (pair,) + recurse[0]
+        else:
+            yield (pair,)
+
+
+# FIXME: rename
 class APG(ProjectionWavefunction):
     """ Antisymmetric Product Geminals
 
@@ -113,6 +135,9 @@ class APG(ProjectionWavefunction):
     d_cache : dict of (mpz, int) to float
         Cache of the Slater determinant to the derivative(with respect to some index)
         of the overlap of the wavefunction with this Slater determinan
+    adjacency : np.ndarray
+        Adjacency matrix that shows the correlation between any orbital pairs.
+        This matrix will be used to get the pairing scheme
 
     Properties
     ----------
@@ -186,7 +211,60 @@ class APG(ProjectionWavefunction):
     normalize
         Normalizes the wavefunction (different definitions available)
         By default, the norm should the projection against the ref_sd squared
+    assign_adjacency
+        Assigns the adjacency matrix which is used to obtain the get the coupling scheme
     """
+    def __init__(self,
+                 # Mandatory arguments
+                 nelec=None,
+                 H=None,
+                 G=None,
+                 # Arguments handled by base Wavefunction class
+                 dtype=None,
+                 nuc_nuc=None,
+                 # Arguments handled by ProjWavefunction class
+                 params=None,
+                 pspace=None,
+                 energy_is_param=True,
+                 # Adjacnecy
+                 adjacency=None
+    ):
+        super(APG, self).__init__(
+            nelec=nelec,
+            H=H,
+            G=G,
+            dtype=dtype,
+            nuc_nuc=nuc_nuc,
+            params=params,
+            pspace=pspace,
+            energy_is_param=energy_is_param
+        )
+        self.assign_adjacency(adjacency=adjacency)
+
+    def assign_adjacency(self, adjacency=None):
+        """ Assigns the adjacency matrix
+
+        Parameters
+        ----------
+        adjacency : np.ndarray
+            Adjacency matrix
+            Square boolean numpy array that describes the correlations between orbitals
+        """
+        if adjacency is None:
+            adjacency = np.ones((self.nspin, self.nspin), dtype=bool)
+            adjacency -= np.diag(np.diag(adjacency))
+        if not isinstance(adjacency, np.ndarray):
+            raise TypeError, 'Adjacency matrix must be a numpy array'
+        if adjacency.dtype != 'bool':
+            raise TypeError, 'Adjacency matrix must be a boolean array'
+        if adjacency.shape[0] != adjacency.shape[1]:
+            raise ValueError, 'Adjacency matrix must be square'
+        if not np.allclose(adjacency, adjacency.T):
+            raise ValueError, 'Adjacency matrix is not symmetric'
+        if not np.all(np.diag(adjacency) == False):
+            raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
+        self.adjacency = adjacency
+
     @property
     def template_params(self):
         """ Default numpy array of parameters.
@@ -204,19 +282,13 @@ class APG(ProjectionWavefunction):
         # # if C_{p;ij} = C_{p;ji}
         # gem_coeffs = np.zeros((self.npair, (self.nspin-1)*(self.nspin-2)/2), dtype=self.dtype)
         for i in range(self.npair):
-            gem_ind = ind_orbs_to_gem(i, i+self.nspatial, self.nspin)
+            gem_ind = ind_from_orbs_to_gem(i, i+self.nspatial, self.nspin)
             gem_coeffs[i, gem_ind] = 1
         params = gem_coeffs.flatten()
         return params
 
-    '''
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
-
-        # FIXME: wording
-        Since APIG wavefunction only consists of Slater determinants with orbitals that are
-        paired (alpha and beta orbitals corresponding to the same spatial orbital are occupied),
-        the Slater determinants used correspond to those in DOCI wavefunction
 
         Parameters
         ----------
@@ -229,9 +301,9 @@ class APG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return doci_sd_list(self, num_sd)
+        return ci_sd_list(self, num_sd)
 
-    def compute_overlap(self, sd, deriv=None):
+    def compute_overlap(self, sd, pairing_scheme={}, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
@@ -248,6 +320,15 @@ class APG(ProjectionWavefunction):
         sd : int, gmpy2.mpz
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
+        pairing_scheme : dict of sd to pairing scheme
+            Contains all of available pairing schemes for a given Slater determinant
+            For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
+            Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
+            `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
+            and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
+            and `3`rd orbitals, respectively.
+            # FIXME: maybe change the pairing scheme to take in a generator instead of
+            #        a tuple
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
@@ -259,31 +340,26 @@ class APG(ProjectionWavefunction):
         # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = mpz(sd)
         # get indices of the occupied orbitals
-        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        occ_alpha_indices = slater.occ_indices(alpha_sd)
-        occ_beta_indices = slater.occ_indices(beta_sd)
-        if occ_alpha_indices != occ_beta_indices:
-            raise ValueError('Given Slater determinant, {0}, does not belong'
-                             ' to the DOCI Slater determinants'.format(bin(sd)))
+        occ_indices = slater.occ_indices(sd)
 
         # build geminal coefficient
         if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
+            gem_coeffs = self.params[:-1].reshape(self.template_params.shape)
         else:
-            gem_coeffs = self.params.reshape(self.npair, self.nspatial)
+            gem_coeffs = self.params.reshape(self.template_params.shape)
 
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, occ_alpha_indices])
+            val = permanent_ryser(gem_coeffs[:, occ_indices])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
             row_to_remove = deriv // self.nspatial
             col_to_remove = deriv % self.nspatial
-            if col_to_remove in occ_alpha_indices:
+            if col_to_remove in occ_indices:
                 row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in occ_alpha_indices if i != col_to_remove]
+                col_inds = [i for i in occ_indices if i != col_to_remove]
                 if len(row_inds) == 0 and len(col_inds) == 0:
                     val = 1
                 else:
@@ -293,6 +369,7 @@ class APG(ProjectionWavefunction):
                 self.d_cache[(sd, deriv)] = val
         return val
 
+    '''
     def compute_hamiltonian(self, sd, deriv=None):
         """ Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
