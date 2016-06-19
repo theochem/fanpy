@@ -198,10 +198,7 @@ class APIG(ProjectionWavefunction):
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
         # build geminal coefficient
-        if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
-        else:
-            gem_coeffs = self.params.reshape(self.npair, self.nspatial)
+        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
 
         val = 0.0
         # if no derivatization
@@ -256,7 +253,7 @@ class APIG(ProjectionWavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.nspatial)
+        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -266,14 +263,11 @@ class APIG(ProjectionWavefunction):
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
-        if self.energy_is_param:
-            self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
-        else:
-            self.params = gem_coeffs.flatten()
-        # FIXME: need smarter caching (just delete the ones affected)
+        self.params[:self.energy_index] = gem_coeffs.flatten()
+        # empty cache
         for sd in self.ref_sd:
             del self.cache[sd]
-            # This requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
             for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.cache[i]
+                del self.d_cache[i]
+            # Following requires d_cache to be a dictionary of dictionary
+            # self.d_cache[sd] = {}

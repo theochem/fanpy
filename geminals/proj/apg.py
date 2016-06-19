@@ -6,7 +6,7 @@ from gmpy2 import mpz
 from copy import deepcopy
 
 from .. import slater
-from ..sd_list import doci_sd_list, ci_sd_list
+from ..sd_list import ci_sd_list, ci_sd_list
 from ..math_tools import permanent_ryser
 from .proj_wavefunction import ProjectionWavefunction
 from .proj_hamiltonian import doci_hamiltonian
@@ -30,27 +30,28 @@ def generate_pairing_scheme(occ_indices):
 
     Yields
     ------
-    pairing_scheme : list of list of 2 ints
+    pairing_scheme : tuple of tuple of 2 ints
         Contains the geminals needed to construct the corresponding Slater determinant
         Not necessarily ordered
     """
+    occ_indices = tuple(occ_indices)
     n = len(occ_indices)
     if (n%2 == 1 or n < 2):
         raise ValueError, 'Given occ_indices cannot produce a perfect matching (odd number of occupied indices)'
     if (n == 2):
-        yield( [ [occ_indices[0], occ_indices[1]] ] )
+        yield( ( (occ_indices[0], occ_indices[1]), ) )
     else:
         # smaller subset (all pairs without the last two indices)
         Sn_2 = generate_pairing_scheme(occ_indices[:-2])
         for scheme in Sn_2:
             # add in the last two indices
-            yield( scheme + [occ_indices[-2:]] )
+            yield( scheme + (occ_indices[-2:],) )
             # swap the last two indices wth an existing pair
             for i in range(n//2 - 1):
                 # this part of the scheme is kept constant
                 base_scheme = scheme[:i] + scheme[i+1:]
-                yield( base_scheme + [ [scheme[i][0], occ_indices[-2]] , [scheme[i][1], occ_indices[-1]] ] )
-                yield( base_scheme + [ [scheme[i][0], occ_indices[-1]] , [scheme[i][1], occ_indices[-2]] ] )
+                yield( base_scheme + ( (scheme[i][0], occ_indices[-2]), (scheme[i][1], occ_indices[-1]) ) )
+                yield( base_scheme + ( (scheme[i][0], occ_indices[-1]), (scheme[i][1], occ_indices[-2]) ) )
 
 # FIXME: rename
 class APG(ProjectionWavefunction):
@@ -234,6 +235,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         self.adjacency = adjacency
         # find all the edges/orbital pairs that are correlated
         orbpairs = np.where(adjacency != False)
+        # if C_{p;ij} = C_{p;ji}
         # orbpairs = np.where(np.triu(adjacency, k=1) != False)
         self.dict_orbpair_gem = {i:orbpair for i, orbpair in enumerate(orbpairs)}
         self.dict_gem_orbpair = {orbpair:i for i, orbpair in enumerate(orbpairs)}
@@ -256,7 +258,6 @@ r       Solves the system of nonliear equations (and the wavefunction) using
 
         """
         gem_coeffs = np.zeros((self.npair, len(self.dict_gem_orbpair)), dtype=self.dtype)
-        # if C_{p;ij} = C_{p;ji}
         for i in range(self.npair):
             gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
             gem_coeffs[i, gem_ind] = 1
@@ -279,7 +280,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         """
         return ci_sd_list(self, num_sd)
 
-    def compute_overlap(self, sd, pairing_scheme={}, deriv=None):
+    def compute_overlap(self, sd, pairing_schemes=None, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
@@ -296,15 +297,13 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         sd : int, gmpy2.mpz
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
-        pairing_scheme : dict of sd to pairing scheme
-            Contains all of available pairing schemes for a given Slater determinant
+        pairing_scheme : generator of list of list of 2 ints
+            Contains all of available pairing schemes for the given Slater determinant
             For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
             Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
             `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
             and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
             and `3`rd orbitals, respectively.
-            # FIXME: maybe change the pairing scheme to take in a generator instead of
-            #        a tuple
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
@@ -317,35 +316,49 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         sd = mpz(sd)
         # get indices of the occupied orbitals
         occ_indices = slater.occ_indices(sd)
-
-        # build geminal coefficient
-        if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.template_params.shape)
+        # get the pairing schemes
+        if pairing_schemes is None:
+            pairing_schemes = generate_pairing_schemes(occ_indices)
         else:
-            gem_coeffs = self.params.reshape(self.template_params.shape)
+            pairing_schemes, temp = it.tee(pairing_schemes)
+            for i in temp:
+                # if C_{p;ij} = C_{p;ji}
+                # for j in i:
+                #     assert j[0] < j[1]
+                assert all(len(j) == 2), 'All pairing in the scheme must be in 2'
+                assert set(occ_indices) == set(k for j in i for k in j), 'Pairing '
+                'scheme must use the same indices as the occupied orbitals of the '
+                'given Slater determinant'
+        # build geminal coefficient
+        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
 
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, occ_indices])
+            for scheme in pairing_schemes:
+                indices = [self.dict_orbpair_gem[i] for i in scheme]
+                matrix = gem_coeffs[:, indices]
+                val += permanent_ryser(matrix)
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            row_to_remove = deriv // self.nspatial
-            col_to_remove = deriv % self.nspatial
-            if col_to_remove in occ_indices:
-                row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in occ_indices if i != col_to_remove]
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
-                else:
-                    val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
-                # construct new gmpy2.mpz to describe the slater determinant and
-                # derivation index
+            row_to_remove = deriv // self.template_params.shape[0]
+            col_to_remove = deriv % self.template_params.shape[0]
+            orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
+            # both orbitals of the geminal must be present in the Slater determinant
+            if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
+                for scheme in pairing_schemes:
+                    # geminal must be an allowed pairing schemes
+                    if orbs_to_remove in scheme:
+                        row_inds = [i for i in range(self.npair) if i!=row_to_remove]
+                        col_inds = [self.dict_orbpair_gem[i] for i in scheme if i!=col_to_remove]
+                        if len(row_inds) == 0 and len(col_inds) == 0:
+                            val += 1
+                        else:
+                            val += permanent_ryser(gem_coeffs[row_inds][:, col_inds])
                 self.d_cache[(sd, deriv)] = val
         return val
 
-    '''
     def compute_hamiltonian(self, sd, deriv=None):
         """ Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
@@ -369,7 +382,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         -------
         float
         """
-        return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
+        return sum(ci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
@@ -378,7 +391,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.nspatial)
+        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -388,15 +401,11 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
-        if self.energy_is_param:
-            self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
-        else:
-            self.params = gem_coeffs.flatten()
-        # FIXME: need smarter caching (just delete the ones affected)
+        self.params[:self.energy_index] = gem_coeffs.flatten()
+        # empty cache
         for sd in self.ref_sd:
             del self.cache[sd]
-            # This requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
             for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.cache[i]
-    '''
+                del self.d_cache[i]
+            # Following requires d_cache to be a dictionary of dictionary
+            # self.d_cache[sd] = {}
