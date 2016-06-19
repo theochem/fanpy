@@ -3,34 +3,33 @@ from nose.tools import assert_raises
 import numpy as np
 
 from geminals.proj.proj_wavefunction import ProjectionWavefunction
-from geminals.proj.apg import APG, ind_from_orbs_to_gem, ind_from_gem_to_orbs, generate_pairing_scheme
+from geminals.proj.apg import APG, generate_pairing_scheme
 from geminals.hort import hartreefock
 
-def test_ind_converter():
-    nspin = 100
-    counter = 0
-    for i in range(nspin):
-        # if C_{p;ij} \neq C_{p;ji}
-        for j in range(nspin):
-        # # if C_{p;ij} = C_{p;ji}
-        # for j in range(i):
-            if i == j:
-                assert_raises(ValueError, lambda: ind_from_orbs_to_gem(i, j, nspin))
-            else:
-                gem_ind = ind_from_orbs_to_gem(i, j, nspin)
-                assert gem_ind == counter
-                assert ind_from_gem_to_orbs(gem_ind, nspin) == (i,j)
-                counter += 1
-
 def test_generate_pairing_scheme():
-    occ_indices = range(4)
-    for i in generate_pairing_scheme(occ_indices):
-        print(i)
-
-    # schemes = tuple(tuple(sorted(i, key=lambda x:x[0])) for i in generate_pairing_scheme(occ_indices))
-    # print(schemes)
-    # print(len(schemes))
-    # print(len(set(schemes)))
+    occ_indices = [0,1,3,4]
+    answer = [ [[0,1], [3,4]],
+               [[0,3], [1,4]],
+               [[0,4], [1,3]]]
+    assert answer == list(generate_pairing_scheme(occ_indices))
+    occ_indices = [0,1,3,4,6,7]
+    answer = [ [[0,1], [3,4], [6,7]],
+               [[0,1], [3,6], [4,7]],
+               [[0,1], [3,7], [4,6]],
+               [[0,3], [1,4], [6,7]],
+               [[0,3], [1,6], [4,7]],
+               [[0,3], [1,7], [4,6]],
+               [[0,4], [1,3], [6,7]],
+               [[0,4], [1,6], [3,7]],
+               [[0,4], [1,7], [3,6]],
+               [[0,6], [1,3], [4,7]],
+               [[0,7], [1,3], [4,6]],
+               [[0,6], [1,4], [3,7]],
+               [[0,7], [1,4], [3,6]],
+               [[0,6], [1,7], [3,4]],
+               [[0,7], [1,6], [3,4]],
+    ]
+    assert answer == [sorted(i, key=lambda x: x[0]) for i in sorted(generate_pairing_scheme(occ_indices), key=lambda x:x[0])]
 
 class TestAPGWavefunction(APG):
     def compute_hamiltonian():

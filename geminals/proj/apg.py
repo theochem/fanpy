@@ -11,82 +11,46 @@ from ..math_tools import permanent_ryser
 from .proj_wavefunction import ProjectionWavefunction
 from .proj_hamiltonian import doci_hamiltonian
 
-def ind_from_orbs_to_gem(i, j, nspin):
-    """ Converts a pair of indices for the orbitals to a single index for the geminal
-
-    Parameters
-    ----------
-    i : int
-        Index of the orbital that is used to create the geminal
-    j : int
-        Index of the other orbital that is used to create the geminal
-
-    Returns
-    -------
-    k : int
-        Index of the geminal
-    """
-    if i == j:
-        raise ValueError, 'It is not possible to create a nonzero geminal from a single orbital'
-    # # if C_{p;ij} \neq C_{p;ji}
-    k = i*(nspin-1)
-    if j < i:
-        k += j
-    elif j > i:
-        k += j - 1
-    return k
-    # # if C_{p;ij} = C_{p;ji}
-    # if i < j:
-    #     i, j = j, i
-    # if i <= 1:
-    #     return 0
-    # else:
-    #     return i*(i-1)//2 + j
-
-def ind_from_gem_to_orbs(k, nspin):
-    """ Converts a pair of indices for the orbitals to a single index for the geminal
-
-    Parameters
-    ----------
-    k : int
-        Index of the geminal
-
-    Returns
-    -------
-    i : int
-        Index of the orbital that is used to create the geminal
-    j : int
-        Index of the other orbital that is used to create the geminal
-    """
-    # if C_{p;ij} = C_{p;ji}
-    i = k // (nspin-1)
-    j = k % (nspin-1)
-    if j >= i:
-        j += 1
-    return (i, j)
-    # # if C_{p;ij} = C_{p;ji}
-    # i = (1 + (1+8*k)**0.5) // 2
-    # j = k - i*(i-1)/2
-    # return (int(i), int(j))
-
 def generate_pairing_scheme(occ_indices):
-    # change indices into hashes (faster to delete)
-    if not isinstance(occ_indices, dict):
-        occ_indices = {i:None for i in occ_indices}
-    assert len(occ_indices) % 2 == 0
-    # select two
-    for pair in it.combinations(occ_indices.keys(), 2):
-        copy_indices = deepcopy(occ_indices)
-        del copy_indices[pair[0]]
-        del copy_indices[pair[1]]
-        if pair[0] > pair[1]:
-            pair = pair[::-1]
-        recurse = tuple(generate_pairing_scheme(copy_indices))
-        if len(recurse) >= 1:
-            yield (pair,) + recurse[0]
-        else:
-            yield (pair,)
+    """ Generates all possible ways to construct a Slater determinant from its
+    orbital pairs (geminals)
 
+    Equivalently, it generates all the perfect matchings given a complete graph with
+    vertices with indices given by occ_indices.
+
+    For example, the Slater determinant that corresponds to 0b00110011 with 4 spatial
+    orbitals, we have the orbitals 0, 1, 4, and 5 occupied. This means that we
+    can describe this Slater determinant with geminals ((0,1), (4,5)), ((0,4), (1,5)),
+    and ((0,5), (1,4)). This function generates all of these "geminal configurations"
+
+    Parameters
+    ----------
+    occ_indices : list of int
+         List of indices to be used to identify the Slater determinant
+
+    Yields
+    ------
+    pairing_scheme : list of list of 2 ints
+        Contains the geminals needed to construct the corresponding Slater determinant
+        Not necessarily ordered
+    """
+    n = len(occ_indices)
+    if (n%2 == 1 or n < 2):
+        raise ValueError, 'Given occ_indices cannot produce a perfect matching (odd number of occupied indices)'
+    if (n == 2):
+        yield( [ [occ_indices[0], occ_indices[1]] ] )
+    else:
+        # smaller subset (all pairs without the last two indices)
+        Sn_2 = generate_pairing_scheme(occ_indices[:-2])
+        for scheme in Sn_2:
+            # add in the last two indices
+            yield( scheme + [occ_indices[-2:]] )
+            # swap the last two indices wth an existing pair
+            for i in range(n//2 - 1):
+                # this part of the scheme is kept constant
+                base_scheme = scheme[:i] + scheme[i+1:]
+                yield( base_scheme + [ [scheme[i][0], occ_indices[-2]] , [scheme[i][1], occ_indices[-1]] ] )
+                yield( base_scheme + [ [scheme[i][0], occ_indices[-1]] , [scheme[i][1], occ_indices[-2]] ] )
 
 # FIXME: rename
 class APG(ProjectionWavefunction):
@@ -138,6 +102,10 @@ class APG(ProjectionWavefunction):
     adjacency : np.ndarray
         Adjacency matrix that shows the correlation between any orbital pairs.
         This matrix will be used to get the pairing scheme
+    dict_orbpair_gem : dict of (int, int) to int
+        Dictionary of indices of the orbital pairs to the index of the geminal
+    dict_gem_orbpair : dict of int to (int, int)
+        Dictionary of indices of index of the geminal to the the orbital pairs
 
     Properties
     ----------
@@ -182,7 +150,7 @@ class APG(ProjectionWavefunction):
     assign_nelec(nelec)
         Assigns the number of electrons
     _solve_least_squares(**kwargs)
-        Solves the system of nonliear equations (and the wavefunction) using
+r       Solves the system of nonliear equations (and the wavefunction) using
         least squares method
     assign_params(params=None)
         Assigns the parameters used to describe the wavefunction.
@@ -264,6 +232,11 @@ class APG(ProjectionWavefunction):
         if not np.all(np.diag(adjacency) == False):
             raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
         self.adjacency = adjacency
+        # find all the edges/orbital pairs that are correlated
+        orbpairs = np.where(adjacency != False)
+        # orbpairs = np.where(np.triu(adjacency, k=1) != False)
+        self.dict_orbpair_gem = {i:orbpair for i, orbpair in enumerate(orbpairs)}
+        self.dict_gem_orbpair = {orbpair:i for i, orbpair in enumerate(orbpairs)}
 
     @property
     def template_params(self):
@@ -277,12 +250,15 @@ class APG(ProjectionWavefunction):
         -------
         template_params : np.ndarray(K, )
 
+        Note
+        ----
+        Assumes that C_{p;ij} = C_{p;ji}
+
         """
-        gem_coeffs = np.zeros((self.npair, self.nspin*(self.nspin-1)), dtype=self.dtype)
-        # # if C_{p;ij} = C_{p;ji}
-        # gem_coeffs = np.zeros((self.npair, (self.nspin-1)*(self.nspin-2)/2), dtype=self.dtype)
+        gem_coeffs = np.zeros((self.npair, len(self.dict_gem_orbpair)), dtype=self.dtype)
+        # if C_{p;ij} = C_{p;ji}
         for i in range(self.npair):
-            gem_ind = ind_from_orbs_to_gem(i, i+self.nspatial, self.nspin)
+            gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
             gem_coeffs[i, gem_ind] = 1
         params = gem_coeffs.flatten()
         return params
