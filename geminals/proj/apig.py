@@ -125,6 +125,10 @@ class APIG(ProjectionWavefunction):
         By default, the norm should the projection against the ref_sd squared
     """
     @property
+    def template_coeffs(self):
+        return np.eye(self.npair, self.nspatial, dtype=self.dtype)
+
+    @property
     def template_params(self):
         """ Default numpy array of parameters.
 
@@ -137,9 +141,7 @@ class APIG(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        gem_coeffs = np.eye(self.npair, self.nspatial, dtype=self.dtype)
-        params = gem_coeffs.flatten()
-        return params
+        return self.temp_coeffs.flatten()
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
