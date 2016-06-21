@@ -53,7 +53,7 @@ def permanent_ryser(matrix):
         if m > n:
             matrix = matrix.transpose()
             m, n = n, m
-        A = np.pad(matrix, ((0, n - m), (0, 0)), mode="constant", constant_values=1.0)
+        A = np.pad(matrix, ((0, n - m), (0, 0)), mode="constant", constant_values=((0, 1.0), (0, 0)))
         factor = 1.0 / np.math.factorial(n - m)
     else:
         A = matrix
@@ -85,7 +85,7 @@ def permanent_ryser(matrix):
                 cur_value = graycode[n - 1]
             else:
                 cur_value = not \
-                            (graycode[cur_position] and graycode[cur_position + 1])
+                (graycode[cur_position] and graycode[cur_position + 1])
             if flag:
                 break
 
@@ -104,3 +104,59 @@ def permanent_ryser(matrix):
             sign = True
 
     return permanent * factor
+
+
+def adjugate(matrix):
+    return np.linalg.det(matrix) * np.linalg.inv(matrix)
+
+
+def permanent_borchardt(params, m, n):
+    """
+    Calculate the permanent of a square or rectangular matrix using the Borchardt theorem
+
+    Parameters
+    ----------
+    params : list
+        it is assumed the parameters are ordered as [lambda, epsilon, xi].
+    m : integer
+        number of rows in the matrix.
+    n : int
+        number of columns in the matrix.
+
+    Returns
+    -------
+    result : float
+        permanent of the rank-2 matrix built from the given parameter list.
+
+    """
+    # m must be smaller or equal to n
+    if not m <= n:
+        raise ValueError("m should be smaller than n.")
+
+    # Obtain different parameters
+    lambdas = params[:m]
+    epsilons = params[m:m + n]
+    xis = params[m + n:]
+
+    # Compute permanent of diagonal xi-matrix
+    perm_xi = np.prod(xis)
+    
+    # Construct B and D matrix
+    lambda_matrix = np.array([lambdas, ] * n).transpose()
+    epsilon_matrix = np.array([epsilons, ] * m)
+    gem_coeffs = 1.0 / (lambda_matrix - epsilon_matrix)
+
+    b_matrix = np.zeros((n, n))
+    d_matrix = b_matrix.copy()
+    d_matrix[:m, :] = gem_coeffs[:]
+    b_matrix[:m, :] = gem_coeffs[:]**2
+
+    # In the case of a rectangular matrix we have to add an additional submatrix
+    if m != n:
+        sub = np.array([epsilons, ] * (n - m))
+        power = np.arange(n - m)
+        sub = np.power(sub.transpose(), power).transpose()
+        d_matrix[m:, :] = sub
+        b_matrix[m:, :] = sub
+
+    return np.linalg.det(b_matrix) / np.linalg.det(d_matrix) * perm_xi

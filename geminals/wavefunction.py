@@ -205,7 +205,7 @@ class Wavefunction(object):
                     raise TypeError('Integrals of unrestricted orbitals must be'
                                     'given as a tuple of numpy arrays (2 for H and 3 for G)')
                 elif orb_type is None:
-                    orb_type = 'unrestricted'
+                    orb_type = 'restricted'
             # tuple of two and three integrals
             elif len(H) == 2 and len(G) == 3:
                 # must be unrestricted
