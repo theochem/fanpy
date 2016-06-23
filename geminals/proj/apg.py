@@ -8,50 +8,9 @@ from copy import deepcopy
 from .. import slater
 from ..sd_list import ci_sd_list, ci_sd_list
 from ..math_tools import permanent_ryser
+from ..graphs import generate_complete_pmatch
 from .proj_wavefunction import ProjectionWavefunction
 from .proj_hamiltonian import hamiltonian
-
-def generate_pairing_scheme(occ_indices):
-    """ Generates all possible ways to construct a Slater determinant from its
-    orbital pairs (geminals)
-
-    Equivalently, it generates all the perfect matchings given a complete graph with
-    vertices with indices given by occ_indices.
-
-    For example, the Slater determinant that corresponds to 0b00110011 with 4 spatial
-    orbitals, we have the orbitals 0, 1, 4, and 5 occupied. This means that we
-    can describe this Slater determinant with geminals ((0,1), (4,5)), ((0,4), (1,5)),
-    and ((0,5), (1,4)). This function generates all of these "geminal configurations"
-
-    Parameters
-    ----------
-    occ_indices : list of int
-         List of indices to be used to identify the Slater determinant
-
-    Yields
-    ------
-    pairing_scheme : tuple of tuple of 2 ints
-        Contains the geminals needed to construct the corresponding Slater determinant
-        Not necessarily ordered
-    """
-    occ_indices = tuple(occ_indices)
-    n = len(occ_indices)
-    if (n%2 == 1 or n < 2):
-        raise ValueError, 'Given occ_indices cannot produce a perfect matching (odd number of occupied indices)'
-    if (n == 2):
-        yield( ( (occ_indices[0], occ_indices[1]), ) )
-    else:
-        # smaller subset (all pairs without the last two indices)
-        Sn_2 = generate_pairing_scheme(occ_indices[:-2])
-        for scheme in Sn_2:
-            # add in the last two indices
-            yield( scheme + (occ_indices[-2:],) )
-            # swap the last two indices wth an existing pair
-            for i in range(n//2 - 1):
-                # this part of the scheme is kept constant
-                base_scheme = scheme[:i] + scheme[i+1:]
-                yield( base_scheme + ( (scheme[i][0], occ_indices[-2]), (scheme[i][1], occ_indices[-1]) ) )
-                yield( base_scheme + ( (scheme[i][0], occ_indices[-1]), (scheme[i][1], occ_indices[-2]) ) )
 
 # FIXME: rename
 class APG(ProjectionWavefunction):
@@ -324,7 +283,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         occ_indices = slater.occ_indices(sd)
         # get the pairing schemes
         if pairing_schemes is None:
-            pairing_schemes = generate_pairing_scheme(occ_indices)
+            pairing_schemes = generate_complete_pmatch(occ_indices)
         else:
             pairing_schemes, temp = it.tee(pairing_schemes)
             for i in temp:
