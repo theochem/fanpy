@@ -4,10 +4,10 @@ import numpy as np
 from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
-from . import slater
-from .sd_list import doci_sd_list
+from .. import slater
+from ..sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
-from .math_tools import permanent_borchardt, adjugate
+from ..math_tools import permanent_borchardt, adjugate
 from .ap1rog import AP1roG
 
 

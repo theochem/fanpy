@@ -7,7 +7,7 @@ from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
 from ..sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
-from ..math_tools import permanent_ryser
+from ..math_tools import permanent_combinatoric
 
 class AP1roG(ProjectionWavefunction):
     """ Antisymmetric Product of One-Reference-Orbital Geminals
