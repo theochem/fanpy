@@ -4,12 +4,13 @@ import numpy as np
 from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
-from . import slater
-from .sd_list import ci_sd_list
-from .math_tools import permanent_ryser
+from .. import slater
+from ..sd_list import ci_sd_list
+from ..math_tools import permanent_ryser
+from .proj_hamiltonian import hamiltonian
 
 
-class APFSG(ProjectionWavefunction):
+class APfsG(ProjectionWavefunction):
     """ Antisymmetric Product of Factorized Set Geminals
     """
 
