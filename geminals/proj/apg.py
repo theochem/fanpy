@@ -229,6 +229,24 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         """
         return self.template_coeffs.flatten()
 
+    def default_pmatch_generator(self, occ_indices):
+        """ Generator for the perfect matchings needed to construct the Slater determinant
+
+        Parameters
+        ----------
+        occ_indices : list of int
+            List of spin orbital indices that are occupied in a given Slater determinant
+
+        Returns
+        -------
+        Generator for the perfect matchings
+
+        Notes
+        -----
+        Assumes that graph (of correlation) is a complete
+        """
+        return generate_complete_pmatch(occ_indices)
+
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
@@ -283,7 +301,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         occ_indices = slater.occ_indices(sd)
         # get the pairing schemes
         if pairing_schemes is None:
-            pairing_schemes = generate_complete_pmatch(occ_indices)
+            pairing_schemes = self.default_pmatch_generator(occ_indices)
         else:
             pairing_schemes, temp = it.tee(pairing_schemes)
             for i in temp:
