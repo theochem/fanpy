@@ -4,21 +4,14 @@ import numpy as np
 from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
-from .. import slater
-from ..sd_list import doci_sd_list
+from . import slater
+from .sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
-from ..math_tools import permanent_ryser
+from .math_tools import permanent_ryser
 
 
-class APIG(ProjectionWavefunction):
-    """ Antisymmetric Product of Interacting Geminals
-
-    ..math::
-        \big| \Psi_{\mathrm{APIG}} \big>
-        &= \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
-    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-    Slater determinant (DOCI).
+class APseqG(ProjectionWavefunction):
+    """ Antisymmetric Product of Sequantially Interacting Geminals
 
     Attributes
     ----------
@@ -125,10 +118,6 @@ class APIG(ProjectionWavefunction):
         By default, the norm should the projection against the ref_sd squared
     """
     @property
-    def template_coeffs(self):
-        return np.eye(self.npair, self.nspatial, dtype=self.dtype)
-
-    @property
     def template_params(self):
         """ Default numpy array of parameters.
 
@@ -141,15 +130,15 @@ class APIG(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        return self.temp_coeffs.flatten()
+        self.seqmax = self.npair - 1
+        gem_coeffs = np.eye(self.nspatial, self.nspatial, dtype=self.dtype)
+        params = gem_coeffs.flatten()
+        return params
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
-        # FIXME: wording
-        Since APIG wavefunction only consists of Slater determinants with orbitals that are
-        paired (alpha and beta orbitals corresponding to the same spatial orbital are occupied),
-        the Slater determinants used correspond to those in DOCI wavefunction
+        The Slater determinants used correspond to those in FCI wavefunction
 
         Parameters
         ----------
@@ -162,19 +151,12 @@ class APIG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return doci_sd_list(self, num_sd)
+        return ci_sd_list(self, num_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
-        ..math::
-            \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
-            &= \big< \Phi_k \big| \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
-            &= | C(\Phi_k) |^+
-        where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-        Slater determinant (DOCI).
 
         Parameters
         ----------
@@ -195,32 +177,53 @@ class APIG(ProjectionWavefunction):
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
         occ_alpha_indices = slater.occ_indices(alpha_sd)
         occ_beta_indices = slater.occ_indices(beta_sd)
-        if occ_alpha_indices != occ_beta_indices:
-            raise ValueError('Given Slater determinant, {0}, does not belong'
-                             ' to the DOCI Slater determinants'.format(bin(sd)))
+        if len(occ_alpha_indices) != len(occ_beta_indices):
+            raise ValueError('Given Slater determinant, {0}, should have same 
+                                number of alpha and beta electrons'.format(bin(sd)))
 
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
+        if self.energy_is_param:
+            gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
+        else:
+            gem_coeffs = self.params.reshape(self.npair, self.nspatial)
 
         val = 0.0
+
+
+        # order indices of sequentially occupied orbitals
+        # put all the pairs that are going to be used in the first npair rows 
+        fainds = []
+        fbinds = []
+        for j,a in enumerate(range(self.npair)):
+            seqlsta = [[]]*self.npair
+            seqlstb = [[]]*self.npair
+            if occ_beta_indices[j] == occ_alpha_indices[j]:
+                b = occ_beta_indices[j]
+                seqlsta[0].extend([a])
+                seqlstb[0].extend([b])
+            else:
+                for seq in range(1, self.seqmax):
+                    if occ_beta_indices[j] == occ_alpha_indices[j]+seq:
+                        b = occ_beta_indices[j]
+                        seqlsta[seq].extend([a])
+                        seqlstb[seq].extend([b])
+                    elif occ_beta_indices[j] == occ_alpha_indices[j]-seq:
+                        b = occ_beta_indices[j]
+                        seqlsta[seq].extend([a])
+                        seqlstb[seq].extend([b])
+            ainds = [i for k in seqlsta for i in k]
+            binds = [i for l in seqlstb for i in l] 
+            assert len(ainds) == self.npair and len(binds) == len(ainds)
+            fainds.append(ainds) ; fbinds.append(binds)
+
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, occ_alpha_indices])
+            val = permanent_ryser(gem_coeffs[fainds, fbinds])
             self.cache[sd] = val
         # if derivatization
+        # TODO:Modify the derivatives 
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            row_to_remove = deriv // self.nspatial
-            col_to_remove = deriv % self.nspatial
-            if col_to_remove in occ_alpha_indices:
-                row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in occ_alpha_indices if i != col_to_remove]
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
-                else:
-                    val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
-                # construct new gmpy2.mpz to describe the slater determinant and
-                # derivation index
-                self.d_cache[(sd, deriv)] = val
+            return NotImplementedError
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
@@ -228,9 +231,9 @@ class APIG(ProjectionWavefunction):
         determinant
 
         ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{APIG}} \big>
+            \big< \Phi_i \big| H \big| \Psi_{mathrm{APseqG}} \big>
 
-        Since only Slater determinants from DOCI will be used, we can use the DOCI
+        Since only Slater determinants from FCI will be used
         Hamiltonian
 
         Parameters
@@ -246,7 +249,7 @@ class APIG(ProjectionWavefunction):
         -------
         float
         """
-        return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
+        return sum(hamiltonian(self, sd, self.orb_type, deriv=deriv))
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
@@ -254,22 +257,4 @@ class APIG(ProjectionWavefunction):
 
         Some of the cache are emptied because the parameters are rewritten
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
-        # normalize the geminals
-        norm = np.sum(gem_coeffs**2, axis=1)
-        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # flip the negative norms
-        gem_coeffs[norm < 0, :] *= -1
-        # normalize the wavefunction
-        norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5 / self.npair)
-        # set attributes
-        self.params[:self.energy_index] = gem_coeffs.flatten()
-        # empty cache
-        for sd in self.ref_sd:
-            del self.cache[sd]
-            for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.d_cache[i]
-            # Following requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
+        pass

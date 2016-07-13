@@ -48,7 +48,7 @@ def hamiltonian(self, sd, orb_type, deriv=None):
     for i in occ_indices:
         for a in vir_indices:
             ion_sd = slater.annihilate(sd, i)
-            exc_sd = slater.create(sd, a)
+            exc_sd = slater.create(ion_sd, a)
             coeff = self.overlap(exc_sd, deriv=deriv)
             one_electron += coeff*get_H_value(H, i, a, orb_type=orb_type)
             for j in slater.occ_indices(ion_sd):
@@ -60,8 +60,8 @@ def hamiltonian(self, sd, orb_type, deriv=None):
         for a, b in combinations(vir_indices, 2):
             exc_sd = slater.excite(sd, i, j, a, b)
             coeff = self.overlap(exc_sd, deriv=deriv)
-            coulomb += coeff*get_G_value(G, i, j, k, l, orb_type=orb_type)
-            exchange -= coeff*get_G_value(G, i, j, l, k, orb_type=orb_type)
+            coulomb += coeff * get_G_value(G, i, j, a, b, orb_type=orb_type)
+            exchange -= coeff * get_G_value(G, i, j, b, a, orb_type=orb_type)
     return one_electron, coulomb, exchange
 
 def doci_hamiltonian(self, sd, orb_type, deriv=None):
