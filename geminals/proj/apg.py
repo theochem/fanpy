@@ -204,7 +204,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
 
     @property
     def template_coeffs(self):
-        gem_coeffs = np.zeros((self.npair, len(self.dict_gem_orbpair)), dtype=self.dtype)
+        gem_coeffs = np.zeros((self.npair, self.ngem), dtype=self.dtype)
         for i in range(self.npair):
             gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
             gem_coeffs[i, gem_ind] = 1
@@ -228,6 +228,18 @@ r       Solves the system of nonliear equations (and the wavefunction) using
 
         """
         return self.template_coeffs.flatten()
+
+    @property
+    def ngem(self):
+        """ Number of geminals
+
+        Returns
+        -------
+        int
+
+        """
+        return len(self.dict_gem_orbpair)
+
 
     def default_pmatch_generator(self, occ_indices):
         """ Generator for the perfect matchings needed to construct the Slater determinant
@@ -302,6 +314,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         # get the pairing schemes
         if pairing_schemes is None:
             pairing_schemes = self.default_pmatch_generator(occ_indices)
+        # FIXME: this part is not cheap
         else:
             pairing_schemes, temp = it.tee(pairing_schemes)
             for i in temp:
@@ -312,8 +325,9 @@ r       Solves the system of nonliear equations (and the wavefunction) using
                 assert set(occ_indices) == set(k for j in i for k in j), 'Pairing '
                 'scheme must use the same indices as the occupied orbitals of the '
                 'given Slater determinant'
+        # FIXME: pairing_schemes is assumed to be good (there are geminals such that all schemes present are possible)
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, len(self.dict_gem_orbpair))
+        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
 
         val = 0.0
         # if no derivatization
@@ -325,8 +339,8 @@ r       Solves the system of nonliear equations (and the wavefunction) using
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            row_to_remove = deriv // self.npair
-            col_to_remove = deriv % self.npair
+            row_to_remove = deriv // self.ngem
+            col_to_remove = deriv % self.ngem
             orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
             # both orbitals of the geminal must be present in the Slater determinant
             if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
@@ -374,7 +388,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, len(self.dict_gem_orbpair))
+        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
