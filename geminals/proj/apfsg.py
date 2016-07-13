@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from gmpy2 import mpz
+from gmpy2 import mpz, popcount
 
 from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
@@ -136,10 +136,10 @@ class APfsG(ProjectionWavefunction):
         -------
         template_params : np.ndarray(K, )
         """
-        init_pair = np.eye(self.npair, self.nspatial, dtype=self.type)
-        init_unpair = np.eye(self.npair, self.nspatial, dtype=self.type)
+        init_pair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        init_unpair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
         init_spin = np.eye(self.nspatial,
-                           self.nspatial, dtype=self.type).flatten()
+                           self.nspatial, dtype=self.dtype).flatten()
         init_spatial = np.hstack((init_pair, init_unpair)).flatten()
         return np.hstack((init_spatial, init_spin))
 
@@ -160,7 +160,7 @@ class APfsG(ProjectionWavefunction):
             as a bitstring
         """
         number_sd = 2 * self.npair * self.nspatial + self.nspatial ** 2
-        return ci_sd_list(number_sd)
+        return ci_sd_list(self, number_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
@@ -199,16 +199,16 @@ class APfsG(ProjectionWavefunction):
         sd = mpz(sd)
         if deriv is not None:
             raise NotImplementedError
-        # get occupied orbital indices
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
+        if popcount(alpha_sd) != popcount(beta_sd):
+            return 0.
         occ_alpha_indices = slater.occ_indices(alpha_sd)
         occ_beta_indices = slater.occ_indices(beta_sd)
         pair_sd = alpha_sd & beta_sd
         unpair_sd = alpha_sd ^ beta_sd
         pair_list = slater.occ_indices(pair_sd)
         unpair_list = slater.occ_indices(unpair_sd)
-        boson_list = pair_list.extend([i + len(pair_list) for i in unpair_list])
-
+        boson_list = list(pair_list) + [i + len(pair_list) for i in unpair_list]
         # build geminal and sd coefficient
         boson_part = self.params[
             :self.npair * self.nspatial * 2].reshape(self.npair, 2 * self.nspatial)
@@ -218,11 +218,14 @@ class APfsG(ProjectionWavefunction):
         # build the occupation of boson
         boson_part = boson_part[:, boson_list]
         # build the occupation of fermion
-        fermion_rows_index = np.array([occ_alpha_indices])[:, np.newaxis]
-        fermion_part = fermion_part[fermion_rows_index, occ_beta_indices]
+        fermion_rows_index = np.array(occ_alpha_indices)[:, np.newaxis]
+        if not fermion_rows_index:
+            fermion_part = fermion_part[fermion_rows_index, np.array(occ_beta_indices)]
 
         # calculate overlap
-        overlap = permanent_ryser(boson_part) * np.linalg.det(fermion_part)
+        overlap = permanent_ryser(boson_part)
+        if fermion_rows_index:
+            overlap = overlap * np.linalg.det(fermion_part)
         self.cache[sd] = overlap
         return overlap
 
