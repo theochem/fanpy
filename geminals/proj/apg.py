@@ -3,10 +3,9 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import itertools as it
 from gmpy2 import mpz
-from copy import deepcopy
 
 from .. import slater
-from ..sd_list import ci_sd_list, ci_sd_list
+from ..sd_list import ci_sd_list
 from ..math_tools import permanent_ryser
 from ..graphs import generate_complete_pmatch
 from .proj_wavefunction import ProjectionWavefunction
@@ -203,14 +202,6 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         self.dict_gem_orbpair = {i:orbpair for i, orbpair in enumerate(orbpairs)}
 
     @property
-    def template_coeffs(self):
-        gem_coeffs = np.zeros((self.npair, self.ngem), dtype=self.dtype)
-        for i in range(self.npair):
-            gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
-            gem_coeffs[i, gem_ind] = 1
-        return gem_coeffs
-
-    @property
     def template_params(self):
         """ Default numpy array of parameters.
 
@@ -227,7 +218,11 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         Assumes that C_{p;ij} = C_{p;ji}
 
         """
-        return self.template_coeffs.flatten()
+        gem_coeffs = np.zeros((self.npair, self.ngem), dtype=self.dtype)
+        for i in range(self.npair):
+            gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
+            gem_coeffs[i, gem_ind] = 1
+        return gem_coeffs.flatten()
 
     @property
     def ngem(self):
@@ -314,7 +309,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         # get the pairing schemes
         if pairing_schemes is None:
             pairing_schemes = self.default_pmatch_generator(occ_indices)
-        # FIXME: this part is not cheap
+        # FIXME: this part is not cheap. it should move somewhere else.
         else:
             pairing_schemes, temp = it.tee(pairing_schemes)
             for i in temp:

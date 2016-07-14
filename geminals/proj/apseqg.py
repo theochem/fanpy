@@ -3,14 +3,14 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
+from ., import slater
+from ..math_tools import permanent_ryser
+
 from .proj_wavefunction import ProjectionWavefunction
-from . import slater
-from .sd_list import doci_sd_list
-from .proj_hamiltonian import doci_hamiltonian
-from .math_tools import permanent_ryser
+from .apg import APG
 
 
-class APseqG(ProjectionWavefunction):
+class APseqG(APG):
     """ Antisymmetric Product of Sequantially Interacting Geminals
 
     Attributes
@@ -117,6 +117,88 @@ class APseqG(ProjectionWavefunction):
         Normalizes the wavefunction (different definitions available)
         By default, the norm should the projection against the ref_sd squared
     """
+
+    def __init__(self,
+                 # Mandatory arguments
+                 nelec=None,
+                 H=None,
+                 G=None,
+                 # Arguments handled by base Wavefunction class
+                 dtype=None,
+                 nuc_nuc=None,
+                 # Arguments handled by ProjWavefunction class
+                 params=None,
+                 pspace=None,
+                 energy_is_param=True,
+                 # sequence list
+                 seq_list=None
+                 ):
+        super(ProjectionWavefunction, self).__init__(nelec=nelec,
+                                                     H=H,
+                                                     G=G,
+                                                     dtype=dtype,
+                                                     nuc_nuc=nuc_nuc,
+                                                     )
+        self.energy_is_param = energy_is_param
+        self.assign_params(params=params)
+        self.assign_pspace(pspace=pspace)
+        self.assign_seq_list(seq_list=seq_list)
+        del self._energy
+        self.cache = {}
+        self.d_cache = {}
+        self.dict_orbpair_gem = {}
+        self.dict_gem_orbpair = {}
+
+    # Remove methods from parent
+    # FIXME: there probably is a better way to do this.
+    def assign_adjacency(self, adjacency=None):
+        """ Method from APG that will not be used in this class
+
+        Parameters
+        ----------
+        adjacency
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError
+
+    def default_pmatch_generator(self, occ_indices):
+        """ Method from APG that will not be used in this class
+
+        Parameters
+        ----------
+        occ_indices
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError
+
+    # New assignment method
+    def assign_seq_list(self, seq_list=None):
+        """ Assigns the list of sequence orders that will be included
+
+        Parameters
+        ----------
+        seq_list : None, list of ints
+            Order of sequence that will be included in the wavefunction
+            Default is 0
+
+        """
+        if seq_list is None:
+            seq_list = [0]
+        if hasattr(seq_list, '__iter__'):
+            raise TypeError('seq_list must be iterable')
+        if any(i<0 for i in seq_list):
+            raise ValueError('All of the sequence order must be positive')
+        self.seq_list = seq_list
+
+    #FIXME: this needs to be implemented
     @property
     def template_params(self):
         """ Default numpy array of parameters.
@@ -130,30 +212,9 @@ class APseqG(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        self.seqmax = self.npair - 1
-        gem_coeffs = np.eye(self.nspatial, self.nspatial, dtype=self.dtype)
-        params = gem_coeffs.flatten()
-        return params
+        raise NotImplementedError
 
-    def compute_pspace(self, num_sd):
-        """ Generates Slater determinants to project onto
-
-        The Slater determinants used correspond to those in FCI wavefunction
-
-        Parameters
-        ----------
-        num_sd : int
-            Number of Slater determinants to generate
-
-        Returns
-        -------
-        pspace : list of gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        """
-        return ci_sd_list(self, num_sd)
-
-    def compute_overlap(self, sd, deriv=None):
+    def compute_overlap(self, sd, deriv=None, seq_list=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
@@ -166,6 +227,9 @@ class APseqG(ProjectionWavefunction):
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
+        seq_list : None, list
+            Order of the sequences to include
+            Default is 0
 
         Returns
         -------
@@ -173,88 +237,59 @@ class APseqG(ProjectionWavefunction):
         """
         # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = mpz(sd)
+
         # get indices of the occupied orbitals
-        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        occ_alpha_indices = slater.occ_indices(alpha_sd)
-        occ_beta_indices = slater.occ_indices(beta_sd)
-        if len(occ_alpha_indices) != len(occ_beta_indices):
-            raise ValueError('Given Slater determinant, {0}, should have same 
-                                number of alpha and beta electrons'.format(bin(sd)))
+        occ_indices = slater.occ_indices(sd)
+        # because orbitals are ordered by alpha orbs then beta orbs,
+        # we need to interleave/shuffle them to pair the alpha and the beta orbitals together
+        occ_interleave_indices = np.array([2*i if i<self.nspatial
+                                           else 2*(i-self.nspatial)+1
+                                           for i in occ_indices])
+        # find differences between any two indices
+        indices_diff = np.abs(occ_interleave_indices - occ_interleave_indices[:, np.newaxis])
+
+        # find orbital indices that correspond to each sequence
+        orb_indices_pairs = []
+        for seq in seq_list:
+            # find orbital that correspond to sequence order
+            seq_orbs = np.where(np.triu(indices_diff)==seq)
+            # append to list after pairing up the orbitals into pairs
+            orb_indices_pairs.append(zip(*seq_orbs))
+        # remove repeated indices
+        orb_indices_pairs = list(set(orb_indices_pairs))
+
+        # convert orbital indices to geminal indices
+        gem_indices = []
+        for index in orb_indices_pairs:
+            try:
+                gem_indices.append(self.dict_orbpair_gem[index])
+            except KeyError:
+                self.dict_orbpair_gem[index] = self.ngem
+                self.dict_gem_orbpair[self.ngem] = index
+                gem_indices.append(self.ngem)
 
         # build geminal coefficient
-        if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
-        else:
-            gem_coeffs = self.params.reshape(self.npair, self.nspatial)
+        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
 
         val = 0.0
-
-
-        # order indices of sequentially occupied orbitals
-        # put all the pairs that are going to be used in the first npair rows 
-        fainds = []
-        fbinds = []
-        for j,a in enumerate(range(self.npair)):
-            seqlsta = [[]]*self.npair
-            seqlstb = [[]]*self.npair
-            if occ_beta_indices[j] == occ_alpha_indices[j]:
-                b = occ_beta_indices[j]
-                seqlsta[0].extend([a])
-                seqlstb[0].extend([b])
-            else:
-                for seq in range(1, self.seqmax):
-                    if occ_beta_indices[j] == occ_alpha_indices[j]+seq:
-                        b = occ_beta_indices[j]
-                        seqlsta[seq].extend([a])
-                        seqlstb[seq].extend([b])
-                    elif occ_beta_indices[j] == occ_alpha_indices[j]-seq:
-                        b = occ_beta_indices[j]
-                        seqlsta[seq].extend([a])
-                        seqlstb[seq].extend([b])
-            ainds = [i for k in seqlsta for i in k]
-            binds = [i for l in seqlstb for i in l] 
-            assert len(ainds) == self.npair and len(binds) == len(ainds)
-            fainds.append(ainds) ; fbinds.append(binds)
-
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[fainds, fbinds])
+            val = permanent_ryser(gem_coeffs[:, gem_indices])
             self.cache[sd] = val
         # if derivatization
-        # TODO:Modify the derivatives 
         elif isinstance(deriv, int) and deriv < self.energy_index:
-            return NotImplementedError
+            row_to_remove = deriv // self.ngem
+            col_to_remove = deriv % self.ngem
+            orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
+            # both orbitals of the geminal must be present in the Slater determinant
+            if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
+                row_inds = [i for i in range(self.npair) if i != row_to_remove]
+                col_inds = [self.dict_orbpair_gem[i] for i in gem_indices if
+                            self.dict_orbpair_gem[i] != col_to_remove]
+                # NOTE: length of row_inds and col_inds must be the same
+                if len(row_inds) == 0 and len(col_inds) == 0:
+                    val += 1
+                else:
+                    val += permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+                self.d_cache[(sd, deriv)] = val
         return val
-
-    def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
-        determinant
-
-        ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{APseqG}} \big>
-
-        Since only Slater determinants from FCI will be used
-        Hamiltonian
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        deriv : None, int
-            Index of the paramater to derivatize the overlap with respect to
-            Default is no derivatization
-
-        Returns
-        -------
-        float
-        """
-        return sum(hamiltonian(self, sd, self.orb_type, deriv=deriv))
-
-    def normalize(self):
-        """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
-
-        Some of the cache are emptied because the parameters are rewritten
-        """
-        pass
