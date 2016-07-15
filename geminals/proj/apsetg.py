@@ -1,11 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import itertools as it
-from gmpy2 import mpz
 
-from .. import slater
-from ..math_tools import permanent_ryser
 from ..graphs import generate_biclique_pmatch
 from .proj_wavefunction import ProjectionWavefunction
 from .apg import APG

@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from ., import slater
+from .. import slater
 from ..math_tools import permanent_ryser
 
 from .proj_wavefunction import ProjectionWavefunction
