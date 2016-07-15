@@ -208,26 +208,46 @@ class APfsG(ProjectionWavefunction):
         unpair_sd = alpha_sd ^ beta_sd
         pair_list = slater.occ_indices(pair_sd)
         unpair_list = slater.occ_indices(unpair_sd)
+        # build the occupations of bosons and fermions
         boson_list = list(pair_list) + [i + len(pair_list) for i in unpair_list]
         # build geminal and sd coefficient
-        boson_part = self.params[
-            :self.npair * self.nspatial * 2].reshape(self.npair, 2 * self.nspatial)
+        num_boson_part = self.npair*self.nspatial*2
+        boson_part = self.params[:num_boson_part].reshape(self.npair, 2*self.nspatial)
+        fermion_part = self.params[num_boson_part: ].reshape(self.nspatial, self.nspatial)
 
-        fermion_part = self.params[self.npair * 2 * self.nspatial : ].reshape(self.nspatial, self.nspatial)
-
-        # build the occupation of boson
-        boson_part = boson_part[:, boson_list]
-        # build the occupation of fermion
-        fermion_rows_index = np.array(occ_alpha_indices)[:, np.newaxis]
-        if not fermion_rows_index:
-            fermion_part = fermion_part[fermion_rows_index, np.array(occ_beta_indices)]
-
-        # calculate overlap
-        overlap = permanent_ryser(boson_part)
-        if fermion_rows_index:
-            overlap = overlap * np.linalg.det(fermion_part)
-        self.cache[sd] = overlap
-        return overlap
+        val = 0
+        if deriv is None:
+            val = permanent_ryser(boson_part[:, boson_list])
+            val *= np.linalg.det(fermion_part[occ_alpha_indices, :][:, occ_beta_indices])
+            self.cache[sd] = val
+        else:
+            # if the parameter to derivatize is in the permanent
+            if deriv < num_boson_part:
+                row_to_remove = deriv // boson_part.shape[1]
+                col_to_remove = deriv % boson_part.shape[1]
+                if col_to_remove in boson_list:
+                    row_inds = [i for i in range(boson_part.shape[0]) if i != row_to_remove]
+                    col_inds = [i for i in boson_list if i != col_to_remove]
+                    if len(row_inds) == len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = permanent_ryser(boson_part[row_inds, :][:, col_inds])
+                    val *= np.linalg.det(fermion_part)
+                    self.d_cache[(sd, deriv)] = val
+            # if the parameter to derivatize is in the determinant
+            elif deriv < self.energy_index:
+                row_to_remove = deriv - boson_part.size // fermion_part.shape[1]
+                col_to_remove = deriv - boson_part.size % fermion_part.shape[1]
+                if row_to_remove in occ_alpha_indices and col_to_remove in occ_beta_indices:
+                    row_inds = [i for i in occ_alpha_indices if i != row_to_remove]
+                    col_inds = [i for i in occ_beta_indices if i != col_to_remove]
+                    if len(row_inds) == len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = np.linalg.det(fermion_part[row_inds, :][:, col_inds])
+                    val *= permanent_ryser(boson_part)
+                    self.d_cache[(sd, deriv)] = val
+        return val
 
     def compute_hamiltonian(self, sd, deriv=None):
         """ Computes the hamiltonian of the wavefunction with respect to a Slater
