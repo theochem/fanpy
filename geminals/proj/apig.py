@@ -141,7 +141,7 @@ class APIG(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        return self.temp_coeffs.flatten()
+        return self.template_coeffs.flatten()
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -200,7 +200,7 @@ class APIG(ProjectionWavefunction):
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
+        gem_coeffs = self.params[:self.energy_index].reshape(self.template_coeffs.shape)
 
         val = 0.0
         # if no derivatization
