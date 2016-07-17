@@ -197,8 +197,6 @@ class APfsG(ProjectionWavefunction):
         overlap : float
         """
         sd = mpz(sd)
-        if deriv is not None:
-            raise NotImplementedError
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
         if popcount(alpha_sd) != popcount(beta_sd):
             return 0.
@@ -213,7 +211,7 @@ class APfsG(ProjectionWavefunction):
         # build geminal and sd coefficient
         num_boson_part = self.npair*self.nspatial*2
         boson_part = self.params[:num_boson_part].reshape(self.npair, 2*self.nspatial)
-        fermion_part = self.params[num_boson_part: ].reshape(self.nspatial, self.nspatial)
+        fermion_part = self.params[num_boson_part: self.energy_index].reshape(self.nspatial, self.nspatial)
 
         val = 0
         if deriv is None:
