@@ -159,7 +159,7 @@ class APsetG(APG):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
-        self.assign_dict_setind_orbs(dict_setind_orbs=dict_setind_orbs)
+        self.assign_orbsets(dict_setind_orbs=dict_setind_orbs)
         self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
@@ -176,16 +176,15 @@ class APsetG(APG):
             raise TypeError('dict_setind_orbs should be a dictionary')
         if not all([isinstance(value, tuple) for value in dict_setind_orbs.values()]):
             raise ValueError('dict_setind_orbs should only have values that are tuples')
-        if [j for i in dict_setind_orbs.values() for j in i] == list(range(self.nspin)):
+        if sorted([j for i in dict_setind_orbs.values() for j in i]) != list(range(self.nspin)):
             raise ValueError('dict_setind_orbs is missing some orbitals or contains too many orbitals')
         self.dict_setind_orbs = dict_setind_orbs
         self.dict_orb_setind = {k:i for i,j in dict_setind_orbs.items() for k in j}
         # make adjacency matrix
-        adjacency = np.zeros((self.nspin, self.nspin), dtype=bool)
+        adjacency = np.ones((self.nspin, self.nspin), dtype=bool)
         for orbset in dict_setind_orbs.values():
             orbset = np.array(orbset)
-            adjacency[orbset[:, np.newaxis], orbset] = True
-        adjacency -= np.diag(np.diag(adjacency))
+            adjacency[orbset[:, np.newaxis], orbset] = False
         self.assign_adjacency(adjacency=adjacency)
 
     def default_pmatch_generator(self, *occ_orbsets):
@@ -205,6 +204,8 @@ class APsetG(APG):
         Assumes that the graph (of correlaton) is complete bipartite
         """
         # assumes complete bipartite graph
-        if len(occ_orbsets) != 2:
+        if len(self.dict_setind_orbs) != 2:
             raise AssertionError('Automatic perfect match not supported for partite graphs with more than two sets')
-        return generate_biclique_pmatch(*occ_orbsets)
+        set_one = [i for i in occ_orbsets if i in self.dict_setind_orbs[0]]
+        set_two = [i for i in occ_orbsets if i in self.dict_setind_orbs[1]]
+        return generate_biclique_pmatch(set_one, set_two)
