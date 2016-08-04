@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import numpy as np
 from gmpy2 import mpz
-from scipy.optimize import least_squares
+from scipy.optimize import root, least_squares
 
 from ..wavefunction import Wavefunction
 
@@ -78,7 +78,7 @@ class ProjectionWavefunction(Wavefunction):
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
+        _Assigns the nuclear nuclear repulsion
     assign_nelec(nelec)
         Assigns the number of electrons
     _solve_least_squares(**kwargs)
@@ -156,7 +156,10 @@ class ProjectionWavefunction(Wavefunction):
         methods : dict
             "default" -> least squares nonlinear solver
         """
-        return {"default": self._solve_least_squares}
+        return {
+                "default": self._solve_root, 
+                "leastsq": self._solve_least_squares,
+                }
 
     @property
     def nparam(self):
@@ -240,6 +243,53 @@ class ProjectionWavefunction(Wavefunction):
     #
     # Solver methods
     #
+    def _solve_root(self, **kwargs):
+        """
+        Optimize `self.objective(params)` to solve the coefficient vector.
+
+        Parameters
+        ----------
+        jacobian : bool, optional
+        If False, the Jacobian is not used in the optimization.
+        kwargs : dict, optional
+        Keywords to pass to the internal solver, `scipy.optimize.root`.
+
+        Returns
+        -------
+        result : tuple
+        See `scipy.optimize.root` documentation.
+        """
+
+        if 'jacobian' not in kwargs or kwargs['jacobian']:  
+            # Update solver options
+            options = {
+                    # Powell's hybrid method (MINPACK)
+                    "method": 'hybr',
+                    # "bounds": self.bounds,
+                    "jac": self.jacobian,
+                    "options": {
+                        "xtol":1.0e-9,
+                        },
+                    }
+        else:
+            # Update solver options
+            options = {
+                # Newton-Krylov Quasinewton method
+                "method": 'krylov',
+                # "bounds": self.bounds,
+                # "jac": None,
+                "options": {
+                    "fatol":1.0e-9,
+                    "xatol":1.0e-7,
+                    },
+                }
+
+        options.update(kwargs)
+
+        # Solve
+        result = root(self.objective, self.params, **options)
+        return result
+
     def _solve_least_squares(self, **kwargs):
         """
         Optimize `self.objective(params)` to solve the coefficient vector.
@@ -248,7 +298,6 @@ class ProjectionWavefunction(Wavefunction):
         ----------
         jacobian : bool, optional
         If False, the Jacobian is not used in the optimization.
-        If False, it is not used.
         kwargs : dict, optional
         Keywords to pass to the internal solver, `scipy.optimize.leastsq`.
 
