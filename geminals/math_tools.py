@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from scipy.misc import comb
-from itertools import permutations
+from itertools import permutations, combinations
 
 
 def binomial(n, k):
@@ -26,6 +26,46 @@ def binomial(n, k):
 
     return comb(n, k, exact=True)
 
+def hafnian_combinatoric(matrix):
+
+    hafnian = 0.0
+    n, _ = matrix.shape
+#   rows = np.arange(2*m)
+    cols = range(n)
+#   for perm in combinations(cols,n//2):
+
+    for perm in permutations(cols):
+        haf_prod = 1.
+        for i in range(n//2):
+            haf_prod *= matrix[perm[2*i],perm[2*i+1]]
+        print(perm)
+        hafnian += haf_prod
+    
+    hafnian /= np.math.factorial(n//2) * 2**(n//2)
+    return hafnian
+
+
+def quartet_3D_matrix_function(matrix):
+
+    hafnian = 0.0
+    q, n, _ = matrix.shape
+#   rows = np.arange(2*m)
+    cols = range(n)
+    pages = range(q)
+#   for perm in combinations(cols,n//2):
+
+    for quartperms in permutations(pages):
+    
+        for perm in permutations(cols):
+            haf_prod = 1.
+            for i in range(n//2):
+                haf_prod *= matrix[quartperms[i],perm[2*i],perm[2*i+1]]
+            print(perm)
+            hafnian += haf_prod
+    
+
+    hafnian /= np.math.factorial(n//2) * 2**(n//2)
+    return hafnian
 
 def permanent_combinatoric(matrix):
 
