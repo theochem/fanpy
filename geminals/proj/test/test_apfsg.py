@@ -39,3 +39,4 @@ def test_apfsg_wavefunction_lih():
     apfsg()
     print(apfsg.compute_energy(include_nuc=False), 'new code')
     print(-8.96353105152, 'old code')
+    assert False

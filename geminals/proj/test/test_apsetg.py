@@ -39,3 +39,4 @@ def test_apsetg_wavefunction_lih():
     apsetg()
     print(apsetg.compute_energy(include_nuc=False), 'new code')
     print(-8.96353105152, 'old code')
+    assert False
