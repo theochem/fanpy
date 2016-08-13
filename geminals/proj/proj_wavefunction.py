@@ -155,9 +155,13 @@ class ProjectionWavefunction(Wavefunction):
         methods : dict
             "default" -> least squares nonlinear solver
         """
+        # return {
+        #         "default": self._solve_root,
+        #         "leastsq": self._solve_least_squares,
+        #         }
         return {
-                "default": self._solve_root, 
-                "leastsq": self._solve_least_squares,
+                "root": self._solve_root,
+                "default": self._solve_least_squares,
                 }
 
     @property
@@ -245,7 +249,7 @@ class ProjectionWavefunction(Wavefunction):
         See `scipy.optimize.root` documentation.
         """
 
-        if 'jacobian' not in kwargs or kwargs['jacobian']:  
+        if 'jac' not in kwargs or kwargs['jac']:
             # Update solver options
             options = {
                     # Powell's hybrid method (MINPACK)
