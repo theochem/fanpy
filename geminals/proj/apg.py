@@ -194,6 +194,8 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         if not np.all(np.diag(adjacency) == False):
             raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
         self.adjacency = adjacency
+        # remove the lower triangular matrix (removes repetition )
+        adjacency[np.tril_indices(adjacency.shape[0])] = False
         # find all the edges/orbital pairs that are correlated
         orbpairs = zip(*np.where(adjacency != False))
         # if C_{p;ij} = C_{p;ji}

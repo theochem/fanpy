@@ -23,7 +23,8 @@ def test_apig_wavefunction_h2():
     assert abs(apig.compute_energy(include_nuc=False) - (-1.84444667247)) < 1e-7
     # Compare APIG energy with old code
     # Solve with Jacobian using energy as a parameter
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True, dtype=np.float64)
+    init_guess = apig.params[:]
     apig()
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # convert energy back into projection dependent (energy is not a parameter)
@@ -32,13 +33,12 @@ def test_apig_wavefunction_h2():
     assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
     assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve with Jacobian not using energy as a parameter
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
-    apig()
     # FIXME: THESE TESTS FAIL!
-    print('overlaps', apig.overlap(apig.pspace[0]), apig.compute_overlap(apig.pspace[0]))
+    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
+    apig.params = init_guess[:-1]
+    apig()
     print(apig.compute_energy(sd=apig.pspace[0], include_nuc=False), 'new code')
     print(-1.86968284431, 'old code')
-    assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
     assert abs(apig.compute_energy(sd=apig.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
     # assert abs(apig.compute_energy(sd=apig.pspace, include_nuc=False)-(-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter

@@ -338,28 +338,25 @@ class ProjectionWavefunction(Wavefunction):
         params : np.ndarray(K,)
             Parameters of the wavefunction
         """
-        if self.energy_is_param:
-            nparam = self.template_params.size + 1
-        else:
-            nparam = self.template_params.size
+        # parameter shape
+        params_shape = (self.template_params.size + self.energy_is_param,)
+        # number of coefficients (non energy parameters)
+        ncoeffs = self.template_params.size
         if params is None:
             params = self.template_params
             # set scale
-            scale = 1.0 / self.template_params.size
+            scale = 1.0 / ncoeffs
             # set energy
             if self.energy_is_param:
-                energy_index = nparam - 1
                 params = np.hstack((params, 0.0))
-            else:
-                energy_index = nparam
             # add random noise to template
-            params[:energy_index] += scale * (np.random.random(self.template_params.size) - 1)
+            params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
             if params.dtype == np.complex128:
-                params[:energy_index] += 1j * scale * (np.random.random(self.template_params.size) - 1)
+                params[:ncoeffs] += 1j * scale * (np.random.random(ncoeffs) - 0.5)
         if not isinstance(params, np.ndarray):
             raise TypeError("params must be of type {0}".format(np.ndarray))
-        elif params.shape != (nparam,):
-            raise ValueError("params must be of length nparam ({0})".format(nparam))
+        elif params.shape != params_shape:
+            raise ValueError("params must be of right shape({0})".format(params_shape))
         elif params.dtype not in (float, complex, np.float64, np.complex128):
             raise TypeError("params's dtype must be one of {0}".format((float, complex, np.float64, np.complex128)))
 

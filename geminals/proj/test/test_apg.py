@@ -51,7 +51,6 @@ def test_assign_adjacency():
 def test_apg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
-    # Old Code Value : -1.86968284431
     # FCI Value :      -1.87832550029
     nelec = 2
     hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
@@ -67,21 +66,21 @@ def test_apg_wavefunction_h2():
     # Compare APG energy with old code
     # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apg.params[-1] = -1.87832550029
     apg()
-    print(apg.compute_energy())
-    assert abs(apg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
+    assert abs(apg.compute_energy(include_nuc=False) - (-1.87832550029)) < 1e-7
     # convert energy back into projection dependent (energy is not a parameter)
     apg.energy_is_param = False
     apg.params = apg.params[:-1]
-    assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
-    assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False) - (-1.86968284431)) < 1e-7
+    assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False) - (-1.87832550029)) < 1e-7
+    assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False) - (-1.87832550029)) < 1e-7
     # Solve with Jacobian not using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
     apg()
     # FIXME: THESE TESTS FAIL!
     print('overlaps', apg.overlap(apg.pspace[0]), apg.compute_overlap(apg.pspace[0]))
     print(apg.compute_energy(sd=apg.pspace[0], include_nuc=False), 'new code')
-    print(-1.86968284431, 'old code')
+    print(-1.87832550029, 'old code')
     # assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
     # assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False)-(-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
