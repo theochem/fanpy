@@ -63,7 +63,7 @@ class APseqG(APG):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -139,6 +139,7 @@ class APseqG(APG):
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         self.assign_seq_list(seq_list=seq_list)
+        self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}
@@ -196,7 +197,7 @@ class APseqG(APG):
 
     #FIXME: this needs to be implemented
     @property
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -205,7 +206,7 @@ class APseqG(APG):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         """
         raise NotImplementedError

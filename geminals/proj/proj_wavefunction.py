@@ -101,7 +101,7 @@ class ProjectionWavefunction(Wavefunction):
 
     Abstract Property
     -----------------
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -127,8 +127,9 @@ class ProjectionWavefunction(Wavefunction):
     #
     # Abstract Property
     #
+    # FIXME: does this need to be changed into an abstract property
     @abstractproperty
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -137,7 +138,7 @@ class ProjectionWavefunction(Wavefunction):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         """
         pass
@@ -219,6 +220,7 @@ class ProjectionWavefunction(Wavefunction):
         )
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
+        self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}
@@ -321,24 +323,25 @@ class ProjectionWavefunction(Wavefunction):
         params : np.ndarray(K,)
             Parameters of the wavefunction
         """
-        # parameter shape
-        params_shape = (self.template_params.size + 1,)
         # number of coefficients (non energy parameters)
-        ncoeffs = self.template_params.size
+        ncoeffs = self.template_coeffs.size
         if params is None:
-            params = self.template_params
+            params = self.template_coeffs.flatten()
             # set scale
             scale = 1.0 / ncoeffs
-            # set energy
-            params = np.hstack((params, 0.0))
             # add random noise to template
             params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
             if params.dtype == np.complex128:
                 params[:ncoeffs] += 1j * scale * (np.random.random(ncoeffs) - 0.5)
+            # set energy
+            # NOTE: the energy cannot be set with compute_energy right now because
+            # certain terms must be defined for compute_hamiltonian to work
+            energy = 0.0
+            params = np.hstack((params, energy))
         if not isinstance(params, np.ndarray):
             raise TypeError("params must be of type {0}".format(np.ndarray))
-        elif params.shape != params_shape:
-            raise ValueError("params must be of right shape({0})".format(params_shape))
+        elif params.shape != (ncoeffs+1, ):
+            raise ValueError("params must be of right shape({0})".format(ncoeffs + 1))
         elif params.dtype not in (float, complex, np.float64, np.complex128):
             raise TypeError("params's dtype must be one of {0}".format((float, complex, np.float64, np.complex128)))
 

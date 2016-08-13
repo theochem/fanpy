@@ -70,7 +70,7 @@ class APIG(ProjectionWavefunction):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -124,10 +124,6 @@ class APIG(ProjectionWavefunction):
     """
     @property
     def template_coeffs(self):
-        return np.eye(self.npair, self.nspatial, dtype=self.dtype)
-
-    @property
-    def template_params(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -136,10 +132,10 @@ class APIG(ProjectionWavefunction):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         """
-        return self.template_coeffs.flatten()
+        return np.eye(self.npair, self.nspatial, dtype=self.dtype)
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -253,7 +249,7 @@ class APIG(ProjectionWavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.template_params.shape)
+        gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)

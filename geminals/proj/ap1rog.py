@@ -73,7 +73,7 @@ class AP1roG(ProjectionWavefunction):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -126,7 +126,7 @@ class AP1roG(ProjectionWavefunction):
         By default, the norm should the projection against the ref_sd squared
     """
     @property
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -135,13 +135,11 @@ class AP1roG(ProjectionWavefunction):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         """
         self.nvirtual = self.nspatial - self.npair
-        gem_coeffs = np.eye(self.npair, self.nvirtual, dtype=self.dtype)
-        params = gem_coeffs.flatten()
-        return params
+        return np.eye(self.npair, self.nvirtual, dtype=self.dtype)
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -279,7 +277,7 @@ class AP1roG(ProjectionWavefunction):
         ProjectionWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
-        
+
         AP1roG is normalized by contruction.
         """
         pass

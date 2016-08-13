@@ -70,7 +70,7 @@ class APfsG(ProjectionWavefunction):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -124,7 +124,7 @@ class APfsG(ProjectionWavefunction):
     """
 
     @property
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -132,7 +132,7 @@ class APfsG(ProjectionWavefunction):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
         """
         init_pair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
         init_unpair = np.eye(self.npair, self.nspatial, dtype=self.dtype)

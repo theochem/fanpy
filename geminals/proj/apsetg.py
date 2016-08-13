@@ -81,7 +81,7 @@ class APsetG(APG):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -159,6 +159,7 @@ class APsetG(APG):
         self.assign_orbsets(dict_setind_orbs=dict_setind_orbs)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
+        self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}

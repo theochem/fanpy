@@ -53,7 +53,7 @@ class APr2G(ProjectionWavefunction):
 
 
     @property
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -62,7 +62,7 @@ class APr2G(ProjectionWavefunction):
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         """
         ap1rog = AP1roG(nelec=self.nelec, H=self.H, G=self.G, nuc_nuc=self.nuc_nuc)

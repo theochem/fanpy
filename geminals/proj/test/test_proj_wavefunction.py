@@ -11,7 +11,7 @@ class TestProjectionWavefunction(ProjectionWavefunction):
         pass
 
     @property
-    def template_params(self):
+    def template_coeffs(self):
         return np.empty(4)
 
     def compute_pspace(self, num_sd):

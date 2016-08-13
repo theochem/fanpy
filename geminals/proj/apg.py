@@ -85,7 +85,7 @@ class APG(ProjectionWavefunction):
         are calculated
         Integer that describes the occupation of a Slater determinant as a bitstring
         Or list of integers
-    template_params : np.ndarray(K)
+    template_coeffs : np.ndarray(K)
         Default numpy array of parameters.
         This will be used to determine the number of parameters
         Initial guess, if not provided, will be obtained by adding random noise to
@@ -163,6 +163,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         self.assign_adjacency(adjacency=adjacency)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
+        self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}
@@ -203,7 +204,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         self.dict_gem_orbpair = {i:orbpair for i, orbpair in enumerate(orbpairs)}
 
     @property
-    def template_params(self):
+    def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
@@ -212,7 +213,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
 
         Returns
         -------
-        template_params : np.ndarray(K, )
+        template_coeffs : np.ndarray(K, )
 
         Note
         ----
@@ -223,7 +224,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         for i in range(self.npair):
             gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
             gem_coeffs[i, gem_ind] = 1
-        return gem_coeffs.flatten()
+        return gem_coeffs
 
     @property
     def ngem(self):
