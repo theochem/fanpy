@@ -191,7 +191,7 @@ def ap1rog(fn=None,
         ap1rog_kwargs["one"],
         ap1rog_kwargs["two"],
         ap1rog_kwargs["nuc_nuc"],
-        ap1rog_kwargs["orb"],
+        ap1rog_kwargs["orb"][0],
         ap1rog_kwargs["olp"],
         scf=ap1rog_kwargs["opt"],
         **ap1rog_kwargs["ap1rog_kwargs"])

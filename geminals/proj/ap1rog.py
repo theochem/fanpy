@@ -138,8 +138,7 @@ class AP1roG(ProjectionWavefunction):
         template_coeffs : np.ndarray(K, )
 
         """
-        self.nvirtual = self.nspatial - self.npair
-        return np.eye(self.npair, self.nvirtual, dtype=self.dtype)
+        return np.eye(self.npair, self.nspatial-self.npair, dtype=self.dtype)
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -209,18 +208,21 @@ class AP1roG(ProjectionWavefunction):
         if occ_alpha_indices != occ_beta_indices:
             raise ValueError('Given Slater determinant, {0}, does not belong'
                              ' to the DOCI Slater determinants'.format(bin(sd)))
+        # if the alpha and the beta parts are the same, then the orbitals
+        # correspond to the spatial orbitals
+        occ_indices = occ_alpha_indices
         # get indices of the virtual orbitals
-        vir_alpha_indices = slater.vir_indices(alpha_sd, self.nspatial)
+        vir_indices = slater.vir_indices(alpha_sd, self.nspatial)
 
         # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.npair, self.nvirtual)
+        gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
 
-        val = 0.0
-        # get the indices that need to be swapped from virtual to occupied 
-        vo_col = [i - self.npair for i in range(self.npair,self.nspatial) if i in occ_alpha_indices]
-        vo_row = [j for j in range(self.npair) if j in vir_alpha_indices]
+        # get the indices that need to be swapped from virtual to occupied
+        vo_col = [i - self.npair for i in range(self.npair, self.nspatial) if i in occ_indices]
+        vo_row = [j for j in range(self.npair) if j not in occ_indices]
         assert len(vo_row) == len(vo_col)
 
+        val = 0.0
         # if no derivatization
         if deriv is None:
             if len(vo_row) == 0:
@@ -230,21 +232,18 @@ class AP1roG(ProjectionWavefunction):
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
-            if len(vo_row) == 0:
-                val = 1
-            else:
-                row_to_remove = deriv // self.nspatial
-                col_to_remove = deriv %  self.nspatial
-                if col_to_remove in vir_alpha_indices:
-                    row_inds = [i for i in vo_row if i != row_to_remove]
-                    col_inds = [i for i in vo_col if i != col_to_remove]
-                    if len(row_inds) == 0 and len(col_inds) == 0:
-                        val = 1
-                    else:
-                        val = permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
-            # construct new gmpy2.mpz to describe the slater determinant and
-            # derivation index
-            self.d_cache[(sd, deriv)] = val
+            if len(vo_row) > 0:
+                row_to_remove = deriv // self.template_coeffs.shape[1]
+                col_to_remove = deriv %  self.template_coeffs.shape[1]
+                # find indices that excludes the specified row and column
+                row_inds = [i for i in vo_row if i != row_to_remove]
+                col_inds = [i for i in vo_col if i != col_to_remove]
+                # compute
+                if len(row_inds) == 0 and len(col_inds) == 0:
+                    val = 1
+                elif len(row_inds) < len(vo_row) and len(col_inds) < len(vo_col):
+                    val = permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
+                self.d_cache[(sd, deriv)] = val
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
