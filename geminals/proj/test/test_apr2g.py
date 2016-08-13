@@ -13,7 +13,7 @@ def test_apr2g_wavefunction_li2():
 	H = hf_dict["H"]
 	G = hf_dict["G"]
 	nuc_nuc = hf_dict["nuc_nuc"]
-	apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
+	apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
 	apr2g()
 	energy = apr2g.compute_energy(include_nuc=False)
 	print("apr2g energy", energy)

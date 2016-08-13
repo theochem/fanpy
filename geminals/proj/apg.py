@@ -80,8 +80,6 @@ class APG(ProjectionWavefunction):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -152,7 +150,6 @@ r       Solves the system of nonliear equations (and the wavefunction) using
                  # Arguments handled by ProjWavefunction class
                  params=None,
                  pspace=None,
-                 energy_is_param=True,
                  # Adjacnecy
                  adjacency=None
     ):
@@ -164,7 +161,6 @@ r       Solves the system of nonliear equations (and the wavefunction) using
             nuc_nuc=nuc_nuc,
         )
         self.assign_adjacency(adjacency=adjacency)
-        self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         del self._energy
@@ -193,7 +189,10 @@ r       Solves the system of nonliear equations (and the wavefunction) using
             raise ValueError, 'Adjacency matrix is not symmetric'
         if not np.all(np.diag(adjacency) == False):
             raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
-        self.adjacency = adjacency
+        # here, we encountered problems when due to numpy passing arrays as references
+        # ()modifying one affected the other). SO we make a copy of it
+        adjacency = np.copy(adjacency)
+        self.adjacency = np.copy(adjacency)
         # remove the lower triangular matrix (removes repetition )
         adjacency[np.tril_indices(adjacency.shape[0])] = False
         # find all the edges/orbital pairs that are correlated
@@ -324,7 +323,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
                 'given Slater determinant'
         # FIXME: pairing_schemes is assumed to be good (there are geminals such that all schemes present are possible)
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
 
         val = 0.0
         # if no derivatization
@@ -335,7 +334,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
                 val += permanent_ryser(matrix)
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size - 1:
             row_to_remove = deriv // self.ngem
             col_to_remove = deriv % self.ngem
             orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
@@ -385,7 +384,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -395,7 +394,7 @@ r       Solves the system of nonliear equations (and the wavefunction) using
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
-        self.params[:self.energy_index] = gem_coeffs.flatten()
+        self.params[:-1] = gem_coeffs.flatten()
         # empty cache
         for sd in self.ref_sd:
             del self.cache[sd]

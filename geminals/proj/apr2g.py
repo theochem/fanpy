@@ -65,7 +65,7 @@ class APr2G(ProjectionWavefunction):
         template_params : np.ndarray(K, )
 
         """
-        ap1rog = AP1roG(nelec=self.nelec, H=self.H, G=self.G, nuc_nuc=self.nuc_nuc, energy_is_param=False)
+        ap1rog = AP1roG(nelec=self.nelec, H=self.H, G=self.G, nuc_nuc=self.nuc_nuc)
         ap1rog()
         gem_coeffs = np.hstack((np.eye(self.npair), np.reshape(ap1rog.params, (self.npair, self.nspatial - self.npair))))
         params = self._convert_from_ap1rog(self.npair, self.nspatial, gem_coeffs)
@@ -148,10 +148,7 @@ class APr2G(ProjectionWavefunction):
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
         # build geminal coefficient matrix: parameters are assumed to be ordered as [lambda, epsilon, xi]
-        if self.energy_is_param:
-            params = self.params[:-1]
-        else:
-            params = self.params[:]
+        params = self.params[:-1]
 
         val = 0.0
         # if no derivatization
@@ -159,7 +156,7 @@ class APr2G(ProjectionWavefunction):
             val = permanent_borchardt(params, self.npair, self.npair)
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size - 1:
             # Determine the indices of the parameters which will correspond to occupied columns
             # Check that parameter to derivatize is present in the matrix
             indices = list(range(self.npair))
@@ -249,7 +246,7 @@ class APr2G(ProjectionWavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.nspatial)
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -259,10 +256,7 @@ class APr2G(ProjectionWavefunction):
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5/self.npair)
         # set attributes
-        if self.energy_is_param:
-            self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
-        else:
-            self.params = gem_coeffs.flatten()
+        self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
         # FIXME: need smarter caching (just delete the ones affected)
         for sd in self.ref_sd:
             del self.cache[sd]

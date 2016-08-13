@@ -76,8 +76,6 @@ class APsetG(APG):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -148,7 +146,6 @@ class APsetG(APG):
                  # Arguments handled by ProjWavefunction class
                  params=None,
                  pspace=None,
-                 energy_is_param=True,
                  # orbital sets
                  dict_setind_orbs=None
     ):
@@ -160,7 +157,6 @@ class APsetG(APG):
             nuc_nuc=nuc_nuc,
         )
         self.assign_orbsets(dict_setind_orbs=dict_setind_orbs)
-        self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         del self._energy

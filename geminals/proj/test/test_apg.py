@@ -17,7 +17,7 @@ def test_assign_adjacency():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     # default adjacenecy
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False, adjacency=None)
+    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, adjacency=None)
     apg.assign_adjacency(adjacency=None)
     nspin = apg.nspin
     adjacency = np.identity(nspin, dtype=bool)
@@ -59,38 +59,18 @@ def test_apg_wavefunction_h2():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     # see if we can reproduce HF numbers
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
+    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params *= 0.0
     apg.params[apg.dict_orbpair_gem[(0, apg.nspatial)]] = 1.0
-    assert abs(apg.compute_energy(include_nuc=False) - (-1.84444667247)) < 1e-7
+    assert abs(apg.compute_energy(include_nuc=False, ref_sds=apg.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Compare APG energy with old code
     # Solve with Jacobian using energy as a parameter
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params[-1] = -1.87832550029
     apg()
     assert abs(apg.compute_energy(include_nuc=False) - (-1.87832550029)) < 1e-7
-    # convert energy back into projection dependent (energy is not a parameter)
-    apg.energy_is_param = False
-    apg.params = apg.params[:-1]
-    assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False) - (-1.87832550029)) < 1e-7
-    assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False) - (-1.87832550029)) < 1e-7
-    # Solve with Jacobian not using energy as a parameter
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
-    apg()
-    # FIXME: THESE TESTS FAIL!
-    print('overlaps', apg.overlap(apg.pspace[0]), apg.compute_overlap(apg.pspace[0]))
-    print(apg.compute_energy(sd=apg.pspace[0], include_nuc=False), 'new code')
-    print(-1.87832550029, 'old code')
-    # assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False) - (-1.86968284431)) < 1e-7
-    # assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False)-(-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg._solve_least_squares()
     # FIXME: the numbers are quite different
     #assert abs(apg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
-    # Solve without Jacobian not using energy as a parameter
-    apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=False)
-    apg._solve_least_squares()
-    # FIXME: THESE TESTS FAIL!
-    # assert abs(apg.compute_energy(sd=apg.pspace[0], include_nuc=False)-(-1.86968284431)) < 1e-4
-    # assert abs(apg.compute_energy(sd=apg.pspace, include_nuc=False)-(-1.86968284431)) < 1e-4

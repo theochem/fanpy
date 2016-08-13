@@ -17,7 +17,7 @@ def test_apfsg_wavefunction_h2():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
     # Solve with Jacobian using energy as a parameter
-    apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apfsg()
     assert abs(apfsg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
 
@@ -35,7 +35,7 @@ def test_apfsg_wavefunction_lih():
     nuc_nuc = hf_dict["nuc_nuc"]
     # Compare apfsg energy with old code
     # Solve with Jacobian using energy as a parameter
-    apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, energy_is_param=True)
+    apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apfsg()
     print(apfsg.compute_energy(include_nuc=False), 'new code')
     print(-8.96353105152, 'old code')

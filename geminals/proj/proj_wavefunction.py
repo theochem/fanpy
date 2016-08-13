@@ -58,8 +58,6 @@ class ProjectionWavefunction(Wavefunction):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -182,31 +180,18 @@ class ProjectionWavefunction(Wavefunction):
         return len(self.pspace)
 
     @property
-    def energy_index(self):
-        """ Index of the energy in the list of parameters
-
-        Returns
-        -------
-        energy_index : int
-        """
-        if self.energy_is_param:
-            return self.nparam - 1
-        else:
-            return self.nparam
-
-    @property
-    def ref_sd(self):
+    def default_ref_sds(self):
         """ Reference Slater determinant
 
         You can overwrite this attribute if you want to change the reference Slater determinant
 
         Returns
         -------
-        ref_sd : int, list of int
+        default_ref_sd : int, list of int
             Integer that describes the occupation of a Slater determinant as a bitstring
             Or list of integers
         """
-        return self.pspace[0]
+        return (self.pspace[0], )
 
     #
     # Special methods
@@ -224,7 +209,6 @@ class ProjectionWavefunction(Wavefunction):
         # Arguments handled by FullCI class
         params=None,
         pspace=None,
-        energy_is_param=True
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -233,7 +217,6 @@ class ProjectionWavefunction(Wavefunction):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
-        self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         del self._energy
@@ -339,7 +322,7 @@ class ProjectionWavefunction(Wavefunction):
             Parameters of the wavefunction
         """
         # parameter shape
-        params_shape = (self.template_params.size + self.energy_is_param,)
+        params_shape = (self.template_params.size + 1,)
         # number of coefficients (non energy parameters)
         ncoeffs = self.template_params.size
         if params is None:
@@ -347,8 +330,7 @@ class ProjectionWavefunction(Wavefunction):
             # set scale
             scale = 1.0 / ncoeffs
             # set energy
-            if self.energy_is_param:
-                params = np.hstack((params, 0.0))
+            params = np.hstack((params, 0.0))
             # add random noise to template
             params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
             if params.dtype == np.complex128:
@@ -376,6 +358,8 @@ class ProjectionWavefunction(Wavefunction):
         """
         if pspace is None:
             pspace = self.compute_pspace(self.nparam - 1)
+            # - 1 because we need one equation for normalization
+        # FIXME: this is quite terrible
         if isinstance(pspace, int):
             pspace = self.compute_pspace(pspace)
         elif isinstance(pspace, (list, tuple)):
@@ -419,7 +403,7 @@ class ProjectionWavefunction(Wavefunction):
         except KeyError:
             return self.compute_overlap(sd, deriv=deriv)
 
-    def compute_norm(self, sd=None, deriv=None):
+    def compute_norm(self, ref_sds=None, deriv=None):
         """ Returns the norm of the wavefunction
 
         ..math::
@@ -436,9 +420,7 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        sd : int, mpz, iterable of (int, gmpy2.mpz)
-            If int or mpz, then an integer that describes the occupation of
-            a Slater determinant as a bitstring
+        ref_sds : iterable of (int, gmpy2.mpz)
             If iterable, then list of integers that describes the occupation of
             a Slater determinant as a bitstring
         deriv : int
@@ -449,24 +431,22 @@ class ProjectionWavefunction(Wavefunction):
         -------
         norm : float
         """
-        if sd is None:
-            sd = self.ref_sd
-        if type(sd) in [int, type(mpz())]:
-            sd = (sd,)
-        if not isinstance(sd, (list, tuple)):
-            raise TypeError('Slater determinants must be given as an int or mpz or list/tuple of these')
-        if not all(type(i) in [int, type(mpz())] for i in sd):
-            raise TypeError('List of Slater determinants must all be of type int or mpz')
+        if ref_sds is None:
+            ref_sds = self.default_ref_sds
+        if not isinstance(ref_sds, (list, tuple)):
+            raise TypeError('The reference Slater determinants must be given as a list or tuple')
+        if not all(type(i) in [int, type(mpz())] for i in ref_sds):
+            raise TypeError('Each reference Slater determinant must be of type int or mpz')
         # convert to mpz
-        sd = [mpz(i) for i in sd]
+        ref_sds = [mpz(i) for i in ref_sds]
         # if not derivatized
         if deriv is None:
-            return sum(self.overlap(i)**2 for i in sd)
+            return sum(self.overlap(i)**2 for i in ref_sds)
         # if derivatized
         else:
-            return sum(2 * self.overlap(i) * self.overlap(i, deriv=deriv) for i in sd)
+            return sum(2 * self.overlap(i) * self.overlap(i, deriv=deriv) for i in ref_sds)
 
-    def compute_energy(self, include_nuc=False, sd=None, deriv=None):
+    def compute_energy(self, include_nuc=False, ref_sds=None, deriv=None):
         """ Returns the energy of the system
 
         ..math::
@@ -474,7 +454,7 @@ class ProjectionWavefunction(Wavefunction):
 
         Parameters
         ----------
-        sd : int, mpz, list of (int, gmpy2.mpz)
+        ref_sds : int, mpz, list of (int, gmpy2.mpz)
             If an int or mpz is given,
             ..math::
                 \frac{c_i \big< \Phi_i \big| H \big| \Psi \big>}{\big< \Phi_i \big| \Psi \big>}
@@ -499,51 +479,43 @@ class ProjectionWavefunction(Wavefunction):
             If include_nuc is False, then electronic energy
             Default is electronic energy
         """
+        # set nuclear nuclear repulsion
         nuc_nuc = 0.0
         if include_nuc:
             nuc_nuc = self.nuc_nuc
-        # if energy is a parameter
-        if self.energy_is_param:
-            if sd is not None:
-                print('Warning: Cannot specify Slater determinant to compute energy if energy is a parameter')
+        if ref_sds is None:
             # if not derivatized
             if deriv is None:
                 return self.params[-1] + nuc_nuc
             # if derivatized
-            elif deriv == self.energy_index:
+            elif deriv == self.params.size - 1:
                 return 1.0
             else:
                 return 0.0
-        # if energy is not a parameter
         else:
-            # if sd is None
-            if sd is None:
-                sd = self.ref_sd
-            # if sd is not None
-            if type(sd) in [int, type(mpz())]:
-                sd = (sd,)
-            if not isinstance(sd, (list, tuple)):
-                raise TypeError('Unsupported Slater determinant type {0}'.format(type(sd)))
-            if not all(type(i) in [int, type(mpz())] for i in sd):
-                raise TypeError('List of Slater determinants must all be of type int or mpz')
+            if not isinstance(ref_sds, (list, tuple)):
+                raise TypeError('The reference Slater determinants must given as a list or tuple')
+            if not all(type(i) in [int, type(mpz())] for i in ref_sds):
+                raise TypeError('Each Slater determinants must be of type int or mpz')
             # convert to mpz
-            sd = [mpz(i) for i in sd]
+            ref_sds = [mpz(sd) for sd in ref_sds]
 
             # if not derivatized
             if deriv is None:
-                elec_energy = sum(self.overlap(i) * self.compute_hamiltonian(i) for i in sd)
-                elec_energy /= self.compute_norm(sd=sd)
+                elec_energy = sum(self.overlap(i) * self.compute_hamiltonian(i) for i in ref_sds)
+                elec_energy /= self.compute_norm(ref_sds=ref_sds)
             # if derivatized
             else:
-                olp = np.array([self.overlap(i) for i in sd])
-                d_olp = np.array([self.overlap(i, deriv=deriv) for i in sd])
-                ham = np.array([self.compute_hamiltonian(i) for i in sd])
-                d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in sd])
-                norm = self.compute_norm(sd=sd)
-                d_norm = self.compute_norm(sd=sd, deriv=deriv)
+                olp = np.array([self.overlap(i) for i in ref_sds])
+                d_olp = np.array([self.overlap(i, deriv=deriv) for i in ref_sds])
+                ham = np.array([self.compute_hamiltonian(i) for i in ref_sds])
+                d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in ref_sds])
+                norm = self.compute_norm(ref_sds=ref_sds)
+                d_norm = self.compute_norm(ref_sds=ref_sds, deriv=deriv)
                 elec_energy = np.sum(d_olp * ham + olp * d_ham) / norm
                 elec_energy += np.sum(olp * ham) / (-norm**2) * d_norm
             return elec_energy + nuc_nuc
+
 
     #
     # Objective

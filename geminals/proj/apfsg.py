@@ -65,8 +65,6 @@ class APfsG(ProjectionWavefunction):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -211,7 +209,7 @@ class APfsG(ProjectionWavefunction):
         # build geminal and sd coefficient
         num_boson_part = self.npair*self.nspatial*2
         boson_part = self.params[:num_boson_part].reshape(self.npair, 2*self.nspatial)
-        fermion_part = self.params[num_boson_part: self.energy_index].reshape(self.nspatial, self.nspatial)
+        fermion_part = self.params[num_boson_part: -1].reshape(self.nspatial, self.nspatial)
 
         val = 0
         if deriv is None:
@@ -233,7 +231,7 @@ class APfsG(ProjectionWavefunction):
                     val *= np.linalg.det(fermion_part)
                     self.d_cache[(sd, deriv)] = val
             # if the parameter to derivatize is in the determinant
-            elif deriv < self.energy_index:
+            elif deriv < self.params.size - 1:
                 row_to_remove = deriv - boson_part.size // fermion_part.shape[1]
                 col_to_remove = deriv - boson_part.size % fermion_part.shape[1]
                 if row_to_remove in occ_alpha_indices and col_to_remove in occ_beta_indices:

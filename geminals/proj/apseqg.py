@@ -58,8 +58,6 @@ class APseqG(APG):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -129,7 +127,6 @@ class APseqG(APG):
                  # Arguments handled by ProjWavefunction class
                  params=None,
                  pspace=None,
-                 energy_is_param=True,
                  # sequence list
                  seq_list=None
                  ):
@@ -139,7 +136,6 @@ class APseqG(APG):
                                                      dtype=dtype,
                                                      nuc_nuc=nuc_nuc,
                                                      )
-        self.energy_is_param = energy_is_param
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         self.assign_seq_list(seq_list=seq_list)
@@ -269,7 +265,7 @@ class APseqG(APG):
                 gem_indices.append(self.ngem)
 
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.npair, self.ngem)
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
 
         val = 0.0
         # if no derivatization
@@ -277,7 +273,7 @@ class APseqG(APG):
             val = permanent_ryser(gem_coeffs[:, gem_indices])
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size - 1:
             row_to_remove = deriv // self.ngem
             col_to_remove = deriv % self.ngem
             orbs_to_remove = self.dict_gem_orbpair[col_to_remove]

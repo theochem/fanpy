@@ -65,8 +65,6 @@ class APIG(ProjectionWavefunction):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -200,7 +198,7 @@ class APIG(ProjectionWavefunction):
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_coeffs.shape)
+        gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
 
         val = 0.0
         # if no derivatization
@@ -208,7 +206,7 @@ class APIG(ProjectionWavefunction):
             val = permanent_ryser(gem_coeffs[:, occ_alpha_indices])
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size - 1:
             row_to_remove = deriv // self.nspatial
             col_to_remove = deriv % self.nspatial
             if col_to_remove in occ_alpha_indices:
@@ -255,7 +253,7 @@ class APIG(ProjectionWavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
+        gem_coeffs = self.params[:-1].reshape(self.template_params.shape)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -265,7 +263,7 @@ class APIG(ProjectionWavefunction):
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
-        self.params[:self.energy_index] = gem_coeffs.flatten()
+        self.params[:-1] = gem_coeffs.flatten()
         # empty cache
         for sd in self.ref_sd:
             del self.cache[sd]

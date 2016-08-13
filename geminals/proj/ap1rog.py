@@ -68,8 +68,6 @@ class AP1roG(ProjectionWavefunction):
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
-    energy_index : int
-        Index of the energy in the list of parameters
     ref_sd : int or list of int
         Reference Slater determinants with respect to which the norm and the energy
         are calculated
@@ -217,10 +215,7 @@ class AP1roG(ProjectionWavefunction):
         vir_alpha_indices = slater.vir_indices(alpha_sd, self.nspatial)
 
         # build geminal coefficient
-        if self.energy_is_param:
-            gem_coeffs = self.params[:-1].reshape(self.npair, self.nvirtual)
-        else:
-            gem_coeffs = self.params.reshape(self.npair, self.nvirtual)
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.nvirtual)
 
         val = 0.0
         # get the indices that need to be swapped from virtual to occupied 
@@ -236,7 +231,7 @@ class AP1roG(ProjectionWavefunction):
                 val = permanent_combinatoric(gem_coeffs[vo_row][:, vo_col])
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size - 1:
             if len(vo_row) == 0:
                 val = 1
             else:

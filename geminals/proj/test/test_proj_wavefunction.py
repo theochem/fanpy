@@ -32,7 +32,6 @@ def test_assign_params():
     Tests ProjectionWavefunction.assign_params
     """
     test = TestProjectionWavefunction()
-    test.energy_is_param = True
     # Assign random float
     test.dtype = np.float64
     test.assign_params()
@@ -119,12 +118,12 @@ def test_compute_norm():
     # sd is none
     assert test.compute_norm() == 1.2**2
     # sd specified
-    assert test.compute_norm(sd=0b1111) == 1.2**2
-    assert test.compute_norm(sd=0b10111) == 2.1**2
-    assert test.compute_norm(sd=(0b1111, 0b10111)) == 1.2**2 + 2.1**2
-    # bad sd
-    assert_raises(TypeError, lambda: test.compute_norm(sd='11'))
-    assert_raises(TypeError, lambda: test.compute_norm(sd=('11',)))
+    assert test.compute_norm(ref_sds=[0b1111]) == 1.2**2
+    assert test.compute_norm(ref_sds=[0b10111]) == 2.1**2
+    assert test.compute_norm(ref_sds=(0b1111, 0b10111)) == 1.2**2 + 2.1**2
+    # bad ref_sds
+    assert_raises(TypeError, lambda: test.compute_norm(ref_sds='11'))
+    assert_raises(TypeError, lambda: test.compute_norm(ref_sds=('11',)))
 
 
 def test_compute_energy():
@@ -137,11 +136,7 @@ def test_compute_energy():
     test.cache = {0b1111: 1, 0b10111: 2}
 
     # energy is param
-    test.energy_is_param = True
     assert test.compute_energy() == test.params[-1]
     assert test.compute_energy(include_nuc=False) == test.params[-1]
     assert test.compute_energy(deriv=0) == 0
     assert test.compute_energy(deriv=4) == 1
-    # energy is not param
-    test.energy_is_param = False
-    assert test.compute_energy(sd=0b1111, include_nuc=False) == 2
