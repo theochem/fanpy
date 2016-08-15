@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from geminals.proj.apr2g import APr2G
+from geminals.proj.ap1rog import AP1roG
 from geminals.hort import hartreefock
 import numpy as np
 
@@ -15,12 +16,16 @@ def test_apr2g_wavefunction_h2():
     H = hf_dict["H"]
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
+    # AP1roG as an initial guess
+    ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    ap1rog()
     # Check if apr2g converges to a reasonable number
-    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
     apr2g(jac=None)
     # apr2g()
     energy = apr2g.compute_energy()
     print('HF energy', -1.84444667247)
+    print('AP1roG energy', ap1rog.compute_energy())
     print('APr2G energy', energy)
     print('FCI value', -1.87832550029)
     assert -1.84444667247 > energy > -1.87832550029
@@ -37,32 +42,43 @@ def test_apr2g_wavefunction_lih():
     H = hf_dict["H"]
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
+    # AP1roG as an initial guess
+    ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    ap1rog()
     # Check if apr2g converges to a reasonable number
-    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
     apr2g(jac=None)
     # apr2g()
     energy = apr2g.compute_energy()
     print('HF energy', -8.9472891719)
+    print('AP1roG energy', ap1rog.compute_energy())
     print('APr2G energy', energy)
     print('FCI value', -8.96741814557)
     assert -8.9472891719 > energy > -8.96741814557
     assert False
 
-def test_apr2g_wavefunction_li2():
-    #### Li2 ####
-    # HF Value :
-    # FCI Value :
-    nelec = 6
-    hf_dict = hartreefock(fn="test/li2.xyz", basis="3-21g", nelec=nelec)
-    E_hf = hf_dict["energy"]
-    H = hf_dict["H"]
-    G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
-    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apr2g(jac=None)
-    # apr2g()
-    energy = apr2g.compute_energy(include_nuc=False)
-    print('APr2G energy', energy)
-    assert abs(energy - (-14.796070)) < 1e-7
-    assert False
+# def test_apr2g_wavefunction_li2():
+#     #### Li2 ####
+#     # HF Value :
+#     # FCI Value :
+#     nelec = 6
+#     hf_dict = hartreefock(fn="test/li2.xyz", basis="3-21g", nelec=nelec)
+#     E_hf = hf_dict["energy"]
+#     H = hf_dict["H"]
+#     G = hf_dict["G"]
+#     nuc_nuc = hf_dict["nuc_nuc"]
+#     # AP1roG as an initial guess
+#     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+#     ap1rog()
+#     # Check if apr2g converges to a reasonable number
+#     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
+#     apr2g(jac=None)
+#     # apr2g()
+#     energy = apr2g.compute_energy(include_nuc=False)
+#     print('HF energy', '?')
+#     print('AP1roG energy', ap1rog.compute_energy())
+#     print('APr2G energy', energy)
+#     print('FCI value', '?')
+#     assert abs(energy - (-14.796070)) < 1e-7
+#     assert False
 

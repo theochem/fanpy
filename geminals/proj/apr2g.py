@@ -50,6 +50,52 @@ class APr2G(ProjectionWavefunction):
     Methods
     -------
     """
+    def __init__(
+        self,
+        # Mandatory arguments
+        nelec=None,
+        H=None,
+        G=None,
+        # Arguments handled by base Wavefunction class
+        dtype=None,
+        nuc_nuc=None,
+        # Arguments handled by FullCI class
+        params=None,
+        ap1rog_params=None,
+        pspace=None,
+    ):
+        super(ProjectionWavefunction, self).__init__(
+            nelec=nelec,
+            H=H,
+            G=G,
+            dtype=dtype,
+            nuc_nuc=nuc_nuc,
+        )
+        self.assign_params(params=params, ap1rog_params=ap1rog_params)
+        self.assign_pspace(pspace=pspace)
+        if params is None and ap1rog_params is None:
+            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
+        del self._energy
+        self.cache = {}
+        self.d_cache = {}
+
+    def assign_params(self, params=None, ap1rog_params=None):
+        """ Assigns the parameters to the wavefunction
+
+        Parameters
+        ----------
+        params : np.ndarray(K,)
+            Parameters of the wavefunction
+        ap1rog_coeffs : np.ndarray(P*K+1, )
+            Geminal coefficients and the energy of AP1roG wavefunction
+        """
+        super(APr2G, self).assign_params(params=params)
+        assert not ((params is not None) and (ap1rog_params is not None)),\
+            'Cannot give both params and ap1rog_params'
+        if ap1rog_params is not None:
+            gem_coeffs = np.hstack((np.identity(self.npair), ap1rog_params[:-1].reshape(self.npair, self.nspatial-self.npair)))
+            gem_params = self._convert_from_ap1rog(self.npair, self.nspatial, gem_coeffs)
+            self.params = np.hstack((gem_params, ap1rog_params[-1]))
 
 
     @property
@@ -65,17 +111,11 @@ class APr2G(ProjectionWavefunction):
         template_coeffs : np.ndarray(K, )
 
         """
-        # FIXME: this part shouldb e moved to the assign_params
-        # FIXME: need to make an assign_params
-        ap1rog = AP1roG(nelec=self.nelec, H=self.H, G=self.G, nuc_nuc=self.nuc_nuc)
-        ap1rog()
-        gem_coeffs = np.hstack((np.identity(self.npair), ap1rog.params[:-1].reshape(ap1rog.template_coeffs.shape)))
-        params = self._convert_from_ap1rog(self.npair, self.nspatial, gem_coeffs)
-        # params = np.zeros(self.npair + self.nspatial*2 + 1)
-        # # set epsilons to 1
-        # params[self.npair:self.npair+self.nspatial] = 1.0
-        # # set zetas such that first npair columns are ones
-        # params[self.npair+self.nspatial:self.npair+2*self.nspatial] = 1.0
+        params = np.zeros(self.npair + self.nspatial*2 + 1)
+        # set epsilons to 1
+        params[self.npair:self.npair+self.nspatial] = 1.0
+        # set zetas such that first npair columns are ones
+        params[self.npair+self.nspatial:self.npair+2*self.nspatial] = 1.0
         return params
 
 
