@@ -65,13 +65,21 @@ class APr2G(ProjectionWavefunction):
         template_coeffs : np.ndarray(K, )
 
         """
+        # FIXME: this part shouldb e moved to the assign_params
+        # FIXME: need to make an assign_params
         ap1rog = AP1roG(nelec=self.nelec, H=self.H, G=self.G, nuc_nuc=self.nuc_nuc)
         ap1rog()
-        gem_coeffs = np.hstack((np.eye(self.npair), np.reshape(ap1rog.params, (self.npair, self.nspatial - self.npair))))
+        gem_coeffs = np.hstack((np.identity(self.npair), ap1rog.params[:-1].reshape(ap1rog.template_coeffs.shape)))
         params = self._convert_from_ap1rog(self.npair, self.nspatial, gem_coeffs)
+        # params = np.zeros(self.npair + self.nspatial*2 + 1)
+        # # set epsilons to 1
+        # params[self.npair:self.npair+self.nspatial] = 1.0
+        # # set zetas such that first npair columns are ones
+        # params[self.npair+self.nspatial:self.npair+2*self.nspatial] = 1.0
         return params
 
 
+    # FIXME: this needs to be checked
     @staticmethod
     def _convert_from_ap1rog(npair, nspatial, matrix):
         """
@@ -146,71 +154,64 @@ class APr2G(ProjectionWavefunction):
         if occ_alpha_indices != occ_beta_indices:
             raise ValueError('Given Slater determinant, {0}, does not belong'
                              ' to the DOCI Slater determinants'.format(bin(sd)))
+        occ_indices = occ_alpha_indices
 
-        # build geminal coefficient matrix: parameters are assumed to be ordered as [lambda, epsilon, xi]
-        params = self.params[:-1]
+        # get the appropriate parameters: parameters are assumed to be ordered as [lambda, epsilon, xi]
+        lambdas = self.params[:self.npair]
+        epsilons = self.params[self.npair:self.npair+self.nspatial][occ_indices,]
+        zetas = self.params[self.npair+self.nspatial:self.npair+self.nspatial*2][occ_indices,]
+
+        gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
+        ew_square = gem_coeffs**2
 
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_borchardt(params, self.npair, self.npair)
+            val = permanent_borchardt(lambdas, epsilons, zetas)
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
-            # Determine the indices of the parameters which will correspond to occupied columns
-            # Check that parameter to derivatize is present in the matrix
-            indices = list(range(self.npair))
-            indices.extend([self.npair + c for c in occ_alpha_indices])
-            indices.extend([self.npair + self.nspatial + c for c in occ_alpha_indices])
-            if deriv not in indices:
-                val = 0.0
+            # FIXME: move to math_tools.permanent_borchardt?
+            # compute derivative of the geminal coefficient matrix
+            d_gemcoeffs = np.zeros((self.npair, self.npair))
+            d_ewsquare = np.zeros((self.npair, self.npair))
+
+            # if derivatizing with respect to row elements (lambdas)
+            if 0 <= deriv < self.npair:
+                d_gemcoeffs[deriv, :] = -zetas / (lambdas[deriv] - epsilons) ** 2
+                d_ewsquare[deriv, :] = -2*zetas**2 / (lambdas[deriv] - epsilons)**3
+            # if derivatizing with respect to column elements (epsilons, zetas)
+            elif self.npair <= deriv < self.npair + 2*self.nspatial:
+                # convert deriv index to the column index
+                deriv = (deriv - self.npair) % self.nspatial
+                if deriv not in occ_indices:
+                    return 0.0
+                # if derivatizing with respect to epsilons
+                elif deriv < self.npair + self.nspatial:
+                    # convert deriv index to index within occ_indices
+                    deriv = occ_indices.index(deriv)
+                    # calculate derivative
+                    d_gemcoeffs[:, deriv] = zetas[deriv] / (lambdas - epsilons[deriv])**2
+                    d_ewsquare[:, deriv] = 2*zetas[deriv]**2 / (lambdas - epsilons[deriv])**3
+                # if derivatizing with respect to zetas
+                elif deriv >= self.npair + self.nspatial:
+                    # convert deriv index to index within occ_indices
+                    deriv = occ_indices.index(deriv)
+                    # calculate derivative
+                    d_gemcoeffs[:, deriv] = 1.0 / (lambdas - epsilons[deriv])
+                    d_ewsquare[:, deriv] = 2*zetas[deriv] / (lambdas - epsilons[deriv])**2
             else:
-                # create new list leaving out parameters corresponding to unoccupied columns
-                deriv = indices.index(deriv)
-                new_params = params[indices]
+                return 0.0
 
-                # create geminal coefficient matrix and element-wise squared of the matrix
-                lambda_matrix = np.array([params[:self.npair], ] * self.nspatial).transpose()
-                epsilon_matrix = np.array([params[self.npair:self.npair + self.nspatial], ] * self.npair)
-                xi_matrix = np.array([params[self.npair + self.nspatial:], ] * self.npair)
-                gem_coeffs = (xi_matrix / (lambda_matrix - epsilon_matrix))[:, occ_alpha_indices]
-                ew_square = gem_coeffs.copy()
-                ew_square **= 2
+            # compute determinants and adjugate matrices
+            det_gemcoeffs = np.linalg.det(gem_coeffs)
+            det_ewsquare = np.linalg.det(ew_square)
+            adj_gemcoeffs = adjugate(gem_coeffs)
+            adj_ewsquare = adjugate(ew_square)
 
-                # compute derivative of the geminal coefficient matrix
-                d_gemcoeffs = np.zeros_like(gem_coeffs)
-                d_ewsquare = np.zeros_like(ew_square)
+            val = (np.trace(adj_ewsquare.dot(d_ewsquare)) / det_gemcoeffs
+                    - det_ewsquare / (det_gemcoeffs ** 2) * np.trace(adj_gemcoeffs.dot(d_gemcoeffs)))
 
-                # if deriving w.r.t. lambda_i: only changes row i
-                if 0 <= deriv < self.npair:
-                    num = - new_params[2 * self.npair:]
-                    denom = np.array([new_params[deriv], ] * self.npair) - new_params[self.npair:2 * self.npair]
-                    d_gemcoeffs[deriv, :] = num / denom ** 2
-                    d_ewsquare[deriv, :] = -2 * num ** 2 / denom ** 3
-                # if deriving w.r.t. epsilon_i: only changes column i
-                elif self.npair <= deriv < 2 * self.npair:
-                    num = np.array([new_params[deriv+self.npair], ] * self.npair)
-                    denom = new_params[:self.npair] - np.array([new_params[deriv], ] * self.npair)
-                    d_gemcoeffs[:, deriv - self.npair] = (num / denom ** 2).transpose()
-                    d_ewsquare[:, deriv - self.npair] = (2 * num ** 2 / denom ** 3).transpose()
-                # if deriving w.r.t xi_i: only changes column i
-                else:
-                    num = np.array([new_params[deriv], ] * self.npair)
-                    denom = new_params[:self.npair] - np.array([new_params[deriv - self.npair], ] * self.npair)
-                    d_gemcoeffs[:, deriv - 2 * self.npair] = (1 / denom).transpose()
-                    d_ewsquare[:, deriv - 2 * self.npair] = (2 * num / denom ** 2).transpose()
-
-                # compute determinants and adjugate matrices
-                det_gemcoeffs = np.linalg.det(gem_coeffs)
-                det_ewsquare = np.linalg.det(ew_square)
-                adj_gemcoeffs = adjugate(gem_coeffs)
-                adj_ewsquare = adjugate(ew_square)
-
-                val = np.trace(adj_ewsquare.dot(d_ewsquare)) / det_ewsquare \
-                        - det_ewsquare / det_gemcoeffs ** 2 * np.trace(adj_gemcoeffs.dot(d_gemcoeffs))
-
-            # construct new gmpy2.mpz to describe the slater determinant and
-            # derivation index
             self.d_cache[(sd, deriv)] = val
         return val
 

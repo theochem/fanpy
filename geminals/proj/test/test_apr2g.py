@@ -4,18 +4,65 @@ from geminals.hort import hartreefock
 import numpy as np
 
 
+def test_apr2g_wavefunction_h2():
+    #### H2 ####
+    # HF Value :       -1.84444667247
+    # Old code Value:  -1.86968286065
+    # FCI Value :      -1.87832550029
+    nelec = 2
+    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+    nuc_nuc = hf_dict["nuc_nuc"]
+    # Check if apr2g converges to a reasonable number
+    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g(jac=None)
+    # apr2g()
+    energy = apr2g.compute_energy()
+    print('HF energy', -1.84444667247)
+    print('APr2G energy', energy)
+    print('FCI value', -1.87832550029)
+    assert -1.84444667247 > energy > -1.87832550029
+    assert False
+
+
+def test_apr2g_wavefunction_lih():
+    #### LiH ####
+    # HF Value :       -8.9472891719
+    # FCI Value :      -8.96741814557
+    nelec = 4
+    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+    nuc_nuc = hf_dict["nuc_nuc"]
+    # Check if apr2g converges to a reasonable number
+    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g(jac=None)
+    # apr2g()
+    energy = apr2g.compute_energy()
+    print('HF energy', -8.9472891719)
+    print('APr2G energy', energy)
+    print('FCI value', -8.96741814557)
+    assert -8.9472891719 > energy > -8.96741814557
+    assert False
+
 def test_apr2g_wavefunction_li2():
-	#### Li2 ####
-	# FCI Value :
-	nelec = 6
-	hf_dict = hartreefock(fn="test/li2.xyz", basis="3-21g", nelec=nelec)
-	E_hf = hf_dict["energy"]
-	H = hf_dict["H"]
-	G = hf_dict["G"]
-	nuc_nuc = hf_dict["nuc_nuc"]
-	apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-	apr2g()
-	energy = apr2g.compute_energy(include_nuc=False)
-	print("apr2g energy", energy)
-	assert abs(energy - (-14.796070)) < 1e-7
+    #### Li2 ####
+    # HF Value :
+    # FCI Value :
+    nelec = 6
+    hf_dict = hartreefock(fn="test/li2.xyz", basis="3-21g", nelec=nelec)
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+    nuc_nuc = hf_dict["nuc_nuc"]
+    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g(jac=None)
+    # apr2g()
+    energy = apr2g.compute_energy(include_nuc=False)
+    print('APr2G energy', energy)
+    assert abs(energy - (-14.796070)) < 1e-7
+    assert False
 

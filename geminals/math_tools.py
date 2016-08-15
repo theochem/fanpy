@@ -157,6 +157,7 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
         perm_etas *= np.prod(etas)
 
     # In the case of a rectangular matrix we have to add an additional submatrix
+    # FIXME: doesn't work
     if num_row != num_col:
         sub = np.power(epsilons, np.arange(num_col-num_row)[:, np.newaxis])
         d_matrix[num_row:, :] = sub
