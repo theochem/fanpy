@@ -110,18 +110,21 @@ def adjugate(matrix):
     return np.linalg.det(matrix) * np.linalg.inv(matrix)
 
 
-def permanent_borchardt(params, m, n):
+# NOTE: is this necessary? can't we just place this function is apr2g wavefunction class?
+def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     """
     Calculate the permanent of a square or rectangular matrix using the Borchardt theorem
 
     Parameters
     ----------
-    params : list
-        it is assumed the parameters are ordered as [lambda, epsilon, xi].
-    m : integer
-        number of rows in the matrix.
-    n : int
-        number of columns in the matrix.
+    lambdas : np.ndarray(N,)
+        Row matrix of the form :math:`\lambdas_j`
+    epsilons : np.ndarray(M,)
+        Row matrix of the form :math:`\epsilons_j`
+    zetas : np.ndarray(M,)
+        Row matrix of the form :math:`\zeta_j`
+    etas : np.ndarray(N,)
+        Flattened column matrix of the form :math:`\eta_i`
 
     Returns
     -------
@@ -129,34 +132,34 @@ def permanent_borchardt(params, m, n):
         permanent of the rank-2 matrix built from the given parameter list.
 
     """
-    # m must be smaller or equal to n
-    if not m <= n:
-        raise ValueError("m should be smaller than n.")
+    if lambdas.size > epsilons.size:
+        raise ValueError('The Cauchy matrix must have more columns than rows')
+    if zetas.size != epsilons.size:
+        raise ValueError('The number of columns of the Cauchy matrix and '
+                         'the number of zetas must be equal')
+    if etas is not None and etas.size != lambdas.size:
+        raise ValueError('The number of rows of the Cauchy matrix and '
+                         'the number of etas must be equal')
 
-    # Obtain different parameters
-    lambdas = params[:m]
-    epsilons = params[m:m + n]
-    xis = params[m + n:]
+    num_row = lambdas.size
+    num_col = epsilons.size
+    cauchy_matrix = 1 / (epsilons - lambdas[:, np.newaxis])
 
-    # Compute permanent of diagonal xi-matrix
-    perm_xi = np.prod(xis)
-    
-    # Construct B and D matrix
-    lambda_matrix = np.array([lambdas, ] * n).transpose()
-    epsilon_matrix = np.array([epsilons, ] * m)
-    gem_coeffs = 1.0 / (lambda_matrix - epsilon_matrix)
+    b_matrix = np.zeros([num_col]*2)
+    b_matrix[:num_row, :] = cauchy_matrix[:]**2
 
-    b_matrix = np.zeros((n, n))
-    d_matrix = b_matrix.copy()
-    d_matrix[:m, :] = gem_coeffs[:]
-    b_matrix[:m, :] = gem_coeffs[:]**2
+    d_matrix = np.zeros([num_col]*2)
+    d_matrix[:num_row, :] = cauchy_matrix[:]
+
+    perm_zetas = np.prod(zetas)
+    perm_etas = 1.0
+    if etas is not None:
+        perm_etas *= np.prod(etas)
 
     # In the case of a rectangular matrix we have to add an additional submatrix
-    if m != n:
-        sub = np.array([epsilons, ] * (n - m))
-        power = np.arange(n - m)
-        sub = np.power(sub.transpose(), power).transpose()
-        d_matrix[m:, :] = sub
-        b_matrix[m:, :] = sub
+    if num_row != num_col:
+        sub = np.power(epsilons, np.arange(num_col-num_row)[:, np.newaxis])
+        d_matrix[num_row:, :] = sub
+        b_matrix[num_row:, :] = sub
 
-    return np.linalg.det(b_matrix) / np.linalg.det(d_matrix) * perm_xi
+    return np.linalg.det(b_matrix) / np.linalg.det(d_matrix) * perm_zetas * perm_etas

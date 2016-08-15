@@ -30,28 +30,27 @@ def test_permanent_ryser():
 
 def test_permanent_borchardt_square():
     p = 6
-    params = np.random.rand(3 * p)
-    lambda_matrix = np.array([params[:p], ] * p).transpose()
-    epsilon_matrix = np.array([params[p:2 * p], ] * p)
-    xi_matrix = np.array([params[2 * p:], ] * p)
-    gem_coeffs = xi_matrix / (lambda_matrix - epsilon_matrix)
+    params = np.random.rand(3*p)
+    lambdas = params[:p]
+    epsilons = params[p:2*p]
+    zetas = params[2*p:]
+    gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
 
     assert np.allclose(permanent_combinatoric(gem_coeffs),
-                       permanent_borchardt(params, p, p))
+                       permanent_borchardt(lambdas, epsilons, zetas))
 
 def test_permanent_borchardt_rectangular():
     #FIXME this fails if x_i != 1, because perm(A*D) != perm(A)*perm(D) when A rectangular (D = diagonal)
-    p, k = 6, 8
-    params = np.random.rand(p + 2 * k)
-    lambda_matrix = np.array([params[:p], ] * k).transpose()
-    epsilon_matrix = np.array([params[p:p + k], ] * p)
-    xi_matrix = np.array([params[p + k:], ] * p)
-    gem_coeffs = xi_matrix / (lambda_matrix - epsilon_matrix)
+    p = 6
+    k = 8
+    params = np.random.rand(p + 2*k)
+    lambdas = params[:p]
+    epsilons = params[p:p+k]
+    zetas = params[p+k:p+2*k]
+    gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
     perm_comb = permanent_combinatoric(gem_coeffs)
-    perm_borch = permanent_borchardt(params, p, k)
+    perm_borch = permanent_borchardt(lambdas, epsilons, zetas)
     perm_rys = permanent_ryser(gem_coeffs)
+    assert np.allclose(perm_comb, perm_rys)
     assert np.allclose(perm_comb, perm_borch)
     assert np.allclose(perm_rys, perm_borch)
-
-
-
