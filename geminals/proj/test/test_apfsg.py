@@ -8,7 +8,6 @@ from geminals.hort import hartreefock
 def test_apfsg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
-    # Old Code Value : -1.86968284431
     # FCI Value :      -1.87832550029
     nelec = 2
     hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
@@ -18,14 +17,17 @@ def test_apfsg_wavefunction_h2():
     nuc_nuc = hf_dict["nuc_nuc"]
     # Solve with Jacobian using energy as a parameter
     apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apfsg()
+    apfsg(jac=None)
+    print('HF energy', -1.84444667247)
+    print('new energy', apfsg.compute_energy())
+    print('FCI value', -1.87832550029)
+    assert -1.84444667247 > apfg.computer_energy() > -1.87832550029
     assert abs(apfsg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
 
 
 def test_apfsg_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719
-    # Old Code Value : -8.96353105152
     # FCI Value :      -8.96741814557
     nelec = 4
     hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
@@ -36,7 +38,9 @@ def test_apfsg_wavefunction_lih():
     # Compare apfsg energy with old code
     # Solve with Jacobian using energy as a parameter
     apfsg = APfsG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apfsg()
-    print(apfsg.compute_energy(include_nuc=False), 'new code')
-    print(-8.96353105152, 'old code')
+    apfsg(jac=None)
+    print('HF energy', -8.9472891719)
+    print('new energy', apfsg.compute_energy())
+    print('FCI value', -8.96741814557)
+    assert -8.9472891719 > apfg.computer_energy() > -8.96741814557
     assert False

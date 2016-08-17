@@ -68,9 +68,29 @@ def test_apg_wavefunction_h2():
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params[-1] = -1.87832550029
     apg()
+    print('HF energy', -1.84444667247)
+    print('APG energy', apg.compute_energy())
+    print('FCI value', -1.87832550029)
     assert abs(apg.compute_energy(include_nuc=False) - (-1.87832550029)) < 1e-7
-    # Solve without Jacobian using energy as a parameter
+
+
+def test_apsetg_wavefunction_lih():
+    #### LiH ####
+    # HF Value :       -8.9472891719
+    # Old Code Value : -8.96353105152
+    # FCI Value :      -8.96741814557
+    nelec = 4
+    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+    nuc_nuc = hf_dict["nuc_nuc"]
+    # Compare apsetg energy with old code
+    # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apg._solve_least_squares()
-    # FIXME: the numbers are quite different
-    #assert abs(apg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
+    apg()
+    print('HF energy', -8.9472891719)
+    print('APG energy', apg.compute_energy())
+    print('FCI value', -8.96741814557)
+    assert -8.9472891719 > apfg.computer_energy() > -8.96741814557
+    assert False
