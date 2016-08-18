@@ -107,7 +107,7 @@ class APG(ProjectionWavefunction):
     assign_nelec(nelec)
         Assigns the number of electrons
     _solve_least_squares(**kwargs)
-r       Solves the system of nonliear equations (and the wavefunction) using
+        Solves the system of nonliear equations (and the wavefunction) using
         least squares method
     assign_params(params=None)
         Assigns the parameters used to describe the wavefunction.

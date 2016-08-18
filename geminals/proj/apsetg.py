@@ -184,7 +184,7 @@ class APsetG(APG):
             adjacency[orbset[:, np.newaxis], orbset] = False
         self.assign_adjacency(adjacency=adjacency)
 
-    def default_pmatch_generator(self, *occ_orbsets):
+    def default_pmatch_generator(self, occ_indices):
         """ Generator for the perfect matchings needed to construct the Slater determinant
 
         Parameters
@@ -201,8 +201,16 @@ class APsetG(APG):
         Assumes that the graph (of correlaton) is complete bipartite
         """
         # assumes complete bipartite graph
+
         if len(self.dict_setind_orbs) != 2:
             raise AssertionError('Automatic perfect match not supported for partite graphs with more than two sets')
-        set_one = [i for i in occ_orbsets if i in self.dict_setind_orbs[0]]
-        set_two = [i for i in occ_orbsets if i in self.dict_setind_orbs[1]]
-        return generate_biclique_pmatch(set_one, set_two)
+        set_one, set_two = [], []
+        for i in occ_indices:
+            if self.dict_orb_setind[i] == 0:
+                set_one.append(i)
+            else:
+                set_two.append(i)
+        if len(set_one) == len(set_two):
+            return generate_biclique_pmatch(set_one, set_two)
+        else:
+            return []
