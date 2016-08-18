@@ -27,11 +27,11 @@ def generate_complete_pmatch(indices):
             # add in the last two indices
             yield( scheme + (indices[-2:],) )
             # swap the last two indices wth an existing pair
-            for i in range(n//2 - 1):
+            # remove the ith pair and shuffle the indices with the last pair
+            for i in reversed(range(n//2 - 1)):
                 # this part of the scheme is kept constant
-                base_scheme = scheme[:i] + scheme[i+1:]
-                yield( base_scheme + ( (scheme[i][0], indices[-2]), (scheme[i][1], indices[-1]) ) )
-                yield( base_scheme + ( (scheme[i][0], indices[-1]), (scheme[i][1], indices[-2]) ) )
+                yield( scheme[:i] + ( (scheme[i][0], indices[-2]), (scheme[i][1], indices[-1]) ) + scheme[i+1:])
+                yield( scheme[:i] + ( (scheme[i][0], indices[-1]), (scheme[i][1], indices[-2]) ) + scheme[i+1:])
 
 def generate_biclique_pmatch(indices_one, indices_two):
     """ Generates all of the perfect matches of a complete bipartite (sub)graph
