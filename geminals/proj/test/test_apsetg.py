@@ -45,6 +45,4 @@ def test_apsetg_wavefunction_lih():
     print('new energy', apsetg.compute_energy())
     print('FCI value', -8.96741814557)
     assert -8.9472891719 > apsetg.compute_energy() > -8.96741814557
-    print(apsetg.compute_energy(include_nuc=False), 'new code')
-    print(-8.96353105152, 'old code')
     assert False
