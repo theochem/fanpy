@@ -7,7 +7,7 @@ from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
 from ..sd_list import doci_sd_list
 from .proj_hamiltonian import doci_hamiltonian
-from ..math_tools import permanent_ryser
+from ..math_tools import permanent_ryser, binomial, quartet_3D_matrix_function
 
 
 class APQ(ProjectionWavefunction):
@@ -125,24 +125,14 @@ class APQ(ProjectionWavefunction):
         By default, the norm should the projection against the ref_sd squared
     """
     @property
-    def template_coeffs(self):
-#       return np.eye(self.nquartet, self.nspatial, dtype=self.dtype)
-        return np.zeros((self.nquartet, self.nspatial, self.nspatial), dtype=self.dtype)
+    def nquartet(self):
+        return self.nelec//4
 
     @property
-    def template_params(self):
-        """ Default numpy array of parameters.
+    def template_coeffs(self):
+#       return np.eye(self.nquartet, self.nspatial, dtype=self.dtype)
+        return np.zeros((self.nquartet, binomial(self.nspatial,2)), dtype=self.dtype)
 
-        This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
-
-        Returns
-        -------
-        template_params : np.ndarray(K, )
-
-        """
-        return self.template_coeffs.flatten()
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -201,16 +191,30 @@ class APQ(ProjectionWavefunction):
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_coeffs.shape)
-        gem_coeffs[:, occ_alpha_indices, occ_alpha_indices]
+#        gem_coeffs = self.params[:self.energy_index].reshape(self.template_coeffs.shape)
 
+        p = self.params[:-1].reshape(self.template_coeffs.shape)
+
+        gem_coeffs = np.zeros((self.nquartet,self.nspatial,self.nspatial),dtype=self.dtype)
+        #print(p.shape)
+        #print(gem_coeffs[0].shape)        
+        ind = np.triu_indices(self.nspatial,k=1)
+        #print(gem_coeffs[0,ind])
+        for i in range(self.nquartet):
+            g = gem_coeffs[i]
+            g[ind]  = p[i]
+            g.T[ind] = p[i]
         val = 0.0
+        gem_coeffs = gem_coeffs[:,occ_alpha_indices,:][:, :, occ_alpha_indices]
+        #print(gem_coeffs.shape)
+
+
         # if no derivatization
         if deriv is None:
             val = quartet_3D_matrix_function(gem_coeffs)
             self.cache[sd] = val
         # if derivatization
-        elif isinstance(deriv, int) and deriv < self.energy_index:
+        elif isinstance(deriv, int) and deriv < self.params.size-1:
             raise NotImplementedError("Work on your derivatives dingus!")
             row_to_remove = deriv // self.nspatial
             col_to_remove = deriv % self.nspatial
@@ -258,7 +262,7 @@ class APQ(ProjectionWavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         # build geminal coefficient
-        gem_coeffs = self.params[:self.energy_index].reshape(self.template_params.shape)
+        gem_coeffs = self.params[:-1].reshape(self.template_params.shape)
         # normalize the geminals
         norm = np.sum(gem_coeffs**2, axis=1)
         gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
@@ -268,7 +272,7 @@ class APQ(ProjectionWavefunction):
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
         # set attributes
-        self.params[:self.energy_index] = gem_coeffs.flatten()
+        self.params[:-1] = gem_coeffs.flatten()
         # empty cache
         for sd in self.ref_sd:
             del self.cache[sd]

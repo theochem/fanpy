@@ -60,7 +60,7 @@ def quartet_3D_matrix_function(matrix):
             haf_prod = 1.
             for i in range(n//2):
                 haf_prod *= matrix[quartperms[i],perm[2*i],perm[2*i+1]]
-            print(perm)
+            #print(perm)
             hafnian += haf_prod
     
 
