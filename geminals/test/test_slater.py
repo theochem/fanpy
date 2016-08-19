@@ -227,3 +227,43 @@ def test_deinterleave():
     assert slater.deinterleave(0b000101, 3) == 0b000011
     assert slater.deinterleave(0b0011, 2) == 0b0101
     assert slater.deinterleave(0b010001, 3) == 0b000101
+
+def test_interleave_index():
+    """
+    Test slater.interleave_index()
+    """
+    # 1 spatial orbital
+    assert slater.interleave_index(0, 1) == 0
+    assert slater.interleave_index(1, 1) == 1
+    # 2 spatial orbitals
+    assert slater.interleave_index(0, 2) == 0
+    assert slater.interleave_index(1, 2) == 2
+    assert slater.interleave_index(2, 2) == 1
+    assert slater.interleave_index(3, 2) == 3
+    # 3 spatial orbitals
+    assert slater.interleave_index(0, 3) == 0
+    assert slater.interleave_index(1, 3) == 2
+    assert slater.interleave_index(2, 3) == 4
+    assert slater.interleave_index(3, 3) == 1
+    assert slater.interleave_index(4, 3) == 3
+    assert slater.interleave_index(5, 3) == 5
+
+def test_deinterleave_index():
+    """
+    Test slater.deinterleave_index()
+    """
+    # 1 spatial orbital
+    assert slater.deinterleave_index(0, 1) == 0
+    assert slater.deinterleave_index(1, 1) == 1
+    # 2 spatial orbitals
+    assert slater.deinterleave_index(0, 2) == 0
+    assert slater.deinterleave_index(1, 2) == 2
+    assert slater.deinterleave_index(2, 2) == 1
+    assert slater.deinterleave_index(3, 2) == 3
+    # 3 spatial orbitals
+    assert slater.deinterleave_index(0, 3) == 0
+    assert slater.deinterleave_index(1, 3) == 3
+    assert slater.deinterleave_index(2, 3) == 1
+    assert slater.deinterleave_index(3, 3) == 4
+    assert slater.deinterleave_index(4, 3) == 2
+    assert slater.deinterleave_index(5, 3) == 5

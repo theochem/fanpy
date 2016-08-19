@@ -423,3 +423,45 @@ def deinterleave(shuffled_sd, norbs):
         if gmpy2.bit_test(shuffled_sd, 2 * i + 1):
             block_sd |= 1 << i + norbs
     return block_sd
+
+def interleave_index(i, nspatial):
+    """ Converts index of an orbital in block sd notation to that of interleaved
+    sd notation
+
+    Parameter
+    ---------
+    i : int
+        Index of orbital in block sd notation
+    nspatial : int
+        Number of spatial orbitals
+
+    Returns
+    -------
+    Index of the same orbital in interleaved notation
+    """
+    assert 0 <= i < 2*nspatial, 'Given index is not valid with the number of spatial orbitals'
+    if i < nspatial:
+        return 2*i
+    else:
+        return 2*(i - nspatial) + 1
+
+def deinterleave_index(i, nspatial):
+    """ Converts index of an orbital in interleaved sd notation to that of block
+    sd notation
+
+    Parameter
+    ---------
+    i : int
+        Index of orbital in interleaved sd notation
+    nspatial : int
+        Number of spatial orbitals
+
+    Returns
+    -------
+    Index of the same orbital in block notation
+    """
+    assert 0 <= i < 2*nspatial, 'Given index is not valid with the number of spatial orbitals'
+    if i % 2 == 0:
+        return i//2
+    else:
+        return i//2 + nspatial
