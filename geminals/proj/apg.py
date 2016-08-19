@@ -163,7 +163,8 @@ class APG(ProjectionWavefunction):
         self.assign_adjacency(adjacency=adjacency)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
-        self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
+        if params is None:
+            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}
