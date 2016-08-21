@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from gmpy2 import mpz
+from gmpy2 import mpz, bit_scan1
 import itertools as it
 
 from .. import slater
@@ -280,45 +280,38 @@ class APseqG(ProjectionWavefunction):
         """
         # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = mpz(sd)
-        # get indices of the occupied orbitals
-        occ_indices = slater.occ_indices(sd)
         # because orbitals are ordered by alpha orbs then beta orbs,
         # we need to interleave/shuffle them to pair the alpha and the beta orbitals together
-        occ_interleave_indices = np.array([slater.interleave_index(i, self.nspatial) for i in occ_indices])
-        # find differences between any two indices
-        indices_diff = np.abs(occ_interleave_indices - occ_interleave_indices[:, np.newaxis])
-
+        sd = slater.interleave(sd, self.nspatial)
         # find orbital indices that correspond to each sequence
         orb_pairs = {}
         for seq in self.seq_list:
-            # find orbital that correspond to sequence order
-            # NOTE: these are given as indices of indices_diff
-            seq_orbs = np.where(np.triu(indices_diff) == seq + 1)
-            # store after pairing up the orbitals into pairs
-            for orb_pair in zip(*seq_orbs):
-                # remove selected orbitals from the occupied orbitals
-                indices_diff[orb_pair[0], :] = 0
-                indices_diff[:, orb_pair[0]] = 0
-                indices_diff[orb_pair[1], :] = 0
-                indices_diff[:, orb_pair[1]] = 0
-                # get these indices to the occupation indices
-                orb_pair = tuple(occ_interleave_indices[i] for i in orb_pair)
-                # get these indices to the occupation indices
-                orb_pairs[orb_pair] = None
+            occ_index = bit_scan1(sd, 0)
+            while occ_index is not None:
+                next_index = occ_index+seq+1
+                if slater.occ(sd, next_index):
+                    sd = slater.annihilate(sd, occ_index, next_index)
+                    orb_pairs[(occ_index, next_index)] = None
+                    if sd is None:
+                        break
+                occ_index = bit_scan1(sd, occ_index+1)
 
-    
         # convert orbital indices to geminal indices
         gem_indices = []
-        for index in orb_pairs:
-            # unshuffle the indices
-            index = tuple(slater.deinterleave_index(i, self.nspatial) for i in index)
+        for orbpair in orb_pairs:
+            # unshuffle (and sort) the indices
+            orbpair = sorted(slater.deinterleave_index(i, self.nspatial) for i in orbpair)
+            # convert to tuple (because lists are not hashable)
+            orbpair = tuple(orbpair)
+            # store indices
             try:
-                gem_indices.append(self.dict_orbpair_gem[index])
+                gem_indices.append(self.dict_orbpair_gem[orbpair])
             except KeyError:
+                # if orbpair not in dictionary
                 if raise_error:
-                    raise KeyError('Cannot find key {0} in dictionary dict_orbpair_gem'.format(index))
-                self.dict_orbpair_gem[index] = self.ngem
-                self.dict_gem_orbpair[self.ngem] = index
+                    raise KeyError('Cannot find key {0} in dictionary dict_orbpair_gem'.format(orbpair))
+                self.dict_orbpair_gem[orbpair] = self.ngem
+                self.dict_gem_orbpair[self.ngem] = orbpair
                 gem_indices.append(self.ngem)
 
         return gem_indices

@@ -1,9 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
-np.random.seed(2012)
-
 from geminals.proj.apseqg import APseqG
-from geminals.proj.apg import APG
 from geminals.hort import hartreefock
 
 def test_find_gem_indices():
@@ -13,33 +10,36 @@ def test_find_gem_indices():
         def __init__(self):
             self.dict_orbpair_gem = {}
             self.dict_gem_orbpair = {}
+
     # sequence 0
     apseq = TempAPseqG()
     apseq.find_gem_indices(0b00110011, raise_error=False)
-    answer = [(0, 4), (1, 4), (1,5)]
+    answer = [(0, 4), (1, 5)]
     for gem in answer:
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
+
     # sequence 1
     apseq.seq_list = [1]
     apseq.dict_orbpair_gem = {}
     apseq.dict_gem_orbpair = {}
     apseq.find_gem_indices(0b00110011, raise_error=False)
-    answer = [(0, 1), (4,5)]
+    answer = [(0, 1), (4, 5)]
     for gem in answer:
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
-    assert len(answer) == len(apseq.dict_orbpair_gem)
+
     # sequence 0 and 1
     apseq.seq_list = [0, 1]
     apseq.dict_orbpair_gem = {}
     apseq.dict_gem_orbpair = {}
     apseq.find_gem_indices(0b00110011, raise_error=False)
-    answer = [(0, 4), (1, 4), (1,5)]
-    # because orbitals (0, 1, 4, 5) must be removed after they are selected once
+    answer = [(0, 4), (1, 5)]
+    # because orbitals (0, 4, 1, 5) are selected already in sequence 0
     for gem in answer:
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
+
     # another example
     apseq.seq_list = [0, 1]
     apseq.dict_orbpair_gem = {}
@@ -48,6 +48,17 @@ def test_find_gem_indices():
     answer = [(0, 4), (5, 6)]
     # first, the orbitals 0 and 4 are removed from seq 0 selection
     # then, only orbitals 5 and 6 are availble for seq 1 selection
+    for gem in answer:
+        assert gem in apseq.dict_orbpair_gem.keys()
+    assert len(answer) == len(apseq.dict_orbpair_gem)
+
+    # another example
+    apseq.seq_list = [1]
+    apseq.dict_orbpair_gem = {}
+    apseq.dict_gem_orbpair = {}
+    apseq.find_gem_indices(0b00110110, raise_error=False)
+    answer = [(1, 2), (4, 5)]
+    print(apseq.dict_orbpair_gem.keys())
     for gem in answer:
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
@@ -61,13 +72,16 @@ def test_config_gem_config():
         def __init__(self):
             self.dict_orbpair_gem = {}
             self.dict_gem_orbpair = {}
+    # NOTE: pspace is 0b00110101
+
     # sequence 0
     apseq = TempAPseqG()
     apseq.config_gem_orbpair()
-    answer = [(0, 4), (1, 4), (1, 5), (2, 5), (2, 6), (3, 6), (3, 7)]
+    answer = [(0, 4), (1, 5), (2, 6), (3, 7), (2, 5), (3, 6), (1, 4)]
     for gem in answer:
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
+
     # sequence 1
     apseq.seq_list = [1]
     apseq.dict_orbpair_gem = {}
