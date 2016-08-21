@@ -383,6 +383,9 @@ class APseqG(ProjectionWavefunction):
 
         # find the relevant geminal indices
         gem_indices = self.find_gem_indices(sd, raise_error=True)
+        # FIXME: THIS MUST BE CHECKED
+        if len(gem_indices) < self.npair:
+            return 0.0
 
         # build geminal coefficient
         gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)

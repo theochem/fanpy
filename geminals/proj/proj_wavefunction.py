@@ -557,7 +557,6 @@ class ProjectionWavefunction(Wavefunction):
         """
         # Update the coefficient vector
         self.params[:] = x
-        print(x)
         # Clear cache
         self.cache = {}
         self.d_cache = {}
