@@ -5,7 +5,7 @@ from gmpy2 import mpz, bit_scan1
 import itertools as it
 
 from .. import slater
-from ..math_tools import permanent_combinatoric
+from ..math_tools import permanent_ryser
 from ..sd_list import ci_sd_list
 
 from .proj_wavefunction import ProjectionWavefunction
@@ -393,7 +393,7 @@ class APseqG(ProjectionWavefunction):
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_combinatoric(gem_coeffs[:, gem_indices])
+            val = permanent_ryser(gem_coeffs[:, gem_indices])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
@@ -408,7 +408,7 @@ class APseqG(ProjectionWavefunction):
                 if len(row_inds) == 0 and len(col_inds) == 0:
                     val += 1
                 else:
-                    val += permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
+                    val += permanent_ryser(gem_coeffs[row_inds][:, col_inds])
                 self.d_cache[(sd, deriv)] = val
         return val
 
