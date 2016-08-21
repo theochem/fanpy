@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from gmpy2 import mpz, popcount
+from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
@@ -136,9 +136,9 @@ class APfsG(ProjectionWavefunction):
         """
         init_pair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
         init_unpair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        init_spatial = np.hstack((init_pair, init_unpair)).flatten()
         init_spin = np.eye(self.nspatial,
                            self.nspatial, dtype=self.dtype).flatten()
-        init_spatial = np.hstack((init_pair, init_unpair)).flatten()
         return np.hstack((init_spatial, init_spin))
 
     def compute_pspace(self, num_sd):
@@ -196,14 +196,14 @@ class APfsG(ProjectionWavefunction):
         """
         sd = mpz(sd)
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        if popcount(alpha_sd) != popcount(beta_sd):
-            return 0.
         occ_alpha_indices = slater.occ_indices(alpha_sd)
         occ_beta_indices = slater.occ_indices(beta_sd)
-        pair_sd = alpha_sd & beta_sd
-        unpair_sd = alpha_sd ^ beta_sd
+        if len(occ_alpha_indices) != len(occ_beta_indices):
+            return 0.0
+        pair_sd = slater.shared(alpha_sd, beta_sd)
         pair_list = slater.occ_indices(pair_sd)
-        unpair_list = slater.occ_indices(unpair_sd)
+        diff_alpha_occ, diff_beta_occ  =  slater.diff(alpha_sd, beta_sd)
+        unpair_list = diff_alpha_occ + diff_beta_occ
         # build the occupations of bosons and fermions
         boson_list = list(pair_list) + [i + len(pair_list) for i in unpair_list]
         # build geminal and sd coefficient
@@ -224,7 +224,7 @@ class APfsG(ProjectionWavefunction):
                 if col_to_remove in boson_list:
                     row_inds = [i for i in range(boson_part.shape[0]) if i != row_to_remove]
                     col_inds = [i for i in boson_list if i != col_to_remove]
-                    if len(row_inds) == len(col_inds) == 0:
+                    if len(row_inds) == 0 or len(col_inds) == 0:
                         val = 1
                     else:
                         val = permanent_ryser(boson_part[row_inds, :][:, col_inds])
