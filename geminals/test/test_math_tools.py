@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+from nose.tools import assert_raises
 
 import numpy as np
 
@@ -16,7 +17,9 @@ def test_permanent_combinatoric():
 
     assert np.allclose(permanent_combinatoric(np.arange(1, 10).reshape(3, 3)), 450)
     assert np.allclose(permanent_combinatoric(np.arange(1, 13).reshape(3, 4)), 3900)
-
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0,0))))
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(1,0))))
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0,1))))
 
 def test_permanent_ryser():
 
@@ -26,6 +29,9 @@ def test_permanent_ryser():
                 permanent_ryser(np.arange(1, i * j + 1).reshape(i, j)),
                 permanent_combinatoric(np.arange(1, i * j + 1).reshape(i, j)),
             )
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0,0))))
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(1,0))))
+    assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0,1))))
 
 
 def test_permanent_borchardt_square():

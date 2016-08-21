@@ -31,6 +31,8 @@ def permanent_combinatoric(matrix):
 
     permanent = 0.0
     m, n = matrix.shape
+    if m == 0 or n == 0:
+        raise ValueError('Given matrix has no numbers')
     if m > n:
         m, n = n, m
         A = matrix.transpose()
@@ -49,6 +51,8 @@ def permanent_ryser(matrix):
     # Ryser formula (Bjorklund et al. 2009, On evaluation of permanents) works
     # on rectangular matrices A(m, n) where m <= n.
     m, n = matrix.shape
+    if m == 0 or n == 0:
+        raise ValueError('Given matrix has no numbers')
     if m != n:
         if m > n:
             matrix = matrix.transpose()
