@@ -19,6 +19,8 @@ def test_ap1rog_wavefunction_h2():
     # see if we can reproduce HF numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     ap1rog.params *= 0.0
+    ap1rog.cache = {}
+    ap1rog.d_cache = {}
     assert abs(ap1rog.compute_energy(include_nuc=False, ref_sds=ap1rog.default_ref_sds)-(-1.84444667247)) < 1e-7
     # old code results
     old_results = old_ap1rog(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
@@ -54,6 +56,8 @@ def test_ap1rog_wavefunction_lih():
     # see if we can reproduce HF numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     ap1rog.params *= 0.0
+    ap1rog.cache = {}
+    ap1rog.d_cache = {}
     assert abs(ap1rog.compute_energy(include_nuc=False, ref_sds=ap1rog.default_ref_sds)-(-8.9472891719)) < 1e-7
     # old code results
     old_results = old_ap1rog(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)

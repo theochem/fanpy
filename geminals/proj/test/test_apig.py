@@ -19,6 +19,8 @@ def test_apig_wavefunction_h2():
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     apig.params[:-1] = apig.template_coeffs.flatten()
+    apig.cache = {}
+    apig.d_cache = {}
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Compare APIG energy with old code
     # Solve with Jacobian using energy as a parameter
@@ -46,6 +48,8 @@ def test_apig_wavefunction_lih():
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     apig.params[:-1] = apig.template_coeffs.flatten()
+    apig.cache = {}
+    apig.d_cache = {}
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-8.9472891719)) < 1e-7
     # Compare APIG energy with old code
     # Solve with Jacobian using energy as a parameter

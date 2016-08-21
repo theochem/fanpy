@@ -61,6 +61,8 @@ def test_apg_wavefunction_h2():
     # see if we can reproduce HF numbers
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params *= 0.0
+    apg.cache = {}
+    apg.d_cache = {}
     apg.params[apg.dict_orbpair_gem[(0, apg.nspatial)]] = 1.0
     assert abs(apg.compute_energy(include_nuc=False, ref_sds=apg.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Compare APG energy with old code
