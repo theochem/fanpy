@@ -333,11 +333,11 @@ class ProjectionWavefunction(Wavefunction):
         if params is None:
             params = self.template_coeffs.flatten()
             # set scale
-            scale = 1.0 / ncoeffs
+            scale = 0.2 / ncoeffs
             # add random noise to template
             params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
             if params.dtype == np.complex128:
-                params[:ncoeffs] += 1j * scale * (np.random.random(ncoeffs) - 0.5)
+                params[:ncoeffs] += 0.001j * scale * (np.random.random(ncoeffs) - 0.5)
             # set energy
             # NOTE: the energy cannot be set with compute_energy right now because
             # certain terms must be defined for compute_hamiltonian to work
@@ -472,7 +472,7 @@ class ProjectionWavefunction(Wavefunction):
                 \frac{\sum_i \big< \Phi_i \big| \Psi \big> \big< \Phi_i \big| H \big| \Psi \big>}{\sum_j \big< \Phi_j \big| \Psi \big>^2}
             is calculated
             This is only useful if the energy is not a parameter
-            Default is the self.ref_sd
+            Default is the self.default_ref_sds
         include_nuc : bool
             Flag to include nuclear nuclear repulsion
             Default is False
@@ -557,6 +557,7 @@ class ProjectionWavefunction(Wavefunction):
         """
         # Update the coefficient vector
         self.params[:] = x
+        print(x)
         # Clear cache
         self.cache = {}
         self.d_cache = {}
@@ -569,7 +570,7 @@ class ProjectionWavefunction(Wavefunction):
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy * self.overlap(sd)
         # Add normalization constraint
-        obj[-1] = self.compute_norm() - 1.0
+        obj[-1] = (self.compute_norm() - 1.0)*self.params.size*(len(self.pspace)+1)*1000
         return obj
 
     def jacobian(self, x):
@@ -608,7 +609,7 @@ class ProjectionWavefunction(Wavefunction):
                 jac[i, j] = (self.compute_hamiltonian(sd, deriv=j) -
                              energy * self.overlap(sd, deriv=j) - d_energy * self.overlap(sd))
             # Add normalization constraint
-            jac[-1, j] = self.compute_norm(deriv=j)
+            jac[-1, j] = self.compute_norm(deriv=j)*self.params.size*(len(self.pspace)+1)*1000
         return jac
 
     #
