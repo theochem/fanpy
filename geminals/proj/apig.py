@@ -242,6 +242,7 @@ class APIG(ProjectionWavefunction):
         """
         return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
 
+    # FIXME: remove
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
         ProjectionWavefunction.compute_norm
@@ -261,7 +262,7 @@ class APIG(ProjectionWavefunction):
         # set attributes
         self.params[:-1] = gem_coeffs.flatten()
         # empty cache
-        for sd in self.ref_sd:
+        for sd in self.default_ref_sds:
             del self.cache[sd]
             for i in (j for j in self.d_cache.keys() if j[0] == sd):
                 del self.d_cache[i]

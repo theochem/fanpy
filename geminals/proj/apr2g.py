@@ -280,6 +280,7 @@ class APr2G(ProjectionWavefunction):
         """
         return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
 
+    # FIXME: remove
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
         ProjectionWavefunction.compute_norm
@@ -299,7 +300,7 @@ class APr2G(ProjectionWavefunction):
         # set attributes
         self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
         # FIXME: need smarter caching (just delete the ones affected)
-        for sd in self.ref_sd:
+        for sd in self.default_ref_sds:
             del self.cache[sd]
             # This requires d_cache to be a dictionary of dictionary
             # self.d_cache[sd] = {}
