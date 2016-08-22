@@ -375,12 +375,17 @@ def interleave(block_sd, norbs):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
-    shuffled_sd = gmpy2.mpz(0)
-    for i in range(norbs):
-        if gmpy2.bit_test(block_sd, i):
-            shuffled_sd |= 1 << 2 * i
-        if gmpy2.bit_test(block_sd, i + norbs):
-            shuffled_sd |= 1 << 2 * i + 1
+    # shuffled_sd = gmpy2.mpz(0)
+    # for i in range(norbs):
+    #     if gmpy2.bit_test(block_sd, i):
+    #         shuffled_sd |= 1 << 2 * i
+    #     if gmpy2.bit_test(block_sd, i + norbs):
+    #         shuffled_sd |= 1 << 2 * i + 1
+    sd_bit = bin(block_sd)[2:]
+    sd_bit = '0'*(norbs*2-len(sd_bit)) + sd_bit
+    alpha_bit, beta_bit = sd_bit[norbs:], sd_bit[:norbs]
+    shuffled_bit = '0b'+''.join(''.join(i) for i in zip(beta_bit, alpha_bit))
+    shuffled_sd = gmpy2.mpz(shuffled_bit)
     return shuffled_sd
 
 
@@ -416,12 +421,17 @@ def deinterleave(shuffled_sd, norbs):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
-    block_sd = gmpy2.mpz(0)
-    for i in range(norbs):
-        if gmpy2.bit_test(shuffled_sd, 2 * i):
-            block_sd |= 1 << i
-        if gmpy2.bit_test(shuffled_sd, 2 * i + 1):
-            block_sd |= 1 << i + norbs
+    # block_sd = gmpy2.mpz(0)
+    # for i in range(norbs):
+    #     if gmpy2.bit_test(shuffled_sd, 2 * i):
+    #         block_sd |= 1 << i
+    #     if gmpy2.bit_test(shuffled_sd, 2 * i + 1):
+    #         block_sd |= 1 << i + norbs
+    sd_bit = bin(shuffled_sd)[2:]
+    alpha_bit, beta_bit = sd_bit[-1::-2][::-1], sd_bit[-2::-2][::-1]
+    block_bit = '0b' + beta_bit + alpha_bit
+    block_sd = gmpy2.mpz(block_bit)
+
     return block_sd
 
 def interleave_index(i, nspatial):
