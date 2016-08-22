@@ -211,9 +211,10 @@ class ProjectionWavefunction(Wavefunction):
         # Arguments handled by base Wavefunction class
         dtype=None,
         nuc_nuc=None,
-        # Arguments handled by FullCI class
         params=None,
         pspace=None,
+        # Arguments for memory
+        save_params=False
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -222,6 +223,7 @@ class ProjectionWavefunction(Wavefunction):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
+        self.save_params = save_params
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         if params is None:
@@ -557,6 +559,9 @@ class ProjectionWavefunction(Wavefunction):
         """
         # Update the coefficient vector
         self.params[:] = x
+        # save params
+        if self.save_params:
+            np.save('{0}_temp.npy'.format(self.__class__.__name__), self.params)
         # Clear cache
         self.cache = {}
         self.d_cache = {}
