@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import numpy as np
+import os
 from gmpy2 import mpz
 from scipy.optimize import root, least_squares
 
@@ -280,6 +281,10 @@ class ProjectionWavefunction(Wavefunction):
 
         # Solve
         result = root(self.objective, self.params, **options)
+        # Save results
+        if self.save_params:
+            np.save('{0}.npy'.format(self.__class__.__name__), self.params)
+            os.remove('{0}_temp.npy'.format(self.__class__.__name__))
         return result
 
     def _solve_least_squares(self, **kwargs):
