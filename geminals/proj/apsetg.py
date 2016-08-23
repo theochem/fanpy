@@ -147,7 +147,7 @@ class APsetG(APG):
                  params=None,
                  pspace=None,
                  # orbital sets
-                 dict_setind_orbs=None
+                 dict_setind_orbs=None,
                  # Arguments for saving parameters
                  save_params=False
     ):

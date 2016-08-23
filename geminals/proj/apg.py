@@ -151,7 +151,7 @@ class APG(ProjectionWavefunction):
                  params=None,
                  pspace=None,
                  # Adjacnecy
-                 adjacency=None
+                 adjacency=None,
                  # Arguments for saving parameters
                  save_params=False
     ):

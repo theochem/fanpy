@@ -130,7 +130,7 @@ class APseqG(ProjectionWavefunction):
                  params=None,
                  pspace=None,
                  # sequence list
-                 seq_list=None
+                 seq_list=None,
                  # Arguments for saving parameters
                  save_params=False
                  ):
