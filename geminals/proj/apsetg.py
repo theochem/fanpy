@@ -148,6 +148,8 @@ class APsetG(APG):
                  pspace=None,
                  # orbital sets
                  dict_setind_orbs=None
+                 # Arguments for saving parameters
+                 save_params=False
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -156,6 +158,7 @@ class APsetG(APG):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
+        self.save_params = save_params
         self.assign_orbsets(dict_setind_orbs=dict_setind_orbs)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)

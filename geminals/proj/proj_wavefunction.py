@@ -214,7 +214,7 @@ class ProjectionWavefunction(Wavefunction):
         nuc_nuc=None,
         params=None,
         pspace=None,
-        # Arguments for memory
+        # Arguments for saving parameters
         save_params=False
     ):
         super(ProjectionWavefunction, self).__init__(

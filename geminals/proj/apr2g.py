@@ -63,6 +63,8 @@ class APr2G(ProjectionWavefunction):
         params=None,
         ap1rog_params=None,
         pspace=None,
+        # Arguments for saving parameters
+        save_params=False
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -71,6 +73,7 @@ class APr2G(ProjectionWavefunction):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
+        self.save_params = save_params
         self.assign_params(params=params, ap1rog_params=ap1rog_params)
         self.assign_pspace(pspace=pspace)
         if params is None and ap1rog_params is None:
