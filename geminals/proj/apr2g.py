@@ -114,7 +114,7 @@ class APr2G(ProjectionWavefunction):
         template_coeffs : np.ndarray(K, )
 
         """
-        params = np.zeros(self.npair + self.nspatial*2 + 1)
+        params = np.zeros(self.npair + self.nspatial*2)
         # set epsilons to 1
         params[self.npair:self.npair+self.nspatial] = 1.0
         # set zetas such that first npair columns are ones
