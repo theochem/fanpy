@@ -209,30 +209,30 @@ def ci_matrix(self, orb_type):
             else:
                 diff_order = len(diff_sd0)
 
-            # two sd's are different by double excitation
-            if diff_order == 2:
-                i, j = diff_sd0
-                k, l = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
-                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
-
-            # two sd's are different by single excitation
-            elif diff_order == 1:
-                i, = diff_sd0
-                k, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_H_value(H, i, k, orb_type=orb_type)
-                for j in shared_indices:
-                    if j != i:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, j, orb_type=orb_type)
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, k, orb_type=orb_type)
-
             # two sd's are the same
-            elif diff_order == 0:
+            if diff_order == 0:
                 for ic, i in enumerate(shared_indices):
                     ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
                     for j in shared_indices[ic + 1:]:
                         ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
                         ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+
+            # two sd's are different by single excitation
+            elif diff_order == 1:
+                i, = diff_sd0
+                a, = diff_sd1
+                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orb_type=orb_type)
+                for j in shared_indices:
+                    if j != i:
+                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orb_type=orb_type)
+                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orb_type=orb_type)
+
+            # two sd's are different by double excitation
+            elif diff_order == 2:
+                i, j = diff_sd0
+                a, b = diff_sd1
+                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orb_type=orb_type)
+                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orb_type=orb_type)
 
     # Make it Hermitian
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T

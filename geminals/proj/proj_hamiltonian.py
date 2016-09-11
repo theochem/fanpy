@@ -56,7 +56,7 @@ def hamiltonian(self, sd, orb_type, deriv=None):
                     coulomb += coeff*get_G_value(G, i, j, a, j, orb_type=orb_type)
                     exchange -= coeff*get_G_value(G, i, j, j, a, orb_type=orb_type)
     # sum over two electron excitation
-    for i,j in combinations(occ_indices, 2):
+    for i, j in combinations(occ_indices, 2):
         for a, b in combinations(vir_indices, 2):
             exc_sd = slater.excite(sd, i, j, a, b)
             coeff = self.overlap(exc_sd, deriv=deriv)
