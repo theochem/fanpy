@@ -13,7 +13,7 @@ doci_sd_list
 """
 
 
-def ci_sd_list(self, num_limit, exc_orders=[]):
+def ci_sd_list(self, num_limit, exc_orders=[], spin=None):
     """ Generates Slater determinants
 
     Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
@@ -31,6 +31,14 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
         Slater determinant)
         Slater determinants of the first excitation will be included first, second excitations
         included second, etc
+    spin : int, float, None
+        Total spin of the generated slater determinants
+        Default is no spin
+        0.5 is singlet, 1 is doublet, 1.5 is triplet, etc
+        If positive, then the number of alpha orbitals is greater than the
+        number of beta orbitals
+        If negative, then the number of alpha orbitals is less than the number
+        of beta orbitals
 
     Returns
     -------
@@ -51,7 +59,8 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
     # ASSUME: certain structure for civec
     # spin orbitals are ordered by energy
     ground = slater.ground(nelec, 2 * nspatial)
-    civec.append(ground)
+    if spin is None or spin == slater.get_spin(ground, nspatial):
+        civec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
     vir_indices = slater.vir_indices(ground, 2 * nspatial)
@@ -66,6 +75,8 @@ def ci_sd_list(self, num_limit, exc_orders=[]):
         for occ, vir in product(occ_combinations, vir_combinations):
             sd = slater.annihilate(ground, *occ)
             sd = slater.create(sd, *vir)
+            if spin is not None and spin != slater.get_spin(sd, nspatial):
+                continue
             civec.append(sd)
             count += 1
             if count >= num_limit:
@@ -105,6 +116,7 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
     Note
     ----
     Crashes if order of excitation is less than 0
+    DOCI is always singlet
     """
     nspatial = self.nspatial
     nelec = self.nelec

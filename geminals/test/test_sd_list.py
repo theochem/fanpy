@@ -66,7 +66,23 @@ def test_ci_sd_list():
                                                      gmpy2.mpz(0b111010),
                                                      gmpy2.mpz(0b010111),
                                                      gmpy2.mpz(0b110011)]
-
+    assert sd_list.ci_sd_list(test, 999, [1, 2], 0) == [gmpy2.mpz(0b011011),
+                                                        gmpy2.mpz(0b011101),
+                                                        gmpy2.mpz(0b101011),
+                                                        gmpy2.mpz(0b011110),
+                                                        gmpy2.mpz(0b110011),
+                                                        gmpy2.mpz(0b101101),
+                                                        gmpy2.mpz(0b110101),
+                                                        gmpy2.mpz(0b101110),
+                                                        gmpy2.mpz(0b110110)]
+    assert sd_list.ci_sd_list(test, 999, [1, 2], 0.5) == []
+    assert sd_list.ci_sd_list(test, 999, [1, 2], -0.5) == []
+    assert sd_list.ci_sd_list(test, 999, [1, 2], 1) == [gmpy2.mpz(0b001111),
+                                                        gmpy2.mpz(0b010111),
+                                                        gmpy2.mpz(0b100111)]
+    assert sd_list.ci_sd_list(test, 999, [1, 2], -1) == [gmpy2.mpz(0b111001),
+                                                         gmpy2.mpz(0b111010),
+                                                         gmpy2.mpz(0b111100)]
 
 def test_doci_sd_list():
     """ Tests sd_list.doci_sd_list
