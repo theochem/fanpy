@@ -267,3 +267,31 @@ def test_deinterleave_index():
     assert slater.deinterleave_index(3, 3) == 4
     assert slater.deinterleave_index(4, 3) == 2
     assert slater.deinterleave_index(5, 3) == 5
+
+def test_get_spin():
+    """
+    Test slater.get_spin
+    """
+    # 0 spatial orbital
+    assert_raises(lambda:slater.get_spin(0b0000, 0))
+    # 1 spatial orbital
+    assert slater.get_spin(0b00, 1) == 0
+    assert slater.get_spin(0b01, 1) == 0.5
+    assert slater.get_spin(0b10, 1) == -0.5
+    # 2 spatial orbital
+    assert slater.get_spin(0b0000, 2) == 0
+    assert slater.get_spin(0b0001, 2) == 0.5
+    assert slater.get_spin(0b0010, 2) == 0.5
+    assert slater.get_spin(0b0100, 2) == -0.5
+    assert slater.get_spin(0b1000, 2) == -0.5
+    assert slater.get_spin(0b0011, 2) == 1
+    assert slater.get_spin(0b0101, 2) == 0
+    assert slater.get_spin(0b1001, 2) == 0
+    assert slater.get_spin(0b0110, 2) == 0
+    assert slater.get_spin(0b1010, 2) == 0
+    assert slater.get_spin(0b1100, 2) == -1
+    assert slater.get_spin(0b0111, 2) == 0.5
+    assert slater.get_spin(0b1011, 2) == 0.5
+    assert slater.get_spin(0b1101, 2) == -0.5
+    assert slater.get_spin(0b1110, 2) == -0.5
+    assert slater.get_spin(0b1111, 2) == 0

@@ -31,6 +31,12 @@ interleave
     Converts Slater determinants from block form to shuffled form
 deinterleave
     Converts Slater determinants from shuffled form to block form
+interleave_index
+    Converts orbital index of Slater determinant in block form to shuffled form
+deinterleave_index
+    Converts orbital index of Slater determinant in shuffled form to block form
+get_spin
+    Returns the spin of the given slater determinant
 """
 
 
@@ -281,7 +287,7 @@ def diff(sd1, sd2):
     return (occ_indices(sd1_diff), occ_indices(sd2_diff))
 
 
-def combine_spin(alpha_bits, beta_bits, norbs):
+def combine_spin(alpha_bits, beta_bits, nspatial):
     """ Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
 
     Parameters
@@ -290,37 +296,37 @@ def combine_spin(alpha_bits, beta_bits, norbs):
         Integer that describes the occupation of alpha spin orbitals as a bitstring
     beta_bits : int
         Integer that describes the occupation of beta spin orbitals as a bitstring
-    norbs : int
+    nspatial : int
         Total number of spatial orbitals
 
     Returns
     -------
     block_sd : int
         Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than norbs correspond to the alpha spin orbitals
-        Indices greater than or equal to norbs correspond to the beta spin orbitals
+        Indices less than nspatial correspond to the alpha spin orbitals
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals
 
     Note
     ----
     Erratic behaviour if the total number of spatial orbitals is less than the the
     actual number (i.e. if there are any occupied orbitals with indices greater than
-    norbs)
+    nspatial)
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
-    return alpha_bits | (beta_bits << norbs)
+    assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
+    return alpha_bits | (beta_bits << nspatial)
 
 
-def split_spin(block_sd, norbs):
+def split_spin(block_sd, nspatial):
     """ Splits a Slater determinant into the alpha and beta parts
 
     Parameters
     ----------
     block_sd : int
         Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than norbs correspond to the alpha spin orbitals
-        Indices greater than or equal to norbs correspond to the beta spin orbitals
-    norbs : int
+        Indices less than nspatial correspond to the alpha spin orbitals
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals
+    nspatial : int
         Total number of spatial orbitals
 
     Returns
@@ -334,16 +340,16 @@ def split_spin(block_sd, norbs):
     ----
     Erratic behaviour if the total number of spatial orbitals is less than the the
     actual number (i.e. if there are any occupied orbitals with indices greater than
-    norbs)
+    nspatial)
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
-    alpha_bits = gmpy2.t_mod_2exp(block_sd, norbs)
-    beta_bits = block_sd >> norbs
+    assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
+    alpha_bits = gmpy2.t_mod_2exp(block_sd, nspatial)
+    beta_bits = block_sd >> nspatial
     return (alpha_bits, beta_bits)
 
 
-def interleave(block_sd, norbs):
+def interleave(block_sd, nspatial):
     """ Turns sd from block form to the shuffled form
 
     Block form:
@@ -355,9 +361,9 @@ def interleave(block_sd, norbs):
     ----------
     block_sd : int
         Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than norbs correspond to the alpha spin orbitals
-        Indices greater than or equal to norbs correspond to the beta spin orbitals
-    norbs : int
+        Indices less than nspatial correspond to the alpha spin orbitals
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals
+    nspatial : int
         Total number of spatial orbitals
 
     Returns
@@ -371,25 +377,25 @@ def interleave(block_sd, norbs):
     ----
     Erratic behaviour if the total number of spatial orbitals is less than the the
     actual number (i.e. if there are any occupied orbitals with indices greater than
-    norbs)
+    nspatial)
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
     # shuffled_sd = gmpy2.mpz(0)
-    # for i in range(norbs):
+    # for i in range(nspatial):
     #     if gmpy2.bit_test(block_sd, i):
     #         shuffled_sd |= 1 << 2 * i
-    #     if gmpy2.bit_test(block_sd, i + norbs):
+    #     if gmpy2.bit_test(block_sd, i + nspatial):
     #         shuffled_sd |= 1 << 2 * i + 1
     sd_bit = bin(block_sd)[2:]
-    sd_bit = '0'*(norbs*2-len(sd_bit)) + sd_bit
-    alpha_bit, beta_bit = sd_bit[norbs:], sd_bit[:norbs]
+    sd_bit = '0'*(nspatial*2-len(sd_bit)) + sd_bit
+    alpha_bit, beta_bit = sd_bit[nspatial:], sd_bit[:nspatial]
     shuffled_bit = '0b'+''.join(''.join(i) for i in zip(beta_bit, alpha_bit))
     shuffled_sd = gmpy2.mpz(shuffled_bit)
     return shuffled_sd
 
 
-def deinterleave(shuffled_sd, norbs):
+def deinterleave(shuffled_sd, nspatial):
     """ Turns sd from shuffled form to the block form
 
     Shuffled form:
@@ -403,32 +409,34 @@ def deinterleave(shuffled_sd, norbs):
         Integer that describes the occupation of a Slater determinant as a bitstring
         Odd indices correspond to the alpha spin orbitals
         Even indices correspond to the beta spin orbitals
-    norbs : int
+    nspatial : int
         Total number of spatial orbitals
 
     Returns
     -------
     block_sd : int
         Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than norbs correspond to the alpha spin orbitals
-        Indices greater than or equal to norbs correspond to the beta spin orbitals
+        Indices less than nspatial correspond to the alpha spin orbitals
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals
 
     Note
     ----
     Erratic behaviour if the total number of spatial orbitals is less than the the
     actual number (i.e. if there are any occupied orbitals with indices greater than
-    norbs)
+    nspatial)
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    assert norbs > 0, 'Number of spatial orbitals must be greater than 0'
+    assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
     # block_sd = gmpy2.mpz(0)
-    # for i in range(norbs):
+    # for i in range(nspatial):
     #     if gmpy2.bit_test(shuffled_sd, 2 * i):
     #         block_sd |= 1 << i
     #     if gmpy2.bit_test(shuffled_sd, 2 * i + 1):
-    #         block_sd |= 1 << i + norbs
+    #         block_sd |= 1 << i + nspatial
     sd_bit = bin(shuffled_sd)[2:]
     alpha_bit, beta_bit = sd_bit[-1::-2][::-1], sd_bit[-2::-2][::-1]
+    alpha_bit  = '0'*(nspatial - len(alpha_bit)) + alpha_bit
+    beta_bit  = '0'*(nspatial - len(beta_bit)) + beta_bit
     block_bit = '0b' + beta_bit + alpha_bit
     block_sd = gmpy2.mpz(block_bit)
 
@@ -475,3 +483,22 @@ def deinterleave_index(i, nspatial):
         return i//2
     else:
         return i//2 + nspatial
+
+def get_spin(sd, nspatial):
+    """ Splits a Slater determinant into the alpha and beta parts
+
+    Parameters
+    ----------
+    sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    nspatial : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    spin : int
+        Spin of the given slaterdeterminant
+
+    """
+    alpha_bits, beta_bits = split_spin(sd, nspatial)
+    return (0.5)*(total_occ(alpha_bits) - total_occ(beta_bits))
