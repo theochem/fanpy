@@ -128,6 +128,7 @@ class CIWavefunction(Wavefunction):
             # Arguments handled by FullCI class
             nci=None,
             civec=None,
+            spin=None
     ):
 
         super(CIWavefunction, self).__init__(
@@ -138,6 +139,7 @@ class CIWavefunction(Wavefunction):
             nuc_nuc=nuc_nuc,
         )
         self.assign_nci(nci=nci)
+        self.assign_spin(spin=spin)
         self.assign_civec(civec=civec)
         self.sd_coeffs = np.zeros([self.nci, self.nci])
         self._energy = np.zeros(self.nci)
@@ -169,6 +171,10 @@ class CIWavefunction(Wavefunction):
         ----------
         nci : int
             Number of configuratons
+
+        Note
+        ----
+        nci is also modified in assign_civec
         """
         #FIXME: cyclic dependence on civec
         if nci is None:
@@ -176,6 +182,22 @@ class CIWavefunction(Wavefunction):
         if not isinstance(nci, int):
             raise TypeError('Number of determinants must be an integer')
         self.nci = nci
+
+    def assign_spin(self, spin=None):
+        """ Sets the spin of the projection determinants
+
+        Parameters
+        ----------
+        spin : int
+            Total spin of the wavefunction
+            Default is no spin (all spins possible)
+            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
+            Positive spin means that there are more alpha orbitals than beta orbitals
+            Negative spin means that there are more beta orbitals than alpha orbitals
+        """
+        if spin is not None and not isinstance(spin, int):
+            raise TypeError('Invalid spin of the wavefunction')
+        self.spin = spin
 
     def assign_civec(self, civec=None):
         """ Sets the Slater determinants used in the wavefunction
@@ -192,6 +214,9 @@ class CIWavefunction(Wavefunction):
         if not isinstance(civec, (list, tuple)):
             raise TypeError("civec must be a list or a tuple")
         self.civec = tuple(civec)
+        # NOTE: nci is modified here!!!
+        if len(civec) != self.nci:
+            self.nci = len(civec)
 
     #
     # Computation methods

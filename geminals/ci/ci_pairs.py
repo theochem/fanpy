@@ -67,6 +67,26 @@ class CIPairs(CIWavefunction):
         num_singles = binomial(self.npair, 1) * binomial(self.nspatial - self.npair, 1)
         return 1 + num_singles
 
+    def assign_spin(self, spin=None):
+        """ Sets the spin of the projection determinants
+
+        Parameters
+        ----------
+        spin : int
+            Total spin of the wavefunction
+            Default is no spin (all spins possible)
+            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
+            Positive spin means that there are more alpha orbitals than beta orbitals
+            Negative spin means that there are more beta orbitals than alpha orbitals
+        """
+        if spin is None:
+            spin = 0
+        if not isinstance(spin, int):
+            raise TypeError('Invalid spin of the wavefunction')
+        if spin > 0:
+            raise ValueError('DOCI wavefunction can only be singlet')
+        self.spin = spin
+
     def compute_civec(self):
         """ Generates Slater determinants
 

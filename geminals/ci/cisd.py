@@ -80,7 +80,7 @@ class CISD(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return ci_sd_list(self, self.nci, [1, 2])
+        return ci_sd_list(self, self.nci, [1, 2], spin=self.spin)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis

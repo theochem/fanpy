@@ -41,11 +41,28 @@ def test_assign_nci():
     assert_raises(TypeError, lambda: test.assign_nci('123'))
 
 
+def test_assign_spin():
+    """
+    Tests CIWavefunction.assign_spin
+    """
+    test = TestCIWavefunction()
+    # None assigned
+    test.assign_spin()
+    assert test.spin is None
+    # Int assigned
+    test.spin = None
+    test.assign_spin(10)
+    assert test.spin == 10
+    # Other assigned
+    assert_raises(TypeError, lambda: test.assign_spin('123'))
+
+
 def test_assign_civec():
     """
     Tests CIWavefunction.assign_civec
     """
     test = TestCIWavefunction()
+    test.assign_nci()
     # None assigned
     test.civec = None
     test.assign_civec()
