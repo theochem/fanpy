@@ -57,9 +57,9 @@ def hartreefock(fn=None, basis=None, nelec=None,
         mol = fn
     else:
         try:
-            mol = IOData.from_file(file_path)
-        except IOError:
             mol = IOData.from_file(fn)
+        except IOError:
+            mol = IOData.from_file(file_path)
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
     npair = nelec // 2
 
