@@ -207,7 +207,7 @@ def ap1rog(fn=None,
     return output
 
 
-def gaussian_fchk(fchk_file, horton_internal=False):
+def gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True):
     """ Extracts the appropriate data from Gaussian fchk file (using HORTON)
 
     Parameters
@@ -215,6 +215,9 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     fchk_file : str
         Formatted chk file
     horton_internal : bool
+        Flag to return horton_internal variables
+    compute_nuc : bool
+        Flag to use HORTON to compute nuclear nuclear repulsion (otherwise not included)
 
 
     Returns
@@ -247,6 +250,12 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     one_ab += na
     two_ab = obasis.compute_electron_repulsion(mol.lf)._array
 
+    # compute nuclear nuclear repulsion
+    if compute_nuc:
+        nuc_nuc = compute_nucnuc(mol.coordinates, mol.pseudo_numbers)
+    else:
+        nuc_nuc = None
+
     # for spin orbitals
     one_mo = []
     two_mo = []
@@ -264,7 +273,7 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     # energy includes the nuclear nuclear repulsion
     output = {
         "energy": mol.energy,
-        "nuc_nuc": None,
+        "nuc_nuc": nuc_nuc,
         "H": tuple(one_mo),
         "G": tuple(two_mo),
     }
