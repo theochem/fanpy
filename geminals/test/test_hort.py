@@ -13,9 +13,14 @@ def test_hartreefock():
 
     assert isinstance(e_hf, float)
     assert isinstance(nuc_nuc, float)
-    assert isinstance(H, np.ndarray)
-    assert isinstance(G, np.ndarray)
-    assert np.all(np.array(H.shape + G.shape) == H.shape[0])
+    assert isinstance(H, tuple)
+    for i in H:
+        assert isinstance(i, np.ndarray)
+    assert isinstance(G, tuple)
+    for i in G:
+        assert isinstance(i, np.ndarray)
+    for matrix in H+G:
+        assert np.all(np.array(matrix.shape) == H[0].shape[0])
 
 
 def test_ap1rog():

@@ -34,8 +34,8 @@ def hartreefock(fn=None, basis=None, nelec=None,
     result : dict
         "energy", electronic energy
         "nuc_nuc", nuclear repulsion energy
-        "H", one-electron Hamiltonian;
-        "G", two-electron Hamiltonian;
+        "H", tuple of the one-electron Hamiltonian;
+        "G", tuple of the two-electron Hamiltonian;
         "horton_internal", dictionary that  contains horton's internal object
             "mol", horton.io.iodata.IOData object that contains fchk data
             "lf", horton.matrix.dense.LinalgFactory that creates horton matrices
@@ -102,7 +102,8 @@ def hartreefock(fn=None, basis=None, nelec=None,
     one = kin
     one.iadd(na)
     one_mo, two_mo = transform_integrals(one, two, "tensordot", orb)
-    one_mo, two_mo = one_mo[0]._array, two_mo[0]._array
+    one_mo = tuple(i._array for i in one_mo)
+    two_mo = tuple(i._array for i in two_mo)
 
     output = {
         # Collect HF energy and integrals
