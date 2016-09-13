@@ -1,17 +1,20 @@
 from __future__ import absolute_import, division, print_function
+import os
 import numpy as np
 np.random.seed(2012)
 
 from geminals.proj.apig import APIG
-from geminals.hort import hartreefock
+from geminals.hort import gaussian_fchk
 
 def test_apig_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
     # Old Code Value : -1.86968284431
     # FCI Value :      -1.87832550029
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
     nelec = 2
-    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -39,8 +42,10 @@ def test_apig_wavefunction_lih():
     # HF Value :       -8.9472891719
     # Old Code Value : -8.96353105152
     # FCI Value :      -8.96741814557
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_sto6g.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
     nelec = 4
-    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]

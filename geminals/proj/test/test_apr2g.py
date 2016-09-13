@@ -1,8 +1,9 @@
 from __future__ import absolute_import, division, print_function
+import os
+import numpy as np
 from geminals.proj.apr2g import APr2G
 from geminals.proj.ap1rog import AP1roG
-from geminals.hort import hartreefock
-import numpy as np
+from geminals.hort import gaussian_fchk
 
 
 def test_apr2g_wavefunction_h2():
@@ -10,8 +11,10 @@ def test_apr2g_wavefunction_h2():
     # HF Value :       -1.84444667247
     # Old code Value:  -1.86968286065
     # FCI Value :      -1.87832550029
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
     nelec = 2
-    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -36,8 +39,10 @@ def test_apr2g_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719
     # FCI Value :      -8.96741814557
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_sto6g.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
     nelec = 4
-    hf_dict = hartreefock(fn="test/lih.xyz", basis="sto-6g", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -61,8 +66,10 @@ def test_apr2g_wavefunction_lih():
 #     #### Li2 ####
 #     # HF Value :
 #     # FCI Value :
+#     data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_631g.fchk')
+#     hf_dict = gaussian_fchk(data_path)
+#
 #     nelec = 6
-#     hf_dict = hartreefock(fn="test/li2.xyz", basis="3-21g", nelec=nelec)
 #     E_hf = hf_dict["energy"]
 #     H = hf_dict["H"]
 #     G = hf_dict["G"]
@@ -79,6 +86,6 @@ def test_apr2g_wavefunction_lih():
 #     print('AP1roG energy', ap1rog.compute_energy())
 #     print('APr2G energy', energy)
 #     print('FCI value', '?')
-#     assert abs(energy - (-14.796070)) < 1e-7
+#    # assert abs(energy - (-14.796070)) < 1e-7
 #     assert False
 

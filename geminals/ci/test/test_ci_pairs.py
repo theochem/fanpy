@@ -1,17 +1,21 @@
 from __future__ import absolute_import, division, print_function
 
+import os
 from geminals.ci.ci_pairs import CIPairs
-from geminals.hort import hartreefock
+from geminals.hort import gaussian_fchk
 
 
 def test_cipairs_wavefunction():
     #### H2 ####
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
     nelec = 2
-    hf_dict = hartreefock(fn="test/h2.xyz", basis="6-31g**", nelec=nelec)
     E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
+    print(nuc_nuc)
     cipairs = CIPairs(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # compare HF numbers
     print(cipairs.compute_ci_matrix()[0, 0])
