@@ -1,6 +1,13 @@
 from __future__ import absolute_import, division, print_function
 import os
 from pyscf import gto, scf, ao2mo
+# needed for the generate_ci_matrix part
+import numpy as np
+import ctypes
+from pyscf.fci import cistring
+import pyscf.lib
+libfci = pyscf.lib.load_library('libfci')
+from geminals import slater
 
 def hartreefock(xyz_file, basis, is_unrestricted=False):
     """ Runs HF using PySCF
@@ -40,7 +47,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
         lines = [i.strip() for i in f.readlines()[2:]]
         atoms = ';'.join(lines)
     # get mol
-    mol = gto.M(atom=atoms, basis=basis)
+    mol = gto.M(atom=atoms, basis=basis, parse_arg=False, unit='angstrom')
     # get hf
     if is_unrestricted:
         raise NotImplementedError('Unrestricted or Generalized orbitals are not supported in this PySCF wrapper (yet).')
@@ -68,3 +75,113 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     return result
 
 
+def generate_ci_matrix(h1e, eri, nelec):
+    """ Constructs the CI Hamiltonian matrix using PySCF
+
+    Parameters
+    ----------
+    h1e : np.ndarray(K, K)
+        One electron integrals
+    eri : np.ndarray(K, K, K, K)
+        Two electron integrals
+    nelec : int
+        Number of electrons
+
+    Returns
+    -------
+    ci_matrix : np.ndarray(M, M)
+        CI Hamiltonian matrix
+    pspace : list(M)
+        List of the Slater determinants (in bitstring) that corresponds to each
+        row/column of the ci_matrix
+
+    NOTE
+    ----
+    The integrals must be given from PySCF calculations. I'm not so sure why at the
+    moment, but the HORTON's one and two electrons integrals differ from PySCF's.
+    I'm not quite sure what is the cause of this difference.
+    """
+    print('WARNING: Given integrals must be from PySCF (and not from HORTON)')
+    # adapted/copied from pyscf.fci.direct_spin1.make_hdiag
+    # number of spatial orbitals
+    norb = h1e.shape[0]
+    # number of electrons
+    if isinstance(nelec, (int, np.number)):
+        # beta
+        nelecb = nelec//2
+        # alpha
+        neleca = nelec - nelecb
+    else:
+        neleca, nelecb = nelec
+    # integrals
+    h1e = np.ascontiguousarray(h1e)
+    eri = np.ascontiguousarray(eri)
+    # Construct some sort of lookup table to link different bit string occupations
+    # to one another. i.e. From one bit string, and several indices that describes
+    # certain excitation, we can get the other bit string
+    # NOTE: PySCF treats alpha and the beta bits separately
+    link_indexa = cistring.gen_linkstr_index(range(norb), neleca)
+    link_indexb = cistring.gen_linkstr_index(range(norb), nelecb)
+    # number of Slater determinants
+    na = link_indexa.shape[0] # number of "alpha" Slater determinants
+    nb = link_indexb.shape[0] # number of "beta" Slater determinants
+    num_sd = na*nb # number of Slater determinants in total
+
+    occslista = np.asarray(link_indexa[:,:neleca,0], order='C')
+    occslistb = np.asarray(link_indexb[:,:nelecb,0], order='C')
+    # Diagonal of CI Hamiltonian matrix
+    hdiag = np.empty(num_sd)
+    # Coulomb integrals
+    jdiag = np.asarray(np.einsum('iijj->ij',eri), order='C')
+    # Exchange integrals
+    kdiag = np.asarray(np.einsum('ijji->ij',eri), order='C')
+    # Fucking Magic
+    libfci.FCImake_hdiag_uhf(hdiag.ctypes.data_as(ctypes.c_void_p),
+                             h1e.ctypes.data_as(ctypes.c_void_p),
+                             h1e.ctypes.data_as(ctypes.c_void_p),
+                             jdiag.ctypes.data_as(ctypes.c_void_p),
+                             jdiag.ctypes.data_as(ctypes.c_void_p),
+                             jdiag.ctypes.data_as(ctypes.c_void_p),
+                             kdiag.ctypes.data_as(ctypes.c_void_p),
+                             kdiag.ctypes.data_as(ctypes.c_void_p),
+                             ctypes.c_int(norb),
+                             ctypes.c_int(na), ctypes.c_int(nb),
+                             ctypes.c_int(neleca), ctypes.c_int(nelecb),
+                             occslista.ctypes.data_as(ctypes.c_void_p),
+                             occslistb.ctypes.data_as(ctypes.c_void_p))
+    hdiag = np.asarray(hdiag)
+
+    # adapted/copied from pyscf.fci.direct_spin1.pspace
+    # PySCF has a fancy indicing of Slater determinants (bitstrings to consecutive integers)
+    addr = np.arange(hdiag.size)
+    # again, separate the alpha and the bet aparts
+    addra, addrb = divmod(addr, nb)
+    # bit strings for the alpha and beta parts
+    stra = np.array([cistring.addr2str(norb,neleca,ia) for ia in addra],
+                       dtype=np.uint64)
+    strb = np.array([cistring.addr2str(norb,nelecb,ib) for ib in addrb],
+                       dtype=np.uint64)
+    # number of slater determinants
+    ci_matrix = np.zeros((num_sd, num_sd))
+    # More Fucking Magic
+    libfci.FCIpspace_h0tril(ci_matrix.ctypes.data_as(ctypes.c_void_p),
+                            h1e.ctypes.data_as(ctypes.c_void_p),
+                            eri.ctypes.data_as(ctypes.c_void_p),
+                            stra.ctypes.data_as(ctypes.c_void_p),
+                            strb.ctypes.data_as(ctypes.c_void_p),
+                            ctypes.c_int(norb), ctypes.c_int(num_sd))
+
+    for i in range(num_sd):
+        ci_matrix[i,i] = hdiag[addr[i]]
+    ci_matrix = pyscf.lib.hermi_triu(ci_matrix)
+
+    # convert  PySCF Slater determinant notation to one that we use
+    pspace = []
+    for i in addr:
+        # beta b/c the modulus corresponds to the "beta slater determinant" index
+        addra, addrb = divmod(i, nb)
+        alpha_bit = cistring.addr2str(norb, neleca, addra)
+        beta_bit = cistring.addr2str(norb, nelecb, addrb)
+        pspace.append(slater.combine_spin(alpha_bit, beta_bit, norb))
+
+    return ci_matrix, pspace
