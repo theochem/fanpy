@@ -3,7 +3,7 @@ import os
 import numpy as np
 from geminals.proj.apr2g import APr2G
 from geminals.proj.ap1rog import AP1roG
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 
 
 def test_apr2g_wavefunction_h2():

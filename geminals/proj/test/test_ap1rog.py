@@ -3,8 +3,8 @@ import os
 import numpy as np
 
 from geminals.proj.ap1rog import AP1roG
-from geminals.hort import gaussian_fchk
-from geminals.hort import ap1rog as old_ap1rog
+from geminals.wrapper.horton import gaussian_fchk
+from geminals.wrapper.horton import ap1rog as old_ap1rog
 
 def test_ap1rog_wavefunction_h2():
     #### H2 ####

@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
 from geminals.proj.apseqg import APseqG
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 import geminals.slater as slater
 
 def test_find_gem_indices():

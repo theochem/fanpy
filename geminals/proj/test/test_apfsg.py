@@ -4,7 +4,7 @@ import numpy as np
 np.random.seed(2012)
 
 from geminals.proj.apfsg import APfsG
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 
 def test_apfsg_wavefunction_h2():
     #### H2 ####

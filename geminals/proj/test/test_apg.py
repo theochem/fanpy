@@ -5,7 +5,7 @@ import numpy as np
 
 from geminals.proj.proj_wavefunction import ProjectionWavefunction
 from geminals.proj.apg import APG
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 
 def test_assign_adjacency():
     """

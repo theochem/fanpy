@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 from geminals.ci.ci_pairs import CIPairs
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 
 
 def test_cipairs_wavefunction():

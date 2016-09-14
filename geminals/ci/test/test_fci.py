@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
 from geminals.ci.fci import FCI
-from geminals.hort import gaussian_fchk
+from geminals.wrapper.horton import gaussian_fchk
 
 
 def test_fci_h2():
