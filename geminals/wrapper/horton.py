@@ -272,7 +272,7 @@ def gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True):
     # FIXME: need to get the nuclear nuclear repulsion
     # energy includes the nuclear nuclear repulsion
     output = {
-        "energy": mol.energy,
+        "energy": mol.energy - nuc_nuc if nuc_nuc else mol.energy,
         "nuc_nuc": nuc_nuc,
         "H": tuple(one_mo),
         "G": tuple(two_mo),
