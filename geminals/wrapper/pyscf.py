@@ -61,11 +61,12 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     E_elec = E_tot - E_nuc
     # mo_coeffs
     mo_coeff = hf.mo_coeff
+    # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
     # get 1e integral
-    H_ab = hf.get_hcore(mol)
+    H_ab = mol.intor_symmetric('cint1e_kin_sph') + mol.intor_symmetric('cint1e_nuc_sph')
     H = mo_coeff.T.dot(H_ab).dot(mo_coeff)
     # get 2e integral
-    eri = ao2mo.full(mol, mo_coeff, verbose=0)
+    eri = ao2mo.full(mol, mo_coeff, verbose=0, intor='cint2e_sph')
     G = ao2mo.restore(1, eri, mol.nao_nr())
     # results
     result = {'energy' : E_elec,
@@ -75,7 +76,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     return result
 
 
-def generate_ci_matrix(h1e, eri, nelec):
+def generate_ci_matrix(h1e, eri, nelec, is_chemist_notation=False):
     """ Constructs the CI Hamiltonian matrix using PySCF
 
     Parameters
@@ -86,6 +87,10 @@ def generate_ci_matrix(h1e, eri, nelec):
         Two electron integrals
     nelec : int
         Number of electrons
+    is_chemist_notation : bool
+        Flag to set the notation for the two electron integrals
+        By default, it is assumed that the Physicist's notation is used for the
+        two electron integrals
 
     Returns
     -------
@@ -94,14 +99,9 @@ def generate_ci_matrix(h1e, eri, nelec):
     pspace : list(M)
         List of the Slater determinants (in bitstring) that corresponds to each
         row/column of the ci_matrix
-
-    NOTE
-    ----
-    The integrals must be given from PySCF calculations. I'm not so sure why at the
-    moment, but the HORTON's one and two electrons integrals differ from PySCF's.
-    I'm not quite sure what is the cause of this difference.
     """
-    print('WARNING: Given integrals must be from PySCF (and not from HORTON)')
+    if not is_chemist_notation:
+        eri = np.einsum('ijkl->ikjl', eri)
     # adapted/copied from pyscf.fci.direct_spin1.make_hdiag
     # number of spatial orbitals
     norb = h1e.shape[0]

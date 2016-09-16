@@ -44,7 +44,7 @@ def test_generate_ci_matrix():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
 
-    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec)
+    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec, is_chemist_notation=True)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
@@ -60,6 +60,6 @@ def test_generate_ci_matrix():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
 
-    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec)
+    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec, is_chemist_notation=True)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
