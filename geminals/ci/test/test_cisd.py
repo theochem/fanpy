@@ -40,14 +40,17 @@ def test_cisd_lih():
     H = hf_dict["H"]
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
+
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = cisd.compute_ci_matrix()
+
     # compare HF numbers
     assert abs(ci_matrix[0, 0] + cisd.nuc_nuc - (-7.97926894940) < 1e-8)
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
     cisd()
+
     # compare with number from Gaussian
     print(cisd.compute_energy(), (-7.9980021297))
     assert abs(cisd.compute_energy() - (-7.9980021297)) < 1e-7
