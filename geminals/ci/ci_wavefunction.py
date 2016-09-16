@@ -8,6 +8,7 @@ from scipy.linalg import eigh
 
 from ..wavefunction import Wavefunction
 from .. import slater
+from .ci_matrix import is_alpha, spatial_index
 
 
 class CIWavefunction(Wavefunction):
@@ -195,7 +196,7 @@ class CIWavefunction(Wavefunction):
             Positive spin means that there are more alpha orbitals than beta orbitals
             Negative spin means that there are more beta orbitals than alpha orbitals
         """
-        if spin is not None and not isinstance(spin, int):
+        if spin is not None and not isinstance(spin, (int, float)):
             raise TypeError('Invalid spin of the wavefunction')
         self.spin = spin
 
@@ -213,6 +214,7 @@ class CIWavefunction(Wavefunction):
             civec = self.compute_civec()
         if not isinstance(civec, (list, tuple)):
             raise TypeError("civec must be a list or a tuple")
+        # FIXME: need to see if civec satisfies spin
         self.civec = tuple(civec)
         # NOTE: nci is modified here!!!
         if len(civec) != self.nci:
@@ -325,3 +327,150 @@ class CIWavefunction(Wavefunction):
         result = least_squares(self.objective, new_instance.x)
         new_instance.assign_civec(result.x)
         return new_instance
+
+
+    def get_density_matrix(self, notation='physicist', val_threshold=1e-4):
+        """ Returns the first and second order density matrices
+
+        Second order density matrix uses the Physicist's notation:
+        ..math::
+            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+        Chemist's notation is also implemented
+        ..math::
+            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+        but is commented out
+
+        Paramaters
+        ----------
+        val_threshold : float
+            If the term has weight that is less than this threshold, it is discarded
+        notation : 'physicist', 'chemist'
+            Flag for physicist or chemist notation
+            Default is Physicist's notation
+
+        Returns
+        -------
+        one_density : np.ndarray(self.nspatial, self.nspatial)
+            One electron density matrix
+        two_density : np.ndarray(self.nspatial, self.nspatial, self.nspatial, self.nspatial)
+            Two electron density matrix
+
+        NOTE
+        ----
+        I'm not 100% on the signs of the num. I feel like there is a sign change
+        missing in the singlet excitation two electron density part. e.g. if I have
+        ..math::
+            g_{ijkj} = G_{ijkj} a_i a_j a_i^\dagger a_j^\dagger a_k a_j a_j^\dagger a_k
+
+        there should be an extra negative sign due to changing position of
+        :math:`a_j` and :math:`a_i^\dagger`
+        """
+        ns = self.nspatial
+        assert notation in ['physicist', 'chemist']
+
+        temp_sorting = sorted(zip(self.sd_coeffs, self.civec), key=lambda x: abs(x[0]), reverse=True)
+        sorted_x, sorted_sd = zip(*temp_sorting)
+
+        one_density = np.zeros([ns]*2)
+        two_density = np.zeros([ns]*4)
+        for a, sd1 in enumerate(sorted_sd):
+            for b, sd2 in enumerate(sorted_sd[a:]):
+                b += a
+                num = sorted_x[a] * sorted_x[b]
+                # orbitals that are not shared by the two determinants
+                left_diff, right_diff = slater.diff(sd1, sd2)
+                shared_indices = slater.occ_indices(slater.shared(sd1, sd2))
+
+                # moving all the shared orbitals toward one another (in the middle)
+                num_transpositions_0 = sum(len([j for j in shared_indices if j<i]) for i in left_diff)
+                num_transpositions_1 = sum(len([j for j in shared_indices if j<i]) for i in right_diff)
+                num_transpositions = num_transpositions_0 + num_transpositions_1
+                sign = (-1)**num_transpositions
+                num *= sign
+
+                if len(right_diff) != len(left_diff) or len(left_diff) > 2:
+                    continue
+                # if they're the same
+                elif len(left_diff) == 0:
+                    for ind, i in enumerate(shared_indices):
+                        I = spatial_index(i, ns)
+                        one_density[I, I] += num
+                        for j in shared_indices[ind+1:]:
+                            J = spatial_index(j, ns)
+                            if notation == 'physicist':
+                                two_density[I, J, I, J] += num
+                                two_density[J, I, J, I] += num
+                            elif notation == 'chemist':
+                                two_density[I, I, J, J] += num
+                                two_density[J, J, I, I] += num
+                            if is_alpha(i, ns) == is_alpha(j, ns):
+                                if notation == 'physicist':
+                                    two_density[I, J, J, I] -= num
+                                    two_density[J, I, I, J] -= num
+                                elif notation == 'chemist':
+                                    two_density[I, J, I, J] -= num
+                                    two_density[J, I, J, I] -= num
+                # if single excitation
+                elif len(left_diff) == 1:
+                    i = left_diff[0]
+                    k = right_diff[0]
+                    I = spatial_index(i, ns)
+                    K = spatial_index(k, ns)
+                    if is_alpha(i, ns) == is_alpha(k, ns):
+                        one_density[I, K] += num
+                        one_density[K, I] += num
+                    for j in shared_indices:
+                        J = spatial_index(j, ns)
+                        if is_alpha(i, ns) == is_alpha(k, ns):
+                            if notation == 'physicist':
+                                two_density[I, J, K, J] += num
+                                two_density[J, I, J, K] += num
+                                two_density[K, J, I, J] += num
+                                two_density[J, K, J, I] += num
+                            elif notation == 'chemist':
+                                two_density[I, K, J, J] += num
+                                two_density[J, J, K, I] += num
+                                two_density[K, I, J, J] += num
+                                two_density[J, J, I, K] += num
+                        if is_alpha(i, ns) == is_alpha(j, ns) and is_alpha(j, ns) == is_alpha(k, ns):
+                            if notation == 'physicist':
+                                two_density[I, J, J, K] -= num
+                                two_density[J, I, K, J] -= num
+                                two_density[K, J, J, I] -= num
+                                two_density[J, K, I, J] -= num
+                            elif notation == 'chemist':
+                                two_density[I, J, K, J] -= num
+                                two_density[J, K, J, I] -= num
+                                two_density[K, J, I, J] -= num
+                                two_density[J, I, J, K] -= num
+                # if double excitation
+                elif len(left_diff) == 2:
+                    i, j = left_diff
+                    k, l = right_diff
+                    I = spatial_index(i, ns)
+                    J = spatial_index(j, ns)
+                    K = spatial_index(k, ns)
+                    L = spatial_index(l, ns)
+                    if is_alpha(i, ns) == is_alpha(k, ns) and is_alpha(j, ns) == is_alpha(l, ns):
+                        if notation == 'physicist':
+                            two_density[I, J, K, L] += num
+                            two_density[J, I, L, K] += num
+                            two_density[K, L, I, J] += num
+                            two_density[L, K, J, I] += num
+                        elif notation == 'chemist':
+                            two_density[I, K, L, J] += num
+                            two_density[J, L, K, I] += num
+                            two_density[K, I, J, L] += num
+                            two_density[L, J, I, K] += num
+                    if is_alpha(i, ns) == is_alpha(l, ns) and is_alpha(j, ns) == is_alpha(k, ns):
+                        if notation == 'physicist':
+                            two_density[I, J, L, K] -= num
+                            two_density[J, I, K, L] -= num
+                            two_density[K, L, J, I] -= num
+                            two_density[L, K, I, J] -= num
+                        elif notation == 'chemist':
+                            two_density[I, L, K, J] -= num
+                            two_density[J, K, L, I] -= num
+                            two_density[K, J, I, L] -= num
+                            two_density[L, I, J, K] -= num
+        return one_density, two_density
