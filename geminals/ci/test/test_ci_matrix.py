@@ -1,8 +1,11 @@
 from nose.tools import assert_raises
 import numpy as np
+import os
 
 from geminals.ci import ci_matrix
 from geminals import slater
+from geminals.wrapper.horton import gaussian_fchk
+from geminals.wrapper.pyscf import hartreefock, generate_fci_cimatrix
 
 
 def test_is_alpha():
@@ -170,11 +173,78 @@ def test_get_G_value():
     assert ci_matrix.get_G_value(G, 4, 4, 4, 5, 'generalized') == 2341.0
 
 
-def test_ci_matrix():
+def test_ci_matrix_h2():
     """
-    Tests ci_matrix.ci_matrix
+    Tests ci_matrix.ci_matrix using H2 FCI ci_matrix
+
+    Note
+    ----
+    Needs PYSCF!!
     """
-    pass
+    # HORTON/Olsen Results
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+
+    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 2, is_chemist_notation=False)
+
+    class DummyWavefunction:
+        dtype = np.float64
+        orb_type = 'restricted'
+
+        def __init__(self, pspace, H, G):
+            self.civec = pspace
+            self.nci = len(pspace)
+            self.H = H
+            self.G = G
+
+        def compute_ci_matrix(self):
+            return ci_matrix.ci_matrix(self, self.orb_type)
+
+    dummy = DummyWavefunction(ref_pspace, H, G)
+    test_ci_matrix = dummy.compute_ci_matrix()
+
+    assert np.allclose(test_ci_matrix, ref_ci_matrix)
+
+
+def test_ci_matrix_lih():
+    """
+    Tests ci_matrix.ci_matrix using LiH FCI ci_matrix
+
+    Note
+    ----
+    Needs PYSCF!!
+    """
+    # HORTON/Olsen Results
+    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_631g.fchk')
+    hf_dict = gaussian_fchk(data_path)
+
+    E_hf = hf_dict["energy"]
+    H = hf_dict["H"]
+    G = hf_dict["G"]
+
+    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 4, is_chemist_notation=False)
+
+    class DummyWavefunction:
+        dtype = np.float64
+        orb_type = 'restricted'
+
+        def __init__(self, pspace, H, G):
+            self.civec = pspace
+            self.nci = len(pspace)
+            self.H = H
+            self.G = G
+
+        def compute_ci_matrix(self):
+            return ci_matrix.ci_matrix(self, self.orb_type)
+
+    dummy = DummyWavefunction(ref_pspace, H, G)
+    test_ci_matrix = dummy.compute_ci_matrix()
+
+    assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
 
 def test_doci_matrix():

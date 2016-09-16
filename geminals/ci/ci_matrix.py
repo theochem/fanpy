@@ -204,6 +204,12 @@ def ci_matrix(self, orb_type):
             diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
             shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
 
+            # moving all the shared orbitals toward one another (in the middle)
+            num_transpositions_0 = sum(len([j for j in shared_indices if j<i]) for i in diff_sd0)
+            num_transpositions_1 = sum(len([j for j in shared_indices if j<i]) for i in diff_sd1)
+            num_transpositions = num_transpositions_0 + num_transpositions_1
+            sign = (-1)**num_transpositions
+
             if len(diff_sd0) != len(diff_sd1):
                 continue
             else:
@@ -212,27 +218,26 @@ def ci_matrix(self, orb_type):
             # two sd's are the same
             if diff_order == 0:
                 for ic, i in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
+                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type) * sign
                     for j in shared_indices[ic + 1:]:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type) * sign
+                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type) * sign
 
             # two sd's are different by single excitation
             elif diff_order == 1:
                 i, = diff_sd0
                 a, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orb_type=orb_type)
-                for j in shared_indices:
-                    if j != i:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orb_type=orb_type)
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orb_type=orb_type)
+                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orb_type=orb_type) * sign
+                for num_trans, j in enumerate(shared_indices):
+                    ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orb_type=orb_type) * sign
+                    ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orb_type=orb_type) * sign
 
             # two sd's are different by double excitation
             elif diff_order == 2:
                 i, j = diff_sd0
                 a, b = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orb_type=orb_type)
-                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orb_type=orb_type)
+                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orb_type=orb_type) * sign
+                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orb_type=orb_type) * sign
 
     # Make it Hermitian
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T
