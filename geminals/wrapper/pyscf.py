@@ -76,8 +76,8 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     return result
 
 
-def generate_ci_matrix(h1e, eri, nelec, is_chemist_notation=False):
-    """ Constructs the CI Hamiltonian matrix using PySCF
+def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
+    """ Constructs the FCI CI Hamiltonian matrix using PySCF
 
     Parameters
     ----------

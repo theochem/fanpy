@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.linalg
 import os
-from geminals.wrapper.pyscf import hartreefock, generate_ci_matrix
+from geminals.wrapper.pyscf import hartreefock, generate_fci_cimatrix
 
 def test_hartreefock():
     """ Tests geminals.wrapper.pyscf.hartreefock
@@ -27,8 +27,8 @@ def test_hartreefock():
     for matrix in H+G:
         assert np.all(np.array(matrix.shape) == H[0].shape[0])
 
-def test_generate_ci_matrix():
-    """ Tests geminals.wrapper.pyscf.generate_ci_matrix
+def test_generate_fci_cimatrix():
+    """ Tests geminals.wrapper.pyscf.generate_fci_cimatrix
 
     Code is tested by seeing if CI matrix can be used to create the FCI energies of H2 and LiH
     """
@@ -44,7 +44,7 @@ def test_generate_ci_matrix():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
 
-    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec, is_chemist_notation=True)
+    ci_matrix, pspace = generate_fci_cimatrix(H[0], G[0], nelec, is_chemist_notation=True)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
@@ -60,6 +60,6 @@ def test_generate_ci_matrix():
     G = hf_dict["G"]
     nuc_nuc = hf_dict["nuc_nuc"]
 
-    ci_matrix, pspace = generate_ci_matrix(H[0], G[0], nelec, is_chemist_notation=True)
+    ci_matrix, pspace = generate_fci_cimatrix(H[0], G[0], nelec, is_chemist_notation=True)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
