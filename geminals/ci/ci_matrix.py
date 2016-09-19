@@ -282,6 +282,12 @@ def doci_matrix(self, orb_type):
             else:
                 diff_order = len(diff_sd0)
 
+            # moving all the shared orbitals toward one another (in the middle)
+            num_transpositions_0 = sum(len([j for j in shared_indices if j<i]) for i in diff_sd0)
+            num_transpositions_1 = sum(len([j for j in shared_indices if j<i]) for i in diff_sd1)
+            num_transpositions = num_transpositions_0 + num_transpositions_1
+            sign = (-1)**num_transpositions
+
             assert diff_order % 2 == 0, 'One (or both) of the Slater determinants, {0} or {1},'
             'are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
 
@@ -289,23 +295,18 @@ def doci_matrix(self, orb_type):
             if diff_order == 2:
                 i, j = diff_sd0
                 k, l = diff_sd1
-                if spatial_index(i, ns) == spatial_index(k, ns) and spatial_index(j, ns) == spatial_index(l, ns):
-                    doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type)
-                elif spatial_index(i, ns) == spatial_index(l, ns) and spatial_index(j, ns) == spatial_index(k, ns):
-                    doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type)
-                else:
-                    assert True, 'One (or both) of the Slater determinants, {0} or {1},'
-                    ' are not DOCI Slater determinants'.format(bin(sd0), bin(sd1))
+                doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type) * sign
+                doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type) * sign
 
             # two sd's are the same
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
                     doci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
                     for j in shared_indices[ic + 1:]:
-                        doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type)
-                        doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+                        doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type) * sign
+                        doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type) * sign
 
     # Make it Hermitian
-    doci_matrix[:, :] = np.triu(doci_matrix) + np.tril(doci_matrix, -1)
+    doci_matrix[:, :] = np.triu(doci_matrix) + np.triu(doci_matrix, 1).T
 
     return doci_matrix
