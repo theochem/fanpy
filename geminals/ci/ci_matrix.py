@@ -258,7 +258,9 @@ def doci_matrix(self, orb_type):
     Returns
     -------
     matrix : np.ndarray(K, K)
+
     """
+
     H = self.H
     G = self.G
     ns = self.nspatial
@@ -304,3 +306,70 @@ def doci_matrix(self, orb_type):
     doci_matrix[:, :] = np.triu(doci_matrix) + np.tril(doci_matrix, -1)
 
     return doci_matrix
+
+def phi_H_phi(sd0, sd1, H, G, orb_type=None):
+    """ Returns CI matrix element 
+
+    ..math::
+       \big< \Phi_0 \big| H \big| \Phi_1 \big>
+
+    Parameters
+    ----------
+    sd0: int
+        First slater determinant
+    sd1: int
+        Second slater determinant
+    H: tuple of np.ndarray(K, K)
+        One electron integral matrices
+        More than one if orbital is unrestricted
+    G: tuple of np.ndarray(K, K, K, K)
+        Two electron integral matrices
+        More than one if orbital is unrestricted
+    orb_type : {'restricted', 'unrestricted', 'generalized'}
+        Flag that indicates the type of the orbital
+
+    Returns
+    -------
+    value : float
+        CI matrix element
+
+    """
+
+    # Determine orbitals occupied in both determinants
+    diff_sd0, diff_sd1 = slater.diff(sd0, sd1)
+    shared_indices = slater.occ_indices(slater.shared(sd0, sd1))
+
+    # Check the determinants contain the same number of electrons
+    if len(diff_sd0) != len(diff_sd1):
+        pass
+    else:
+        diff_order = len(diff_sd0)
+
+    value = 0.
+
+    # two sd's are different by double excitation
+    if diff_order == 2:
+        i, j = diff_sd0
+        k, l = diff_sd1
+        value += get_G_value(G, i, j, k, l, orb_type=orb_type)
+        value -= get_G_value(G, i, j, l, k, orb_type=orb_type)
+
+    # two sd's are different by single excitation
+    elif diff_order == 1:
+        i, = diff_sd0
+        k, = diff_sd1
+        value += get_H_value(H, i, k, orb_type=orb_type)
+        for j in shared_indices:
+            if j != i:
+                value += get_G_value(G, i, j, k, j, orb_type=orb_type)
+                value -= get_G_value(G, i, j, j, k, orb_type=orb_type)
+
+    # two sd's are the same
+    elif diff_order == 0:
+        for ic, i in enumerate(shared_indices):
+            value += get_H_value(H, i, i, orb_type=orb_type)
+            for j in shared_indices[ic + 1:]:
+                value += get_G_value(G, i, j, i, j, orb_type=orb_type)
+                value -= get_G_value(G, i, j, j, i, orb_type=orb_type)
+
+    return value

@@ -134,3 +134,144 @@ def doci_sd_list(self, num_limit, exc_orders=[]):
                 return civec[:num_limit]
     else:
         return civec[:num_limit]
+
+def apig_doubles_sd_list(self):
+    """ Generates doubly excited (DOCI) Slater determinants
+
+    DOCI Slater determinants are all pairwise (alpha beta) excitations of the ground state
+    singlet Slater determinant
+
+    Parameters
+    ----------
+    self : instance of Wavefunction
+        Any instance that contains nspatial, nelec, and npair
+
+    Returns
+    -------
+    civec : list of ints
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    """
+    
+    nspatial = self.nspatial
+    nelec = self.nelec
+    npair = self.npair
+    civec = []
+    
+    # ASSUME: certain structure for civec
+    # spin orbitals are ordered by energy
+    ground = slater.ground(nelec, 2 * nspatial)
+    civec.append(ground)
+
+    # this part assumes that the ground state has the first N electrons occupied
+    occ_combinations = combinations(reversed(range(npair)), 1)
+    vir_combinations = combinations(range(npair, nspatial), 1)
+    
+    for occ, vir in product(occ_combinations, vir_combinations):
+        occ = [i for i in occ] + [i + nspatial for i in occ]
+        vir = [a for a in vir] + [a + nspatial for a in vir]
+        sd = slater.annihilate(ground, *occ)
+        sd = slater.create(sd, *vir)
+        civec.append(sd)
+    
+    return civec
+
+def apsetg_doubles_sd_list(self):
+    """ Generates doubly excited (fullCI) Slater determinants with closed shell
+    occupied orbitals and open shell vitual orbitals within the disjoint set
+    approximation 
+
+    Parameters
+    ----------
+    self : instance of Wavefunction
+        Any instance that contains nspatial and nelec
+
+    Returns
+    -------
+    civec : list of ints
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    """
+    
+    nspatial = self.nspatial
+    nelec = self.nelec
+    civec = []
+
+    # ASSUME: certain structure for civec
+    # spin orbitals are ordered by energy
+    ground = slater.ground(nelec, 2 * nspatial)
+    civec.append(ground)
+
+    occ_indices = slater.occ_indices(ground)
+    vir_indices = slater.vir_indices(ground, 2 * nspatial)
+    
+    # order by energy
+    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True)
+    vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
+    
+    # Spit virtuals into alpha and beta
+    vir_alpha_indices = vir_indices[:len(vir_indices) // 2]
+    vir_beta_indices = vir_indices[len(vir_indices) // 2:]
+
+    occ_combinations = combinations(occ_indices, 1)
+    vir_alpha_combinations = combinations(vir_alpha_indices, 1)
+    vir_beta_combinations = combinations(vir_beta_indices, 1)
+    vir_combinations = zip(vir_alpha_combinations, vir_beta_combinations)
+
+    for occ, vir in product(occ_combinations, vir_combinations):
+        occ = [i for i in occ] + [i + nspatial for i in occ]
+        sd = slater.annihilate(ground, *occ)
+        sd = slater.create(sd, *vir[0])
+        sd = slater.create(sd, *vir[1])
+        # Place holder because we make garbage determinants
+        if sd is None:
+            continue
+        civec.append(sd)
+
+    return civec
+
+def apg_doubles_sd_list(self):
+    """ Generates doubly excited (fullCI) Slater determinants with closed shell
+    occupied orbitals and open shell vitual orbitals 
+
+    Parameters
+    ----------
+    self : instance of Wavefunction
+        Any instance that contains nspatial and nelec
+
+    Returns
+    -------
+    civec : list of ints
+        Integer that describes the occupation of a Slater determinant as a bitstring
+
+    """
+    
+    nspatial = self.nspatial
+    nelec = self.nelec
+    civec = []
+
+    # ASSUME: certain structure for civec
+    # spin orbitals are ordered by energy
+    ground = slater.ground(nelec, 2 * nspatial)
+    civec.append(ground)
+
+    occ_indices = slater.occ_indices(ground)
+    vir_indices = slater.vir_indices(ground, 2 * nspatial)
+   
+   # order by energy
+    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True)
+    vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
+
+    occ_combinations = combinations(occ_indices, 1)
+    vir_combinations = combinations(vir_indices, 2)
+
+    for occ, vir in product(occ_combinations, vir_combinations):
+        occ = [i for i in occ] + [i + nspatial for i in occ]
+        sd = slater.annihilate(ground, *occ)
+        sd = slater.create(sd, *vir)
+        # Place holder because we make garbage determinants
+        if sd is None:
+            continue
+        civec.append(sd)
+
+    return civec

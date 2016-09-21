@@ -97,3 +97,20 @@ def test_doci_sd_list():
                                                       gmpy2.mpz(0b10011001),
                                                       gmpy2.mpz(0b01100110),
                                                       gmpy2.mpz(0b10101010)]
+
+def test_apig_doubles_sd_list():
+    """ Tests sd_list.doci_sd_list
+    """
+    test = TestWavefunction()
+    test.nspatial = 4
+    print(map(bin,sd_list.apig_doubles_sd_list(test)))
+
+def test_apg_doubles_sd_list():
+    """ Tests sd_list.doci_sd_list
+    """
+    test = TestWavefunction()
+    test.nspatial = 4
+    #test.nelec = 2
+    #test.npair = 1
+    #ypeError: 'NoneType' object cannot be interpreted as an index
+    print(map(bin,sd_list.apg_doubles_sd_list(test)))

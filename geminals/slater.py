@@ -275,6 +275,7 @@ def diff(sd1, sd2):
         Second tuple of ints are the indices of the occupied orbitals of sd2 that
         are not occupied in sd1
     """
+    print(type(sd1), type(sd2))
     sd_diff = sd1 ^ sd2
     sd1_diff = sd_diff & sd1
     sd2_diff = sd_diff & sd2
