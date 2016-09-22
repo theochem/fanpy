@@ -50,6 +50,21 @@ class APr2G(ProjectionWavefunction):
     Methods
     -------
     """
+    @property
+    def bounds(self):
+        """ Boundaries for the parameters
+
+        Used to set bounds on the optimizer
+
+        Returns
+        -------
+        bounds : iterable of 2-tuples
+            Each 2-tuple correspond to the min and the max value for the parameter
+            with the same index.
+        """
+        bounds = [(-np.inf, np.inf) for i in self.nparam]
+        return bounds
+
     def __init__(
         self,
         # Mandatory arguments

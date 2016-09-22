@@ -199,6 +199,23 @@ class ProjectionWavefunction(Wavefunction):
         """
         return (self.pspace[0], )
 
+    @property
+    def bounds(self):
+        """ Boundaries for the parameters
+
+        Used to set bounds on the optimizer
+
+        Returns
+        -------
+        bounds : iterable of 2-tuples
+            Each 2-tuple correspond to the min and the max value for the parameter
+            with the same index.
+        """
+        bounds = [(-1, 1) for i in self.nparam]
+        # remove boundary on energy
+        bounds[-1] = (-np.inf, np.inf)
+        return bounds
+
     #
     # Special methods
     #
@@ -258,7 +275,7 @@ class ProjectionWavefunction(Wavefunction):
             options = {
                     # Powell's hybrid method (MINPACK)
                     "method": 'hybr',
-                    # "bounds": self.bounds,
+                    "bounds": self.bounds,
                     "jac": self.jacobian,
                     "options": {
                         "xtol":1.0e-9,
@@ -269,7 +286,7 @@ class ProjectionWavefunction(Wavefunction):
             options = {
                 # Newton-Krylov Quasinewton method
                 "method": 'krylov',
-                # "bounds": self.bounds,
+                "bounds": self.bounds,
                 # "jac": None,
                 "options": {
                     "fatol":1.0e-9,
@@ -307,7 +324,7 @@ class ProjectionWavefunction(Wavefunction):
         # Update solver options
         options = {
             "jac": self.jacobian,
-            # "bounds": self.bounds,
+            "bounds": self.bounds,
             # "jac": None,
             "xtol": 1.0e-15,
             "ftol": 1.0e-15,
