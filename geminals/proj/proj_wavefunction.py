@@ -695,3 +695,6 @@ class ProjectionWavefunction(Wavefunction):
         Some of the cache are emptied because the parameters are rewritten
         """
         pass
+
+    def get_coeffs(self):
+        return self.params[:-1].reshape(self.template_coeffs.shape)
