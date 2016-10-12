@@ -156,14 +156,14 @@ class ProjectionWavefunction(Wavefunction):
         methods : dict
             "default" -> least squares nonlinear solver
         """
-        # return {
-        #         "default": self._solve_root,
-        #         "leastsq": self._solve_least_squares,
-        #         }
         return {
-                "root": self._solve_root,
-                "default": self._solve_least_squares,
+                "default": self._solve_root,
+                "leastsq": self._solve_least_squares,
                 }
+        #return {
+                #"root": self._solve_root,
+                #"default": self._solve_least_squares,
+                #}
 
     @property
     def nparam(self):
