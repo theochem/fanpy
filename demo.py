@@ -44,6 +44,7 @@ class DemoWfn(ProjectionWavefunction):
         alpha, beta = slater.split_spin(sd, self.nspatial)
         alpha_occ = slater.occ_indices(alpha)
         beta_occ = slater.occ_indices(beta)
+        assert alpha_occ == beta_occ
 
         # Compute the overlap
         coeffs = self.get_coeffs()
@@ -84,7 +85,7 @@ from geminals.hort import hartreefock
 
 # Run RHF to get MO Hamiltonians
 nelec = 4
-hf_dict = hartreefock(fn="h4.xyz", basis="6-31g**", nelec=nelec)
+hf_dict = hartreefock(fn="h4.xyz", basis="3-21g", nelec=nelec)
 H = hf_dict["H"]
 G = hf_dict["G"]
 nuc_nuc = hf_dict["nuc_nuc"]
