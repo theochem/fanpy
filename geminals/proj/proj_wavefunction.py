@@ -2,9 +2,7 @@ from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import numpy as np
-import os
 from gmpy2 import mpz
-from scipy.optimize import root, least_squares
 
 from ..wavefunction import Wavefunction
 
@@ -443,7 +441,7 @@ class ProjectionWavefunction(Wavefunction):
     #
     # Objective
     #
-    def objective(self, x):
+    def objective(self, x, weigh_norm=True):
         """ System of nonlinear functions that corresponds to the projected Schrodinger equation
 
         The set of equations is
@@ -463,6 +461,10 @@ class ProjectionWavefunction(Wavefunction):
         ----------
         x : 1-index np.ndarray
             The coefficient vector
+        weigh_norm : bool
+            Flag for weighing the norm heavier by some arbitrary value
+            By default, the norm equation is weighted heavier by a factor of
+            1000*(number of terms in the system of nonlinear equations)
 
         Returns
         -------
@@ -472,7 +474,9 @@ class ProjectionWavefunction(Wavefunction):
         """
         # Update the coefficient vector
         self.params[:] = x
-        # save params
+        # Normalize
+        # self.normalize()
+        # Save params
         if self.save_params:
             np.save('{0}_temp.npy'.format(self.__class__.__name__), self.params)
         # Clear cache
@@ -487,7 +491,11 @@ class ProjectionWavefunction(Wavefunction):
         for i, sd in enumerate(self.pspace):
             obj[i] = self.compute_hamiltonian(sd) - energy * self.overlap(sd)
         # Add normalization constraint
-        obj[-1] = (self.compute_norm() - 1.0)*self.params.size*(len(self.pspace)+1)*1000
+        if weigh_norm:
+            obj[-1] = (self.compute_norm() - 1.0)*self.params.size*(len(self.pspace)+1)*1000
+        else:
+            obj[-1] = (self.compute_norm() - 1.0)
+
         return obj
 
     def jacobian(self, x):

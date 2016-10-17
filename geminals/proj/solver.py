@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
 from scipy.optimize import root, least_squares
+from paraopt.cma import fmin_cma
 
 def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
     """
@@ -33,10 +34,12 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
 
     # set options
     options = {}
-    options["bounds"] = wavefunction.bounds
 
     # set default options and solver
     if solver_type == 'root':
+        solver = root
+        objective = wavefunction.objective
+        options["bounds"] = wavefunction.bounds
         # if Jacobian included
         if jac:
             # Powell's hybrid method (MINPACK)
@@ -58,8 +61,10 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
                     "xatol":1.0e-7,
                     },
                 }
-        solver = root
-    if solver_type == 'least squares':
+    elif solver_type == 'least squares':
+        solver = least_squares
+        objective = wavefunction.objective
+        options["bounds"] = wavefunction.bounds
         # if Jacobian is included
         if jac:
             options = {
@@ -75,23 +80,33 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
                 options["jac"] = "cs"
             else:
                 options["jac"] = "3-point"
-        solver = least_squares
+    elif solver_type == 'cma':
+        solver = fmin_cma
+        objective = lambda x: np.sum(np.abs(wavefunction.objective(x, weigh_norm=False)))
+        if jac:
+            print('WARNING: Jacobian is not needed in CMA solver')
+        options['sigma0'] = 0.01
+        options['npop'] = wavefunction.nparam*2
+        options['verbose'] = False
+        options['max_iter'] = 1000
 
     # overwrite options with user input
     options.update(kwargs)
 
     # Solve
-    result = solver(wavefunction.objective, wavefunction.params, **options)
+    result = solver(objective, wavefunction.params, **options)
+
+    # warn user if solver didn't converge
+    if solver_type in ['least squares', 'root'] and not result.success:
+        print('WARNING: Optimization did not succeed.')
+    if solver_type in ['cma'] and result[1] != 'CONVERGED_WIDTH':
+        print('WARNING: Optimization did not succeed.')
 
     # Save results
     if wavefunction.save_params:
         # FIXME: _temp business is quite ugly
         np.save('{0}.npy'.format(wavefunction.__class__.__name__), wavefunction.params)
         os.remove('{0}_temp.npy'.format(wavefunction.__class__.__name__))
-
-    # warn user if solver didn't converge
-    if not result.success:
-        print('WARNING: Optimization did not succeed.')
 
     return result
 

@@ -30,13 +30,17 @@ def test_apig_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, dtype=np.float64)
     init_guess = apig.params[:]
-    solve(apig, solver_type='least squares', jac=True)
+    solve(apig, solver_type='cma')
+    results = solve(apig, solver_type='least squares', jac=True)
+    assert results.success
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apig, solver_type='least squares', jac=False)
-    # FIXME: the numbers are quite different
-    assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
+    # result = solve(apig, solver_type='least squares', jac=False)
+    solve(apig, solver_type='cma')
+    results = solve(apig, solver_type='least squares', jac=True)
+    assert results.success
+    assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
 
 def test_apig_wavefunction_lih():
     #### LiH ####
@@ -58,14 +62,13 @@ def test_apig_wavefunction_lih():
     apig.d_cache = {}
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-8.9472891719)) < 1e-7
     # Compare APIG energy with old code
-    # Solve with Jacobian using energy as a parameter
+    # Solve with Jacobian using CMA
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apig, solver_type='least squares', jac=True)
+    apig.normalize()
+    solve(apig, solver_type='cma')
+    results = solve(apig, solver_type='least squares')
+    # solve(apig, solver_type='least squares', jac=True)
     print(apig.compute_energy(include_nuc=False), 'new code')
     print(-8.96353105152, 'old code')
-    assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-7
-    # Solve without Jacobian using energy as a parameter
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apig, solver_type='least squares', jac=False)
-    # FIXME: the numbers are quite different
-    assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-4
+    assert results.success
+    assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-6
