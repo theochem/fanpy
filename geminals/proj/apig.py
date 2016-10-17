@@ -251,11 +251,6 @@ class APIG(ProjectionWavefunction):
         """
         # build geminal coefficient
         gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
-        # normalize the geminals
-        norm = np.sum(gem_coeffs**2, axis=1)
-        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # flip the negative norms
-        gem_coeffs[norm < 0, :] *= -1
         # normalize the wavefunction
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
