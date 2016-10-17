@@ -30,11 +30,11 @@ def test_apig_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, dtype=np.float64)
     init_guess = apig.params[:]
-    solve(apig)
+    solve(apig, solver_type='least squares', jac=True)
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(solver_type='least squares', jac=False)
+    solve(apig, solver_type='least squares', jac=False)
     # FIXME: the numbers are quite different
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
 
@@ -60,12 +60,12 @@ def test_apig_wavefunction_lih():
     # Compare APIG energy with old code
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apig()
+    solve(apig, solver_type='least squares', jac=True)
     print(apig.compute_energy(include_nuc=False), 'new code')
     print(-8.96353105152, 'old code')
     assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(solver_type='least squares', jac=False)
+    solve(apig, solver_type='least squares', jac=False)
     # FIXME: the numbers are quite different
     assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-4

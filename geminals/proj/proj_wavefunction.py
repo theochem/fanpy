@@ -191,9 +191,8 @@ class ProjectionWavefunction(Wavefunction):
             Each 2-tuple correspond to the min and the max value for the parameter
             with the same index.
         """
-        # bounds = [(-1, 1) for i in range(self.nparam)]
-        low_bounds = [-1 for i in range(self.nparam)]
-        upp_bounds = [1 for i in range(self.nparam)]
+        low_bounds = [-1.2 for i in range(self.nparam)]
+        upp_bounds = [1.2 for i in range(self.nparam)]
         # remove boundary on energy
         low_bounds[-1] = -np.inf
         upp_bounds[-1] = np.inf
