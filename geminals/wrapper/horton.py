@@ -50,7 +50,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
             "olp", horton.matrix.dense.DenseTwoIndex that contains the overlap matrix of
             the atomic orbitals
     """
-    data_dir = os.path.join(os.path.dirname(__file__), '../data')
+    data_dir = os.path.join(os.path.dirname(__file__), '../../data')
     file_path = os.path.join(data_dir, fn)
     # Initialize molecule and basis set from specified file
     if isinstance(fn, IOData):
@@ -125,85 +125,6 @@ def hartreefock(fn=None, basis=None, nelec=None,
             "olp": olp,
         }
 
-    return output
-
-
-def ap1rog(fn=None,
-           basis=None, nelec=None, nuc_nuc=True,
-           solver=EDIIS2SCFSolver, tol=1.0e-12,
-           opt=False,
-           **kwargs):
-    """ Runs an AP1roG calculation using HORTON
-
-    Parameters
-    ----------
-    fn :
-    basis : str
-        Basis set name
-    nelec : int
-        Number of electrons
-    nuc_nuc : float
-        Nuclear nuclear repulsion
-    solver : PlainSCFSolver, ODASSCFSolver, CDIISSCFSolver, EDIISSCFSolver,  EDIIS2SCFSolver
-        HORTON's SCF solver
-    tol : float
-        The convergence threshold for the wavefunction
-    opt : bool
-    kwargs
-        "hf_kwargs", dictionary of the keyword arguments for HF solver
-        "ap1rog_kwargs", dictionary of the keyword arguments for AP1roG solver
-
-    Returns
-    -------
-    result : dict
-        "energy", electronic energy
-        "H", one-electron Hamiltonian;
-        "G", two-electron Hamiltonian;
-        "x", AP1roG geminal coefficients;
-        "mol", horton.io.iodata.IOData object that contains fchk data
-        "basis", horton.gbasis.GOBasis that describes the atomic basis
-        "orb", horton.matrix.dense.DenseExpansion that contains the MO info
-    """
-    #FIXME: add orbital rotation option
-
-    hf_kwargs = {
-        "fn": fn,
-        "basis": basis,
-        "nelec": nelec,
-        "solver": solver,
-        "nuc_nuc": nuc_nuc,
-        "tol": tol,
-        "horton_internal": True,
-    }
-    if "hf_kwargs" in kwargs:
-        hf_kwargs.update(kwargs["hf_kwargs"])
-
-    hf_result = hartreefock(**hf_kwargs)
-
-    ap1rog_kwargs = hf_result["horton_internal"]
-    ap1rog_kwargs["opt"] = opt
-    if "ap1rog_kwargs" in kwargs:
-        ap1rog_kwargs["ap1rog_kwargs"] = kwargs["ap1rog_kwargs"]
-    else:
-        ap1rog_kwargs["ap1rog_kwargs"] = {}
-
-    geminal = RAp1rog(ap1rog_kwargs["lf"], ap1rog_kwargs["occ_model"])
-    ap1rog_result = geminal(
-        ap1rog_kwargs["one"],
-        ap1rog_kwargs["two"],
-        ap1rog_kwargs["nuc_nuc"],
-        ap1rog_kwargs["orb"][0],
-        ap1rog_kwargs["olp"],
-        scf=ap1rog_kwargs["opt"],
-        **ap1rog_kwargs["ap1rog_kwargs"])
-
-    output = {
-        "energy": ap1rog_result[0],
-        "x": ap1rog_result[1]._array.ravel(),
-        "C": ap1rog_result[1]._array,
-    }
-    if opt:
-        output["lagrange"] = ap1rog_result[2]
     return output
 
 
