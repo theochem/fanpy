@@ -138,7 +138,7 @@ class AP1roG(ProjectionWavefunction):
         template_coeffs : np.ndarray(K, )
 
         """
-        return np.eye(self.npair, self.nspatial-self.npair, dtype=self.dtype)
+        return np.zeros((self.npair, self.nspatial-self.npair), dtype=self.dtype)
 
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
