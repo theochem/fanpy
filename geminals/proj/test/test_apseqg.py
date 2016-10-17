@@ -116,12 +116,13 @@ def test_apseqg_wavefunction_h2():
     assert abs(apseqg.compute_energy(include_nuc=False, ref_sds=apseqg.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Solve with Jacobian using energy as a parameter
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apseqg)
-    energy = apseqg.compute_energy()
+    solve(apseqg, solver_type='cma')
+    results = solve(apseqg, solver_type='least squares', jac=True)
     print('HF energy', -1.84444667247)
-    print('APseqG energy', energy)
+    print('APseqG energy', apseqg.compute_energy())
     print('FCI value', -1.87832550029)
-    assert -1.84444667247 > energy > -1.87832550029
+    assert results.success
+    assert -1.84444667247 > apseqg.compute_energy() > -1.87832550029
     assert False
 
 def test_apseqg_wavefunction_lih():
@@ -146,14 +147,11 @@ def test_apseqg_wavefunction_lih():
     # Solve with Jacobian using energy as a parameter
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # print(apseqg.params[:-1].reshape(apseqg.template_coeffs.shape))
-    solve(apseqg)
-    energy = apseqg.compute_energy()
+    solve(apseqg, solver_type='cma')
+    results = solve(apseqg, solver_type='least squares', jac=True)
     print('HF energy', -8.9472891719)
-    print('APseqG energy', energy)
+    print('APseqG energy', apseqg.compute_energy())
     print('FCI value', -8.96741814557)
-    # print(apseqg.params[:-1].reshape(apseqg.template_coeffs.shape))
-    # print([apseqg.dict_gem_orbpair[i] for i,j in enumerate(apseqg.dict_orbpair_gem)])
-    # print(apseqg.compute_overlap(apseqg.pspace[0]))
-    # print(apseqg.find_gem_indices(apseqg.pspace[0]))
-    assert -8.9472891719 > energy > -8.96741814557
+    assert results.success
+    assert -8.9472891719 > apseqg.compute_energy() > -8.96741814557
     assert False

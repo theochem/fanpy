@@ -22,17 +22,18 @@ def test_apr2g_wavefunction_h2():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog)
+    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    solve(apr2g, jac=False)
-    # apr2g()
-    energy = apr2g.compute_energy()
+    solve(apr2g, solver_type='cma')
+    # results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -1.84444667247)
     print('AP1roG energy', ap1rog.compute_energy())
-    print('APr2G energy', energy)
+    print('APr2G energy', apr2g.compute_energy())
     print('FCI value', -1.87832550029)
-    assert -1.84444667247 > energy > -1.87832550029
+    # assert results.success
+    assert -1.84444667247 > apr2g.compute_energy() > -1.87832550029
     assert False
 
 
@@ -50,17 +51,18 @@ def test_apr2g_wavefunction_lih():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog)
+    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    solve(apr2g, jac=False)
-    # apr2g()
-    energy = apr2g.compute_energy()
+    solve(apr2g, solver_type='cma')
+    # results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -8.9472891719)
     print('AP1roG energy', ap1rog.compute_energy())
-    print('APr2G energy', energy)
+    print('APr2G energy', apr2g.compute_energy())
     print('FCI value', -8.96741814557)
-    assert -8.9472891719 > energy > -8.96741814557
+    # assert results.success
+    assert -8.9472891719 > apr2g.compute_energy() > -8.96741814557
     assert False
 
 # def test_apr2g_wavefunction_li2():

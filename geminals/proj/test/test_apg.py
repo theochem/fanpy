@@ -75,10 +75,12 @@ def test_apg_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params[-1] = -1.87832550029
-    solve(apg)
+    solve(apg, solver_type='cma')
+    results = solve(apg, solver_type='least squares', jac=True)
     print('HF energy', -1.84444667247)
     print('APG energy', apg.compute_energy())
     print('FCI value', -1.87832550029)
+    assert results.success
     assert abs(apg.compute_energy(include_nuc=False) - (-1.87832550029)) < 1e-7
 
 
@@ -98,9 +100,11 @@ def test_apsetg_wavefunction_lih():
     # Compare apsetg energy with old code
     # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apg)
+    solve(apg, solver_type='cma')
+    results = solve(apg, solver_type='least squares', jac=True)
     print('HF energy', -8.9472891719)
     print('APG energy', apg.compute_energy())
     print('FCI value', -8.96741814557)
-    assert -8.9472891719 > apfg.computer_energy() > -8.96741814557
+    assert results.success
+    assert -8.9472891719 > apg.computer_energy() > -8.96741814557
     assert False
