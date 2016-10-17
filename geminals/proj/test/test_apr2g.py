@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from geminals.proj.solver import solve
 from geminals.proj.apr2g import APr2G
 from geminals.proj.ap1rog import AP1roG
 from geminals.wrapper.horton import gaussian_fchk
@@ -21,10 +22,10 @@ def test_apr2g_wavefunction_h2():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    ap1rog()
+    solve(ap1rog)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    apr2g(jac=None)
+    solve(apr2g, jac=False)
     # apr2g()
     energy = apr2g.compute_energy()
     print('HF energy', -1.84444667247)
@@ -49,10 +50,10 @@ def test_apr2g_wavefunction_lih():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    ap1rog()
+    solve(ap1rog)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    apr2g(jac=None)
+    solve(apr2g, jac=False)
     # apr2g()
     energy = apr2g.compute_energy()
     print('HF energy', -8.9472891719)
@@ -76,11 +77,10 @@ def test_apr2g_wavefunction_lih():
 #     nuc_nuc = hf_dict["nuc_nuc"]
 #     # AP1roG as an initial guess
 #     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-#     ap1rog()
+#     solve(ap1rog)
 #     # Check if apr2g converges to a reasonable number
 #     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-#     apr2g(jac=None)
-#     # apr2g()
+#     solve(apr2g, jac=False)
 #     energy = apr2g.compute_energy(include_nuc=False)
 #     print('HF energy', '?')
 #     print('AP1roG energy', ap1rog.compute_energy())

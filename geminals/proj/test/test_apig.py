@@ -4,6 +4,7 @@ import numpy as np
 np.random.seed(2012)
 
 from geminals.proj.apig import APIG
+from geminals.proj.solver import solve
 from geminals.wrapper.horton import gaussian_fchk
 
 def test_apig_wavefunction_h2():
@@ -29,7 +30,7 @@ def test_apig_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, dtype=np.float64)
     init_guess = apig.params[:]
-    apig()
+    solve(apig)
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)

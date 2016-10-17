@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
 
+from geminals.proj.solver import solve
 from geminals.proj.ap1rog import AP1roG
 from geminals.wrapper.horton import gaussian_fchk
 from geminals.wrapper.horton import ap1rog as old_ap1rog
@@ -31,12 +32,12 @@ def test_ap1rog_wavefunction_h2():
     old_params = np.hstack((old_results['x'], old_energy))
     # Check if AP1roG converges to the same number if we give the old "converged" AP1roG numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, params=old_params)
-    ap1rog()
+    solve(ap1rog)
     energy = ap1rog.compute_energy()
     assert abs(ap1rog.compute_energy(include_nuc=False) - old_energy) < 1e-7
     # Check if AP1roG converges to the same number by itself
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    ap1rog()
+    solve(ap1rog)
     energy = ap1rog.compute_energy()
     print('HF energy', -1.84444667247)
     print('new energy', energy)
@@ -70,12 +71,12 @@ def test_ap1rog_wavefunction_lih():
     old_params = np.hstack((old_results['x'], old_energy))
     # Check if AP1roG converges to the same number if we give the old "converged" AP1roG numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, params=old_params)
-    ap1rog()
+    solve(ap1rog)
     energy = ap1rog.compute_energy()
     assert abs(ap1rog.compute_energy(include_nuc=False) - old_energy) < 1e-7
     # Check if AP1roG converges to the same number by itself
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    ap1rog()
+    solve(ap1rog)
     energy = ap1rog.compute_energy()
     print('HF energy', -8.9472891719)
     print("new energy", energy)

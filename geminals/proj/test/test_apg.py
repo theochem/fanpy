@@ -4,6 +4,7 @@ import os
 import numpy as np
 
 from geminals.proj.proj_wavefunction import ProjectionWavefunction
+from geminals.proj.solver import solve
 from geminals.proj.apg import APG
 from geminals.wrapper.horton import gaussian_fchk
 
@@ -74,7 +75,7 @@ def test_apg_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apg.params[-1] = -1.87832550029
-    apg()
+    solve(apg)
     print('HF energy', -1.84444667247)
     print('APG energy', apg.compute_energy())
     print('FCI value', -1.87832550029)
@@ -97,7 +98,7 @@ def test_apsetg_wavefunction_lih():
     # Compare apsetg energy with old code
     # Solve with Jacobian using energy as a parameter
     apg = APG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apg()
+    solve(apg)
     print('HF energy', -8.9472891719)
     print('APG energy', apg.compute_energy())
     print('FCI value', -8.96741814557)

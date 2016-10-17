@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from geminals.proj.solver import solve
 from geminals.proj.apseqg import APseqG
 from geminals.wrapper.horton import gaussian_fchk
 import geminals.slater as slater
@@ -115,7 +116,7 @@ def test_apseqg_wavefunction_h2():
     assert abs(apseqg.compute_energy(include_nuc=False, ref_sds=apseqg.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Solve with Jacobian using energy as a parameter
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apseqg()
+    solve(apseqg)
     energy = apseqg.compute_energy()
     print('HF energy', -1.84444667247)
     print('APseqG energy', energy)
@@ -145,7 +146,7 @@ def test_apseqg_wavefunction_lih():
     # Solve with Jacobian using energy as a parameter
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     # print(apseqg.params[:-1].reshape(apseqg.template_coeffs.shape))
-    apseqg()
+    solve(apseqg)
     energy = apseqg.compute_energy()
     print('HF energy', -8.9472891719)
     print('APseqG energy', energy)
