@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from geminals.ci.solver import solve
 from geminals.ci.fci import FCI
 from geminals.wrapper.horton import gaussian_fchk
 
@@ -25,7 +26,7 @@ def test_fci_h2():
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
-    fci()
+    solve(fci)
     # compare with number from Gaussian
     assert abs(fci.compute_energy() - (-1.1651486697)) < 1e-7
 
@@ -49,7 +50,7 @@ def test_fci_lih_sto6g():
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
-    fci()
+    solve(fci)
     # compare with number from Gaussian
     assert abs(fci.compute_energy()-(-7.9723355823)) < 1e-7
 
@@ -74,7 +75,7 @@ def test_fci_lih_631g():
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
-    fci()
+    solve(fci)
     # compare with number from Gaussian
     print(fci.compute_energy(), -7.97926894940)
     assert abs(fci.compute_energy()-(-7.9982761)) < 1e-7

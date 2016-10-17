@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from geminals.ci.solver import solve
 from geminals.ci.cisd import CISD
 from geminals.wrapper.horton import gaussian_fchk
 
@@ -33,7 +34,7 @@ def test_cisd_h2():
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
-    cisd()
+    solve(cisd)
     # compare with number from Gaussian
     assert abs(cisd.compute_energy() - (-1.1651486697)) < 1e-7
 
@@ -67,7 +68,7 @@ def test_cisd_lih():
     # check that hamiltonian is symmetric
     assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
-    cisd()
+    solve(cisd)
 
     # compare with number from Gaussian
     print(cisd.compute_energy(), (-7.99826182))

@@ -10,10 +10,6 @@ class TestWavefunction(Wavefunction):
     def __init__(self):
         pass
 
-    @property
-    def _methods(self):
-        pass
-
     def compute_energy():
         return 20
 

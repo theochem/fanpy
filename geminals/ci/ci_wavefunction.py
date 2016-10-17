@@ -1,10 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractproperty, abstractmethod
 
-from itertools import combinations, product
-
 import numpy as np
-from scipy.linalg import eigh
 
 from ..wavefunction import Wavefunction
 from .. import slater
@@ -52,8 +49,6 @@ class CIWavefunction(Wavefunction):
 
     Private
     -------
-    _methods : dict
-        Default dimension of projection space
     _energy : float
         Electronic energy
 
@@ -80,18 +75,6 @@ class CIWavefunction(Wavefunction):
         """ Default number of configurations
         """
         pass
-
-    @property
-    def _methods(self):
-        """ Dictionary of methods for solving the wavefunction
-
-        Returns
-        -------
-        methods : dict
-            "default" -> eigenvalue decomposition
-        """
-
-        return {"default": self._solve_eigh}
 
     def dict_sd_coeff(self, exc_lvl=0):
         """ Dictionary of the coefficient
@@ -144,23 +127,6 @@ class CIWavefunction(Wavefunction):
         self.assign_civec(civec=civec)
         self.sd_coeffs = np.zeros([self.nci, self.nci])
         self._energy = np.zeros(self.nci)
-
-    #
-    # Solver methods
-    #
-
-    def _solve_eigh(self, which='SA', **kwargs):
-        """ Solves for the ground state using eigenvalue decomposition
-        """
-        ci_matrix = self.compute_ci_matrix()
-        result = eigh(ci_matrix, **kwargs)
-        del ci_matrix
-
-        # NOTE: overwrites last sd_coeffs
-        self.sd_coeffs = result[1]
-        self._energy = result[0]
-
-        return result
 
     #
     # Assignment methods

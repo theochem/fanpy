@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+from geminals.ci.solver import solve
 from geminals.ci.ci_pairs import CIPairs
 from geminals.wrapper.horton import gaussian_fchk
 
@@ -21,5 +22,5 @@ def test_cipairs_wavefunction():
     print(cipairs.compute_ci_matrix()[0, 0])
     print(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc)
     assert abs(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc - (-1.131269841877) < 1e-8)
-    cipairs()
+    solve(cipairs)
     print(cipairs.compute_energy())

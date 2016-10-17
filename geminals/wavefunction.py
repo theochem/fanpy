@@ -55,35 +55,12 @@ class Wavefunction(object):
     assign_nelec(nelec)
         Assigns the number of electrons
 
-    Abstract Property
-    -----------------
-    _methods : dict
-        Dictionary of methods that are used to solve the wavefunction
-
     Abstract Method
     ---------------
     compute_energy
         Calculates the energy of the wavefunction
     """
     __metaclass__ = ABCMeta
-
-    #
-    # Default attribute values
-    #
-    @abstractproperty
-    def _methods(self):
-        """ Dictionary of methods for solving the wavefunction
-
-        Returns
-        -------
-        methods : dict
-            Dictionary of the form {'method name':method}
-            Must have key "default"
-        """
-        # this is an example
-        def example_method():
-            pass
-        return {"default": example_method}
 
     #
     # Special methods
@@ -133,15 +110,6 @@ class Wavefunction(object):
         self.assign_nuc_nuc(nuc_nuc)
         self.assign_nelec(nelec)
         self._energy = 0.0
-
-    def __call__(self, method="default", **kwargs):
-        """ Optimize coefficients
-        """
-        if method in self._methods:
-            optimizer = self._methods[method.lower()]
-            return optimizer(**kwargs)
-        else:
-            raise ValueError("method must be one of {0}".format(self._methods.keys()))
 
     #
     # Assignment methods

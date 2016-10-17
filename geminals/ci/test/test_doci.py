@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from geminals.ci.solver import solve
 from geminals.ci.doci import DOCI
 from geminals.wrapper.horton import gaussian_fchk
 
@@ -40,5 +41,7 @@ def test_doci_h2():
     G = np.einsum('abcl,ld->abcd', G, T)
 
     doci = DOCI(nelec=nelec, H=(H,), G=(G,), nuc_nuc=nuc_nuc)
-    doci()
+    solve(doci)
     assert abs(doci.compute_energy() - (-1.884948574812363)) < 1e-7
+
+# FIXME: need other tests
