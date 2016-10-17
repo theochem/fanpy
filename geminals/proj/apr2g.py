@@ -62,8 +62,12 @@ class APr2G(ProjectionWavefunction):
             Each 2-tuple correspond to the min and the max value for the parameter
             with the same index.
         """
-        bounds = [(-np.inf, np.inf) for i in self.nparam]
-        return bounds
+        # FIXME: apply better bounds
+        # remove bounds on parameters (for now)
+        # bounds = [(-np.inf, np.inf) for i in self.nparam]
+        low_bounds = [-np.inf for i in range(self.nparam)]
+        upp_bounds = [np.inf for i in range(self.nparam)]
+        return (tuple(low_bounds), tuple(upp_bounds))
 
     def __init__(
         self,

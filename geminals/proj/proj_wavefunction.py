@@ -47,8 +47,6 @@ class ProjectionWavefunction(Wavefunction):
 
     Properties
     ----------
-    _methods : dict of func
-        Dictionary of methods that are used to solve the wavefunction
     nspin : int
         Number of spin orbitals (alpha and beta)
     nspatial : int
@@ -148,24 +146,6 @@ class ProjectionWavefunction(Wavefunction):
     # Properties
     #
     @property
-    def _methods(self):
-        """ Dictionary of methods for solving the wavefunction
-
-        Returns
-        -------
-        methods : dict
-            "default" -> least squares nonlinear solver
-        """
-        # return {
-        #         "default": self._solve_root,
-        #         "leastsq": self._solve_least_squares,
-        #         }
-        return {
-                "root": self._solve_root,
-                "default": self._solve_least_squares,
-                }
-
-    @property
     def nparam(self):
         """ Number of parameters
 
@@ -211,10 +191,13 @@ class ProjectionWavefunction(Wavefunction):
             Each 2-tuple correspond to the min and the max value for the parameter
             with the same index.
         """
-        bounds = [(-1, 1) for i in self.nparam]
+        # bounds = [(-1, 1) for i in range(self.nparam)]
+        low_bounds = [-1 for i in range(self.nparam)]
+        upp_bounds = [1 for i in range(self.nparam)]
         # remove boundary on energy
-        bounds[-1] = (-np.inf, np.inf)
-        return bounds
+        low_bounds[-1] = -np.inf
+        upp_bounds[-1] = np.inf
+        return (tuple(low_bounds), tuple(upp_bounds))
 
     #
     # Special methods

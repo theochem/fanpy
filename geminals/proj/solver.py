@@ -33,7 +33,7 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
 
     # set options
     options = {}
-    options["bounds"] = wavefunction.bounds,
+    options["bounds"] = wavefunction.bounds
 
     # set default options and solver
     if solver_type == 'root':
