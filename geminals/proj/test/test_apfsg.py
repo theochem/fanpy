@@ -62,4 +62,3 @@ def test_apfsg_wavefunction_h2():
 #     print('FCI value', -8.96741814557)
 #     assert -8.9472891719 > apfsg.compute_energy() > -8.96741814557
 #     assert False
-test_apfsg_wavefunction_h2()

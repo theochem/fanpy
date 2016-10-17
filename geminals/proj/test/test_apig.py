@@ -34,7 +34,7 @@ def test_apig_wavefunction_h2():
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apig._solve_least_squares(jac=None)
+    solve(solver_type='least squares', jac=False)
     # FIXME: the numbers are quite different
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
 
@@ -66,6 +66,6 @@ def test_apig_wavefunction_lih():
     assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apig._solve_least_squares(jac=None)
+    solve(solver_type='least squares', jac=False)
     # FIXME: the numbers are quite different
     assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-4
