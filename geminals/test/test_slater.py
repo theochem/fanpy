@@ -295,3 +295,111 @@ def test_get_spin():
     assert slater.get_spin(0b1101, 2) == -0.5
     assert slater.get_spin(0b1110, 2) == -0.5
     assert slater.get_spin(0b1111, 2) == 0
+
+def test_find_num_trans():
+    """
+    Test slater.find_num_trans
+    """
+    assert slater.find_num_trans([1, 3, 4, 6]) == 0
+    assert slater.find_num_trans([1, 3, 6, 4]) == 1
+    assert slater.find_num_trans([1, 4, 3, 6]) == 1
+    assert slater.find_num_trans([1, 4, 6, 3]) == 2
+    assert slater.find_num_trans([1, 6, 3, 4]) == 2
+    assert slater.find_num_trans([1, 6, 4, 3]) == 3
+    assert slater.find_num_trans([3, 1, 4, 6]) == 1
+    assert slater.find_num_trans([3, 1, 6, 4]) == 2
+    assert slater.find_num_trans([3, 4, 1, 6]) == 2
+    assert slater.find_num_trans([3, 4, 6, 1]) == 3
+    assert slater.find_num_trans([3, 6, 1, 4]) == 3
+    assert slater.find_num_trans([3, 6, 4, 1]) == 4
+    assert slater.find_num_trans([4, 1, 3, 6]) == 2
+    assert slater.find_num_trans([4, 1, 6, 3]) == 3
+    assert slater.find_num_trans([4, 3, 1, 6]) == 3
+    assert slater.find_num_trans([4, 3, 6, 1]) == 4
+    assert slater.find_num_trans([4, 6, 1, 3]) == 4
+    assert slater.find_num_trans([4, 6, 3, 1]) == 5
+    assert slater.find_num_trans([6, 1, 3, 4]) == 3
+    assert slater.find_num_trans([6, 1, 4, 3]) == 4
+    assert slater.find_num_trans([6, 3, 1, 4]) == 4
+    assert slater.find_num_trans([6, 3, 4, 1]) == 5
+    assert slater.find_num_trans([6, 4, 1, 3]) == 5
+    assert slater.find_num_trans([6, 4, 3, 1]) == 6
+
+    assert slater.find_num_trans([1, 3, 4, 6], [1, 3, 4, 6]) == 0
+    assert slater.find_num_trans([1, 3, 6, 4], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans([1, 4, 3, 6], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans([1, 4, 6, 3], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans([1, 6, 3, 4], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans([1, 6, 4, 3], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([3, 1, 4, 6], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans([3, 1, 6, 4], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans([3, 4, 1, 6], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans([3, 4, 6, 1], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([3, 6, 1, 4], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([3, 6, 4, 1], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans([4, 1, 3, 6], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans([4, 1, 6, 3], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([4, 3, 1, 6], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([4, 3, 6, 1], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans([4, 6, 1, 3], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans([4, 6, 3, 1], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans([6, 1, 3, 4], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans([6, 1, 4, 3], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans([6, 3, 1, 4], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans([6, 3, 4, 1], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans([6, 4, 1, 3], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans([6, 4, 3, 1], [1, 3, 4, 6]) == 6
+
+def test_find_num_trans_dumb():
+    """
+    Test slater.find_num_trans_dumb
+    """
+    assert slater.find_num_trans_dumb([1, 3, 4, 6]) == 0
+    assert slater.find_num_trans_dumb([1, 3, 6, 4]) == 1
+    assert slater.find_num_trans_dumb([1, 4, 3, 6]) == 1
+    assert slater.find_num_trans_dumb([1, 4, 6, 3]) == 2
+    assert slater.find_num_trans_dumb([1, 6, 3, 4]) == 2
+    assert slater.find_num_trans_dumb([1, 6, 4, 3]) == 3
+    assert slater.find_num_trans_dumb([3, 1, 4, 6]) == 1
+    assert slater.find_num_trans_dumb([3, 1, 6, 4]) == 2
+    assert slater.find_num_trans_dumb([3, 4, 1, 6]) == 2
+    assert slater.find_num_trans_dumb([3, 4, 6, 1]) == 3
+    assert slater.find_num_trans_dumb([3, 6, 1, 4]) == 3
+    assert slater.find_num_trans_dumb([3, 6, 4, 1]) == 4
+    assert slater.find_num_trans_dumb([4, 1, 3, 6]) == 2
+    assert slater.find_num_trans_dumb([4, 1, 6, 3]) == 3
+    assert slater.find_num_trans_dumb([4, 3, 1, 6]) == 3
+    assert slater.find_num_trans_dumb([4, 3, 6, 1]) == 4
+    assert slater.find_num_trans_dumb([4, 6, 1, 3]) == 4
+    assert slater.find_num_trans_dumb([4, 6, 3, 1]) == 5
+    assert slater.find_num_trans_dumb([6, 1, 3, 4]) == 3
+    assert slater.find_num_trans_dumb([6, 1, 4, 3]) == 4
+    assert slater.find_num_trans_dumb([6, 3, 1, 4]) == 4
+    assert slater.find_num_trans_dumb([6, 3, 4, 1]) == 5
+    assert slater.find_num_trans_dumb([6, 4, 1, 3]) == 5
+    assert slater.find_num_trans_dumb([6, 4, 3, 1]) == 6
+
+    assert slater.find_num_trans_dumb([1, 3, 4, 6], [1, 3, 4, 6]) == 0
+    assert slater.find_num_trans_dumb([1, 3, 6, 4], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans_dumb([1, 4, 3, 6], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans_dumb([1, 4, 6, 3], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans_dumb([1, 6, 3, 4], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans_dumb([1, 6, 4, 3], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([3, 1, 4, 6], [1, 3, 4, 6]) == 1
+    assert slater.find_num_trans_dumb([3, 1, 6, 4], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans_dumb([3, 4, 1, 6], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans_dumb([3, 4, 6, 1], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([3, 6, 1, 4], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([3, 6, 4, 1], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans_dumb([4, 1, 3, 6], [1, 3, 4, 6]) == 2
+    assert slater.find_num_trans_dumb([4, 1, 6, 3], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([4, 3, 1, 6], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([4, 3, 6, 1], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans_dumb([4, 6, 1, 3], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans_dumb([4, 6, 3, 1], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans_dumb([6, 1, 3, 4], [1, 3, 4, 6]) == 3
+    assert slater.find_num_trans_dumb([6, 1, 4, 3], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans_dumb([6, 3, 1, 4], [1, 3, 4, 6]) == 4
+    assert slater.find_num_trans_dumb([6, 3, 4, 1], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans_dumb([6, 4, 1, 3], [1, 3, 4, 6]) == 5
+    assert slater.find_num_trans_dumb([6, 4, 3, 1], [1, 3, 4, 6]) == 6
