@@ -309,19 +309,10 @@ class APr2G(ProjectionWavefunction):
 
         Some of the cache are emptied because the parameters are rewritten
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.npair, self.nspatial)
-        # normalize the geminals
-        norm = np.sum(gem_coeffs**2, axis=1)
-        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # flip the negative norms
-        gem_coeffs[norm < 0, :] *= -1
         # normalize the wavefunction
         norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5/self.npair)
         # set attributes
-        self.params = np.hstack((gem_coeffs.flatten(), self.params[-1]))
-        # FIXME: need smarter caching (just delete the ones affected)
+        self.params[self.npair+self.nspatial:self.npair+self.nspatial*2]*= norm**(-0.5/self.npair)
         for sd in self.default_ref_sds:
             del self.cache[sd]
             # This requires d_cache to be a dictionary of dictionary
