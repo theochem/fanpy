@@ -88,7 +88,7 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
         options['npop'] = wavefunction.nparam*2
         if solver_type == 'cma':
             options['sigma0'] = 0.01
-            options['verbose'] = True
+            options['verbose'] = False
             options['max_iter'] = 1000
         elif solver_type == 'cma_guess':
             options['sigma0'] = 0.1

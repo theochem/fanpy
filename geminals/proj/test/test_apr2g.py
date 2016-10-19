@@ -26,13 +26,14 @@ def test_apr2g_wavefunction_h2():
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
+    apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
-    # results = solve(apr2g, solver_type='least squares', jac=False)
+    results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -1.84444667247)
     print('AP1roG energy', ap1rog.compute_energy())
     print('APr2G energy', apr2g.compute_energy())
     print('FCI value', -1.87832550029)
-    # assert results.success
+    assert results.success
     assert -1.84444667247 > apr2g.compute_energy() > -1.87832550029
     assert False
 
@@ -55,13 +56,14 @@ def test_apr2g_wavefunction_lih():
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
+    apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
-    # results = solve(apr2g, solver_type='least squares', jac=False)
+    results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -8.9472891719)
     print('AP1roG energy', ap1rog.compute_energy())
     print('APr2G energy', apr2g.compute_energy())
     print('FCI value', -8.96741814557)
-    # assert results.success
+    assert results.success
     assert -8.9472891719 > apr2g.compute_energy() > -8.96741814557
     assert False
 
