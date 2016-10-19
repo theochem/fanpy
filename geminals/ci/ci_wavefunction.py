@@ -146,7 +146,7 @@ class CIWavefunction(Wavefunction):
         #FIXME: cyclic dependence on civec
         if nci is None:
             nci = self._nci
-        if not isinstance(nci, int):
+        if not isinstance(nci, (int, long)):
             raise TypeError('Number of determinants must be an integer')
         self.nci = nci
 
