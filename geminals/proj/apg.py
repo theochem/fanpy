@@ -334,9 +334,12 @@ class APG(ProjectionWavefunction):
         # if no derivatization
         if deriv is None:
             for scheme in pairing_schemes:
+                sign = slater.find_num_trans([j for i in scheme for j in i],
+                                             occ_indices,
+                                             is_creator=True)
                 indices = [self.dict_orbpair_gem[i] for i in scheme]
                 matrix = gem_coeffs[:, indices]
-                val += permanent_ryser(matrix)
+                val += sign * permanent_ryser(matrix)
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
@@ -346,14 +349,17 @@ class APG(ProjectionWavefunction):
             # both orbitals of the geminal must be present in the Slater determinant
             if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
                 for scheme in pairing_schemes:
+                    sign = slater.find_num_trans([j for i in scheme for j in i],
+                                                 occ_indices,
+                                                 is_creator=True)
                     # geminal must be an allowed pairing schemes
                     if orbs_to_remove in scheme:
                         row_inds = [i for i in range(self.npair) if i!=row_to_remove]
                         col_inds = [self.dict_orbpair_gem[i] for i in scheme if self.dict_orbpair_gem[i]!=col_to_remove]
                         if len(row_inds) == 0 and len(col_inds) == 0:
-                            val += 1
+                            val += sign * 1
                         else:
-                            val += permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+                            val += sign * permanent_ryser(gem_coeffs[row_inds][:, col_inds])
                 self.d_cache[(sd, deriv)] = val
         return val
 
@@ -389,13 +395,13 @@ class APG(ProjectionWavefunction):
 
         Some of the cache are emptied because the parameters are rewritten
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
-        # normalize the geminals
-        norm = np.sum(gem_coeffs**2, axis=1)
-        gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # flip the negative norms
-        gem_coeffs[norm < 0, :] *= -1
+        # # build geminal coefficient
+        # gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
+        # # normalize the geminals
+        # norm = np.sum(gem_coeffs**2, axis=1)
+        # gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
+        # # flip the negative norms
+        # gem_coeffs[norm < 0, :] *= -1
         # normalize the wavefunction
         norm = self.compute_norm()
         gem_coeffs *= norm**(-0.5 / self.npair)
