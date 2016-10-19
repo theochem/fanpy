@@ -29,7 +29,7 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
     See `scipy.optimize.root` documentation.
     """
     # check solver_type
-    if solver_type not in ['least squares', 'root', 'cma']:
+    if solver_type not in ['least squares', 'root', 'cma', 'cma_guess']:
         raise TypeError('Given solver type, {0}, is not supported'.format(solver_type))
 
     # set options
@@ -80,15 +80,20 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
                 options["jac"] = "cs"
             else:
                 options["jac"] = "3-point"
-    elif solver_type == 'cma':
+    elif 'cma' in solver_type:
         solver = fmin_cma
         objective = lambda x: np.sum(np.abs(wavefunction.objective(x, weigh_norm=False)))
         if jac:
             print('WARNING: Jacobian is not needed in CMA solver')
-        options['sigma0'] = 0.01
         options['npop'] = wavefunction.nparam*2
-        options['verbose'] = False
-        options['max_iter'] = 1000
+        if solver_type == 'cma':
+            options['sigma0'] = 0.01
+            options['verbose'] = True
+            options['max_iter'] = 1000
+        elif solver_type == 'cma_guess':
+            options['sigma0'] = 0.1
+            options['verbose'] = False
+            options['max_iter'] = 50
 
     # overwrite options with user input
     options.update(kwargs)

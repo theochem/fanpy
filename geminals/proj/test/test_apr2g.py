@@ -22,11 +22,11 @@ def test_apr2g_wavefunction_h2():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='cma_guess')
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    solve(apr2g, solver_type='cma')
+    solve(apr2g, solver_type='cma_guess')
     # results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -1.84444667247)
     print('AP1roG energy', ap1rog.compute_energy())
@@ -51,11 +51,11 @@ def test_apr2g_wavefunction_lih():
     nuc_nuc = hf_dict["nuc_nuc"]
     # AP1roG as an initial guess
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='cma_guess')
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, ap1rog_params=ap1rog.params)
-    solve(apr2g, solver_type='cma')
+    solve(apr2g, solver_type='cma_guess')
     # results = solve(apr2g, solver_type='least squares', jac=False)
     print('HF energy', -8.9472891719)
     print('AP1roG energy', ap1rog.compute_energy())

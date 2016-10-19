@@ -29,7 +29,7 @@ def test_ap1rog_wavefunction_h2():
     assert abs(ap1rog.compute_energy(include_nuc=False, ref_sds=ap1rog.default_ref_sds)-(-1.84444667247)) < 1e-7
     # Check if AP1roG converges to the same number by itself
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='cma_guess')
     results = solve(ap1rog, solver_type='least squares', jac=True)
     print('HF energy', -1.84444667247)
     print('new energy', ap1rog.compute_energy())
@@ -62,7 +62,7 @@ def test_ap1rog_wavefunction_lih():
     # Check if AP1roG converges to the same number by itself
     # FIXME: terrible reference
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(ap1rog, solver_type='cma')
+    solve(ap1rog, solver_type='cma_guess')
     results = solve(ap1rog, solver_type='least squares', jac=True)
     print('HF energy', -8.9472891719)
     print('new energy', ap1rog.compute_energy())

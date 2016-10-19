@@ -30,17 +30,25 @@ def test_apig_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, dtype=np.float64)
     init_guess = apig.params[:]
-    solve(apig, solver_type='cma')
+    solve(apig, solver_type='cma_guess')
     results = solve(apig, solver_type='least squares', jac=True)
     assert results.success
+    print('HF Energy: -1.84444667247')
+    print('APIG Energy: {0}'.format(apig.compute_energy(include_nuc=False)))
+    print('APIG Energy (old code): -1.86968284431')
+    print('FCI Energy: -1.87832550029')
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    # result = solve(apig, solver_type='least squares', jac=False)
-    solve(apig, solver_type='cma')
-    results = solve(apig, solver_type='least squares', jac=True)
+    solve(apig, solver_type='cma_guess')
+    results = solve(apig, solver_type='least squares', jac=False)
     assert results.success
-    assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
+    print('HF Energy: -1.84444667247')
+    print('APIG Energy: {0}'.format(apig.compute_energy(include_nuc=False)))
+    print('APIG Energy (old code): -1.86968284431')
+    print('FCI Energy: -1.87832550029')
+    # Note: least squares solver without a jacobian isn't very good
+    assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
 
 def test_apig_wavefunction_lih():
     #### LiH ####
@@ -62,13 +70,15 @@ def test_apig_wavefunction_lih():
     apig.d_cache = {}
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-8.9472891719)) < 1e-7
     # Compare APIG energy with old code
-    # Solve with Jacobian using CMA
     apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     apig.normalize()
-    solve(apig, solver_type='cma')
-    results = solve(apig, solver_type='least squares')
-    # solve(apig, solver_type='least squares', jac=True)
-    print(apig.compute_energy(include_nuc=False), 'new code')
-    print(-8.96353105152, 'old code')
+    # guess with cma
+    solve(apig, solver_type='cma_guess')
+    # finish solving with least squares
+    results = solve(apig, solver_type='least squares', jac=True)
     assert results.success
+    print('HF Energy: -8.9472891719')
+    print('APIG Energy: {0}'.format(apig.compute_energy(include_nuc=False)))
+    print('APIG Energy (old code): -8.96353105152')
+    print('FCI Energy: -8.96741814557')
     assert abs(apig.compute_energy(include_nuc=False) - (-8.96353105152)) < 1e-6

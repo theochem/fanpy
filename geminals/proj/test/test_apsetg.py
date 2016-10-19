@@ -22,7 +22,7 @@ def test_apsetg_wavefunction_h2():
     nuc_nuc = hf_dict["nuc_nuc"]
     # Solve with Jacobian using energy as a parameter
     apsetg = APsetG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apsetg, solver_type='cma')
+    solve(apsetg, solver_type='cma_guess')
     results = solve(apsetg, solver_type='least squares', jac=True)
     print('HF energy', -1.84444667247)
     print('new energy', apsetg.compute_energy())
@@ -48,7 +48,7 @@ def test_apsetg_wavefunction_lih():
     # Compare apsetg energy with old code
     # Solve with Jacobian using energy as a parameter
     apsetg = APsetG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    solve(apsetg, solver_type='cma')
+    solve(apsetg, solver_type='cma_guess')
     results = solve(apsetg, solver_type='least squares', jac=True)
     print('HF energy', -8.9472891719)
     print('new energy', apsetg.compute_energy())
