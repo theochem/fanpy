@@ -212,7 +212,7 @@ class ProjectionWavefunction(Wavefunction):
         params=None,
         pspace=None,
         # Arguments for saving parameters
-        save_params=False
+        save_params=''
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -478,7 +478,7 @@ class ProjectionWavefunction(Wavefunction):
         # self.normalize()
         # Save params
         if self.save_params:
-            np.save('{0}_temp.npy'.format(self.__class__.__name__), self.params)
+            np.save('{0}_temp.npy'.format(self.save_params), self.params)
         # Clear cache
         self.cache = {}
         self.d_cache = {}

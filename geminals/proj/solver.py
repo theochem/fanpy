@@ -110,8 +110,8 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
     # Save results
     if wavefunction.save_params:
         # FIXME: _temp business is quite ugly
-        np.save('{0}.npy'.format(wavefunction.__class__.__name__), wavefunction.params)
-        os.remove('{0}_temp.npy'.format(wavefunction.__class__.__name__))
+        np.save('{0}.npy'.format(wavefunction.save_params), wavefunction.params)
+        os.remove('{0}_temp.npy'.format(wavefunction.save_params))
 
     return result
 
