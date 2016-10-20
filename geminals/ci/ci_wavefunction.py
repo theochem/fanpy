@@ -111,6 +111,7 @@ class CIWavefunction(Wavefunction):
             nuc_nuc=None,
             # Arguments handled by FullCI class
             nci=None,
+            excs=None,
             civec=None,
             spin=None
     ):
@@ -123,10 +124,11 @@ class CIWavefunction(Wavefunction):
             nuc_nuc=nuc_nuc,
         )
         self.assign_nci(nci=nci)
+        self.assign_excs(excs=excs)
         self.assign_spin(spin=spin)
         self.assign_civec(civec=civec)
-        self.sd_coeffs = np.zeros([self.nci, self.nci])
-        self._energy = np.zeros(self.nci)
+        self.sd_coeffs = np.zeros((self.nci, self.excs.size))
+        self._energy = np.zeros(self.excs.size)
 
     #
     # Assignment methods
@@ -149,6 +151,23 @@ class CIWavefunction(Wavefunction):
         if not isinstance(nci, (int, long)):
             raise TypeError('Number of determinants must be an integer')
         self.nci = nci
+
+    def assign_excs(self, excs=None):
+        """ Sets orders of excitations to include during calculation
+
+        Parameters
+        ----------
+        excs : list of ints
+            Orders of excitations to include
+        """
+        if excs is None:
+            excs = [0]
+        if not isinstance(excs, list):
+            raise TypeError('Orders of excitations must be given as a list')
+        for i in excs:
+            if not isinstance(i, int):
+                raise TypeError('Orders of excitations must be given as an inteer')
+        self.excs = np.array(excs)
 
     def assign_spin(self, spin=None):
         """ Sets the spin of the projection determinants

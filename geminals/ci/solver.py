@@ -25,11 +25,11 @@ def solve(wavefunction, solver_type='eigh', **kwargs):
         raise TypeError('Given solver type, {0}, is not supported'.format(solver_type))
 
     ci_matrix = wavefunction.compute_ci_matrix()
-    result = eigh(ci_matrix, **kwargs)
+    result = eigh(ci_matrix, eigvals=(min(wavefunction.excs), max(wavefunction.excs)), **kwargs)
     del ci_matrix
 
     # NOTE: overwrites last sd_coeffs
-    wavefunction.sd_coeffs = result[1]
-    wavefunction._energy = result[0]
+    wavefunction.sd_coeffs = result[1][:, [i-min(wavefunction.excs) for i in wavefunction.excs]]
+    wavefunction._energy = result[0][[i-min(wavefunction.excs) for i in wavefunction.excs]]
 
     return result
