@@ -132,8 +132,9 @@ class APseqG(ProjectionWavefunction):
                  # sequence list
                  seq_list=None,
                  # Arguments for saving parameters
-                 save_params=False
+                 params_save_name=''
                  ):
+        # FIXME: this fucking mess
         super(ProjectionWavefunction, self).__init__(nelec=nelec,
                                                      H=H,
                                                      G=G,
@@ -146,7 +147,7 @@ class APseqG(ProjectionWavefunction):
         self.dict_orbpair_gem = {}
         self.dict_gem_orbpair = {}
 
-        self.save_params = save_params
+        self.assign_params_save(params_save_name=params_save_name)
         self.assign_seq_list(seq_list=seq_list)
         self.assign_pspace(pspace=pspace)
         self.config_gem_orbpair()

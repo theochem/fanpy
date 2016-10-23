@@ -69,38 +69,6 @@ class APr2G(ProjectionWavefunction):
         upp_bounds = [np.inf for i in range(self.nparam)]
         return (tuple(low_bounds), tuple(upp_bounds))
 
-    def __init__(
-        self,
-        # Mandatory arguments
-        nelec=None,
-        H=None,
-        G=None,
-        # Arguments handled by base Wavefunction class
-        dtype=None,
-        nuc_nuc=None,
-        # Arguments handled by FullCI class
-        params=None,
-        ap1rog_params=None,
-        pspace=None,
-        # Arguments for saving parameters
-        save_params=False
-    ):
-        super(ProjectionWavefunction, self).__init__(
-            nelec=nelec,
-            H=H,
-            G=G,
-            dtype=dtype,
-            nuc_nuc=nuc_nuc,
-        )
-        self.save_params = save_params
-        self.assign_params(params=params, ap1rog_params=ap1rog_params)
-        self.assign_pspace(pspace=pspace)
-        if params is None and ap1rog_params is None:
-            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
-        del self._energy
-        self.cache = {}
-        self.d_cache = {}
-
     def assign_params(self, params=None, ap1rog_params=None):
         """ Assigns the parameters to the wavefunction
 

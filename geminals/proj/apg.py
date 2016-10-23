@@ -153,8 +153,9 @@ class APG(ProjectionWavefunction):
                  # Adjacnecy
                  adjacency=None,
                  # Arguments for saving parameters
-                 save_params=False
+                 params_save_name=''
     ):
+        # FIXME: this fucking mess
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
             H=H,
@@ -162,7 +163,7 @@ class APG(ProjectionWavefunction):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
-        self.save_params = save_params
+        self.assign_params_save(params_save_name=params_save_name)
         self.assign_adjacency(adjacency=adjacency)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
