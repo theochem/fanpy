@@ -395,8 +395,8 @@ class APG(ProjectionWavefunction):
 
         Some of the cache are emptied because the parameters are rewritten
         """
-        # # build geminal coefficient
-        # gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
+        # build geminal coefficient
+        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
         # # normalize the geminals
         # norm = np.sum(gem_coeffs**2, axis=1)
         # gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
