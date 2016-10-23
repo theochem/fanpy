@@ -26,7 +26,7 @@ def test_apr2g_wavefunction_h2():
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apr2g.assign_params(ap1rog_params=ap1rog.params)
+    apr2g.assign_params(params=ap1rog.params, params_type='ap1rog')
     apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
     results = solve(apr2g, solver_type='least squares', jac=False)
@@ -57,7 +57,7 @@ def test_apr2g_wavefunction_lih():
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
-    apr2g.assign_params(ap1rog_params=ap1rog.params)
+    apr2g.assign_params(params=ap1rog.params, params_type='ap1rog')
     apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
     results = solve(apr2g, solver_type='least squares', jac=False)

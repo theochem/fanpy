@@ -69,23 +69,30 @@ class APr2G(ProjectionWavefunction):
         upp_bounds = [np.inf for i in range(self.nparam)]
         return (tuple(low_bounds), tuple(upp_bounds))
 
-    def assign_params(self, params=None, ap1rog_params=None):
+    def assign_params(self, params=None, params_type='apr2g'):
         """ Assigns the parameters to the wavefunction
 
         Parameters
         ----------
         params : np.ndarray(K,)
             Parameters of the wavefunction
-        ap1rog_coeffs : np.ndarray(P*K+1, )
-            Geminal coefficients and the energy of AP1roG wavefunction
+        params_type : str
+            Type of parameter
+            One of 'apr2g', 'ap1rog', 'apig'
         """
-        super(APr2G, self).assign_params(params=params)
-        assert not ((params is not None) and (ap1rog_params is not None)),\
-            'Cannot give both params and ap1rog_params'
-        if ap1rog_params is not None:
-            gem_coeffs = np.hstack((np.identity(self.npair), ap1rog_params[:-1].reshape(self.npair, self.nspatial-self.npair)))
-            gem_params = self._convert_from_ap1rog(self.npair, self.nspatial, gem_coeffs)
-            self.params = np.hstack((gem_params, ap1rog_params[-1]))
+        if params_type not in ['apr2g', 'ap1rog', 'apig']:
+            raise TypeError('Unsupport parameter type, {0}'.format(params_type))
+
+        if params_type == 'apr2g':
+            super(APr2G, self).assign_params(params=params)
+        elif params_type == 'ap1rog':
+            gem_coeffs = np.hstack((np.identity(self.npair), params[:-1].reshape(self.npair, self.nspatial-self.npair)))
+            gem_params = self._convert_from_apig(self.npair, self.nspatial, gem_coeffs)
+            self.params = np.hstack((gem_params, params[-1]))
+        elif params_type == 'apig':
+            gem_coeffs = params[:-1].reshape(self.npair, self.nspatial)
+            gem_params = self._convert_from_apig(self.npair, self.nspatial, gem_coeffs)
+            self.params = np.hstack((gem_params, params[-1]))
 
 
     @property
@@ -111,9 +118,17 @@ class APr2G(ProjectionWavefunction):
 
     # FIXME: this needs to be checked
     @staticmethod
-    def _convert_from_ap1rog(npair, nspatial, matrix):
+    def _convert_from_apig(npair, nspatial, matrix):
         """
-        Initialize an APr2G coefficient vector from the AP1roG matrix.
+        Initialize an APr2G coefficient vector from the APIG matrix.
+
+        Parameters
+        ----------
+        npair : int
+            Number of electron pairs
+        nspatial : int
+            Number of spatial orbitals
+        matrix : np.ndarray
         """
 
         # Construct a least-squares augmented matrix
