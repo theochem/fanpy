@@ -108,10 +108,10 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
         print('WARNING: Optimization did not succeed.')
 
     # Save results
-    if wavefunction.save_params:
+    if wavefunction.params_save_name:
         # FIXME: _temp business is quite ugly
-        np.save('{0}.npy'.format(wavefunction.save_params), wavefunction.params)
-        os.remove('{0}_temp.npy'.format(wavefunction.save_params))
+        np.save('{0}.npy'.format(wavefunction.params_save_name), wavefunction.params)
+        os.remove('{0}_temp.npy'.format(wavefunction.params_save_name))
 
     return result
 

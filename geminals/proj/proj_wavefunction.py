@@ -212,7 +212,7 @@ class ProjectionWavefunction(Wavefunction):
         params=None,
         pspace=None,
         # Arguments for saving parameters
-        save_params=''
+        params_save_name=''
     ):
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
@@ -221,7 +221,7 @@ class ProjectionWavefunction(Wavefunction):
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
-        self.save_params = save_params
+        self.assign_params_save(params_save_name=params_save_name)
         self.assign_params(params=params)
         self.assign_pspace(pspace=pspace)
         if params is None:
@@ -233,6 +233,19 @@ class ProjectionWavefunction(Wavefunction):
     #
     # Assignment methods
     #
+    def assign_params_save(self, params_save_name=''):
+        """ Assigns the npy file name that stores the parameters
+
+        Parameters
+        ----------
+        npy_name : str
+            Name of the npy file that will contain the parameters
+
+        """
+        if not isinstance(params_save_name, str):
+            raise TypeError('The numpy file name must be a string')
+        self.params_save_name = params_save_name
+
     def assign_params(self, params=None):
         """ Assigns the parameters to the wavefunction
 
@@ -477,8 +490,8 @@ class ProjectionWavefunction(Wavefunction):
         # Normalize
         # self.normalize()
         # Save params
-        if self.save_params:
-            np.save('{0}_temp.npy'.format(self.save_params), self.params)
+        if self.params_save_name:
+            np.save('{0}_temp.npy'.format(self.params_save_name), self.params)
         # Clear cache
         self.cache = {}
         self.d_cache = {}
