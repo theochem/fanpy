@@ -196,6 +196,20 @@ class ProjectionWavefunction(Wavefunction):
         upp_bounds[-1] = np.inf
         return (tuple(low_bounds), tuple(upp_bounds))
 
+
+    @property
+    def nconstraints(self):
+        """Number of constraints on the sollution of the projected wavefunction.
+        
+        By default this is - 1 because we need one equation for normalization.
+
+        Returns
+        -------
+        nconstraints : int
+        """
+        self._nconstraints = 1
+        return self._nconstraints
+
     #
     # Special methods
     #
@@ -291,8 +305,9 @@ class ProjectionWavefunction(Wavefunction):
             If integer, then it is the number of Slater determinants to be generated
         """
         if pspace is None:
-            pspace = self.compute_pspace(self.nparam - 1)
-            # - 1 because we need one equation for normalization
+            pspace = self.compute_pspace(self.nparam - self.nconstraints)
+            # - the number of constraints already impored on the wfn
+            # in general this is - 1 because we need one equation for normalization
         # FIXME: this is quite terrible
         if isinstance(pspace, int):
             pspace = self.compute_pspace(pspace)
