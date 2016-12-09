@@ -140,6 +140,21 @@ class AP1roG(ProjectionWavefunction):
         """
         return np.zeros((self.npair, self.nspatial-self.npair), dtype=self.dtype)
 
+    @property
+    def nconstraints(self):
+        """Number of constraints on the sollution of the projected wavefunction.
+
+        For AP1roG this is 0 because the intermediate normalization is satisfied by construction.
+
+        Returns
+        -------
+        nconstraints : int
+        """
+
+        self._nconstraints = 0
+
+        return self._nconstraints
+
     def compute_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
