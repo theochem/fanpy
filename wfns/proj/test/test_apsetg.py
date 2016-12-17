@@ -1,12 +1,14 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
-np.random.seed(2012)
+from nose.plugins.attrib import attr
 
 from wfns.proj.solver import solve
 from wfns.proj.apsetg import APsetG
 from wfns.wrapper.horton import gaussian_fchk
 
+
+@attr('slow')
 def test_apsetg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
@@ -32,6 +34,7 @@ def test_apsetg_wavefunction_h2():
     assert abs(apsetg.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
 
 
+@attr('slow')
 def test_apsetg_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from nose.plugins.attrib import attr
 from wfns.ci.solver import solve
 from wfns.ci.fci import FCI
 from wfns.wrapper.horton import gaussian_fchk
@@ -55,6 +56,7 @@ def test_fci_lih_sto6g():
     assert abs(fci.compute_energy()-(-7.9723355823)) < 1e-7
 
 
+@attr('slow')
 def test_fci_lih_631g():
     #### LiH ####
     # HF energy: -7.97926894940

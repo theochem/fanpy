@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from nose.plugins.attrib import attr
 from wfns.proj.solver import solve
 from wfns.proj.apr2g import APr2G
 from wfns.proj.ap1rog import AP1roG
@@ -39,6 +40,7 @@ def test_apr2g_wavefunction_h2():
     assert False
 
 
+@attr('slow')
 def test_apr2g_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719

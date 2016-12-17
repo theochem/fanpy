@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from nose.plugins.attrib import attr
 from wfns.proj.solver import solve
 from wfns.proj.apseqg import APseqG
 from wfns.wrapper.horton import gaussian_fchk
@@ -95,6 +96,8 @@ def test_config_gem_config():
         assert gem in apseq.dict_orbpair_gem.keys()
     assert len(answer) == len(apseq.dict_orbpair_gem)
 
+
+@attr('slow')
 def test_apseqg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
@@ -125,6 +128,8 @@ def test_apseqg_wavefunction_h2():
     assert -1.84444667247 > apseqg.compute_energy() > -1.87832550029
     assert False
 
+
+@attr('slow')
 def test_apseqg_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719

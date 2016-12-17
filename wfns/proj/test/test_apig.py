@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
-np.random.seed(2012)
+from nose.plugins.attrib import attr
 
 from wfns.proj.apig import APIG
 from wfns.proj.solver import solve
@@ -50,6 +50,8 @@ def test_apig_wavefunction_h2():
     # Note: least squares solver without a jacobian isn't very good
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-4
 
+
+@attr('slow')
 def test_apig_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719

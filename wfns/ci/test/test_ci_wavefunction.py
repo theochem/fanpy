@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
-from nose.tools import assert_raises
 import os
 import numpy as np
+from nose.tools import assert_raises
+from nose.plugins.attrib import attr
 from wfns.wrapper.pyscf import generate_fci_cimatrix
 from wfns.wrapper.horton import gaussian_fchk
 from wfns.ci.ci_wavefunction import CIWavefunction
@@ -297,6 +298,7 @@ def test_get_density_matrix_lih_sto6g():
                 0.5*np.einsum('ijkl,iklj', G, density2)) - (energy)) < 1e-8
 
 
+@attr('slow')
 def test_get_density_matrix_lih_631g():
     """
     Tests CIWavefunction.get_density_matrix using LiH system (6-31G**)

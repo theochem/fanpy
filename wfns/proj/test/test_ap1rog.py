@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function
 import os
-import numpy as np
 
 from wfns.proj.solver import solve
 from wfns.proj.ap1rog import AP1roG

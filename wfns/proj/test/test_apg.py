@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
-from nose.tools import assert_raises
 import os
 import numpy as np
+from nose.tools import assert_raises
+from nose.plugins.attrib import attr
 
 from wfns.proj.proj_wavefunction import ProjectionWavefunction
 from wfns.proj.solver import solve
@@ -52,6 +53,8 @@ def test_assign_adjacency():
     test[0,0] = True
     assert_raises(ValueError, lambda:apg.assign_adjacency(test))
 
+
+@attr('slow')
 def test_apg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
@@ -84,6 +87,7 @@ def test_apg_wavefunction_h2():
     assert abs(apg.compute_energy(include_nuc=False) - (-1.87832550029)) < 1e-7
 
 
+@attr('slow')
 def test_apg_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719
