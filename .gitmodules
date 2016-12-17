@@ -1,0 +1,3 @@
+[submodule "InspectorElephant"]
+	path = tools
+	url = git@github.com:kimt33/InspectorElephant.git
