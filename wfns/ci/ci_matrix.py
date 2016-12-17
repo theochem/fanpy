@@ -2,63 +2,6 @@ import numpy as np
 from .. import slater
 
 
-def is_alpha(i, nspatial):
-    """ Checks if index `i` belongs to an alpha spin orbital
-
-    Parameter
-    ---------
-    i : int
-        Index of the spin orbital in the Slater determinant
-    nspatial : int
-        Number of spatial orbitals
-
-    Returns
-    -------
-    True if alpha orbital
-    False if beta orbital
-
-    Note
-    ----
-    Erratic behaviour of nspatial <= 0
-    Erratic behaviour of i < 0 or i > 2*nspatial
-    """
-    # assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
-    # assert 0 <= i < 2*nspatial, 'Index must be between 0 and 2*nspatial-1'
-    if i < nspatial:
-        return True
-    else:
-        return False
-
-
-def spatial_index(i, nspatial):
-    """ Returns the index of the spatial orbital that corresponds to the
-    spin orbital `i`
-
-    Parameter
-    ---------
-    i : int
-        Index of the spin orbital in the Slater determinant
-    nspatial : int
-        Number of spatial orbitals
-
-    Returns
-    -------
-    ind_spatial : int
-        Index of the spatial orbital that corresponds to the spin orbital `i`
-
-    Note
-    ----
-    Erratic behaviour of nspatial <= 0
-    Erratic behaviour of i < 0 or i > 2*nspatial
-    """
-    # assert nspatial > 0, 'Number of spatial orbitals must be greater than 0'
-    # assert 0 <= i < 2*nspatial, 'Index must be between 0 and 2*nspatial-1'
-    if is_alpha(i, nspatial):
-        return i
-    else:
-        return i - nspatial
-
-
 def get_H_value(H_matrices, i, k, orb_type):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
 
@@ -91,19 +34,19 @@ def get_H_value(H_matrices, i, k, orb_type):
         # Assume that H_matrices are expressed wrt spatial orbitals
         ns = H_matrices[0].shape[0]
         # if spins are the same
-        if is_alpha(i, ns) == is_alpha(k, ns):
-            I = spatial_index(i, ns)
-            K = spatial_index(k, ns)
+        if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
+            I = slater.spatial_index(i, ns)
+            K = slater.spatial_index(k, ns)
             return H_matrices[0][I, K]
     elif orb_type == 'unrestricted':
         # Assume that H_matrices is expressed wrt spin orbitals
         ns = H_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
-        I = spatial_index(i, ns)
-        K = spatial_index(k, ns)
-        if is_alpha(i, ns) and is_alpha(k, ns):
+        I = slater.spatial_index(i, ns)
+        K = slater.spatial_index(k, ns)
+        if slater.is_alpha(i, ns) and slater.is_alpha(k, ns):
             return H_matrices[0][I, K]
-        elif not is_alpha(i, ns) and not is_alpha(k, ns):
+        elif not slater.is_alpha(i, ns) and not slater.is_alpha(k, ns):
             return H_matrices[1][I, K]
     elif orb_type == 'generalized':
         return H_matrices[0][i, k]
@@ -144,29 +87,29 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
     if orb_type == 'restricted':
         # Assume that G_matrices is expressed wrt spatial orbitals
         ns = G_matrices[0].shape[0]
-        if is_alpha(i, ns) == is_alpha(k, ns) and is_alpha(j, ns) == is_alpha(l, ns):
-            I = spatial_index(i, ns)
-            J = spatial_index(j, ns)
-            K = spatial_index(k, ns)
-            L = spatial_index(l, ns)
+        if slater.is_alpha(i, ns) == slater.is_alpha(k, ns) and slater.is_alpha(j, ns) == slater.is_alpha(l, ns):
+            I = slater.spatial_index(i, ns)
+            J = slater.spatial_index(j, ns)
+            K = slater.spatial_index(k, ns)
+            L = slater.spatial_index(l, ns)
             return G_matrices[0][I, J, K, L]
     elif orb_type == 'unrestricted':
         # Assume that H_matrices is expressed wrt spin orbitals
         ns = G_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
-        I = spatial_index(i, ns)
-        J = spatial_index(j, ns)
-        K = spatial_index(k, ns)
-        L = spatial_index(l, ns)
-        if is_alpha(i, ns) and is_alpha(j, ns) and is_alpha(k, ns) and is_alpha(l, ns):
+        I = slater.spatial_index(i, ns)
+        J = slater.spatial_index(j, ns)
+        K = slater.spatial_index(k, ns)
+        L = slater.spatial_index(l, ns)
+        if slater.is_alpha(i, ns) and slater.is_alpha(j, ns) and slater.is_alpha(k, ns) and slater.is_alpha(l, ns):
             return G_matrices[0][I, J, K, L]
-        elif is_alpha(i, ns) and not is_alpha(j, ns) and is_alpha(k, ns) and not is_alpha(l, ns):
+        elif slater.is_alpha(i, ns) and not slater.is_alpha(j, ns) and slater.is_alpha(k, ns) and not slater.is_alpha(l, ns):
             return G_matrices[1][I, J, K, L]
-        elif not is_alpha(i, ns) and is_alpha(j, ns) and not is_alpha(k, ns) and is_alpha(l, ns):
+        elif not slater.is_alpha(i, ns) and slater.is_alpha(j, ns) and not slater.is_alpha(k, ns) and slater.is_alpha(l, ns):
             # FIXME: check the transposition
             # take the appropraite transpose to get the beta alpha beta alpha form
             return np.einsum('IJKL->JILK', G_matrices[1])[I, J, K, L]
-        elif not is_alpha(i, ns) and not is_alpha(j, ns) and not is_alpha(k, ns) and not is_alpha(l, ns):
+        elif not slater.is_alpha(i, ns) and not slater.is_alpha(j, ns) and not slater.is_alpha(k, ns) and not slater.is_alpha(l, ns):
             return G_matrices[2][I, J, K, L]
     elif orb_type == 'generalized':
         return G_matrices[0][i, j, k, l]
