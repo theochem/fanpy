@@ -5,7 +5,6 @@ import numpy as np
 
 from ..wavefunction import Wavefunction
 from .. import slater
-from .ci_matrix import is_alpha, spatial_index
 
 
 class CIWavefunction(Wavefunction):
@@ -378,17 +377,17 @@ class CIWavefunction(Wavefunction):
                 # if they're the same
                 elif len(left_diff) == 0:
                     for ind, i in enumerate(shared_indices):
-                        I = spatial_index(i, ns)
+                        I = slater.spatial_index(i, ns)
                         one_density[I, I] += num
                         for j in shared_indices[ind+1:]:
-                            J = spatial_index(j, ns)
+                            J = slater.spatial_index(j, ns)
                             if notation == 'physicist':
                                 two_density[I, J, I, J] += num
                                 two_density[J, I, J, I] += num
                             elif notation == 'chemist':
                                 two_density[I, I, J, J] += num
                                 two_density[J, J, I, I] += num
-                            if is_alpha(i, ns) == is_alpha(j, ns):
+                            if slater.is_alpha(i, ns) == slater.is_alpha(j, ns):
                                 if notation == 'physicist':
                                     two_density[I, J, J, I] -= num
                                     two_density[J, I, I, J] -= num
@@ -399,14 +398,14 @@ class CIWavefunction(Wavefunction):
                 elif len(left_diff) == 1:
                     i = left_diff[0]
                     k = right_diff[0]
-                    I = spatial_index(i, ns)
-                    K = spatial_index(k, ns)
-                    if is_alpha(i, ns) == is_alpha(k, ns):
+                    I = slater.spatial_index(i, ns)
+                    K = slater.spatial_index(k, ns)
+                    if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
                         one_density[I, K] += num
                         one_density[K, I] += num
                     for j in shared_indices:
-                        J = spatial_index(j, ns)
-                        if is_alpha(i, ns) == is_alpha(k, ns):
+                        J = slater.spatial_index(j, ns)
+                        if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
                             if notation == 'physicist':
                                 two_density[I, J, K, J] += num
                                 two_density[J, I, J, K] += num
@@ -417,7 +416,7 @@ class CIWavefunction(Wavefunction):
                                 two_density[J, J, K, I] += num
                                 two_density[K, I, J, J] += num
                                 two_density[J, J, I, K] += num
-                        if is_alpha(i, ns) == is_alpha(j, ns) and is_alpha(j, ns) == is_alpha(k, ns):
+                        if slater.is_alpha(i, ns) == slater.is_alpha(j, ns) and slater.is_alpha(j, ns) == slater.is_alpha(k, ns):
                             if notation == 'physicist':
                                 two_density[I, J, J, K] -= num
                                 two_density[J, I, K, J] -= num
@@ -432,11 +431,11 @@ class CIWavefunction(Wavefunction):
                 elif len(left_diff) == 2:
                     i, j = left_diff
                     k, l = right_diff
-                    I = spatial_index(i, ns)
-                    J = spatial_index(j, ns)
-                    K = spatial_index(k, ns)
-                    L = spatial_index(l, ns)
-                    if is_alpha(i, ns) == is_alpha(k, ns) and is_alpha(j, ns) == is_alpha(l, ns):
+                    I = slater.spatial_index(i, ns)
+                    J = slater.spatial_index(j, ns)
+                    K = slater.spatial_index(k, ns)
+                    L = slater.spatial_index(l, ns)
+                    if slater.is_alpha(i, ns) == slater.is_alpha(k, ns) and slater.is_alpha(j, ns) == slater.is_alpha(l, ns):
                         if notation == 'physicist':
                             two_density[I, J, K, L] += num
                             two_density[J, I, L, K] += num
@@ -447,7 +446,7 @@ class CIWavefunction(Wavefunction):
                             two_density[J, L, K, I] += num
                             two_density[K, I, J, L] += num
                             two_density[L, J, I, K] += num
-                    if is_alpha(i, ns) == is_alpha(l, ns) and is_alpha(j, ns) == is_alpha(k, ns):
+                    if slater.is_alpha(i, ns) == slater.is_alpha(l, ns) and slater.is_alpha(j, ns) == slater.is_alpha(k, ns):
                         if notation == 'physicist':
                             two_density[I, J, L, K] -= num
                             two_density[J, I, K, L] -= num

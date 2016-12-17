@@ -1,5 +1,7 @@
+""" Testst wfns.slater
+"""
 from nose.tools import assert_raises
-
+import gmpy2
 from wfns import slater
 
 
@@ -13,6 +15,48 @@ def test_occ():
     assert not slater.occ(0b100100, 4)
     assert not slater.occ(0b100100, 6)
     assert not slater.occ(0b100100, 0)
+
+
+def test_is_alpha():
+    """
+    Tests slater.is_alpha
+    """
+    assert slater.is_alpha(0, 1)
+    assert not slater.is_alpha(1, 1)
+
+    assert slater.is_alpha(0, 4)
+    assert slater.is_alpha(1, 4)
+    assert slater.is_alpha(2, 4)
+    assert slater.is_alpha(3, 4)
+    assert not slater.is_alpha(4, 4)
+    assert not slater.is_alpha(5, 4)
+    assert not slater.is_alpha(6, 4)
+    assert not slater.is_alpha(7, 4)
+
+    #NOTE: erratic behaviour
+    assert slater.is_alpha(-1, 4)
+    assert not slater.is_alpha(99, 4)
+
+
+def test_spatial_index():
+    """
+    Tests slater.spatial_index
+    """
+    assert slater.spatial_index(0, 1) == 0
+    assert slater.spatial_index(1, 1) == 0
+
+    assert slater.spatial_index(0, 4) == 0
+    assert slater.spatial_index(1, 4) == 1
+    assert slater.spatial_index(2, 4) == 2
+    assert slater.spatial_index(3, 4) == 3
+    assert slater.spatial_index(4, 4) == 0
+    assert slater.spatial_index(5, 4) == 1
+    assert slater.spatial_index(6, 4) == 2
+    assert slater.spatial_index(7, 4) == 3
+
+    #NOTE: erratic behaviour
+    assert slater.spatial_index(-1, 4) == -1
+    assert slater.spatial_index(99, 4) == 95
 
 
 def test_total_occ():
@@ -89,6 +133,9 @@ def test_excite():
     """
     Test excite().
     """
+    # Check error
+    assert_raises(ValueError, lambda: slater.excite(0b1111, 1, 2, 5))
+
     # Excite spatial orbitals from occupied to virtual
     assert slater.excite(0b0001, 0, 1) == 0b10
     assert slater.excite(0b0001, 0, 5) == 0b100000
@@ -114,16 +161,42 @@ def test_ground():
     """
     Test slater.ground
     """
-    assert_raises(AssertionError, lambda: slater.ground(2, 1))
-    print(slater.ground(2, 2))
+    assert_raises(ValueError, lambda: slater.ground(2, 1))
     assert slater.ground(2, 2) == 0b11
-    assert_raises(AssertionError, lambda: slater.ground(2, 3))
+    assert_raises(ValueError, lambda: slater.ground(2, 3))
     assert slater.ground(2, 4) == 0b0101
     assert slater.ground(2, 6) == 0b001001
     assert slater.ground(2, 8) == 0b00010001
-    assert_raises(AssertionError, lambda: slater.ground(3, 2))
+    assert_raises(ValueError, lambda: slater.ground(3, 2))
     assert slater.ground(3, 4) == 0b0111
     assert slater.ground(3, 6) == 0b001011
+
+
+def test_is_internal_sd():
+    """
+    Test slater.is_internal_sd
+    """
+    assert slater.is_internal_sd(gmpy2.mpz(2))
+    assert not slater.is_internal_sd(2)
+    assert not slater.is_internal_sd([5])
+    assert not slater.is_internal_sd(None)
+    assert not slater.is_internal_sd((3))
+
+
+def test_internal_sd():
+    """
+    Test slater.internal_sd
+    """
+    # Check error
+    assert_raises(TypeError, lambda: slater.internal_sd(None))
+    assert_raises(TypeError, lambda: slater.internal_sd('5'))
+    assert_raises(TypeError, lambda: slater.internal_sd(['1', '2']))
+
+    assert isinstance(slater.internal_sd(5), type(gmpy2.mpz()))
+    assert isinstance(slater.internal_sd([1, 2, 3]), type(gmpy2.mpz()))
+    assert isinstance(slater.internal_sd((1, 2, 3)), type(gmpy2.mpz()))
+    assert isinstance(slater.internal_sd({1:None, 2:None, 3:None}), type(gmpy2.mpz()))
+    assert isinstance(slater.internal_sd((i for i in range(4))), type(gmpy2.mpz()))
 
 
 def test_occ_indices():
@@ -181,8 +254,8 @@ def test_combine_spin():
     """
     Test slater.combine_spin
     """
-    assert_raises(AssertionError, lambda: slater.combine_spin(0b0, 0b0, 0))
-    assert_raises(AssertionError, lambda: slater.combine_spin(0b0, 0b0, -1))
+    assert_raises(ValueError, lambda: slater.combine_spin(0b0, 0b0, 0))
+    assert_raises(ValueError, lambda: slater.combine_spin(0b0, 0b0, -1))
     assert slater.combine_spin(0b1, 0b0, 1) == 0b1
     assert slater.combine_spin(0b0, 0b1, 1) == 0b10
     assert slater.combine_spin(0b111, 0b0, 3) == 0b111
@@ -196,8 +269,8 @@ def test_split_spin():
     """
     Test slater.split_spin
     """
-    assert_raises(AssertionError, lambda: slater.split_spin(0b0, 0))
-    assert_raises(AssertionError, lambda: slater.split_spin(0b0, -1))
+    assert_raises(ValueError, lambda: slater.split_spin(0b0, 0))
+    assert_raises(ValueError, lambda: slater.split_spin(0b0, -1))
     assert slater.split_spin(0b1, 1) == (0b1, 0b0)
     assert slater.split_spin(0b10, 1) == (0b0, 0b1)
     assert slater.split_spin(0b111, 3) == (0b111, 0b0)
@@ -207,31 +280,14 @@ def test_split_spin():
     assert slater.split_spin(0b0011100000, 5) == (0b000, 0b111)
 
 
-def test_interleave():
-    """
-    Test slater.interleave
-    """
-    assert slater.interleave(0b11, 1) == 0b11
-    assert slater.interleave(0b0011, 2) == 0b0101
-    assert slater.interleave(0b000011, 3) == 0b000101
-    assert slater.interleave(0b0101, 2) == 0b0011
-    assert slater.interleave(0b000101, 3) == 0b010001
-
-
-def test_deinterleave():
-    """
-    Test slater.deinterleave
-    """
-    assert slater.deinterleave(0b11, 1) == 0b11
-    assert slater.deinterleave(0b0101, 2) == 0b0011
-    assert slater.deinterleave(0b000101, 3) == 0b000011
-    assert slater.deinterleave(0b0011, 2) == 0b0101
-    assert slater.deinterleave(0b010001, 3) == 0b000101
-
 def test_interleave_index():
     """
     Test slater.interleave_index()
     """
+    # Check error
+    assert_raises(ValueError, lambda: slater.interleave_index(-1, 4))
+    assert_raises(ValueError, lambda: slater.interleave_index(8, 4))
+    assert_raises(ValueError, lambda: slater.interleave_index(9, 4))
     # 1 spatial orbital
     assert slater.interleave_index(0, 1) == 0
     assert slater.interleave_index(1, 1) == 1
@@ -248,10 +304,15 @@ def test_interleave_index():
     assert slater.interleave_index(4, 3) == 3
     assert slater.interleave_index(5, 3) == 5
 
+
 def test_deinterleave_index():
     """
     Test slater.deinterleave_index()
     """
+    # Check error
+    assert_raises(ValueError, lambda: slater.deinterleave_index(-1, 4))
+    assert_raises(ValueError, lambda: slater.deinterleave_index(8, 4))
+    assert_raises(ValueError, lambda: slater.deinterleave_index(9, 4))
     # 1 spatial orbital
     assert slater.deinterleave_index(0, 1) == 0
     assert slater.deinterleave_index(1, 1) == 1
@@ -268,12 +329,37 @@ def test_deinterleave_index():
     assert slater.deinterleave_index(4, 3) == 2
     assert slater.deinterleave_index(5, 3) == 5
 
+
+def test_interleave():
+    """
+    Test slater.interleave
+    """
+    assert_raises(ValueError, lambda: slater.interleave(0, -4))
+    assert slater.interleave(0b11, 1) == 0b11
+    assert slater.interleave(0b0011, 2) == 0b0101
+    assert slater.interleave(0b000011, 3) == 0b000101
+    assert slater.interleave(0b0101, 2) == 0b0011
+    assert slater.interleave(0b000101, 3) == 0b010001
+
+
+def test_deinterleave():
+    """
+    Test slater.deinterleave
+    """
+    assert_raises(ValueError, lambda: slater.deinterleave(0, -4))
+    assert slater.deinterleave(0b11, 1) == 0b11
+    assert slater.deinterleave(0b0101, 2) == 0b0011
+    assert slater.deinterleave(0b000101, 3) == 0b000011
+    assert slater.deinterleave(0b0011, 2) == 0b0101
+    assert slater.deinterleave(0b010001, 3) == 0b000101
+
+
 def test_get_spin():
     """
     Test slater.get_spin
     """
     # 0 spatial orbital
-    assert_raises(lambda:slater.get_spin(0b0000, 0))
+    assert_raises(ValueError, lambda: slater.get_spin(0b0000, 0))
     # 1 spatial orbital
     assert slater.get_spin(0b00, 1) == 0
     assert slater.get_spin(0b01, 1) == 0.5
@@ -295,6 +381,7 @@ def test_get_spin():
     assert slater.get_spin(0b1101, 2) == -0.5
     assert slater.get_spin(0b1110, 2) == -0.5
     assert slater.get_spin(0b1111, 2) == 0
+
 
 def test_find_num_trans():
     """
