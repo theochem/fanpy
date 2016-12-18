@@ -2,8 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from ..math_tools import binomial
 from .doci import DOCI
-from ..sd_list import doci_sd_list
-from .ci_matrix import doci_matrix
+from ..sd_list import sd_list
 from .. import slater
 
 
@@ -79,7 +78,7 @@ class CIPairs(DOCI):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return doci_sd_list(self, self.nci, [1])
+        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, exc_orders=[2], seniority=0)
 
     def to_ap1rog(self, exc_lvl=0):
         """ Returns geminal matrix given then converged CIPairs wavefunction coefficients

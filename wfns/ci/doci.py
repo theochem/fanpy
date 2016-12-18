@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from .ci_wavefunction import CIWavefunction
 from ..math_tools import binomial
-from ..sd_list import doci_sd_list
+from ..sd_list import sd_list
 from .ci_matrix import doci_matrix
 
 
@@ -97,7 +97,7 @@ class DOCI(CIWavefunction):
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return doci_sd_list(self, self.nci)
+        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, seniority=0)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
