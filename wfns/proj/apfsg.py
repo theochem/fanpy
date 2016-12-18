@@ -5,7 +5,7 @@ from gmpy2 import mpz
 
 from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
-from ..sd_list import ci_sd_list
+from ..sd_list import sd_list
 from ..math_tools import permanent_ryser
 from .proj_hamiltonian import hamiltonian
 
@@ -158,7 +158,7 @@ class APfsG(ProjectionWavefunction):
             as a bitstring
         """
         number_sd = 2 * self.npair * self.nspatial + self.nspatial ** 2
-        return ci_sd_list(self, number_sd)
+        return sd_list(self.nelec, self.nspatial, num_limit=number_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant

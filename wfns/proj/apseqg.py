@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
+import itertools as it
 import numpy as np
 from gmpy2 import mpz, bit_scan1
-import itertools as it
 
 from .. import slater
 from ..math_tools import permanent_ryser
-from ..sd_list import ci_sd_list
+from ..sd_list import sd_list
 
 from .proj_wavefunction import ProjectionWavefunction
 from .proj_hamiltonian import hamiltonian
@@ -360,7 +360,7 @@ class APseqG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return ci_sd_list(self, num_sd, exc_orders=[1,2])
+        return sd_list(self.nelec, self.nspatial, num_limit=num_sd, exc_orders=[1, 2])
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant

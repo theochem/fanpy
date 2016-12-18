@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
 import itertools as it
+import numpy as np
 from gmpy2 import mpz
 
 from .. import slater
-from ..sd_list import ci_sd_list
+from ..sd_list import sd_list
 from ..math_tools import permanent_ryser
 from ..graphs import generate_complete_pmatch
 from .proj_wavefunction import ProjectionWavefunction
@@ -275,7 +275,7 @@ class APG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return ci_sd_list(self, num_sd)
+        return sd_list(self.nelec, self.nspatial, num_limit=num_sd)
 
     def compute_overlap(self, sd, pairing_schemes=None, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
