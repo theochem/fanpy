@@ -192,11 +192,21 @@ def test_internal_sd():
     assert_raises(TypeError, lambda: slater.internal_sd('5'))
     assert_raises(TypeError, lambda: slater.internal_sd(['1', '2']))
 
-    assert isinstance(slater.internal_sd(5), type(gmpy2.mpz()))
-    assert isinstance(slater.internal_sd([1, 2, 3]), type(gmpy2.mpz()))
-    assert isinstance(slater.internal_sd((1, 2, 3)), type(gmpy2.mpz()))
-    assert isinstance(slater.internal_sd({1:None, 2:None, 3:None}), type(gmpy2.mpz()))
-    assert isinstance(slater.internal_sd((i for i in range(4))), type(gmpy2.mpz()))
+    # integer
+    assert slater.internal_sd(5) == gmpy2.mpz(5)
+    assert isinstance(slater.internal_sd(5), type(gmpy2.mpz(5)))
+    # iterable
+    assert slater.internal_sd([1, 2, 3]) == gmpy2.mpz(0b1110)
+    assert isinstance(slater.internal_sd([1, 2, 3]), type(gmpy2.mpz(0b1110)))
+    assert slater.internal_sd((1, 2, 3)) == gmpy2.mpz(0b1110)
+    assert isinstance(slater.internal_sd((1, 2, 3)), type(gmpy2.mpz(0b1110)))
+    assert slater.internal_sd({1:None, 2:None, 3:None}) == gmpy2.mpz(0b1110)
+    assert isinstance(slater.internal_sd({1:None, 2:None, 3:None}), type(gmpy2.mpz(0b1110)))
+    assert slater.internal_sd((i for i in range(4))) == gmpy2.mpz(0b1111)
+    assert isinstance(slater.internal_sd((i for i in range(4))), type(gmpy2.mpz(0b1111)))
+    # gmpy2 object
+    assert slater.internal_sd(gmpy2.mpz(5)) == gmpy2.mpz(5)
+    assert isinstance(slater.internal_sd(gmpy2.mpz(5)), type(gmpy2.mpz(5)))
 
 
 def test_occ_indices():
@@ -381,6 +391,36 @@ def test_get_spin():
     assert slater.get_spin(0b1101, 2) == -0.5
     assert slater.get_spin(0b1110, 2) == -0.5
     assert slater.get_spin(0b1111, 2) == 0
+
+
+def test_get_seniority():
+    """
+    Test slater.get_seniority
+    """
+    # 0 spatial orbital
+    assert_raises(ValueError, lambda: slater.get_seniority(0b0000, 0))
+    assert_raises(ValueError, lambda: slater.get_seniority(0b0011, 0))
+    # 1 spatial orbital
+    assert slater.get_seniority(0b00, 1) == 0
+    assert slater.get_seniority(0b01, 1) == 1
+    assert slater.get_seniority(0b10, 1) == 1
+    # 2 spatial orbital
+    assert slater.get_seniority(0b0000, 2) == 0
+    assert slater.get_seniority(0b0001, 2) == 1
+    assert slater.get_seniority(0b0010, 2) == 1
+    assert slater.get_seniority(0b0100, 2) == 1
+    assert slater.get_seniority(0b1000, 2) == 1
+    assert slater.get_seniority(0b0011, 2) == 2
+    assert slater.get_seniority(0b0101, 2) == 0
+    assert slater.get_seniority(0b1001, 2) == 2
+    assert slater.get_seniority(0b0110, 2) == 2
+    assert slater.get_seniority(0b1010, 2) == 0
+    assert slater.get_seniority(0b1100, 2) == 2
+    assert slater.get_seniority(0b0111, 2) == 1
+    assert slater.get_seniority(0b1011, 2) == 1
+    assert slater.get_seniority(0b1101, 2) == 1
+    assert slater.get_seniority(0b1110, 2) == 1
+    assert slater.get_seniority(0b1111, 2) == 0
 
 
 def test_find_num_trans():
