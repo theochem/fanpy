@@ -52,6 +52,7 @@ find_num_trans_dumb(jumbled_set, ordered_set=None, is_creator=True)
     Returns the number of transpostions necessary to convert a set of indices into increasing order
     using brute force
 """
+from itertools import tee
 import gmpy2
 import numpy as np
 
@@ -305,16 +306,21 @@ def internal_sd(identifier):
     Raises
     ------
     TypeError
-        If not an integer and not an iterable object of integers
+        If not an integer and not an iterable
+        If is an iterable of non integers
     """
     if isinstance(identifier, int):
         return gmpy2.mpz(identifier)
-    elif hasattr(identifier, '__iter__') and all(isinstance(i, int) for i in identifier):
-        return create(gmpy2.mpz(0), *identifier)
+    elif hasattr(identifier, '__iter__'):
+        identifier, test = tee(identifier, 2)
+        if all(isinstance(i, int) for i in test):
+            return create(gmpy2.mpz(0), *identifier)
+        else:
+            raise TypeError('Iterable must contain only integers to describe a Slater determinant')
     elif is_internal_sd(identifier):
         return identifier
     else:
-        raise TypeError('Unsupported Slater determinant form')
+        raise TypeError('Unsupported Slater determinant form, {0}'.format(type(identifier)))
 
 
 def occ_indices(sd):
@@ -693,6 +699,30 @@ def get_spin(sd, nspatial):
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
     return (0.5)*(total_occ(alpha_bits) - total_occ(beta_bits))
+
+
+def get_seniority(sd, nspatial):
+    """ Returns the seniority of the given Slater determinant
+
+    Parameters
+    ----------
+    sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    nspatial : int
+        Total number of spatial orbitals
+
+    Returns
+    -------
+    seniority : int
+        Seniority of the given Slater determinant
+
+    Raises
+    ------
+    ValueError
+        If number of spatial orbitals is less than or equal to zero
+    """
+    alpha_bits, beta_bits = split_spin(sd, nspatial)
+    return total_occ(alpha_bits ^ beta_bits)
 
 
 #FIXME: bad location
