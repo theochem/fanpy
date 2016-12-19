@@ -1,19 +1,36 @@
-from __future__ import absolute_import, division, print_function
+""" Wrapper of HORTON
 
+At this moment, we mainly need the integrals (in MO basis) and the energies (electron, nuclear
+nuclear repulsion) to construct a wavefunction. Here, we use HORTON to get these values.
+
+Functions
+---------
+hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,
+            horton_internal=False, **kwargs)
+    Runs a HF in HORTON
+gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
+    Extracts appropriate information from a Gaussian FCHK file
+"""
+from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
+from horton import (IOData, get_gobasis,
+                    PlainSCFSolver, EDIIS2SCFSolver,
+                    DenseLinalgFactory,
+                    compute_nucnuc, guess_core_hamiltonian, transform_integrals,
+                    AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
+from wfns import __file__ as package_path
 
-from horton import *
 
-def hartreefock(fn=None, basis=None, nelec=None,
-                solver=EDIIS2SCFSolver, tol=1.0e-12,
-                nuc_nuc=True, horton_internal=False,
-                **kwargs):
+def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,
+                horton_internal=False, **kwargs):
     """ Runs a HF calculation using HORTON
 
     Parameters
     ----------
-    fn :
+    fn : str
+        File name
+        Supports XYZ file (in Angstrom)
     basis : str
         Basis set name
     nelec : int
@@ -22,8 +39,6 @@ def hartreefock(fn=None, basis=None, nelec=None,
         HORTON's SCF solver
     tol : float
         The convergence threshold for the wavefunction
-    nuc_nuc : float
-        Nuclear nuclear repulsion
     horton_internal : bool
         Flag for returning HORTON's internal data
     kwargs
@@ -32,26 +47,41 @@ def hartreefock(fn=None, basis=None, nelec=None,
     Returns
     -------
     result : dict
-        "energy", electronic energy
-        "nuc_nuc", nuclear repulsion energy
-        "H", tuple of the one-electron Hamiltonian;
-        "G", tuple of the two-electron Hamiltonian;
-        "horton_internal", dictionary that  contains horton's internal object
-            "mol", horton.io.iodata.IOData object that contains fchk data
-            "lf", horton.matrix.dense.LinalgFactory that creates horton matrices
-            "occ_model", horton.meanfield.occ.OccModel that describe the occupation of
-            the orbitals
-            "one", horton.matrix.dense.DenseTwoIndex that contain the one electron
-            integrals
-            "two", horton.matrix.dense.DenseTwoIndex that contain the two electron
-            integrals
-            "nuc_nuc", nuclear repulsion energy
-            "orb", horton.matrix.dense.DenseExpansion that contains the MO info
-            "olp", horton.matrix.dense.DenseTwoIndex that contains the overlap matrix of
-            the atomic orbitals
+        "el_energy"
+            Electronic energy
+        "nuc_nuc_energy"
+            Nuclear repulsion energy
+        "H"
+            Tuple of the one-electron Hamiltonian;
+        "G"
+            Tuple of the two-electron Hamiltonian;
+        "horton_internal"
+            Dictionary that  contains horton's internal object
+            "mol"
+                horton.io.iodata.IOData object that contains fchk data
+            "lf"
+                horton.matrix.dense.LinalgFactory that creates horton matrices
+            "occ_model"
+                horton.meanfield.occ.OccModel that describe the occupation of the orbitals
+            "one"
+                horton.matrix.dense.DenseTwoIndex that contain the one electron integrals
+            "two"
+                horton.matrix.dense.DenseTwoIndex that contain the two electron integrals
+            "orb"
+                horton.matrix.dense.DenseExpansion that contains the MO info
+            "olp"
+                horton.matrix.dense.DenseTwoIndex that contains the overlap matrix of the atomic
+                orbitals
+
+    Raises
+    ------
+    ValueError
+        If solver is not callable
+
+    Note
+    ----
+    While HORTON does support unrestricted calculations, the wrapper does not support it.
     """
-    data_dir = os.path.join(os.path.dirname(__file__), '../../data')
-    file_path = os.path.join(data_dir, fn)
     # Initialize molecule and basis set from specified file
     if isinstance(fn, IOData):
         mol = fn
@@ -59,6 +89,8 @@ def hartreefock(fn=None, basis=None, nelec=None,
         try:
             mol = IOData.from_file(fn)
         except IOError:
+            data_dir = os.path.join(os.path.dirname(package_path), '../data')
+            file_path = os.path.join(data_dir, fn)
             mol = IOData.from_file(file_path)
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
     npair = nelec // 2
@@ -95,7 +127,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
         ham.compute_fock(fock_alpha)
         orb.from_fock_and_dm(fock_alpha, dm, olp)
     else:
-        raise_invalid_type("solver", solver, "callable")
+        raise ValueError('Given solver, {0}, is not callable'.format(solver))
     energy = ham.cache["energy"]
 
     # Transform one- and two- electron integrals into MO basis
@@ -107,20 +139,18 @@ def hartreefock(fn=None, basis=None, nelec=None,
 
     output = {
         # Collect HF energy and integrals
-        "energy": energy if nuc_nuc else energy - external["nn"],
-        "nuc_nuc": external["nn"] if nuc_nuc else 0.0,
+        "el_energy": energy - external["nn"],
+        "nuc_nuc_energy": external["nn"],
         "H": one_mo,
         "G": two_mo,
     }
 
     if horton_internal:
         output["horton_internal"] = {
-            # Collect input to HORTON's RAp1rog module
             "lf": lf,
             "occ_model": occ_model,
             "one": one,
             "two": two,
-            "nuc_nuc": external["nn"] if nuc_nuc else 0.0,
             "orb": [orb,],
             "olp": olp,
         }
@@ -128,7 +158,7 @@ def hartreefock(fn=None, basis=None, nelec=None,
     return output
 
 
-def gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True):
+def gaussian_fchk(fchk_file, horton_internal=False):
     """ Extracts the appropriate data from Gaussian fchk file (using HORTON)
 
     Parameters
@@ -137,27 +167,38 @@ def gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True):
         Formatted chk file
     horton_internal : bool
         Flag to return horton_internal variables
-    compute_nuc : bool
-        Flag to use HORTON to compute nuclear nuclear repulsion (otherwise not included)
-
 
     Returns
     -------
     result : dict
-        "energy", electronic energy including nuclear nuclear repulsion
-        "nuc_nuc", zero
-        "H", tuple of the one-electron Hamiltonian;
-        "G", tuple of the two-electron Hamiltonian;
-        "horton_internal", dictionary that  contains horton's internal object
-            "mol", horton.io.iodata.IOData object that contains fchk data
-            "lf", horton.matrix.dense.LinalgFactory that creates horton matrices
-            "one", horton.matrix.dense.DenseTwoIndex that contain the one electron
-            integrals
-            "two", horton.matrix.dense.DenseTwoIndex that contain the two electron
-            integrals
-            "orb", horton.matrix.dense.DenseExpansion that contains the MO info
+        "el_energy"
+            Electronic energy
+        "nuc_nuc_energy"
+            Nuclear nuclear repulsion energy
+        "H"
+            Tuple of the one-electron Hamiltonian;
+        "G"
+            Tuple of the two-electron Hamiltonian;
+        "horton_internal"
+            Dictionary that  contains horton's internal object
+            "mol"
+                horton.io.iodata.IOData object that contains fchk data
+            "lf"
+                horton.matrix.dense.LinalgFactory that creates horton matrices
+            "one"
+                horton.matrix.dense.DenseTwoIndex that contain the one electron integrals
+            "two"
+                horton.matrix.dense.DenseTwoIndex that contain the two electron integrals
+            "orb"
+                horton.matrix.dense.DenseExpansion that contains the MO info
     """
-    mol = IOData.from_file(fchk_file)
+    try:
+        mol = IOData.from_file(fchk_file)
+    except IOError:
+        data_dir = os.path.join(os.path.dirname(package_path), '../data')
+        file_path = os.path.join(data_dir, fchk_file)
+        mol = IOData.from_file(file_path)
+
     # for spin orbitals
     exps = [mol.exp_alpha]
     if hasattr(mol, 'exp_beta'):
@@ -172,29 +213,24 @@ def gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True):
     two_ab = obasis.compute_electron_repulsion(mol.lf)._array
 
     # compute nuclear nuclear repulsion
-    if compute_nuc:
-        nuc_nuc = compute_nucnuc(mol.coordinates, mol.pseudo_numbers)
-    else:
-        nuc_nuc = None
+    nuc_nuc = compute_nucnuc(mol.coordinates, mol.pseudo_numbers)
 
     # for spin orbitals
     one_mo = []
     two_mo = []
     for i, exp_i in enumerate(exps):
-        for j, exp_j in enumerate(exps):
-            if i <= j:
-                temp = np.einsum('sd,pqrs->pqrd', exp_j.coeffs, two_ab, casting='no', order='C')
-                temp = np.einsum('rc,pqrd->pqcd', exp_i.coeffs, temp, casting='no', order='C')
-                temp = np.einsum('qb,pqcd->pbcd', exp_j.coeffs, temp, casting='no', order='C')
-                temp = np.einsum('pa,pbcd->abcd', exp_i.coeffs, temp, casting='no', order='C')
-                two_mo.append(temp)
+        for j, exp_j in enumerate(exps[i:]):
+            j += i
+            temp = np.einsum('sd,pqrs->pqrd', exp_j.coeffs, two_ab, casting='no', order='C')
+            temp = np.einsum('rc,pqrd->pqcd', exp_i.coeffs, temp, casting='no', order='C')
+            temp = np.einsum('qb,pqcd->pbcd', exp_j.coeffs, temp, casting='no', order='C')
+            temp = np.einsum('pa,pbcd->abcd', exp_i.coeffs, temp, casting='no', order='C')
+            two_mo.append(temp)
         one_mo.append(exp_i.coeffs.T.dot(one_ab).dot(exp_i.coeffs))
 
-    # FIXME: need to get the nuclear nuclear repulsion
-    # energy includes the nuclear nuclear repulsion
     output = {
-        "energy": mol.energy - nuc_nuc if nuc_nuc else mol.energy,
-        "nuc_nuc": nuc_nuc,
+        "el_energy": mol.energy - nuc_nuc,
+        "nuc_nuc_energy": nuc_nuc,
         "H": tuple(one_mo),
         "G": tuple(two_mo),
     }

@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from nose.plugins.attrib import attr
 from wfns.ci.solver import solve
@@ -11,14 +10,12 @@ def test_fci_h2():
     #### H2 ####
     # HF energy: -1.13126983927
     # FCI energy: -1.1651487496
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     fci = FCI(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = fci.compute_ci_matrix()
@@ -35,14 +32,12 @@ def test_fci_lih_sto6g():
     #### LiH ####
     # HF energy: -7.95197153880
     # FCI energy: -7.9723355823
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_sto6g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     fci = FCI(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = fci.compute_ci_matrix()
@@ -61,14 +56,12 @@ def test_fci_lih_631g():
     #### LiH ####
     # HF energy: -7.97926894940
     # FCI energy: -7.9982761
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_631g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     fci = FCI(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = fci.compute_ci_matrix()

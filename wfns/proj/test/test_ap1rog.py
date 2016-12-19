@@ -1,6 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import os
-
 from wfns.proj.solver import solve
 from wfns.proj.ap1rog import AP1roG
 from wfns.wrapper.horton import gaussian_fchk
@@ -12,14 +10,12 @@ def test_ap1rog_wavefunction_h2():
     # HF Value :       -1.84444667247
     # Old code Value:  -1.86968286065
     # FCI Value :      -1.87832550029
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
     # see if we can reproduce HF numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     ap1rog.params *= 0.0
@@ -44,14 +40,12 @@ def test_ap1rog_wavefunction_lih():
     # HF Value :       -8.9472891719
     # Old Code Value : -8.87332409253 WTF?
     # FCI Value :      -8.96741814557
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_sto6g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
     # see if we can reproduce HF numbers
     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
     ap1rog.params *= 0.0

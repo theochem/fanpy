@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from nose.plugins.attrib import attr
 
@@ -153,8 +152,7 @@ def test_ci_matrix_h2():
     Needs PYSCF!!
     """
     # HORTON/Olsen Results
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     H = hf_dict["H"]
     G = hf_dict["G"]
@@ -178,10 +176,8 @@ def test_ci_matrix_lih():
     Needs PYSCF!!
     """
     # HORTON/Olsen Results
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_631g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
 
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
 

@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from wfns.ci.solver import solve
 from wfns.ci.cisd import CISD
@@ -19,14 +18,12 @@ def test_cisd_h2():
     #### H2 ####
     # HF energy: -1.13126983927
     # FCI energy: -1.1651487496
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = cisd.compute_ci_matrix()
     # compare HF numbers
@@ -51,14 +48,12 @@ def test_cisd_lih():
     #### LiH ####
     # HF energy: -7.97926895
     # CISD energy: -7.99826182
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_631g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=None)
     ci_matrix = cisd.compute_ci_matrix()
