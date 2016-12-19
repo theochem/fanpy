@@ -1,13 +1,26 @@
+""" Wrapper of PySCF
+
+At this moment, we mainly need the integrals (in MO basis) and the energies (electron, nuclear
+nuclear repulsion) to construct a wavefunction. Here, we use PySCF to get these values.
+
+Functions
+---------
+hartreefock(xyz_file, basis, is_unrestricted=False)
+    Runs HF in PySCF
+generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
+    Generates the FCI Hamiltonian CI matrix
+"""
 from __future__ import absolute_import, division, print_function
 import os
-from pyscf import gto, scf, ao2mo
-# needed for the generate_ci_matrix part
-import numpy as np
 import ctypes
-from pyscf.fci import cistring
-import pyscf.lib
-libfci = pyscf.lib.load_library('libfci')
+import numpy as np
+from wfns import __file__ as package_path
 from wfns import slater
+from pyscf import gto, scf, ao2mo
+from pyscf.lib import load_library, hermi_triu
+from pyscf.fci import cistring
+
+LIBFCI = load_library('libfci')
 
 def hartreefock(xyz_file, basis, is_unrestricted=False):
     """ Runs HF using PySCF
@@ -25,15 +38,25 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     Returns
     -------
     result : dict
-        "energy", electronic energy
-        "nuc_nuc", nuclear repulsion energy
-        "H", tuple of the one-electron Hamiltonian;
-        "G", tuple of the two-electron Hamiltonian;
+        "el_energy"
+            electronic energy
+        "nuc_nuc_energy"
+            nuclear repulsion energy
+        "H"
+            tuple of the one-electron interal
+        "G"
+            tuple of the two-electron integral in Physicist's notation
 
+    Raises
+    ------
+    ValueError
+        If given xyz file does not exist
+    NotImplementedError
+        If calculation is unrestricted or generalized
     """
     # check xyz file
     cwd = os.path.dirname(__file__)
-    data_dir = os.path.join(cwd, '../../data')
+    data_dir = os.path.join(os.path.dirname(package_path), '../data')
     if os.path.isfile(xyz_file):
         pass
     elif os.path.isfile(os.path.join(cwd, xyz_file)):
@@ -42,19 +65,22 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
         xyz_file = os.path.join(data_dir, xyz_file)
     else:
         raise ValueError('Given xyz_file does not exist')
+
    # get coordinates
     with open(xyz_file, 'r') as f:
         lines = [i.strip() for i in f.readlines()[2:]]
         atoms = ';'.join(lines)
+
     # get mol
     mol = gto.M(atom=atoms, basis=basis, parse_arg=False, unit='angstrom')
+
     # get hf
     if is_unrestricted:
-        raise NotImplementedError('Unrestricted or Generalized orbitals are not supported in this PySCF wrapper (yet).')
-    else:
-        hf = scf.RHF(mol)
+        raise NotImplementedError('Unrestricted or Generalized orbitals are not supported in this'
+                                  ' PySCF wrapper (yet).')
+    hf = scf.RHF(mol)
     # run hf
-    # hf.scf()
+    hf.scf()
     # energies
     E_nuc = hf.energy_nuc()
     E_tot = hf.kernel() # HF is solved here
@@ -68,9 +94,11 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     # get 2e integral
     eri = ao2mo.full(mol, mo_coeff, verbose=0, intor='cint2e_sph')
     G = ao2mo.restore(1, eri, mol.nao_nr())
+    # NOTE: PySCF uses Chemist's notation
+    G = np.einsum('ijkl->ikjl', G)
     # results
-    result = {'energy' : E_elec,
-              'nuc_nuc' : E_nuc,
+    result = {'el_energy' : E_elec,
+              'nuc_nuc_energy' : E_nuc,
               'H' : (H,),
               'G' : (G,)}
     return result
@@ -99,6 +127,11 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     pspace : list(M)
         List of the Slater determinants (in bitstring) that corresponds to each
         row/column of the ci_matrix
+
+    Raises
+    ------
+    ValueError
+        If number of electrons is invalid
     """
     if not is_chemist_notation:
         eri = np.einsum('ijkl->ikjl', eri)
@@ -111,8 +144,10 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
         nelecb = nelec//2
         # alpha
         neleca = nelec - nelecb
-    else:
+    elif isinstance(nelec, (tuple, list)) and len(nelec) == 2:
         neleca, nelecb = nelec
+    else:
+        raise ValueError('Unsupported electron number, {0}'.format(nelec))
     # integrals
     h1e = np.ascontiguousarray(h1e)
     eri = np.ascontiguousarray(eri)
@@ -127,16 +162,16 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     nb = link_indexb.shape[0] # number of "beta" Slater determinants
     num_sd = na*nb # number of Slater determinants in total
 
-    occslista = np.asarray(link_indexa[:,:neleca,0], order='C')
-    occslistb = np.asarray(link_indexb[:,:nelecb,0], order='C')
+    occslista = np.asarray(link_indexa[:, :neleca, 0], order='C')
+    occslistb = np.asarray(link_indexb[:, :nelecb, 0], order='C')
     # Diagonal of CI Hamiltonian matrix
     hdiag = np.empty(num_sd)
     # Coulomb integrals
-    jdiag = np.asarray(np.einsum('iijj->ij',eri), order='C')
+    jdiag = np.asarray(np.einsum('iijj->ij', eri), order='C')
     # Exchange integrals
-    kdiag = np.asarray(np.einsum('ijji->ij',eri), order='C')
+    kdiag = np.asarray(np.einsum('ijji->ij', eri), order='C')
     # Fucking Magic
-    libfci.FCImake_hdiag_uhf(hdiag.ctypes.data_as(ctypes.c_void_p),
+    LIBFCI.FCImake_hdiag_uhf(hdiag.ctypes.data_as(ctypes.c_void_p),
                              h1e.ctypes.data_as(ctypes.c_void_p),
                              h1e.ctypes.data_as(ctypes.c_void_p),
                              jdiag.ctypes.data_as(ctypes.c_void_p),
@@ -157,14 +192,12 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # again, separate the alpha and the bet aparts
     addra, addrb = divmod(addr, nb)
     # bit strings for the alpha and beta parts
-    stra = np.array([cistring.addr2str(norb,neleca,ia) for ia in addra],
-                       dtype=np.uint64)
-    strb = np.array([cistring.addr2str(norb,nelecb,ib) for ib in addrb],
-                       dtype=np.uint64)
+    stra = np.array([cistring.addr2str(norb, neleca, ia) for ia in addra], dtype=np.uint64)
+    strb = np.array([cistring.addr2str(norb, nelecb, ib) for ib in addrb], dtype=np.uint64)
     # number of slater determinants
     ci_matrix = np.zeros((num_sd, num_sd))
     # More Fucking Magic
-    libfci.FCIpspace_h0tril(ci_matrix.ctypes.data_as(ctypes.c_void_p),
+    LIBFCI.FCIpspace_h0tril(ci_matrix.ctypes.data_as(ctypes.c_void_p),
                             h1e.ctypes.data_as(ctypes.c_void_p),
                             eri.ctypes.data_as(ctypes.c_void_p),
                             stra.ctypes.data_as(ctypes.c_void_p),
@@ -172,8 +205,8 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
                             ctypes.c_int(norb), ctypes.c_int(num_sd))
 
     for i in range(num_sd):
-        ci_matrix[i,i] = hdiag[addr[i]]
-    ci_matrix = pyscf.lib.hermi_triu(ci_matrix)
+        ci_matrix[i, i] = hdiag[addr[i]]
+    ci_matrix = hermi_triu(ci_matrix)
 
     # convert  PySCF Slater determinant notation to one that we use
     pspace = []
