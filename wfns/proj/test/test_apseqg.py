@@ -1,11 +1,8 @@
 from __future__ import absolute_import, division, print_function
-import os
-import numpy as np
 from nose.plugins.attrib import attr
 from wfns.proj.solver import solve
 from wfns.proj.apseqg import APseqG
 from wfns.wrapper.horton import gaussian_fchk
-import wfns.slater as slater
 
 def test_find_gem_indices():
     class TempAPseqG(APseqG):
@@ -103,14 +100,12 @@ def test_apseqg_wavefunction_h2():
     # HF Value :       -1.84444667247
     # Old Code Value : -1.86968284431
     # FCI Value :      -1.87832550029
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2_hf_631gdp.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
     # Reproduce HF energy
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, seq_list=[0])
     apseqg.params[:-1] = apseqg.template_coeffs.flatten()
@@ -135,14 +130,12 @@ def test_apseqg_wavefunction_lih():
     # HF Value :       -8.9472891719
     # Old Code Value : -8.96353105152
     # FCI Value :      -8.96741814557
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih_hf_sto6g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"]
     G = hf_dict["G"]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
     # Reproduce HF energy
     apseqg = APseqG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, seq_list=[0])
     apseqg.params[:-1] = apseqg.template_coeffs.flatten()

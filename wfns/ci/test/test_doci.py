@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from wfns.ci.solver import solve
 from wfns.ci.doci import DOCI
@@ -16,14 +15,12 @@ def test_doci_h2():
     #### H2 ####
     # HF energy: -1.13126983927
     # OO DOCI energy: -1.884948574812363
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h4_square_hf_sto6g.fchk')
-    hf_dict = gaussian_fchk(data_path)
+    hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
 
     nelec = 4
-    E_hf = hf_dict["energy"]
     H = hf_dict["H"][0]
     G = hf_dict["G"][0]
-    nuc_nuc = hf_dict["nuc_nuc"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     # compare HF numbers
     doci = DOCI(nelec=nelec, H=(H,), G=(G,), nuc_nuc=nuc_nuc)
