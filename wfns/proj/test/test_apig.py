@@ -14,10 +14,10 @@ def test_apig_wavefunction_h2():
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apig = APIG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     apig.params[:-1] = apig.template_coeffs.flatten()
     apig.cache = {}
@@ -25,7 +25,7 @@ def test_apig_wavefunction_h2():
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Compare APIG energy with old code
     # Solve with Jacobian using energy as a parameter
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, dtype=np.float64)
+    apig = APIG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc, dtype=np.float64)
     init_guess = apig.params[:]
     solve(apig, solver_type='cma_guess')
     results = solve(apig, solver_type='least squares', jac=True)
@@ -36,7 +36,7 @@ def test_apig_wavefunction_h2():
     print('FCI Energy: -1.87832550029')
     assert abs(apig.compute_energy(include_nuc=False) - (-1.86968284431)) < 1e-7
     # Solve without Jacobian using energy as a parameter
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apig = APIG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(apig, solver_type='cma_guess')
     results = solve(apig, solver_type='least squares', jac=False)
     assert results.success
@@ -57,17 +57,17 @@ def test_apig_wavefunction_lih():
     hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apig = APIG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     apig.params[:-1] = apig.template_coeffs.flatten()
     apig.cache = {}
     apig.d_cache = {}
     assert abs(apig.compute_energy(include_nuc=False, ref_sds=apig.default_ref_sds) - (-8.9472891719)) < 1e-7
     # Compare APIG energy with old code
-    apig = APIG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apig = APIG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     apig.normalize()
     # guess with cma
     solve(apig, solver_type='cma_guess')

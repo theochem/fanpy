@@ -8,142 +8,142 @@ from wfns.wrapper.horton import gaussian_fchk
 from wfns.wrapper.pyscf import generate_fci_cimatrix
 
 
-def test_get_H_value():
+def test_get_one_int_value():
     """
-    Tests ci_matrix.get_H_value
+    Tests ci_matrix.get_one_int_value
     """
-    H = (np.arange(16).reshape(4, 4),)
+    one_int = (np.arange(16).reshape(4, 4),)
     # check errors
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, -1, 0, 'restricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H*2, 0, -1, 'unrestricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 0, -1, 'generalized'))
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 8, 0, 'restricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H*2, 0, 8, 'unrestricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 0, 4, 'generalized'))
-    assert_raises(TypeError, lambda: ci_matrix.get_H_value(H, 0, 0, 'random type'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int, -1, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int*2, 0, -1, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int, 0, -1, 'generalized'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int, 8, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int*2, 0, 8, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_one_int_value(one_int, 0, 4, 'generalized'))
+    assert_raises(TypeError, lambda: ci_matrix.get_one_int_value(one_int, 0, 0, 'random type'))
     # restricted
-    assert ci_matrix.get_H_value(H, 0, 0, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 0, 1, 'restricted') == 1.0
-    assert ci_matrix.get_H_value(H, 0, 4, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 0, 5, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 1, 0, 'restricted') == 4.0
-    assert ci_matrix.get_H_value(H, 1, 1, 'restricted') == 5.0
-    assert ci_matrix.get_H_value(H, 1, 4, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 1, 5, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 0, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 1, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 4, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 5, 'restricted') == 1.0
-    assert ci_matrix.get_H_value(H, 5, 0, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 5, 1, 'restricted') == 0.0
-    assert ci_matrix.get_H_value(H, 5, 4, 'restricted') == 4.0
-    assert ci_matrix.get_H_value(H, 5, 5, 'restricted') == 5.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 0, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 1, 'restricted') == 1.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 4, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 5, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 0, 'restricted') == 4.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 1, 'restricted') == 5.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 4, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 5, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 0, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 1, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 4, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 5, 'restricted') == 1.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 0, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 1, 'restricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 4, 'restricted') == 4.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 5, 'restricted') == 5.0
     # unrestricted
-    H = (np.arange(16).reshape(4, 4), np.arange(16, 32).reshape(4, 4))
-    assert ci_matrix.get_H_value(H, 0, 0, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 0, 1, 'unrestricted') == 1.0
-    assert ci_matrix.get_H_value(H, 0, 4, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 0, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 1, 0, 'unrestricted') == 4.0
-    assert ci_matrix.get_H_value(H, 1, 1, 'unrestricted') == 5.0
-    assert ci_matrix.get_H_value(H, 1, 4, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 1, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 0, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 4, 4, 'unrestricted') == 16.0
-    assert ci_matrix.get_H_value(H, 4, 5, 'unrestricted') == 17.0
-    assert ci_matrix.get_H_value(H, 5, 0, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 5, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_H_value(H, 5, 4, 'unrestricted') == 20.0
-    assert ci_matrix.get_H_value(H, 5, 5, 'unrestricted') == 21.0
+    one_int = (np.arange(16).reshape(4, 4), np.arange(16, 32).reshape(4, 4))
+    assert ci_matrix.get_one_int_value(one_int, 0, 0, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 1, 'unrestricted') == 1.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 4, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 0, 'unrestricted') == 4.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 1, 'unrestricted') == 5.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 4, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 0, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 4, 'unrestricted') == 16.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 5, 'unrestricted') == 17.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 0, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 4, 'unrestricted') == 20.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 5, 'unrestricted') == 21.0
     # generalized
-    H = (np.arange(64).reshape(8, 8),)
-    assert ci_matrix.get_H_value(H, 0, 0, 'generalized') == 0.0
-    assert ci_matrix.get_H_value(H, 0, 1, 'generalized') == 1.0
-    assert ci_matrix.get_H_value(H, 0, 4, 'generalized') == 4.0
-    assert ci_matrix.get_H_value(H, 0, 5, 'generalized') == 5.0
-    assert ci_matrix.get_H_value(H, 1, 0, 'generalized') == 8.0
-    assert ci_matrix.get_H_value(H, 1, 1, 'generalized') == 9.0
-    assert ci_matrix.get_H_value(H, 1, 4, 'generalized') == 12.0
-    assert ci_matrix.get_H_value(H, 1, 5, 'generalized') == 13.0
-    assert ci_matrix.get_H_value(H, 4, 0, 'generalized') == 32.0
-    assert ci_matrix.get_H_value(H, 4, 1, 'generalized') == 33.0
-    assert ci_matrix.get_H_value(H, 4, 4, 'generalized') == 36.0
-    assert ci_matrix.get_H_value(H, 4, 5, 'generalized') == 37.0
-    assert ci_matrix.get_H_value(H, 5, 0, 'generalized') == 40.0
-    assert ci_matrix.get_H_value(H, 5, 1, 'generalized') == 41.0
-    assert ci_matrix.get_H_value(H, 5, 4, 'generalized') == 44.0
-    assert ci_matrix.get_H_value(H, 5, 5, 'generalized') == 45.0
+    one_int = (np.arange(64).reshape(8, 8),)
+    assert ci_matrix.get_one_int_value(one_int, 0, 0, 'generalized') == 0.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 1, 'generalized') == 1.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 4, 'generalized') == 4.0
+    assert ci_matrix.get_one_int_value(one_int, 0, 5, 'generalized') == 5.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 0, 'generalized') == 8.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 1, 'generalized') == 9.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 4, 'generalized') == 12.0
+    assert ci_matrix.get_one_int_value(one_int, 1, 5, 'generalized') == 13.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 0, 'generalized') == 32.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 1, 'generalized') == 33.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 4, 'generalized') == 36.0
+    assert ci_matrix.get_one_int_value(one_int, 4, 5, 'generalized') == 37.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 0, 'generalized') == 40.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 1, 'generalized') == 41.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 4, 'generalized') == 44.0
+    assert ci_matrix.get_one_int_value(one_int, 5, 5, 'generalized') == 45.0
 
 
-def test_get_G_value():
+def test_get_two_int_value():
     """
-    Tests ci_matrix.get_G_value
+    Tests ci_matrix.get_two_int_value
     """
-    G = (np.arange(256).reshape(4, 4, 4, 4),)
+    two_int = (np.arange(256).reshape(4, 4, 4, 4),)
     # check errors
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, -1, 0, 0, 0, 'restricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G*3, 0, -1, 0, 0, 'unrestricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 0, 0, -1, 0, 'generalized'))
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 8, 0, 0, 0, 'restricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G*3, 0, 8, 0, 0, 'unrestricted'))
-    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 0, 0, 4, 0, 'generalized'))
-    assert_raises(TypeError, lambda: ci_matrix.get_G_value(G, 0, 0, 0, 0, 'random type'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int, -1, 0, 0, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int*3, 0, -1, 0, 0, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int, 0, 0, -1, 0, 'generalized'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int, 8, 0, 0, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int*3, 0, 8, 0, 0, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_two_int_value(two_int, 0, 0, 4, 0, 'generalized'))
+    assert_raises(TypeError, lambda: ci_matrix.get_two_int_value(two_int, 0, 0, 0, 0, 'random type'))
     # restricted
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 1, 'restricted') == 1.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 1, 'restricted') == 1.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 1, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 5, 'restricted') == 1.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 5, 'restricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 5, 'restricted') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 1, 'restricted') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 1, 'restricted') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 1, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 5, 'restricted') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 5, 'restricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 5, 'restricted') == 1.0
     # unrestricted
-    G = (np.arange(256).reshape(4, 4, 4, 4),
+    two_int = (np.arange(256).reshape(4, 4, 4, 4),
          np.arange(256, 512).reshape(4, 4, 4, 4),
          np.arange(512, 768).reshape(4, 4, 4, 4))
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 1, 'unrestricted') == 1.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 1, 'unrestricted') == 260.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 1, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 5, 'unrestricted') == 257.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 5, 'unrestricted') == 0.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 5, 'unrestricted') == 513.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 1, 'unrestricted') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 1, 'unrestricted') == 260.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 1, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 5, 'unrestricted') == 257.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 5, 'unrestricted') == 0.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 5, 'unrestricted') == 513.0
     # generalized
-    G = (np.arange(4096).reshape(8, 8, 8, 8),)
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 1, 'generalized') == 1.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 1, 'generalized') == 33.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 1, 'generalized') == 257.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 1, 'generalized') == 2049.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 1, 'generalized') == 289.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 1, 'generalized') == 2081.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 1, 'generalized') == 2305.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 1, 'generalized') == 2337.0
-    assert ci_matrix.get_G_value(G, 0, 0, 0, 5, 'generalized') == 5.0
-    assert ci_matrix.get_G_value(G, 0, 0, 4, 5, 'generalized') == 37.0
-    assert ci_matrix.get_G_value(G, 0, 4, 0, 5, 'generalized') == 261.0
-    assert ci_matrix.get_G_value(G, 4, 0, 0, 5, 'generalized') == 2053.0
-    assert ci_matrix.get_G_value(G, 0, 4, 4, 5, 'generalized') == 293.0
-    assert ci_matrix.get_G_value(G, 4, 0, 4, 5, 'generalized') == 2085.0
-    assert ci_matrix.get_G_value(G, 4, 4, 0, 5, 'generalized') == 2309.0
-    assert ci_matrix.get_G_value(G, 4, 4, 4, 5, 'generalized') == 2341.0
+    two_int = (np.arange(4096).reshape(8, 8, 8, 8),)
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 1, 'generalized') == 1.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 1, 'generalized') == 33.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 1, 'generalized') == 257.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 1, 'generalized') == 2049.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 1, 'generalized') == 289.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 1, 'generalized') == 2081.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 1, 'generalized') == 2305.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 1, 'generalized') == 2337.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 0, 5, 'generalized') == 5.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 0, 4, 5, 'generalized') == 37.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 0, 5, 'generalized') == 261.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 0, 5, 'generalized') == 2053.0
+    assert ci_matrix.get_two_int_value(two_int, 0, 4, 4, 5, 'generalized') == 293.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 0, 4, 5, 'generalized') == 2085.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 0, 5, 'generalized') == 2309.0
+    assert ci_matrix.get_two_int_value(two_int, 4, 4, 4, 5, 'generalized') == 2341.0
 
 
 def test_ci_matrix_h2():
@@ -155,12 +155,12 @@ def test_ci_matrix_h2():
     Needs PYSCF!!
     """
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     # reference (from pyscf)
-    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 2, is_chemist_notation=False)
+    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2, is_chemist_notation=False)
     # test
-    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec=ref_pspace, dtype=np.float64,
+    test_ci_matrix = ci_matrix.ci_matrix(one_int, two_int, civec=ref_pspace, dtype=np.float64,
                                              orbtype='restricted')
     assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
@@ -176,12 +176,12 @@ def test_ci_matrix_lih():
     """
     # HORTON/Olsen Results
     hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     # reference (from pyscf)
-    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 4, is_chemist_notation=False)
+    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 4, is_chemist_notation=False)
     # test
-    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec=ref_pspace, dtype=np.float64,
+    test_ci_matrix = ci_matrix.ci_matrix(one_int, two_int, civec=ref_pspace, dtype=np.float64,
                                              orbtype='restricted')
     assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
@@ -190,10 +190,10 @@ def test_ci_matrix_lih():
 def test_ci_matrix_enum_break():
     """ Tests ci_matrix.ci_matrix while breaking particle number symmetry
     """
-    H = (np.arange(16).reshape(4, 4) + 1,)
-    G = (np.arange(256).reshape(4, 4, 4, 4) + 1, )
+    one_int = (np.arange(16).reshape(4, 4) + 1,)
+    two_int = (np.arange(256).reshape(4, 4, 4, 4) + 1, )
     civec = [0b01, 0b11]
-    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec, dtype=np.float64, orbtype='restricted')
+    test_ci_matrix = ci_matrix.ci_matrix(one_int, two_int, civec, dtype=np.float64, orbtype='restricted')
     assert np.allclose(test_ci_matrix, np.array([[1, 0], [0, 4]]))
     # first element because \braket{1 | h_{11} | 1}
     # second and third element because they break particle number symmetry

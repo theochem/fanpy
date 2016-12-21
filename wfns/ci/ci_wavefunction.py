@@ -16,18 +16,10 @@ class CIWavefunction(Wavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K)
+    one_int : np.ndarray(K,K)
         One electron integrals for the spatial orbitals
-    Ha : np.ndarray(K,K)
-        One electron integrals for the alpha spin orbitals
-    Hb : np.ndarray(K,K)
-        One electron integrals for the beta spin orbitals
-    G : np.ndarray(K,K,K,K)
+    two_int : np.ndarray(K,K,K,K)
         Two electron integrals for the spatial orbitals
-    Ga : np.ndarray(K,K,K,K)
-        Two electron integrals for the alpha spin orbitals
-    Gb : np.ndarray(K,K,K,K)
-        Two electron integrals for the beta spin orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
     nspatial : int
@@ -103,8 +95,8 @@ class CIWavefunction(Wavefunction):
             self,
             # Mandatory arguments
             nelec=None,
-            H=None,
-            G=None,
+            one_int=None,
+            two_int=None,
             # Arguments handled by base Wavefunction class
             dtype=None,
             nuc_nuc=None,
@@ -117,8 +109,8 @@ class CIWavefunction(Wavefunction):
 
         super(CIWavefunction, self).__init__(
             nelec=nelec,
-            H=H,
-            G=G,
+            one_int=one_int,
+            two_int=two_int,
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )
@@ -280,8 +272,8 @@ class CIWavefunction(Wavefunction):
             that tries to resemble self
         """
         new_instance = Other(nelec=self.nelec,
-                             H=self.H,
-                             G=self.G,
+                             one_int=self.one_int,
+                             two_int=self.two_int,
                              dtype=self.dtype,
                              nuc_nuc=self.nuc_nuc,
                              orbtype=self.orbtype,

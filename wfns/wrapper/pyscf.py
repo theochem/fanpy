@@ -42,9 +42,9 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
             electronic energy
         "nuc_nuc_energy"
             nuclear repulsion energy
-        "H"
+        "one_int"
             tuple of the one-electron interal
-        "G"
+        "two_int"
             tuple of the two-electron integral in Physicist's notation
 
     Raises
@@ -89,18 +89,18 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     mo_coeff = hf.mo_coeff
     # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
     # get 1e integral
-    H_ab = mol.intor_symmetric('cint1e_kin_sph') + mol.intor_symmetric('cint1e_nuc_sph')
-    H = mo_coeff.T.dot(H_ab).dot(mo_coeff)
+    one_int_ab = mol.intor_symmetric('cint1e_kin_sph') + mol.intor_symmetric('cint1e_nuc_sph')
+    one_int = mo_coeff.T.dot(one_int_ab).dot(mo_coeff)
     # get 2e integral
     eri = ao2mo.full(mol, mo_coeff, verbose=0, intor='cint2e_sph')
-    G = ao2mo.restore(1, eri, mol.nao_nr())
+    two_int = ao2mo.restore(1, eri, mol.nao_nr())
     # NOTE: PySCF uses Chemist's notation
-    G = np.einsum('ijkl->ikjl', G)
+    two_int = np.einsum('ijkl->ikjl', two_int)
     # results
     result = {'el_energy' : E_elec,
               'nuc_nuc_energy' : E_nuc,
-              'H' : (H,),
-              'G' : (G,)}
+              'one_int' : (one_int,),
+              'two_int' : (two_int,)}
     return result
 
 

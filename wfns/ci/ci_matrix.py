@@ -2,18 +2,18 @@
 
 Functions
 ---------
-get_H_value(H_matrices, i, k, orbtype)
+get_one_int_value(one_int_matrices, i, k, orbtype)
     Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
-get_G_value(G_matrices, i, j, k, l, orbtype)
+get_two_int_value(two_int_matrices, i, j, k, l, orbtype)
     Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k` and `l`
-ci_matrix(H, G, civec, dtype, orbtype)
+ci_matrix(one_int, two_int, civec, dtype, orbtype)
     Returns CI Hamiltonian matrix in the arbitrary Slater (orthonormal) determinant basis
 """
 import numpy as np
 from .. import slater
 
 
-def get_H_value(H_matrices, i, k, orbtype):
+def get_one_int_value(one_int_matrices, i, k, orbtype):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
 
     ..math::
@@ -21,7 +21,7 @@ def get_H_value(H_matrices, i, k, orbtype):
 
     Parameters
     ----------
-    H_matrices : tuple of np.ndarray(K, K)
+    one_int_matrices : tuple of np.ndarray(K, K)
         One electron integral matrices
         If 1-tuple, then restricted or generalized orbitals
         If 2-tuple, then unrestricted orbitals
@@ -48,37 +48,37 @@ def get_H_value(H_matrices, i, k, orbtype):
     # NOTE: NECESARY?
     if any(index < 0 for index in [i, k]):
         raise ValueError('Indices cannot be negative')
-    elif any(index >= H_matrices[0].shape[0] * (2 - int(orbtype == 'generalized'))
-                 for index in [i, k]):
+    elif any(index >= one_int_matrices[0].shape[0] * (2 - int(orbtype == 'generalized'))
+             for index in [i, k]):
         raise ValueError('Indices cannot be greater than the number of spin orbitals')
 
     if orbtype == 'restricted':
-        # Assume that H_matrices are expressed wrt spatial orbitals
-        ns = H_matrices[0].shape[0]
-        I = slater.spatial_index(i, ns)
-        K = slater.spatial_index(k, ns)
+        # Assume that one_int_matrices are expressed wrt spatial orbitals
+        nspatial = one_int_matrices[0].shape[0]
+        I = slater.spatial_index(i, nspatial)
+        K = slater.spatial_index(k, nspatial)
         # if spins are the same
-        if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
-            return H_matrices[0][I, K]
+        if slater.is_alpha(i, nspatial) == slater.is_alpha(k, nspatial):
+            return one_int_matrices[0][I, K]
     elif orbtype == 'unrestricted':
-        # Assume that H_matrices is expressed wrt spatial orbitals
-        ns = H_matrices[0].shape[0]
-        I = slater.spatial_index(i, ns)
-        K = slater.spatial_index(k, ns)
+        # Assume that one_int_matrices is expressed wrt spatial orbitals
+        nspatial = one_int_matrices[0].shape[0]
+        I = slater.spatial_index(i, nspatial)
+        K = slater.spatial_index(k, nspatial)
         # if spins are both alpha
-        if slater.is_alpha(i, ns) and slater.is_alpha(k, ns):
-            return H_matrices[0][I, K]
+        if slater.is_alpha(i, nspatial) and slater.is_alpha(k, nspatial):
+            return one_int_matrices[0][I, K]
         # if spins are both beta
-        elif not slater.is_alpha(i, ns) and not slater.is_alpha(k, ns):
-            return H_matrices[1][I, K]
+        elif not slater.is_alpha(i, nspatial) and not slater.is_alpha(k, nspatial):
+            return one_int_matrices[1][I, K]
     elif orbtype == 'generalized':
-        return H_matrices[0][i, k]
+        return one_int_matrices[0][i, k]
     else:
         raise TypeError, 'Unknown orbital type, {0}'.format(orbtype)
     return 0.0
 
 
-def get_G_value(G_matrices, i, j, k, l, orbtype):
+def get_two_int_value(two_int_matrices, i, j, k, l, orbtype):
     """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
     ..math::
@@ -87,7 +87,7 @@ def get_G_value(G_matrices, i, j, k, l, orbtype):
 
     Parameters
     ----------
-    G_matrices : tuple of np.ndarray(K, K, K, K)
+    two_int_matrices : tuple of np.ndarray(K, K, K, K)
         Two electron integral matrices
         If 1-tuple, then restricted or generalized orbitals
         If 3-tuple, then unrestricted orbitals
@@ -118,66 +118,66 @@ def get_G_value(G_matrices, i, j, k, l, orbtype):
     # NOTE: NECESARY?
     if any(index < 0 for index in [i, j, k, l]):
         raise ValueError('Indices cannot be negative')
-    elif any(index >= G_matrices[0].shape[0] * (2 - int(orbtype == 'generalized'))
-                 for index in [i, j, k, l]):
+    elif any(index >= two_int_matrices[0].shape[0] * (2 - int(orbtype == 'generalized'))
+             for index in [i, j, k, l]):
         raise ValueError('Indices cannot be greater than the number of spin orbitals')
 
     if orbtype == 'restricted':
-        # Assume that G_matrices is expressed wrt spatial orbitals
-        ns = G_matrices[0].shape[0]
+        # Assume that two_int_matrices is expressed wrt spatial orbitals
+        nspatial = two_int_matrices[0].shape[0]
         # if i and k have same spin and j and l have same spin
-        if (slater.is_alpha(i, ns) == slater.is_alpha(k, ns)
-            and slater.is_alpha(j, ns) == slater.is_alpha(l, ns)):
-            I = slater.spatial_index(i, ns)
-            J = slater.spatial_index(j, ns)
-            K = slater.spatial_index(k, ns)
-            L = slater.spatial_index(l, ns)
-            return G_matrices[0][I, J, K, L]
+        if (slater.is_alpha(i, nspatial) == slater.is_alpha(k, nspatial)
+            and slater.is_alpha(j, nspatial) == slater.is_alpha(l, nspatial)):
+            I = slater.spatial_index(i, nspatial)
+            J = slater.spatial_index(j, nspatial)
+            K = slater.spatial_index(k, nspatial)
+            L = slater.spatial_index(l, nspatial)
+            return two_int_matrices[0][I, J, K, L]
     elif orbtype == 'unrestricted':
-        # Assume that H_matrices is expressed wrt spin orbitals
-        ns = G_matrices[0].shape[0]
+        # Assume that one_int_matrices is expressed wrt spin orbitals
+        nspatial = two_int_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
-        I = slater.spatial_index(i, ns)
-        J = slater.spatial_index(j, ns)
-        K = slater.spatial_index(k, ns)
-        L = slater.spatial_index(l, ns)
+        I = slater.spatial_index(i, nspatial)
+        J = slater.spatial_index(j, nspatial)
+        K = slater.spatial_index(k, nspatial)
+        L = slater.spatial_index(l, nspatial)
         # if alpha alpha alpha alpha
-        if (slater.is_alpha(i, ns) and slater.is_alpha(j, ns) and slater.is_alpha(k, ns) and
-                slater.is_alpha(l, ns)):
-            return G_matrices[0][I, J, K, L]
+        if (slater.is_alpha(i, nspatial) and slater.is_alpha(j, nspatial) and
+                slater.is_alpha(k, nspatial) and slater.is_alpha(l, nspatial)):
+            return two_int_matrices[0][I, J, K, L]
         # if alpha beta alpha beta
-        elif (slater.is_alpha(i, ns) and not slater.is_alpha(j, ns) and slater.is_alpha(k, ns) and
-              not slater.is_alpha(l, ns)):
-            return G_matrices[1][I, J, K, L]
+        elif (slater.is_alpha(i, nspatial) and not slater.is_alpha(j, nspatial) and
+              slater.is_alpha(k, nspatial) and not slater.is_alpha(l, nspatial)):
+            return two_int_matrices[1][I, J, K, L]
         # if beta alpha beta alpha
-        elif (not slater.is_alpha(i, ns) and slater.is_alpha(j, ns) and not slater.is_alpha(k, ns)
-              and slater.is_alpha(l, ns)):
+        elif (not slater.is_alpha(i, nspatial) and slater.is_alpha(j, nspatial) and
+              not slater.is_alpha(k, nspatial) and slater.is_alpha(l, nspatial)):
             # take the appropraite transposition to get the beta alpha beta alpha form
-            return G_matrices[1][J, I, L, K]
+            return two_int_matrices[1][J, I, L, K]
         # if beta beta beta beta
-        elif (not slater.is_alpha(i, ns) and not slater.is_alpha(j, ns)
-              and not slater.is_alpha(k, ns) and not slater.is_alpha(l, ns)):
-            return G_matrices[2][I, J, K, L]
+        elif (not slater.is_alpha(i, nspatial) and not slater.is_alpha(j, nspatial) and
+              not slater.is_alpha(k, nspatial) and not slater.is_alpha(l, nspatial)):
+            return two_int_matrices[2][I, J, K, L]
     elif orbtype == 'generalized':
-        return G_matrices[0][i, j, k, l]
+        return two_int_matrices[0][i, j, k, l]
     else:
         raise TypeError, 'Unknown orbital type, {0}'.format(orbtype)
     return 0.0
 
 
-def ci_matrix(H, G, civec, dtype, orbtype):
+def ci_matrix(one_int, two_int, civec, dtype, orbtype):
     """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
 
     ..math::
-        H_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
+        one_int_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
 
     Parameters
     ----------
-    H : 1- or 2-tuple np.ndarray(K,K)
+    one_int : 1- or 2-tuple np.ndarray(K,K)
         One electron integrals for restricted, unrestricted, or generalized orbitals
         1-tuple for spatial (restricted) and generalized orbitals
         2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    G : 1- or 3-tuple np.ndarray(K,K)
+    two_int : 1- or 3-tuple np.ndarray(K,K)
         Two electron integrals for restricted, unrestricted, or generalized orbitals
         In physicist's notation
         1-tuple for spatial (restricted) and generalized orbitals
@@ -218,26 +218,33 @@ def ci_matrix(H, G, civec, dtype, orbtype):
             # two sd's are the same
             if diff_order == 0:
                 for count, i in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orbtype=orbtype) * sign
+                    ci_matrix[nsd0, nsd1] += get_one_int_value(one_int, i, i,
+                                                               orbtype=orbtype) * sign
                     for j in shared_indices[count + 1:]:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orbtype=orbtype) * sign
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orbtype=orbtype) * sign
+                        ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, i, j,
+                                                                   orbtype=orbtype) * sign
+                        ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, i,
+                                                                   orbtype=orbtype) * sign
 
             # two sd's are different by single excitation
             elif diff_order == 1:
                 i, = diff_sd0
                 a, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orbtype=orbtype) * sign
+                ci_matrix[nsd0, nsd1] += get_one_int_value(one_int, i, a, orbtype=orbtype) * sign
                 for j in shared_indices:
-                    ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orbtype=orbtype) * sign
-                    ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orbtype=orbtype) * sign
+                    ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, j,
+                                                               orbtype=orbtype) * sign
+                    ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, a,
+                                                               orbtype=orbtype) * sign
 
             # two sd's are different by double excitation
             elif diff_order == 2:
                 i, j = diff_sd0
                 a, b = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orbtype=orbtype) * sign
-                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orbtype=orbtype) * sign
+                ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, b,
+                                                           orbtype=orbtype) * sign
+                ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, b, a,
+                                                           orbtype=orbtype) * sign
 
     # Make it Hermitian (symmetric)
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T

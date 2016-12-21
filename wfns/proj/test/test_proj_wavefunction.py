@@ -95,7 +95,7 @@ def test_overlap():
     # sd not included in cache
     assert test.overlap(0b100111) == 3
     # derivative
-    test.H = np.arange(9).reshape(3, 3)
+    test.one_int = np.arange(9).reshape(3, 3)
     test.orbtype = 'restricted'
     test.d_cache = {(0b1111, 0): 4, (0b1111, 1): 5, (0b1111, 2): 6, (0b10111, 0): 7, (0b10111, 1): 8}
     assert test.overlap(0b1111, deriv=0) == 4

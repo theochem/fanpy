@@ -19,11 +19,11 @@ class APseqG(ProjectionWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
         One electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
         and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
         Two electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 3), two electron integrals for the
         (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
@@ -73,13 +73,13 @@ class APseqG(ProjectionWavefunction):
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orbtype=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
@@ -121,8 +121,8 @@ class APseqG(ProjectionWavefunction):
     def __init__(self,
                  # Mandatory arguments
                  nelec=None,
-                 H=None,
-                 G=None,
+                 one_int=None,
+                 two_int=None,
                  # Arguments handled by base Wavefunction class
                  dtype=None,
                  nuc_nuc=None,
@@ -136,8 +136,8 @@ class APseqG(ProjectionWavefunction):
                  ):
         # FIXME: this fucking mess
         super(ProjectionWavefunction, self).__init__(nelec=nelec,
-                                                     H=H,
-                                                     G=G,
+                                                     one_int=one_int,
+                                                     two_int=two_int,
                                                      dtype=dtype,
                                                      nuc_nuc=nuc_nuc,
                                                      )

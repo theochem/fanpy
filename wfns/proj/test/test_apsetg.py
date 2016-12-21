@@ -14,11 +14,11 @@ def test_apsetg_wavefunction_h2():
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
     # Solve with Jacobian using energy as a parameter
-    apsetg = APsetG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apsetg = APsetG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(apsetg, solver_type='cma_guess')
     results = solve(apsetg, solver_type='least squares', jac=True)
     print('HF energy', -1.84444667247)
@@ -38,12 +38,12 @@ def test_apsetg_wavefunction_lih():
     hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
     # Compare apsetg energy with old code
     # Solve with Jacobian using energy as a parameter
-    apsetg = APsetG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apsetg = APsetG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(apsetg, solver_type='cma_guess')
     results = solve(apsetg, solver_type='least squares', jac=True)
     print('HF energy', -8.9472891719)

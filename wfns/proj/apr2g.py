@@ -17,9 +17,9 @@ class APr2G(ProjectionWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : tuple of np.ndarray(K,K)
+    one_int : tuple of np.ndarray(K,K)
         One electron integrals for the spatial orbitals
-    G : tuple of np.ndarray(K,K,K,K)
+    two_int : tuple of np.ndarray(K,K,K,K)
         Two electron integrals for the spatial orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
@@ -83,7 +83,7 @@ class APr2G(ProjectionWavefunction):
             raise TypeError('Unsupport parameter type, {0}'.format(params_type))
 
         if params_type == 'apr2g':
-            super(APr2G, self).assign_params(params=params)
+            super(APr2two_int, self).assign_params(params=params)
         elif params_type == 'ap1rog':
             gem_coeffs = np.hstack((np.identity(self.npair), params[:-1].reshape(self.npair, self.nspatial-self.npair)))
             gem_params = self._convert_from_apig(self.npair, self.nspatial, gem_coeffs)

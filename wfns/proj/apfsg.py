@@ -21,9 +21,9 @@ class APfsG(ProjectionWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : tuple of np.ndarray(K,K)
+    one_int : tuple of np.ndarray(K,K)
         One electron integrals for the spatial orbitals
-    G : tuple of np.ndarray(K,K,K,K)
+    two_int : tuple of np.ndarray(K,K,K,K)
         Two electron integrals for the spatial orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
@@ -78,13 +78,13 @@ class APfsG(ProjectionWavefunction):
 
     Methods
     -------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orbtype=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)

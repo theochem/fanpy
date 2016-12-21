@@ -12,11 +12,11 @@ class APsetG(APG):
     """ Antisymmetric Product Geminals
 
     ..math::
-        G_p^\dagger = \sum_{ij} C_{p;ij} a_i^\dagger a_j^\dagger
+        two_int_p^\dagger = \sum_{ij} C_{p;ij} a_i^\dagger a_j^\dagger
 
     ..math::
         \big| \Psi_{\mathrm{APG}} \big>
-        &= \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
+        &= \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
     where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
     Slater determinant.
@@ -28,11 +28,11 @@ class APsetG(APG):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
         One electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
         and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
         Two electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 3), two electron integrals for the
         (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
@@ -89,13 +89,13 @@ class APsetG(APG):
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orbtype=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
@@ -138,8 +138,8 @@ class APsetG(APG):
     def __init__(self,
                  # Mandatory arguments
                  nelec=None,
-                 H=None,
-                 G=None,
+                 one_int=None,
+                 two_int=None,
                  # Arguments handled by base Wavefunction class
                  dtype=None,
                  nuc_nuc=None,
@@ -154,8 +154,8 @@ class APsetG(APG):
         # FIXME: this fucking mess
         super(ProjectionWavefunction, self).__init__(
             nelec=nelec,
-            H=H,
-            G=G,
+            one_int=one_int,
+            two_int=two_int,
             dtype=dtype,
             nuc_nuc=nuc_nuc,
         )

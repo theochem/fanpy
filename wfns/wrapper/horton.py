@@ -51,9 +51,9 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
             Electronic energy
         "nuc_nuc_energy"
             Nuclear repulsion energy
-        "H"
+        "one_int"
             Tuple of the one-electron Hamiltonian;
-        "G"
+        "two_int"
             Tuple of the two-electron Hamiltonian;
         "horton_internal"
             Dictionary that  contains horton's internal object
@@ -141,8 +141,8 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
         # Collect HF energy and integrals
         "el_energy": energy - external["nn"],
         "nuc_nuc_energy": external["nn"],
-        "H": one_mo,
-        "G": two_mo,
+        "one_int": one_mo,
+        "two_int": two_mo,
     }
 
     if horton_internal:
@@ -175,9 +175,9 @@ def gaussian_fchk(fchk_file, horton_internal=False):
             Electronic energy
         "nuc_nuc_energy"
             Nuclear nuclear repulsion energy
-        "H"
+        "one_int"
             Tuple of the one-electron Hamiltonian;
-        "G"
+        "two_int"
             Tuple of the two-electron Hamiltonian;
         "horton_internal"
             Dictionary that  contains horton's internal object
@@ -231,8 +231,8 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     output = {
         "el_energy": mol.energy - nuc_nuc,
         "nuc_nuc_energy": nuc_nuc,
-        "H": tuple(one_mo),
-        "G": tuple(two_mo),
+        "one_int": tuple(one_mo),
+        "two_int": tuple(two_mo),
     }
     if horton_internal:
         output["horton_internal"] = {
