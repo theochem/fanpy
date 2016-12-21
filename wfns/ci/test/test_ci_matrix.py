@@ -1,7 +1,9 @@
+""" Tests wfns.ci.ci_matrix
+"""
 import numpy as np
 from nose.plugins.attrib import attr
-
-from wfns.ci import ci_matrix
+from nose.tools import assert_raises
+import wfns.ci.ci_matrix as ci_matrix
 from wfns.wrapper.horton import gaussian_fchk
 from wfns.wrapper.pyscf import generate_fci_cimatrix
 
@@ -11,6 +13,14 @@ def test_get_H_value():
     Tests ci_matrix.get_H_value
     """
     H = (np.arange(16).reshape(4, 4),)
+    # check errors
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, -1, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H*2, 0, -1, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 0, -1, 'generalized'))
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 8, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H*2, 0, 8, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_H_value(H, 0, 4, 'generalized'))
+    assert_raises(TypeError, lambda: ci_matrix.get_H_value(H, 0, 0, 'random type'))
     # restricted
     assert ci_matrix.get_H_value(H, 0, 0, 'restricted') == 0.0
     assert ci_matrix.get_H_value(H, 0, 1, 'restricted') == 1.0
@@ -70,8 +80,16 @@ def test_get_G_value():
     """
     Tests ci_matrix.get_G_value
     """
-    # restricted
     G = (np.arange(256).reshape(4, 4, 4, 4),)
+    # check errors
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, -1, 0, 0, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G*3, 0, -1, 0, 0, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 0, 0, -1, 0, 'generalized'))
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 8, 0, 0, 0, 'restricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G*3, 0, 8, 0, 0, 'unrestricted'))
+    assert_raises(ValueError, lambda: ci_matrix.get_G_value(G, 0, 0, 4, 0, 'generalized'))
+    assert_raises(TypeError, lambda: ci_matrix.get_G_value(G, 0, 0, 0, 0, 'random type'))
+    # restricted
     assert ci_matrix.get_G_value(G, 0, 0, 0, 1, 'restricted') == 1.0
     assert ci_matrix.get_G_value(G, 0, 0, 4, 1, 'restricted') == 0.0
     assert ci_matrix.get_G_value(G, 0, 4, 0, 1, 'restricted') == 0.0
@@ -128,41 +146,22 @@ def test_get_G_value():
     assert ci_matrix.get_G_value(G, 4, 4, 4, 5, 'generalized') == 2341.0
 
 
-class DummyWavefunction(object):
-    """ Dummy wavefunction because ci_matrix takes in Wavefunction class"""
-    dtype = np.float64
-    orbtype = 'restricted'
-
-    def __init__(self, pspace, H, G):
-        self.civec = pspace
-        self.nci = len(pspace)
-        self.H = H
-        self.G = G
-
-    def compute_ci_matrix(self):
-        return ci_matrix.ci_matrix(self, self.orbtype)
-
-
 def test_ci_matrix_h2():
     """
-    Tests ci_matrix.ci_matrix using H2 FCI ci_matrix
+    Tests ci_matrix.ci_matrix using H2 HF/6-31G** orbitals
 
     Note
     ----
     Needs PYSCF!!
     """
-    # HORTON/Olsen Results
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-
     H = hf_dict["H"]
     G = hf_dict["G"]
-
+    # reference (from pyscf)
     ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 2, is_chemist_notation=False)
-
-
-    dummy = DummyWavefunction(ref_pspace, H, G)
-    test_ci_matrix = dummy.compute_ci_matrix()
-
+    # test
+    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec=ref_pspace, dtype=np.float64,
+                                             orbtype='restricted')
     assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
 
@@ -177,21 +176,25 @@ def test_ci_matrix_lih():
     """
     # HORTON/Olsen Results
     hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
-
     H = hf_dict["H"]
     G = hf_dict["G"]
-
+    # reference (from pyscf)
     ref_ci_matrix, ref_pspace = generate_fci_cimatrix(H[0], G[0], 4, is_chemist_notation=False)
-
-
-    dummy = DummyWavefunction(ref_pspace, H, G)
-    test_ci_matrix = dummy.compute_ci_matrix()
+    # test
+    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec=ref_pspace, dtype=np.float64,
+                                             orbtype='restricted')
+    assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
     assert np.allclose(test_ci_matrix, ref_ci_matrix)
 
-
-def test_doci_matrix():
+def test_ci_matrix_enum_break():
+    """ Tests ci_matrix.ci_matrix while breaking particle number symmetry
     """
-    Tests ci_matrix.doci_matrix
-    """
-    pass
+    H = (np.arange(16).reshape(4, 4) + 1,)
+    G = (np.arange(256).reshape(4, 4, 4, 4) + 1, )
+    civec = [0b01, 0b11]
+    test_ci_matrix = ci_matrix.ci_matrix(H, G, civec, dtype=np.float64, orbtype='restricted')
+    assert np.allclose(test_ci_matrix, np.array([[1, 0], [0, 4]]))
+    # first element because \braket{1 | h_{11} | 1}
+    # second and third element because they break particle number symmetry
+    # last element because \braket{1 2 | h_{11} + h_{22} + g_{1212} - g_{1221} | 1 2}
