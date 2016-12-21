@@ -92,4 +92,4 @@ class CISD(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return ci_matrix(self, self.orb_type)
+        return ci_matrix(self, self.orbtype)

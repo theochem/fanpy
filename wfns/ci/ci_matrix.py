@@ -2,7 +2,7 @@ import numpy as np
 from .. import slater
 
 
-def get_H_value(H_matrices, i, k, orb_type):
+def get_H_value(H_matrices, i, k, orbtype):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
 
     ..math::
@@ -17,7 +17,7 @@ def get_H_value(H_matrices, i, k, orb_type):
         Index of the spin orbital
     k : int
         Index of the spin orbital
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -30,7 +30,7 @@ def get_H_value(H_matrices, i, k, orb_type):
     Erratic behaviour if i or k (or their spatial index analog) is negative or
     is larger than H_matrices
     """
-    if orb_type == 'restricted':
+    if orbtype == 'restricted':
         # Assume that H_matrices are expressed wrt spatial orbitals
         ns = H_matrices[0].shape[0]
         # if spins are the same
@@ -38,7 +38,7 @@ def get_H_value(H_matrices, i, k, orb_type):
             I = slater.spatial_index(i, ns)
             K = slater.spatial_index(k, ns)
             return H_matrices[0][I, K]
-    elif orb_type == 'unrestricted':
+    elif orbtype == 'unrestricted':
         # Assume that H_matrices is expressed wrt spin orbitals
         ns = H_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
@@ -48,14 +48,14 @@ def get_H_value(H_matrices, i, k, orb_type):
             return H_matrices[0][I, K]
         elif not slater.is_alpha(i, ns) and not slater.is_alpha(k, ns):
             return H_matrices[1][I, K]
-    elif orb_type == 'generalized':
+    elif orbtype == 'generalized':
         return H_matrices[0][i, k]
     else:
-        raise AssertionError, 'Unknown orbital type, {0}'.format(orb_type)
+        raise AssertionError, 'Unknown orbital type, {0}'.format(orbtype)
     return 0.0
 
 
-def get_G_value(G_matrices, i, j, k, l, orb_type):
+def get_G_value(G_matrices, i, j, k, l, orbtype):
     """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
     # TODO: check ordering
@@ -76,7 +76,7 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
         Index of the spin orbital
     l : int
         Index of the spin orbital
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -84,7 +84,7 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
     g_ijkl : float
         Value of the one electron hamiltonian
     """
-    if orb_type == 'restricted':
+    if orbtype == 'restricted':
         # Assume that G_matrices is expressed wrt spatial orbitals
         ns = G_matrices[0].shape[0]
         if slater.is_alpha(i, ns) == slater.is_alpha(k, ns) and slater.is_alpha(j, ns) == slater.is_alpha(l, ns):
@@ -93,7 +93,7 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
             K = slater.spatial_index(k, ns)
             L = slater.spatial_index(l, ns)
             return G_matrices[0][I, J, K, L]
-    elif orb_type == 'unrestricted':
+    elif orbtype == 'unrestricted':
         # Assume that H_matrices is expressed wrt spin orbitals
         ns = G_matrices[0].shape[0]
         # number of spatial orbitals is number of spin orbitals divided by 2
@@ -111,12 +111,12 @@ def get_G_value(G_matrices, i, j, k, l, orb_type):
             return np.einsum('IJKL->JILK', G_matrices[1])[I, J, K, L]
         elif not slater.is_alpha(i, ns) and not slater.is_alpha(j, ns) and not slater.is_alpha(k, ns) and not slater.is_alpha(l, ns):
             return G_matrices[2][I, J, K, L]
-    elif orb_type == 'generalized':
+    elif orbtype == 'generalized':
         return G_matrices[0][i, j, k, l]
     return 0.0
 
 
-def ci_matrix(self, orb_type):
+def ci_matrix(self, orbtype):
     """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
 
     ..math::
@@ -128,7 +128,7 @@ def ci_matrix(self, orb_type):
         Instance of Wavefunction class
         Needs to have the following in __dict__:
             nci, H, G, civec, dtype
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -161,26 +161,26 @@ def ci_matrix(self, orb_type):
             # two sd's are the same
             if diff_order == 0:
                 for ic, i in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type) * sign
+                    ci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orbtype=orbtype) * sign
                     for j in shared_indices[ic + 1:]:
-                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type) * sign
-                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type) * sign
+                        ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orbtype=orbtype) * sign
+                        ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orbtype=orbtype) * sign
 
             # two sd's are different by single excitation
             elif diff_order == 1:
                 i, = diff_sd0
                 a, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orb_type=orb_type) * sign
+                ci_matrix[nsd0, nsd1] += get_H_value(H, i, a, orbtype=orbtype) * sign
                 for num_trans, j in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orb_type=orb_type) * sign
-                    ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orb_type=orb_type) * sign
+                    ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, j, orbtype=orbtype) * sign
+                    ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, a, orbtype=orbtype) * sign
 
             # two sd's are different by double excitation
             elif diff_order == 2:
                 i, j = diff_sd0
                 a, b = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orb_type=orb_type) * sign
-                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orb_type=orb_type) * sign
+                ci_matrix[nsd0, nsd1] += get_G_value(G, i, j, a, b, orbtype=orbtype) * sign
+                ci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, b, a, orbtype=orbtype) * sign
 
     # Make it Hermitian
     ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T
@@ -188,7 +188,7 @@ def ci_matrix(self, orb_type):
     return ci_matrix
 
 
-def doci_matrix(self, orb_type):
+def doci_matrix(self, orbtype):
     """ Returns Hamiltonian matrix in the doci Slater determinant basis
 
     ..math::
@@ -200,7 +200,7 @@ def doci_matrix(self, orb_type):
         Instance of Wavefunction class
         Needs to have the following in __dict__:
             nci, nspatial, H, G, civec, dtype
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -238,16 +238,16 @@ def doci_matrix(self, orb_type):
             if diff_order == 2:
                 i, j = diff_sd0
                 k, l = diff_sd1
-                doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orb_type=orb_type) * sign
-                doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orb_type=orb_type) * sign
+                doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, k, l, orbtype=orbtype) * sign
+                doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, l, k, orbtype=orbtype) * sign
 
             # two sd's are the same
             elif diff_order == 0:
                 for ic, i in enumerate(shared_indices):
-                    doci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orb_type=orb_type)
+                    doci_matrix[nsd0, nsd1] += get_H_value(H, i, i, orbtype=orbtype)
                     for j in shared_indices[ic + 1:]:
-                        doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orb_type=orb_type) * sign
-                        doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orb_type=orb_type) * sign
+                        doci_matrix[nsd0, nsd1] += get_G_value(G, i, j, i, j, orbtype=orbtype) * sign
+                        doci_matrix[nsd0, nsd1] -= get_G_value(G, i, j, j, i, orbtype=orbtype) * sign
 
     # Make it Hermitian
     doci_matrix[:, :] = np.triu(doci_matrix) + np.triu(doci_matrix, 1).T

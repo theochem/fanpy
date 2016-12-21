@@ -131,7 +131,7 @@ def test_get_G_value():
 class DummyWavefunction(object):
     """ Dummy wavefunction because ci_matrix takes in Wavefunction class"""
     dtype = np.float64
-    orb_type = 'restricted'
+    orbtype = 'restricted'
 
     def __init__(self, pspace, H, G):
         self.civec = pspace
@@ -140,7 +140,7 @@ class DummyWavefunction(object):
         self.G = G
 
     def compute_ci_matrix(self):
-        return ci_matrix.ci_matrix(self, self.orb_type)
+        return ci_matrix.ci_matrix(self, self.orbtype)
 
 
 def test_ci_matrix_h2():

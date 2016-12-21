@@ -109,4 +109,4 @@ class DOCI(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return doci_matrix(self, self.orb_type)
+        return doci_matrix(self, self.orbtype)

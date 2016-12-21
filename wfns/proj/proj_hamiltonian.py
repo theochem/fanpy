@@ -3,7 +3,7 @@ from itertools import combinations
 from .. import slater
 from ..ci.ci_matrix import get_H_value, get_G_value
 
-def hamiltonian(self, sd, orb_type, deriv=None):
+def hamiltonian(self, sd, orbtype, deriv=None):
     """ Compute the Hamiltonian of the wavefunction projected against `sd`.
 
     ..math::
@@ -17,7 +17,7 @@ def hamiltonian(self, sd, orb_type, deriv=None):
             nspin, H, G, overlap
     sd : int
         The Slater Determinant against which to project.
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -39,31 +39,31 @@ def hamiltonian(self, sd, orb_type, deriv=None):
     # sum over zeroth order excitation
     coeff = self.overlap(sd, deriv=deriv)
     for ic, i in enumerate(occ_indices):
-        one_electron += coeff*get_H_value(H, i, i, orb_type=orb_type)
+        one_electron += coeff*get_H_value(H, i, i, orbtype=orbtype)
         for j in occ_indices[ic+1:]:
-            coulomb += coeff*get_G_value(G, i, j, i, j, orb_type=orb_type)
-            exchange -= coeff*get_G_value(G, i, j, j, i, orb_type=orb_type)
+            coulomb += coeff*get_G_value(G, i, j, i, j, orbtype=orbtype)
+            exchange -= coeff*get_G_value(G, i, j, j, i, orbtype=orbtype)
     # sum over one electron excitation
     for i in occ_indices:
         for a in vir_indices:
             ion_sd = slater.annihilate(sd, i)
             exc_sd = slater.create(ion_sd, a)
             coeff = self.overlap(exc_sd, deriv=deriv)
-            one_electron += coeff*get_H_value(H, i, a, orb_type=orb_type)
+            one_electron += coeff*get_H_value(H, i, a, orbtype=orbtype)
             for j in slater.occ_indices(ion_sd):
                 if j != i:
-                    coulomb += coeff*get_G_value(G, i, j, a, j, orb_type=orb_type)
-                    exchange -= coeff*get_G_value(G, i, j, j, a, orb_type=orb_type)
+                    coulomb += coeff*get_G_value(G, i, j, a, j, orbtype=orbtype)
+                    exchange -= coeff*get_G_value(G, i, j, j, a, orbtype=orbtype)
     # sum over two electron excitation
     for i, j in combinations(occ_indices, 2):
         for a, b in combinations(vir_indices, 2):
             exc_sd = slater.excite(sd, i, j, a, b)
             coeff = self.overlap(exc_sd, deriv=deriv)
-            coulomb += coeff * get_G_value(G, i, j, a, b, orb_type=orb_type)
-            exchange -= coeff * get_G_value(G, i, j, b, a, orb_type=orb_type)
+            coulomb += coeff * get_G_value(G, i, j, a, b, orbtype=orbtype)
+            exchange -= coeff * get_G_value(G, i, j, b, a, orbtype=orbtype)
     return one_electron, coulomb, exchange
 
-def doci_hamiltonian(self, sd, orb_type, deriv=None):
+def doci_hamiltonian(self, sd, orbtype, deriv=None):
     """ Compute the DOCI Hamiltonian of the wavefunction projected against `sd`.
 
     ..math::
@@ -77,7 +77,7 @@ def doci_hamiltonian(self, sd, orb_type, deriv=None):
             nspin, nspatial, H, G, overlap
     sd : int
         The Slater Determinant against which to project.
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Flag that indicates the type of the orbital
 
     Returns
@@ -107,11 +107,11 @@ def doci_hamiltonian(self, sd, orb_type, deriv=None):
     # sum over zeroth order excitation
     coeff = self.overlap(sd, deriv=deriv)
     for ic, i in enumerate(occ_alpha_indices):
-        one_electron += 2*coeff*get_H_value(H, i, i, orb_type=orb_type)
-        coulomb += coeff*get_G_value(G, i, i, i, i, orb_type=orb_type)
+        one_electron += 2*coeff*get_H_value(H, i, i, orbtype=orbtype)
+        coulomb += coeff*get_G_value(G, i, i, i, i, orbtype=orbtype)
         for j in occ_alpha_indices[ic+1:]:
-            coulomb += 4*coeff*get_G_value(G, i, j, i, j, orb_type=orb_type)
-            exchange -= 2*coeff*get_G_value(G, i, j, j, i, orb_type=orb_type)
+            coulomb += 4*coeff*get_G_value(G, i, j, i, j, orbtype=orbtype)
+            exchange -= 2*coeff*get_G_value(G, i, j, j, i, orbtype=orbtype)
     # sum over two electron excitation
     for i in occ_alpha_indices:
         for a in vir_alpha_indices:
@@ -123,6 +123,6 @@ def doci_hamiltonian(self, sd, orb_type, deriv=None):
                 raise ValueError('Given Slater determinant, {0}, does not belong'
                                  ' to the DOCI Slater determinants'.format(bin(sd)))
             coeff = self.overlap(exc_sd, deriv=deriv)
-            coulomb += coeff*get_G_value(G, i, j, a, b, orb_type=orb_type)
-            exchange -= coeff*get_G_value(G, i, j, b, a, orb_type=orb_type)
+            coulomb += coeff*get_G_value(G, i, j, a, b, orbtype=orbtype)
+            exchange -= coeff*get_G_value(G, i, j, b, a, orbtype=orbtype)
     return one_electron, coulomb, exchange
