@@ -6,6 +6,7 @@ import numpy as np
 from nose.tools import assert_raises
 import scipy.linalg
 from wfns.wrapper.pyscf import hartreefock, generate_fci_cimatrix
+from wfns import __file__ as package_path
 
 
 def check_data_h2_rhf_sto6g(data):
@@ -49,10 +50,6 @@ def test_hartreefock_h2_rhf_sto6g():
                           "sto-6g")
     check_data_h2_rhf_sto6g(hf_dict)
 
-    # file location specified (relative)
-    hf_dict = hartreefock("../../../data/test/h2.xyz", "sto-6g")
-    check_data_h2_rhf_sto6g(hf_dict)
-
     # data reference
     hf_dict = hartreefock("test/h2.xyz", "sto-6g")
     check_data_h2_rhf_sto6g(hf_dict)
@@ -67,7 +64,6 @@ def test_hartreefock_h2_rhf_sto6g():
 
 def test_hartreefock():
     """ Tests HF against LiH STO6G
-
     """
     # file location specified
     hf_dict = hartreefock("{0}/../../../data/test/lih.xyz".format(os.path.dirname(__file__)),
@@ -139,16 +135,16 @@ def test_generate_fci_cimatrix_lih_sto6g():
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
     # nelec is tuple
-    ci_matrix, pspace = generate_fci_cimatrix(H[0], G[0], (1, 1), is_chemist_notation=False)
+    ci_matrix, pspace = generate_fci_cimatrix(H[0], G[0], (2, 2), is_chemist_notation=False)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
     # invalid nelec
     assert_raises(ValueError,
-                  lambda: generate_fci_cimatrix(H[0], G[0], '2', is_chemist_notation=False))
+                  lambda: generate_fci_cimatrix(H[0], G[0], '4', is_chemist_notation=False))
     assert_raises(ValueError,
                   lambda: generate_fci_cimatrix(H[0], G[0], (1, 1, 2), is_chemist_notation=False))
     # chemist notation
-    ci_matrix, pspace = generate_fci_cimatrix(H[0], np.einsum('ikjl->ijkl', G[0]), 2,
+    ci_matrix, pspace = generate_fci_cimatrix(H[0], np.einsum('ikjl->ijkl', G[0]), 4,
                                               is_chemist_notation=True)
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
