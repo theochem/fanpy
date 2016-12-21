@@ -14,15 +14,15 @@ def test_apr2g_wavefunction_h2():
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
     # AP1roG as an initial guess
-    ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='cma_guess')
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
-    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g = APr2G(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     apr2g.assign_params(params=ap1rog.params, params_type='ap1rog')
     apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
@@ -44,15 +44,15 @@ def test_apr2g_wavefunction_lih():
     hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
 
     nelec = 4
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
     # AP1roG as an initial guess
-    ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='cma_guess')
     solve(ap1rog, solver_type='least squares', jac=True)
     # Check if apr2g converges to a reasonable number
-    apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+    apr2g = APr2G(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     apr2g.assign_params(params=ap1rog.params, params_type='ap1rog')
     apr2g.normalize()
     solve(apr2g, solver_type='cma_guess')
@@ -72,14 +72,14 @@ def test_apr2g_wavefunction_lih():
 #     hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
 #
 #     nelec = 6
-#     H = hf_dict["H"]
-#     G = hf_dict["G"]
+#     one_int = hf_dict["one_int"]
+#     two_int = hf_dict["two_int"]
 #     nuc_nuc = hf_dict["nuc_nuc_energy"]
 #     # AP1roG as an initial guess
-#     ap1rog = AP1roG(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+#     ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
 #     solve(ap1rog)
 #     # Check if apr2g converges to a reasonable number
-#     apr2g = APr2G(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc)
+#     apr2g = APr2G(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
 #     apr2g.assign_params(ap1rog_params=ap1rog.params)
 #     solve(apr2g, jac=False)
 #     energy = apr2g.compute_energy(include_nuc=False)

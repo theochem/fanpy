@@ -15,7 +15,7 @@ class APIG(ProjectionWavefunction):
 
     ..math::
         \big| \Psi_{\mathrm{APIG}} \big>
-        &= \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
+        &= \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
     where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
     Slater determinant (DOCI).
@@ -24,11 +24,11 @@ class APIG(ProjectionWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
         One electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
         and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
         Two electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 3), two electron integrals for the
         (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
@@ -78,13 +78,13 @@ class APIG(ProjectionWavefunction):
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orbtype=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
@@ -164,7 +164,7 @@ class APIG(ProjectionWavefunction):
         The results are cached in self.cache and self.d_cache.
         ..math::
             \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
-            &= \big< \Phi_k \big| \prod_{p=1}^P G_p^\dagger \big| \theta \big>\\
+            &= \big< \Phi_k \big| \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
             &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
             &= | C(\Phi_k) |^+
         where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a

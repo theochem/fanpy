@@ -139,10 +139,10 @@ def test_get_density_matrix_h2_sto6g():
     hf_dict = gaussian_fchk(data_path)
 
     nelec = 2
-    H = hf_dict["H"][0]
-    G = hf_dict["G"][0]
+    one_int = hf_dict["one_int"][0]
+    two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(H, G, nelec, is_chemist_notation=False)
+    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -165,14 +165,14 @@ def test_get_density_matrix_h2_sto6g():
     # Reconstruct FCI energy
     # physicist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='physicist')
-    print((np.einsum('ij,ij', H, density1) +
-               0.5*np.einsum('ijkl,ijkl', G, density2)), energy)
-    assert abs((np.einsum('ij,ij', H, density1) +
-               0.5*np.einsum('ijkl,ijkl', G, density2)) - (energy)) < 1e-8
+    print((np.einsum('ij,ij', one_int, density1) +
+               0.5*np.einsum('ijkl,ijkl', two_int, density2)), energy)
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+               0.5*np.einsum('ijkl,ijkl', two_int, density2)) - (energy)) < 1e-8
     # chemist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='chemist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,iklj', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,iklj', two_int, density2)) - (energy)) < 1e-8
 
 
 def test_get_density_matrix_h2_631gdp():
@@ -196,16 +196,16 @@ def test_get_density_matrix_h2_631gdp():
     hf_dict = gaussian_fchk(data_path)
 
     nelec = 2
-    H = hf_dict["H"][0]
-    G = hf_dict["G"][0]
-    ns = H.shape[0]
+    one_int = hf_dict["one_int"][0]
+    two_int = hf_dict["two_int"][0]
+    ns = one_int.shape[0]
 
-    ci_matrix, civec = generate_fci_cimatrix(H, G, nelec, is_chemist_notation=False)
+    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
     test = TestCIWavefunction()
-    test.nspatial = H.shape[0]
+    test.nspatial = one_int.shape[0]
     test.civec = civec
     test.sd_coeffs = sd_coeffs
     density1, density2 = test.get_density_matrix(val_threshold=0)
@@ -217,8 +217,8 @@ def test_get_density_matrix_h2_631gdp():
 
     # Reference from Gaussian
     # commented out b/c the SD coefficients from Gaussian and PySCF are different
-    # ref_density1 = np.zeros(H.shape)
-    # ref_density1[np.tril_indices(H.shape[0])] = np.array([0.196959E+01, 0.151608E-14, 0.202432E-01, 0.278696E-03,
+    # ref_density1 = np.zeros(one_int.shape)
+    # ref_density1[np.tril_indices(one_int.shape[0])] = np.array([0.196959E+01, 0.151608E-14, 0.202432E-01, 0.278696E-03,
     #                                                       0.136404E-16, 0.634765E-02, -0.957626E-15, -0.929509E-05,
     #                                                       -0.826580E-17, 0.213190E-03, -0.464457E-17, 0.263984E-18,
     #                                                       0.294631E-18, 0.440488E-19, 0.157700E-02, -0.142304E-16,
@@ -239,13 +239,13 @@ def test_get_density_matrix_h2_631gdp():
     # physicist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='physicist')
     # density1, density2 = fci.get_density_matrix(val_threshold=0, notation='physicist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-               0.5*np.einsum('ijkl,ijkl', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+               0.5*np.einsum('ijkl,ijkl', two_int, density2)) - (energy)) < 1e-8
     # chemist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='chemist')
     # density1, density2 = fci.get_density_matrix(val_threshold=0, notation='chemist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,iklj', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,iklj', two_int, density2)) - (energy)) < 1e-8
 
 def test_get_density_matrix_lih_sto6g():
     """
@@ -268,15 +268,15 @@ def test_get_density_matrix_lih_sto6g():
     hf_dict = gaussian_fchk(data_path)
 
     nelec = 4
-    H = hf_dict["H"][0]
-    G = hf_dict["G"][0]
+    one_int = hf_dict["one_int"][0]
+    two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(H, G, nelec, is_chemist_notation=False)
+    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
     test = TestCIWavefunction()
-    test.nspatial = H.shape[0]
+    test.nspatial = one_int.shape[0]
     test.civec = civec
     test.sd_coeffs = sd_coeffs
     density1, density2 = test.get_density_matrix(val_threshold=0)
@@ -288,14 +288,14 @@ def test_get_density_matrix_lih_sto6g():
     # Reconstruct FCI energy
     # physicist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='physicist')
-    print((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,ijkl', G, density2)))
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,ijkl', G, density2)) - (energy)) < 1e-8
+    print((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,ijkl', two_int, density2)))
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,ijkl', two_int, density2)) - (energy)) < 1e-8
     # chemist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='chemist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,iklj', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,iklj', two_int, density2)) - (energy)) < 1e-8
 
 
 @attr('slow')
@@ -320,15 +320,15 @@ def test_get_density_matrix_lih_631g():
     hf_dict = gaussian_fchk(data_path)
 
     nelec = 4
-    H = hf_dict["H"][0]
-    G = hf_dict["G"][0]
+    one_int = hf_dict["one_int"][0]
+    two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(H, G, nelec, is_chemist_notation=False)
+    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
     test = TestCIWavefunction()
-    test.nspatial = H.shape[0]
+    test.nspatial = one_int.shape[0]
     test.civec = civec
     test.sd_coeffs = sd_coeffs
     density1, density2 = test.get_density_matrix(val_threshold=0)
@@ -341,10 +341,10 @@ def test_get_density_matrix_lih_631g():
     # physicist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='physicist')
     # density1, density2 = fci.get_density_matrix(val_threshold=0, notation='physicist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,ijkl', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,ijkl', two_int, density2)) - (energy)) < 1e-8
     # chemist notation
     density1, density2 = test.get_density_matrix(val_threshold=0, notation='chemist')
     # density1, density2 = fci.get_density_matrix(val_threshold=0, notation='chemist')
-    assert abs((np.einsum('ij,ij', H, density1) +
-                0.5*np.einsum('ijkl,iklj', G, density2)) - (energy)) < 1e-8
+    assert abs((np.einsum('ij,ij', one_int, density1) +
+                0.5*np.einsum('ijkl,iklj', two_int, density2)) - (energy)) < 1e-8

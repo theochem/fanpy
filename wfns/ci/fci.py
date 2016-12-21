@@ -15,18 +15,10 @@ class FCI(CIWavefunction):
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K)
+    one_int : np.ndarray(K,K)
         One electron integrals for the spatial orbitals
-    Ha : np.ndarray(K,K)
-        One electron integrals for the alpha spin orbitals
-    Hb : np.ndarray(K,K)
-        One electron integrals for the beta spin orbitals
-    G : np.ndarray(K,K,K,K)
+    two_int : np.ndarray(K,K,K,K)
         Two electron integrals for the spatial orbitals
-    Ga : np.ndarray(K,K,K,K)
-        Two electron integrals for the alpha spin orbitals
-    Gb : np.ndarray(K,K,K,K)
-        Two electron integrals for the beta spin orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
     nspatial : int
@@ -89,4 +81,4 @@ class FCI(CIWavefunction):
         -------
         matrix : np.ndarray(K, K)
         """
-        return ci_matrix(self.H, self.G, self.civec, self.dtype, self.orbtype)
+        return ci_matrix(self.one_int, self.two_int, self.civec, self.dtype, self.orbtype)

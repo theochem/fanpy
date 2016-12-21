@@ -21,10 +21,10 @@ def test_cisd_h2():
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
 
     nelec = 2
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
-    cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=0)
+    cisd = CISD(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = cisd.compute_ci_matrix()
     # compare HF numbers
     assert abs(ci_matrix[0, 0] + cisd.nuc_nuc - (-1.131269841877) < 1e-8)
@@ -51,11 +51,11 @@ def test_cisd_lih():
     hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
 
     nelec = 4
-    H = hf_dict["H"]
-    G = hf_dict["G"]
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
 
-    cisd = CISD(nelec=nelec, H=H, G=G, nuc_nuc=nuc_nuc, spin=None)
+    cisd = CISD(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc, spin=None)
     ci_matrix = cisd.compute_ci_matrix()
 
     # compare HF numbers
