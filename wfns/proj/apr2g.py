@@ -282,7 +282,7 @@ class APr2G(ProjectionWavefunction):
         -------
         float
         """
-        return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
+        return sum(doci_hamiltonian(self, sd, self.orbtype, deriv=deriv))
 
     # FIXME: remove
     def normalize(self):

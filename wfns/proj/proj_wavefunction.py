@@ -29,7 +29,7 @@ class ProjectionWavefunction(Wavefunction):
         Nuclear nuclear repulsion value
     nelec : int
         Number of electrons
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
     params : np.ndarray(K)
         Guess for the parameters
@@ -63,13 +63,13 @@ class ProjectionWavefunction(Wavefunction):
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orb_type=None)
+    assign_integrals(H, G, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
