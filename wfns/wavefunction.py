@@ -7,9 +7,9 @@ import numpy as np
 
 
 class Wavefunction(object):
-    """ Wavefunction (abstract) class
+    """ Wavefunction class
 
-    Contains the necessary information to projectively solve the wavefunction
+    Contains the necessary information to solve the wavefunction
 
     Attributes
     ----------
