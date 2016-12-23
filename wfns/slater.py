@@ -44,7 +44,7 @@ interleave(block_sd, nspatial)
     Converts Slater determinants from block form to shuffled form
 deinterleave(shuffled_sd, nspatial)
     Converts Slater determinants from shuffled form to block form
-get_spin
+get_spin(sd, nspatial)
     Returns the spin of the given slater determinant
 find_num_trans(jumbled_set, ordered_set=None, is_creator=True)
     Returns the number of adjacent swaps necessary to convert a set of indices into increasing order

@@ -195,7 +195,7 @@ def ci_matrix(one_int, two_int, civec, dtype, orbtype):
     matrix : np.ndarray(K, K)
     """
     nci = len(civec)
-    ci_matrix = np.zeros((nci, ) * 2, dtype=dtype)
+    matrix = np.zeros((nci, ) * 2, dtype=dtype)
 
     # Loop only over upper triangular
     for nsd0, sd0 in enumerate(civec):
@@ -218,35 +218,35 @@ def ci_matrix(one_int, two_int, civec, dtype, orbtype):
             # two sd's are the same
             if diff_order == 0:
                 for count, i in enumerate(shared_indices):
-                    ci_matrix[nsd0, nsd1] += get_one_int_value(one_int, i, i,
-                                                               orbtype=orbtype) * sign
+                    matrix[nsd0, nsd1] += get_one_int_value(one_int, i, i,
+                                                            orbtype=orbtype) * sign
                     for j in shared_indices[count + 1:]:
-                        ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, i, j,
-                                                                   orbtype=orbtype) * sign
-                        ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, i,
-                                                                   orbtype=orbtype) * sign
+                        matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, i, j,
+                                                                orbtype=orbtype) * sign
+                        matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, i,
+                                                                orbtype=orbtype) * sign
 
             # two sd's are different by single excitation
             elif diff_order == 1:
                 i, = diff_sd0
                 a, = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_one_int_value(one_int, i, a, orbtype=orbtype) * sign
+                matrix[nsd0, nsd1] += get_one_int_value(one_int, i, a, orbtype=orbtype) * sign
                 for j in shared_indices:
-                    ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, j,
-                                                               orbtype=orbtype) * sign
-                    ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, a,
-                                                               orbtype=orbtype) * sign
+                    matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, j,
+                                                            orbtype=orbtype) * sign
+                    matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, j, a,
+                                                            orbtype=orbtype) * sign
 
             # two sd's are different by double excitation
             elif diff_order == 2:
                 i, j = diff_sd0
                 a, b = diff_sd1
-                ci_matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, b,
-                                                           orbtype=orbtype) * sign
-                ci_matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, b, a,
-                                                           orbtype=orbtype) * sign
+                matrix[nsd0, nsd1] += get_two_int_value(two_int, i, j, a, b,
+                                                        orbtype=orbtype) * sign
+                matrix[nsd0, nsd1] -= get_two_int_value(two_int, i, j, b, a,
+                                                        orbtype=orbtype) * sign
 
     # Make it Hermitian (symmetric)
-    ci_matrix[:, :] = np.triu(ci_matrix) + np.triu(ci_matrix, 1).T
+    matrix[:, :] = np.triu(matrix) + np.triu(matrix, 1).T
 
-    return ci_matrix
+    return matrix

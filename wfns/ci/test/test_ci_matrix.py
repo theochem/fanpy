@@ -198,3 +198,5 @@ def test_ci_matrix_enum_break():
     # first element because \braket{1 | h_{11} | 1}
     # second and third element because they break particle number symmetry
     # last element because \braket{1 2 | h_{11} + h_{22} + g_{1212} - g_{1221} | 1 2}
+
+# FIXME: add ci_matrix tests with unrestricted and generalized orbitals
