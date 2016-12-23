@@ -46,31 +46,22 @@ class CIPairs(DOCI):
 
     Methods
     -------
-    compute_civec
+    generate_civec
         Generates a list of Slater determinants
     compute_ci_matrix
         Generates the Hamiltonian matrix of the Slater determinants
     """
-    @property
-    def _nci(self):
-        """ Total number of configurations
-        """
-        num_singles = binomial(self.npair, 1) * binomial(self.nspatial - self.npair, 1)
-        return 1 + num_singles
+    def generate_civec(self):
+        """ Generates Slater determinants for CI-Pairs wavefunction
 
-    def compute_civec(self):
-        """ Generates Slater determinants
-
-        Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-        state, next are the first excitations from exc_orders, then second excitation from
-        exc_orders, etc
+        All seniority zero Slater determinants with only electron pair excitations from ground state
 
         Returns
         -------
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, exc_orders=[2], seniority=0)
+        return sd_list(self.nelec, self.nspatial, exc_orders=[2], seniority=0)
 
     def to_ap1rog(self, exc_lvl=0):
         """ Returns geminal matrix given then converged CIPairs wavefunction coefficients
@@ -86,9 +77,22 @@ class CIPairs(DOCI):
         -------
         gem_coeffs : np.ndarray(self.npair, self.nspatial-self.npair)
             AP1roG geminal coefficients
+
+        Raises
+        ------
+        TypeError
+            If excitation level is not an integer
+        ValueError
+            If excitation level is negative
         """
+        if not isinstance(exc_lvl, int):
+            raise TypeError('Excitation level must be an integer')
+        if exc_lvl < 0:
+            raise ValueError('Excitation level cannot be negative')
+
         # dictionary of slater determinant to coefficient
-        sd_coeffs = self.dict_sd_coeff(exc_lvl=exc_lvl)
+        dict_sd_coeff = {sd: coeff for sd, coeff in zip(self.civec,
+                                                        self.sd_coeffs[:, exc_lvl].flat)}
         # ground state SD
         ground = slater.ground(nelec, 2 * nspatial)
         # fill empty geminal coefficient
@@ -100,5 +104,5 @@ class CIPairs(DOCI):
                 # excite slater determinant
                 sd_exc = slater.excite(ground, i, a)
                 # set geminal coefficient
-                gem_coeffs[i, a] = sd_coeffs[sd_exc]
+                gem_coeffs[i, a] = dict_sd_coeff[sd_exc]
         return gem_coeffs

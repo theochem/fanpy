@@ -19,4 +19,4 @@ def test_cipairs_wavefunction():
     print(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc)
     assert abs(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc - (-1.131269841877) < 1e-8)
     solve(cipairs)
-    print(cipairs.compute_energy())
+    print(cipairs.get_energy())

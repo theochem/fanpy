@@ -46,33 +46,22 @@ class CISD(CIWavefunction):
 
     Methods
     -------
-    compute_civec
+    generate_civec
         Generates a list of Slater determinants
     compute_ci_matrix
         Generates the Hamiltonian matrix of the Slater determinants
     """
-    @property
-    def _nci(self):
-        """ Total number of configurations
-        """
-        num_singles = binomial(self.nelec, 1) * binomial(self.nspin - self.nelec, 1)
-        num_doubles = binomial(self.nelec, 2) * binomial(self.nspin - self.nelec, 2)
-        return 1 + num_singles + num_doubles
+    def generate_civec(self):
+        """ Generates Slater determinants for CISD
 
-    def compute_civec(self):
-        """ Generates Slater determinants
-
-        Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-        state, next are the first excitations from exc_orders, then second excitation from
-        exc_orders, etc
+        All first and second order excitation of ground state Slater determinant
 
         Returns
         -------
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, exc_orders=[1, 2],
-                       spin=self.spin)
+        return sd_list(self.nelec, self.nspatial, exc_orders=[1, 2], spin=self.spin)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis

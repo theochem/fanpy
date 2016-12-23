@@ -46,17 +46,11 @@ class DOCI(CIWavefunction):
 
     Methods
     -------
-    compute_civec
+    generate_civec
         Generates a list of Slater determinants
     compute_ci_matrix
         Generates the Hamiltonian matrix of the Slater determinants
     """
-    @property
-    def _nci(self):
-        """ Total number of configurations
-        """
-        return binomial(self.nspatial, self.npair)
-
     def assign_spin(self, spin=None):
         """ Sets the spin of the projection determinants
 
@@ -77,19 +71,17 @@ class DOCI(CIWavefunction):
             raise ValueError('DOCI wavefunction can only be singlet')
         self.spin = spin
 
-    def compute_civec(self):
-        """ Generates Slater determinants
+    def generate_civec(self):
+        """ Generates Slater determinants of DOCI
 
-        Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-        state, next are the first excitations from exc_orders, then second excitation from
-        exc_orders, etc
+        All seniority zero Slater determinants
 
         Returns
         -------
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, seniority=0)
+        return sd_list(self.nelec, self.nspatial, seniority=0)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis
