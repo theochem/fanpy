@@ -1,10 +1,15 @@
+""" Parent class of CI wavefunctions
+
+This module describes wavefunction that are expressed as linear combination of Slater determinants.
+"""
 from __future__ import absolute_import, division, print_function
-from abc import ABCMeta, abstractproperty, abstractmethod
-
+from abc import ABCMeta, abstractmethod
 import numpy as np
-
+from scipy.optimize import least_squares
 from ..wavefunction import Wavefunction
 from .. import slater
+from .density import density_matrix
+# FIXME: inherit docstring
 
 
 class CIWavefunction(Wavefunction):
@@ -14,154 +19,132 @@ class CIWavefunction(Wavefunction):
 
     Attributes
     ----------
-    dtype : {np.float64, np.complex128}
-        Numpy data type
-    one_int : np.ndarray(K,K)
-        One electron integrals for the spatial orbitals
-    two_int : np.ndarray(K,K,K,K)
-        Two electron integrals for the spatial orbitals
-    nuc_nuc : float
-        Nuclear nuclear repulsion value
-    nspatial : int
-        Number of spatial orbitals
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
-    npair : int
-        Number of electron pairs
-        Assumes that the number of electrons is even
-    nparticle : int
-        Number of quasiparticles (electrons)
-    ngeminal : int
-        Number of geminals
-    nci : int
-        Number of (user-specified) Slater determinants
+    one_int : 1- or 2-tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        1-tuple for spatial (restricted) and generalized orbitals
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
+    two_int : 1- or 3-tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        In physicist's notation
+        1-tuple for spatial (restricted) and generalized orbitals
+        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
+        beta-beta-beta-beta components)
+    dtype : {np.float64, np.complex128}
+        Numpy data type
+    nuc_nuc : float
+        Nuclear-nuclear repulsion energy
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
+        Type of the orbital used in obtaining the one-electron and two-electron integrals
+    dict_exc_index : dict from int to int
+        Dictionary from the excitation order to the column index of the coefficient matrix
+    spin : float
+        Total spin of the wavefunction
+        Default is no spin (all spins possible)
+        0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
+        Positive spin means that there are more alpha orbitals than beta orbitals
+        Negative spin means that there are more beta orbitals than alpha orbitals
+    civec : tuple of int
+        List of Slater determinants used to construct the CI wavefunction
 
-    Private
-    -------
-    _energy : float
-        Electronic energy
+    Properties
+    ----------
+    nspin : int
+        Number of spin orbitals (alpha and beta)
+    nspatial : int
+        Number of spatial orbitals
 
-    Abstract Properties
-    -------------------
-    _nci : int
-        Total number of (default) Slater determinants
+    Method
+    ------
+    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
+        Initializes wavefunction
+    assign_nelec(self, nelec)
+        Assigns the number of electrons
+    assign_dtype(self, dtype)
+        Assigns the data type of parameters used to define the wavefunction
+    assign_nuc_nuc(self, nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion
+    assign_integrals(self, one_int, two_int, orbtype=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+    assign_excs(self, excs=None)
+        Assigns excitations to include in the calculation
+    assign_spin(self, spin=None)
+        Assigns the spin of the wavefunction
+    assign_civec(self, civec=None)
+        Assigns the tuple of Slater determinants used in the CI wavefunction
+    get_energy(self, include_nuc=True, exc_lvl=0)
+        Gets the energy of the CI wavefunction
+    compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
+        Constructs the one and two electron density matrices for the given excitation level
+    to_proj(self, Other, exc_lvl=0)
+        Try to convert the CI wavefunction into the appropriate Projected Wavefunction
 
     Abstract Methods
     ----------------
-    compute_civec
+    generate_civec
         Generates a list of Slater determinants
     compute_ci_matrix
         Generates the Hamiltonian matrix of the Slater determinants
     """
-    # FIXME: turn C into property and have a better attribute name
     __metaclass__ = ABCMeta
 
-    #
-    # Default attribute values
-    #
-    @abstractproperty
-    def _nci(self):
-        """ Default number of configurations
-        """
-        pass
-
-    def dict_sd_coeff(self, exc_lvl=0):
-        """ Dictionary of the coefficient
+    def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None,
+                 excs=None, civec=None, spin=None):
+        """ Initializes a wavefunction
 
         Parameters
         ----------
-        exc_lvl : int
-            Excitation level of the wavefunction
-            0 is the ground state wavefunction
-            1 is the first excited wavefunction
+        nelec : int
+            Number of electrons
 
-        Returns
-        -------
-        Dictionary of SD to coefficient
+        one_int : np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K)
+            One electron integrals
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unretricted spin orbitals, 2-tuple of np.ndarray
+
+        two_int : np.ndarray(K,K,K,K), 1- or 3-tuple np.ndarray(K,K,K,K)
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unrestricted orbitals, 3-tuple of np.ndarray
+
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type
+            Default is `np.float64`
+
+        nuc_nuc : {float, None}
+            Nuclear nuclear repulsion value
+            Default is `0.0`
+
+        orbtype : {'restricted', 'unrestricted', 'generalized', None}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is `'restricted'`
+
+        excs : list/tuple of int
+            Tuple of excitation orders that are relevant to the wavefunction
+
+        civec : iterable of int
+            List of Slater determinants used to construct the CI wavefunction
+
+        spin : float
+            Total spin of the wavefunction
+            Default is no spin (all spins possible)
+            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
+            Positive spin means that there are more alpha orbitals than beta orbitals
+            Negative spin means that there are more beta orbitals than alpha orbitals
         """
-        if not isinstance(exc_lvl, int):
-            raise TypeError('Excitation level must be an integer')
-        if exc_lvl < 0:
-            raise ValueError('Excitation level cannot be negative')
-        return {sd: coeff for sd, coeff in zip(self.civec, self.sd_coeffs[:, exc_lvl].flat)}
-
-    #
-    # Special methods
-    #
-
-    def __init__(
-            self,
-            # Mandatory arguments
-            nelec=None,
-            one_int=None,
-            two_int=None,
-            # Arguments handled by base Wavefunction class
-            dtype=None,
-            nuc_nuc=None,
-            # Arguments handled by FullCI class
-            nci=None,
-            excs=None,
-            civec=None,
-            spin=None
-    ):
-
-        super(CIWavefunction, self).__init__(
-            nelec=nelec,
-            one_int=one_int,
-            two_int=two_int,
-            dtype=dtype,
-            nuc_nuc=nuc_nuc,
-        )
-        self.assign_nci(nci=nci)
-        self.assign_excs(excs=excs)
+        super(CIWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype, nuc_nuc=nuc_nuc,
+                                             orbtype=orbtype)
         self.assign_spin(spin=spin)
         self.assign_civec(civec=civec)
-        self.sd_coeffs = np.zeros((self.nci, self.excs.size))
-        self._energy = np.zeros(self.excs.size)
+        self.assign_excs(excs=excs)
+        self.sd_coeffs = np.zeros((len(self.civec), len(self.dict_exc_index)))
+        self.energies = np.zeros(len(self.dict_exc_index))
 
-    #
-    # Assignment methods
-    #
-    def assign_nci(self, nci=None):
-        """ Sets number of projection determinants
-
-        Parameters
-        ----------
-        nci : int
-            Number of configuratons
-
-        Note
-        ----
-        nci is also modified in assign_civec
-        """
-        #FIXME: cyclic dependence on civec
-        if nci is None:
-            nci = self._nci
-        if not isinstance(nci, (int, long)):
-            raise TypeError('Number of determinants must be an integer')
-        self.nci = nci
-
-    def assign_excs(self, excs=None):
-        """ Sets orders of excitations to include during calculation
-
-        Parameters
-        ----------
-        excs : list of ints
-            Orders of excitations to include
-        """
-        if excs is None:
-            excs = [0]
-        if not isinstance(excs, list):
-            raise TypeError('Orders of excitations must be given as a list')
-        for i in excs:
-            if not isinstance(i, int):
-                raise TypeError('Orders of excitations must be given as an inteer')
-        self.excs = np.array(excs)
-
+    ######################
+    # Assignment methods #
+    ######################
     def assign_spin(self, spin=None):
-        """ Sets the spin of the projection determinants
+        """ Sets the spin of the wavefunction
 
         Parameters
         ----------
@@ -171,10 +154,16 @@ class CIWavefunction(Wavefunction):
             0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
             Positive spin means that there are more alpha orbitals than beta orbitals
             Negative spin means that there are more beta orbitals than alpha orbitals
+
+        Raises
+        ------
+        TypeError
+            If the spin is not an integer, float, or None
         """
-        if spin is not None and not isinstance(spin, (int, float)):
+        if not isinstance(spin, (int, float, type(None))):
             raise TypeError('Invalid spin of the wavefunction')
         self.spin = spin
+
 
     def assign_civec(self, civec=None):
         """ Sets the Slater determinants used in the wavefunction
@@ -182,53 +171,71 @@ class CIWavefunction(Wavefunction):
         Parameters
         ----------
         civec : iterable of int
-            List of Slater determinants (in the form of integers that describe
-            the occupation as a bitstring)
+            List of Slater determinants (in the form of integers that describe the occupation as a
+            bitstring)
+
+        Raises
+        ------
+        TypeError
+            If civec is not iterable
+            If a Slater determinant cannot be turned into the internal form
+        ValueError
+            If Slater determinant does not have the right number of electrons
+            If there are no Slater determinants that has the given spin
         """
-        #FIXME: cyclic dependence on nci
         if civec is None:
-            civec = self.compute_civec()
-        if not isinstance(civec, (list, tuple)):
-            raise TypeError("civec must be a list or a tuple")
-        # FIXME: need to see if civec satisfies spin
-        self.civec = tuple(civec)
-        # NOTE: nci is modified here!!!
-        if len(civec) != self.nci:
-            self.nci = len(civec)
+            civec = self.generate_civec()
 
-    #
-    # Computation methods
-    #
-    @abstractmethod
-    def compute_civec(self):
-        """ Generates Slater determinants
+        if not hasattr(civec, '__iter__'):
+            raise TypeError("Slater determinants must be given as an iterable")
 
-        Number of Slater determinants generated is determined strictly by the size of the
-        projection space (self.nci). First row corresponds to the ground state SD, then
-        the next few rows are the first excited, then the second excited, etc
+        filtered_sds = []
+        for slater_d in civec:
+            slater_d = slater.internal_sd(slater_d)
+            if slater.total_occ(slater_d) != self.nelec:
+                raise ValueError('Slater determinant, {0}, does not have the right number of'
+                                 ' electrons'.format(bin(slater_d)))
+            if self.spin is not None and slater.get_spin(slater_d, self.nspatial) != self.spin:
+                continue
+            filtered_sds.append(slater_d)
 
-        Returns
-        -------
-        civec : list of ints
-            Integer that describes the occupation of a Slater determinant as a bitstring
+        # check if empty
+        if len(filtered_sds) == 0:
+            raise ValueError('Could not find any Slater determinant that has spin, {0}'
+                             ''.format(self.spin))
+        self.civec = tuple(filtered_sds)
 
+
+    def assign_excs(self, excs=None):
+        """ Sets orders of excitations to include during calculation
+
+        Parameters
+        ----------
+        excs : list/tuple of ints
+            Orders of excitations to calculate
+            By default, only the ground state (0th excitation) is calculated
+
+        Raises
+        ------
+        TypeError
+            If excs is not given as a list/tuple of integers
+        ValueError
+            If any excitation order is less than 0 or greater than the number of Slater determinants
         """
-        pass
+        if excs is None:
+            excs = [0]
+        if not isinstance(excs, (list, tuple)) or any(not isinstance(i, int) for i in excs):
+            raise TypeError('Orders of excitations must be given as a list or tuple of integers')
+        if not all(0 <= exc < len(self.civec) for exc in excs):
+            raise ValueError('All excitation orders must be greater than or equal to 0 and less'
+                             ' the number of Slater determinants, {0}'.format(len(self.civec)))
+        self.dict_exc_index = {exc:i for i, exc in enumerate(excs)}
 
-    @abstractmethod
-    def compute_ci_matrix(self):
-        """ Returns Hamiltonian matrix in the Slater determinant basis
 
-        ..math::
-            H_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
-
-        Returns
-        -------
-        matrix : np.ndarray(K, K)
-        """
-        pass
-
-    def compute_energy(self, include_nuc=True, exc_lvl=0):
+    ##########
+    # Getter #
+    ##########
+    def get_energy(self, include_nuc=True, exc_lvl=0):
         """ Returns the energy of the system
 
         Parameters
@@ -238,22 +245,73 @@ class CIWavefunction(Wavefunction):
         exc_lvl : int
             Excitation level of the wavefunction
             0 is the ground state wavefunction
-            1 is the first excited wavefunction
+            `n`is the `n`th order excitation
 
         Returns
         -------
         energy : float
             Total energy if include_nuc is True
             Electronic energy if include_nuc is False
-        """
-        if not isinstance(exc_lvl, int):
-            raise TypeError('Excitation level must be an integer')
-        if exc_lvl < 0:
-            raise ValueError('Excitation level cannot be negative')
-        nuc_nuc = self.nuc_nuc if include_nuc else 0.0
-        return self._energy[exc_lvl] + nuc_nuc
 
-    def to_other(self, Other, exc_lvl=0):
+        Raises
+        ------
+        ValueError
+            If the excitation level was not included in the initialization (or in the assignment of
+            self.dict_exc_index)
+        """
+        if exc_lvl not in self.dict_exc_index:
+            raise ValueError('Unsupported excitation level, {0}'.format(exc_lvl))
+        nuc_nuc = self.nuc_nuc if include_nuc else 0.0
+        return self.energies[self.dict_exc_index[exc_lvl]] + nuc_nuc
+
+
+    ##################
+    # Density Matrix #
+    ##################
+    def compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0):
+        """ Returns the first and second order density matrices
+
+        Second order density matrix uses the Physicist's notation:
+        ..math::
+            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+        Chemist's notation is also implemented
+        ..math::
+            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+
+        Paramaters
+        ----------
+        exc_lvl : int
+            Excitation level of the wavefunction
+            0 is the ground state wavefunction
+            `n`is the `n`th order excitation
+        is_chemist_notation : bool
+            True if chemist's notation
+            False if physicist's notation
+            Default is Physicist's notation
+        val_threshold : float
+            Threshold for truncating the density matrice entries
+            Skips all of the Slater determinants whose maximal sum of contributions to density
+            matrices is less than threshold value
+
+        Returns
+        -------
+        one_densities : tuple of np.ndarray
+            One electron density matrix
+            For spatial and generalized orbitals, 1-tuple of np.ndarray
+            For unretricted spin orbitals, 2-tuple of np.ndarray
+        two_densities : tuple of np.ndarray
+            Two electron density matrix
+            For spatial and generalized orbitals, 1-tuple of np.ndarray
+            For unrestricted orbitals, 3-tuple of np.ndarray
+        """
+        return density_matrix(self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat, self.civec,
+                              self.nspatial, is_chemist_notation=is_chemist_notation,
+                              val_threshold=val_threshold, orbtype=self.orbtype)
+
+    ####################################################
+    # Methods for Converting A Wavefunction To Another #
+    ####################################################
+    def to_proj(self, Other, exc_lvl=0):
         """ Converts CIWavefunction to ProjWavefunction as best as possible
 
         Parameters
@@ -263,23 +321,35 @@ class CIWavefunction(Wavefunction):
         exc_lvl : int
             Excitation level of the wavefunction
             0 is the ground state wavefunction
-            1 is the first excited wavefunction
+            `n`is the `n`th order excitation
 
         Returns
         -------
         new_instance : Other instance
             Instance of the specified wavefunction with parameters/coefficients
             that tries to resemble self
+
+        Raises
+        ------
+        TypeError
+            If excitation level is not an integer
+        ValueError
+            If excitation level is negative
         """
-        new_instance = Other(nelec=self.nelec,
-                             one_int=self.one_int,
-                             two_int=self.two_int,
-                             dtype=self.dtype,
-                             nuc_nuc=self.nuc_nuc,
-                             orbtype=self.orbtype,
-                             nproj=None,
-                             x=None,)
-        sd_coeff = dict_sd_coeff(self, exc_lvl=0)
+        if not isinstance(exc_lvl, int):
+            raise TypeError('Excitation level must be an integer')
+        if exc_lvl < 0:
+            raise ValueError('Excitation level cannot be negative')
+
+        dict_sd_coeff = {sd: coeff for sd, coeff in zip(self.civec,
+                            self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat)}
+
+        # initialize new wavefunction
+        new_instance = Other(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
+                             nuc_nuc=self.nuc_nuc, orbtype=self.orbtype)
+        new_instance.params[-1] = self.get_energy(exc_lvl=exc_lvl)
+
+
         def objective(x_vec):
             """ Function to minimize
 
@@ -293,160 +363,46 @@ class CIWavefunction(Wavefunction):
 
             Returns
             -------
-            val : np.ndarray(K,)
+            obj : np.ndarray(K,)
                 One dimensional numpy array
             """
-            val = np.empty(self.nci, dtype=self.dtype)
+            new_instance.params[:] = x_vec
+            obj = np.empty(len(self.civec), dtype=self.dtype)
             for i, sd in enumerate(self.civec):
-                val[i] = new_instance.compute_overlap(sd) - sd_coeff[sd]
-            return val
-        result = least_squares(self.objective, new_instance.x)
-        new_instance.assign_civec(result.x)
+                obj[i] = new_instance.compute_overlap(sd) - dict_sd_coeff[sd]
+            return obj
+
+        #FIXME: Location
+        result = least_squares(objective, new_instance.x)
+        new_instance.assign_params(result.x)
         return new_instance
 
 
-    def get_density_matrix(self, notation='physicist', val_threshold=1e-4):
-        """ Returns the first and second order density matrices
+    ####################
+    # Abstract methods #
+    ####################
+    @abstractmethod
+    def compute_ci_matrix(self):
+        """ Returns CI Hamiltonian matrix in the Slater determinant basis
 
-        Second order density matrix uses the Physicist's notation:
         ..math::
-            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-        Chemist's notation is also implemented
-        ..math::
-            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-        but is commented out
-
-        Paramaters
-        ----------
-        val_threshold : float
-            If the term has weight that is less than this threshold, it is discarded
-        notation : 'physicist', 'chemist'
-            Flag for physicist or chemist notation
-            Default is Physicist's notation
+            H_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
 
         Returns
         -------
-        one_density : np.ndarray(self.nspatial, self.nspatial)
-            One electron density matrix
-        two_density : np.ndarray(self.nspatial, self.nspatial, self.nspatial, self.nspatial)
-            Two electron density matrix
-
-        NOTE
-        ----
-        I'm not 100% on the signs of the num. I feel like there is a sign change
-        missing in the singlet excitation two electron density part. e.g. if I have
-        ..math::
-            g_{ijkj} = G_{ijkj} a_i a_j a_i^\dagger a_j^\dagger a_k a_j a_j^\dagger a_k
-
-        there should be an extra negative sign due to changing position of
-        :math:`a_j` and :math:`a_i^\dagger`
+        ci_matrix : np.ndarray(K, K)
         """
-        ns = self.nspatial
-        assert notation in ['physicist', 'chemist']
+        pass
 
-        temp_sorting = sorted(zip(self.sd_coeffs, self.civec), key=lambda x: abs(x[0]), reverse=True)
-        sorted_x, sorted_sd = zip(*temp_sorting)
 
-        one_density = np.zeros([ns]*2)
-        two_density = np.zeros([ns]*4)
-        for a, sd1 in enumerate(sorted_sd):
-            for b, sd2 in enumerate(sorted_sd[a:]):
-                b += a
-                num = sorted_x[a] * sorted_x[b]
-                # orbitals that are not shared by the two determinants
-                left_diff, right_diff = slater.diff(sd1, sd2)
-                shared_indices = slater.occ_indices(slater.shared(sd1, sd2))
+    @abstractmethod
+    def generate_civec(self):
+        """ Generates Slater determinants
 
-                # moving all the shared orbitals toward one another (in the middle)
-                num_transpositions_0 = sum(len([j for j in shared_indices if j<i]) for i in left_diff)
-                num_transpositions_1 = sum(len([j for j in shared_indices if j<i]) for i in right_diff)
-                num_transpositions = num_transpositions_0 + num_transpositions_1
-                sign = (-1)**num_transpositions
-                num *= sign
+        Returns
+        -------
+        civec : list of ints
+            Integer that describes the occupation of a Slater determinant as a bitstring
 
-                if len(right_diff) != len(left_diff) or len(left_diff) > 2:
-                    continue
-                # if they're the same
-                elif len(left_diff) == 0:
-                    for ind, i in enumerate(shared_indices):
-                        I = slater.spatial_index(i, ns)
-                        one_density[I, I] += num
-                        for j in shared_indices[ind+1:]:
-                            J = slater.spatial_index(j, ns)
-                            if notation == 'physicist':
-                                two_density[I, J, I, J] += num
-                                two_density[J, I, J, I] += num
-                            elif notation == 'chemist':
-                                two_density[I, I, J, J] += num
-                                two_density[J, J, I, I] += num
-                            if slater.is_alpha(i, ns) == slater.is_alpha(j, ns):
-                                if notation == 'physicist':
-                                    two_density[I, J, J, I] -= num
-                                    two_density[J, I, I, J] -= num
-                                elif notation == 'chemist':
-                                    two_density[I, J, I, J] -= num
-                                    two_density[J, I, J, I] -= num
-                # if single excitation
-                elif len(left_diff) == 1:
-                    i = left_diff[0]
-                    k = right_diff[0]
-                    I = slater.spatial_index(i, ns)
-                    K = slater.spatial_index(k, ns)
-                    if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
-                        one_density[I, K] += num
-                        one_density[K, I] += num
-                    for j in shared_indices:
-                        J = slater.spatial_index(j, ns)
-                        if slater.is_alpha(i, ns) == slater.is_alpha(k, ns):
-                            if notation == 'physicist':
-                                two_density[I, J, K, J] += num
-                                two_density[J, I, J, K] += num
-                                two_density[K, J, I, J] += num
-                                two_density[J, K, J, I] += num
-                            elif notation == 'chemist':
-                                two_density[I, K, J, J] += num
-                                two_density[J, J, K, I] += num
-                                two_density[K, I, J, J] += num
-                                two_density[J, J, I, K] += num
-                        if slater.is_alpha(i, ns) == slater.is_alpha(j, ns) and slater.is_alpha(j, ns) == slater.is_alpha(k, ns):
-                            if notation == 'physicist':
-                                two_density[I, J, J, K] -= num
-                                two_density[J, I, K, J] -= num
-                                two_density[K, J, J, I] -= num
-                                two_density[J, K, I, J] -= num
-                            elif notation == 'chemist':
-                                two_density[I, J, K, J] -= num
-                                two_density[J, K, J, I] -= num
-                                two_density[K, J, I, J] -= num
-                                two_density[J, I, J, K] -= num
-                # if double excitation
-                elif len(left_diff) == 2:
-                    i, j = left_diff
-                    k, l = right_diff
-                    I = slater.spatial_index(i, ns)
-                    J = slater.spatial_index(j, ns)
-                    K = slater.spatial_index(k, ns)
-                    L = slater.spatial_index(l, ns)
-                    if slater.is_alpha(i, ns) == slater.is_alpha(k, ns) and slater.is_alpha(j, ns) == slater.is_alpha(l, ns):
-                        if notation == 'physicist':
-                            two_density[I, J, K, L] += num
-                            two_density[J, I, L, K] += num
-                            two_density[K, L, I, J] += num
-                            two_density[L, K, J, I] += num
-                        elif notation == 'chemist':
-                            two_density[I, K, L, J] += num
-                            two_density[J, L, K, I] += num
-                            two_density[K, I, J, L] += num
-                            two_density[L, J, I, K] += num
-                    if slater.is_alpha(i, ns) == slater.is_alpha(l, ns) and slater.is_alpha(j, ns) == slater.is_alpha(k, ns):
-                        if notation == 'physicist':
-                            two_density[I, J, L, K] -= num
-                            two_density[J, I, K, L] -= num
-                            two_density[K, L, J, I] -= num
-                            two_density[L, K, I, J] -= num
-                        elif notation == 'chemist':
-                            two_density[I, L, K, J] -= num
-                            two_density[J, K, L, I] -= num
-                            two_density[K, J, I, L] -= num
-                            two_density[L, I, J, K] -= num
-        return one_density, two_density
+        """
+        pass

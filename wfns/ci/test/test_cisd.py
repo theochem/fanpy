@@ -33,7 +33,7 @@ def test_cisd_h2():
     # solve
     solve(cisd)
     # compare with number from Gaussian
-    assert abs(cisd.compute_energy() - (-1.1651486697)) < 1e-7
+    assert abs(cisd.get_energy() - (-1.1651486697)) < 1e-7
 
 def test_cisd_lih():
     """ Tests CISD wavefunction using LiH (6-31G)
@@ -66,5 +66,5 @@ def test_cisd_lih():
     solve(cisd)
 
     # compare with number from Gaussian
-    print(cisd.compute_energy(), (-7.99826182))
-    assert abs(cisd.compute_energy() - (-7.99826182)) < 1e-7
+    print(cisd.get_energy(), (-7.99826182))
+    assert abs(cisd.get_energy() - (-7.99826182)) < 1e-7

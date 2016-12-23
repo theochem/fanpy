@@ -39,6 +39,6 @@ def test_doci_h2():
 
     doci = DOCI(nelec=nelec, one_int=(one_int,), two_int=(two_int,), nuc_nuc=nuc_nuc)
     solve(doci)
-    assert abs(doci.compute_energy() - (-1.884948574812363)) < 1e-7
+    assert abs(doci.get_energy() - (-1.884948574812363)) < 1e-7
 
 # FIXME: need other tests

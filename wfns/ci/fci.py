@@ -46,30 +46,22 @@ class FCI(CIWavefunction):
 
     Methods
     -------
-    compute_civec
+    generate_civec
         Generates a list of Slater determinants
     compute_ci_matrix
         Generates the Hamiltonian matrix of the Slater determinants
     """
-    @property
-    def _nci(self):
-        """ Total number of configurations
-        """
-        return binomial(self.nspin, self.nelec)
+    def generate_civec(self):
+        """ Generates Slater determinants for FCI
 
-    def compute_civec(self):
-        """ Generates Slater determinants
-
-        Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-        state, next are the first excitations from exc_orders, then second excitation from
-        exc_orders, etc
+        All Slater determinants
 
         Returns
         -------
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=self.nci, spin=self.spin)
+        return sd_list(self.nelec, self.nspatial, spin=self.spin)
 
     def compute_ci_matrix(self):
         """ Returns Hamiltonian matrix in the arbitrary Slater (orthogonal) determinant basis

@@ -26,7 +26,7 @@ def test_fci_h2():
     # solve
     solve(fci)
     # compare with number from Gaussian
-    assert abs(fci.compute_energy() - (-1.1651486697)) < 1e-7
+    assert abs(fci.get_energy() - (-1.1651486697)) < 1e-7
 
 def test_fci_lih_sto6g():
     #### LiH ####
@@ -48,7 +48,7 @@ def test_fci_lih_sto6g():
     # solve
     solve(fci)
     # compare with number from Gaussian
-    assert abs(fci.compute_energy()-(-7.9723355823)) < 1e-7
+    assert abs(fci.get_energy()-(-7.9723355823)) < 1e-7
 
 
 @attr('slow')
@@ -72,5 +72,5 @@ def test_fci_lih_631g():
     # solve
     solve(fci)
     # compare with number from Gaussian
-    print(fci.compute_energy(), -7.97926894940)
-    assert abs(fci.compute_energy()-(-7.9982761)) < 1e-7
+    print(fci.get_energy(), -7.97926894940)
+    assert abs(fci.get_energy()-(-7.9982761)) < 1e-7
