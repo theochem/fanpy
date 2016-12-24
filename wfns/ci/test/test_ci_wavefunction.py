@@ -156,5 +156,22 @@ def test_get_energy():
     assert test.get_energy(include_nuc=False, exc_lvl=2) == 1
     assert test.get_energy(include_nuc=False, exc_lvl=1) == 2
 
-# TODO: add test for density matrix (once density module is finished)
+def test_compute_density_matrix():
+    """ Tests wfns.ci.ci_wavefunction.compute_density_matrix
+    """
+    test = TestCIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
+                              orbtype='restricted', civec=[0b0101, 0b1001, 0b0110, 0b1010])
+    test.sd_coeffs[:, 0] = np.array([0.993594152, 0.0, 0.0, -0.113007352])
+    one_density, two_density = test.compute_density_matrix(exc_lvl=0, is_chemist_notation=False,
+                                                           val_threshold=0)
+    # reference
+    ref_one_density = np.array([[0.197446E+01, -0.163909E-14],
+                                [-0.163909E-14, 0.255413E-01]])
+    ref_two_density = np.array([[[[1.97445868, 0], [0, -0.22456689]],
+                                 [[0, 0], [0, 0]]],
+                                [[[0, 0], [0, 0]],
+                                 [[-0.22456689, 0], [0, 0.02554132]]]])
+    # compare
+    assert np.allclose(one_density[0], ref_one_density)
+    assert np.allclose(two_density[0], ref_two_density)
 # TODO: add test for to_proj (once proj_wavefunction is finished)
