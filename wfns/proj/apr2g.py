@@ -6,7 +6,7 @@ from gmpy2 import mpz
 from .proj_wavefunction import ProjectionWavefunction
 from .. import slater
 from ..sd_list import sd_list
-from .proj_hamiltonian import doci_hamiltonian
+from .proj_hamiltonian import sen0_hamiltonian
 from ..math_tools import permanent_borchardt, adjugate
 
 
@@ -282,7 +282,7 @@ class APr2G(ProjectionWavefunction):
         -------
         float
         """
-        return sum(doci_hamiltonian(self, sd, self.orbtype, deriv=deriv))
+        return sum(sen0_hamiltonian(self, sd, self.orbtype, deriv=deriv))
 
     # FIXME: remove
     def normalize(self):
