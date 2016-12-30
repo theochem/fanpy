@@ -8,11 +8,11 @@ from .. import slater
 from ..math_tools import permanent_ryser
 from ..sd_list import sd_list
 
-from .proj_wavefunction import ProjectionWavefunction
+from .proj_wavefunction import ProjectedWavefunction
 from .proj_hamiltonian import hamiltonian
 
 
-class APseqG(ProjectionWavefunction):
+class APseqG(ProjectedWavefunction):
     """ Antisymmetric Product of Sequantially Interacting Geminals
 
     Attributes
@@ -56,7 +56,7 @@ class APseqG(ProjectionWavefunction):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -105,7 +105,7 @@ class APseqG(ProjectionWavefunction):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -135,7 +135,7 @@ class APseqG(ProjectionWavefunction):
                  params_save_name=''
                  ):
         # FIXME: this fucking mess
-        super(ProjectionWavefunction, self).__init__(nelec=nelec,
+        super(ProjectedWavefunction, self).__init__(nelec=nelec,
                                                      one_int=one_int,
                                                      two_int=two_int,
                                                      dtype=dtype,
@@ -227,14 +227,14 @@ class APseqG(ProjectionWavefunction):
             # num_max_gems = sum(self.nspin-1-seq for seq in self.seq_list)
             # select as many projections as possible
             # NOTE: the projections need to be truncated afterwards!
-            # pspace = self.compute_pspace(num_max_gems+1)
+            # pspace = self.generate_pspace(num_max_gems+1)
             # + 1 because we need one equation for normalization
 
             # choose all singles and doubles
-            pspace = self.compute_pspace(9999999999999999)
+            pspace = self.generate_pspace(9999999999999999)
         # FIXME: this is quite terrible
         if isinstance(pspace, int):
-            pspace = self.compute_pspace(pspace)
+            pspace = self.generate_pspace(pspace)
         elif isinstance(pspace, (list, tuple)):
             if not all(type(i) in [int, type(mpz())] for i in pspace):
                 raise ValueError('Each Slater determinant must be an integer or mpz object')
@@ -346,7 +346,7 @@ class APseqG(ProjectionWavefunction):
                                                   raise_error=False)
 
 
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
         Parameters
@@ -443,7 +443,7 @@ class APseqG(ProjectionWavefunction):
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
         """

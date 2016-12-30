@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from ..graphs import generate_biclique_pmatch
-from .proj_wavefunction import ProjectionWavefunction
+from .proj_wavefunction import ProjectedWavefunction
 from .apg import APG
 
 
@@ -72,7 +72,7 @@ class APsetG(APG):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -121,7 +121,7 @@ class APsetG(APG):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -152,7 +152,7 @@ class APsetG(APG):
                  params_save_name=''
     ):
         # FIXME: this fucking mess
-        super(ProjectionWavefunction, self).__init__(
+        super(ProjectedWavefunction, self).__init__(
             nelec=nelec,
             one_int=one_int,
             two_int=two_int,

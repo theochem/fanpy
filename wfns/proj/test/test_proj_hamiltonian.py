@@ -2,11 +2,10 @@
 """
 import numpy as np
 from nose.tools import assert_raises
-from wfns.proj.proj_wavefunction import ProjectionWavefunction
+from wfns.proj.proj_wavefunction import ProjectedWavefunction
 from wfns.proj.proj_hamiltonian import hamiltonian, sen0_hamiltonian
 
-# FIXME: ProjectionWavefunction will end up shedding a lot of its abstract methods and properties
-class TestProjectionWavefunction(ProjectionWavefunction):
+class TestProjectedWavefunction(ProjectedWavefunction):
     """ Child of ProjWavefunction used to test ProjWavefunction
 
     Because ProjWavefunction is an abstract class
@@ -17,15 +16,6 @@ class TestProjectionWavefunction(ProjectionWavefunction):
 
     @property
     def template_coeffs(self):
-        pass
-
-    def compute_pspace(self, num_sd):
-        pass
-
-    def compute_hamiltonian(self, sd, deriv=None):
-        pass
-
-    def normalize(self):
         pass
 
     def compute_overlap(self, sd, deriv=None):
@@ -41,7 +31,7 @@ class TestProjectionWavefunction(ProjectionWavefunction):
 def test_hamiltonian():
     """ Tests wfns.proj.proj_hamiltonian.hamiltonian
     """
-    test_wfn = TestProjectionWavefunction()
+    test_wfn = TestProjectedWavefunction()
     test_wfn.one_int = (np.array([[1, 2], [3, 4]], dtype=float), )
     test_wfn.two_int = (np.array([[[[5, 6], [7, 8]],
                                    [[9, 10], [11, 12]]],
@@ -73,7 +63,7 @@ def test_hamiltonian():
 def test_sen0_hamiltonian_2e():
     """ Tests wfns.proj.sen0_proj_hamiltonian.hamiltonian
     """
-    test_wfn = TestProjectionWavefunction()
+    test_wfn = TestProjectedWavefunction()
     test_wfn.one_int = (np.array([[1, 2], [3, 4]], dtype=float), )
     test_wfn.two_int = (np.array([[[[5, 6], [7, 8]],
                                    [[9, 10], [11, 12]]],
@@ -100,7 +90,7 @@ def test_sen0_hamiltonian_2e():
 def test_sen0_hamiltonian_4e():
     """ Tests wfns.proj.sen0_proj_hamiltonian.hamiltonian
     """
-    test_wfn = TestProjectionWavefunction()
+    test_wfn = TestProjectedWavefunction()
     test_wfn.one_int = (np.array([[1, 2, 3],
                                   [4, 5, 6],
                                   [7, 8, 9]], dtype=float), )
@@ -110,7 +100,7 @@ def test_sen0_hamiltonian_4e():
     test_wfn.d_cache = {}
     # FIXME: ugly
     # overwrite the overlap function with 4 electron one
-    def overlap(sd, deriv=None):
+    def compute_overlap(sd, deriv=None):
         if sd == 0b011011:
             return 1
         elif sd == 0b101101:
@@ -118,7 +108,7 @@ def test_sen0_hamiltonian_4e():
         elif sd == 0b110110:
             return 3
         return 0
-    test_wfn.overlap = overlap
+    test_wfn.compute_overlap = compute_overlap
 
     # check error
     assert_raises(ValueError, lambda: sen0_hamiltonian(test_wfn, 0b000001, 'restricted',

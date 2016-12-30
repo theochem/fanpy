@@ -50,7 +50,7 @@ def hamiltonian(wfn, slater_d, orbtype, deriv=None):
     exchange = 0.0
 
     # sum over zeroth order excitation
-    coeff = wfn.overlap(slater_d, deriv=deriv)
+    coeff = wfn.get_overlap(slater_d, deriv=deriv)
     for counter, i in enumerate(occ_indices):
         one_electron += coeff*get_one_int_value(wfn.one_int, i, i, orbtype=orbtype)
         for j in occ_indices[counter+1:]:
@@ -60,7 +60,7 @@ def hamiltonian(wfn, slater_d, orbtype, deriv=None):
     # sum over one electron excitation
     for counter, i in enumerate(occ_indices):
         for a in vir_indices:
-            coeff = wfn.overlap(slater.excite(slater_d, i, a), deriv=deriv)
+            coeff = wfn.get_overlap(slater.excite(slater_d, i, a), deriv=deriv)
             one_electron += coeff*get_one_int_value(wfn.one_int, i, a, orbtype=orbtype)
             for j in occ_indices[:counter] + occ_indices[counter+1:]:
                 coulomb += coeff*get_two_int_value(wfn.two_int, i, j, a, j, orbtype=orbtype)
@@ -69,7 +69,7 @@ def hamiltonian(wfn, slater_d, orbtype, deriv=None):
     # sum over two electron excitation
     for i, j in combinations(occ_indices, 2):
         for a, b in combinations(vir_indices, 2):
-            coeff = wfn.overlap(slater.excite(slater_d, i, j, a, b), deriv=deriv)
+            coeff = wfn.get_overlap(slater.excite(slater_d, i, j, a, b), deriv=deriv)
             coulomb += coeff * get_two_int_value(wfn.two_int, i, j, a, b, orbtype=orbtype)
             exchange -= coeff * get_two_int_value(wfn.two_int, i, j, b, a, orbtype=orbtype)
 
@@ -125,7 +125,7 @@ def sen0_hamiltonian(wfn, slater_d, orbtype, deriv=None):
     exchange = 0.0
 
     # sum over zeroth order excitation
-    coeff = wfn.overlap(slater_d, deriv=deriv)
+    coeff = wfn.get_overlap(slater_d, deriv=deriv)
     for counter, i in enumerate(occ_spatial_indices):
         one_electron += 2*coeff*get_one_int_value(wfn.one_int, i, i, orbtype=orbtype)
         coulomb += coeff*get_two_int_value(wfn.two_int, i, i, i, i, orbtype=orbtype)
@@ -138,7 +138,7 @@ def sen0_hamiltonian(wfn, slater_d, orbtype, deriv=None):
         for a in vir_spatial_indices:
             j = i + wfn.nspatial
             b = a + wfn.nspatial
-            coeff = wfn.overlap(slater.excite(slater_d, i, j, a, b), deriv=deriv)
+            coeff = wfn.get_overlap(slater.excite(slater_d, i, j, a, b), deriv=deriv)
             coulomb += coeff*get_two_int_value(wfn.two_int, i, j, a, b, orbtype=orbtype)
             exchange -= coeff*get_two_int_value(wfn.two_int, i, j, b, a, orbtype=orbtype)
 

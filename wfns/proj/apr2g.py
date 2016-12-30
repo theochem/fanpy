@@ -3,14 +3,14 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from .proj_wavefunction import ProjectionWavefunction
+from .proj_wavefunction import ProjectedWavefunction
 from .. import slater
 from ..sd_list import sd_list
 from .proj_hamiltonian import sen0_hamiltonian
 from ..math_tools import permanent_borchardt, adjugate
 
 
-class APr2G(ProjectionWavefunction):
+class APr2G(ProjectedWavefunction):
     """ Antisymmetric Product of rank-2 Geminals
 
     Attributes
@@ -63,9 +63,9 @@ class APr2G(ProjectionWavefunction):
         """
         # FIXME: apply better bounds
         # remove bounds on parameters (for now)
-        # bounds = [(-np.inf, np.inf) for i in self.nparam]
-        low_bounds = [-np.inf for i in range(self.nparam)]
-        upp_bounds = [np.inf for i in range(self.nparam)]
+        # bounds = [(-np.inf, np.inf) for i in self.nparams]
+        low_bounds = [-np.inf for i in range(self.nparams)]
+        upp_bounds = [np.inf for i in range(self.nparams)]
         return (tuple(low_bounds), tuple(upp_bounds))
 
     def assign_params(self, params=None, params_type='apr2g'):
@@ -150,7 +150,7 @@ class APr2G(ProjectionWavefunction):
         x[:] = sol
         return x
 
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
         # FIXME: wording
@@ -287,7 +287,7 @@ class APr2G(ProjectionWavefunction):
     # FIXME: remove
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
         """
