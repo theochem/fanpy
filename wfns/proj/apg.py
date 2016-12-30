@@ -8,11 +8,11 @@ from .. import slater
 from ..sd_list import sd_list
 from ..math_tools import permanent_ryser
 from ..graphs import generate_complete_pmatch
-from .proj_wavefunction import ProjectionWavefunction
+from .proj_wavefunction import ProjectedWavefunction
 from .proj_hamiltonian import hamiltonian
 
 # FIXME: rename
-class APG(ProjectionWavefunction):
+class APG(ProjectedWavefunction):
     """ Antisymmetric Product Geminals
 
     ..math::
@@ -76,7 +76,7 @@ class APG(ProjectionWavefunction):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -125,7 +125,7 @@ class APG(ProjectionWavefunction):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -156,7 +156,7 @@ class APG(ProjectionWavefunction):
                  params_save_name=''
     ):
         # FIXME: this fucking mess
-        super(ProjectionWavefunction, self).__init__(
+        super(ProjectedWavefunction, self).__init__(
             nelec=nelec,
             one_int=one_int,
             two_int=two_int,
@@ -261,7 +261,7 @@ class APG(ProjectionWavefunction):
         """
         return generate_complete_pmatch(occ_indices)
 
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
         Parameters
@@ -392,7 +392,7 @@ class APG(ProjectionWavefunction):
     # FIXME: remove
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
         """

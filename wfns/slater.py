@@ -46,6 +46,8 @@ deinterleave(shuffled_sd, nspatial)
     Converts Slater determinants from shuffled form to block form
 get_spin(sd, nspatial)
     Returns the spin of the given slater determinant
+get_seniority(sd, nspatial)
+    Returns the seniority of the given Slater determinant
 find_num_trans(jumbled_set, ordered_set=None, is_creator=True)
     Returns the number of adjacent swaps necessary to convert a set of indices into increasing order
 find_num_trans_dumb(jumbled_set, ordered_set=None, is_creator=True)
@@ -309,11 +311,11 @@ def internal_sd(identifier):
         If not an integer and not an iterable
         If is an iterable of non integers
     """
-    if isinstance(identifier, int):
+    if isinstance(identifier, (int, long)):
         return gmpy2.mpz(identifier)
     elif hasattr(identifier, '__iter__'):
         identifier, test = tee(identifier, 2)
-        if all(isinstance(i, int) for i in test):
+        if all(isinstance(i, (int, long)) for i in test):
             return create(gmpy2.mpz(0), *identifier)
         else:
             raise TypeError('Iterable must contain only integers to describe a Slater determinant')

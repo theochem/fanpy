@@ -11,7 +11,7 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
 
     Parameters
     ----------
-    wavefunction : instance of ProjectionWavefunction
+    wavefunction : instance of ProjectedWavefunction
         Wavefunction to solve
     solver_type : str
         solver type
@@ -85,7 +85,7 @@ def solve(wavefunction, solver_type='least squares', jac=True, **kwargs):
         objective = lambda x: np.sum(np.abs(wavefunction.objective(x, weigh_norm=False)))
         if jac:
             print('WARNING: Jacobian is not needed in CMA solver')
-        options['npop'] = wavefunction.nparam*2
+        options['npop'] = wavefunction.nparams*2
         if solver_type == 'cma':
             options['sigma0'] = 0.01
             options['verbose'] = False

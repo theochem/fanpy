@@ -3,7 +3,7 @@ import numpy as np
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 
-from wfns.proj.proj_wavefunction import ProjectionWavefunction
+from wfns.proj.proj_wavefunction import ProjectedWavefunction
 from wfns.proj.solver import solve
 from wfns.proj.apg import APG
 from wfns.wrapper.horton import gaussian_fchk

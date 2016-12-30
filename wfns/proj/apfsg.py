@@ -3,14 +3,14 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from .proj_wavefunction import ProjectionWavefunction
+from .proj_wavefunction import ProjectedWavefunction
 from .. import slater
 from ..sd_list import sd_list
 from ..math_tools import permanent_ryser
 from .proj_hamiltonian import hamiltonian
 
 
-class APfsG(ProjectionWavefunction):
+class APfsG(ProjectedWavefunction):
     """ Antisymmetric Product of Factorized Set Geminals
 
     ..math::
@@ -61,7 +61,7 @@ class APfsG(ProjectionWavefunction):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -110,7 +110,7 @@ class APfsG(ProjectionWavefunction):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -141,7 +141,7 @@ class APfsG(ProjectionWavefunction):
                            self.nspatial, dtype=self.dtype).flatten()
         return np.hstack((init_spatial, init_spin))
 
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
         # to do: add some more detailed doc
@@ -272,7 +272,7 @@ class APfsG(ProjectionWavefunction):
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
 
