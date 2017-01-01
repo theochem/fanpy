@@ -75,7 +75,6 @@ class ProjectedWavefunction(Wavefunction):
         Number of parameters
     nproj : int
         Number of Slater determinants
-    bounds : 2-tuple of tuple of floats
 
     Method
     ------
@@ -314,6 +313,8 @@ class ProjectedWavefunction(Wavefunction):
             If `params` is not a numpy array
             If `params` does not have data type of `float`, `complex`, `np.float64` and
             `np.complex128`
+            If `params` has data type of `float or `np.float64` and wavefunction does not have data
+            type of `np.float64`
         ValueError
             If `params` is None (default) and `ref_sds` has more than one Slater determinants
             If `params` is not a one dimensional numpy array with appropriate dimensions
@@ -335,6 +336,10 @@ class ProjectedWavefunction(Wavefunction):
         elif params.dtype not in (float, complex, np.float64, np.complex128):
             raise TypeError('Data type of the parameters must be one of `float`, `complex`,'
                             ' `np.float64` and `np.complex128`')
+        if params.dtype in (complex, np.complex128) and self.dtype != np.complex128:
+            raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction'
+                            ' must be `np.complex128`')
+
         # add random noise
         if add_noise:
             # set scale
@@ -343,11 +348,11 @@ class ProjectedWavefunction(Wavefunction):
             if params.dtype == np.complex128:
                 params[:ncoeffs] += 0.001j * scale * (np.random.random(ncoeffs) - 0.5)
 
+        self.params = params.astype(self.dtype)
         # add energy
-        if params[-1] == 0:
-            params[-1] = self.compute_energy(ref_sds=self.ref_sds)
+        if self.params[-1] == 0:
+            self.params[-1] = self.compute_energy(ref_sds=self.ref_sds)
 
-        self.params = params
 
 
     def get_overlap(self, sd, deriv=None):
@@ -567,7 +572,7 @@ class ProjectedWavefunction(Wavefunction):
     #############
     # Objective #
     #############
-    def objective(self, x, weigh_constraints=True, save_file=''):
+    def objective(self, x, weigh_constraints=True, save_file=None):
         """ System of (usually) nonlinear functions that corresponds to the projected Schrodinger
         equation
 
@@ -597,6 +602,7 @@ class ProjectedWavefunction(Wavefunction):
         save_file : str
             Name of the `.npy` file that will be used to store the parameters in the course of the
             optimization
+            Default is no save file
 
         Returns
         -------
@@ -605,7 +611,7 @@ class ProjectedWavefunction(Wavefunction):
         # Update the coefficient vector
         self.params[:] = x
         # Save params
-        if save_file:
+        if save_file is not None:
             np.save('{0}_temp.npy'.format(save_file), self.params)
         # Clear cache
         self.cache = {}
