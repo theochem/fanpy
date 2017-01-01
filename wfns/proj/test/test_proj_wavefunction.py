@@ -209,6 +209,7 @@ def test_assign_params():
     assert_raises(ValueError, test.assign_params, np.arange(5).reshape(1, 5))
     assert_raises(ValueError, test.assign_params, np.arange(5).reshape(1, 5))
     assert_raises(TypeError, test.assign_params, np.arange(5).astype(bool))
+    assert_raises(TypeError, test.assign_params, np.arange(5).astype(np.complex128))
 
     # default
     test.ref_sds = (0b001001, )
@@ -218,11 +219,6 @@ def test_assign_params():
     test.dtype = np.float64
     test.assign_params(add_noise=True)
     assert np.allclose(test.params, np.hstack((np.arange(4), 721/49)), atol=0.2/4*0.5)
-    # Assign random float (default)
-    test.dtype = np.complex128
-    test.assign_params(add_noise=True)
-    assert np.allclose(np.real(test.params), np.hstack((np.arange(4), 721/49)), atol=0.2/4*0.5)
-    assert np.allclose(np.imag(test.params), np.hstack((np.zeros(4), 0)), atol=0.001*0.2/4*0.5)
     # Assign params (float), default energy
     test.assign_params(np.hstack((np.arange(4, dtype=float), 0)), add_noise=False)
     assert np.allclose(test.params, np.hstack((np.arange(4), 721/49))) # energy is 721/49
@@ -235,6 +231,11 @@ def test_assign_params():
     # Assign params (np.float64), custom energy
     test.assign_params(np.hstack((np.arange(4, dtype=np.float64), 3)), add_noise=False)
     assert np.allclose(test.params, np.hstack((np.arange(4), 3)))
+    # Assign random float (default)
+    test.dtype = np.complex128
+    test.assign_params(add_noise=True)
+    assert np.allclose(np.real(test.params), np.hstack((np.arange(4), 721/49)), atol=0.2/4*0.5)
+    assert np.allclose(np.imag(test.params), np.hstack((np.zeros(4), 0)), atol=0.001*0.2/4*0.5)
     # Assign params (complex), default energy
     test.assign_params(np.hstack((np.arange(4, dtype=complex), 0)), add_noise=False)
     assert np.allclose(np.real(test.params), np.hstack((np.arange(4), 721/49)))

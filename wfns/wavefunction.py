@@ -143,12 +143,13 @@ class Wavefunction(object):
             If dtype is not one of float, complex, np.float64, np.complex128
         """
 
-        if dtype is None:
-            dtype = np.float64
-        elif dtype not in (float, complex, np.float64, np.complex128):
+        if dtype is None or dtype in (float, np.float64):
+            self.dtype = np.float64
+        elif dtype in (complex, np.complex128):
+            self.dtype = np.complex128
+        else:
             raise TypeError("dtype must be one of {0}".format((float, complex,
                                                                np.float64, np.complex128)))
-        self.dtype = dtype
 
 
     def assign_nuc_nuc(self, nuc_nuc=None):

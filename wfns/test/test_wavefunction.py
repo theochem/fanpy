@@ -38,10 +38,13 @@ def test_assign_dtype():
     test.assign_dtype(None)
     assert test.dtype == np.float64
     # other assignments
-    all_types = [float, complex, np.float64, np.complex128]
-    for dtype in all_types:
+    for dtype in [float, np.float64]:
         test.assign_dtype(dtype)
-        assert test.dtype == dtype
+        assert test.dtype == np.float64
+    for dtype in [complex, np.complex128]:
+        test.assign_dtype(dtype)
+        assert test.dtype == np.complex128
+
 
 
 def test_assign_nuc_nuc():
