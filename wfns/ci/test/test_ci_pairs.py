@@ -1,22 +1,16 @@
+""" Tests wfns.ci.ci_pairs
+"""
 from __future__ import absolute_import, division, print_function
-from wfns.ci.solver import solve
+import numpy as np
 from wfns.ci.ci_pairs import CIPairs
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.sd_list import sd_list
 
 
-def test_cipairs_wavefunction():
-    #### H2 ####
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+def test_generate_civec():
+    """ Tests wfns.ci.ci_pairs.CIPairs.generate_civec
+    """
+    test = CIPairs(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    assert test.generate_civec() == sd_list(test.nelec, test.nspatial, num_limit=None, spin=0,
+                                            seniority=0, exc_orders=[2])
 
-    nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
-    print(nuc_nuc)
-    cipairs = CIPairs(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
-    # compare HF numbers
-    print(cipairs.compute_ci_matrix()[0, 0])
-    print(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc)
-    assert abs(cipairs.compute_ci_matrix()[0, 0] + cipairs.nuc_nuc - (-1.131269841877) < 1e-8)
-    solve(cipairs)
-    print(cipairs.get_energy())
+#FIXME: check to_ap1rog (after checking ap1rog)

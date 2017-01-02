@@ -39,3 +39,10 @@ def test_solve_eigh():
     assert np.allclose(test_wfn.sd_coeffs, np.array([[0.41321628, -0.91063291],
                                                      [0.91063291, 0.41321628]]))
     assert np.allclose(test_wfn.energies, np.array([9.81507291, -0.81507291]))
+
+def test_solve_davidson():
+    """ Tests wfn.ci.solver.solve with davidson algorithm
+    """
+    test_wfn = TestCIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0, 1],
+                                  civec=[0b0011, 0b1100])
+    assert_raises(NotImplementedError, lambda: solve(test_wfn, solver_type='davidson'))
