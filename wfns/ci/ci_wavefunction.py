@@ -3,12 +3,12 @@
 This module describes wavefunction that are expressed as linear combination of Slater determinants.
 """
 from __future__ import absolute_import, division, print_function
-from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.optimize import least_squares
 from ..wavefunction import Wavefunction
 from .. import slater
 from .ci_matrix import ci_matrix
+from ..sd_list import sd_list
 from .density import density_matrix
 # FIXME: inherit docstring
 
@@ -82,14 +82,9 @@ class CIWavefunction(Wavefunction):
         Try to convert the CI wavefunction into the appropriate Projected Wavefunction
     compute_ci_matrix(self)
         Returns CI Hamiltonian matrix in the Slater determinant basis
-
-    Abstract Methods
-    ----------------
     generate_civec
         Generates a list of Slater determinants
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None,
                  excs=None, civec=None, spin=None, seniority=None):
         """ Initializes a wavefunction
@@ -425,17 +420,15 @@ class CIWavefunction(Wavefunction):
         return ci_matrix(self.one_int, self.two_int, self.civec, self.dtype, self.orbtype)
 
 
-    ####################
-    # Abstract methods #
-    ####################
-    @abstractmethod
     def generate_civec(self):
         """ Generates Slater determinants
+
+        All orders of excitations given the assigned spin and seniority
 
         Returns
         -------
         civec : list of ints
             Integer that describes the occupation of a Slater determinant as a bitstring
-
         """
-        pass
+        return sd_list(self.nelec, self.nspatial, num_limit=None, exc_orders=None, spin=self.spin,
+                       seniority=self.seniority)
