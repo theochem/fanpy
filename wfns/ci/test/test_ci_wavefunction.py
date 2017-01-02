@@ -7,31 +7,10 @@ from wfns.ci.ci_wavefunction import CIWavefunction
 from wfns.ci.ci_matrix import ci_matrix
 
 
-def test_abstract():
-    """ Check that some methods are abstract methods
-    """
-    # both generate_civec and compute_ci_matrix not defined
-    assert_raises(TypeError, lambda: CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
-    # generate_civec not defined
-    class Test(CIWavefunction):
-        def generate_civec(self):
-            pass
-    assert_raises(TypeError, lambda: Test(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
-
-
-class TestCIWavefunction(CIWavefunction):
-    """ Child of CIWavefunction used to test CIWavefunction
-
-    Because CIWavefunction is an abstract class
-    """
-    def generate_civec(self):
-        return [0b001001, 0b010010, 0b0110000, 0b0000101]
-
-
 def test_assign_spin():
     """ Tests CIWavefunction.assign_spin
     """
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # check error
     assert_raises(TypeError, lambda: test.assign_spin('1'))
     assert_raises(TypeError, lambda: test.assign_spin([1]))
@@ -50,7 +29,7 @@ def test_assign_spin():
 def test_assign_seniority():
     """ Tests CIWavefunction.assign_seniority
     """
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # check error
     assert_raises(TypeError, lambda: test.assign_seniority('1'))
     assert_raises(TypeError, lambda: test.assign_seniority(1.0))
@@ -67,7 +46,7 @@ def test_assign_civec():
     """
     Tests CIWavefunction.assign_civec
     """
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # check error
     #  not iterable
     assert_raises(TypeError, lambda: test.assign_civec(2))
@@ -89,14 +68,20 @@ def test_assign_civec():
     test.assign_seniority(0)
     assert_raises(ValueError, test.assign_civec, [0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
 
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # None assigned
     del test.civec
     test.assign_civec()
-    assert test.civec == (0b001001, 0b010010, 0b0110000, 0b0000101)
+    print([bin(i) for i in test.civec])
+
+    assert test.civec == (0b001001, 0b001010, 0b011000, 0b001100, 0b101000, 0b000011, 0b010001,
+                          0b000101, 0b100001, 0b010010, 0b000110, 0b100010, 0b010100, 0b110000,
+                          0b100100)
     del test.civec
     test.assign_civec(None)
-    assert test.civec == (0b001001, 0b010010, 0b0110000, 0b0000101)
+    assert test.civec == (0b001001, 0b001010, 0b011000, 0b001100, 0b101000, 0b000011, 0b010001,
+                          0b000101, 0b100001, 0b010010, 0b000110, 0b100010, 0b010100, 0b110000,
+                          0b100100)
     # tuple assigned
     del test.civec
     test.assign_civec((0b0011,))
@@ -115,11 +100,11 @@ def test_assign_civec():
     test.assign_civec([0b0101, ]*20)
     assert test.civec == (0b0101, )*20
     # spin
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), spin=1)
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), spin=1)
     test.assign_civec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
     assert test.civec == (0b000011, 0b000110, 0b000101)
     # seniority
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), seniority=0)
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), seniority=0)
     test.assign_civec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
     assert test.civec == (0b001001, )
 
@@ -127,7 +112,7 @@ def test_assign_civec():
 def test_assign_excs():
     """ Tests CIWavefunction.assign_excs
     """
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # check error
     #  string
     assert_raises(TypeError, lambda: test.assign_excs(excs='0'))
@@ -139,7 +124,7 @@ def test_assign_excs():
     assert_raises(TypeError, lambda: test.assign_excs(excs=[0.0, 1.0]))
     #  bad excitation levels
     assert_raises(ValueError, lambda: test.assign_excs(excs=[-1]))
-    assert_raises(ValueError, lambda: test.assign_excs(excs=[4]))
+    assert_raises(ValueError, lambda: test.assign_excs(excs=[15]))
     # assign
     test.assign_excs(excs=None)
     assert test.dict_exc_index == {0:0}
@@ -156,19 +141,19 @@ def test_get_energy():
     Tests CIWavefunction.get_energy
     """
     # check
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0])
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0])
     assert_raises(ValueError, lambda: test.get_energy(exc_lvl=-1))
     assert_raises(ValueError, lambda: test.get_energy(exc_lvl=2))
 
     # without nuclear repulsion
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0, 2, 1])
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0, 2, 1])
     test.energies = np.arange(3)
     assert test.get_energy(exc_lvl=0) == 0
     assert test.get_energy(exc_lvl=2) == 1
     assert test.get_energy(exc_lvl=1) == 2
 
     # wit nuclear repulsion
-    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), nuc_nuc=2.4,
+    test = CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), nuc_nuc=2.4,
                               excs=[0, 2, 1])
     test.energies = np.arange(3)
     assert test.get_energy(include_nuc=True, exc_lvl=0) == 2.4
@@ -181,7 +166,7 @@ def test_get_energy():
 def test_compute_density_matrix():
     """ Tests wfns.ci.ci_wavefunction.compute_density_matrix
     """
-    test = TestCIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
+    test = CIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
                               orbtype='restricted', civec=[0b0101, 0b1001, 0b0110, 0b1010])
     test.sd_coeffs[:, 0] = np.array([0.993594152, 0.0, 0.0, -0.113007352])
     one_density, two_density = test.compute_density_matrix(exc_lvl=0, is_chemist_notation=False,
@@ -201,7 +186,7 @@ def test_compute_density_matrix():
 def test_compute_ci_matrix():
     """ Tests wfns.ci.ci_wavefunction.compute_ci_matrix
     """
-    test = TestCIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
+    test = CIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
                               orbtype='restricted', civec=[0b0101, 0b1001, 0b0110, 0b1010])
     assert np.allclose(test.compute_ci_matrix(), ci_matrix(test.one_int, test.two_int, test.civec,
                                                            test.dtype, test.orbtype))
