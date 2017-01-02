@@ -5,8 +5,28 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.ci.solver import solve
 from wfns.ci.doci import DOCI
-from wfns.sd_list import sd_list
 from wfns.wrapper.horton import gaussian_fchk
+
+
+def test_assign_nelec():
+    """
+    Tests Wavefunction.assign_nelec
+    """
+    test = DOCI(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    # int
+    test.assign_nelec(2)
+    assert test.nelec == 2
+    # long
+    test.assign_nelec(long(2))
+    assert test.nelec == 2
+    # check errors
+    assert_raises(TypeError, lambda: test.assign_nelec(None))
+    assert_raises(TypeError, lambda: test.assign_nelec(2.0))
+    assert_raises(TypeError, lambda: test.assign_nelec('2'))
+    assert_raises(ValueError, lambda: test.assign_nelec(0))
+    assert_raises(ValueError, lambda: test.assign_nelec(-2))
+    assert_raises(ValueError, lambda: test.assign_nelec(1))
+    assert_raises(ValueError, lambda: test.assign_nelec(3))
 
 
 def test_assign_spin():
