@@ -1,3 +1,5 @@
+""" Tests wfns.ci.fci
+"""
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from nose.plugins.attrib import attr
@@ -6,12 +8,13 @@ from wfns.ci.fci import FCI
 from wfns.wrapper.horton import gaussian_fchk
 
 
-def test_fci_h2():
+def test_fci_h2_631gdp():
+    """ Tests FCI wavefunction for H2 (6-31g**)
+    """
     #### H2 ####
     # HF energy: -1.13126983927
     # FCI energy: -1.1651487496
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-
     nelec = 2
     one_int = hf_dict["one_int"]
     two_int = hf_dict["two_int"]
@@ -21,14 +24,14 @@ def test_fci_h2():
     ci_matrix = fci.compute_ci_matrix()
     # compare HF numbers
     assert abs(ci_matrix[0, 0] + fci.nuc_nuc - (-1.131269841877) < 1e-8)
-    # check that hamiltonian is symmetric
-    assert np.allclose(ci_matrix, ci_matrix.T)
     # solve
     solve(fci)
     # compare with number from Gaussian
     assert abs(fci.get_energy() - (-1.1651486697)) < 1e-7
 
 def test_fci_lih_sto6g():
+    """ Tests FCI wavefunction for LiH STO-6G
+    """
     #### LiH ####
     # HF energy: -7.95197153880
     # FCI energy: -7.9723355823
@@ -53,6 +56,8 @@ def test_fci_lih_sto6g():
 
 @attr('slow')
 def test_fci_lih_631g():
+    """ Tests FCI wavefunction for LiH 6-31G
+    """
     #### LiH ####
     # HF energy: -7.97926894940
     # FCI energy: -7.9982761
@@ -72,5 +77,4 @@ def test_fci_lih_631g():
     # solve
     solve(fci)
     # compare with number from Gaussian
-    print(fci.get_energy(), -7.97926894940)
     assert abs(fci.get_energy()-(-7.9982761)) < 1e-7
