@@ -78,8 +78,6 @@ class CIWavefunction(Wavefunction):
         Gets the energy of the CI wavefunction
     compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
         Constructs the one and two electron density matrices for the given excitation level
-    to_proj(self, Other, exc_lvl=0)
-        Try to convert the CI wavefunction into the appropriate Projected Wavefunction
     compute_ci_matrix(self)
         Returns CI Hamiltonian matrix in the Slater determinant basis
     generate_civec
@@ -333,75 +331,6 @@ class CIWavefunction(Wavefunction):
         return density_matrix(self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat, self.civec,
                               self.nspatial, is_chemist_notation=is_chemist_notation,
                               val_threshold=val_threshold, orbtype=self.orbtype)
-
-    ####################################################
-    # Methods for Converting A Wavefunction To Another #
-    ####################################################
-    def to_proj(self, Other, exc_lvl=0):
-        """ Converts CIWavefunction to ProjWavefunction as best as possible
-
-        Parameters
-        ----------
-        Other : ProjWavefunction class
-            Class of the wavefunction to turn into
-        exc_lvl : int
-            Excitation level of the wavefunction
-            0 is the ground state wavefunction
-            `n`is the `n`th order excitation
-
-        Returns
-        -------
-        new_instance : Other instance
-            Instance of the specified wavefunction with parameters/coefficients
-            that tries to resemble self
-
-        Raises
-        ------
-        TypeError
-            If excitation level is not an integer
-        ValueError
-            If excitation level is negative
-        """
-        if not isinstance(exc_lvl, int):
-            raise TypeError('Excitation level must be an integer')
-        if exc_lvl < 0:
-            raise ValueError('Excitation level cannot be negative')
-
-        dict_sd_coeff = {sd: coeff for sd, coeff in zip(self.civec,
-                            self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat)}
-
-        # initialize new wavefunction
-        new_instance = Other(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
-                             nuc_nuc=self.nuc_nuc, orbtype=self.orbtype)
-        new_instance.params[-1] = self.get_energy(exc_lvl=exc_lvl)
-
-
-        def objective(x_vec):
-            """ Function to minimize
-
-            We will find the root of this function, which means that we find the
-            x_vec such that the objective gives back the smallest vector
-
-            parameters
-            ----------
-            x_vec : np.ndarray(K,)
-                One dimensional numpy array
-
-            Returns
-            -------
-            obj : np.ndarray(K,)
-                One dimensional numpy array
-            """
-            new_instance.params[:] = x_vec
-            obj = np.empty(len(self.civec), dtype=self.dtype)
-            for i, sd in enumerate(self.civec):
-                obj[i] = new_instance.compute_overlap(sd) - dict_sd_coeff[sd]
-            return obj
-
-        #FIXME: Location
-        result = least_squares(objective, new_instance.x)
-        new_instance.assign_params(result.x)
-        return new_instance
 
 
     ###########
