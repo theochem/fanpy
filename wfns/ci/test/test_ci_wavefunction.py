@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 from wfns.ci.ci_wavefunction import CIWavefunction
+from wfns.ci.ci_matrix import ci_matrix
 
 
 def test_abstract():
@@ -12,11 +13,6 @@ def test_abstract():
     # both generate_civec and compute_ci_matrix not defined
     assert_raises(TypeError, lambda: CIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
     # generate_civec not defined
-    class Test(CIWavefunction):
-        def compute_ci_matrix(self):
-            pass
-    assert_raises(TypeError, lambda: Test(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
-    # compute_ci_matrix not defined
     class Test(CIWavefunction):
         def generate_civec(self):
             pass
@@ -30,9 +26,6 @@ class TestCIWavefunction(CIWavefunction):
     """
     def generate_civec(self):
         return [0b001001, 0b010010, 0b0110000, 0b0000101]
-
-    def compute_ci_matrix(self):
-        pass
 
 
 def test_assign_spin():
@@ -54,6 +47,22 @@ def test_assign_spin():
     assert test.spin == 0.8
 
 
+def test_assign_seniority():
+    """ Tests CIWavefunction.assign_seniority
+    """
+    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    # check error
+    assert_raises(TypeError, lambda: test.assign_seniority('1'))
+    assert_raises(TypeError, lambda: test.assign_seniority(1.0))
+    assert_raises(TypeError, lambda: test.assign_seniority(long(1)))
+    # None
+    test.assign_seniority(None)
+    assert test.seniority is None
+    # Int assigned
+    test.assign_seniority(10)
+    assert test.seniority == 10
+
+
 def test_assign_civec():
     """
     Tests CIWavefunction.assign_civec
@@ -69,7 +78,16 @@ def test_assign_civec():
     assert_raises(ValueError, lambda: test.assign_civec([0b1, 0b111]))
     #  bad spin
     test.assign_spin(0.5)
+    test.assign_seniority(None)
     assert_raises(ValueError, lambda: test.assign_civec([0b000011, 0b000110]))
+    #  bad seniority
+    test.assign_spin(None)
+    test.assign_seniority(0)
+    assert_raises(ValueError, test.assign_civec, [0b000011, 0b000110])
+    #  bad spin and seniority
+    test.assign_spin(1)
+    test.assign_seniority(0)
+    assert_raises(ValueError, test.assign_civec, [0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
 
     test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     # None assigned
@@ -100,6 +118,10 @@ def test_assign_civec():
     test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), spin=1)
     test.assign_civec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
     assert test.civec == (0b000011, 0b000110, 0b000101)
+    # seniority
+    test = TestCIWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), seniority=0)
+    test.assign_civec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
+    assert test.civec == (0b001001, )
 
 
 def test_assign_excs():
@@ -175,3 +197,11 @@ def test_compute_density_matrix():
     assert np.allclose(one_density[0], ref_one_density)
     assert np.allclose(two_density[0], ref_two_density)
 # TODO: add test for to_proj (once proj_wavefunction is finished)
+
+def test_compute_ci_matrix():
+    """ Tests wfns.ci.ci_wavefunction.compute_ci_matrix
+    """
+    test = TestCIWavefunction(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), excs=[0],
+                              orbtype='restricted', civec=[0b0101, 0b1001, 0b0110, 0b1010])
+    assert np.allclose(test.compute_ci_matrix(), ci_matrix(test.one_int, test.two_int, test.civec,
+                                                           test.dtype, test.orbtype))
