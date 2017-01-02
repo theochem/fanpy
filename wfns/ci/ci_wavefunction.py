@@ -8,6 +8,7 @@ import numpy as np
 from scipy.optimize import least_squares
 from ..wavefunction import Wavefunction
 from .. import slater
+from .ci_matrix import ci_matrix
 from .density import density_matrix
 # FIXME: inherit docstring
 
@@ -79,18 +80,18 @@ class CIWavefunction(Wavefunction):
         Constructs the one and two electron density matrices for the given excitation level
     to_proj(self, Other, exc_lvl=0)
         Try to convert the CI wavefunction into the appropriate Projected Wavefunction
+    compute_ci_matrix(self)
+        Returns CI Hamiltonian matrix in the Slater determinant basis
 
     Abstract Methods
     ----------------
     generate_civec
         Generates a list of Slater determinants
-    compute_ci_matrix
-        Generates the Hamiltonian matrix of the Slater determinants
     """
     __metaclass__ = ABCMeta
 
     def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None,
-                 excs=None, civec=None, spin=None):
+                 excs=None, civec=None, spin=None, seniority=None):
         """ Initializes a wavefunction
 
         Parameters
@@ -131,10 +132,15 @@ class CIWavefunction(Wavefunction):
             0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
             Positive spin means that there are more alpha orbitals than beta orbitals
             Negative spin means that there are more beta orbitals than alpha orbitals
+
+        seniority : int
+            Seniority of the wavefunction
+            Default is no seniority (all seniority possible)
         """
         super(CIWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype, nuc_nuc=nuc_nuc,
                                              orbtype=orbtype)
         self.assign_spin(spin=spin)
+        self.assign_seniority(seniority=seniority)
         self.assign_civec(civec=civec)
         self.assign_excs(excs=excs)
         self.sd_coeffs = np.zeros((len(self.civec), len(self.dict_exc_index)))
@@ -148,7 +154,7 @@ class CIWavefunction(Wavefunction):
 
         Parameters
         ----------
-        spin : int
+        spin : float
             Total spin of the wavefunction
             Default is no spin (all spins possible)
             0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
@@ -163,6 +169,25 @@ class CIWavefunction(Wavefunction):
         if not isinstance(spin, (int, float, type(None))):
             raise TypeError('Invalid spin of the wavefunction')
         self.spin = spin
+
+
+    def assign_seniority(self, seniority=None):
+        """ Sets the seniority of the wavefunction
+
+        Parameters
+        ----------
+        seniority : int
+            Seniority of the wavefunction
+            Default is no seniority (all seniority possible)
+
+        Raises
+        ------
+        TypeError
+            If the seniority is not a float or None
+        """
+        if not isinstance(seniority, (int, type(None))):
+            raise TypeError('Invalid seniority of the wavefunction')
+        self.seniority = seniority
 
 
     def assign_civec(self, civec=None):
@@ -197,12 +222,18 @@ class CIWavefunction(Wavefunction):
                                  ' electrons'.format(bin(slater_d)))
             if self.spin is not None and slater.get_spin(slater_d, self.nspatial) != self.spin:
                 continue
+            if (self.seniority is not None and
+                    slater.get_seniority(slater_d, self.nspatial) != self.seniority):
+                continue
             filtered_sds.append(slater_d)
 
         # check if empty
         if len(filtered_sds) == 0:
-            raise ValueError('Could not find any Slater determinant that has spin, {0}'
-                             ''.format(self.spin))
+            terms = {'spin':self.spin, 'seniority':self.seniority}
+            end_phrase = ', and '.join('{0}, {1}'.format(i, j) for i, j in terms.iteritems()
+                                       if j is not None)
+            raise ValueError('Could not find any Slater determinant that has {0}'
+                             ''.format(end_phrase))
         self.civec = tuple(filtered_sds)
 
 
@@ -378,10 +409,9 @@ class CIWavefunction(Wavefunction):
         return new_instance
 
 
-    ####################
-    # Abstract methods #
-    ####################
-    @abstractmethod
+    ###########
+    # Solving #
+    ###########
     def compute_ci_matrix(self):
         """ Returns CI Hamiltonian matrix in the Slater determinant basis
 
@@ -390,11 +420,14 @@ class CIWavefunction(Wavefunction):
 
         Returns
         -------
-        ci_matrix : np.ndarray(K, K)
+        matrix : np.ndarray(K, K)
         """
-        pass
+        return ci_matrix(self.one_int, self.two_int, self.civec, self.dtype, self.orbtype)
 
 
+    ####################
+    # Abstract methods #
+    ####################
     @abstractmethod
     def generate_civec(self):
         """ Generates Slater determinants
