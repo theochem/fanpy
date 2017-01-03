@@ -1,127 +1,149 @@
+""" APIG wavefunction
+"""
 from __future__ import absolute_import, division, print_function
-
 import numpy as np
-from gmpy2 import mpz
-
-from .proj_wavefunction import ProjectedWavefunction
-from .. import slater
-from ..sd_list import sd_list
-from .proj_hamiltonian import sen0_hamiltonian
-from ..math_tools import permanent_ryser
+from .geminal import Geminal
+from ..proj_hamiltonian import sen0_hamiltonian
+from ... import slater
+from ...sd_list import sd_list
+from ...math_tools import permanent_ryser
 
 
-class APIG(ProjectedWavefunction):
+class APIG(Geminal):
     """ Antisymmetric Product of Interacting Geminals
 
     ..math::
-        \big| \Psi_{\mathrm{APIG}} \big>
-        &= \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
+        \ket{\Psi_{\mathrm{APIG}}}
+        &= \prod_{p=1}^P two_int_p^\dagger \ket{\theta}\\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
+        \ket{\mathbf{m}}
     where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
     Slater determinant (DOCI).
 
+    Class Variables
+    ---------------
+    _nconstraints : int
+        Number of constraints
+    _seniority : int, None
+        Seniority of the wavefunction
+        None means that all seniority is allowed
+    _spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
+
     Attributes
     ----------
-    dtype : {np.float64, np.complex128}
-        Numpy data type
-    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
-        and the (beta, beta) unrestricted orbitals
-    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 3), two electron integrals for the
-        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
-        (beta, beta, beta, beta) unrestricted orbitals
-    nuc_nuc : float
-        Nuclear nuclear repulsion value
     nelec : int
         Number of electrons
+    one_int : 1- or 2-tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        1-tuple for spatial (restricted) and generalized orbitals
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
+    two_int : 1- or 3-tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        In physicist's notation
+        1-tuple for spatial (restricted) and generalized orbitals
+        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
+        beta-beta-beta-beta components)
+    dtype : {np.float64, np.complex128}
+        Numpy data type
+    nuc_nuc : float
+        Nuclear-nuclear repulsion energy
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
-    params : np.ndarray(K)
-        Guess for the parameters
-        Iteratively updated during convergence
-        Initial guess before convergence
-        Coefficients after convergence
-    cache : dict of mpz to float
-        Cache of the Slater determinant to the overlap of the wavefunction with this
-        Slater determinant
-    d_cache : dict of (mpz, int) to float
-        Cache of the Slater determinant to the derivative(with respect to some index)
-        of the overlap of the wavefunction with this Slater determinan
+    pspace : tuple of gmpy2.mpz
+        Slater determinants onto which the wavefunction is projected
+    ref_sds : tuple of gmpy2.mpz
+        Slater determinants that will be used as a reference for the wavefunction (e.g. for
+        initial guess, energy calculation, normalization, etc)
+    params : np.ndarray
+        Parameters of the wavefunction (including energy)
+    cache : dict of sd to float
+        Cache of the overlaps that are calculated for each Slater determinant encountered
+    d_cache : dict of gmpy2.mpz to float
+        Cache of the derivative of overlaps that are calculated for each Slater determinant and
+        derivative index encountered
 
     Properties
     ----------
-    _methods : dict of func
-        Dictionary of methods that are used to solve the wavefunction
     nspin : int
         Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
-    npair : int
-        Number of electron pairs (rounded down)
     nparams : int
-        Number of parameters used to define the wavefunction
+        Number of parameters
     nproj : int
-        Number of Slater determinants to project against
-    ref_sd : int or list of int
-        Reference Slater determinants with respect to which the norm and the energy
-        are calculated
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Or list of integers
-    template_coeffs : np.ndarray(K)
-        Default numpy array of parameters.
-        This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
+        Number of Slater determinants
+    npair : int
+        Number of electron pairs
+    ngem : int
+        Number of geminals
+    template_coeffs : np.ndarray
+        Initial guess coefficient matrix for the given reference Slater determinants
+    template_orbpairs : tuple
+        List of orbital pairs that will be used to construct the geminals
 
     Method
     ------
-    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
-    __call__(method="default", **kwargs)
-        Solves the wavefunction
-    assign_dtype(dtype)
+    assign_nelec(self, nelec)
+        Assigns the number of electrons
+    assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-        (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
         Assigns the nuclear nuclear repulsion
-    assign_nelec(nelec)
-        Assigns the number of electrons
-    _solve_least_squares(**kwargs)
-        Solves the system of nonliear equations (and the wavefunction) using
-        least squares method
-    assign_params(params=None)
-        Assigns the parameters used to describe the wavefunction.
-        Adds random noise from the template if necessary
-    assign_pspace(pspace=None)
-        Assigns projection space
-    overlap(sd, deriv=None)
-        Retrieves overlap from the cache if available, otherwise compute overlap
-    compute_norm(sd=None, deriv=None)
-        Computes the norm of the wavefunction
-    compute_energy(include_nuc=False, sd=None, deriv=None)
-        Computes the energy of the wavefunction
-    objective(x)
-        The objective (system of nonlinear equations) associated with the projected
-        Schrodinger equation
-    jacobian(x)
-        The Jacobian of the objective
-    generate_pspace
-        Generates a tuple of Slater determinants onto which the wavefunction is projected
-    compute_overlap
-        Computes the overlap of the wavefunction with one or more Slater determinants
-    compute_hamiltonian
-        Computes the hamiltonian of the wavefunction with respect to one or more Slater
-        determinants
-        By default, the energy is determined with respect to ref_sd
-    normalize
-        Normalizes the wavefunction (different definitions available)
-        By default, the norm should the projection against the ref_sd squared
+    assign_integrals(self, one_int, two_int, orbtype=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+    assign_pspace(self, pspace=None)
+        Assigns the tuple of Slater determinants onto which the wavefunction is projected
+        Default uses `generate_pspace`
+    generate_pspace(self)
+        Generates the default tuple of Slater determinants with the appropriate spin and seniority
+        in increasing excitation order.
+        The number of Slater determinants is truncated by the number of parameters plus a magic
+        number (42)
+    assign_ref_sds(self, ref_sds=None)
+        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
+        calculated
+        Default is the first Slater determinant of projection space
+    assign_params(self, params=None)
+        Assigns the parameters of the wavefunction (including energy)
+        Default contains coefficients from abstract property, `template_coeffs`, and the energy of
+        the reference Slater determinants with the coefficients from `template_coeffs`
+    assign_orbpairs(self, orbpairs=None)
+        Assigns the orbital pairs that will be used to construct geminals
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
+    compute_norm(self, ref_sds=None, deriv=None)
+        Calculates the norm from given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        Default is no derivatization
+    compute_hamitonian(self, slater_d, deriv=None)
+        Calculates the expectation value of the Hamiltonian projected onto the given Slater
+        determinant, `slater_d`
+        By default no derivatization
+    compute_energy(self, include_nuc=False, ref_sds=None, deriv=None)
+        Calculates the energy projected onto given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        By default, electronic energy, no derivatization
+    objective(self, x, weigh_constraints=True)
+        Objective of the equations that will need to be solved (to solve the Projected Schrodinger
+        equation)
+    jacobian(self, x, weigh_constraints=True)
+        Jacobian of the objective
+    compute_overlap(self, sd, deriv=None)
+        Calculates the overlap between the wavefunction and a Slater determinant
+        Function in FancyCI
     """
+    @property
+    def template_orbpairs(self):
+        """ Default orbital pairs used to construct the wavefunction
+        """
+        return tuple((i, i+self.nspatial) for i in range(self.nspatial))
+
     @property
     def template_coeffs(self):
         """ Default numpy array of parameters.
@@ -132,7 +154,7 @@ class APIG(ProjectedWavefunction):
 
         Returns
         -------
-        template_coeffs : np.ndarray(K, )
+        template_coeffs : np.ndarray
 
         """
         return np.eye(self.npair, self.nspatial, dtype=self.dtype)

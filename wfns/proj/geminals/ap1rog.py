@@ -3,11 +3,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from .proj_wavefunction import ProjectedWavefunction
-from .. import slater
-from ..sd_list import sd_list
-from .proj_hamiltonian import sen0_hamiltonian
-from ..math_tools import permanent_combinatoric
+from ..proj_wavefunction import ProjectedWavefunction
+from ... import slater
+from ...sd_list import sd_list
+from ..proj_hamiltonian import sen0_hamiltonian
+from ...math_tools import permanent_combinatoric
 
 class AP1roG(ProjectedWavefunction):
     """ Antisymmetric Product of One-Reference-Orbital Geminals

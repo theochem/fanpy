@@ -2,9 +2,9 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from ..graphs import generate_biclique_pmatch
-from .proj_wavefunction import ProjectedWavefunction
-from .apg import APG
+from ...graphs import generate_biclique_pmatch
+from ..proj_wavefunction import ProjectedWavefunction
+from ..geminals.apg import APG
 
 
 # FIXME: rename
