@@ -5,7 +5,7 @@ import numpy as np
 from .doci import DOCI
 from ..sd_list import sd_list
 from .. import slater
-from ..proj.ap1rog import AP1roG
+from ..proj.geminals.ap1rog import AP1roG
 
 
 class CIPairs(DOCI):

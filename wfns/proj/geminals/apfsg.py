@@ -3,11 +3,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from .proj_wavefunction import ProjectedWavefunction
-from .. import slater
-from ..sd_list import sd_list
-from ..math_tools import permanent_ryser
-from .proj_hamiltonian import hamiltonian
+from ..proj_wavefunction import ProjectedWavefunction
+from ... import slater
+from ...sd_list import sd_list
+from ...math_tools import permanent_ryser
+from ..proj_hamiltonian import hamiltonian
 
 
 class APfsG(ProjectedWavefunction):

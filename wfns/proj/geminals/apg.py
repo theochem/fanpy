@@ -2,18 +2,31 @@ from __future__ import absolute_import, division, print_function
 
 import itertools as it
 import numpy as np
-from gmpy2 import mpz, bit_scan1
+from gmpy2 import mpz
 
-from .. import slater
-from ..math_tools import permanent_ryser
-from ..sd_list import sd_list
+from ... import slater
+from ...sd_list import sd_list
+from ...math_tools import permanent_ryser
+from ...graphs import generate_complete_pmatch
+from ..proj_wavefunction import ProjectedWavefunction
+from ..proj_hamiltonian import hamiltonian
 
-from .proj_wavefunction import ProjectedWavefunction
-from .proj_hamiltonian import hamiltonian
+# FIXME: rename
+class APG(ProjectedWavefunction):
+    """ Antisymmetric Product Geminals
 
+    ..math::
+        two_int_p^\dagger = \sum_{ij} C_{p;ij} a_i^\dagger a_j^\dagger
 
-class APseqG(ProjectedWavefunction):
-    """ Antisymmetric Product of Sequantially Interacting Geminals
+    ..math::
+        \big| \Psi_{\mathrm{APG}} \big>
+        &= \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
+        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
+    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
+    Slater determinant.
+
+    Note that for now, we make no assumptions about the structure of the :math:`C_{p;ij}`.
+    We do not impose conditions like :math:`C_{p;ij} = C_{p;ji}`
 
     Attributes
     ----------
@@ -45,6 +58,13 @@ class APseqG(ProjectedWavefunction):
     d_cache : dict of (mpz, int) to float
         Cache of the Slater determinant to the derivative(with respect to some index)
         of the overlap of the wavefunction with this Slater determinan
+    adjacency : np.ndarray
+        Adjacency matrix that shows the correlation between any orbital pairs.
+        This matrix will be used to get the pairing scheme
+    dict_orbpair_gem : dict of (int, int) to int
+        Dictionary of indices of the orbital pairs to the index of the geminal
+    dict_gem_orbpair : dict of int to (int, int)
+        Dictionary of indices of index of the geminal to the the orbital pairs
 
     Properties
     ----------
@@ -116,8 +136,9 @@ class APseqG(ProjectedWavefunction):
     normalize
         Normalizes the wavefunction (different definitions available)
         By default, the norm should the projection against the ref_sd squared
+    assign_adjacency
+        Assigns the adjacency matrix which is used to obtain the get the coupling scheme
     """
-
     def __init__(self,
                  # Mandatory arguments
                  nelec=None,
@@ -129,45 +150,63 @@ class APseqG(ProjectedWavefunction):
                  # Arguments handled by ProjWavefunction class
                  params=None,
                  pspace=None,
-                 # sequence list
-                 seq_list=None,
+                 # Adjacnecy
+                 adjacency=None,
                  # Arguments for saving parameters
                  params_save_name=''
-                 ):
+    ):
         # FIXME: this fucking mess
-        super(ProjectedWavefunction, self).__init__(nelec=nelec,
-                                                     one_int=one_int,
-                                                     two_int=two_int,
-                                                     dtype=dtype,
-                                                     nuc_nuc=nuc_nuc,
-                                                     )
+        super(ProjectedWavefunction, self).__init__(
+            nelec=nelec,
+            one_int=one_int,
+            two_int=two_int,
+            dtype=dtype,
+            nuc_nuc=nuc_nuc,
+        )
+        self.assign_params_save(params_save_name=params_save_name)
+        self.assign_adjacency(adjacency=adjacency)
+        self.assign_params(params=params)
+        self.assign_pspace(pspace=pspace)
+        if params is None:
+            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
         del self._energy
         self.cache = {}
         self.d_cache = {}
-        self.dict_orbpair_gem = {}
-        self.dict_gem_orbpair = {}
 
-        self.assign_params_save(params_save_name=params_save_name)
-        self.assign_seq_list(seq_list=seq_list)
-        self.assign_pspace(pspace=pspace)
-        self.config_gem_orbpair()
-        # assigned last due to cyclic dependence business
-        self.assign_params(params=params)
-        if params is None:
-            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
-        # normalize
-        self.normalize()
+    def assign_adjacency(self, adjacency=None):
+        """ Assigns the adjacency matrix
 
-    @property
-    def ngem(self):
-        """ Number of geminals
-
-        Returns
-        -------
-        int
-
+        Parameters
+        ----------
+        adjacency : np.ndarray
+            Adjacency matrix
+            Square boolean numpy array that describes the correlations between orbitals
         """
-        return len(self.dict_gem_orbpair)
+        if adjacency is None:
+            adjacency = np.ones((self.nspin, self.nspin), dtype=bool)
+            adjacency -= np.diag(np.diag(adjacency))
+        if not isinstance(adjacency, np.ndarray):
+            raise TypeError, 'Adjacency matrix must be a numpy array'
+        if adjacency.dtype != 'bool':
+            raise TypeError, 'Adjacency matrix must be a boolean array'
+        if adjacency.shape[0] != adjacency.shape[1]:
+            raise ValueError, 'Adjacency matrix must be square'
+        if not np.allclose(adjacency, adjacency.T):
+            raise ValueError, 'Adjacency matrix is not symmetric'
+        if not np.all(np.diag(adjacency) == False):
+            raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
+        # here, we encountered problems when due to numpy passing arrays as references
+        # ()modifying one affected the other). SO we make a copy of it
+        adjacency = np.copy(adjacency)
+        self.adjacency = np.copy(adjacency)
+        # remove the lower triangular matrix (removes repetition )
+        adjacency[np.tril_indices(adjacency.shape[0])] = False
+        # find all the edges/orbital pairs that are correlated
+        orbpairs = zip(*np.where(adjacency != False))
+        # if C_{p;ij} = C_{p;ji}
+        # orbpairs = zip(*np.where(np.triu(adjacency, k=1) != False))
+        self.dict_orbpair_gem = {orbpair:i for i, orbpair in enumerate(orbpairs)}
+        self.dict_gem_orbpair = {i:orbpair for i, orbpair in enumerate(orbpairs)}
 
     @property
     def template_coeffs(self):
@@ -181,6 +220,10 @@ class APseqG(ProjectedWavefunction):
         -------
         template_coeffs : np.ndarray(K, )
 
+        Note
+        ----
+        Assumes that C_{p;ij} = C_{p;ji}
+
         """
         gem_coeffs = np.zeros((self.npair, self.ngem), dtype=self.dtype)
         for i in range(self.npair):
@@ -188,163 +231,35 @@ class APseqG(ProjectedWavefunction):
             gem_coeffs[i, gem_ind] = 1
         return gem_coeffs
 
-    # NOTE: we need to redefine assign_pspace, because of the dependency order
-    # normally it is: pspace depends on params
-    #                 params depends on template_coeffs
-    #                 template_coeffs depends on nothing
-    # however in APseqG: pspace depends on params
-    #                    params depends on template_coeffs,
-    #                    template_coeffs depends on dict_orbpair_gem
-    #                    dict_orbpair_gem depends on pspace
-    # so pspace was chosen to break this ugly dependence:
-    #     params depends on template_coeffs,
-    #     template_coeffs depends on ngem
-    #     ngem depends on dict_orbpair_gem
-    #     dict_orbpair_gem depends on pspace
-    #     pspace depends on nothing
-    # There is still some ugly cyclic dependence so pspace needs to be truncated
-    # after params is assigned
-    def assign_pspace(self, pspace=None):
-        """ Sets the Slater determinants on which to project against
-
-        Parameters
-        ----------
-        pspace : int, iterable of int,
-            If iterable, then it is a list of Slater determinants (in the form of integers that describe
-            the occupation as a bitstring)
-            If integer, then it is the number of Slater determinants to be generated
-
-        Note
-        ----
-        If pspace is None, we take the maximum number of geminals possible for
-        the given sequences as the projection space size. However, the number of
-        geminals possible will be less for a given pspace. So the pspace will
-        need to be truncated afterwards.
-        """
-        if pspace is None:
-            # maximum number of geminals possible for a given sequence (i.e. number
-            # of geminals for a given sequence if all of the orbitals are occupied)
-            # num_max_gems = sum(self.nspin-1-seq for seq in self.seq_list)
-            # select as many projections as possible
-            # NOTE: the projections need to be truncated afterwards!
-            # pspace = self.generate_pspace(num_max_gems+1)
-            # + 1 because we need one equation for normalization
-
-            # choose all singles and doubles
-            pspace = self.generate_pspace(9999999999999999)
-        # FIXME: this is quite terrible
-        if isinstance(pspace, int):
-            pspace = self.generate_pspace(pspace)
-        elif isinstance(pspace, (list, tuple)):
-            if not all(type(i) in [int, type(mpz())] for i in pspace):
-                raise ValueError('Each Slater determinant must be an integer or mpz object')
-            pspace = [mpz(sd) for sd in pspace]
-        else:
-            raise TypeError("pspace must be an int, list or tuple")
-        self.pspace = tuple(pspace)
-
-    def assign_seq_list(self, seq_list=None):
-        """ Assigns the list of sequence orders that will be included
-
-        Parameters
-        ----------
-        seq_list : None, list of ints
-            Order of sequence that will be included in the wavefunction
-            Default is 0
-
-        """
-        if seq_list is None:
-            seq_list = [0]
-        if not isinstance(seq_list, (list, tuple)):
-            raise TypeError('seq_list must be a list or a tuple')
-        if any(i<0 for i in seq_list):
-            raise ValueError('All of the sequence order must be positive')
-        self.seq_list = seq_list
-
-    def find_gem_indices(self, sd, raise_error=True):
-        """ Returns the geminal indices that corresponds to the desired sequences
-        and the Slater determinant
-
-        Parameters
-        ----------
-        sd : mpz
-            Slater determinant written as a bitstring
-        raise_error : bool
-            If True and the orbital pair is not already defined in
-            dict_orbpair_gem, raises KeyError
-            If False and the orbital pair is not already defined in
-            dict_orbpair_gem, creates new key-value pair in dict_orbpair_gem
-            and dict_gem_orbpair.
+    @property
+    def ngem(self):
+        """ Number of geminals
 
         Returns
         -------
-        List of geminal indices that corresponds to the given sequences and the
-        Slater determinant
+        int
 
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
-        sd = mpz(sd)
-        # because orbitals are ordered by alpha orbs then beta orbs,
-        # we need to interleave/shuffle them to pair the alpha and the beta orbitals together
-        sd = slater.interleave(sd, self.nspatial)
-        # find orbital indices that correspond to each sequence
-        orb_pairs = {}
-        for seq in self.seq_list:
-            occ_index = bit_scan1(sd, 0)
-            while occ_index is not None:
-                next_index = occ_index+seq+1
-                if slater.occ(sd, next_index):
-                    sd = slater.annihilate(sd, occ_index, next_index)
-                    orb_pairs[(occ_index, next_index)] = None
-                    if sd is None:
-                        break
-                occ_index = bit_scan1(sd, occ_index+1)
+        return len(self.dict_gem_orbpair)
 
-        # convert orbital indices to geminal indices
-        gem_indices = []
-        for orbpair in orb_pairs:
-            # unshuffle (and sort) the indices
-            orbpair = sorted(slater.deinterleave_index(i, self.nspatial) for i in orbpair)
-            # convert to tuple (because lists are not hashable)
-            orbpair = tuple(orbpair)
-            # store indices
-            try:
-                gem_indices.append(self.dict_orbpair_gem[orbpair])
-            except KeyError:
-                # if orbpair not in dictionary
-                if raise_error:
-                    raise KeyError('Cannot find key {0} in dictionary dict_orbpair_gem'.format(orbpair))
-                self.dict_orbpair_gem[orbpair] = self.ngem
-                self.dict_gem_orbpair[self.ngem] = orbpair
-                gem_indices.append(self.ngem)
 
-        return gem_indices
+    def default_pmatch_generator(self, occ_indices):
+        """ Generator for the perfect matchings needed to construct the Slater determinant
 
-    # FIXME: this part is hamiltonian dependent
-    def config_gem_orbpair(self):
-        """ Constructs all of the geminal indices and the orbital pairs that are
-        encountered with the given projection space and the sequences
+        Parameters
+        ----------
+        occ_indices : list of int
+            List of spin orbital indices that are occupied in a given Slater determinant
 
+        Returns
+        -------
+        Generator for the perfect matchings
+
+        Notes
+        -----
+        Assumes that graph (of correlation) is a complete
         """
-        for sd in self.pspace:
-            self.find_gem_indices(sd, raise_error=False)
-            occ_indices = slater.occ_indices(sd)
-            vir_indices = slater.vir_indices(sd, self.nspin)
-            for one, i in enumerate(occ_indices):
-                for two, a in enumerate(vir_indices):
-                    exc_sd = slater.excite(sd, i, a)
-                    if exc_sd is None:
-                        continue
-                    self.find_gem_indices(exc_sd,
-                                          raise_error=False)
-                    for j in occ_indices[one:]:
-                        for b in vir_indices[two:]:
-                            exc_sd = slater.excite(sd, i, j, a, b)
-                            if exc_sd is None:
-                                continue
-                            self.find_gem_indices(exc_sd,
-                                                  raise_error=False)
-
+        return generate_complete_pmatch(occ_indices)
 
     def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
@@ -360,18 +275,32 @@ class APseqG(ProjectedWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=num_sd, exc_orders=[1, 2])
+        return sd_list(self.nelec, self.nspatial, num_limit=num_sd)
 
-    def compute_overlap(self, sd, deriv=None):
+    def compute_overlap(self, sd, pairing_schemes=None, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
+        ..math::
+            \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
+            &= \big< \Phi_k \big| \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
+            &= | C(\Phi_k) |^+
+        where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
+        Slater determinant (DOCI).
 
         Parameters
         ----------
         sd : int, gmpy2.mpz
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
+        pairing_scheme : generator of list of list of 2 ints
+            Contains all of available pairing schemes for the given Slater determinant
+            For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
+            Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
+            `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
+            and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
+            and `3`rd orbitals, respectively.
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
@@ -382,22 +311,36 @@ class APseqG(ProjectedWavefunction):
         """
         # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = mpz(sd)
-
+        # get indices of the occupied orbitals
         occ_indices = slater.occ_indices(sd)
-
-        # find the relevant geminal indices
-        gem_indices = self.find_gem_indices(sd, raise_error=True)
-        # FIXME: THIS MUST BE CHECKED
-        if len(gem_indices) < self.npair:
-            return 0.0
-
+        # get the pairing schemes
+        if pairing_schemes is None:
+            pairing_schemes = self.default_pmatch_generator(occ_indices)
+        # FIXME: this part is not cheap. it should move somewhere else.
+        else:
+            pairing_schemes, temp = it.tee(pairing_schemes)
+            for i in temp:
+                # if C_{p;ij} = C_{p;ji}
+                for j in i:
+                    # assert j[0] < j[1]
+                    assert all(len(j) == 2), 'All pairing in the scheme must be in 2'
+                assert set(occ_indices) == set(k for j in i for k in j), 'Pairing '
+                'scheme must use the same indices as the occupied orbitals of the '
+                'given Slater determinant'
+        # FIXME: pairing_schemes is assumed to be good (there are geminals such that all schemes present are possible)
         # build geminal coefficient
         gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
 
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, gem_indices])
+            for scheme in pairing_schemes:
+                sign = slater.find_num_trans([j for i in scheme for j in i],
+                                             occ_indices,
+                                             is_creator=True)
+                indices = [self.dict_orbpair_gem[i] for i in scheme]
+                matrix = gem_coeffs[:, indices]
+                val += sign * permanent_ryser(matrix)
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
@@ -406,13 +349,18 @@ class APseqG(ProjectedWavefunction):
             orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
             # both orbitals of the geminal must be present in the Slater determinant
             if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
-                row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in gem_indices if i != col_to_remove]
-                # NOTE: length of row_inds and col_inds must be the same
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val += 1
-                else:
-                    val += permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+                for scheme in pairing_schemes:
+                    sign = slater.find_num_trans([j for i in scheme for j in i],
+                                                 occ_indices,
+                                                 is_creator=True)
+                    # geminal must be an allowed pairing schemes
+                    if orbs_to_remove in scheme:
+                        row_inds = [i for i in range(self.npair) if i!=row_to_remove]
+                        col_inds = [self.dict_orbpair_gem[i] for i in scheme if self.dict_orbpair_gem[i]!=col_to_remove]
+                        if len(row_inds) == 0 and len(col_inds) == 0:
+                            val += sign * 1
+                        else:
+                            val += sign * permanent_ryser(gem_coeffs[row_inds][:, col_inds])
                 self.d_cache[(sd, deriv)] = val
         return val
 
@@ -441,6 +389,7 @@ class APseqG(ProjectedWavefunction):
         """
         return sum(hamiltonian(self, sd, self.orbtype, deriv=deriv))
 
+    # FIXME: remove
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
         ProjectedWavefunction.compute_norm
