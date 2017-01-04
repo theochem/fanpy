@@ -352,6 +352,9 @@ class ProjectedWavefunction(Wavefunction):
         # add energy
         if self.params[-1] == 0:
             self.params[-1] = self.compute_energy(ref_sds=self.ref_sds)
+        # clear cache
+        self.cache = {}
+        self.d_cache = {}
 
 
 
@@ -711,5 +714,11 @@ class ProjectedWavefunction(Wavefunction):
         Returns
         -------
         overlap : float
+        """
+        pass
+
+    @abstractmethod
+    def normalize(self):
+        """ Normalizes the wavefunction such that the norm with respect to `ref_sds` is 1
         """
         pass
