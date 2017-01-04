@@ -33,6 +33,9 @@ class TestProjectedWavefunction(ProjectedWavefunction):
         else:
             return 8
 
+    def normalize(self, ref_sds=None):
+        pass
+
 
 def test_nconstraints():
     """ Tests ProjectedWavefunction._nconstraints
@@ -433,10 +436,25 @@ def test_abstract():
     class TestWfn(ProjectedWavefunction):
         def compute_overlap(self):
             pass
+
+        def normalize(self):
+            pass
     assert_raises(TypeError, lambda: TestWfn(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
     # compute_overlap not defined
     class TestWfn(ProjectedWavefunction):
         @property
         def template_coeffs(self):
+            pass
+
+        def normalize(self):
+            pass
+    assert_raises(TypeError, lambda: TestWfn(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
+    # normalize not defined
+    class TestWfn(ProjectedWavefunction):
+        @property
+        def template_coeffs(self):
+            pass
+
+        def compute_overlap(self):
             pass
     assert_raises(TypeError, lambda: TestWfn(2, np.ones((3, 3)), np.ones((3, 3, 3, 3))))
