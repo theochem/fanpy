@@ -180,18 +180,27 @@ class Geminal(ProjectedWavefunction):
         ngem : int, None
             Number of geminals
         """
-        super(Geminal, self).__init__(nelec, one_int, two_int, dtype=dtype, nuc_nuc=nuc_nuc,
-                                      orbtype=orbtype, pspace=pspace, ref_sds=ref_sds,
-                                      params=params)
+        # NOTE: need to use Wavefunction.__init__ because ProjectedWavefunction.__init__ has some
+        #       problems with the dependency ordering
+        #       need nelec -> ngem -> template_coeffs -> assign_pspace
+        #       but ProjectedWavefunction.__init__ does
+        #       nelec -> assign_pspace
+        super(ProjectedWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype,
+                                                    nuc_nuc=nuc_nuc, orbtype=orbtype)
+        self.cache = {}
+        self.d_cache = {}
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
+        self.assign_pspace(pspace=pspace)
+        self.assign_ref_sds(ref_sds=ref_sds)
+        self.assign_params(params=params)
 
 
     @property
     def npair(self):
         """ Number of electron pairs
         """
-        return self.nelec/2
+        return self.nelec//2
 
 
     def assign_nelec(self, nelec):
