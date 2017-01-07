@@ -536,6 +536,14 @@ class ProjectedWavefunction(Wavefunction):
             If include_nuc is True, then total energy
             If include_nuc is False, then electronic energy
             Default is electronic energy
+
+        Raises
+        ------
+        TypeError
+            If the given reference Slater determinants are not supported
+        ValueError
+            If the norm of the wavefunction is zero
+            If the norm of the wavefunction is negative
         """
         nuc_nuc = 0.0
         if include_nuc:
@@ -551,10 +559,16 @@ class ProjectedWavefunction(Wavefunction):
         else:
             raise TypeError('Unsupported reference Slater determinants, {0}'.format(type(ref_sds)))
 
+        norm = self.compute_norm(ref_sds=ref_sds)
+        if np.abs(norm) < 1e-9:
+            raise ValueError('Norm of the waefunction is zero')
+        elif isinstance(norm, (complex, np.complex128)) and (norm.real < 1e-9 or
+                                                             abs(norm.imag) > 1e-9):
+            raise ValueError('Norm of the wavefunction is complex')
         # if not derivatized
         if deriv is None:
             elec_energy = sum(self.get_overlap(i)*sum(self.compute_hamiltonian(i)) for i in ref_sds)
-            elec_energy /= self.compute_norm(ref_sds=ref_sds)
+            elec_energy /= norm
         # if derivatized
         else:
             olp = np.array([self.get_overlap(i) for i in ref_sds])
@@ -563,7 +577,6 @@ class ProjectedWavefunction(Wavefunction):
             ham = np.array([sum(self.compute_hamiltonian(i)) for i in ref_sds])
             d_ham = np.array([sum(self.compute_hamiltonian(i, deriv=deriv)) for i in ref_sds])
 
-            norm = self.compute_norm(ref_sds=ref_sds)
             d_norm = self.compute_norm(ref_sds=ref_sds, deriv=deriv)
 
             elec_energy = np.sum(d_olp * ham + olp * d_ham) / norm

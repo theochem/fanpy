@@ -370,6 +370,11 @@ def test_compute_energy():
     assert_raises(TypeError, lambda: test.compute_energy(ref_sds=1.0))
     assert_raises(TypeError, lambda: test.compute_energy(ref_sds={}))
     assert_raises(TypeError, lambda: test.compute_energy(ref_sds='0b111'))
+    # bad norm
+    test.compute_overlap = lambda sd, deriv=None: 0
+    assert_raises(ValueError, test.compute_energy)
+    test.compute_overlap = lambda sd, deriv=None: 1j
+    assert_raises(ValueError, test.compute_energy)
 
 
 def test_objective():
