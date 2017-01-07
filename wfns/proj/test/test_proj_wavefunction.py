@@ -172,32 +172,41 @@ def test_assign_pspace():
     assert test.pspace == ()
 
 def test_assign_ref_sds():
-    test = TestProjectedWavefunction(5, np.ones((10, 10)), np.ones((10, 10, 10, 10)))
-    test.pspace = (0b11111, 0b1)
+    test = TestProjectedWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    test.pspace = (0b001001, 0b010001)
     # check error
     assert_raises(TypeError, lambda: test.assign_ref_sds(1.0))
     assert_raises(TypeError, lambda: test.assign_ref_sds({}))
     assert_raises(TypeError, lambda: test.assign_ref_sds('0b111'))
+    assert_raises(ValueError, lambda: test.assign_ref_sds(0b011001))
+    test._spin = 1
+    test._seniority = None
+    assert_raises(ValueError, lambda: test.assign_ref_sds(0b001001))
+    test._spin = None
+    test._seniority = 2
+    assert_raises(ValueError, lambda: test.assign_ref_sds(0b001001))
     # single integer
-    test.assign_ref_sds(3)
-    assert test.ref_sds == (3, )
+    test._spin = None
+    test._seniority = None
+    test.assign_ref_sds(0b001001)
+    assert test.ref_sds == (0b001001, )
     # single long
-    test.assign_ref_sds(long(3))
-    assert test.ref_sds == (3, )
+    test.assign_ref_sds(long(0b001001))
+    assert test.ref_sds == (0b001001, )
     # single mpz
-    test.assign_ref_sds(slater.internal_sd(3))
-    assert test.ref_sds == (3, )
+    test.assign_ref_sds(slater.internal_sd(0b001001))
+    assert test.ref_sds == (0b001001, )
     # tuple
-    test.assign_ref_sds((3, ))
-    assert test.ref_sds == (3, )
+    test.assign_ref_sds((0b001001, ))
+    assert test.ref_sds == (0b001001, )
     # list
-    test.assign_ref_sds([3, ])
-    assert test.ref_sds == (3, )
+    test.assign_ref_sds([0b001001, ])
+    assert test.ref_sds == (0b001001, )
     # check default
     test.assign_ref_sds()
-    assert test.ref_sds == (0b11111, )
+    assert test.ref_sds == (0b001001, )
     test.assign_ref_sds(None)
-    assert test.ref_sds == (0b11111, )
+    assert test.ref_sds == (0b001001, )
 
 
 def test_assign_params():

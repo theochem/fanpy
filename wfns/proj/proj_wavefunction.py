@@ -252,9 +252,8 @@ class ProjectedWavefunction(Wavefunction):
         pspace = tuple(slater.internal_sd(sd) for sd in pspace)
         # filter
         self.pspace = tuple(sd for sd in pspace if
-                            (self._spin is None or slater.get_spin(sd, self.nspatial) == self._spin)
-                            and (self._seniority is None or
-                                 slater.get_seniority(sd, self.nspatial) == self._seniority))
+                            (self._spin in [None, slater.get_spin(sd, self.nspatial)]) and
+                            (self._seniority in [None, slater.get_seniority(sd, self.nspatial)]))
 
 
     def assign_ref_sds(self, ref_sds=None):
@@ -291,6 +290,18 @@ class ProjectedWavefunction(Wavefunction):
             self.ref_sds = tuple(slater.internal_sd(i) for i in ref_sds)
         else:
             raise TypeError('Unsupported reference Slater determinants, {0}'.format(type(ref_sds)))
+
+        for sd in self.ref_sds:
+            if slater.total_occ(sd) != self.nelec:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same number'
+                                 ' of electrons as the wavefunction'.format(bin(sd)))
+            elif self._spin not in [None, slater.get_spin(sd, self.nspatial)]:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same spin'
+                                 ' as the selected spin, {1}'.format(bin(sd), self._spin))
+            elif self._seniority not in [None, slater.get_seniority(sd, self.nspatial)]:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same'
+                                 ' seniority as the selected seniority, {1}'
+                                 ''.format(bin(sd), self._seniority))
 
 
     def assign_params(self, params=None, add_noise=False):
