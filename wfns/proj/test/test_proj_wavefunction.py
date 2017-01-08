@@ -33,7 +33,7 @@ class TestProjectedWavefunction(ProjectedWavefunction):
         else:
             return 8
 
-    def normalize(self, ref_sds=None):
+    def normalize(self):
         pass
 
 

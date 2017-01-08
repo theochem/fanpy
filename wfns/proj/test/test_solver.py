@@ -45,6 +45,9 @@ class TestProjWavefunction(ProjectedWavefunction):
         else:
             return 0
 
+    def normalize(self):
+        pass
+
 
 def check_solver_type(test_wfn, init_guess, solver_type, use_jac, atol=1e-8):
     """ Checks that given solver type is able to produce a solution when run multiple times
