@@ -679,6 +679,7 @@ class ProjectedWavefunction(Wavefunction):
         jac : np.ndarray(self.nproj+self._nconstraints, self.nparams)
             Value of the Jacobian :math:`J_{ij}`
         """
+        # FIXME: double check if this is necessary
         # Clear cache
         self.cache = {}
         self.d_cache = {}

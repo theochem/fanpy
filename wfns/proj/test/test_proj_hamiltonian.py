@@ -27,6 +27,9 @@ class TestProjectedWavefunction(ProjectedWavefunction):
             return 3
         return 0
 
+    def normalize(self):
+        pass
+
 
 def test_hamiltonian():
     """ Tests wfns.proj.proj_hamiltonian.hamiltonian
