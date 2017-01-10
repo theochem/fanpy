@@ -649,10 +649,12 @@ class ProjectedWavefunction(Wavefunction):
             obj[i] = sum(self.compute_hamiltonian(sd)) - self.get_energy() * self.get_overlap(sd)
         # Add constraints
         # FIXME: constraint weight needs to be repeated in jacobian
-        if weigh_constraints:
-            obj[self.nproj] = (self.compute_norm() - 1)*(self.nproj + self._nconstraints)
-        else:
-            obj[self.nproj] = (self.compute_norm() - 1)
+        # FIXME: need some way of adding arbitrary constraints
+        if self._nconstraints == 1:
+            if weigh_constraints:
+                obj[self.nproj] = (self.compute_norm() - 1)*(self.nproj + self._nconstraints)
+            else:
+                obj[self.nproj] = (self.compute_norm() - 1)
 
         return obj
 
@@ -696,10 +698,12 @@ class ProjectedWavefunction(Wavefunction):
                              - energy*self.get_overlap(sd, deriv=j) - d_energy*self.get_overlap(sd))
             # Add normalization constraint
             # FIXME: constrain weight needs to be repeated here
-            if weigh_constraints:
-                jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)*(self.nproj+self._nconstraints)
-            else:
-                jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)
+            # FIXME: need some way of adding arbitrary constraints
+            if self._nconstraints == 1:
+                if weigh_constraints:
+                    jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)*(self.nproj+self._nconstraints)
+                else:
+                    jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)
 
         return jac
 

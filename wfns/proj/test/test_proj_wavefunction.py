@@ -172,6 +172,8 @@ def test_assign_pspace():
     assert test.pspace == ()
 
 def test_assign_ref_sds():
+    """ Tests ProjectedWavefunction.assign_ref_sds
+    """
     test = TestProjectedWavefunction(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
     test.pspace = (0b001001, 0b010001)
     # check error
