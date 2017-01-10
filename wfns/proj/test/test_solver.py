@@ -105,7 +105,8 @@ def multiple_run(num_runs, rtol_num_errors, *args, **kwargs):
         except (AssertionError, ValueError):
             num_errors += 1
     if (num_runs - num_errors)/num_runs < rtol_num_errors:
-        raise AssertionError('Optimizer given by {0} and {1} cannot solve the problem')
+        raise AssertionError('Optimizer given by {0} and {1} cannot solve the problem'
+                             ''.format(args, kwargs))
 
 
 def test_solver_float():
@@ -153,6 +154,7 @@ def test_solver_complex():
     assert_raises(NotImplementedError, solve, test, 'root')
     assert_raises(NotImplementedError, solve, test, 'cma')
     assert_raises(NotImplementedError, solve, test, 'cma_guess')
+    assert_raises(NotImplementedError, solve, test, 'variational')
 
     # answers (bad init guess)
     init_guess = lambda: (np.random.rand(3) - 0.5)*10
