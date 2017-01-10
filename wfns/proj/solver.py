@@ -76,7 +76,12 @@ def solve(proj_wfn, solver_type='least_squares', use_jac=True, save_file=None, *
     elif solver_type == 'cma_guess':
         solver, objective, options = get_cma(proj_wfn, use_jac, save_file, is_guess=True)
     elif solver_type == 'variational':
-        solver, objective, options = get_var(proj_wfn, use_jac, save_file)
+        if 'ref_sds' in kwargs:
+            ref_sds = kwargs['ref_sds']
+            del kwargs['ref_sds']
+        else:
+            ref_sds = None
+        solver, objective, options = get_var(proj_wfn, use_jac, save_file, ref_sds=ref_sds)
     # overwrite options with user input
     options.update(kwargs)
 
@@ -229,7 +234,7 @@ def get_cma(proj_wfn, use_jac, save_file, is_guess=False):
         options['wtol'] = 1e-12
     return fmin_cma, objective, options
 
-def get_var(proj_wfn, use_jac, save_file):
+def get_var(proj_wfn, use_jac, save_file, ref_sds=None):
     """ Returns the tools needed to run scalar minimization on the energy
 
     Parameters
@@ -265,24 +270,24 @@ def get_var(proj_wfn, use_jac, save_file):
         proj_wfn.normalize()
         if save_file is not None:
             np.save('{0}_temp.npy'.format(save_file), params)
-        return proj_wfn.compute_energy()
+        return proj_wfn.compute_energy(ref_sds=ref_sds)
 
     def grad_energy(params):
         """ Calculates the gradient of energy from given a set of parameters
         """
         proj_wfn.assign_params(params)
-        return np.array([proj_wfn.compute_energy(deriv=i) for i in range(params.size)])
+        proj_wfn.normalize()
+        return np.array([proj_wfn.compute_energy(ref_sds=ref_sds, deriv=i) for i in
+                         range(params.size)])
 
-    solver = None
+    solver = minimize
     objective = energy
     options = {}
     if use_jac:
-        solver = minimize
         options['method'] = 'BFGS'
         options['jac'] = grad_energy
         options['options'] = {'gtol':1e-8}
     else:
-        solver = minimize
         options['method'] = 'Powell'
         options['options'] = {'xtol':1e-9, 'ftol':1e-9}
 
