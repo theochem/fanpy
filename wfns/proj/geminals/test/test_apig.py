@@ -152,7 +152,8 @@ def test_normalize():
 
 
 def answer_apig_h2_sto6g():
-    """ Finds the APIG/STO-6G wavefunction by scanning through the coefficients for the lowest energy
+    """ Finds the APIG/STO-6G wavefunction by scanning through the coefficients for the lowest
+    energy
     """
     hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
