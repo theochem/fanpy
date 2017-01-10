@@ -3,9 +3,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from .geminal import Geminal
-from ..proj_hamiltonian import sen0_hamiltonian
 from ... import slater
-from ...sd_list import sd_list
 from ...math_tools import permanent_ryser
 
 
@@ -138,11 +136,15 @@ class APIG(Geminal):
         Calculates the overlap between the wavefunction and a Slater determinant
         Function in FancyCI
     """
+    _seniority = 0
+    _spin = 0
+
     @property
     def template_orbpairs(self):
         """ Default orbital pairs used to construct the wavefunction
         """
         return tuple((i, i+self.nspatial) for i in range(self.nspatial))
+
 
     @property
     def template_coeffs(self):
@@ -155,48 +157,32 @@ class APIG(Geminal):
         Returns
         -------
         template_coeffs : np.ndarray
-
         """
-        return np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        # FIXME: only applies to reference Slater determinant of ground state HF
+        # FIXME: should find perfect matching of the template_orbpairs to construct the refernece SD
+        # TODO: raise error if none exist
+        # NOTE: not too easy b/c ref_sds requires pspace which requires template_coeffs (cyclic
+        #       dependence)
+        return np.eye(self.ngem, self.nspatial, dtype=self.dtype)
 
-    def generate_pspace(self, num_sd):
-        """ Generates Slater determinants to project onto
-
-        # FIXME: wording
-        Since APIG wavefunction only consists of Slater determinants with orbitals that are
-        paired (alpha and beta orbitals corresponding to the same spatial orbital are occupied),
-        the Slater determinants used correspond to those in DOCI wavefunction
-
-        Parameters
-        ----------
-        num_sd : int
-            Number of Slater determinants to generate
-
-        Returns
-        -------
-        pspace : list of gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        """
-        return sd_list(self.nelec, self.nspatial, num_limit=num_sd, seniority=0)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
         ..math::
-            \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
-            &= \big< \Phi_k \big| \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
+            \braket{\Phi_k | \Psi_{\mathrm{APIG}}}
+            &= \braket{\Phi_k | \prod_{p=1}^P two_int_p^\dagger | \theta }\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
+               \braket{\Phi_k | \mathbf{m}}
             &= | C(\Phi_k) |^+
-        where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-        Slater determinant (DOCI).
+        where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a Slater determinant
+        (DOCI).
 
         Parameters
         ----------
         sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
@@ -204,14 +190,21 @@ class APIG(Geminal):
         Returns
         -------
         overlap : float
+
+        Raises
+        ------
+        ValueError
+            If `sd` does not have same number of electrons as ground state HF
+            If `sd` does not have seniority zero
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
-        sd = mpz(sd)
+        sd = slater.internal_sd(sd)
         # get indices of the occupied orbitals
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        occ_alpha_indices = slater.occ_indices(alpha_sd)
-        occ_beta_indices = slater.occ_indices(beta_sd)
-        if occ_alpha_indices != occ_beta_indices:
+        occ_indices = slater.occ_indices(alpha_sd)
+        if len(occ_indices) != self.npair:
+            raise ValueError('Given Slater determinant, {0}, does not have the same number of'
+                             ' electrons as ground state HF wavefunction'.format(bin(sd)))
+        if occ_indices != slater.occ_indices(beta_sd):
             raise ValueError('Given Slater determinant, {0}, does not belong'
                              ' to the DOCI Slater determinants'.format(bin(sd)))
 
@@ -221,67 +214,40 @@ class APIG(Geminal):
         val = 0.0
         # if no derivatization
         if deriv is None:
-            val = permanent_ryser(gem_coeffs[:, occ_alpha_indices])
+            val = permanent_ryser(gem_coeffs[:, occ_indices])
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
             row_to_remove = deriv // self.nspatial
             col_to_remove = deriv % self.nspatial
-            if col_to_remove in occ_alpha_indices:
-                row_inds = [i for i in range(self.npair) if i != row_to_remove]
-                col_inds = [i for i in occ_alpha_indices if i != col_to_remove]
+            if col_to_remove in occ_indices:
+                row_inds = [i for i in range(int(self.npair)) if i != row_to_remove]
+                col_inds = [i for i in occ_indices if i != col_to_remove]
                 if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
+                    val = 1.0
                 else:
-                    val = permanent_ryser(gem_coeffs[row_inds][:, col_inds])
+                    val = permanent_ryser(gem_coeffs[row_inds, :][:, col_inds])
                 # construct new gmpy2.mpz to describe the slater determinant and
                 # derivation index
                 self.d_cache[(sd, deriv)] = val
         return val
 
-    def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
-        determinant
 
-        ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{APIG}} \big>
-
-        Since only Slater determinants from DOCI will be used, we can use the DOCI
-        Hamiltonian
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        deriv : None, int
-            Index of the paramater to derivatize the overlap with respect to
-            Default is no derivatization
-
-        Returns
-        -------
-        float
-        """
-        return sum(sen0_hamiltonian(self, sd, self.orbtype, deriv=deriv))
-
-    # FIXME: remove
+    # FIXME; REPEATED CODE IN A LOT OF GEMINAL CODE
     def normalize(self):
-        """ Normalizes the wavefunction using the norm defined in
-        ProjectedWavefunction.compute_norm
+        """ Normalizes the wavefunction such that the norm with respect to `ref_sds` is 1
 
-        Some of the cache are emptied because the parameters are rewritten
+        Raises
+        ------
+        ValueError
+            If the norm is zero
+            If the norm is negative
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
-        # normalize the wavefunction
-        norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5 / self.npair)
-        # set attributes
-        self.params[:-1] = gem_coeffs.flatten()
-        # empty cache
-        for sd in self.default_ref_sds:
-            del self.cache[sd]
-            for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.d_cache[i]
-            # Following requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
+        norm = self.compute_norm(ref_sds=self.ref_sds)
+        if abs(norm) < 1e-9:
+            raise ValueError('Norm of the wavefunction is zero. Cannot normalize')
+        if norm < 0:
+            raise ValueError('Norm of the wavefunction is negative. Cannot normalize')
+        self.params[:-1] *= norm**(-0.5/self.ngem)
+        self.cache = {sd : val * norm**(-0.5) for sd, val in self.cache.iteritems()}
+        self.d_cache = {d_sd : val * norm**(-0.5) for d_sd, val in self.cache.iteritems()}
