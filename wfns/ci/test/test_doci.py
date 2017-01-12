@@ -91,6 +91,7 @@ def test_doci_h4_hf_sto6g():
     assert abs(doci.get_energy() - (-1.884948574812363)) < 1e-7
 
 
+# FIXME: NEED EITHER ORBITAL OPTIMIZATION OR REORDERING OF PETER'S ORBITALS
 # def test_doci_h2_hf_631gdp():
 #     """ Tests DOCI wavefunction for H2 (STO-6G) against Peter's orbital optimized DOCI
 
