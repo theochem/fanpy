@@ -121,23 +121,25 @@ class CIPairs(DOCI):
         if exc_lvl < 0:
             raise ValueError('Excitation level cannot be negative')
 
-        npair = self.nelec/2
+        npair = self.nelec//2
         # dictionary of slater determinant to coefficient
-        dict_sd_coeff = {sd:coeff for sd, coeff in
+        dict_sd_coeff = {sd : coeff for sd, coeff in
                          zip(self.civec, self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat)}
         # ground state SD
         ground = slater.ground(self.nelec, self.nspin)
+        # normalize
+        dict_sd_coeff = {sd : coeff/dict_sd_coeff[ground] for sd, coeff in
+                         dict_sd_coeff.iteritems()}
         # fill empty geminal coefficient
         gem_coeffs = np.zeros((npair, self.nspatial - npair))
         for i in range(npair):
             for a in range(npair, self.nspatial):
-                # because first npair columns are removed
-                a -= npair
                 # excite slater determinant
                 sd_exc = slater.excite(ground, i, a)
-                # set geminal coefficient
-                gem_coeffs[i, a] = dict_sd_coeff[sd_exc]
+                sd_exc = slater.excite(sd_exc, i+self.nspatial, a+self.nspatial)
+                # set geminal coefficient (`a` decremented b/c first npair columns are removed)
+                gem_coeffs[i, a-npair] = dict_sd_coeff[sd_exc]
 
         return AP1roG(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
                       nuc_nuc=self.nuc_nuc, orbtype=self.orbtype,
-                      params=np.hstack(gem_coeffs.flat, self.get_energy()))
+                      params=np.hstack((gem_coeffs.flat, self.get_energy(include_nuc=False))))
