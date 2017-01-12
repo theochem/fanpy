@@ -231,34 +231,34 @@ def test_ap1rog_h2_sto6g():
     two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
 
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     ap1rog.cache = {}
     ap1rog.d_cache = {}
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.838434256)) < 1e-7
 
     # Solve with least squares with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.859089844148)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], -0.113735924428061)
     # Solve with least squares without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.859089844148)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], -0.113735924428061)
     # Solve with root with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.859089844148)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], -0.113735924428061)
     # Solve with root without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.859089844148)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], -0.113735924428061)
     # CMA is quite terrible here
-    # ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    # ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     # solve(ap1rog, solver_type='cma', use_jac=False)
     # print(ap1rog.compute_energy(include_nuc=False))
     # print(ap1rog.params)
@@ -281,42 +281,42 @@ def test_ap1rog_h2_631gdp():
     two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
 
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     ap1rog.cache = {}
     ap1rog.d_cache = {}
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.84444667247)) < 1e-7
 
     # Solve with least squares with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.8696828608304892)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-0.05949796, -0.05454253, -0.03709503,
                                                      -0.02899231, -0.02899231, -0.01317386,
                                                      -0.00852702, -0.00852702, -0.00517996]))
     # Solve with least squares without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.8696828608304892)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-0.05949796, -0.05454253, -0.03709503,
                                                      -0.02899231, -0.02899231, -0.01317386,
                                                      -0.00852702, -0.00852702, -0.00517996]))
     # Solve with root with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.8696828608304892)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-0.05949796, -0.05454253, -0.03709503,
                                                      -0.02899231, -0.02899231, -0.01317386,
                                                      -0.00852702, -0.00852702, -0.00517996]))
     # Solve with root without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.8696828608304892)) < 1e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-0.05949796, -0.05454253, -0.03709503,
                                                      -0.02899231, -0.02899231, -0.01317386,
                                                      -0.00852702, -0.00852702, -0.00517996]))
     # Solve with cma
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='cma', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-1.8696828608304892)) < 1e-4
     assert np.allclose(ap1rog.params[:-1], np.array([-0.05949796, -0.05454253, -0.03709503,
@@ -341,13 +341,13 @@ def test_ap1rog_lih_sto6g():
     nuc_nuc = hf_dict["nuc_nuc_energy"]
 
     # see if we can reproduce HF numbers
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     ap1rog.cache = {}
     ap1rog.d_cache = {}
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.9472891719)) < 1e-7
 
     # Solve with least squares with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.963531105243506)) < 2e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-4.18979612e-03, -1.71684359e-03,
@@ -356,7 +356,7 @@ def test_ap1rog_lih_sto6g():
                                                      -2.90031933e-02, -1.17012605e-01]),
                        rtol=1e-4, atol=1e-7)
     # Solve with least squares without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='least_squares', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.963531105243506)) < 2e-8
     assert np.allclose(ap1rog.params[:-1], np.array([-4.18979612e-03, -1.71684359e-03,
@@ -365,7 +365,7 @@ def test_ap1rog_lih_sto6g():
                                                      -2.90031933e-02, -1.17012605e-01]),
                        rtol=1e-4, atol=1e-7)
     # Solve with root with Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=True)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.963531105243506)) < 1e-7
     assert np.allclose(ap1rog.params[:-1], np.array([-4.18979612e-03, -1.71684359e-03,
@@ -374,7 +374,7 @@ def test_ap1rog_lih_sto6g():
                                                      -2.90031933e-02, -1.17012605e-01]),
                        rtol=1e-3, atol=1e-6)
     # Solve with root without Jacobian
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='root', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.963531105243506)) < 1e-7
     assert np.allclose(ap1rog.params[:-1], np.array([-4.18979612e-03, -1.71684359e-03,
@@ -383,7 +383,7 @@ def test_ap1rog_lih_sto6g():
                                                      -2.90031933e-02, -1.17012605e-01]),
                        rtol=1e-3, atol=1e-6)
     # Solve with cma
-    ap1rog = AP1roG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(ap1rog, solver_type='cma', use_jac=False)
     assert abs(ap1rog.compute_energy(include_nuc=False) - (-8.963531105243506)) < 1e-5
     assert np.allclose(ap1rog.params[:-1], np.array([-4.18979612e-03, -1.71684359e-03,

@@ -33,6 +33,9 @@ class TestGeminal(Geminal):
         else:
             return 8
 
+    def normalize(self):
+        pass
+
 
 def test_assign_nelec():
     """ Tests Geminal.assign_nelec
