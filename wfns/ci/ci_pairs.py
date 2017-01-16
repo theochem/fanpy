@@ -5,7 +5,6 @@ import numpy as np
 from .doci import DOCI
 from ..sd_list import sd_list
 from .. import slater
-from ..proj.geminals.ap1rog import AP1roG
 
 
 class CIPairs(DOCI):
@@ -116,6 +115,9 @@ class CIPairs(DOCI):
         ValueError
             If excitation level is negative
         """
+        # import AP1roG (because nasty cyclic import business)
+        from ..proj.geminals.ap1rog import AP1roG
+
         if not isinstance(exc_lvl, int):
             raise TypeError('Excitation level must be an integer')
         if exc_lvl < 0:

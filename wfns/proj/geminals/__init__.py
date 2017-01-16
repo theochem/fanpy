@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from . import geminal
 from . import apig
 from . import ap1rog
 from . import apr2g

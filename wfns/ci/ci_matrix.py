@@ -13,6 +13,7 @@ import numpy as np
 from .. import slater
 
 
+# FIXME: This should move to somewhere in wfns b/c wfns.proj.proj_hamiltonian also uses it
 def get_one_int_value(one_int_matrices, i, k, orbtype):
     """ Gets value of the one-electron hamiltonian integral with orbitals `i` and `k`
 
@@ -78,6 +79,7 @@ def get_one_int_value(one_int_matrices, i, k, orbtype):
     return 0.0
 
 
+# FIXME: This should move to somewhere in wfns b/c wfns.proj.proj_hamiltonian also uses it
 def get_two_int_value(two_int_matrices, i, j, k, l, orbtype):
     """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 

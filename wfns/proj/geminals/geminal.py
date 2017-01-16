@@ -270,7 +270,7 @@ class Geminal(ProjectedWavefunction):
         if orbpairs is None:
             orbpairs = self.template_orbpairs
 
-        if (not isinstance(orbpairs, (tuple, int)) or
+        if (not isinstance(orbpairs, (tuple, list)) or
                 not all(isinstance(orbpair, tuple) for orbpair in orbpairs) or
                 not all(len(orbpair) == 2 for orbpair in orbpairs)):
             raise TypeError('`orbpairs` must be given as a tuple/list of 2-tuple')
