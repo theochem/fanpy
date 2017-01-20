@@ -62,6 +62,9 @@ class APIG(Geminal):
     d_cache : dict of gmpy2.mpz to float
         Cache of the derivative of overlaps that are calculated for each Slater determinant and
         derivative index encountered
+    dict_orbpair_ind : dict of 2-tuple of int to int
+        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
+        to the column index of the geminal coefficient matrix
 
     Properties
     ----------
@@ -251,3 +254,145 @@ class APIG(Geminal):
         self.params[:-1] *= norm**(-0.5/self.ngem)
         self.cache = {sd : val * norm**(-0.5) for sd, val in self.cache.iteritems()}
         self.d_cache = {d_sd : val * norm**(-0.5) for d_sd, val in self.cache.iteritems()}
+
+
+    def to_apr2g(self, rmsd=0.01):
+        """ Converts APIG wavefunction to APr2G wavefunction
+
+        Using least squares, the APIG geminal coefficients are converted to the APr2G variant, i.e.
+        find the coefficients :math:`\{\lambda_j\}`, :math:`\{\epsilon_i\}`, and :math:`\{\zeta_i\}`
+        such that following equation is best satisfied
+        ..math::
+            C_{ij} &= \frac{\zeta_i}{\epsilon_i + \lambda_j}\\
+            0 &= \zeta_i - C_{ij} \epsilon_i - C_{ij} \lambda_j\\
+
+        The least square has the form of :math:`Ax=b`. Given that the :math:`b=0`
+        and the unknowns are
+        ..math::
+            x = \begin{bmatrix}
+            \lambda_1 \\ \vdots\\ \lambda_K\\
+            \zeta_1 \\ \vdots\\ \zeta_P\\
+            \epsilon_1 \\ \vdots\\ \epsilon_P\\
+            \end{bmatrix},
+        then A must be
+        ..math::
+            A = \begin{bmatrix}
+            -C_{11} & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            -C_{12} & 0 & \dots & 0 & 0 & -C_{12} & \dots & 0 &  & 0 & 1 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            -C_{1K} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{1K} &  & 0 & 0 & \dots & 1\\
+            0 & -C_{21} & \dots & 0 & -C_{21} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            0 & -C_{2K} & \dots & 0 & 0 & 0 & \dots & -C_{2K} &  & 0 & 0 & \dots & 1\\
+            0 & 0 & \dots & -C_{PK} & -C_{P1} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & -C_{PK} &  & 0 & 0 & \dots & 1\\
+            \end{bmatrix}
+
+
+        Parameters
+        ----------
+        rmsd : float
+            Root mean square deviation allowed for the generated APr2G coefficient matrix (compared
+            to the APIG coefficient matrix)
+
+        Returns
+        -------
+        apr2g : APr2G instance
+            APr2G wavefunction that best corresponds to the given APIG wavefunction
+
+        Raises
+        ------
+        ValueError
+            If generate APr2G coefficient matrix has a root mean square deviation with the APIG
+            coefficient matrix that is greater than the threshold value
+
+        Example
+        -------
+        Assuming we have a system with 2 electron pairs and 4 spatial orbitals,
+        we have
+        ..math::
+            C = \begin{bmatrix}
+            C_{11} & \dots & C_{1K}\\
+            C_{21} & \dots & C_{2K}
+            \end{bmatrix}
+        ..math::
+            A = \begin{bmatrix}
+            C_{11} & 0 & -C_{11} & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+            C_{12} & 0 & 0 & -C_{12} & 0 & 0 & 0 & 1 & 0 & 0\\
+            C_{13} & 0 & 0 & 0 & -C_{13} & 0 & 0 & 0 & 1 & 0\\
+            C_{14} & 0 & 0 & 0 & 0 & -C_{14} & 0 & 0 & 0 & 1\\
+            0 & C_{21} & -C_{21} & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+            0 & C_{22} & 0 & -C_{22} & 0 & 0 & 0 & 1 & 0 & 0\\
+            0 & C_{23} & 0 & 0 & -C_{23} & 0 & 0 & 0 & 1 & 0\\
+            0 & C_{24} & 0 & 0 & 0 & -C_{24} & 0 & 0 & 0 & 1\\
+            \end{bmatrix}
+
+        ..math::
+            x = \begin{bmatrix}
+            \lambda_ 1& \lambda_2
+            \epsilon_1 \\ \epsilon_2\ \\ \epsilon_3 \\ \epsilon_4\\
+            \zeta_1 \\ \zeta_2\\
+            \end{bmatrix}
+        """
+        # import APr2G (because nasty cyclic import business)
+        from .apr2g import APr2G
+
+        # make coefficients
+        apig_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
+        # assign least squares matrix by reference
+        matrix = np.zeros((apig_coeffs.size, self.npair + 2*self.nspatial), dtype=self.dtype)
+        # set up submatrices that references a specific part of the matrix
+        lambdas = matrix[:, :self.npair]
+        epsilons = matrix[:, self.npair:self.npair + self.nspatial]
+        zetas = matrix[:, self.npair + self.nspatial:self.npair + 2*self.nspatial]
+        for i in range(self.npair):
+            lambdas[i*self.nspatial:(i + 1)*self.nspatial, i] = -apig_coeffs[i, :]
+            epsilons[i*self.nspatial:(i + 1)*self.nspatial, :] = np.diag(apig_coeffs[i, :])
+            zetas[i*self.nspatial:(i + 1)*self.nspatial, :] = np.identity(self.nspatial)
+
+        # Turn system of equations heterogeneous
+        # Select indices that will be assigned values
+        indices = np.zeros(self.npair + 2*self.nspatial, dtype=bool)
+        vals = np.array([])
+
+        # assign epsilons
+        #  with orbital energy
+        # indices[self.npair:self.npair + self.nspatial] = True
+        # vals = np.diag(self.one_int[0])
+        # indices[self.npair] = True
+        # vals = np.hstack((vals, np.diag(self.one_int[0])[0]))
+
+        # assign zetas
+        # FIXME: assign weights based on orbital coupling
+        # indices[self.npair + self.nspatial:2*self.npair + self.nspatial] = True
+        # vals = np.hstack((vals, np.ones(self.npair)))
+        indices[self.npair + self.nspatial] = True
+        vals = np.hstack((vals, 1))
+
+        # find ordinate
+        ordinate = -matrix[:, indices].dot(vals)
+
+        # Solve the least-squares system
+        sol = np.zeros(indices.size)
+        sol[indices] = vals
+        sol[-indices] = np.linalg.lstsq(matrix[:, -indices], ordinate)[0].astype(self.dtype)
+
+        # Check
+        lambdas = sol[:self.npair][:, np.newaxis]
+        epsilons = sol[self.npair:self.npair+self.nspatial]
+        zetas = sol[self.npair+self.nspatial:]
+        apr2g_coeffs = zetas / (lambdas - epsilons)
+        deviation = (np.sum((apig_coeffs - apr2g_coeffs)**2)/apig_coeffs.size)**(0.5)
+        if deviation > rmsd or np.isnan(deviation):
+            raise ValueError('APr2G coefficient matrix has RMSD of {0} with the APIG coefficient'
+                             ' matrix'.format(deviation))
+        # Add energy
+        params = np.hstack((sol, self.get_energy()))
+        # make wavefunction
+        return APr2G(self.nelec, self.one_int, self.two_int, dtype=self.dtype, nuc_nuc=self.nuc_nuc,
+                     orbtype=self.orbtype, pspace=self.pspace, ref_sds=self.ref_sds,
+                     params=params, ngem=self.ngem, orbpairs=self.dict_orbpair_ind.keys())
