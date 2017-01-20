@@ -53,6 +53,10 @@ class Geminal(ProjectedWavefunction):
     d_cache : dict of gmpy2.mpz to float
         Cache of the derivative of overlaps that are calculated for each Slater determinant and
         derivative index encountered
+    dict_orbpair_ind : dict of 2-tuple of int to int
+        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
+        to the column index of the geminal coefficient matrix
+
 
     Properties
     ----------
@@ -282,7 +286,7 @@ class Geminal(ProjectedWavefunction):
         # sort
         orbpairs = sorted((i, j) if i < j else (j, i) for (i, j) in orbpairs)
 
-        self.dict_orbpair_gem = {orbpair:i for i, orbpair in enumerate(orbpairs)}
+        self.dict_orbpair_ind = {orbpair:i for i, orbpair in enumerate(orbpairs)}
 
 
     #####################
