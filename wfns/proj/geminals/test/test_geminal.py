@@ -90,21 +90,21 @@ def test_assign_orbpair():
     assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (1, 1)))
     # None
     test.assign_orbpairs()
-    assert test.dict_orbpair_gem == {(0, 1):0}
+    assert test.dict_orbpair_ind == {(0, 1):0}
     test.assign_orbpairs(None)
-    assert test.dict_orbpair_gem == {(0, 1):0}
+    assert test.dict_orbpair_ind == {(0, 1):0}
     # sorted
     test.assign_orbpairs(((0, 1), (1, 2), (3, 4)))
-    assert test.dict_orbpair_gem == {(0, 1):0, (1, 2):1, (3, 4):2}
+    assert test.dict_orbpair_ind == {(0, 1):0, (1, 2):1, (3, 4):2}
     # unsorted
     test.assign_orbpairs(((0, 1), (2, 1), (3, 4)))
-    assert test.dict_orbpair_gem == {(0, 1):0, (1, 2):1, (3, 4):2}
+    assert test.dict_orbpair_ind == {(0, 1):0, (1, 2):1, (3, 4):2}
     test.assign_orbpairs(((3, 4), (1, 2), (1, 0)))
-    assert test.dict_orbpair_gem == {(0, 1):0, (1, 2):1, (3, 4):2}
+    assert test.dict_orbpair_ind == {(0, 1):0, (1, 2):1, (3, 4):2}
     test.assign_orbpairs(((3, 4), (1, 2), (1, 0)))
-    assert test.dict_orbpair_gem == {(0, 1):0, (1, 2):1, (3, 4):2}
+    assert test.dict_orbpair_ind == {(0, 1):0, (1, 2):1, (3, 4):2}
     test.assign_orbpairs(((0, 1), (2, 4), (2, 3)))
-    assert test.dict_orbpair_gem == {(0, 1):0, (2, 3):1, (2, 4):2}
+    assert test.dict_orbpair_ind == {(0, 1):0, (2, 3):1, (2, 4):2}
 
 
 def test_abstract():

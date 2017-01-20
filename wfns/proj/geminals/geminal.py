@@ -194,9 +194,9 @@ class Geminal(ProjectedWavefunction):
         self.cache = {}
         self.d_cache = {}
         self.assign_ngem(ngem=ngem)
-        self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_pspace(pspace=pspace)
         self.assign_ref_sds(ref_sds=ref_sds)
+        self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
 
 
