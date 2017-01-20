@@ -51,6 +51,14 @@ def test_template_coeffs():
     assert np.allclose(test.template_coeffs, np.array([1, 0, 0, 0]))
 
 
+def test_assign_orbpairs():
+    """ Tests wfns.rpoj.geminals.apig.APIG.assign_orbpairs
+    """
+    test = APIG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
+    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5), (5, 7), (6, 7)))
+    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5)))
+
+
 def test_compute_overlap():
     """ Tests wfns.proj.geminals.apig.APIG.compute_overlap
     """

@@ -169,6 +169,31 @@ class APIG(Geminal):
         return np.eye(self.ngem, self.nspatial, dtype=self.dtype)
 
 
+    def assign_orbpairs(self, orbpairs=None):
+        """ Assigns the orbital pairs that will be used to construct geminals
+
+        Parameters
+        ----------
+        orbpairs : tuple/list of 2-tuple of ints
+            Each 2-tuple is an orbital pair that is allowed to contribute to geminals
+
+        Raises
+        ------
+        TypeError
+            If `orbpairs` is not a tuple/list of 2-tuples
+        ValueError
+            If an orbital pair has the same integer
+            If any two orbital pair shares an orbital
+            If any orbital is not included in any orbital pair
+        """
+        super(APIG, self).assign_orbpairs(orbpairs=orbpairs)
+        all_orbs = [j for i in self.dict_orbpair_ind.iterkeys() for j in i]
+        if len(all_orbs) != len(set(all_orbs)):
+            raise ValueError('At least two orbital pairs share an orbital')
+        elif len(set(all_orbs)) != self.nspin:
+            raise ValueError('Not all of the orbitals are included in orbital pairs')
+
+
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
