@@ -65,6 +65,12 @@ class AP1roG(APIG):
     d_cache : dict of gmpy2.mpz to float
         Cache of the derivative of overlaps that are calculated for each Slater determinant and
         derivative index encountered
+    dict_orbpair_ind : dict of 2-tuple of int to int
+        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
+        to the column index of the geminal coefficient matrix
+    dict_orb_ind : dict of int to int
+        Dictionary of virtual orbital pair (wrt reference SD) to the index of the geminal
+        coefficient column
 
     Properties
     ----------
@@ -163,11 +169,6 @@ class AP1roG(APIG):
         #        0 1 0 0 c c c c c
         #        0 0 1 0 c c c c c
         #        0 0 0 1 c c c c c
-        # TODO: when reference is not ground state, coefficient matrix should look something like
-        #        1 0 c 0 0 c c c c
-        #        0 1 c 0 0 c c c c
-        #        0 0 c 0 1 c c c c
-        #        0 0 c 1 0 c c c c
         # NOTE: we need to know which rows (of identity matrix) are repeated
         return np.zeros((self.ngem, self.nspatial-self.npair), dtype=self.dtype)
 
@@ -221,9 +222,42 @@ class AP1roG(APIG):
             ints or None
         """
         super(self.__class__, self).assign_ref_sds(ref_sds=ref_sds)
-        if self.ref_sds != (slater.ground(self.nelec, self.nspin), ):
-            raise NotImplementedError('AP1roG (as it is right now) only supports ground state HF'
-                                      ' as a reference Slater determinant (i.e. no excited states)')
+        if len(self.ref_sds) != 1:
+            raise NotImplementedError('AP1roG (as it is right now) only supports one reference'
+                                      ' Slater determinant')
+
+
+    def assign_orbpairs(self, orbpairs=None):
+        """ Assigns the orbital pairs that will be used to construct geminals
+
+        Parameters
+        ----------
+        orbpairs : tuple/list of 2-tuple of ints
+            Each 2-tuple is an orbital pair that is allowed to contribute to geminals
+
+        Raises
+        ------
+        TypeError
+            If `orbpairs` is not a tuple/list of 2-tuples
+        ValueError
+            If an orbital pair has the same integer
+        """
+        super(AP1roG, self).assign_orbpairs(orbpairs=orbpairs)
+        # NOTE: it's possible for two different orbital pair to share the same index b/c index for
+        #       occupied orbital pair refers to the row index and the index for virtual orbital pair
+        #       refers to the column index
+        # NOTE: if there is more than one reference SD, we don't know which is "occupied" and
+        #       "virtual"
+        counter_occ = 0
+        counter_vir = 0
+        # Since only the virtual orbitals (wrt reference SD) are relevant
+        for i, j in sorted(self.dict_orbpair_ind.iterkeys(), key=lambda x: x[0]):
+            if not slater.occ(self.ref_sds[0], i) and not slater.occ(self.ref_sds[0], j):
+                self.dict_orbpair_ind[(i, j)] = counter_vir
+                counter_vir += 1
+            else:
+                self.dict_orbpair_ind[(i, j)] = counter_occ
+                counter_occ += 1
 
 
     def compute_overlap(self, sd, deriv=None):
@@ -276,7 +310,9 @@ class AP1roG(APIG):
         # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = slater.internal_sd(sd)
         # get indices of the occupied orbitals
-        orbs_annihilated, orbs_created = slater.diff(slater.ground(self.nelec, self.nspin), sd)
+        # NOTE: self.dict_orbpair_ind breaks if reference SD is not wrt first ref_sds (there can
+        #       only be one)
+        orbs_annihilated, orbs_created = slater.diff(self.ref_sds[0], sd)
         if len(orbs_annihilated) != len(orbs_created):
             raise ValueError('Given Slater determinant, {0}, does not have the same number of'
                              ' electrons as ground state HF wavefunction'.format(bin(sd)))
@@ -284,8 +320,10 @@ class AP1roG(APIG):
             raise ValueError('Given Slater determinant, {0}, does not belong to the DOCI Slater'
                              ' determinants'.format(bin(sd)))
         # convert to spatial orbitals
-        orbs_annihilated = [i for i in orbs_annihilated if i < self.nspatial]
-        orbs_created = [i - self.npair for i in orbs_created if i < self.nspatial]
+        orbs_annihilated = [self.dict_orbpair_ind[(i, i+self.nspatial)] for i in orbs_annihilated
+                            if i < self.nspatial]
+        orbs_created = [self.dict_orbpair_ind[(i, i+self.nspatial)] for i in orbs_created
+                        if i < self.nspatial]
 
         # build geminal coefficient
         gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
