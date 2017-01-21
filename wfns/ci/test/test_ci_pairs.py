@@ -23,18 +23,18 @@ def test_to_ap1rog():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog
     """
     test = CIPairs(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0, 1, 2])
-    test.sd_coeffs = np.arange(1, 10).reshape(3, 3)
+    test.sd_coeffs = np.arange(9, 0, -1).reshape(3, 3)
     assert_raises(TypeError, test.to_ap1rog, 1.0)
     assert_raises(ValueError, test.to_ap1rog, -1)
     ap1rog = test.to_ap1rog(exc_lvl=0)
-    assert np.allclose(ap1rog.params, np.array([4, 7, 14]))
+    assert np.allclose(ap1rog.params, np.array([6/9, 3/9, 4]))
     ap1rog = test.to_ap1rog(exc_lvl=1)
-    assert np.allclose(ap1rog.params, np.array([5/2, 8/2, 9.5]))
+    assert np.allclose(ap1rog.params, np.array([5/8, 2/8, 3.875]))
     ap1rog = test.to_ap1rog(exc_lvl=2)
-    assert np.allclose(ap1rog.params, np.array([6/3, 9/3, 8]))
+    assert np.allclose(ap1rog.params, np.array([4/7, 1/7, 7*4/7 - 2*1/7]))
 
 
-def test_to_ap1rog_h2_sto6g():
+def test_to_ap1rog_h2_sto6g_ground():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals
     """
     hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
@@ -43,11 +43,18 @@ def test_to_ap1rog_h2_sto6g():
     two_int = hf_dict["two_int"]
     nuc_nuc = hf_dict["nuc_nuc_energy"]
 
-    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
+    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
     solve(cipair)
+    # ground state
     test_ap1rog = cipair.to_ap1rog(exc_lvl=0)
     test_ap1rog.normalize()
-    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b0101, ))
+    proj_solve(ap1rog)
+    assert np.allclose(test_ap1rog.params, ap1rog.params)
+    # excited state
+    test_ap1rog = cipair.to_ap1rog(exc_lvl=1)
+    test_ap1rog.normalize()
+    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b1010, ))
     proj_solve(ap1rog)
     assert np.allclose(test_ap1rog.params, ap1rog.params)
 
