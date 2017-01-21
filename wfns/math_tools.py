@@ -239,7 +239,7 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     if etas is None:
         etas = np.ones(num_row)
 
-    cauchy_matrix = 1 / (epsilons - lambdas[:, np.newaxis])
+    cauchy_matrix = 1 / (lambdas[:, np.newaxis] - epsilons)
     if num_row > num_col:
         num_row, num_col = num_col, num_row
         zetas, etas = etas, zetas
