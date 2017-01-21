@@ -119,7 +119,7 @@ def test_permanent_borchardt_rect():
     etas = np.random.rand(p)
 
     # without etas
-    gem_coeffs = zetas / (epsilons - lambdas[:, np.newaxis])
+    gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
     perm_comb = permanent_combinatoric(gem_coeffs)
     perm_borch = permanent_borchardt(lambdas, epsilons, zetas)
     perm_rys = permanent_ryser(gem_coeffs)
@@ -127,7 +127,7 @@ def test_permanent_borchardt_rect():
     assert np.allclose(perm_rys, perm_borch)
 
     # with etas (ncol > nrow)
-    gem_coeffs = zetas * etas[:, np.newaxis] / (epsilons - lambdas[:, np.newaxis])
+    gem_coeffs = zetas * etas[:, np.newaxis] / (lambdas[:, np.newaxis] - epsilons)
     perm_comb = permanent_combinatoric(gem_coeffs)
     perm_borch = permanent_borchardt(lambdas, epsilons, zetas, etas)
     perm_rys = permanent_ryser(gem_coeffs)
@@ -141,7 +141,7 @@ def test_permanent_borchardt_rect():
     etas = np.random.rand(k)
 
     # without etas
-    gem_coeffs = zetas / (epsilons - lambdas[:, np.newaxis])
+    gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
     perm_comb = permanent_combinatoric(gem_coeffs)
     perm_borch = permanent_borchardt(lambdas, epsilons, zetas)
     perm_rys = permanent_ryser(gem_coeffs)
@@ -149,7 +149,7 @@ def test_permanent_borchardt_rect():
     assert np.allclose(perm_rys, perm_borch)
 
     # with etas
-    gem_coeffs = zetas * etas[:, np.newaxis] / (epsilons - lambdas[:, np.newaxis])
+    gem_coeffs = zetas * etas[:, np.newaxis] / (lambdas[:, np.newaxis] - epsilons)
     perm_comb = permanent_combinatoric(gem_coeffs)
     perm_borch = permanent_borchardt(lambdas, epsilons, zetas, etas)
     perm_rys = permanent_ryser(gem_coeffs)
