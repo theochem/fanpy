@@ -125,23 +125,29 @@ class CIPairs(DOCI):
 
         npair = self.nelec//2
         # dictionary of slater determinant to coefficient
-        dict_sd_coeff = {sd : coeff for sd, coeff in
-                         zip(self.civec, self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat)}
-        # ground state SD
-        ground = slater.ground(self.nelec, self.nspin)
+        zip_sd_coeff = zip(self.civec, self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat)
+        zip_sd_coeff.sort(reverse=True, key=lambda x: abs(x[1]))
+        dict_sd_coeff = {sd : coeff for sd, coeff in zip_sd_coeff}
+        # reference SD
+        ref_sd = zip_sd_coeff[0][0]
         # normalize
-        dict_sd_coeff = {sd : coeff/dict_sd_coeff[ground] for sd, coeff in
+        dict_sd_coeff = {sd : coeff/dict_sd_coeff[ref_sd] for sd, coeff in
                          dict_sd_coeff.iteritems()}
+        # make ap1rog object
+        ap1rog = AP1roG(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
+                        nuc_nuc=self.nuc_nuc, orbtype=self.orbtype, ref_sds=(ref_sd, ))
         # fill empty geminal coefficient
         gem_coeffs = np.zeros((npair, self.nspatial - npair))
-        for i in range(npair):
-            for a in range(npair, self.nspatial):
+        for occ_ind in (i for i in slater.occ_indices(ref_sd) if i < self.nspatial):
+            for vir_ind in (a for a in slater.vir_indices(ref_sd, self.nspin) if a < self.nspatial):
                 # excite slater determinant
-                sd_exc = slater.excite(ground, i, a)
-                sd_exc = slater.excite(sd_exc, i+self.nspatial, a+self.nspatial)
+                sd_exc = slater.excite(ref_sd, occ_ind, vir_ind)
+                sd_exc = slater.excite(sd_exc, occ_ind+self.nspatial, vir_ind+self.nspatial)
                 # set geminal coefficient (`a` decremented b/c first npair columns are removed)
-                gem_coeffs[i, a-npair] = dict_sd_coeff[sd_exc]
+                row_ind = ap1rog.dict_orbpair_ind[(occ_ind, occ_ind+self.nspatial)]
+                col_ind = ap1rog.dict_orbpair_ind[(vir_ind, vir_ind+self.nspatial)]
+                gem_coeffs[row_ind, col_ind] = dict_sd_coeff[sd_exc]
 
-        return AP1roG(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
-                      nuc_nuc=self.nuc_nuc, orbtype=self.orbtype,
-                      params=np.hstack((gem_coeffs.flat, self.get_energy(include_nuc=False))))
+        ap1rog.assign_params(np.hstack((gem_coeffs.flat, self.get_energy(include_nuc=False,
+                                                                         exc_lvl=exc_lvl))))
+        return ap1rog
