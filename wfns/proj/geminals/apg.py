@@ -1,212 +1,159 @@
+""" Antisymmeterized Product of Geminals
+"""
 from __future__ import absolute_import, division, print_function
-
-import itertools as it
 import numpy as np
-from gmpy2 import mpz
-
-from ... import slater
-from ...sd_list import sd_list
-from ...math_tools import permanent_ryser
-from ...graphs import generate_complete_pmatch
+from .geminal import Geminal
 from ..proj_wavefunction import ProjectedWavefunction
-from ..proj_hamiltonian import hamiltonian
+from ... import slater
+from ...graphs import generate_complete_pmatch
+from ...math_tools import permanent_ryser
 
-# FIXME: rename
-class APG(ProjectedWavefunction):
-    """ Antisymmetric Product Geminals
+class APG(Geminal):
+    """ Antisymmeterized Product of Geminals Wavefunction
 
-    ..math::
-        two_int_p^\dagger = \sum_{ij} C_{p;ij} a_i^\dagger a_j^\dagger
+    Here, the geminal wavefunction is built with the perfect matchings of a graph whose edges
+    are the orbital pairs that are used to construct the wavefunction. For example, the APG
+    wavefunction is analogous to all perfect matchings of a complete graph. The APsetG wavefunction
+    is analogous to all perfect matchings of a complete bipartite graph. Though this structure is
+    very flexible, the cost of the wavefunction is restricted by the cost of permanent evaluation.
+    For now, the perfect matching representation of a geminal wavefunction is restricted to the
+    evaluation of permanents, so the numerically efficient approximations will also be restricted to
+    those of the permanent (i.e. borchardt theorem and reference Slater determinant).
 
-    ..math::
-        \big| \Psi_{\mathrm{APG}} \big>
-        &= \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big| \mathbf{m} \big>
-    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-    Slater determinant.
+    If you want to use another function to evaluate the overlap, such as a pfaffian, you will be
+    better off constructing a new child of Geminal class. Otherwise, a child of APG class should be
+    sufficient after overwriting template_orbpairs and assign_pmatch_generator.
 
-    Note that for now, we make no assumptions about the structure of the :math:`C_{p;ij}`.
-    We do not impose conditions like :math:`C_{p;ij} = C_{p;ji}`
+    Class Variables
+    ---------------
+    _nconstraints : int
+        Number of constraints
+    _seniority : int, None
+        Seniority of the wavefunction
+        None means that all seniority is allowed
+    _spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
 
     Attributes
     ----------
-    dtype : {np.float64, np.complex128}
-        Numpy data type
-    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
-        and the (beta, beta) unrestricted orbitals
-    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 3), two electron integrals for the
-        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
-        (beta, beta, beta, beta) unrestricted orbitals
-    nuc_nuc : float
-        Nuclear nuclear repulsion value
     nelec : int
         Number of electrons
+    one_int : 1- or 2-tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        1-tuple for spatial (restricted) and generalized orbitals
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
+    two_int : 1- or 3-tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        In physicist's notation
+        1-tuple for spatial (restricted) and generalized orbitals
+        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
+        beta-beta-beta-beta components)
+    dtype : {np.float64, np.complex128}
+        Numpy data type
+    nuc_nuc : float
+        Nuclear-nuclear repulsion energy
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
-    params : np.ndarray(K)
-        Guess for the parameters
-        Iteratively updated during convergence
-        Initial guess before convergence
-        Coefficients after convergence
-    cache : dict of mpz to float
-        Cache of the Slater determinant to the overlap of the wavefunction with this
-        Slater determinant
-    d_cache : dict of (mpz, int) to float
-        Cache of the Slater determinant to the derivative(with respect to some index)
-        of the overlap of the wavefunction with this Slater determinan
-    adjacency : np.ndarray
-        Adjacency matrix that shows the correlation between any orbital pairs.
-        This matrix will be used to get the pairing scheme
-    dict_orbpair_gem : dict of (int, int) to int
-        Dictionary of indices of the orbital pairs to the index of the geminal
-    dict_gem_orbpair : dict of int to (int, int)
-        Dictionary of indices of index of the geminal to the the orbital pairs
+    pspace : tuple of gmpy2.mpz
+        Slater determinants onto which the wavefunction is projected
+    ref_sds : tuple of gmpy2.mpz
+        Slater determinants that will be used as a reference for the wavefunction (e.g. for
+        initial guess, energy calculation, normalization, etc)
+    params : np.ndarray
+        Parameters of the wavefunction (including energy)
+    cache : dict of sd to float
+        Cache of the overlaps that are calculated for each Slater determinant encountered
+    d_cache : dict of gmpy2.mpz to float
+        Cache of the derivative of overlaps that are calculated for each Slater determinant and
+        derivative index encountered
+    dict_orbpair_ind : dict of 2-tuple of int to int
+        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
+        to the column index of the geminal coefficient matrix
+    dict_ind_orbpair : dict of int to 2-tuple of int
+        Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
+        where i and j are spin orbital indices and i < j
+    template_coeffs : np.ndarray
+        Initial guess coefficient matrix for the given reference Slater determinants
+
 
     Properties
     ----------
-    _methods : dict of func
-        Dictionary of methods that are used to solve the wavefunction
     nspin : int
         Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
-    npair : int
-        Number of electron pairs (rounded down)
     nparams : int
-        Number of parameters used to define the wavefunction
+        Number of parameters
     nproj : int
-        Number of Slater determinants to project against
-    ref_sd : int or list of int
-        Reference Slater determinants with respect to which the norm and the energy
-        are calculated
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Or list of integers
-    template_coeffs : np.ndarray(K)
-        Default numpy array of parameters.
-        This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
+        Number of Slater determinants
+    npair : int
+        Number of electron pairs
+    ngem : int
+        Number of geminals
+    template_orbpairs : tuple
+        List of orbital pairs that will be used to construct the geminals
 
     Method
     ------
-    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
-    __call__(method="default", **kwargs)
-        Solves the wavefunction
-    assign_dtype(dtype)
+    assign_nelec(self, nelec)
+        Assigns the number of electrons
+    assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-        (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
         Assigns the nuclear nuclear repulsion
-    assign_nelec(nelec)
-        Assigns the number of electrons
-    _solve_least_squares(**kwargs)
-        Solves the system of nonliear equations (and the wavefunction) using
-        least squares method
-    assign_params(params=None)
-        Assigns the parameters used to describe the wavefunction.
-        Adds random noise from the template if necessary
-    assign_pspace(pspace=None)
-        Assigns projection space
-    overlap(sd, deriv=None)
-        Retrieves overlap from the cache if available, otherwise compute overlap
-    compute_norm(sd=None, deriv=None)
-        Computes the norm of the wavefunction
-    compute_energy(include_nuc=False, sd=None, deriv=None)
-        Computes the energy of the wavefunction
-    objective(x)
-        The objective (system of nonlinear equations) associated with the projected
-        Schrodinger equation
-    jacobian(x)
-        The Jacobian of the objective
-    generate_pspace
-        Generates a tuple of Slater determinants onto which the wavefunction is projected
-    compute_overlap
-        Computes the overlap of the wavefunction with one or more Slater determinants
-    compute_hamiltonian
-        Computes the hamiltonian of the wavefunction with respect to one or more Slater
-        determinants
-        By default, the energy is determined with respect to ref_sd
-    normalize
-        Normalizes the wavefunction (different definitions available)
-        By default, the norm should the projection against the ref_sd squared
-    assign_adjacency
-        Assigns the adjacency matrix which is used to obtain the get the coupling scheme
+    assign_integrals(self, one_int, two_int, orbtype=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+    assign_pspace(self, pspace=None)
+        Assigns the tuple of Slater determinants onto which the wavefunction is projected
+        Default uses `generate_pspace`
+    generate_pspace(self)
+        Generates the default tuple of Slater determinants with the appropriate spin and seniority
+        in increasing excitation order.
+        The number of Slater determinants is truncated by the number of parameters plus a magic
+        number (42)
+    assign_ref_sds(self, ref_sds=None)
+        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
+        calculated
+        Default is the first Slater determinant of projection space
+    assign_params(self, params=None)
+        Assigns the parameters of the wavefunction (including energy)
+        Default contains coefficients from abstract property, `template_coeffs`, and the energy of
+        the reference Slater determinants with the coefficients from `template_coeffs`
+    assign_orbpairs(self, orbpairs=None)
+        Assigns the orbital pairs that will be used to construct geminals
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
+    compute_norm(self, ref_sds=None, deriv=None)
+        Calculates the norm from given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        Default is no derivatization
+    compute_hamitonian(self, slater_d, deriv=None)
+        Calculates the expectation value of the Hamiltonian projected onto the given Slater
+        determinant, `slater_d`
+        By default no derivatization
+    compute_energy(self, include_nuc=False, ref_sds=None, deriv=None)
+        Calculates the energy projected onto given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        By default, electronic energy, no derivatization
+    objective(self, x, weigh_constraints=True)
+        Objective of the equations that will need to be solved (to solve the Projected Schrodinger
+        equation)
+    jacobian(self, x, weigh_constraints=True)
+        Jacobian of the objective
+    compute_overlap(self, sd, deriv=None)
+        Calculates the overlap between the wavefunction and a Slater determinant
     """
-    def __init__(self,
-                 # Mandatory arguments
-                 nelec=None,
-                 one_int=None,
-                 two_int=None,
-                 # Arguments handled by base Wavefunction class
-                 dtype=None,
-                 nuc_nuc=None,
-                 # Arguments handled by ProjWavefunction class
-                 params=None,
-                 pspace=None,
-                 # Adjacnecy
-                 adjacency=None,
-                 # Arguments for saving parameters
-                 params_save_name=''
-    ):
-        # FIXME: this fucking mess
-        super(ProjectedWavefunction, self).__init__(
-            nelec=nelec,
-            one_int=one_int,
-            two_int=two_int,
-            dtype=dtype,
-            nuc_nuc=nuc_nuc,
-        )
-        self.assign_params_save(params_save_name=params_save_name)
-        self.assign_adjacency(adjacency=adjacency)
-        self.assign_params(params=params)
-        self.assign_pspace(pspace=pspace)
-        if params is None:
-            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
-        del self._energy
-        self.cache = {}
-        self.d_cache = {}
-
-    def assign_adjacency(self, adjacency=None):
-        """ Assigns the adjacency matrix
-
-        Parameters
-        ----------
-        adjacency : np.ndarray
-            Adjacency matrix
-            Square boolean numpy array that describes the correlations between orbitals
+    @property
+    def template_orbpairs(self):
+        """ List of orbital pairs that will be used to construct the geminals
         """
-        if adjacency is None:
-            adjacency = np.ones((self.nspin, self.nspin), dtype=bool)
-            adjacency -= np.diag(np.diag(adjacency))
-        if not isinstance(adjacency, np.ndarray):
-            raise TypeError, 'Adjacency matrix must be a numpy array'
-        if adjacency.dtype != 'bool':
-            raise TypeError, 'Adjacency matrix must be a boolean array'
-        if adjacency.shape[0] != adjacency.shape[1]:
-            raise ValueError, 'Adjacency matrix must be square'
-        if not np.allclose(adjacency, adjacency.T):
-            raise ValueError, 'Adjacency matrix is not symmetric'
-        if not np.all(np.diag(adjacency) == False):
-            raise ValueError, 'Adjacency matrix must have a diagonal of zero (or False)'
-        # here, we encountered problems when due to numpy passing arrays as references
-        # ()modifying one affected the other). SO we make a copy of it
-        adjacency = np.copy(adjacency)
-        self.adjacency = np.copy(adjacency)
-        # remove the lower triangular matrix (removes repetition )
-        adjacency[np.tril_indices(adjacency.shape[0])] = False
-        # find all the edges/orbital pairs that are correlated
-        orbpairs = zip(*np.where(adjacency != False))
-        # if C_{p;ij} = C_{p;ji}
-        # orbpairs = zip(*np.where(np.triu(adjacency, k=1) != False))
-        self.dict_orbpair_gem = {orbpair:i for i, orbpair in enumerate(orbpairs)}
-        self.dict_gem_orbpair = {i:orbpair for i, orbpair in enumerate(orbpairs)}
+        return tuple((i, j) for i in range(self.nspin) for j in range(i+1, self.nspin))
+
 
     @property
     def template_coeffs(self):
@@ -225,66 +172,145 @@ class APG(ProjectedWavefunction):
         Assumes that C_{p;ij} = C_{p;ji}
 
         """
-        gem_coeffs = np.zeros((self.npair, self.ngem), dtype=self.dtype)
-        for i in range(self.npair):
-            gem_ind = self.dict_orbpair_gem[(i, i+self.nspatial)]
-            gem_coeffs[i, gem_ind] = 1
+        gem_coeffs = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
+        # FIXME: only applies to reference Slater determinant of ground state HF
+        col_inds = [self.dict_orbpair_ind[(i, i+self.nspatial)] for i in range(self.npair)]
+        gem_coeffs[:, col_inds] += np.eye(self.ngem, self.npair)
         return gem_coeffs
 
+
     @property
-    def ngem(self):
-        """ Number of geminals
-
-        Returns
-        -------
-        int
-
+    def norbpair(self):
+        """ Number of orbital pairs used to construct the geminals
         """
-        return len(self.dict_gem_orbpair)
+        return len(self.dict_orbpair_ind)
 
 
-    def default_pmatch_generator(self, occ_indices):
-        """ Generator for the perfect matchings needed to construct the Slater determinant
+    def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None, pspace=None,
+                 ref_sds=None, params=None, ngem=None, orbpairs=None, pmatch_generator=None):
+        """ Initializes a wavefunction
 
         Parameters
         ----------
-        occ_indices : list of int
-            List of spin orbital indices that are occupied in a given Slater determinant
+        nelec : int
+            Number of electrons
 
-        Returns
-        -------
-        Generator for the perfect matchings
+        one_int : np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K)
+            One electron integrals
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unretricted spin orbitals, 2-tuple of np.ndarray
 
-        Notes
-        -----
-        Assumes that graph (of correlation) is a complete
+        two_int : np.ndarray(K,K,K,K), 1- or 3-tuple np.ndarray(K,K,K,K)
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unrestricted orbitals, 3-tuple of np.ndarray
+
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type
+            Default is `np.float64`
+
+        nuc_nuc : {float, None}
+            Nuclear nuclear repulsion value
+            Default is `0.0`
+
+        orbtype : {'restricted', 'unrestricted', 'generalized', None}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is `'restricted'`
+
+        pspace : list/tuple of int/long/gmpy2.mpz, None
+            Slater determinants onto which the wavefunction is projected
+            Default uses `generate_pspace`
+
+        ref_sds : int/long/gmpy2.mpz, list/tuple of int/long/gmpy2.mpz, None
+            Slater determinants that will be used as a reference for the wavefunction (e.g. for
+            initial guess, energy calculation, normalization, etc)
+            Default uses first Slater determinant of `pspace`
+
+        params : np.ndarray, None
+            Parameters of the wavefunction (including energy)
+            Default uses `template_coeffs` and energy of the reference Slater determinants
+
+        ngem : int, None
+            Number of geminals
+
+        orbpairs : tuple/list of 2-tuple of ints
+            List of orbital pairs that are allowed to contribute to geminals
+
+        pmatch_generator : function
+            Function that returns the perfect matchings available for a given Slater determinant
+            Input is list/tuple of orbitals indices that are occupied in the Slater determinant
+            Generates a `npair`-tuple of 2-tuple where each 2-tuple is an orbital pair.
+            For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
+            Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
+            `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
+            and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
+            and `3`rd orbitals, respectively.
         """
-        return generate_complete_pmatch(occ_indices)
+        # NOTE: modified from Geminal.__init__ because APG.pspace depends on assign_orbpairs and
+        #       APG.assign_params depends on assign_pmatch_generator
+        super(ProjectedWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype,
+                                                    nuc_nuc=nuc_nuc, orbtype=orbtype)
+        self.cache = {}
+        self.d_cache = {}
+        self.assign_ngem(ngem=ngem)
+        self.assign_orbpairs(orbpairs=orbpairs)
+        self.assign_pspace(pspace=pspace)
+        self.assign_ref_sds(ref_sds=ref_sds)
+        self.assign_pmatch_generator(pmatch_generator=pmatch_generator)
+        self.assign_params(params=params)
 
-    def generate_pspace(self, num_sd):
-        """ Generates Slater determinants to project onto
+
+    def assign_pmatch_generator(self, pmatch_generator=None):
+        """ Assigns the function that is used to generate the perfect matchings of a Slater
+        determinant
 
         Parameters
         ----------
-        num_sd : int
-            Number of Slater determinants to generate
+        pmatch_generator : function
+            Function that returns the perfect matchings available for a given Slater determinant
+            Input is list/tuple of orbitals indices that are occupied in the Slater determinant
+            Generates a `npair`-tuple of 2-tuple where each 2-tuple is an orbital pair.
+            For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
+            Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
+            `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
+            and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
+            and `3`rd orbitals, respectively.
 
-        Returns
-        -------
-        pspace : list of gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
+        Raises
+        ------
+        TypeError
+            If pmatch_generator is not a function
+        ValueError
+            If pairing scheme contains a pair with the wrong number (not 2) of orbital indices
+            If pairing scheme contains more than `npair` orbital pairs
+            If pairing scheme contains orbital indices that are not in the given Slater determinant
         """
-        return sd_list(self.nelec, self.nspatial, num_limit=num_sd)
+        if pmatch_generator is None:
+            pmatch_generator = generate_complete_pmatch
+        if not callable(pmatch_generator):
+            raise TypeError('Given pmatch_generator is not a function')
+        # quite expensive
+        for sd in self.pspace:
+            occ_indices = slater.occ_indices(sd)
+            for scheme in pmatch_generator(occ_indices):
+                if not all(len(pair) == 2 for pair in scheme):
+                    raise ValueError('All pairing in the scheme must be in 2')
+                if len(scheme) != self.npair:
+                    raise ValueError('There is at least one redundant orbital pair')
+                if set(occ_indices) != set(orb_ind for pair in scheme for orb_ind in pair):
+                    raise ValueError('Pairing scheme contains orbitals that is not contained in'
+                                     ' the provided Slater determinant')
+        self.pmatch_generator = pmatch_generator
 
-    def compute_overlap(self, sd, pairing_schemes=None, deriv=None):
+
+    def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
         ..math::
             \big< \Phi_k \big| \Psi_{\mathrm{APIG}} \big>
             &= \big< \Phi_k \big| \prod_{p=1}^P two_int_p^\dagger \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
+               | C(\mathbf{m}) |^+ \big< \Phi_k \big| \mathbf{m} \big>
             &= | C(\Phi_k) |^+
         where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
         Slater determinant (DOCI).
@@ -296,11 +322,6 @@ class APG(ProjectedWavefunction):
             as a bitstring
         pairing_scheme : generator of list of list of 2 ints
             Contains all of available pairing schemes for the given Slater determinant
-            For example, {0b1111:(((0,2),(1,3)), ((0,1),(2,3)))} would associate the
-            Slater determinant `0b1111` with pairing schemes ((0,2), (1,3)), where
-            `0`th and `2`nd orbitals are paired with `1`st and `3`rd orbitals, respectively,
-            and ((0,1),(2,3)) where `0`th and `1`st orbitals are paired with `2`nd
-            and `3`rd orbitals, respectively.
         deriv : None, int
             Index of the paramater to derivatize the overlap with respect to
             Default is no derivatization
@@ -308,55 +329,50 @@ class APG(ProjectedWavefunction):
         Returns
         -------
         overlap : float
+
+        Raises
+        ------
+        ValueError
+            If the number of electrons of the wavefunction and the SD does not match
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
-        sd = mpz(sd)
+        sd = slater.internal_sd(sd)
         # get indices of the occupied orbitals
         occ_indices = slater.occ_indices(sd)
+        if len(occ_indices) != self.nelec:
+            raise ValueError('Given Slater determinant, {0}, does not have the same number of'
+                             ' electrons as ground state HF wavefunction'.format(bin(sd)))
         # get the pairing schemes
-        if pairing_schemes is None:
-            pairing_schemes = self.default_pmatch_generator(occ_indices)
-        # FIXME: this part is not cheap. it should move somewhere else.
-        else:
-            pairing_schemes, temp = it.tee(pairing_schemes)
-            for i in temp:
-                # if C_{p;ij} = C_{p;ji}
-                for j in i:
-                    # assert j[0] < j[1]
-                    assert all(len(j) == 2), 'All pairing in the scheme must be in 2'
-                assert set(occ_indices) == set(k for j in i for k in j), 'Pairing '
-                'scheme must use the same indices as the occupied orbitals of the '
-                'given Slater determinant'
-        # FIXME: pairing_schemes is assumed to be good (there are geminals such that all schemes present are possible)
+        pairing_schemes = self.pmatch_generator(occ_indices)
         # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
+        gem_coeffs = self.params[:-1].reshape(self.ngem, self.norbpair)
 
         val = 0.0
         # if no derivatization
         if deriv is None:
             for scheme in pairing_schemes:
-                sign = slater.find_num_trans([j for i in scheme for j in i],
-                                             occ_indices,
-                                             is_creator=True)
-                indices = [self.dict_orbpair_gem[i] for i in scheme]
+                # FIXME: it will be better to get the sign as we generate the pairing scheme
+                sign = (-1)**slater.find_num_trans([i for pair in scheme for i in pair],
+                                                   occ_indices, is_creator=True)
+                indices = [self.dict_orbpair_ind[pair] for pair in scheme]
                 matrix = gem_coeffs[:, indices]
                 val += sign * permanent_ryser(matrix)
             self.cache[sd] = val
         # if derivatization
         elif isinstance(deriv, int) and deriv < self.params.size - 1:
-            row_to_remove = deriv // self.ngem
-            col_to_remove = deriv % self.ngem
-            orbs_to_remove = self.dict_gem_orbpair[col_to_remove]
-            # both orbitals of the geminal must be present in the Slater determinant
+            row_to_remove = deriv // self.norbpair
+            col_to_remove = deriv % self.norbpair
+            orbs_to_remove = self.dict_ind_orbpair[col_to_remove]
+            # if the column corresponds to orbitals that are occupied in the Slater determinant
             if orbs_to_remove[0] in occ_indices and orbs_to_remove[1] in occ_indices:
                 for scheme in pairing_schemes:
-                    sign = slater.find_num_trans([j for i in scheme for j in i],
-                                                 occ_indices,
-                                                 is_creator=True)
-                    # geminal must be an allowed pairing schemes
+                    # if the column/orbital pair is used to describe the Slater determinant
                     if orbs_to_remove in scheme:
-                        row_inds = [i for i in range(self.npair) if i!=row_to_remove]
-                        col_inds = [self.dict_orbpair_gem[i] for i in scheme if self.dict_orbpair_gem[i]!=col_to_remove]
+                        # FIXME: it will be better to get the sign as we generate the pairing scheme
+                        sign = (-1)**slater.find_num_trans([i for pair in scheme for i in pair],
+                                                           occ_indices, is_creator=True)
+                        row_inds = [i for i in range(self.npair) if i != row_to_remove]
+                        col_inds = [self.dict_orbpair_ind[i] for i in scheme
+                                    if self.dict_orbpair_ind[i] != col_to_remove]
                         if len(row_inds) == 0 and len(col_inds) == 0:
                             val += sign * 1
                         else:
@@ -364,54 +380,22 @@ class APG(ProjectedWavefunction):
                 self.d_cache[(sd, deriv)] = val
         return val
 
-    def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
-        determinant
 
-        ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{APIG}} \big>
-
-        Since only Slater determinants from DOCI will be used, we can use the DOCI
-        Hamiltonian
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        deriv : None, int
-            Index of the paramater to derivatize the overlap with respect to
-            Default is no derivatization
-
-        Returns
-        -------
-        float
-        """
-        return sum(hamiltonian(self, sd, self.orbtype, deriv=deriv))
-
-    # FIXME: remove
+    # FIXME: REPEATED CODE IN A LOT OF GEMINAL CODE
     def normalize(self):
-        """ Normalizes the wavefunction using the norm defined in
-        ProjectedWavefunction.compute_norm
+        """ Normalizes the wavefunction such that the norm with respect to `ref_sds` is 1
 
-        Some of the cache are emptied because the parameters are rewritten
+        Raises
+        ------
+        ValueError
+            If the norm is zero
+            If the norm is negative
         """
-        # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.npair, self.ngem)
-        # # normalize the geminals
-        # norm = np.sum(gem_coeffs**2, axis=1)
-        # gem_coeffs *= np.abs(norm[:, np.newaxis])**(-0.5)
-        # # flip the negative norms
-        # gem_coeffs[norm < 0, :] *= -1
-        # normalize the wavefunction
-        norm = self.compute_norm()
-        gem_coeffs *= norm**(-0.5 / self.npair)
-        # set attributes
-        self.params[:-1] = gem_coeffs.flatten()
-        # empty cache
-        for sd in self.default_ref_sds:
-            del self.cache[sd]
-            for i in (j for j in self.d_cache.keys() if j[0] == sd):
-                del self.d_cache[i]
-            # Following requires d_cache to be a dictionary of dictionary
-            # self.d_cache[sd] = {}
+        norm = self.compute_norm(ref_sds=self.ref_sds)
+        if abs(norm) < 1e-9:
+            raise ValueError('Norm of the wavefunction is zero. Cannot normalize')
+        if norm < 0:
+            raise ValueError('Norm of the wavefunction is negative. Cannot normalize')
+        self.params[:-1] *= norm**(-0.5/self.ngem)
+        self.cache = {sd : val * norm**(-0.5) for sd, val in self.cache.iteritems()}
+        self.d_cache = {d_sd : val * norm**(-0.5) for d_sd, val in self.cache.iteritems()}
