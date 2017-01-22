@@ -65,6 +65,9 @@ class APr2G(APIG):
     dict_orbpair_ind : dict of 2-tuple of int to int
         Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
         to the column index of the geminal coefficient matrix
+    dict_ind_orbpair : dict of int to 2-tuple of int
+        Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
+        where i and j are spin orbital indices and i < j
 
     Properties
     ----------

@@ -743,10 +743,8 @@ def find_num_trans(jumbled_set, ordered_set=None, is_creator=True):
         If used with the creation operators, give indices from smallest to largest
         order
     is_creator : bool
-        If True, the objects being ordered are treated as creators (from largest
-        to smallest)
-        If False, the objects being ordered are treated as annihilators (from smallest
-        to largest)
+        If True, the objects being ordered are treated as creators (from largest to smallest)
+        If False, the objects being ordered are treated as annihilators (from smallest to largest)
 
     Returns
     -------

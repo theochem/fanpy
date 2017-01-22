@@ -8,7 +8,7 @@ solve(proj_wfn, solver_type='least_squares', use_jac=True, save_file=None, **kwa
 from __future__ import absolute_import, division, print_function
 import os
 import numpy as np
-from scipy.optimize import root, least_squares, minimize, basinhopping
+from scipy.optimize import root, least_squares, minimize
 from paraopt.cma import fmin_cma
 from .proj_wavefunction import ProjectedWavefunction
 
