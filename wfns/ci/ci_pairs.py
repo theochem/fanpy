@@ -146,8 +146,10 @@ class CIPairs(DOCI):
                 # set geminal coefficient (`a` decremented b/c first npair columns are removed)
                 row_ind = ap1rog.dict_orbpair_ind[(occ_ind, occ_ind+self.nspatial)]
                 col_ind = ap1rog.dict_orbpair_ind[(vir_ind, vir_ind+self.nspatial)]
-                gem_coeffs[row_ind, col_ind] = dict_sd_coeff[sd_exc]
-
+                try:
+                    gem_coeffs[row_ind, col_ind] = dict_sd_coeff[sd_exc]
+                except KeyError:
+                    gem_coeffs[row_ind, col_ind] = 0
         ap1rog.assign_params(np.hstack((gem_coeffs.flat, self.get_energy(include_nuc=False,
                                                                          exc_lvl=exc_lvl))))
         return ap1rog

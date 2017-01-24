@@ -59,7 +59,7 @@ def test_to_ap1rog_h2_sto6g_ground():
     assert np.allclose(test_ap1rog.params, ap1rog.params)
 
 
-def test_to_ap1rog_ilh_sto6g():
+def test_to_ap1rog_lih_sto6g():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals
     """
     hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
@@ -75,3 +75,24 @@ def test_to_ap1rog_ilh_sto6g():
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     proj_solve(ap1rog)
     assert np.all(test_ap1rog.params / ap1rog.params > 0.99)
+
+
+def test_to_ap1rog_h4_sto6g():
+    """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals
+    """
+    hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
+    nelec = 4
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
+    solve(cipair)
+    test_ap1rog = cipair.to_ap1rog(exc_lvl=1)
+    #FIXME: SD 0b10101010 cannot be obtained by single pair excitation of 0b01010101 (reference)
+    #       this means that one coefficient is discarded when converted to ap1rog
+    #       Maybe it will be better to keep 0b00110011 as the reference and modify the normalization
+    sd_coeffs = cipair.sd_coeffs[:, 1].flatten()/ cipair.sd_coeffs[1, 1]
+    assert np.allclose(sd_coeffs[0], test_ap1rog.params[2])
+    assert np.allclose(sd_coeffs[1], 1)
+    assert np.allclose(sd_coeffs[2], test_ap1rog.params[3])
