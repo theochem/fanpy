@@ -197,6 +197,40 @@ def test_to_apr2g():
     assert_raises(ValueError, apig.to_apr2g)
 
 
+def test_to_apg():
+    """ Tests wfns.proj.geminals.apig.APIG.to_apg
+    """
+    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    one_int = hf_dict["one_int"]
+    two_int = hf_dict["two_int"]
+    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # construct apig with this coefficient matrix
+    apig_coeffs = np.array([[1.033593181822e+00, 3.130903350751e-04, -4.321247538977e-03,
+                             -1.767251395337e-03, -1.769214953534e-03, -1.169729179981e-03],
+                            [-5.327889357199e-01, 9.602580629349e-01, -1.139839360648e-02,
+                             -2.858698370621e-02, -2.878270043699e-02, -1.129324573431e-01]])
+
+    apig = APIG(4, one_int, two_int, nuc_nuc=nuc_nuc, params=np.hstack((apig_coeffs.flat, 0)))
+    # convert
+    apg = apig.to_apg()
+    apg_coeffs = apg.params[:-1].reshape(apg.template_coeffs.shape)
+
+    assert apig.nelec == apg.nelec
+    assert apig.one_int == apg.one_int
+    assert apig.two_int == apg.two_int
+    assert apig.dtype == apg.dtype
+    assert apig.nuc_nuc == apg.nuc_nuc
+    assert apig.orbtype == apg.orbtype
+    assert apig.ref_sds == apg.ref_sds
+    for orbpair, ind in apg.dict_orbpair_ind.items():
+        try:
+            assert np.allclose(apg_coeffs[:, ind], apig_coeffs[:, apig.dict_orbpair_ind[orbpair]])
+        except KeyError:
+            assert np.allclose(apg_coeffs[:, ind], 0)
+    assert apig.params[-1] == apg.params[-1]
+
+
 def answer_apig_h2_sto6g():
     """ Finds the APIG/STO-6G wavefunction by scanning through the coefficients for the lowest
     energy
