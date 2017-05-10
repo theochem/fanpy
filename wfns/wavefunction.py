@@ -5,6 +5,8 @@ Contains information that all wavefunctions should have (probably?)
 from __future__ import absolute_import, division, print_function
 import numpy as np
 
+__all__ = []
+
 
 class Wavefunction(object):
     """ Wavefunction class

@@ -6,6 +6,8 @@ from .doci import DOCI
 from ..sd_list import sd_list
 from .. import slater
 
+__all__ = []
+
 
 class CIPairs(DOCI):
     """ DOCI wavefunction with only first order pairwise excitations

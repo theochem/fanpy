@@ -10,6 +10,7 @@ generate_biclique_pmatch(indices_one, indices_two)
 """
 import itertools as it
 
+__all__ = ['generate_complete_pmatch', 'generate_biclique_pmatch']
 
 def generate_complete_pmatch(indices):
     """ Generates all of the perfect matches of a complete (sub)graph

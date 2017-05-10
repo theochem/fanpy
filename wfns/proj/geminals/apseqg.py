@@ -11,6 +11,8 @@ from ...sd_list import sd_list
 from ..proj_wavefunction import ProjectedWavefunction
 from ..proj_hamiltonian import hamiltonian
 
+__all__ = []
+
 
 class APseqG(ProjectedWavefunction):
     """ Antisymmetric Product of Sequantially Interacting Geminals

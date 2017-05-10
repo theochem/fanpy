@@ -11,6 +11,8 @@ density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_thresh
 import numpy as np
 from .. import slater
 
+__all__ = ['density_matrix']
+
 
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
     """ Adds some value to the appropriate density matrix element

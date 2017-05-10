@@ -16,6 +16,8 @@ from itertools import combinations
 from .. import slater
 from ..ci.ci_matrix import get_one_int_value, get_two_int_value
 
+__all__ = []
+
 def hamiltonian(wfn, slater_d, orbtype, deriv=None):
     """ Compute the Hamiltonian of the wavefunction projected against `slater_d`.
 

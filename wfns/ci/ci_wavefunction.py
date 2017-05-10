@@ -12,6 +12,8 @@ from ..sd_list import sd_list
 from .density import density_matrix
 # FIXME: inherit docstring
 
+__all__ = []
+
 
 class CIWavefunction(Wavefunction):
     """ Wavefunction expressed as a linear combination of Slater determinants

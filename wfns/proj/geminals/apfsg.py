@@ -9,6 +9,8 @@ from ...sd_list import sd_list
 from ...math_tools import permanent_ryser
 from ..proj_hamiltonian import hamiltonian
 
+__all__ = []
+
 
 class APfsG(ProjectedWavefunction):
     """ Antisymmetric Product of Factorized Set Geminals

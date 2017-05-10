@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 from .ci_wavefunction import CIWavefunction
 from ..sd_list import sd_list
 
+__all__ = []
+
 
 class CISD(CIWavefunction):
     """ Configuration Interaction Singles and Doubles

@@ -6,6 +6,8 @@ from .apig import APIG
 from ... import slater
 from ...math_tools import permanent_combinatoric
 
+__all__ = []
+
 class AP1roG(APIG):
     """Antisymmetric Product of One-Reference-Orbital Geminals
 
