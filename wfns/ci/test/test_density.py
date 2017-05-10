@@ -438,7 +438,10 @@ def test_density_matrix_restricted_h2_631gdp():
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    # generate ci matrix from pyscf
+    # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    ci_matrix = np.load('../../../data/test/h2_hf_631gdp_cimatrix.npy')
+    civec = np.load('../../../data/test/h2_hf_631gdp_civec.npy')
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -475,7 +478,10 @@ def test_density_matrix_restricted_lih_sto6g():
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    # generate ci matrix from pyscf
+    # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    ci_matrix = np.load('../../../data/test/lih_hf_sto6g_cimatrix.npy')
+    civec = np.load('../../../data/test/lih_hf_sto6g_civec.npy')
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -513,7 +519,10 @@ def test_density_matrix_restricted_lih_631g():
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    # generate ci matrix from pyscf
+    # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    ci_matrix = np.load('../../../data/test/lih_hf_631g_cimatrix.npy')
+    civec = np.load('../../../data/test/lih_hf_631g_civec.npy')
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
