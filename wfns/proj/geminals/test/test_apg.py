@@ -7,7 +7,7 @@ import numpy as np
 from wfns.graphs import generate_complete_pmatch
 from wfns.proj.geminals.apg import APG
 from wfns.proj.solver import solve
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 def test_template_orbpairs():
     """ Tests wfns.proj.geminals.apg.APG.template_orbpairs
@@ -112,7 +112,6 @@ def test_assign_pmatch_generator():
     assert test.pmatch_generator == func
 
 
-@attr('hello')
 def test_compute_overlap():
     """Tests wfns.proj.geminals.apg.APG.assign_compute_overlap
     """
@@ -279,11 +278,15 @@ def test_normalize():
 def answer_apg_h2_sto6g():
     """ Finds the APG/STO-6G wavefunction variationally for H2 system
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
     apg = APG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b0011, 0b0101, 0b1001, 0b0110,
                                                                  0b1010, 0b1100),
               params=np.array([0, 1, 0, 0, 0, 0, 0], dtype=float))
@@ -302,11 +305,15 @@ def test_apg_h2_sto6g():
     APG Coeffs : [0.00000000e+00, 1.00061615e+00, 4.43043808e-16, 4.43043808e-16, -1.13806005e-01,
                   0.00000000e+00]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     # see if we can reproduce HF numbers
     apg = APG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
@@ -345,11 +352,15 @@ def test_apg_h2_sto6g():
 def answer_apg_h2_631gdp():
     """ Finds the APG/6-31G** wavefunction variationally for H2 system
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
     ref_sds = []
     for i in range(20):
         for j in range(i+1, 20):
@@ -419,11 +430,15 @@ def test_apg_h2_631gdp():
                    0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
                    0.00000000e+00, 0.00000000e+00, -8.76902435e-01]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     # see if we can reproduce HF numbers
     apg = APG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
@@ -478,11 +493,15 @@ def test_apg_h2_631gdp():
 def answer_apg_lih_sto6g():
     """ Finds the APG/STO-6G wavefunction variationally for LiH system
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
     ref_sds = []
     for i in range(12):
         for j in range(i+1, 12):
@@ -508,11 +527,15 @@ def test_apg_lih_sto6g():
     APG Energy :
     APG Coeffs :
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
 
     # see if we can reproduce HF numbers
     apg = APG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)

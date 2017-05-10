@@ -5,7 +5,7 @@ import numpy as np
 from wfns.ci.solver import solve
 from wfns.ci.cisd import CISD
 from wfns.sd_list import sd_list
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 
 def test_generate_civec():
@@ -28,11 +28,16 @@ def test_cisd_h2_631gdp():
     #### H2 ####
     # HF energy: -1.13126983927
     # FCI energy: -1.1651487496
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     cisd = CISD(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc, spin=0)
     ci_matrix = cisd.compute_ci_matrix()
@@ -42,6 +47,7 @@ def test_cisd_h2_631gdp():
     solve(cisd)
     # compare with number from Gaussian
     assert abs(cisd.get_energy() - (-1.1651486697)) < 1e-7
+
 
 def test_cisd_lih_631g():
     """ Tests CISD wavefunction using LiH (6-31G)
@@ -56,11 +62,16 @@ def test_cisd_lih_631g():
     #### LiH ####
     # HF energy: -7.97926895
     # CISD energy: -7.99826182
-    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_631g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_631g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
 
     cisd = CISD(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc, spin=None)
     ci_matrix = cisd.compute_ci_matrix()

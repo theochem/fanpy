@@ -198,6 +198,7 @@ def ci_matrix(one_int, two_int, civec, dtype, orbtype):
     -------
     matrix : np.ndarray(K, K)
     """
+    #FIXME: need to allow one_int and two_int that are numpy arrays
     nci = len(civec)
     matrix = np.zeros((nci, ) * 2, dtype=dtype)
 

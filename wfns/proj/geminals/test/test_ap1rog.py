@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 from wfns.proj.solver import solve
 from wfns.proj.geminals.ap1rog import AP1roG
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 def test_assign_ngem():
     """ Tests AP1roG.assign_ngem
@@ -126,11 +126,16 @@ def answer_ap1rog_h2_sto6g():
     """ Finds the AP1roG/STO-6G wavefunction by scanning through the coefficients for the lowest
     energy
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
     ap1rog_ground = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b0101, ))
     ap1rog_excited = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b1010, ))
 
@@ -183,11 +188,16 @@ def answer_ap1rog_h2_631gdp():
     """ Finds the AP1roG/6-31G** wavefunction by scanning through the coefficients for the lowest
     energy
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
 
     # find exact minimum
@@ -209,11 +219,16 @@ def answer_ap1rog_lih_sto6g():
     """ Finds the AP1roG/6-31G** wavefunction by scanning through the coefficients for the lowest
     energy
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
 
     # find exact minimum
@@ -245,11 +260,16 @@ def test_ap1rog_h2_sto6g_ground():
     AP1roG Energy : -1.859089844148
     AP1roG Coeffs : [-0.113735924428061]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
@@ -293,11 +313,15 @@ def test_ap1rog_h2_sto6g_excited():
     AP1roG Energy : -0.24166486974216012
     AP1roG Coeffs : [0.113735939809]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b1010,))
 
@@ -340,12 +364,16 @@ def test_ap1rog_h2_631gdp():
     AP1roG Coeffs : [-0.05949796, -0.05454253, -0.03709503, -0.02899231, -0.02899231, -0.01317386,
                      -0.00852702, -0.00852702, -0.00517996]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
 
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     # see if we can reproduce HF numbers
     ap1rog.cache = {}
@@ -407,11 +435,15 @@ def test_ap1rog_lih_sto6g():
     AP1roG Coeffs : [-4.18979612e-03, -1.71684359e-03, -1.71684359e-03, -1.16341258e-03,
                      -9.55342486e-03, -2.90031933e-02, -2.90031933e-02, -1.17012605e-01]
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
 
     # see if we can reproduce HF numbers
     ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)

@@ -1,20 +1,24 @@
 from __future__ import absolute_import, division, print_function
+import numpy as np
 from nose.plugins.attrib import attr
 from wfns.proj.solver import solve
 from wfns.proj.apfsg import APfsG
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 @attr('slow')
 def test_apfsg_wavefunction_h2():
     #### H2 ####
     # HF Value :       -1.84444667247
     # FCI Value :      -1.87832550029
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
     # Reproduce HF energy
     apfsg = APfsG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     apfsg.params[:-1] = apfsg.template_coeffs.flatten()
@@ -37,12 +41,15 @@ def test_apfsg_wavefunction_lih():
     #### LiH ####
     # HF Value :       -8.9472891719
     # FCI Value :      -8.96741814557
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
-
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
     # Reproduce HF energy
     apfsg = APfsG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     apfsg.params[:-1] = apfsg.template_coeffs.flatten()
