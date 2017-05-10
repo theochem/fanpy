@@ -115,7 +115,7 @@ def test_apseqg_wavefunction_h2():
     # Solve with Jacobian using energy as a parameter
     apseqg = APseqG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     solve(apseqg, solver_type='cma_guess')
-    results = solve(apseqg, solver_type='least squares', jac=True)
+    results = solve(apseqg, solver_type='least_squares', use_jac=True)
     print('HF energy', -1.84444667247)
     print('APseqG energy', apseqg.compute_energy())
     print('FCI value', -1.87832550029)
@@ -146,7 +146,7 @@ def test_apseqg_wavefunction_lih():
     apseqg = APseqG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
     # print(apseqg.params[:-1].reshape(apseqg.template_coeffs.shape))
     solve(apseqg, solver_type='cma_guess')
-    results = solve(apseqg, solver_type='least squares', jac=True)
+    results = solve(apseqg, solver_type='least_squares', use_jac=True)
     print('HF energy', -8.9472891719)
     print('APseqG energy', apseqg.compute_energy())
     print('FCI value', -8.96741814557)

@@ -23,7 +23,7 @@ def test_apfsg_wavefunction_h2():
     assert abs(apfsg.compute_energy(include_nuc=False, ref_sds=apfsg.default_ref_sds) - (-1.84444667247)) < 1e-7
     # Solve with Jacobian using energy as a parameter
     apfsg = APfsG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
-    solve(apfsg, jac=False)
+    solve(apfsg, use_jac=False)
     print('HF energy', -1.84444667247)
     print('new energy', apfsg.compute_energy())
     print('FCI value', -1.87832550029)
@@ -51,7 +51,7 @@ def test_apfsg_wavefunction_lih():
     assert abs(apfsg.compute_energy(include_nuc=False, ref_sds=apfsg.default_ref_sds) - (-8.9472891719)) < 1e-7
     # Solve with Jacobian using energy as a parameter
     apfsg = APfsG(nelec=nelec, one_int=one_int, two_int=two_int, nuc_nuc=nuc_nuc)
-    solve(apfsg, jac=False)
+    solve(apfsg, use_jac=False)
     print('HF energy', -8.9472891719)
     print('new energy', apfsg.compute_energy())
     print('FCI value', -8.96741814557)
