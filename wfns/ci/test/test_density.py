@@ -1,15 +1,14 @@
 """ Tests wfns.ci.density
 """
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from scipy.linalg import eigh
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 from wfns import __file__ as package_path
 from wfns.wrapper.horton import gaussian_fchk
-from wfns.wrapper.pyscf import generate_fci_cimatrix
 from wfns.ci.density import add_one_density, add_two_density, density_matrix
+from wfns.tools import find_datafile
 
 
 def test_add_one_density():
@@ -407,8 +406,7 @@ def test_density_matrix_restricted_h2_fci_sto6g():
     assert np.allclose(one_density[0], ref_one_density)
 
     # Reconstruct FCI energy
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'h2_hf_sto6g.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/h2_hf_sto6g.fchk'))
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
     # physicist notation
@@ -431,8 +429,7 @@ def test_density_matrix_restricted_h2_631gdp():
 
     FCI Electronic energy is -1.87832559 Hartree
     """
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'h2_hf_631gdp.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/h2_hf_631gdp.fchk'))
 
     nelec = 2
     one_int = hf_dict["one_int"][0]
@@ -471,8 +468,7 @@ def test_density_matrix_restricted_lih_sto6g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'lih_hf_sto6g.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
 
     nelec = 4
     one_int = hf_dict["one_int"][0]
@@ -512,8 +508,7 @@ def test_density_matrix_restricted_lih_631g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'lih_hf_631g.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_631g.fchk'))
 
     nelec = 4
     one_int = hf_dict["one_int"][0]
@@ -552,14 +547,16 @@ def test_density_matrix_unrestricted_lih_sto6g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'lih_hf_sto6g.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
 
     nelec = 4
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    # generate ci matrix from pyscf
+    # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
+    civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -597,14 +594,16 @@ def test_density_matrix_generalized_lih_sto6g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(os.path.join(os.path.dirname(package_path), '..', 'data', 'test',
-                                         'lih_hf_sto6g.fchk'))
+    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
 
     nelec = 4
     one_int = hf_dict["one_int"][0]
     two_int = hf_dict["two_int"][0]
 
-    ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    # generate ci matrix from pyscf
+    # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
+    ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
+    civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
