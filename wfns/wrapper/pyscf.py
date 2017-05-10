@@ -18,7 +18,7 @@ from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
 from .. import __file__ as package_path
-from .. import slater
+from ..backend import slater
 from ..tools import find_datafile
 
 __all__ = []
