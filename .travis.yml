@@ -50,10 +50,10 @@ install:
   - export PYTHONPATH=$TRAVIS_BUILD_DIR:$PYTHONPATH
 
 # Get the master branch and complete feature branch for a comparative analysis.
-  - tools/inspector/qa/get_master.sh
+  - tools/qa/get_master.sh
 
 # Handle detached-HEAD situations that seem to be common on Travis-CI.
-  - tools/inspector/qa/fix_detached_head.sh
+  - tools/qa/fix_detached_head.sh
 
 script:
 # Run all checks. The behavior of the test script also depends on the current branch:
@@ -68,4 +68,4 @@ script:
 #    whose output needs to compared to the results from the feature branch (the trapdoor
 #    tests). Finally, it compares the outputs of both branches to check for regressions.
   - source activate $HOME/py
-  - tools/inspector/qa/test_all_twobranches.sh
+  - tools/qa/test_all_twobranches.sh
