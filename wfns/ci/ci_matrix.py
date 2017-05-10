@@ -12,6 +12,8 @@ ci_matrix(one_int, two_int, civec, dtype, orbtype)
 import numpy as np
 from .. import slater
 
+__all__ = ['ci_matrix']
+
 
 # FIXME: This should move to somewhere in wfns b/c wfns.proj.proj_hamiltonian also uses it
 def get_one_int_value(one_int_matrices, i, k, orbtype):

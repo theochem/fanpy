@@ -6,6 +6,8 @@ from .apig import APIG
 from ... import slater
 from ...math_tools import permanent_borchardt, adjugate
 
+__all__ = []
+
 
 class APr2G(APIG):
     """ Antisymmetric Product of rank-2 Geminals

@@ -8,6 +8,8 @@ solve(ci_wfn, solver_type='eigh', **kwargs)
 from __future__ import absolute_import, division, print_function
 from scipy.linalg import eigh
 
+__all__ = []
+
 def solve(ci_wfn, solver_type='eigh', **kwargs):
     """ Solves CI wavefunction for the coefficients
 

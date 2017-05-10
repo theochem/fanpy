@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractproperty
 from ..proj_wavefunction import ProjectedWavefunction
 
+__all__ = []
+
 class Geminal(ProjectedWavefunction):
     """ Projected Wavefunction class
 

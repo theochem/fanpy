@@ -17,8 +17,10 @@ import numpy as np
 from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
-from ... import __file__ as package_path
-from ... import slater
+from .. import __file__ as package_path
+from .. import slater
+
+__all__ = []
 
 LIBFCI = load_library('libfci')
 

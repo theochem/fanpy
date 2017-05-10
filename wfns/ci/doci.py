@@ -6,6 +6,8 @@ orbitals
 from __future__ import absolute_import, division, print_function
 from .ci_wavefunction import CIWavefunction
 
+__all__ = []
+
 
 class DOCI(CIWavefunction):
     """ Doubly Occupied Configuration Interaction Wavefunction

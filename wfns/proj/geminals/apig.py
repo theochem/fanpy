@@ -6,6 +6,8 @@ from .geminal import Geminal
 from ... import slater
 from ...math_tools import permanent_ryser
 
+__all__ = []
+
 
 class APIG(Geminal):
     """ Antisymmetric Product of Interacting Geminals

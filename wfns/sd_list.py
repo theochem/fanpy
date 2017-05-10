@@ -12,6 +12,7 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 from itertools import combinations, product
 from . import slater
 
+__all__ = ['sd_list']
 
 def satisfies_conditions(sd, nspatial, spin, seniority):
     """ Checks to see if Slater determinant has the desired spin and seniority
