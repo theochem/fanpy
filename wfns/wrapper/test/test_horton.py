@@ -1,11 +1,11 @@
 """ Tests wfns.wrapper.horton
 """
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from nose.tools import assert_raises
-from wfns.wrapper.horton import hartreefock, gaussian_fchk
 from horton import IOData, PlainSCFSolver
+from wfns.tools import find_datafile
+from wfns.wrapper.horton import hartreefock, gaussian_fchk
 
 
 def check_data_h2_rhf_sto6g(data):
@@ -50,28 +50,26 @@ def test_hartreefock_h2_rhf_sto6g():
     """ Tests hartreefock against H2 HF STO-6G data from Gaussian
     """
     # file location specified
-    hf_dict = hartreefock(fn="{0}/../../../data/test/h2.xyz".format(os.path.dirname(__file__)),
-                          basis="sto-6g", nelec=2)
+    hf_dict = hartreefock(fn=find_datafile('test/h2.xyz'), basis="sto-6g", nelec=2)
     check_data_h2_rhf_sto6g(hf_dict)
 
     # file from data folder
     hf_dict = hartreefock(fn="test/h2.xyz", basis="sto-6g", nelec=2)
     check_data_h2_rhf_sto6g(hf_dict)
 
-    # file in form of IOData (HORTOn)
-    iodata = IOData.from_file("{0}/../../../data/test/h2.xyz".format(os.path.dirname(__file__)))
+    # file in form of IOData (HORTON)
+    iodata = IOData.from_file(find_datafile('test/h2.xyz'))
     hf_dict = hartreefock(fn=iodata, basis="sto-6g", nelec=2)
     check_data_h2_rhf_sto6g(hf_dict)
 
     # using PlainSCFSolver
-    hf_dict = hartreefock(fn="{0}/../../../data/test/h2.xyz".format(os.path.dirname(__file__)),
+    hf_dict = hartreefock(fn=find_datafile('test/h2.xyz'),
                           basis="sto-6g", nelec=2, solver=PlainSCFSolver)
     check_data_h2_rhf_sto6g(hf_dict)
 
     # bad solver
     assert_raises(ValueError,
-                  lambda: hartreefock(fn="{0}/../../../data/test/h2.xyz"
-                                         "".format(os.path.dirname(__file__)),
+                  lambda: hartreefock(fn=find_datafile('test/h2.xyz'),
                                       basis="sto-6g", nelec=2, solver='solver'))
 
 
@@ -79,8 +77,7 @@ def test_gaussian_fchk_h2_rhf_sto6g():
     """ Tests gaussian_fchk against H2 HF STO-6G data from Gaussian
     """
     # file location specified
-    fchk_data = gaussian_fchk('{0}/../../../data/test/h2_hf_sto6g.fchk'
-                              ''.format(os.path.dirname(__file__)), horton_internal=True)
+    fchk_data = gaussian_fchk(find_datafile('test/h2_hf_sto6g.fchk'), horton_internal=True)
     check_data_h2_rhf_sto6g(fchk_data)
 
     # file from data folder
@@ -91,8 +88,7 @@ def test_gaussian_fchk_h2_uhf_sto6g():
     """ Tests gaussian_fchk against H2 UHF STO-6G data from Gaussian
     """
     # file location specified
-    fchk_data = gaussian_fchk('{0}/../../../data/test/h2_uhf_sto6g.fchk'
-                              ''.format(os.path.dirname(__file__)), horton_internal=True)
+    fchk_data = gaussian_fchk(find_datafile('test/h2_uhf_sto6g.fchk'), horton_internal=True)
     check_data_h2_uhf_sto6g(fchk_data)
 
     # file from data folder
