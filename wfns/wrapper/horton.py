@@ -19,7 +19,7 @@ from horton import (IOData, get_gobasis,
                     DenseLinalgFactory,
                     compute_nucnuc, guess_core_hamiltonian, transform_integrals,
                     AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
-from wfns import __file__ as package_path
+from ... import __file__ as package_path
 
 
 def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,

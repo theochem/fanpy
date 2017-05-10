@@ -14,11 +14,11 @@ from __future__ import absolute_import, division, print_function
 import os
 import ctypes
 import numpy as np
-from wfns import __file__ as package_path
-from wfns import slater
 from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
+from ... import __file__ as package_path
+from ... import slater
 
 LIBFCI = load_library('libfci')
 
