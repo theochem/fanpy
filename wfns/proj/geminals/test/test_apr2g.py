@@ -7,7 +7,7 @@ import numpy as np
 from wfns.proj.solver import solve
 from wfns.proj.geminals.apr2g import APr2G
 from wfns.proj.geminals.apig import APIG
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 
 def test_template_coeffs():
@@ -131,10 +131,14 @@ def test_compute_overlap_apig():
     ----
     Does not compare derivative (b/c they won't be the same)
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
     params = np.array([2.52189752e+00, -3.22516976e-01, 1.55439888e+00, -3.23444695e-01,
                        -2.05929322e+00, -5.09945972e-01, -5.08808399e-01, -3.52287139e-01,
                        1.00000000e+00, 8.90849147e-04, -1.97964592e-02, -5.35802964e-03,
@@ -200,11 +204,10 @@ def answer_apr2g_h2_631gdp():
     ----
     Uses APIG answer from test_apig.answer_apig_h2_631gdp, converting it to APr2G
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
     apig = APIG(nelec, one_int, two_int, nuc_nuc=nuc_nuc,
                 params=np.array([0.995079200788, -0.059166892062, -0.054284175189, -0.036920061272,
                                  -0.028848919079, -0.028847742282, -0.013108383833, -0.008485392433,
@@ -236,11 +239,15 @@ def test_apr2g_h2_631gdp():
                     -1.44131604476661e-02, -1.44125734820933e-02, -6.55338227991008e-03,
                     -4.24259557902134e-03, -4.24254235743836e-03, -2.57476173228552e-03,]
     """
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     # initial guess close to answer (apig answer)
     params = np.array([5.00024140e-01, -5.04920993e-01, 1.74433862e-03, 1.46912779e-03,
@@ -291,11 +298,10 @@ def answer_apr2g_lih_sto6g():
     ----
     Uses APIG answer from test_apig.answer_apig_lih_sto6g, converting it to APr2G
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
     apig = APIG(nelec, one_int, two_int, nuc_nuc=nuc_nuc,
                 params=np.array([1.033593181822e+00, 3.130903350751e-04, -4.321247538977e-03,
                                  -1.767251395337e-03, -1.769214953534e-03, -1.169729179981e-03,
@@ -327,11 +333,15 @@ def test_apr2g_lih_sto6g():
                    4.46478511362153e-04, -1.98165460930347e-02, -5.36827124240751e-03,
                    -5.35329619359940e-03, -3.40758975682932e-03]
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
 
     # initial guess close to answer (apig answer)
     params = np.array([2.52192912907165e+00, -3.22730595025637e-01, 1.55436195824780e+00,

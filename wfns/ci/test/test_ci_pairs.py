@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 from wfns.sd_list import sd_list
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 from wfns.ci.ci_pairs import CIPairs
 from wfns.ci.solver import solve
 from wfns.proj.geminals.ap1rog import AP1roG
@@ -37,11 +37,16 @@ def test_to_ap1rog():
 def test_to_ap1rog_h2_sto6g_ground():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals
     """
-    hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     nelec = 2
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    nuc_nuc = 0.71317683129
 
     cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
     solve(cipair)
@@ -62,11 +67,16 @@ def test_to_ap1rog_h2_sto6g_ground():
 def test_to_ap1rog_lih_sto6g():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals
     """
-    hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    nuc_nuc = 0.995317634356
 
     cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
     solve(cipair)
@@ -80,11 +90,16 @@ def test_to_ap1rog_lih_sto6g():
 def test_to_ap1rog_h4_sto6g():
     """ Tests wfns.ci.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals
     """
-    hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
     nelec = 4
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    nuc_nuc = 2.70710678119
 
     cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
     solve(cipair)

@@ -5,7 +5,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.ci.solver import solve
 from wfns.ci.doci import DOCI
-from wfns.wrapper.horton import gaussian_fchk
+from wfns.tools import find_datafile
 
 
 def test_assign_nelec():
@@ -65,12 +65,16 @@ def test_doci_h4_hf_sto6g():
     #### H2 ####
     # HF energy: -1.13126983927
     # OO DOCI energy: -1.884948574812363
-    hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
-
     nelec = 4
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
-    nuc_nuc = hf_dict["nuc_nuc_energy"]
+
+    # Can be read in using HORTON
+    # hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    # nuc_nuc = hf_dict["nuc_nuc_energy"]
+    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    nuc_nuc = 2.70710678119
 
     # compare HF numbers
     doci = DOCI(nelec=nelec, one_int=(one_int,), two_int=(two_int,), nuc_nuc=nuc_nuc)

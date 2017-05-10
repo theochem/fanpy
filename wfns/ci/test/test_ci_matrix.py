@@ -5,7 +5,6 @@ from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 import wfns.ci.ci_matrix as ci_matrix
 from wfns.tools import find_datafile
-from wfns.wrapper.horton import gaussian_fchk
 
 
 def test_get_one_int_value():
@@ -148,9 +147,12 @@ def test_get_two_int_value():
 
 def test_ci_matrix_h2():
     """Test ci_matrix.ci_matrix using H2 HF/6-31G** orbitals"""
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    one_int = (np.load(find_datafile('test/h2_hf_631gdp_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/h2_hf_631gdp_twoint.npy')), )
     # reference (from pyscf)
     # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2, is_chemist_notation=False)
     ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
@@ -164,9 +166,11 @@ def test_ci_matrix_h2():
 def test_ci_matrix_lih():
     """Test ci_matrix.ci_matrix using LiH FCI ci_matrix."""
     # HORTON/Olsen Results
-    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
+    # hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
+    one_int = (np.load(find_datafile('test/lih_hf_631g_oneint.npy')), )
+    two_int = (np.load(find_datafile('test/lih_hf_631g_twoint.npy')), )
     # reference (from pyscf)
     # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 4, is_chemist_notation=False)
     ref_ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))

@@ -6,7 +6,6 @@ from scipy.linalg import eigh
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 from wfns import __file__ as package_path
-from wfns.wrapper.horton import gaussian_fchk
 from wfns.ci.density import add_one_density, add_two_density, density_matrix
 from wfns.tools import find_datafile
 
@@ -406,9 +405,11 @@ def test_density_matrix_restricted_h2_fci_sto6g():
     assert np.allclose(one_density[0], ref_one_density)
 
     # Reconstruct FCI energy
-    hf_dict = gaussian_fchk(find_datafile('test/h2_hf_sto6g.fchk'))
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+    # hf_dict = gaussian_fchk(find_datafile('test/h2_hf_sto6g.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     # physicist notation
     assert abs((np.einsum('ij,ij', one_int, one_density[0]) +
                 0.5*np.einsum('ijkl,ijkl', two_int, two_density[0])) - (-1.85908985)) < 1e-8
@@ -429,11 +430,14 @@ def test_density_matrix_restricted_h2_631gdp():
 
     FCI Electronic energy is -1.87832559 Hartree
     """
-    hf_dict = gaussian_fchk(find_datafile('test/h2_hf_631gdp.fchk'))
-
     nelec = 2
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk(find_datafile('test/h2_hf_631gdp.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
@@ -462,17 +466,20 @@ def test_density_matrix_restricted_h2_631gdp():
 
 
 def test_density_matrix_restricted_lih_sto6g():
-    """ Tests density.density_matrix using LiH system (FCI/STO6G)
+    """ Tests density.density_matrix using LiH system (FCI/STO6G) with restricted orbitals
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
-
     nelec = 4
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
@@ -502,17 +509,20 @@ def test_density_matrix_restricted_lih_sto6g():
 
 @attr('slow')
 def test_density_matrix_restricted_lih_631g():
-    """ Tests density.density_matrix using LiH system (FCI/6-31G)
+    """ Tests density.density_matrix using LiH system (FCI/6-31G) with restricted orbitals
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_631g.fchk'))
-
     nelec = 4
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_631g.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
@@ -547,11 +557,14 @@ def test_density_matrix_unrestricted_lih_sto6g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
-
     nelec = 4
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
@@ -594,11 +607,14 @@ def test_density_matrix_generalized_lih_sto6g():
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
     """
-    hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
-
     nelec = 4
-    one_int = hf_dict["one_int"][0]
-    two_int = hf_dict["two_int"][0]
+
+    # read in gaussian fchk file and generate one and two electron integrals (using horton)
+    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # one_int = hf_dict["one_int"][0]
+    # two_int = hf_dict["two_int"][0]
+    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
