@@ -36,3 +36,7 @@ sdist/
 target/
 .tox/
 var/
+
+# Ignore testing output
+.coverage
+qaworkdir
