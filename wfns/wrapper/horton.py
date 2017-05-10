@@ -12,7 +12,6 @@ gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
     Extracts appropriate information from a Gaussian FCHK file
 """
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from horton import (IOData, get_gobasis,
                     PlainSCFSolver, EDIIS2SCFSolver,
@@ -20,6 +19,7 @@ from horton import (IOData, get_gobasis,
                     compute_nucnuc, guess_core_hamiltonian, transform_integrals,
                     AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
 from .. import __file__ as package_path
+from ..tools import find_datafile
 
 __all__ = []
 
@@ -91,9 +91,7 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
         try:
             mol = IOData.from_file(fn)
         except IOError:
-            data_dir = os.path.join(os.path.dirname(package_path), '../data')
-            file_path = os.path.join(data_dir, fn)
-            mol = IOData.from_file(file_path)
+            mol = IOData.from_file(find_datafile(fn))
     obasis = get_gobasis(mol.coordinates, mol.numbers, basis)
     npair = nelec // 2
 
@@ -197,9 +195,7 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     try:
         mol = IOData.from_file(fchk_file)
     except IOError:
-        data_dir = os.path.join(os.path.dirname(package_path), '../data')
-        file_path = os.path.join(data_dir, fchk_file)
-        mol = IOData.from_file(file_path)
+        mol = IOData.from_file(find_datafile(fchk_file))
 
     # for spin orbitals
     exps = [mol.exp_alpha]

@@ -19,6 +19,7 @@ from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
 from .. import __file__ as package_path
 from .. import slater
+from ..tools import find_datafile
 
 __all__ = []
 
@@ -58,15 +59,15 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     """
     # check xyz file
     cwd = os.path.dirname(__file__)
-    data_dir = os.path.join(os.path.dirname(package_path), '../data')
     if os.path.isfile(xyz_file):
         pass
     elif os.path.isfile(os.path.join(cwd, xyz_file)):
         xyz_file = os.path.join(cwd, xyz_file)
-    elif os.path.isfile(os.path.join(data_dir, xyz_file)):
-        xyz_file = os.path.join(data_dir, xyz_file)
     else:
-        raise ValueError('Given xyz_file does not exist')
+        try:
+            xyz_file = find_datafile(xyz_file)
+        except IOError:
+            raise ValueError('Given xyz_file does not exist')
 
    # get coordinates
     with open(xyz_file, 'r') as f:

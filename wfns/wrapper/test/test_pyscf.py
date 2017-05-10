@@ -1,12 +1,11 @@
 """ Tests wfns.wrapper.pyscf
 """
 from __future__ import absolute_import, division, print_function
-import os
 import numpy as np
 from nose.tools import assert_raises
 import scipy.linalg
+from wfns.tools import find_datafile
 from wfns.wrapper.pyscf import hartreefock, generate_fci_cimatrix
-from wfns import __file__ as package_path
 
 
 def check_data_h2_rhf_sto6g(data):
@@ -46,8 +45,7 @@ def test_hartreefock_h2_rhf_sto6g():
     """ Tests HF against LiH STO6G
     """
     # file location specified (absolute)
-    hf_dict = hartreefock("{0}/../../../data/test/h2.xyz".format(os.path.dirname(__file__)),
-                          "sto-6g")
+    hf_dict = hartreefock(find_datafile('test/h2.xyz'), "sto-6g")
     check_data_h2_rhf_sto6g(hf_dict)
 
     # data reference
@@ -66,8 +64,7 @@ def test_hartreefock():
     """ Tests HF against LiH STO6G
     """
     # file location specified
-    hf_dict = hartreefock("{0}/../../../data/test/lih.xyz".format(os.path.dirname(__file__)),
-                          "sto-6g")
+    hf_dict = hartreefock(find_datafile("test/lih.xyz"), "sto-6g")
     check_data_lih_rhf_sto6g(hf_dict)
 
     hf_dict = hartreefock("test/lih.xyz", "sto-6g")
@@ -87,7 +84,7 @@ def test_generate_fci_cimatrix_h2_631gs():
     #### H2 ####
     # HF energy: -1.13126983927
     # FCI energy: -1.1651487496
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/h2.xyz')
+    data_path = find_datafile('test/h2.xyz')
     hf_dict = hartreefock(data_path, '6-31gs')
 
     nelec = 2
@@ -125,7 +122,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
     #### LiH ####
     # HF energy: -7.95197153880
     # FCI energy: -7.9723355823
-    data_path = os.path.join(os.path.dirname(__file__), '../../../data/test/lih.xyz')
+    data_path = find_datafile('test/lih.xyz')
     hf_dict = hartreefock(data_path, 'sto-6g')
 
     nelec = 4

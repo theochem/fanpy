@@ -4,6 +4,7 @@ import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 import wfns.ci.ci_matrix as ci_matrix
+from wfns.tools import find_datafile
 from wfns.wrapper.horton import gaussian_fchk
 
 
@@ -146,20 +147,14 @@ def test_get_two_int_value():
 
 
 def test_ci_matrix_h2():
-    """
-    Tests ci_matrix.ci_matrix using H2 HF/6-31G** orbitals
-
-    Note
-    ----
-    Needs PYSCF!!
-    """
+    """Test ci_matrix.ci_matrix using H2 HF/6-31G** orbitals"""
     hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     one_int = hf_dict["one_int"]
     two_int = hf_dict["two_int"]
     # reference (from pyscf)
     # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2, is_chemist_notation=False)
-    ref_ci_matrix = np.load('../../../data/test/h2_hf_631gdp_cimatrix.npy')
-    ref_pspace = np.load('../../../data/test/h2_hf_631gdp_civec.npy')
+    ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
     # test
     test_ci_matrix = ci_matrix.ci_matrix(one_int, two_int, civec=ref_pspace, dtype=np.float64,
                                          orbtype='restricted')
@@ -167,21 +162,15 @@ def test_ci_matrix_h2():
 
 @attr('slow')
 def test_ci_matrix_lih():
-    """
-    Tests ci_matrix.ci_matrix using LiH FCI ci_matrix
-
-    Note
-    ----
-    Needs PYSCF!!
-    """
+    """Test ci_matrix.ci_matrix using LiH FCI ci_matrix."""
     # HORTON/Olsen Results
     hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
     one_int = hf_dict["one_int"]
     two_int = hf_dict["two_int"]
     # reference (from pyscf)
     # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 4, is_chemist_notation=False)
-    ref_ci_matrix = np.load('../../../data/test/lih_hf_631g_cimatrix.npy')
-    ref_pspace = np.load('../../../data/test/lih_hf_631g_civec.npy')
+    ref_ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
     # test
     test_ci_matrix = ci_matrix.ci_matrix(one_int, two_int, civec=ref_pspace, dtype=np.float64,
                                          orbtype='restricted')
