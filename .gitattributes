@@ -1,0 +1,2 @@
+data/test/lih_hf_631g_cimatrix.npy filter=lfs diff=lfs merge=lfs -text
+data/test/lih_hf_631g_civec.npy filter=lfs diff=lfs merge=lfs -text
