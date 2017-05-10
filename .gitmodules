@@ -1,3 +1,5 @@
 [submodule "InspectorElephant"]
 	path = tools
-	url = git@github.com:kimt33/InspectorElephant.git
+    url = https://github.com/QuantumElephant/InspectorElephant.git
+    branch = olsens
+    ignore = dirty
