@@ -11,12 +11,11 @@ ChemicalHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 from itertools import combinations
-from .base_hamiltonian import BaseHamiltonian
 from ..backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 from ..backend import slater
 
 
-class ChemicalHamiltonian(BaseHamiltonian):
+class ChemicalHamiltonian(object):
     """Hamiltonian used for a typical chemical system.
 
     ..math::
