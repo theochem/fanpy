@@ -45,7 +45,7 @@ def test_adjugate():
         for j in range(3):
             row_mask[i] = False
             col_mask[j] = False
-            cofactor[i, j] = (-1)**((i + j)%2) * np.linalg.det(matrix[row_mask][:, col_mask])
+            cofactor[i, j] = (-1)**((i + j) % 2) * np.linalg.det(matrix[row_mask][:, col_mask])
             row_mask[i] = True
             col_mask[j] = True
     assert np.allclose(adjugate(matrix), cofactor.T)

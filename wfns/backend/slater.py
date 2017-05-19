@@ -60,6 +60,7 @@ import numpy as np
 
 __all__ = []
 
+
 def occ(sd, i):
     """
     Checks if a given Slater determinant has orbital `i` occupied.
@@ -81,6 +82,7 @@ def occ(sd, i):
         return False
     else:
         return gmpy2.bit_test(sd, i)
+
 
 def is_alpha(i, nspatial):
     """ Checks if index `i` belongs to an alpha spin orbital
@@ -312,11 +314,11 @@ def internal_sd(identifier):
         If not an integer and not an iterable
         If is an iterable of non integers
     """
-    if isinstance(identifier, (int, long)):
+    if isinstance(identifier, int):
         return gmpy2.mpz(identifier)
     elif hasattr(identifier, '__iter__'):
         identifier, test = tee(identifier, 2)
-        if all(isinstance(i, (int, long)) for i in test):
+        if all(isinstance(i, int) for i in test):
             return create(gmpy2.mpz(0), *identifier)
         else:
             raise TypeError('Iterable must contain only integers to describe a Slater determinant')

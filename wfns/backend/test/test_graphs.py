@@ -3,6 +3,7 @@
 from nose.tools import assert_raises
 from wfns.backend.graphs import generate_complete_pmatch, generate_biclique_pmatch
 
+
 def test_generate_complete_pmatch():
     """ Tests the generator for the perfect matchings of a complete graph
     """
@@ -34,7 +35,7 @@ def test_generate_complete_pmatch():
               ((0, 6), (1, 3), (4, 7)),
               ((0, 7), (1, 6), (3, 4)),
               ((0, 7), (1, 4), (3, 6)),
-              ((0, 7), (1, 3), (4, 6)),]
+              ((0, 7), (1, 3), (4, 6))]
     assert answer == [tuple(sorted(i, key=lambda x: x[0])) for i in
                       sorted(generate_complete_pmatch(occ_indices), key=lambda x: x[0])]
 
@@ -63,7 +64,7 @@ def test_generate_biclique_pmatch():
               ((0, 6), (1, 4), (3, 7)),
               ((0, 6), (1, 7), (3, 4)),
               ((0, 7), (1, 4), (3, 6)),
-              ((0, 7), (1, 6), (3, 4)),]
+              ((0, 7), (1, 6), (3, 4))]
     assert answer == list(generate_biclique_pmatch(indices_one, indices_two))
 
     # 8 vertices
@@ -92,5 +93,5 @@ def test_generate_biclique_pmatch():
               ((0, 8), (1, 6), (3, 4), (5, 7)),
               ((0, 8), (1, 6), (3, 7), (5, 4)),
               ((0, 8), (1, 7), (3, 4), (5, 6)),
-              ((0, 8), (1, 7), (3, 6), (5, 4)),]
+              ((0, 8), (1, 7), (3, 6), (5, 4))]
     assert answer == list(generate_biclique_pmatch(indices_one, indices_two))
