@@ -24,6 +24,7 @@ def check_data_h2_rhf_sto6g(data):
                                                    [[1.81610048e-01, 0.000000000000],
                                                     [0.000000000000, 6.98855952e-01]]]]))
 
+
 def check_data_h2_uhf_sto6g(data):
     """ Checks data for h2 uhf sto6g calculation
     """
@@ -83,6 +84,7 @@ def test_gaussian_fchk_h2_rhf_sto6g():
     # file from data folder
     fchk_data = gaussian_fchk('test/h2_hf_sto6g.fchk', horton_internal=True)
     check_data_h2_rhf_sto6g(fchk_data)
+
 
 def test_gaussian_fchk_h2_uhf_sto6g():
     """ Tests gaussian_fchk against H2 UHF STO-6G data from Gaussian

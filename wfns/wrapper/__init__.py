@@ -4,7 +4,7 @@ from __future__ import absolute_import
 horton_mia = False
 try:
     from . import horton
-except ImportError, error:
+except ImportError as error:
     print('WARNING: Error in loading horton wrapper. Check that you have HORTON installed'
             ' and that PYTHONPATH is set properly')
     print(error)
@@ -13,7 +13,7 @@ except ImportError, error:
 pyscf_mia = False
 try:
     from . import pyscf
-except ImportError, error:
+except ImportError as error:
     print('WARNING: Error in loading pyscf wrapper. Check that you have PySCF installed'
             ' and that PYTHONPATH is set properly')
     print(error)

@@ -17,13 +17,13 @@ import numpy as np
 from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
-from .. import __file__ as package_path
 from ..backend import slater
 from ..tools import find_datafile
 
 __all__ = []
 
 LIBFCI = load_library('libfci')
+
 
 def hartreefock(xyz_file, basis, is_unrestricted=False):
     """ Runs HF using PySCF
@@ -69,7 +69,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
         except IOError:
             raise ValueError('Given xyz_file does not exist')
 
-   # get coordinates
+    # get coordinates
     with open(xyz_file, 'r') as f:
         lines = [i.strip() for i in f.readlines()[2:]]
         atoms = ';'.join(lines)
@@ -86,7 +86,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     hf.scf()
     # energies
     E_nuc = hf.energy_nuc()
-    E_tot = hf.kernel() # HF is solved here
+    E_tot = hf.kernel()  # HF is solved here
     E_elec = E_tot - E_nuc
     # mo_coeffs
     mo_coeff = hf.mo_coeff
@@ -100,10 +100,10 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     # NOTE: PySCF uses Chemist's notation
     two_int = np.einsum('ijkl->ikjl', two_int)
     # results
-    result = {'el_energy' : E_elec,
-              'nuc_nuc_energy' : E_nuc,
-              'one_int' : (one_int,),
-              'two_int' : (two_int,)}
+    result = {'el_energy': E_elec,
+              'nuc_nuc_energy': E_nuc,
+              'one_int': (one_int,),
+              'two_int': (two_int,)}
     return result
 
 
@@ -161,9 +161,9 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     link_indexa = cistring.gen_linkstr_index(range(norb), neleca)
     link_indexb = cistring.gen_linkstr_index(range(norb), nelecb)
     # number of Slater determinants
-    na = link_indexa.shape[0] # number of "alpha" Slater determinants
-    nb = link_indexb.shape[0] # number of "beta" Slater determinants
-    num_sd = na*nb # number of Slater determinants in total
+    na = link_indexa.shape[0]  # number of "alpha" Slater determinants
+    nb = link_indexb.shape[0]  # number of "beta" Slater determinants
+    num_sd = na*nb  # number of Slater determinants in total
 
     occslista = np.asarray(link_indexa[:, :neleca, 0], order='C')
     occslistb = np.asarray(link_indexb[:, :nelecb, 0], order='C')

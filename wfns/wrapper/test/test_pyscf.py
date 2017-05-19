@@ -80,10 +80,10 @@ def test_hartreefock():
 
 def test_generate_fci_cimatrix_h2_631gs():
     """ Tests generate_fci_cimatrix with H2 6-31G*
+
+    HF energy: -1.13126983927
+    FCI energy: -1.1651487496
     """
-    #### H2 ####
-    # HF energy: -1.13126983927
-    # FCI energy: -1.1651487496
     data_path = find_datafile('test/h2.xyz')
     hf_dict = hartreefock(data_path, '6-31gs')
 
@@ -118,10 +118,10 @@ def test_generate_fci_cimatrix_h2_631gs():
 
 def test_generate_fci_cimatrix_lih_sto6g():
     """ Tests generate_fci_cimatrix with LiH STO-6G
+
+    HF energy: -7.95197153880
+    FCI energy: -7.9723355823
     """
-    #### LiH ####
-    # HF energy: -7.95197153880
-    # FCI energy: -7.9723355823
     data_path = find_datafile('test/lih.xyz')
     hf_dict = hartreefock(data_path, 'sto-6g')
 
