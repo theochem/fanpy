@@ -18,7 +18,6 @@ from horton import (IOData, get_gobasis,
                     DenseLinalgFactory,
                     compute_nucnuc, guess_core_hamiltonian, transform_integrals,
                     AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
-from .. import __file__ as package_path
 from ..tools import find_datafile
 
 __all__ = []
