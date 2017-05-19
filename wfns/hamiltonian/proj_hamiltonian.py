@@ -18,65 +18,6 @@ from .ci_matrix import get_one_int_value, get_two_int_value
 
 __all__ = []
 
-def hamiltonian(wfn, slater_d, orbtype, deriv=None):
-    """ Compute the Hamiltonian of the wavefunction projected against `slater_d`.
-
-    Parameters
-    ----------
-    wfn : Wavefunction Instance
-        Instance of Wavefunction class
-        Needs to have the following in __dict__:
-            nspin, one_int, two_int, overlap
-    slater_d : int
-        The Slater Determinant against which to project.
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Flag that indicates the type of the orbital
-    deriv : int, None
-        Index of the parameter with which to derivatize against
-        Defeault is no derivatization
-
-    Returns
-    -------
-    one_electron : float
-        One electron energy
-    coulomb : float
-        Coulomb energy
-    exchange : float
-        Exchange energy
-    """
-    occ_indices = slater.occ_indices(slater_d)
-    vir_indices = slater.vir_indices(slater_d, wfn.nspin)
-
-    one_electron = 0.0
-    coulomb = 0.0
-    exchange = 0.0
-
-    # sum over zeroth order excitation
-    coeff = wfn.get_overlap(slater_d, deriv=deriv)
-    for counter, i in enumerate(occ_indices):
-        one_electron += coeff*get_one_int_value(wfn.one_int, i, i, orbtype=orbtype)
-        for j in occ_indices[counter+1:]:
-            coulomb += coeff*get_two_int_value(wfn.two_int, i, j, i, j, orbtype=orbtype)
-            exchange -= coeff*get_two_int_value(wfn.two_int, i, j, j, i, orbtype=orbtype)
-
-    # sum over one electron excitation
-    for counter, i in enumerate(occ_indices):
-        for a in vir_indices:
-            coeff = wfn.get_overlap(slater.excite(slater_d, i, a), deriv=deriv)
-            one_electron += coeff*get_one_int_value(wfn.one_int, i, a, orbtype=orbtype)
-            for j in occ_indices[:counter] + occ_indices[counter+1:]:
-                coulomb += coeff*get_two_int_value(wfn.two_int, i, j, a, j, orbtype=orbtype)
-                exchange -= coeff*get_two_int_value(wfn.two_int, i, j, j, a, orbtype=orbtype)
-
-    # sum over two electron excitation
-    for i, j in combinations(occ_indices, 2):
-        for a, b in combinations(vir_indices, 2):
-            coeff = wfn.get_overlap(slater.excite(slater_d, i, j, a, b), deriv=deriv)
-            coulomb += coeff * get_two_int_value(wfn.two_int, i, j, a, b, orbtype=orbtype)
-            exchange -= coeff * get_two_int_value(wfn.two_int, i, j, b, a, orbtype=orbtype)
-
-    return one_electron, coulomb, exchange
-
 def sen0_hamiltonian(wfn, slater_d, orbtype, deriv=None):
     """ Compute the seniority zero Hamiltonian of the wavefunction projected against `slater_d`.
 
