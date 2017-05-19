@@ -270,3 +270,75 @@ class ChemicalHamiltonian(BaseHamiltonian):
                 exchange -= coeff * self.two_int.get_val(i, j, b, a, self.orbtype)
 
         return one_electron, coulomb, exchange
+
+    def integrate_sd_sd(self, sd1, sd2, deriv=None):
+        """Integrates the Hamiltonian with against two Slater determinants.
+
+        ..math::
+            H_{ij} = \big< \Phi_i \big| \hat{H} \big| \Phi_j \big>
+
+        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
+        Slater determinants.
+
+        Parameters
+        ----------
+        sd1 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        sd2 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        deriv : int, None
+            Index of the parameter against which the expectation value is derivatized.
+            Default is no derivatization
+
+        Returns
+        -------
+        one_electron : float
+            One electron energy
+        coulomb : float
+            Coulomb energy
+        exchange : float
+            Exchange energy
+        """
+        # FIXME: incredibly slow/bad approach
+        one_electron = 0.0
+        coulomb = 0.0
+        exchange = 0.0
+
+        shared_indices = slater.occ_indices(slater.shared(sd1, sd2))
+        diff_sd1, diff_sd2 = slater.diff(sd1, sd2)
+        # if two Slater determinants do not have the same number of electrons
+        if len(diff_sd1) != len(diff_sd2):
+            return 0
+        diff_order = len(diff_sd1)
+
+        # moving all the shared orbitals toward one another (in the middle)
+        num_transpositions_0 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd1)
+        num_transpositions_1 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd2)
+        num_transpositions = num_transpositions_0 + num_transpositions_1
+        sign = (-1)**num_transpositions
+
+        # two sd's are the same
+        if diff_order == 0:
+            for count, i in enumerate(shared_indices):
+                one_electron += sign * self.one_int.get_value(i, i, self.orbtype)
+                for j in shared_indices[count + 1:]:
+                    coulomb += sign * self.two_int.get_value(i, j, i, j, self.orbtype)
+                    exchange -= sign * self.two_int.get_value(i, j, j, i, self.orbtype)
+
+        # two sd's are different by single excitation
+        elif diff_order == 1:
+            i, = diff_sd1
+            a, = diff_sd2
+            one_electron += sign * self.one_int.get_value(i, a, self.orbtype)
+            for j in shared_indices:
+                coulomb += sign * self.two_int.get_value(i, j, a, j, self.orbtype)
+                exchange -= sign * self.two_int.get_value(i, j, j, a, self.orbtype)
+
+        # two sd's are different by double excitation
+        elif diff_order == 2:
+            i, j = diff_sd1
+            a, b = diff_sd2
+            coulomb += sign * self.two_int.get_value(i, j, a, b, self.orbtype)
+            exchange -= sign * self.two_int.get_value(i, j, b, a, self.orbtype)
+
+        return one_electron, coulomb, exchange
