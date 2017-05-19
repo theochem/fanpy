@@ -87,7 +87,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         return self.one_int[0].dtype
 
     #FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
-    def assign_orbtype(self, orbtype):
+    def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
 
         Parameters
@@ -111,6 +111,28 @@ class ChemicalHamiltonian(BaseHamiltonian):
             raise TypeError("Orbital type must be one of 'restricted', 'unrestricted', "
                             "and 'generalized'.")
         self.orbtype = orbtype
+
+    def assign_energy_nuc_nuc(self, energy_nuc_nuc=None):
+        """Assigns the nuclear nuclear repulsion.
+
+        Parameters
+        ----------
+        energy_nuc_nuc : int, float, None
+            Nuclear-nuclear repulsion energy
+            Default is 0.0
+
+        Raises
+        ------
+        TypeError
+            If energy_nuc_nuc is not int or float or None
+        """
+        if energy_nuc_nuc is None:
+            energy_nuc_nuc = 0.0
+        elif isinstance(energy_nuc_nuc, (int, float)):
+            energy_nuc_nuc = float(energy_nuc_nuc)
+        else:
+            raise TypeError('Nuclear-nuclear repulsion must be given as a int, float, or None.')
+        self.energy_nuc_nuc = energy_nuc_nuc
 
     def assign_integrals(self, one_int, two_int):
         """Assign the one- and two-electron integrals.

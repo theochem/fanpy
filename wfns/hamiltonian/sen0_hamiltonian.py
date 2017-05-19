@@ -29,7 +29,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
     Seniority zero means that there are no unpaired electrons
     """
-    def assign_orbtype(self, orbtype):
+    def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
 
         Parameters
