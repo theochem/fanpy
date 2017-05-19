@@ -1,20 +1,19 @@
 """Hamiltonian object that interacts with the wavefunction.
 
 ..math::
-    \braket{\Phi | H | \Psi}
+    \hat{H} = \sum_{ik} h_{ik} a^\dagger_i a_k
+    + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
+where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron integral.
 
-Functions
----------
-hamiltonian(wfn, slater_d, orbtype, deriv=None)
-    Computes expectation value of the wavefunction with Hamiltonian projected against a Slater
-    determinant
-sen0_hamiltonian(wfn, slater_d, orbtype, deriv=None)
-    Computes expectation value of the seniority zero wavefunction with Hamiltonian projected against
-    a Slater determinant
+Class
+-----
+ChemicalHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+from itertools import combinations
 from .base_hamiltonian import BaseHamiltonian
 from ..backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
+from ..backend import slater
 
 
 class ChemicalHamiltonian(BaseHamiltonian):
@@ -78,7 +77,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Default is `0.0`
 
         """
-        self.assign_orbtype(orbtype=orbtype)
+        self.assign_orbtype(orbtype)
         self.assign_energy_nuc_nuc(energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
 
@@ -88,7 +87,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         return self.one_int[0].dtype
 
     #FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
-    def assign_orbtype(self, orbtype=None):
+    def assign_orbtype(self, orbtype):
         """Assign the orbital type.
 
         Parameters
@@ -186,3 +185,66 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         self.one_int = one_int
         self.two_int = two_int
+
+    def integrate_wfn_sd(self, wfn, sd, deriv=None):
+        """Integrates the Hamiltonian with against a wavefunction and Slater determinant.
+
+        ..math::
+            \big< \Psi \big| \hat{H} \big| \Phi \big>
+
+        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
+        :math:`\Phi` is the Slater determinant.
+
+        Parameters
+        ----------
+        wfn : Wavefunction
+            Wavefunction against which the Hamiltonian is integrated.
+            Needs to have the following in `__dict__`: `nspin`, `one_int`, `two_int`, `overlap`.
+        sd : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        deriv : int, None
+            Index of the parameter against which the expectation value is derivatized.
+            Default is no derivatization
+
+        Returns
+        -------
+        one_electron : float
+            One electron energy
+        coulomb : float
+            Coulomb energy
+        exchange : float
+            Exchange energy
+        """
+        # FIXME: incredibly slow/bad approach
+        occ_indices = slater.occ_indices(sd)
+        vir_indices = slater.vir_indices(sd, wfn.nspin)
+
+        one_electron = 0.0
+        coulomb = 0.0
+        exchange = 0.0
+
+        # sum over zeroth order excitation
+        coeff = wfn.get_overlap(sd, deriv=deriv)
+        for counter, i in enumerate(occ_indices):
+            one_electron += coeff * self.one_int.get_val(i, i, self.orbtype)
+            for j in occ_indices[counter+1:]:
+                coulomb += coeff * self.two_int.get_val(i, j, i, j, self.orbtype)
+                exchange -= coeff * self.two_int.get_val(i, j, j, i, self.orbtype)
+
+        # sum over one electron excitation
+        for counter, i in enumerate(occ_indices):
+            for a in vir_indices:
+                coeff = wfn.get_overlap(slater.excite(sd, i, a), deriv=deriv)
+                one_electron += coeff * self.one_int.get_val(i, a, self.orbtype)
+                for j in occ_indices[:counter] + occ_indices[counter+1:]:
+                    coulomb += coeff * self.two_int.get_val(i, j, a, j, self.orbtype)
+                    exchange -= coeff * self.two_int.get_val(i, j, j, a, self.orbtype)
+
+        # sum over two electron excitation
+        for i, j in combinations(occ_indices, 2):
+            for a, b in combinations(vir_indices, 2):
+                coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
+                coulomb += coeff * self.two_int.get_val(i, j, a, b, self.orbtype)
+                exchange -= coeff * self.two_int.get_val(i, j, b, a, self.orbtype)
+
+        return one_electron, coulomb, exchange
