@@ -20,6 +20,7 @@ from scipy.misc import comb
 
 __all__ = []
 
+
 def binomial(n, k):
     """
     Return the binomial coefficient of integers ``n`` and ``k``, or "``n``
@@ -173,8 +174,7 @@ def permanent_ryser(matrix):
             if cur_position == ncol - 1:
                 cur_value = graycode[ncol - 1]
             else:
-                cur_value = not \
-                (graycode[cur_position] and graycode[cur_position + 1])
+                cur_value = not (graycode[cur_position] and graycode[cur_position + 1])
             if flag:
                 break
 

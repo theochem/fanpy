@@ -14,6 +14,7 @@ from . import slater
 
 __all__ = ['sd_list']
 
+
 def satisfies_conditions(sd, nspatial, spin, seniority):
     """ Checks to see if Slater determinant has the desired spin and seniority
 
@@ -94,7 +95,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     if num_limit is None:
         num_limit = -1
-    elif not isinstance(num_limit, (int, long)):
+    elif not isinstance(num_limit, int):
         raise TypeError('Number of Slater determinants should be an integer')
 
     if exc_orders is None:

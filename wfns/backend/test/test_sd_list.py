@@ -30,6 +30,7 @@ def test_satisfies_conditions():
     assert not sd_list.satisfies_conditions(0b1110, 2, 0.5, 1)
     assert not sd_list.satisfies_conditions(0b1110, 2, -0.5, 0)
 
+
 def test_ci_sd_list():
     """ Tests sd_list.sd_list
     """
@@ -83,7 +84,6 @@ def test_ci_sd_list():
                                                         gmpy2.mpz(0b101011), gmpy2.mpz(0b011110),
                                                         gmpy2.mpz(0b111010), gmpy2.mpz(0b010111),
                                                         gmpy2.mpz(0b110011)]
-    print [bin(i) for i in sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0)]
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0) == [gmpy2.mpz(0b011011),
                                                                 gmpy2.mpz(0b011101),
                                                                 gmpy2.mpz(0b101011),
@@ -101,6 +101,7 @@ def test_ci_sd_list():
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-1) == [gmpy2.mpz(0b111001),
                                                                  gmpy2.mpz(0b111010),
                                                                  gmpy2.mpz(0b111100)]
+
 
 def test_doci_sd_list():
     """ Tests sd_list.doci_sd_list

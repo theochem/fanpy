@@ -12,6 +12,7 @@ import itertools as it
 
 __all__ = []
 
+
 def generate_complete_pmatch(indices):
     """ Generates all of the perfect matches of a complete (sub)graph
 
