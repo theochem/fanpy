@@ -52,6 +52,12 @@ def test_one_num_orbs():
     assert OneElectronIntegrals([np.random.rand(3, 3), np.random.rand(3, 3)]).num_orbs == 3
 
 
+def test_one_dtype():
+    """Test wfns.backend.integrals.OneElectronIntegrals.dtype."""
+    assert OneElectronIntegrals(np.random.rand(4, 4).astype(float)).dtype == float
+    assert OneElectronIntegrals(np.random.rand(4, 4).astype(complex)).dtype == complex
+
+
 def test_one_get_value():
     """Test wfns.backend.integrals.OneElectronIntegrals.get_value."""
     one_int = np.random.rand(4, 4)
@@ -153,6 +159,12 @@ def test_two_num_orbs():
     assert TwoElectronIntegrals([np.random.rand(3, 3, 3, 3),
                                  np.random.rand(3, 3, 3, 3),
                                  np.random.rand(3, 3, 3, 3)]).num_orbs == 3
+
+
+def test_two_dtype():
+    """Test wfns.backend.integrals.TwoElectronIntegrals.dtype."""
+    assert TwoElectronIntegrals(np.random.rand(4, 4, 4, 4).astype(float)).dtype == float
+    assert TwoElectronIntegrals(np.random.rand(4, 4, 4, 4).astype(complex)).dtype == complex
 
 
 def test_two_get_value():

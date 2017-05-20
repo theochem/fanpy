@@ -131,6 +131,11 @@ class OneElectronIntegrals(BaseIntegrals):
         """
         return self.integrals[0].shape[0]
 
+    @property
+    def dtype(self):
+        """Return the data type of the integrals."""
+        return self.integrals[0].dtype
+
     def get_value(self, i, k, orbtype):
         """Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
 
@@ -275,6 +280,11 @@ class TwoElectronIntegrals(BaseIntegrals):
         Assumes that the integrals have the same dimensionality in all axis
         """
         return self.integrals[0].shape[0]
+
+    @property
+    def dtype(self):
+        """Return the data type of the integrals."""
+        return self.integrals[0].dtype
 
     def get_value(self, i, j, k, l, orbtype, notation='physicist'):
         """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
