@@ -110,7 +110,7 @@ class OneElectronIntegrals(BaseIntegrals):
                 raise TypeError('One-electron integral matrices must be square (for integration '
                                 'within one basis set).')
         if len(self.integrals) == 2 and self.integrals[0].shape != self.integrals[1].shape:
-            raise ValueError('Number of alpha and beta orbitals must be the same.')
+            raise TypeError('Number of alpha and beta orbitals must be the same.')
 
     @property
     def possible_orbtypes(self):
@@ -192,6 +192,7 @@ class OneElectronIntegrals(BaseIntegrals):
             return self.integrals[0][i, k]
         else:
             raise TypeError('Unknown orbital type, {0}'.format(orbtype))
+        return 0.0
 
 
 class TwoElectronIntegrals(BaseIntegrals):
@@ -236,6 +237,8 @@ class TwoElectronIntegrals(BaseIntegrals):
             If two-electron integral matrices does not have same dimensionality in all axis
             If two-electron integrals (for the unrestricted orbitals) has different number of alpha
             and beta orbitals
+        ValueError
+            If the notation of the integrals is not supported
         """
         super().__init__(integrals)
         if len(self.integrals) not in (1, 3):
@@ -243,12 +246,12 @@ class TwoElectronIntegrals(BaseIntegrals):
         for matrix in self.integrals:
             if len(matrix.shape) != 4:
                 raise TypeError('Two-electron integral matrices must be four dimensional.')
-            elif matrix.shape[0] != matrix.shape[1] != matrix.shape[2] != matrix.shape[3]:
+            elif not(matrix.shape[0] == matrix.shape[1] == matrix.shape[2] == matrix.shape[3]):
                 raise TypeError('Two-electron integral matrices must be square (for integration '
                                 'within one basis set).')
         if (len(self.integrals) == 3 and
                 not(self.integrals[0].shape == self.integrals[1].shape == self.integrals[2].shape)):
-            raise ValueError('Number of alpha and beta orbitals must be the same.')
+            raise TypeError('Number of alpha and beta orbitals must be the same.')
 
         if notation not in ('physicist', 'chemist'):
             raise ValueError('Unsupported notation of integrals.')
@@ -330,7 +333,6 @@ class TwoElectronIntegrals(BaseIntegrals):
                 return self.integrals[0][I, J, K, L]
         elif orbtype == 'unrestricted':
             # self.num_orbs is the number of spatial orbitals
-            self.num_orbs = self.integrals[0].shape[0]
             if any(index >= 2*self.num_orbs for index in (i, j, k, l)):
                 raise ValueError('Indices cannot be greater than the number of spin orbitals')
             # spatial indices
