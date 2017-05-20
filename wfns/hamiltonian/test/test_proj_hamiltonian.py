@@ -31,38 +31,6 @@ class TestProjectedWavefunction(ProjectedWavefunction):
         pass
 
 
-def test_hamiltonian():
-    """ Tests wfns.proj.proj_hamiltonian.hamiltonian
-    """
-    test_wfn = TestProjectedWavefunction()
-    test_wfn.one_int = (np.array([[1, 2], [3, 4]], dtype=float), )
-    test_wfn.two_int = (np.array([[[[5, 6], [7, 8]],
-                                   [[9, 10], [11, 12]]],
-                                  [[[13, 14], [15, 16]],
-                                   [[17, 18], [19, 20]]]], dtype=float), )
-    test_wfn.orbtype = 'restricted'
-    test_wfn.cache = {}
-    test_wfn.d_cache = {}
-    one_energy, coulomb, exchange = hamiltonian(test_wfn, 0b0101, 'restricted', deriv=None)
-    assert one_energy == 1*1 + 1*1
-    assert coulomb == 1*5 + 2*8
-    assert exchange == 0
-
-    one_energy, coulomb, exchange = hamiltonian(test_wfn, 0b1010, 'restricted', deriv=None)
-    assert one_energy == 2*4 + 2*4
-    assert coulomb == 1*17 + 2*20
-    assert exchange == 0
-
-    one_energy, coulomb, exchange = hamiltonian(test_wfn, 0b0110, 'restricted', deriv=None)
-    assert one_energy == 1*3 + 2*2
-    assert coulomb == 1*13 + 2*12
-    assert exchange == 0
-
-    one_energy, coulomb, exchange = hamiltonian(test_wfn, 0b1100, 'restricted', deriv=None)
-    assert one_energy == 1*3 + 3*4
-    assert coulomb == 3*10
-    assert exchange == -3*11
-
 def test_sen0_hamiltonian_2e():
     """ Tests wfns.proj.sen0_proj_hamiltonian.hamiltonian
     """
