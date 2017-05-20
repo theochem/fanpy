@@ -81,9 +81,19 @@ class ChemicalHamiltonian(object):
         self.assign_integrals(one_int, two_int)
 
     @property
+    def nspin(self):
+        """Return the number of spin orbitals."""
+        if self.orbtype in ('restricted', 'unrestricted'):
+            return 2*self.one_int.num_orbs
+        elif self.orbtype == 'generalized':
+            return self.one_int.num_orbs
+        else:
+            raise NotImplementedError('Unsupported orbital type.')
+
+    @property
     def dtype(self):
         """Return the data type of the integrals."""
-        return self.one_int[0].dtype
+        return self.one_int.dtype
 
     #FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
     def assign_orbtype(self, orbtype=None):
@@ -166,6 +176,7 @@ class ChemicalHamiltonian(object):
             If two-electron integrals (for the unrestricted orbitals) has different number of alpha
             and beta orbitals
             If one- and two-electron integrals do not have the same number of orbitals
+            If one- and two-electron integrals do not have the same data type
             If one- and two-electron integrals do not correspond to the same orbital type (i.e.
             restricted, unrestricted, generalized).
             If orbital type of the integrals do not match with the given orbital type
@@ -194,13 +205,15 @@ class ChemicalHamiltonian(object):
         if one_int.num_orbs != two_int.num_orbs:
             raise TypeError('One- and two-electron integrals do not have the same number of '
                             'orbitals.')
-        if one_int.possible_orbtypes != two_int.possible_orbtypes:
+        elif one_int.dtype != two_int.dtype:
+            raise TypeError('One- and two-electron integrals do not have the same data type.')
+        elif one_int.possible_orbtypes != two_int.possible_orbtypes:
             raise TypeError('One- and two-electron integrals do not correspond to the same orbital '
                             'type (i.e. restricted, unrestricted, generalized).')
-        if self.orbtype not in one_int.possible_orbtypes:
+        elif self.orbtype not in one_int.possible_orbtypes:
             raise TypeError('Orbital type of the integrals do not match with the given orbital '
                             'type, {0}'.format(self.orbtype))
-        if self.orbtype == 'generalized' and one_int.num_orbs % 2 == 1:
+        elif self.orbtype == 'generalized' and one_int.num_orbs % 2 == 1:
             raise NotImplementedError('Odd number of "spin" orbitals will cause problems when '
                                       ' constructing Slater determinants.')
 
@@ -220,7 +233,7 @@ class ChemicalHamiltonian(object):
         ----------
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
-            Needs to have the following in `__dict__`: `nspin`, `one_int`, `two_int`, `overlap`.
+            Needs to have the following in `__dict__`: `get_overlap`.
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
         deriv : int, None
@@ -238,7 +251,7 @@ class ChemicalHamiltonian(object):
         """
         # FIXME: incredibly slow/bad approach
         occ_indices = slater.occ_indices(sd)
-        vir_indices = slater.vir_indices(sd, wfn.nspin)
+        vir_indices = slater.vir_indices(sd, self.nspin)
 
         one_electron = 0.0
         coulomb = 0.0

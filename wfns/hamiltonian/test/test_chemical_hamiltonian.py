@@ -100,6 +100,11 @@ def test_assign_integrals():
 
     test = Empty()
     ChemicalHamiltonian.assign_orbtype(test, 'restricted')
+    assert_raises(TypeError, ChemicalHamiltonian.assign_integrals, test,
+                  np.random.rand(4, 4).astype(float), np.random.rand(4, 4, 4, 4).astype(complex))
+
+    test = Empty()
+    ChemicalHamiltonian.assign_orbtype(test, 'restricted')
     assert_raises(TypeError, ChemicalHamiltonian.assign_integrals, test, 2*(np.random.rand(4, 4), ),
                   np.random.rand(4, 4, 4, 4))
 
@@ -117,3 +122,28 @@ def test_assign_integrals():
     ChemicalHamiltonian.assign_orbtype(test, 'generalized')
     assert_raises(NotImplementedError, ChemicalHamiltonian.assign_integrals, test, np.random.rand(3, 3),
                   np.random.rand(3, 3, 3, 3))
+
+
+def test_nspin():
+    """Test ChemicalHamiltonian.dtype."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert test.nspin == 4
+    test = ChemicalHamiltonian(2*[one_int], 3*[two_int], 'unrestricted')
+    assert test.nspin == 4
+    test = ChemicalHamiltonian(one_int, two_int, 'generalized')
+    assert test.nspin == 2
+
+
+def test_dtype():
+    """Test ChemicalHamiltonian.dtype."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert test.dtype == float
+
+    one_int = np.arange(1, 5, dtype=complex).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=complex).reshape(2, 2, 2, 2)
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert test.dtype == complex
