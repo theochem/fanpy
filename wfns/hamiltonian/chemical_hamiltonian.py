@@ -260,26 +260,26 @@ class ChemicalHamiltonian(object):
         # sum over zeroth order excitation
         coeff = wfn.get_overlap(sd, deriv=deriv)
         for counter, i in enumerate(occ_indices):
-            one_electron += coeff * self.one_int.get_val(i, i, self.orbtype)
+            one_electron += coeff * self.one_int.get_value(i, i, self.orbtype)
             for j in occ_indices[counter+1:]:
-                coulomb += coeff * self.two_int.get_val(i, j, i, j, self.orbtype)
-                exchange -= coeff * self.two_int.get_val(i, j, j, i, self.orbtype)
+                coulomb += coeff * self.two_int.get_value(i, j, i, j, self.orbtype)
+                exchange -= coeff * self.two_int.get_value(i, j, j, i, self.orbtype)
 
         # sum over one electron excitation
         for counter, i in enumerate(occ_indices):
             for a in vir_indices:
                 coeff = wfn.get_overlap(slater.excite(sd, i, a), deriv=deriv)
-                one_electron += coeff * self.one_int.get_val(i, a, self.orbtype)
+                one_electron += coeff * self.one_int.get_value(i, a, self.orbtype)
                 for j in occ_indices[:counter] + occ_indices[counter+1:]:
-                    coulomb += coeff * self.two_int.get_val(i, j, a, j, self.orbtype)
-                    exchange -= coeff * self.two_int.get_val(i, j, j, a, self.orbtype)
+                    coulomb += coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
+                    exchange -= coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
 
         # sum over two electron excitation
         for i, j in combinations(occ_indices, 2):
             for a, b in combinations(vir_indices, 2):
                 coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
-                coulomb += coeff * self.two_int.get_val(i, j, a, b, self.orbtype)
-                exchange -= coeff * self.two_int.get_val(i, j, b, a, self.orbtype)
+                coulomb += coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
+                exchange -= coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
 
         return one_electron, coulomb, exchange
 
@@ -320,7 +320,7 @@ class ChemicalHamiltonian(object):
         diff_sd1, diff_sd2 = slater.diff(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
-            return 0
+            return 0.0, 0.0, 0.0
         diff_order = len(diff_sd1)
 
         # moving all the shared orbitals toward one another (in the middle)
