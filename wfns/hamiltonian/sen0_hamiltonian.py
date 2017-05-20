@@ -68,7 +68,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         ----------
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
-            Needs to have the following in `__dict__`: `nspin`, `one_int`, `two_int`, `overlap`.
+            Needs to have the following in `__dict__`: `get_overlap`
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
         deriv : int, None
@@ -85,9 +85,10 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
             Exchange energy
         """
         # FIXME: incredibly slow/bad approach
-        spatial_sd = slater.split_spin(sd, wfn.nspatial)[0]
+        nspatial = self.nspin // 2
+        spatial_sd = slater.split_spin(sd, nspatial)[0]
         occ_spatial_indices = slater.occ_indices(spatial_sd)
-        vir_spatial_indices = slater.vir_indices(spatial_sd, wfn.nspatial)
+        vir_spatial_indices = slater.vir_indices(spatial_sd, nspatial)
 
         one_electron = 0.0
         coulomb = 0.0
@@ -96,19 +97,19 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         # sum over zeroth order excitation
         coeff = wfn.get_overlap(sd, deriv=deriv)
         for counter, i in enumerate(occ_spatial_indices):
-            one_electron += 2 * coeff * self.one_int.get_val(i, i, self.orbtype)
-            coulomb += coeff * self.two_int.get_val(i, i, i, i, self.orbtype)
+            one_electron += 2 * coeff * self.one_int.get_value(i, i, self.orbtype)
+            coulomb += coeff * self.two_int.get_value(i, i, i, i, self.orbtype)
             for j in occ_spatial_indices[counter+1:]:
-                coulomb += 4 * coeff * self.two_int.get_val(i, j, i, j, self.orbtype)
-                exchange -= 2 * coeff * self.two_int.get_val(i, j, j, i, self.orbtype)
+                coulomb += 4 * coeff * self.two_int.get_value(i, j, i, j, self.orbtype)
+                exchange -= 2 * coeff * self.two_int.get_value(i, j, j, i, self.orbtype)
 
         # sum over pair wise excitation (seniority zero)
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:
-                j = i + wfn.nspatial
-                b = a + wfn.nspatial
+                j = i + nspatial
+                b = a + nspatial
                 coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
-                coulomb += coeff * self.two_int.get_val(i, j, a, b, self.orbtype)
-                exchange -= coeff * self.two_int.get_val(i, j, b, a, self.orbtype)
+                coulomb += coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
+                exchange -= coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
 
         return one_electron, coulomb, exchange
