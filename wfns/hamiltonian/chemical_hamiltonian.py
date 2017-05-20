@@ -200,7 +200,7 @@ class ChemicalHamiltonian(object):
         if self.orbtype not in one_int.possible_orbtypes:
             raise TypeError('Orbital type of the integrals do not match with the given orbital '
                             'type, {0}'.format(self.orbtype))
-        if self.orbtype == 'generalized' and one_int[0].shape[0] % 2 == 1:
+        if self.orbtype == 'generalized' and one_int.num_orbs % 2 == 1:
             raise NotImplementedError('Odd number of "spin" orbitals will cause problems when '
                                       ' constructing Slater determinants.')
 
