@@ -127,7 +127,7 @@ def test_assign_integrals():
 
 
 def test_nspin():
-    """Test ChemicalHamiltonian.dtype."""
+    """Test ChemicalHamiltonian.nspin."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test = ChemicalHamiltonian(one_int, two_int, 'restricted')
@@ -136,6 +136,9 @@ def test_nspin():
     assert test.nspin == 4
     test = ChemicalHamiltonian(one_int, two_int, 'generalized')
     assert test.nspin == 2
+    # hack in bad orbital type
+    test.orbtype = 'bad orbital type'
+    assert_raises(NotImplementedError, lambda: test.nspin)
 
 
 def test_dtype():
