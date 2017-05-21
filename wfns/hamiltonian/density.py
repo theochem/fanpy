@@ -12,6 +12,7 @@ import numpy as np
 from ..backend import slater
 
 __all__ = ['density_matrix']
+# FIXME: incredibly slow/bad approach
 
 
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
@@ -177,8 +178,8 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     else:
         raise ValueError('Unsupported orbital type')
 
-# TODO: generalize to arbitrary order density matrix
 
+# TODO: generalize to arbitrary order density matrix
 def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                    orbtype='restricted'):
     """ Returns the first and second order density matrices
@@ -258,13 +259,11 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
 
             # orbitals that are not shared by the two determinants
             left_diff, right_diff = slater.diff(sd1, sd2)
-            shared_indices = slater.occ_indices(slater.shared(sd1, sd2))
+            shared_indices = np.array(slater.occ_indices(slater.shared(sd1, sd2)))
 
             # moving all the shared orbitals toward one another (in the middle)
-            num_transpositions_0 = sum(len([j for j in shared_indices if j < i]) for i in
-                                       left_diff)
-            num_transpositions_1 = sum(len([j for j in shared_indices if j < i]) for i in
-                                       right_diff)
+            num_transpositions_0 = np.sum(shared_indices[:, np.newaxis] < np.array(left_diff))
+            num_transpositions_1 = np.sum(shared_indices[:, np.newaxis] < np.array(right_diff))
             num_transpositions = num_transpositions_0 + num_transpositions_1
             sign = (-1)**num_transpositions
 

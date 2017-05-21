@@ -72,7 +72,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     Returns
     -------
-    civec : list of ints
+    sd_vec : list of ints
         Integer that describes the occupation of a Slater determinant as a bitstring
 
     Raises
@@ -111,11 +111,11 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
     elif None not in [spin, seniority] and seniority < abs(2*spin):
         raise ValueError('Cannot have spin, {0}, with seniority, {1}.'.format(spin, seniority))
 
-    civec = []
+    sd_vec = []
     # ASSUME: spin orbitals are ordered by increasing energy
     ground = slater.ground(nelec, 2*nspatial)
     if satisfies_conditions(ground, nspatial, spin, seniority):
-        civec.append(ground)
+        sd_vec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
     vir_indices = slater.vir_indices(ground, 2*nspatial)
@@ -132,8 +132,8 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
             sd = slater.excite(ground, *(occ+vir))
             if not satisfies_conditions(sd, nspatial, spin, seniority):
                 continue
-            civec.append(sd)
+            sd_vec.append(sd)
             count += 1
             if count >= num_limit >= 0:
-                return civec[:num_limit]
-    return civec
+                return sd_vec[:num_limit]
+    return sd_vec
