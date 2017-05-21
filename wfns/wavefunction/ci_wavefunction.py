@@ -1,324 +1,299 @@
-""" Parent class of CI wavefunctions
+"""Parent class of CI wavefunctions.
 
-This module describes wavefunction that are expressed as linear combination of Slater determinants.
+This module includes wavefunctions that are expressed as linear combination of Slater determinants.
 """
 from __future__ import absolute_import, division, print_function
+import itertools
 import numpy as np
-from scipy.optimize import least_squares
-from .wavefunction import Wavefunction
+from .base_wavefunction import BaseWavefunction
 from ..backend import slater
-from ..hamiltonian.ci_matrix import ci_matrix
 from ..backend.sd_list import sd_list
 from ..hamiltonian.density import density_matrix
-# FIXME: inherit docstring
 
 __all__ = []
 
 
-class CIWavefunction(Wavefunction):
-    """ Wavefunction expressed as a linear combination of Slater determinants
-
-    Contains the necessary information to variationally solve the CI wavefunction
+class CIWavefunction(BaseWavefunction):
+    """Wavefunction that can be expressed as a linear combination of Slater determinants.
 
     Attributes
     ----------
     nelec : int
         Number of electrons
-    one_int : 1- or 2-tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        1-tuple for spatial (restricted) and generalized orbitals
-        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    two_int : 1- or 3-tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        In physicist's notation
-        1-tuple for spatial (restricted) and generalized orbitals
-        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+    nspin : int
+        Number of spin orbitals (alpha and beta)
     dtype : {np.float64, np.complex128}
-        Numpy data type
-    nuc_nuc : float
-        Nuclear-nuclear repulsion energy
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital used in obtaining the one-electron and two-electron integrals
-    dict_exc_index : dict from int to int
-        Dictionary from the excitation order to the column index of the coefficient matrix
-    spin : float
-        Total spin of the wavefunction
+        Data type of the wavefunction
+    params : np.ndarray
+        Parameters of the wavefunction
+    _spin : float
+        Total spin of each Slater determinant
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
         Default is no spin (all spins possible)
-        0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-        Positive spin means that there are more alpha orbitals than beta orbitals
-        Negative spin means that there are more beta orbitals than alpha orbitals
-    civec : tuple of int
+    _seniority : int
+        Number of unpaired electrons in each Slater determinant
+    sd_vec : tuple of int
         List of Slater determinants used to construct the CI wavefunction
+    dict_sd_index : dictionary of int to int
+        Dictionary from Slater determinant to its index in sd_vec
 
     Properties
     ----------
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
+    spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
+    seniority : int, None
+        Seniority (number of unpaired electrons) of the wavefunction
+        None means that all seniority is allowed
+    template_params : np.ndarray
+        Template of the wavefunction parameters
+        Depends on the attributes given
+    nparams : int
+        Number of parameters
+    params_shape : 2-tuple of int
+        Shape of the parameters
 
-    Method
-    ------
-    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
+    Methods
+    -------
+    __init__(self, nelec, one_int, two_int, dtype=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
+    assign_nspin(self, nspin)
+        Assigns the number of spin orbitals
+    assign_params(self, params)
+        Assigns the parameters of the wavefunction
     assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_nuc_nuc(self, nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
-    assign_integrals(self, one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-    assign_excs(self, excs=None)
-        Assigns excitations to include in the calculation
     assign_spin(self, spin=None)
         Assigns the spin of the wavefunction
-    assign_civec(self, civec=None)
+    assign_seniority(self, seniority=None)
+        Assigns the seniority of the wavefunction
+    assign_sd_vec(self, sd_vec=None)
         Assigns the tuple of Slater determinants used in the CI wavefunction
-    get_energy(self, include_nuc=True, exc_lvl=0)
-        Gets the energy of the CI wavefunction
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
     compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
         Constructs the one and two electron density matrices for the given excitation level
-    compute_ci_matrix(self)
-        Returns CI Hamiltonian matrix in the Slater determinant basis
-    generate_civec
-        Generates a list of Slater determinants
     """
-    def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None,
-                 excs=None, civec=None, spin=None, seniority=None):
-        """ Initializes a wavefunction
+    def __init__(self, nelec, nspin, dtype=None, params=None, sd_vec=None, spin=None,
+                 seniority=None):
+        """Initialize the wavefunction.
 
         Parameters
         ----------
         nelec : int
             Number of electrons
-
-        one_int : np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K)
-            One electron integrals
-            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
-            For unretricted spin orbitals, 2-tuple of np.ndarray
-
-        two_int : np.ndarray(K,K,K,K), 1- or 3-tuple np.ndarray(K,K,K,K)
-            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
-            For unrestricted orbitals, 3-tuple of np.ndarray
-
+        nspin : int
+            Number of spin orbitals
         dtype : {float, complex, np.float64, np.complex128, None}
             Numpy data type
             Default is `np.float64`
-
-        nuc_nuc : {float, None}
-            Nuclear nuclear repulsion value
-            Default is `0.0`
-
-        orbtype : {'restricted', 'unrestricted', 'generalized', None}
-            Type of the orbital used in obtaining the one-electron and two-electron integrals
-            Default is `'restricted'`
-
-        excs : list/tuple of int
-            Tuple of excitation orders that are relevant to the wavefunction
-
-        civec : iterable of int
+        params : np.ndarray
+            Coefficients of the Slater determinants of a CI wavefunction
+        sd_vec : iterable of int
             List of Slater determinants used to construct the CI wavefunction
-
         spin : float
             Total spin of the wavefunction
             Default is no spin (all spins possible)
             0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
             Positive spin means that there are more alpha orbitals than beta orbitals
             Negative spin means that there are more beta orbitals than alpha orbitals
-
         seniority : int
             Seniority of the wavefunction
             Default is no seniority (all seniority possible)
         """
-        super(CIWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype, nuc_nuc=nuc_nuc,
-                                             orbtype=orbtype)
+        super().__init__(nelec, nspin, dtype=dtype, params=params)
         self.assign_spin(spin=spin)
         self.assign_seniority(seniority=seniority)
-        self.assign_civec(civec=civec)
-        self.assign_excs(excs=excs)
-        self.sd_coeffs = np.zeros((len(self.civec), len(self.dict_exc_index)))
-        self.energies = np.zeros(len(self.dict_exc_index))
+        self.assign_sd_vec(sd_vec=sd_vec)
+        # FIXME: atleast doubling memory for faster lookup of sd coefficient
+        self.dict_sd_index = {sd: i for i, sd in enumerate(self.sd_vec)}
+        self.assign_params(params=params)
 
-    ######################
-    # Assignment methods #
-    ######################
-    def assign_civec(self, civec=None):
-        """ Sets the Slater determinants used in the wavefunction
+    @property
+    def template_params(self):
+        """Return the template of the parameters of the CI wavefunction.
+
+        First Slater determinant of `sd_vec` is used as the reference.
+
+        Returns
+        -------
+        np.ndarray
+
+        Note
+        ----
+        Instance must contain `sd_vec`
+        """
+        params = np.zeros(len(self.sd_vec), dtype=self.dtype)
+        params[0] = 1
+        return params
+
+    @property
+    def spin(self):
+        """Return the spin of the wavefunction.
+
+        ..math::
+            \frac{1}{2}(N_\alpha - N_\beta)
+
+        Returns
+        -------
+        float
+
+        Note
+        ----
+        `None` means that all possible spins are allowed
+        """
+        return self._spin
+
+    def assign_spin(self, spin=None):
+        """Set the spin of each Slater determinant.
+
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
         Parameters
         ----------
-        civec : iterable of int
+        spin : float
+            Spin of each Slater determinant
+            Default is no spin (all spins possible)
+
+        Raises
+        ------
+        TypeError
+            If the spin is not an integer, float, or None
+        ValueError
+            If the spin is not an integral multiple of 0.5
+        """
+        if spin is None:
+            self._spin = spin
+        elif isinstance(spin, (int, float)):
+            if (2*spin) % 2 != 0:
+                raise ValueError('Spin should be an integral multiple of 0.5.')
+            self._spin = float(spin)
+        else:
+            raise TypeError('Spin should be provided as an integer, float or `None`.')
+
+    @property
+    def seniority(self):
+        """Return the seniority (number of unpaired electrons) of the wavefunction.
+
+        Returns
+        -------
+        int
+
+        Note
+        ----
+        `None` means that all possible seniority are allowed
+        """
+        return self._seniority
+
+    def assign_seniority(self, seniority=None):
+        """Set the seniority of each Slater determinant.
+
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
+
+        Parameters
+        ----------
+        seniority : float
+            Seniority of each Slater determinant
+            Default is no seniority (all seniorities possible)
+
+        Raises
+        ------
+        TypeError
+            If the seniority is not an integer, float, or None
+        ValueError
+            If the seniority is a negative integer
+        """
+        if not isinstance(seniority, (int, type(None))):
+            raise TypeError('Invalid seniority of the wavefunction')
+        elif isinstance(seniority, int) and seniority < 0:
+            raise ValueError('Seniority must be a nonnegative integer.')
+        self._seniority = seniority
+
+    def assign_sd_vec(self, sd_vec=None):
+        """Set the list of Slater determinants from which the CI wavefunction is constructed.
+
+        Parameters
+        ----------
+        sd_vec : iterable of int
             List of Slater determinants (in the form of integers that describe the occupation as a
             bitstring)
 
         Raises
         ------
         TypeError
-            If civec is not iterable
+            If sd_vec is not iterable
             If a Slater determinant cannot be turned into the internal form
         ValueError
-            If Slater determinant does not have the right number of electrons
-            If there are no Slater determinants that has the given spin
+            If an empty iterator was provided
+            If a Slater determinant does not have the correct number of electrons
+            If a Slater determinant does not have the correct spin
+            If a Slater determinant does not have the correct seniority
         """
-        if civec is None:
-            civec = self.generate_civec()
+        # FIXME: terrible memory usage
+        if sd_vec is None:
+            sd_vec = sd_list(self.nelec, self.nspatial, num_limit=None, exc_orders=None,
+                             spin=self.spin, seniority=self.seniority)
 
-        if not hasattr(civec, '__iter__'):
+        if not hasattr(sd_vec, '__iter__'):
             raise TypeError("Slater determinants must be given as an iterable")
 
-        filtered_sds = []
-        for slater_d in civec:
-            slater_d = slater.internal_sd(slater_d)
-            if slater.total_occ(slater_d) != self.nelec:
-                raise ValueError('Slater determinant, {0}, does not have the right number of'
-                                 ' electrons'.format(bin(slater_d)))
-            if self.spin is not None and slater.get_spin(slater_d, self.nspatial) != self.spin:
-                continue
-            if (self.seniority is not None and
-                    slater.get_seniority(slater_d, self.nspatial) != self.seniority):
-                continue
-            filtered_sds.append(slater_d)
+        if len(sd_vec) == 0:
+            raise ValueError('No Slater determiannts were provided.')
 
-        # check if empty
-        if len(filtered_sds) == 0:
-            terms = {'spin':self.spin, 'seniority':self.seniority}
-            end_phrase = ', and '.join('{0}, {1}'.format(i, j) for i, j in terms.iteritems()
-                                       if j is not None)
-            raise ValueError('Could not find any Slater determinant that has {0}'
-                             ''.format(end_phrase))
-        self.civec = tuple(filtered_sds)
+        temp = itertools.tee(sd_vec, 1)
+        for sd in temp:
+            sd = slater.internal_sd(sd)
+            if slater.total_occ(sd) != self.nelec:
+                raise ValueError('Slater determinant, {0}, does not have the correct number of '
+                                 'electrons, {1}'.format(bin(sd), self.nelec))
+            elif isinstance(self.spin, float) and slater.get_spin(sd, self.nspatial) != self.spin:
+                raise ValueError('Slater determinant, {0}, does not have the correct spin, {1}'
+                                 ''.format(bin(sd), self.spin))
+            elif (isinstance(self.seniority, int)
+                  and slater.get_seniority(sd, self.nspatial) != self.seniority):
+                raise ValueError('Slater determinant, {0}, does not have the correct seniority, {1}'
+                                 ''.format(bin(sd), self.seniority))
 
+        self.sd_vec = tuple(sd_vec)
 
-    def assign_excs(self, excs=None):
-        """ Sets orders of excitations to include during calculation
+    def get_overlap(self, sd, deriv=None):
+        """Return the overlap of the CI wavefunction with a Slater determinant.
+
+        i.e. the Slater determinnt coefficient
+        ..math::
+            \big< \Phi_i \big| \Psi \big> = c_i
+
+        where
+        ..math::
+            \big| \Psi \big> = \sum_i c_i \big| \Phi_i \big>
 
         Parameters
         ----------
-        excs : list/tuple of ints
-            Orders of excitations to calculate
-            By default, only the ground state (0th excitation) is calculated
+        sd : int, mpz
+            Slater Determinant against which to project.
+        deriv : int
+            Index of the parameter to derivatize
+            Default does not derivatize
+
+        Returns
+        -------
+        overlap : float
 
         Raises
         ------
         TypeError
-            If excs is not given as a list/tuple of integers
-        ValueError
-            If any excitation order is less than 0 or greater than the number of Slater determinants
+            If given Slater determinant is not compatible with the format used internally
         """
-        if excs is None:
-            excs = [0]
-        if not isinstance(excs, (list, tuple)) or any(not isinstance(i, int) for i in excs):
-            raise TypeError('Orders of excitations must be given as a list or tuple of integers')
-        if not all(0 <= exc < len(self.civec) for exc in excs):
-            raise ValueError('All excitation orders must be greater than or equal to 0 and less'
-                             ' the number of Slater determinants, {0}'.format(len(self.civec)))
-        self.dict_exc_index = {exc:i for i, exc in enumerate(excs)}
-
-
-    ##########
-    # Getter #
-    ##########
-    def get_energy(self, include_nuc=True, exc_lvl=0):
-        """ Returns the energy of the system
-
-        Parameters
-        ----------
-        include_nuc : bool
-            Flag to include nuclear nuclear repulsion
-        exc_lvl : int
-            Excitation level of the wavefunction
-            0 is the ground state wavefunction
-            `n`is the `n`th order excitation
-
-        Returns
-        -------
-        energy : float
-            Total energy if include_nuc is True
-            Electronic energy if include_nuc is False
-
-        Raises
-        ------
-        ValueError
-            If the excitation level was not included in the initialization (or in the assignment of
-            self.dict_exc_index)
-        """
-        if exc_lvl not in self.dict_exc_index:
-            raise ValueError('Unsupported excitation level, {0}'.format(exc_lvl))
-        nuc_nuc = self.nuc_nuc if include_nuc else 0.0
-        return self.energies[self.dict_exc_index[exc_lvl]] + nuc_nuc
-
-
-    ##################
-    # Density Matrix #
-    ##################
-    def compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0):
-        """ Returns the first and second order density matrices
-
-        Second order density matrix uses the Physicist's notation:
-        ..math::
-            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
-        Chemist's notation is also implemented
-        ..math::
-            \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
-
-        Paramaters
-        ----------
-        exc_lvl : int
-            Excitation level of the wavefunction
-            0 is the ground state wavefunction
-            `n`is the `n`th order excitation
-        is_chemist_notation : bool
-            True if chemist's notation
-            False if physicist's notation
-            Default is Physicist's notation
-        val_threshold : float
-            Threshold for truncating the density matrice entries
-            Skips all of the Slater determinants whose maximal sum of contributions to density
-            matrices is less than threshold value
-
-        Returns
-        -------
-        one_densities : tuple of np.ndarray
-            One electron density matrix
-            For spatial and generalized orbitals, 1-tuple of np.ndarray
-            For unretricted spin orbitals, 2-tuple of np.ndarray
-        two_densities : tuple of np.ndarray
-            Two electron density matrix
-            For spatial and generalized orbitals, 1-tuple of np.ndarray
-            For unrestricted orbitals, 3-tuple of np.ndarray
-        """
-        return density_matrix(self.sd_coeffs[:, self.dict_exc_index[exc_lvl]].flat, self.civec,
-                              self.nspatial, is_chemist_notation=is_chemist_notation,
-                              val_threshold=val_threshold, orbtype=self.orbtype)
-
-
-    ###########
-    # Solving #
-    ###########
-    def compute_ci_matrix(self):
-        """ Returns CI Hamiltonian matrix in the Slater determinant basis
-
-        ..math::
-            H_{ij} = \big< \Phi_i \big| H \big| \Phi_j \big>
-
-        Returns
-        -------
-        matrix : np.ndarray(K, K)
-        """
-        return ci_matrix(self.one_int, self.two_int, self.civec, self.dtype, self.orbtype)
-
-
-    def generate_civec(self):
-        """ Generates Slater determinants
-
-        All orders of excitations given the assigned spin and seniority
-
-        Returns
-        -------
-        civec : list of ints
-            Integer that describes the occupation of a Slater determinant as a bitstring
-        """
-        return sd_list(self.nelec, self.nspatial, num_limit=None, exc_orders=None, spin=self.spin,
-                       seniority=self.seniority)
+        sd = slater.internal_sd(sd)
+        if deriv is None:
+            return self.params[self.dict_sd_index[sd]]
+        elif deriv == self.dict_sd_index[sd]:
+            return 1
+        else:
+            return 0
