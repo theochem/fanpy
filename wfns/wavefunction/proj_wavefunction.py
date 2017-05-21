@@ -202,13 +202,6 @@ class ProjectedWavefunction(Wavefunction):
     # Properties #
     ##############
     @property
-    def nparams(self):
-        """ Number of parameters
-        """
-        return self.template_coeffs.size + 1
-
-
-    @property
     def nproj(self):
         """ Number of Slater determinants to project against
         """
@@ -304,71 +297,6 @@ class ProjectedWavefunction(Wavefunction):
                 raise ValueError('Reference Slater determinant, {0}, does not have the same'
                                  ' seniority as the selected seniority, {1}'
                                  ''.format(bin(sd), self._seniority))
-
-
-    def assign_params(self, params=None, add_noise=False):
-        """ Assigns the parameters of the wavefunction
-
-        Parameters
-        ----------
-        params : np.ndarray, None
-            Parameters of the wavefunction
-            Last parameter is the energy
-            Default is the `template_coeffs` for the coefficient and energy of the reference
-            Slater determinants
-            If energy is given as zero, the energy of the reference Slater determinants are used
-        add_noise : bool
-            Flag to add noise to the given parameters
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`
-            If `params` has data type of `float or `np.float64` and wavefunction does not have data
-            type of `np.float64`
-        ValueError
-            If `params` is None (default) and `ref_sds` has more than one Slater determinants
-            If `params` is not a one dimensional numpy array with appropriate dimensions
-        """
-        if params is None:
-            if len(self.ref_sds) > 1:
-                raise ValueError('Cannot use default initial parameters if there is more than one'
-                                 ' reference Slater determinants.')
-            params = self.template_coeffs.astype(self.dtype).flatten()
-            params = np.hstack((params, 0))
-
-        ncoeffs = self.template_coeffs.size
-        # check input
-        if not isinstance(params, np.ndarray):
-            raise TypeError('Parameters must be given as a np.ndarray')
-        elif params.shape != (self.nparams, ):
-            raise ValueError('Parameters must be given as a one dimension array of size, {0}'
-                             ''.format(self.nparams))
-        elif params.dtype not in (float, complex, np.float64, np.complex128):
-            raise TypeError('Data type of the parameters must be one of `float`, `complex`,'
-                            ' `np.float64` and `np.complex128`')
-        if params.dtype in (complex, np.complex128) and self.dtype != np.complex128:
-            raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction'
-                            ' must be `np.complex128`')
-
-        # add random noise
-        if add_noise:
-            # set scale
-            scale = 0.2 / ncoeffs
-            params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
-            if params.dtype == np.complex128:
-                params[:ncoeffs] += 0.001j * scale * (np.random.random(ncoeffs) - 0.5)
-
-        self.params = params.astype(self.dtype)
-        # add energy
-        if self.params[-1] == 0:
-            self.params[-1] = self.compute_energy(ref_sds=self.ref_sds)
-        # clear cache
-        self.cache = {}
-        self.d_cache = {}
-
 
 
     def get_overlap(self, sd, deriv=None):

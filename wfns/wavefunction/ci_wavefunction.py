@@ -144,47 +144,6 @@ class CIWavefunction(Wavefunction):
     ######################
     # Assignment methods #
     ######################
-    def assign_spin(self, spin=None):
-        """ Sets the spin of the wavefunction
-
-        Parameters
-        ----------
-        spin : float
-            Total spin of the wavefunction
-            Default is no spin (all spins possible)
-            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-            Positive spin means that there are more alpha orbitals than beta orbitals
-            Negative spin means that there are more beta orbitals than alpha orbitals
-
-        Raises
-        ------
-        TypeError
-            If the spin is not an integer, float, or None
-        """
-        if not isinstance(spin, (int, float, type(None))):
-            raise TypeError('Invalid spin of the wavefunction')
-        self.spin = spin
-
-
-    def assign_seniority(self, seniority=None):
-        """ Sets the seniority of the wavefunction
-
-        Parameters
-        ----------
-        seniority : int
-            Seniority of the wavefunction
-            Default is no seniority (all seniority possible)
-
-        Raises
-        ------
-        TypeError
-            If the seniority is not a float or None
-        """
-        if not isinstance(seniority, (int, type(None))):
-            raise TypeError('Invalid seniority of the wavefunction')
-        self.seniority = seniority
-
-
     def assign_civec(self, civec=None):
         """ Sets the Slater determinants used in the wavefunction
 
