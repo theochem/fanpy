@@ -3,22 +3,30 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
-from wfns.backend.sd_list import sd_list
 from wfns.tools import find_datafile
 from wfns.wavefunction.ci_pairs import CIPairs
-from wfns.solver.solver_ci import solve
-from wfns.wavefunction.ap1rog import AP1roG
-from wfns.solver.solver import solve as proj_solve
 
 
-def test_generate_civec():
-    """ Tests wfns.wavefunction.ci_pairs.CIPairs.generate_civec
-    """
-    test = CIPairs(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
-    assert test.generate_civec() == sd_list(test.nelec, test.nspatial, num_limit=None, spin=0,
-                                            seniority=0, exc_orders=[2])
+class TestCIPairs(CIPairs):
+    """CIPairs class without initializer."""
+    def __init__(self):
+        pass
 
 
+def test_assign_sd_vec():
+    """Test CIPairs.assign_sd_vec."""
+    test = TestCIPairs()
+    test.assign_nelec(6)
+    test.assign_nspin(10)
+    test.assign_spin(0)
+    test.assign_seniority(0)
+    test.assign_sd_vec()
+    assert test.sd_vec == (0b0011100111, 0b0101101011, 0b1001110011, 0b0110101101, 0b1010110101,
+                           0b0111001110, 0b1011010110)
+    assert_raises(ValueError, test.assign_sd_vec, (0b0011100111, ))
+
+
+# FIXME: implement after ap1rog
 def test_to_ap1rog():
     """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog
     """
@@ -34,6 +42,7 @@ def test_to_ap1rog():
     assert np.allclose(ap1rog.params, np.array([4/7, 1/7, 7*4/7 - 2*1/7]))
 
 
+# FIXME: implement after solver is implemented
 def test_to_ap1rog_h2_sto6g_ground():
     """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals
     """
