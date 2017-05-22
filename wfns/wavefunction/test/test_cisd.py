@@ -1,19 +1,33 @@
 """ Tests wfns.wavefunction.cisd
 """
 from __future__ import absolute_import, division, print_function
+from nose.tools import assert_raises
 import numpy as np
-from wfns.solver.solver import solve
+# from wfns.solver.solver import solve
 from wfns.wavefunction.cisd import CISD
-from wfns.backend.sd_list import sd_list
+# from wfns.backend.sd_list import sd_list
 from wfns.tools import find_datafile
 
 
-def test_generate_civec():
-    """ Tests CISD.generate_civec
-    """
-    test = CISD(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
-    assert test.generate_civec() == sd_list(test.nelec, test.nspatial, num_limit=None, spin=None,
-                                            seniority=None, exc_orders=[1, 2])
+class TestCISD(CISD):
+    """CISD without initialization."""
+    def __init__(self):
+        pass
+
+
+def test_cisd_assign_sd_vec():
+    """Test CISD.assign_sd_vec."""
+    test = TestCISD()
+    test.assign_nelec(3)
+    test.assign_nspin(6)
+    test.assign_spin(None)
+    test.assign_seniority(None)
+    test.assign_sd_vec()
+    assert test.sd_vec == (0b001011, 0b011001, 0b001101, 0b101001, 0b011010, 0b001110, 0b101010,
+                           0b010011, 0b000111, 0b100011, 0b011100, 0b111000, 0b101100, 0b010101,
+                           0b110001, 0b100101, 0b010110, 0b110010, 0b100110)
+    assert_raises(ValueError, test.assign_sd_vec, (0b001011, 0b011001))
+
 
 def test_cisd_h2_631gdp():
     """ Tests CISD wavefunction using H2 (6-31G**)
