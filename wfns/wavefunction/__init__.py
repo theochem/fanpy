@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from . import base_wavefunction
 # from . import proj_wavefunction
-# from . import geminal
+from . import geminals
 # from . import ap1rog
 # from . import apr2g
 # from . import apig
