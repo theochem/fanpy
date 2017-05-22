@@ -1,9 +1,10 @@
-""" FCI wavefunction
+"""Full Configuration Interaction wavefunction.
 """
 from __future__ import absolute_import, division, print_function
 from .ci_wavefunction import CIWavefunction
 
 __all__ = []
+
 
 class FCI(CIWavefunction):
     """ Full Configuration Interaction Wavefunction
@@ -12,66 +13,110 @@ class FCI(CIWavefunction):
     ----------
     nelec : int
         Number of electrons
-    one_int : 1- or 2-tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        1-tuple for spatial (restricted) and generalized orbitals
-        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    two_int : 1- or 3-tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        In physicist's notation
-        1-tuple for spatial (restricted) and generalized orbitals
-        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+    nspin : int
+        Number of spin orbitals (alpha and beta)
     dtype : {np.float64, np.complex128}
-        Numpy data type
-    nuc_nuc : float
-        Nuclear-nuclear repulsion energy
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital used in obtaining the one-electron and two-electron integrals
-    dict_exc_index : dict from int to int
-        Dictionary from the excitation order to the column index of the coefficient matrix
-    spin : float
-        Total spin of the wavefunction
+        Data type of the wavefunction
+    params : np.ndarray
+        Parameters of the wavefunction
+    _spin : float
+        Total spin of each Slater determinant
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
         Default is no spin (all spins possible)
-        0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-        Positive spin means that there are more alpha orbitals than beta orbitals
-        Negative spin means that there are more beta orbitals than alpha orbitals
-    civec : tuple of int
+    _seniority : int
+        Number of unpaired electrons in each Slater determinant
+    sd_vec : tuple of int
         List of Slater determinants used to construct the CI wavefunction
+    dict_sd_index : dictionary of int to int
+        Dictionary from Slater determinant to its index in sd_vec
 
     Properties
     ----------
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
+    spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
+    seniority : int, None
+        Seniority (number of unpaired electrons) of the wavefunction
+        None means that all seniority is allowed
+    template_params : np.ndarray
+        Template of the wavefunction parameters
+        Depends on the attributes given
+    nparams : int
+        Number of parameters
+    params_shape : 2-tuple of int
+        Shape of the parameters
 
-    Method
-    ------
-    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
+    Methods
+    -------
+    __init__(self, nelec, one_int, two_int, dtype=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
+    assign_nspin(self, nspin)
+        Assigns the number of spin orbitals
+    assign_params(self, params)
+        Assigns the parameters of the wavefunction
     assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_nuc_nuc(self, nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
-    assign_integrals(self, one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-    assign_excs(self, excs=None)
-        Assigns excitations to include in the calculation
     assign_spin(self, spin=None)
         Assigns the spin of the wavefunction
-    assign_civec(self, civec=None)
+    assign_seniority(self, seniority=None)
+        Assigns the seniority of the wavefunction
+    assign_sd_vec(self, sd_vec=None)
         Assigns the tuple of Slater determinants used in the CI wavefunction
-    get_energy(self, include_nuc=True, exc_lvl=0)
-        Gets the energy of the CI wavefunction
-    compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
-        Constructs the one and two electron density matrices for the given excitation level
-    compute_ci_matrix(self)
-        Returns CI Hamiltonian matrix in the Slater determinant basis
-    generate_civec
-        Generates a list of Slater determinants
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
     """
-    # is identical to CIWavefunction
-    pass
+    def assign_seniority(self, seniority=None):
+        """Set the seniority of each Slater determinant.
+
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
+        All seniority must be allowed for a FCI wavefunction.
+
+        Parameters
+        ----------
+        seniority : None
+            Seniority of each Slater determinant
+            Default is no seniority (all seniorities possible)
+
+        Raises
+        ------
+        ValueError
+            If the seniority is not `None` (default value)
+        """
+        super().assign_seniority(seniority)
+        if self.seniority is not None:
+            raise ValueError('Only seniority of `None` is supported with the FCI wavefunction. '
+                             'i.e. All seniorities must be enabled.')
+
+    def assign_sd_vec(self, sd_vec=None):
+        """Set the list of Slater determinants for the FCI wavefunction.
+
+        Ignores user input and uses the Slater determinants for the FCI wavefunction (within the
+        given spin)
+
+        Parameters
+        ----------
+        sd_vec : iterable of int
+            List of Slater determinants (in the form of integers that describe the occupation as a
+            bitstring)
+
+        Raises
+        ------
+        ValueError
+            If the sd_vec is not `None` (default value)
+
+        Note
+        ----
+        Needs to have `nelec`, `nspin`, `spin`, `seniority`
+        """
+        if sd_vec is None:
+            super().assign_sd_vec(sd_vec)
+        else:
+            raise ValueError('Only the default list of Slater determinants is allowed. i.e. sd_vec '
+                             'is `None`. If you would like to customize your CI wavefunction, use '
+                             'CIWavefunction instead.')
