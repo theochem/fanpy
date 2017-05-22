@@ -1,7 +1,7 @@
 """CI Singles and Doubles Wavefunction."""
 from __future__ import absolute_import, division, print_function
 from .ci_wavefunction import CIWavefunction
-from ..backend.sd_list import sd_list
+from ...backend.sd_list import sd_list
 
 __all__ = []
 

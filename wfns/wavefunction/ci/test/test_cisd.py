@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 # from wfns.solver.solver import solve
-from wfns.wavefunction.cisd import CISD
+from wfns.wavefunction.ci.cisd import CISD
 # from wfns.backend.sd_list import sd_list
 from wfns.tools import find_datafile
 

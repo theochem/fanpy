@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
-from wfns.wavefunction.ci_wavefunction import CIWavefunction
+from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 
 
 class TestCIWavefunction(CIWavefunction):

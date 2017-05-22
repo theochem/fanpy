@@ -3,8 +3,8 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from .doci import DOCI
-from ..backend.sd_list import sd_list
-from ..backend import slater
+from ...backend.sd_list import sd_list
+from ...backend import slater
 
 __all__ = []
 

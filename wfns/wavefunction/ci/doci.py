@@ -77,7 +77,7 @@ class DOCI(CIWavefunction):
         Default is no derivatization
     """
     def assign_nelec(self, nelec):
-        """ Sets the number of electrons
+        """Set the number of electrons.
 
         Parameters
         ----------

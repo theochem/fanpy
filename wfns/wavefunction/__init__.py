@@ -11,8 +11,3 @@ from . import base_wavefunction
 # from . import apseqg
 # from . import apsetg
 # from . import apg
-from . import ci_wavefunction
-from . import fci
-from . import doci
-from . import cisd
-from . import ci_pairs
