@@ -179,6 +179,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
         raise ValueError('Unsupported orbital type')
 
 
+# FIXME: make input of Wavefunction and CIWavefunction  instead of sd_coeffs, civec, nspatial, ...
 # TODO: generalize to arbitrary order density matrix
 def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                    orbtype='restricted'):
