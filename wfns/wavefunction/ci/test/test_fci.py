@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 from nose.plugins.attrib import attr
-from wfns.solver.solver_ci import solve
-from wfns.wavefunction.fci import FCI
+# from wfns.solver.solver_ci import solve
+from wfns.wavefunction.ci.fci import FCI
 from wfns.tools import find_datafile
 
 
