@@ -8,7 +8,6 @@ import numpy as np
 from .base_wavefunction import BaseWavefunction
 from ..backend import slater
 from ..backend.sd_list import sd_list
-from ..hamiltonian.density import density_matrix
 
 __all__ = []
 
@@ -77,8 +76,6 @@ class CIWavefunction(BaseWavefunction):
     get_overlap(self, sd, deriv=None)
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
-    compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
-        Constructs the one and two electron density matrices for the given excitation level
     """
     def __init__(self, nelec, nspin, dtype=None, params=None, sd_vec=None, spin=None,
                  seniority=None):
