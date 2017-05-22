@@ -8,31 +8,31 @@ from wfns.wavefunction.doci import DOCI
 from wfns.tools import find_datafile
 
 
+class TestDOCI(DOCI):
+    """DOCI instance that skips initialization."""
+    def __init__(self):
+        pass
+
+
 def test_assign_nelec():
-    """
-    Tests Wavefunction.assign_nelec
-    """
-    test = DOCI(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    """Tests DOCI.assign_nelec."""
+    test = TestDOCI()
     # int
     test.assign_nelec(2)
     assert test.nelec == 2
-    # long
-    test.assign_nelec(long(2))
-    assert test.nelec == 2
     # check errors
-    assert_raises(TypeError, lambda: test.assign_nelec(None))
-    assert_raises(TypeError, lambda: test.assign_nelec(2.0))
-    assert_raises(TypeError, lambda: test.assign_nelec('2'))
-    assert_raises(ValueError, lambda: test.assign_nelec(0))
-    assert_raises(ValueError, lambda: test.assign_nelec(-2))
-    assert_raises(ValueError, lambda: test.assign_nelec(1))
-    assert_raises(ValueError, lambda: test.assign_nelec(3))
+    assert_raises(TypeError, test.assign_nelec, None)
+    assert_raises(TypeError, test.assign_nelec, 2.0)
+    assert_raises(TypeError, test.assign_nelec, '2')
+    assert_raises(ValueError, test.assign_nelec, 0)
+    assert_raises(ValueError, test.assign_nelec, -2)
+    assert_raises(ValueError, test.assign_nelec, 1)
+    assert_raises(ValueError, test.assign_nelec, 3)
 
 
 def test_assign_spin():
-    """ Tests DOCI.assign_spin
-    """
-    test = DOCI(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    """Test DOCI.assign_spin."""
+    test = TestDOCI()
     test.assign_spin()
     assert test.spin == 0
     test.assign_spin(0)
@@ -43,18 +43,17 @@ def test_assign_spin():
 
 
 def test_assign_seniority():
-    """ Tests DOCI.ssign_seniority
-    """
-    test = DOCI(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    """Test DOCI.ssign_seniority."""
+    test = TestDOCI()
     test.assign_seniority()
     assert test.seniority == 0
     test.assign_seniority(0)
     assert test.seniority == 0
-    assert_raises(ValueError, test.assign_seniority, 0.5)
     assert_raises(ValueError, test.assign_seniority, 1)
     assert_raises(ValueError, test.assign_seniority, True)
 
 
+# FIXME: implement after solver is implemented
 def test_doci_h4_hf_sto6g():
     """ Tests DOCI wavefunction for H4 (square) (STO-6G) agaisnt Peter's orbital optimized DOCI
 

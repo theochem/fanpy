@@ -10,77 +10,71 @@ __all__ = []
 
 
 class DOCI(CIWavefunction):
-    """ Doubly Occupied Configuration Interaction Wavefunction
+    """Doubly Occupied Configuration Interaction (DOCI) Wavefunction.
 
-    CI wavefunction constructed from all seniority zero Slater determinants (alpha-beta paired
-    spatial orbitals)
+    CI wavefunction constructed from all of the seniority zero Slater determiannts within the given
+    basis.
 
     Attributes
     ----------
     nelec : int
         Number of electrons
-    one_int : 1- or 2-tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        1-tuple for spatial (restricted) and generalized orbitals
-        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    two_int : 1- or 3-tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        In physicist's notation
-        1-tuple for spatial (restricted) and generalized orbitals
-        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+    nspin : int
+        Number of spin orbitals (alpha and beta)
     dtype : {np.float64, np.complex128}
-        Numpy data type
-    nuc_nuc : float
-        Nuclear-nuclear repulsion energy
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital used in obtaining the one-electron and two-electron integrals
-    dict_exc_index : dict from int to int
-        Dictionary from the excitation order to the column index of the coefficient matrix
-    spin : float
-        Total spin of the wavefunction
+        Data type of the wavefunction
+    params : np.ndarray
+        Parameters of the wavefunction
+    _spin : float
+        Total spin of each Slater determinant
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
         Default is no spin (all spins possible)
-        0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-        Positive spin means that there are more alpha orbitals than beta orbitals
-        Negative spin means that there are more beta orbitals than alpha orbitals
-    civec : tuple of int
+    _seniority : int
+        Number of unpaired electrons in each Slater determinant
+    sd_vec : tuple of int
         List of Slater determinants used to construct the CI wavefunction
+    dict_sd_index : dictionary of int to int
+        Dictionary from Slater determinant to its index in sd_vec
 
     Properties
     ----------
-    nspin : int
-        Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
+    spin : float, None
+        Spin of the wavefunction
+        Spin is zero (singlet)
+    seniority : int, None
+        Seniority (number of unpaired electrons) of the wavefunction
+        Seniority is zero
+    template_params : np.ndarray
+        Template of the wavefunction parameters
+        Depends on the attributes given
+    nparams : int
+        Number of parameters
+    params_shape : 2-tuple of int
+        Shape of the parameters
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
+    __init__(self, nelec, one_int, two_int, dtype=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
+    assign_nspin(self, nspin)
+        Assigns the number of spin orbitals
+    assign_params(self, params)
+        Assigns the parameters of the wavefunction
     assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_nuc_nuc(self, nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
-    assign_integrals(self, one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-    assign_excs(self, excs=None)
-        Assigns excitations to include in the calculation
     assign_spin(self, spin=None)
         Assigns the spin of the wavefunction
-    assign_civec(self, civec=None)
+    assign_seniority(self, seniority=None)
+        Assigns the seniority of the wavefunction
+    assign_sd_vec(self, sd_vec=None)
         Assigns the tuple of Slater determinants used in the CI wavefunction
-    get_energy(self, include_nuc=True, exc_lvl=0)
-        Gets the energy of the CI wavefunction
-    compute_density_matrix(self, exc_lvl=0, is_chemist_notation=False, val_threshold=0)
-        Constructs the one and two electron density matrices for the given excitation level
-    to_proj(self, Other, exc_lvl=0)
-        Try to convert the CI wavefunction into the appropriate Projected Wavefunction
-    compute_ci_matrix(self)
-        Returns CI Hamiltonian matrix in the Slater determinant basis
-    generate_civec(self)
-        Returns a list of seniority 0 Slater determinants
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
     """
     def assign_nelec(self, nelec):
         """ Sets the number of electrons
@@ -96,57 +90,59 @@ class DOCI(CIWavefunction):
             If number of electrons is not an integer or long
         ValueError
             If number of electrons is not a positive number
+            If number of electrons is not even
         """
-        # NOTE: use super?
-        if not isinstance(nelec, (int, long)):
-            raise TypeError('`nelec` must be of type {0}'.format(int))
-        elif nelec <= 0:
-            raise ValueError('`nelec` must be a positive integer')
-        elif nelec % 2 != 0:
+        super().assign_nelec(nelec)
+        if self.nelec % 2 != 0:
             raise ValueError('`nelec` must be an even number')
-        self.nelec = nelec
-
 
     def assign_spin(self, spin=None):
-        """ Sets the spin of the projection determinants
+        """Set the spin of each Slater determinant.
+
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
         Parameters
         ----------
-        spin : int
-            Total spin of the wavefunction
+        spin : float
+            Spin of each Slater determinant
             Default is no spin (all spins possible)
-            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-            Positive spin means that there are more alpha orbitals than beta orbitals
-            Negative spin means that there are more beta orbitals than alpha orbitals
-
-        Raises
-        ------
-        ValueError
-            If given spin is not 0
-        """
-        # NOTE: use super?
-        if spin is None or spin == 0:
-            self.spin = 0
-        else:
-            raise ValueError('DOCI wavefunction can only be singlet')
-
-
-    def assign_seniority(self, seniority=None):
-        """ Sets the seniority of the wavefunction
-
-        Parameters
-        ----------
-        seniority : int
-            Seniority of the wavefunction
-            Default is no seniority (all seniority possible)
 
         Raises
         ------
         TypeError
-            If the seniority is not a float or None
+            If the spin is not an integer, float, or None
+        ValueError
+            If the spin is not an integral multiple of 0.5
+        ValueError
+            If spin is not zero (singlet)
         """
-        # NOTE: use super?
-        if seniority is None or seniority == 0:
-            self.seniority = 0
-        else:
+        if spin is None:
+            spin = 0
+        super().assign_spin(spin)
+        if self.spin != 0:
+            raise ValueError('DOCI wavefunction can only be singlet')
+
+    def assign_seniority(self, seniority=None):
+        """Set the seniority of each Slater determinant of the DOCI wavefunction.
+
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
+
+        Parameters
+        ----------
+        seniority : float
+            Seniority of each Slater determinant
+            Default is seniority zero
+
+        Raises
+        ------
+        TypeError
+            If the seniority is not an integer, float, or None
+        ValueError
+            If the seniority is a negative integer
+            If the seniority is not zero
+        """
+        if seniority is None:
+            seniority = 0
+        super().assign_seniority(seniority)
+        if self.seniority != 0:
             raise ValueError('DOCI wavefunction can only be seniority 0')
