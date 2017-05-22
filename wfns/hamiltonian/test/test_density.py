@@ -379,6 +379,8 @@ def test_density_matrix():
                                                [[0, 1*1 + 1*1 + 1*1 + 1*1], [-1*1 - 1*1, 0]]],
                                               [[[0, -1*1 - 1*1], [1*1 + 1*1 + 1*1 + 1*1, 0]],
                                                [[0, 0], [0, 1*1 + 1*1]]]]))
+
+
 # Tests using examples
 def test_density_matrix_restricted_h2_fci_sto6g():
     """ Tests density.density_matrix using H2 FCI/STO-6G
@@ -442,6 +444,7 @@ def test_density_matrix_restricted_h2_631gdp():
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
     civec = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
+    civec = [int(i) for i in civec]
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -484,6 +487,7 @@ def test_density_matrix_restricted_lih_sto6g():
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    civec = [int(i) for i in civec]
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -527,6 +531,7 @@ def test_density_matrix_restricted_lih_631g():
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
+    civec = [int(i) for i in civec]
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -569,6 +574,7 @@ def test_density_matrix_unrestricted_lih_sto6g():
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    civec = [int(i) for i in civec]
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
@@ -619,6 +625,7 @@ def test_density_matrix_generalized_lih_sto6g():
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    civec = [int(i) for i in civec]
     sd_coeffs = eigh(ci_matrix)[1][:, 0]
     energy = eigh(ci_matrix)[0][0]
 
