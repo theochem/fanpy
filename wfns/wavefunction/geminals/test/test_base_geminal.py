@@ -10,8 +10,11 @@ class TestBaseGeminal(BaseGeminal):
     def __init__(self):
         pass
 
-    def get_overlap(self):
-        pass
+    def generate_possible_orbpairs(self, occ_indices):
+        if occ_indices == (0, 1, 2, 3):
+            yield ((0, 1), (2, 3))
+        else:
+            raise NotImplementedError('Unsupported occupied indices')
 
 
 def test_gem_assign_nelec():
@@ -153,3 +156,57 @@ def test_gem_assign_params():
     assert test.cache == {}
     assert test.d_cache == {}
 
+
+def test_gem_compute_permanent():
+    """Test BaseGeminal.compute_permanent."""
+    test = TestBaseGeminal()
+    test.assign_dtype(float)
+    test.assign_nelec(6)
+    test.assign_nspin(6)
+    test.assign_orbpairs()
+    test.assign_ngem(3)
+    test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
+    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3))),
+                    0*(16*32 + 17*31) + 1*(15*32 + 17*30) + 2*(15*31 + 16*30))
+    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(0, 0)),
+                    16*32 + 17*31)
+    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(1, 1)),
+                    0*32 + 2*30)
+    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(2, 4)),
+                    0)
+    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(99, 99)),
+                    0)
+    assert np.equal(test.compute_permanent(((0, 4), (0, 5), (1, 2))),
+                    3*(19*35 + 34*20) + 4*(18*35 + 33*20) + 5*(18*34 + 33*19))
+    assert np.equal(test.compute_permanent(((0, 4), (0, 5), (1, 2)), deriv_row_col=(2, 5)),
+                    3*19 + 18*4)
+
+
+def test_gem_get_overlap():
+    """Test BaseGeminal.get_overlap."""
+    test = TestBaseGeminal()
+    test.assign_dtype(float)
+    test.assign_nelec(4)
+    test.assign_nspin(6)
+    test.assign_orbpairs()
+    test.assign_ngem(3)
+    test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
+    assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
+    # check caching
+    test.cache[0b001111] = 2
+    assert test.get_overlap(0b001111) == 2
+    # check caching of zero contributors
+    test.params[:, 0] = 0
+    test.cache = {}
+    assert test.get_overlap(0b001111) == 0
+    assert 0b001111 not in test.cache
+    # check derivatives
+    test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
+    assert test.get_overlap(0b001111, deriv=0) == 24*1 + 39*1
+    assert test.get_overlap(0b001111, deriv=1) == 0
+    assert test.get_overlap(0b001111, deriv=9) == 15*1 + 30*1
+    assert test.get_overlap(0b001111, deriv=15) == 9*1 + 39*1
+    assert test.get_overlap(0b001111, deriv=39) == 0*1 + 15*1
+    test.d_cache[(0b001111, 0)] = 7
+    assert test.get_overlap(0b001111, deriv=0) == 7
+    assert (0b001111, 1) not in test.d_cache
