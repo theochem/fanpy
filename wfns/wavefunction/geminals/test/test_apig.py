@@ -1,164 +1,61 @@
-""" Tests wfns.wavefunction.apig
-"""
+"""Tests wfns.wavefunction.geminals.apig"""
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
-from wfns.wavefunction.apig import APIG
-from wfns.solver.solver import solve
+from wfns.wavefunction.geminals.apig import APIG
+# from wfns.solver.solver import solve
 from wfns.tools import find_datafile
 
-def test_template_orbpairs():
-    """ Tests wfns.wavefunction.apig.APIG.template_orbpairs
-    """
-    test = APIG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 4), (1, 5), (2, 6), (3, 7))
-    test = APIG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 4), (1, 5), (2, 6), (3, 7))
-    test = APIG(6, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 4), (1, 5), (2, 6), (3, 7))
-    test = APIG(8, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 4), (1, 5), (2, 6), (3, 7))
+
+class TestAPIG(APIG):
+    """Class for testing APIG (stops initialization)"""
+    def __init__(self):
+        pass
 
 
-def test_template_coeffs():
-    """ Tests wfns.wavefunction.apig.APIG.template_coeffs
-    """
-    test = APIG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # ngem 1
-    assert np.allclose(test.template_coeffs, np.array([1, 0, 0, 0]))
-    # ngem 2
-    test.assign_ngem(2)
-    assert np.allclose(test.template_coeffs, np.array([[1, 0, 0, 0],
-                                                       [0, 1, 0, 0]]))
-    # ngem 3
-    test.assign_ngem(3)
-    assert np.allclose(test.template_coeffs, np.array([[1, 0, 0, 0],
-                                                       [0, 1, 0, 0],
-                                                       [0, 0, 1, 0]]))
-    # ngem 5
-    test.assign_ngem(5)
-    assert np.allclose(test.template_coeffs, np.array([[1, 0, 0, 0],
-                                                       [0, 1, 0, 0],
-                                                       [0, 0, 1, 0],
-                                                       [0, 0, 0, 1],
-                                                       [0, 0, 0, 0]]))
-    # different reference sd
-    test.assign_ngem(1)
-    test.assign_ref_sds(0b00100010)
-    # NOTE: this still uses ground state HF as reference
-    assert np.allclose(test.template_coeffs, np.array([1, 0, 0, 0]))
+def test_apig_spin():
+    """Test APIG.spin."""
+    test = TestAPIG()
+    assert test.spin == 0
 
 
-def test_assign_orbpairs():
-    """ Tests wfns.wavefunction.rpoj.geminals.apig.APIG.assign_orbpairs
-    """
-    test = APIG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
+def test_apig_seniority():
+    """Test APIG.seniority."""
+    test = TestAPIG()
+    assert test.seniority == 0
+
+
+def test_apig_assign_orbpairs():
+    """Test APIG.assign_orbpairs."""
+    test = TestAPIG()
+    test.assign_nspin(10)
+    test.assign_orbpairs()
+    assert test.dict_orbpair_ind == {(0, 5): 0, (1, 6): 1, (2, 7): 2, (3, 8): 3, (4, 9): 4}
+    test.assign_orbpairs(((0, 5), (2, 7), (1, 6), (3, 8), (4, 9)))
+    assert test.dict_orbpair_ind == {(0, 5): 0, (1, 6): 2, (2, 7): 1, (3, 8): 3, (4, 9): 4}
     assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5), (5, 7), (6, 7)))
     assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5)))
 
 
-def test_compute_overlap():
-    """ Tests wfns.wavefunction.apig.APIG.compute_overlap
-    """
-    # two electrons
-    test = APIG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.array([1, 2, 3, 4, 0], dtype=float))
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00010010)
-    assert_raises(ValueError, test.compute_overlap, 0b00110011)
-    # overlap
-    assert test.compute_overlap(0b00010001, deriv=None) == 1
-    assert test.compute_overlap(0b00100010, deriv=None) == 2
-    assert test.compute_overlap(0b01000100, deriv=None) == 3
-    assert test.compute_overlap(0b10001000, deriv=None) == 4
-    # differentiate
-    assert test.compute_overlap(0b00010001, deriv=0) == 1
-    assert test.compute_overlap(0b00010001, deriv=1) == 0
-    assert test.compute_overlap(0b00010001, deriv=2) == 0
-    assert test.compute_overlap(0b00010001, deriv=3) == 0
-    assert test.compute_overlap(0b00010001, deriv=4) == 0
-    assert test.compute_overlap(0b00100010, deriv=0) == 0
-    assert test.compute_overlap(0b00100010, deriv=1) == 1
-    assert test.compute_overlap(0b00100010, deriv=2) == 0
-    assert test.compute_overlap(0b00100010, deriv=3) == 0
-    assert test.compute_overlap(0b00100010, deriv=5) == 0
-    assert test.compute_overlap(0b01000100, deriv=0) == 0
-    assert test.compute_overlap(0b01000100, deriv=1) == 0
-    assert test.compute_overlap(0b01000100, deriv=2) == 1
-    assert test.compute_overlap(0b01000100, deriv=3) == 0
-    assert test.compute_overlap(0b01000100, deriv=6) == 0
-    assert test.compute_overlap(0b10001000, deriv=0) == 0
-    assert test.compute_overlap(0b10001000, deriv=1) == 0
-    assert test.compute_overlap(0b10001000, deriv=2) == 0
-    assert test.compute_overlap(0b10001000, deriv=3) == 1
-    assert test.compute_overlap(0b10001000, deriv=99) == 0
-    # fout electrons
-    test = APIG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.array([1, 2, 3, 4,
-                                 5, 6, 7, 8, 0], dtype=float))
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00010010)
-    assert_raises(ValueError, test.compute_overlap, 0b00110101)
-    # overlap
-    assert test.compute_overlap(0b00110011, deriv=None) == 1*6 + 2*5
-    assert test.compute_overlap(0b01010101, deriv=None) == 1*7 + 3*5
-    assert test.compute_overlap(0b10011001, deriv=None) == 1*8 + 4*5
-    assert test.compute_overlap(0b01100110, deriv=None) == 2*7 + 3*6
-    assert test.compute_overlap(0b10101010, deriv=None) == 2*8 + 4*6
-    assert test.compute_overlap(0b11001100, deriv=None) == 3*8 + 4*7
-    # differentiate
-    assert test.compute_overlap(0b00110011, deriv=0) == 6
-    assert test.compute_overlap(0b00110011, deriv=1) == 5
-    assert test.compute_overlap(0b00110011, deriv=2) == 0
-    assert test.compute_overlap(0b00110011, deriv=3) == 0
-    assert test.compute_overlap(0b00110011, deriv=4) == 2
-    assert test.compute_overlap(0b00110011, deriv=5) == 1
-    assert test.compute_overlap(0b00110011, deriv=6) == 0
-    assert test.compute_overlap(0b00110011, deriv=7) == 0
-    assert test.compute_overlap(0b00110011, deriv=8) == 0
-    assert test.compute_overlap(0b00110011, deriv=99) == 0
+def test_apig_generate_possible_orbpairs():
+    """Test APIG.generate_possible_orbpair."""
+    test = TestAPIG()
+    test.assign_nspin(10)
+    test.assign_nelec(6)
+    test.assign_orbpairs()
+    possible_orbpairs = list(test.generate_possible_orbpairs([0, 5, 2, 7, 4, 9]))
+    assert len(possible_orbpairs) == 1
+    assert len(possible_orbpairs[0]) == 3
+    assert (0, 5) in possible_orbpairs[0]
+    assert (2, 7) in possible_orbpairs[0]
+    assert (4, 9) in possible_orbpairs[0]
+    assert_raises(ValueError, lambda: next(test.generate_possible_orbpairs([0, 5, 2, 7])))
+    assert_raises(ValueError, lambda: next(test.generate_possible_orbpairs([0, 1, 2, 7, 4, 9])))
 
 
-def test_normalize():
-    """ Tests wfns.wavefunction.apig.APIG.normalize
-    """
-    test = APIG(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), dtype=float)
-    #check
-    test.assign_ref_sds(0b0101)
-    test.assign_params(np.array([0.0, 0.0, 1.0]))
-    assert_raises(ValueError, test.normalize)
-    test.assign_dtype(complex)
-    test.assign_params(np.array([1j, 0.0, 1.0]))
-    assert_raises(ValueError, test.normalize)
-
-    # one geminal, one reference
-    test = APIG(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), dtype=float)
-    print(test.compute_norm(), test.params)
-    test.assign_params(np.array([2.0, 3.0, 0.0]))
-    test.assign_ref_sds(0b0101)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # one geminal, two reference
-    test.assign_params(np.array([2.0, 3.0, 0.0]))
-    test.assign_ref_sds([0b0101, 0b1010])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-    test = APIG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # multiple geminal, one reference
-    test.assign_params(np.array([2, 3, 4, 5, 6, 7, 8, 9, 0], dtype=float))
-    test.assign_ref_sds(0b00110011)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # multiple geminal, multiple reference
-    test.assign_params(np.array([2, 3, 4, 5, 6, 7, 8, 9, 0], dtype=float))
-    test.assign_ref_sds([0b00110011, 0b01010101])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-
+# TODO: refactor once APr2G, APG, and solvers are set up
 def test_to_apr2g():
     """ Tests wfns.wavefunction.apig.APIG.to_apr2g
     """
