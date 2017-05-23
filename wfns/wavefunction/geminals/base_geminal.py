@@ -75,13 +75,16 @@ class BaseGeminal(BaseWavefunction):
         Default is the first Slater determinant of projection space
     assign_orbpairs(self, orbpairs=None)
         Assigns the orbital pairs that will be used to construct geminals
-    generate_possible_orbpairs(self, occ_indices)
-        Yields the possible orbital pairs that can construct the given Slater determinant.
     compute_permanent(self, orbpairs, deriv_row_col=None)
         Compute the permanent that corresponds to the given orbital pairs
     get_overlap(self, sd, deriv_ind=None)
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
+
+    Abstract Method
+    ---------------
+    generate_possible_orbpairs(self, occ_indices)
+        Yields the possible orbital pairs that can construct the given Slater determinant.
     """
     def __init__(self, nelec, nspin, dtype=None, ngem=None, orbpairs=None, params=None):
         """Initialize the wavefunction.
@@ -298,17 +301,18 @@ class BaseGeminal(BaseWavefunction):
         -------
         permanent :float
         """
+        row_inds = np.arange(self.ngem)
         col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
         if deriv_row_col is None:
-            return permanent_ryser(self.params[:, col_inds])
+            return permanent_ryser(self.params[row_inds, :][:, col_inds])
         else:
-            mask = np.zeros(self.params.shape, dtype=bool)
-            mask[:, col_inds] = True
-            if not mask[deriv_row_col]:
+            # cut out rows and columns that corresponds to the element with which the permanent is
+            # derivatized
+            row_inds = row_inds[row_inds != deriv_row_col[0]]
+            col_inds = col_inds[col_inds != deriv_row_col[1]]
+            if row_inds.size == self.ngem or col_inds.size == self.npair:
                 return 0.0
-            mask[deriv_row_col[0], :] = False
-            mask[:, deriv_row_col[1]] = False
-            return permanent_ryser(self.params[mask])
+            return permanent_ryser(self.params[row_inds, :][:, col_inds])
 
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the geminal wavefunction and a Slater determinant.
@@ -354,7 +358,8 @@ class BaseGeminal(BaseWavefunction):
             if deriv is None:
                 for orbpairs in self.generate_possible_orbpairs(occ_indices):
                     val += self.compute_permanent(orbpairs)
-                self.cache[sd] = val
+                if val != 0:
+                    self.cache[sd] = val
                 return val
             # if derivatization
             elif isinstance(deriv, int):
