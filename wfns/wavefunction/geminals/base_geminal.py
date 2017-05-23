@@ -1,13 +1,16 @@
 """Base class for Geminal wavefunction."""
 from __future__ import absolute_import, division, print_function
+import abc
 import numpy as np
+from ...backend import slater
+from ...backend.math_tools import permanent_ryser
 from ..base_wavefunction import BaseWavefunction
 
 __all__ = []
 
 
 class BaseGeminal(BaseWavefunction):
-    """Generic Geminal Wavefunctions.
+    """Base Geminal Wavefunctions.
 
     Attributes
     ----------
@@ -72,10 +75,11 @@ class BaseGeminal(BaseWavefunction):
         Default is the first Slater determinant of projection space
     assign_orbpairs(self, orbpairs=None)
         Assigns the orbital pairs that will be used to construct geminals
-
-    Abstract Method
-    ---------------
-    get_overlap(self, sd, deriv=None)
+    generate_possible_orbpairs(self, occ_indices)
+        Yields the possible orbital pairs that can construct the given Slater determinant.
+    compute_permanent(self, orbpairs, deriv_row_col=None)
+        Compute the permanent that corresponds to the given orbital pairs
+    get_overlap(self, sd, deriv_ind=None)
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
     """
@@ -277,3 +281,118 @@ class BaseGeminal(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
         self.cache = {}
         self.d_cache = {}
+
+    def compute_permanent(self, orbpairs, deriv_row_col=None):
+        """Compute the permanent that corresponds to the given orbital pairs
+
+        Parameters
+        ----------
+        orbpairs : tuple of 2-tuple of ints
+            Indices of the creation operators (grouped by orbital pairs) that construct the Slater
+            determinant.
+        deriv : 2-tuple of int, None
+            Row and column indices of the element with respect to which the permanent is derivatized
+            Default is no derivatization
+
+        Returns
+        -------
+        permanent :float
+        """
+        col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+        if deriv_row_col is None:
+            return permanent_ryser(self.params[:, col_inds])
+        else:
+            mask = np.zeros(self.params.shape, dtype=bool)
+            mask[:, col_inds] = True
+            if not mask[deriv_row_col]:
+                return 0.0
+            mask[deriv_row_col[0], :] = False
+            mask[:, deriv_row_col[1]] = False
+            return permanent_ryser(self.params[mask])
+
+    def get_overlap(self, sd, deriv=None):
+        """Compute the overlap between the geminal wavefunction and a Slater determinant.
+
+        The results are cached in self.cache and self.d_cache.
+
+        .. math::
+
+            \big| \Psi \big>
+            &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
+            \big| \mathbf{m} \big>
+
+        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
+
+        Parameters
+        ----------
+        sd : int, gmpy2.mpz
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
+        deriv : None, int
+            Index of the paramater with respect to which the overlap is derivatized
+            Default is no derivatization
+
+        Returns
+        -------
+        overlap : float
+
+        Note
+        ----
+        Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
+        """
+        sd = slater.internal_sd(sd)
+        try:
+            if deriv is None:
+                return self.cache[sd]
+            else:
+                return self.d_cache[(sd, deriv)]
+        except KeyError:
+            occ_indices = slater.occ_indices(sd)
+
+            val = 0.0
+            # if no derivatization
+            if deriv is None:
+                for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    val += self.compute_permanent(orbpairs)
+                self.cache[sd] = val
+                return val
+            # if derivatization
+            elif isinstance(deriv, int):
+                # convert parameter index to row and col index
+                row_ind, col_ind = deriv // self.norbpair, deriv % self.norbpair
+                # find orbital pair that corresponds to removed column
+                orb_1, orb_2 = self.dict_ind_orbpair[col_ind]
+                # if either of these orbitals are not present in the Slater determinant, skip
+                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+                    return val
+                # otherwise
+                for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    # if orbital pairs is not present, skip
+                    # ASSUMES: permanent evaluation is much more expensive than the lookup
+                    if (orb_1, orb_2) not in orbpairs:
+                        continue
+                    # otherwise, compute permanent
+                    # FIXME: have generate_possible_orbpairs provide a signature (sign)
+                    sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
+                                                      occ_indices, is_creator=True)
+                    val += sgn * self.compute_permanent(orbpairs, deriv_row_col=(row_ind, col_ind))
+                if val != 0:
+                    self.d_cache[(sd, deriv)] = val
+                return val
+
+    @abc.abstractmethod
+    def generate_possible_orbpairs(self, occ_indices):
+        """Yields the possible orbital pairs that can construct the given Slater determinant.
+
+        Parameters
+        ----------
+        occ_indices : N-tuple of int
+            Indices of the orbitals from which the Slater determinant is constructed
+
+        Yields
+        ------
+        orbpairs : P-tuple of 2-tuple of ints
+            Indices of the creation operators (grouped by orbital pairs) that construct the Slater
+            determinant.
+        """
+        pass
