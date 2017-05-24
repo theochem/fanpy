@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import abc
 import numpy as np
 from ...backend import slater
-from ...backend.math_tools import permanent_ryser
+from ...backend import math_tools
 from ..base_wavefunction import BaseWavefunction
 
 __all__ = []
@@ -316,14 +316,13 @@ class BaseGeminal(BaseWavefunction):
         self.cache = {}
         self.d_cache = {}
 
-    def compute_permanent(self, orbpairs, deriv_row_col=None):
+    def compute_permanent(self, col_inds, deriv_row_col=None):
         """Compute the permanent that corresponds to the given orbital pairs
 
         Parameters
         ----------
-        orbpairs : tuple of 2-tuple of ints
-            Indices of the creation operators (grouped by orbital pairs) that construct the Slater
-            determinant.
+        col_inds : np.ndarray
+            Indices of the columns of geminal coefficient matrices that will be used.
         deriv : 2-tuple of int, None
             Row and column indices of the element with respect to which the permanent is derivatized
             Default is no derivatization
@@ -333,9 +332,15 @@ class BaseGeminal(BaseWavefunction):
         permanent :float
         """
         row_inds = np.arange(self.ngem)
-        col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+        col_inds = np.array(col_inds)
+        # select function that evaluates the permanent
+        if col_inds.size <= row_inds.size <= 3:
+            permanent = math_tools.permanent_ryser
+        else:
+            permanent = math_tools.permanent_combinatoric
+
         if deriv_row_col is None:
-            return permanent_ryser(self.params[row_inds, :][:, col_inds])
+            return permanent(self.params[row_inds, :][:, col_inds])
         else:
             # cut out rows and columns that corresponds to the element with which the permanent is
             # derivatized
@@ -343,7 +348,7 @@ class BaseGeminal(BaseWavefunction):
             col_inds = col_inds[col_inds != deriv_row_col[1]]
             if row_inds.size == self.ngem or col_inds.size == self.npair:
                 return 0.0
-            return permanent_ryser(self.params[row_inds, :][:, col_inds])
+            return permanent(self.params[row_inds, :][:, col_inds])
 
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the geminal wavefunction and a Slater determinant.
@@ -388,16 +393,18 @@ class BaseGeminal(BaseWavefunction):
             # if no derivatization
             if deriv is None:
                 for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                    val += self.compute_permanent(orbpairs)
+                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+                    val += self.compute_permanent(col_inds)
                 if val != 0:
                     self.cache[sd] = val
                 return val
             # if derivatization
             elif isinstance(deriv, int):
                 # convert parameter index to row and col index
-                row_ind, col_ind = deriv // self.norbpair, deriv % self.norbpair
+                row_to_remove = deriv // self.norbpair
+                col_to_remove = deriv % self.norbpair
                 # find orbital pair that corresponds to removed column
-                orb_1, orb_2 = self.dict_ind_orbpair[col_ind]
+                orb_1, orb_2 = self.dict_ind_orbpair[col_to_remove]
                 # if either of these orbitals are not present in the Slater determinant, skip
                 if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                     return val
@@ -411,7 +418,9 @@ class BaseGeminal(BaseWavefunction):
                     # FIXME: have generate_possible_orbpairs provide a signature (sign)
                     sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
                                                       occ_indices, is_creator=True)
-                    val += sgn * self.compute_permanent(orbpairs, deriv_row_col=(row_ind, col_ind))
+                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+                    val += sgn*self.compute_permanent(col_inds,
+                                                      deriv_row_col=(row_to_remove, col_to_remove))
                 if val != 0:
                     self.d_cache[(sd, deriv)] = val
                 return val

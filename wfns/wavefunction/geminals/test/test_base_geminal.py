@@ -166,19 +166,19 @@ def test_gem_compute_permanent():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
-    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3))),
+    assert np.equal(test.compute_permanent([0, 1, 2]),
                     0*(16*32 + 17*31) + 1*(15*32 + 17*30) + 2*(15*31 + 16*30))
-    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(0, 0)),
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv_row_col=(0, 0)),
                     16*32 + 17*31)
-    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(1, 1)),
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv_row_col=(1, 1)),
                     0*32 + 2*30)
-    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(2, 4)),
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv_row_col=(2, 4)),
                     0)
-    assert np.equal(test.compute_permanent(((0, 1), (0, 2), (0, 3)), deriv_row_col=(99, 99)),
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv_row_col=(99, 99)),
                     0)
-    assert np.equal(test.compute_permanent(((0, 4), (0, 5), (1, 2))),
+    assert np.equal(test.compute_permanent((3, 4, 5)),
                     3*(19*35 + 34*20) + 4*(18*35 + 33*20) + 5*(18*34 + 33*19))
-    assert np.equal(test.compute_permanent(((0, 4), (0, 5), (1, 2)), deriv_row_col=(2, 5)),
+    assert np.equal(test.compute_permanent((3, 4, 5), deriv_row_col=(2, 5)),
                     3*19 + 18*4)
 
 
