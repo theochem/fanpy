@@ -2,279 +2,29 @@
 """
 from __future__ import absolute_import, division, print_function
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
+import types
 import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
-from wfns.wavefunction.apg import APG
-from wfns.solver.solver import solve
+from wfns.wavefunction.geminals.apg import APG
 from wfns.tools import find_datafile
 
-def test_template_orbpairs():
-    """ Tests wfns.wavefunction.apg.APG.template_orbpairs
-    """
-    test = APG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7),
-                                      (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
-                                      (2, 3), (2, 4), (2, 5), (2, 6), (2, 7),
-                                      (3, 4), (3, 5), (3, 6), (3, 7),
-                                      (4, 5), (4, 6), (4, 7),
-                                      (5, 6), (5, 7),
-                                      (6, 7))
-    test = APG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7),
-                                      (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
-                                      (2, 3), (2, 4), (2, 5), (2, 6), (2, 7),
-                                      (3, 4), (3, 5), (3, 6), (3, 7),
-                                      (4, 5), (4, 6), (4, 7),
-                                      (5, 6), (5, 7),
-                                      (6, 7))
-    test = APG(6, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7),
-                                      (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
-                                      (2, 3), (2, 4), (2, 5), (2, 6), (2, 7),
-                                      (3, 4), (3, 5), (3, 6), (3, 7),
-                                      (4, 5), (4, 6), (4, 7),
-                                      (5, 6), (5, 7),
-                                      (6, 7))
-    test = APG(8, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert test.template_orbpairs == ((0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7),
-                                      (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
-                                      (2, 3), (2, 4), (2, 5), (2, 6), (2, 7),
-                                      (3, 4), (3, 5), (3, 6), (3, 7),
-                                      (4, 5), (4, 6), (4, 7),
-                                      (5, 6), (5, 7),
-                                      (6, 7))
 
-
-def test_template_coeffs():
-    """ Tests wfns.wavefunction.apg.APG.template_coeffs
-    """
-    test = APG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # ngem 1
-    print(test.template_coeffs)
-    assert np.allclose(test.template_coeffs, np.array([0]*3 + [1] + [0]*24))
-    # ngem 2
-    test.assign_ngem(2)
-    assert np.allclose(test.template_coeffs, np.array([[0]*3 + [1] + [0]*24,
-                                                       [0]*28]))
-    # ngem 3
-    test.assign_ngem(3)
-    assert np.allclose(test.template_coeffs, np.array([[0]*3 + [1] + [0]*24,
-                                                       [0]*28,
-                                                       [0]*28]))
-    # different reference sd
-    test.assign_ngem(1)
-    test.assign_ref_sds(0b00100010)
-    # NOTE: this still uses ground state HF as reference
-    assert np.allclose(test.template_coeffs, np.array([0]*3 + [1] + [0]*24))
-
-    test = APG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # ngem 2
-    test.assign_ngem(2)
-    assert np.allclose(test.template_coeffs, np.array([[0]*3 + [1] + [0]*24,
-                                                       [0]*10 + [1] + [0]*17]))
-    # ngem 3
-    test.assign_ngem(3)
-    assert np.allclose(test.template_coeffs, np.array([[0]*3 + [1] + [0]*24,
-                                                       [0]*10 + [1] + [0]*17,
-                                                       [0]*28]))
+class TestAPG(APG):
+    """APG that skips initialization."""
+    def __init__(self):
+        pass
 
 
 def test_assign_pmatch_generator():
-    """Tests wfns.wavefunction.apg.APG.assign_pmatch_generator
-    """
-    test = APG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # default
-    test.assign_pmatch_generator(None)
-    assert test.pmatch_generator == generate_complete_pmatch
-    # if not callable (function)
-    assert_raises(TypeError, test.assign_pmatch_generator, 1)
-    assert_raises(TypeError, test.assign_pmatch_generator, [])
-    assert_raises(TypeError, test.assign_pmatch_generator, {})
-    # if function does not return tuple of 2-tuples
-    func = lambda x: (((0, 1), (2, 3, 4)), )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    func = lambda x: (((1, ), (2, 3)), )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    # if function does not return tuple of npair 2-tuple
-    func = lambda x: (((0, 1), ), )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    func = lambda x: (((0, 1), (2, 3), (4, 5)), )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    # if function does not return perfect matching that corresponds to given occupied indices
-    func = lambda x: (((0, 1), (2, 3)), )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    func = lambda x: (zip(x[0::2], x[1::2]) + [(0, 1)], )
-    assert_raises(ValueError, test.assign_pmatch_generator, func)
-    # proper pmatch generator
-    func = lambda x: (zip(x[0::2], x[1::2]), )
-    test.assign_pmatch_generator(func)
-    assert test.pmatch_generator == func
+    """Test APG.generate_possible_orbpairs"""
+    test = TestAPG()
+    sd = (0, 1, 2, 3, 4, 5)
+    assert isinstance(test.generate_possible_orbpairs(sd), types.GeneratorType)
+    for i, j in zip(test.generate_possible_orbpairs(sd), generate_complete_pmatch(sd)):
+        assert i == j
 
 
-def test_compute_overlap():
-    """Tests wfns.wavefunction.apg.APG.assign_compute_overlap
-    """
-    # two electrons
-    test = APG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.hstack((np.arange(1, 29, dtype=float), 0)))
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00110011)
-    # overlap
-    assert test.compute_overlap(0b00000011, deriv=None) == -1
-    assert test.compute_overlap(0b00010001, deriv=None) == -4
-    assert test.compute_overlap(0b00100010, deriv=None) == -11
-    assert test.compute_overlap(0b01000100, deriv=None) == -17
-    assert test.compute_overlap(0b10001000, deriv=None) == -22
-    # differentiate
-    assert test.compute_overlap(0b00010001, deriv=0) == 0
-    assert test.compute_overlap(0b00010001, deriv=1) == 0
-    assert test.compute_overlap(0b00010001, deriv=2) == 0
-    assert test.compute_overlap(0b00010001, deriv=3) == -1
-    assert test.compute_overlap(0b00010001, deriv=4) == 0
-    assert test.compute_overlap(0b00010001, deriv=5) == 0
-    assert test.compute_overlap(0b00010001, deriv=6) == 0
-    assert test.compute_overlap(0b00010001, deriv=7) == 0
-    assert test.compute_overlap(0b00010001, deriv=8) == 0
-    assert test.compute_overlap(0b00010001, deriv=9) == 0
-    assert test.compute_overlap(0b00010001, deriv=10) == 0
-    assert test.compute_overlap(0b00010001, deriv=11) == 0
-    assert test.compute_overlap(0b00010001, deriv=12) == 0
-    assert test.compute_overlap(0b00010001, deriv=13) == 0
-    assert test.compute_overlap(0b00010001, deriv=14) == 0
-    assert test.compute_overlap(0b00010001, deriv=15) == 0
-    assert test.compute_overlap(0b00010001, deriv=16) == 0
-    assert test.compute_overlap(0b00010001, deriv=17) == 0
-    assert test.compute_overlap(0b00010001, deriv=18) == 0
-    assert test.compute_overlap(0b00010001, deriv=19) == 0
-    assert test.compute_overlap(0b00010001, deriv=20) == 0
-    assert test.compute_overlap(0b00010001, deriv=21) == 0
-    assert test.compute_overlap(0b00010001, deriv=22) == 0
-    assert test.compute_overlap(0b00010001, deriv=23) == 0
-    assert test.compute_overlap(0b00010001, deriv=24) == 0
-    assert test.compute_overlap(0b00010001, deriv=25) == 0
-    assert test.compute_overlap(0b00010001, deriv=26) == 0
-    assert test.compute_overlap(0b00010001, deriv=27) == 0
-    assert test.compute_overlap(0b00010001, deriv=28) == 0
-
-    # (1:(0, 1), 2:(0, 2), 3:(0, 3), 4:(0, 4), 5:(0, 5), 6:(0, 6), 7:(0, 7),
-    #  8:(1, 2), 9:(1, 3), 10:(1, 4), 11:(1, 5), 12:(1, 6), 13:(1, 7),
-    #  14:(2, 3), 15:(2, 4), 16:(2, 5), 17:(2, 6), 18:(2, 7),
-    #  19:(3, 4), 20:(3, 5), 21:(3, 6), 22:(3, 7),
-    #  23:(4, 5), 24:(4, 6), 25:(4, 7),
-    #  26:(5, 6), 27:(5, 7),
-    #  28:(6, 7))
-
-    # four electrons
-    test = APG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.hstack((np.arange(1, 57, dtype=float), 0)))
-    # overlap
-    assert test.compute_overlap(0b00001111, deriv=None) == ((1*(14+28) + 14*(1+28))
-                                                            - (2*(9+28) + 9*(2+28))
-                                                            + (3*(8+28) + 8*(3+28)))
-    assert test.compute_overlap(0b00010111, deriv=None) == ((1*(15+28) + 15*(1+28))
-                                                            - (2*(10+28) + 10*(2+28))
-                                                            + (4*(8+28) + 8*(4+28)))
-    assert test.compute_overlap(0b00110011, deriv=None) == ((1*(23+28) + 23*(1+28))
-                                                            - (4*(11+28) + 11*(4+28))
-                                                            + (5*(10+28) + 10*(5+28)))
-    # differentiate
-    assert test.compute_overlap(0b00001111, deriv=0) == 14+28
-    assert test.compute_overlap(0b00001111, deriv=1) == -(9+28)
-    assert test.compute_overlap(0b00001111, deriv=2) == 8+28
-    assert test.compute_overlap(0b00001111, deriv=3) == 0
-    assert test.compute_overlap(0b00001111, deriv=4) == 0
-    assert test.compute_overlap(0b00001111, deriv=5) == 0
-    assert test.compute_overlap(0b00001111, deriv=6) == 0
-    assert test.compute_overlap(0b00001111, deriv=7) == 3+28
-    assert test.compute_overlap(0b00001111, deriv=8) == -(2+28)
-    assert test.compute_overlap(0b00001111, deriv=9) == 0
-    assert test.compute_overlap(0b00001111, deriv=10) == 0
-    assert test.compute_overlap(0b00001111, deriv=11) == 0
-    assert test.compute_overlap(0b00001111, deriv=12) == 0
-    assert test.compute_overlap(0b00001111, deriv=13) == 1+28
-    assert test.compute_overlap(0b00001111, deriv=14) == 0
-    assert test.compute_overlap(0b00001111, deriv=15) == 0
-    assert test.compute_overlap(0b00001111, deriv=16) == 0
-    assert test.compute_overlap(0b00001111, deriv=17) == 0
-    assert test.compute_overlap(0b00001111, deriv=18) == 0
-    assert test.compute_overlap(0b00001111, deriv=19) == 0
-    assert test.compute_overlap(0b00001111, deriv=20) == 0
-    assert test.compute_overlap(0b00001111, deriv=21) == 0
-    assert test.compute_overlap(0b00001111, deriv=22) == 0
-    assert test.compute_overlap(0b00001111, deriv=23) == 0
-    assert test.compute_overlap(0b00001111, deriv=24) == 0
-    assert test.compute_overlap(0b00001111, deriv=25) == 0
-    assert test.compute_overlap(0b00001111, deriv=26) == 0
-    assert test.compute_overlap(0b00001111, deriv=27) == 0
-    assert test.compute_overlap(0b00001111, deriv=28) == 14
-    assert test.compute_overlap(0b00001111, deriv=29) == -9
-    assert test.compute_overlap(0b00001111, deriv=30) == 8
-    assert test.compute_overlap(0b00001111, deriv=31) == 0
-    assert test.compute_overlap(0b00001111, deriv=32) == 0
-    assert test.compute_overlap(0b00001111, deriv=33) == 0
-    assert test.compute_overlap(0b00001111, deriv=34) == 0
-    assert test.compute_overlap(0b00001111, deriv=35) == 3
-    assert test.compute_overlap(0b00001111, deriv=36) == -2
-    assert test.compute_overlap(0b00001111, deriv=37) == 0
-    assert test.compute_overlap(0b00001111, deriv=38) == 0
-    assert test.compute_overlap(0b00001111, deriv=39) == 0
-    assert test.compute_overlap(0b00001111, deriv=40) == 0
-    assert test.compute_overlap(0b00001111, deriv=41) == 1
-    assert test.compute_overlap(0b00001111, deriv=42) == 0
-    assert test.compute_overlap(0b00001111, deriv=43) == 0
-    assert test.compute_overlap(0b00001111, deriv=44) == 0
-    assert test.compute_overlap(0b00001111, deriv=45) == 0
-    assert test.compute_overlap(0b00001111, deriv=46) == 0
-    assert test.compute_overlap(0b00001111, deriv=47) == 0
-    assert test.compute_overlap(0b00001111, deriv=48) == 0
-    assert test.compute_overlap(0b00001111, deriv=49) == 0
-    assert test.compute_overlap(0b00001111, deriv=50) == 0
-    assert test.compute_overlap(0b00001111, deriv=51) == 0
-    assert test.compute_overlap(0b00001111, deriv=52) == 0
-    assert test.compute_overlap(0b00001111, deriv=53) == 0
-    assert test.compute_overlap(0b00001111, deriv=54) == 0
-    assert test.compute_overlap(0b00001111, deriv=55) == 0
-    assert test.compute_overlap(0b00001111, deriv=56) == 0
-
-
-def test_normalize():
-    """Tests wfns.wavefunction.apg.APG.normalize
-    """
-    test = APG(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), dtype=float)
-    #check
-    test.assign_ref_sds(0b0101)
-    test.assign_params(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]))
-    assert_raises(ValueError, test.normalize)
-    test.assign_dtype(complex)
-    test.assign_params(np.array([1j, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]))
-    assert_raises(ValueError, test.normalize)
-
-    # one geminal, one reference
-    test = APG(2, np.ones((2, 2)), np.ones((2, 2, 2, 2)), dtype=float)
-    test.assign_params(np.array([2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
-    test.assign_ref_sds(0b0101)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # one geminal, two reference
-    test.assign_params(np.array([2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
-    test.assign_ref_sds([0b0101, 0b1010])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-    test = APG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # multiple geminal, one reference
-    test.assign_params(np.array(range(1, 57) + [0], dtype=float))
-    test.assign_ref_sds(0b00110011)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # multiple geminal, multiple reference
-    test.assign_params(np.array(range(1, 57) + [0], dtype=float))
-    test.assign_ref_sds([0b00110011, 0b01010101])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-
+# FIXME: refactor when solver is finished
 def answer_apg_h2_sto6g():
     """ Finds the APG/STO-6G wavefunction variationally for H2 system
     """
