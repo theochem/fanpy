@@ -12,6 +12,37 @@ __all__ = []
 class BaseGeminal(BaseWavefunction):
     """Base Geminal Wavefunctions.
 
+    A Geminal is a two-electron wavefunction.
+    .. math::
+
+        G^\dagger_p = \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q
+
+    All Geminal wavefunctions can be expresed as an antisymmeterized product of geminals:
+    .. math::
+
+        \big| \Psi \big> = \prod_{p=1}^P G^\dagger_p \big| \theta \big>
+
+    These wavefunctions can be re-expressed in terms of orbital pairs (i.e.
+    :math:`a^\dagger_p a^\dagger_q`), where the overlap of the wavefunction with a Slater
+    determinant is the sum over all possible combinations of orbital pairs that construct the
+    Slater determinant (each set of orbital pairs must be disjoint to follow Slater-Condon rule).
+    These combinations are equivalent to the perfect matchings (disjoint and exhaustive pairing) of
+    the orbitals of a Slater determinant.
+    Different flavors of geminals can allow a different set of perfect matchings for a given Slater
+    determinant.
+    The method `generate_possible_orbpairs` yields a perfect matching for a given Slater
+    determinant.
+    The symmetery of electron pair interchange is captured through the evaluation of a permanent.
+    Different approximations of the permanent can be implemented using the method
+    `compute_permanent`.
+
+    Alternatively, the sum over the different perfect matchings and the permanent evaluation can be
+    merged to construct a different combinatorial sum (such as Pffafian).
+    To implement these wavefunctions, the method `get_overlap` should be changed to use this sum and
+    to ignore `generate_possible_orbpairs` and `compute_permanent`.
+    These methods are only called in `get_overlap` so there should be no issue.
+    If you'd like, you can always raise NotImplementedError.
+
     Attributes
     ----------
     nelec : int
