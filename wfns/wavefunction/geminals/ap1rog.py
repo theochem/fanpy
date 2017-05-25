@@ -288,6 +288,10 @@ class AP1roG(APIG):
         overlap : float
         """
         sd = slater.internal_sd(sd)
+        # ASSUMES: Slater determinants are seniority zero
+        # cut off beta part (for just the alpha/spatial part)
+        spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
+        spatial_sd, _ = slater.split_spin(sd, self.nspatial)
         try:
             if deriv is None:
                 return self.cache[sd]
@@ -295,7 +299,7 @@ class AP1roG(APIG):
                 return self.d_cache[(sd, deriv)]
         except KeyError:
             # get indices of the occupied orbitals
-            orbs_annihilated, orbs_created = slater.diff(self.ref_sd, sd)
+            orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
 
             # if different number of electrons
             if len(orbs_annihilated) != len(orbs_created):
@@ -310,9 +314,9 @@ class AP1roG(APIG):
             # ASSUMES: each orbital pair is a spatial orbital (alpha and beta orbitals)
             # FIXME: code will fail if an alternative orbpair is used
             inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                         for i in orbs_annihilated if i < self.nspatial])
+                                         for i in orbs_annihilated])
             inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_created if i < self.nspatial])
+                                     for i in orbs_created])
 
             # if no derivatization
             if deriv is None:
