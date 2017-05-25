@@ -3,4 +3,5 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from . import base_wavefunction
 # from . import proj_wavefunction
+from . import ci
 from . import geminals
