@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from ...backend import slater
-from .. import base_wavefunction
+from ..base_wavefunction import BaseWavefunction
 from .apig import APIG
 
 __all__ = []
@@ -127,7 +127,7 @@ class AP1roG(APIG):
         ----
         Need to skip over APIG.__init__ because `assign_ref_sd` must come before `assign_params`.
         """
-        super(base_wavefunction.BaseWavefunction, self).__init__(nelec, nspin, dtype=dtype)
+        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype)
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
