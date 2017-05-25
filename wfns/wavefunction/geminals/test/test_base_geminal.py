@@ -180,6 +180,16 @@ def test_gem_compute_permanent():
                     3*(19*35 + 34*20) + 4*(18*35 + 33*20) + 5*(18*34 + 33*19))
     assert np.equal(test.compute_permanent((3, 4, 5), deriv_row_col=(2, 5)),
                     3*19 + 18*4)
+    # row inds
+    assert np.equal(test.compute_permanent(col_inds=(1, 2), row_inds=(0, 1)),
+                    1*17 + 16*2)
+    # ryser
+    assert np.equal(test.compute_permanent(col_inds=(0, 1, 2, 3), row_inds=(0, 1)),
+                    (0*16 + 15*1) + (0*17 + 15*2) + (0*18 + 15*3) + (1*17 + 2*16) + (1*18 + 3*16) +
+                    (2*18 + 17*3))
+    # one by one matrix derivatized
+    assert np.equal(test.compute_permanent(col_inds=(0, ), row_inds=(0, ), deriv_row_col=(0, 0)),
+                    1)
 
 
 def test_gem_get_overlap():
