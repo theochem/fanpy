@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from .doci import DOCI
+from ..geminals.ap1rog import AP1roG
 from ...backend.sd_list import sd_list
 from ...backend import slater
 
@@ -106,45 +107,38 @@ class CIPairs(DOCI):
                              'is `None`. If you would like to customize your CI wavefunction, use '
                              'CIWavefunction instead.')
 
-    # FIXME: implement after ap1rog
     def to_ap1rog(self):
         """Return the AP1roG wavefunction that corresponds to the CIPairs wavefunction.
 
         Returns
         -------
-        ap1rog : wfns.wavefunction.ap1rog.AP1roG
+        ap1rog : wfns.wavefunction.geminals.ap1rog.AP1roG
             AP1roG wavefunction
         """
-        # import AP1roG (because nasty cyclic import business)
-        from .ap1rog import AP1roG
+        # select Slater determinant with largest contributor as the reference Slater determinant
+        ref_sd_ind = np.argsort(np.abs(self.params))[-1]
+        ref_sd = self.sd_vec[ref_sd_ind]
+        spatial_ref_sd, _ = slater.split_spin(ref_sd, self.nspatial)
+        # use ap1rog normalization scheme
+        ci_params = self.params / self.params[ref_sd_ind]
 
-        npair = self.nelec//2
-        # dictionary of slater determinant to coefficient
-        zip_sd_coeff = zip(self.civec, self.params)
-        zip_sd_coeff.sort(reverse=True, key=lambda x: abs(x[1]))
-        dict_sd_coeff = {sd: coeff for sd, coeff in zip_sd_coeff}
-        # reference SD
-        ref_sd = zip_sd_coeff[0][0]
-        # normalize
-        dict_sd_coeff = {sd: coeff/dict_sd_coeff[ref_sd] for sd, coeff in
-                         dict_sd_coeff.iteritems()}
-        # make ap1rog object
-        ap1rog = AP1roG(self.nelec, self.one_int, self.two_int, dtype=self.dtype,
-                        nuc_nuc=self.nuc_nuc, orbtype=self.orbtype, ref_sds=(ref_sd, ))
+        # create AP1roG
+        ap1rog = AP1roG(self.nelec, self.nspin, dtype=self.dtype, ngem=None, orbpairs=None,
+                        ref_sd=ref_sd, params=None)
         # fill empty geminal coefficient
-        gem_coeffs = np.zeros((npair, self.nspatial - npair))
-        for occ_ind in (i for i in slater.occ_indices(ref_sd) if i < self.nspatial):
-            for vir_ind in (a for a in slater.vir_indices(ref_sd, self.nspin) if a < self.nspatial):
+        gem_coeffs = np.zeros(ap1rog.params.shape, dtype=self.dtype)
+        for occ_ind in slater.occ_indices(spatial_ref_sd):
+            for vir_ind in slater.vir_indices(spatial_ref_sd, self.nspatial):
                 # excite slater determinant
                 sd_exc = slater.excite(ref_sd, occ_ind, vir_ind)
                 sd_exc = slater.excite(sd_exc, occ_ind+self.nspatial, vir_ind+self.nspatial)
                 # set geminal coefficient (`a` decremented b/c first npair columns are removed)
-                row_ind = ap1rog.dict_orbpair_ind[(occ_ind, occ_ind+self.nspatial)]
+                row_ind = ap1rog.dict_reforbpair_ind[(occ_ind, occ_ind+self.nspatial)]
                 col_ind = ap1rog.dict_orbpair_ind[(vir_ind, vir_ind+self.nspatial)]
                 try:
-                    gem_coeffs[row_ind, col_ind] = dict_sd_coeff[sd_exc]
+                    gem_coeffs[row_ind, col_ind] = ci_params[self.dict_sd_index[sd_exc]]
                 except KeyError:
-                    gem_coeffs[row_ind, col_ind] = 0
-        ap1rog.assign_params(np.hstack((gem_coeffs.flat, self.get_energy(include_nuc=False,
-                                                                         exc_lvl=exc_lvl))))
+                    gem_coeffs[row_ind, col_ind] = 0.0
+        ap1rog.assign_params(gem_coeffs)
+
         return ap1rog

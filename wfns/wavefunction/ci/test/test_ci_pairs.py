@@ -26,20 +26,19 @@ def test_assign_sd_vec():
     assert_raises(ValueError, test.assign_sd_vec, (0b0011100111, ))
 
 
-# FIXME: implement after ap1rog
 def test_to_ap1rog():
-    """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog
-    """
-    test = CIPairs(2, np.ones((3, 3)), np.ones((3, 3, 3, 3)), excs=[0, 1, 2])
-    test.sd_coeffs = np.arange(9, 0, -1).reshape(3, 3)
-    assert_raises(TypeError, test.to_ap1rog, 1.0)
-    assert_raises(ValueError, test.to_ap1rog, -1)
-    ap1rog = test.to_ap1rog(exc_lvl=0)
-    assert np.allclose(ap1rog.params, np.array([6/9, 3/9, 4]))
-    ap1rog = test.to_ap1rog(exc_lvl=1)
-    assert np.allclose(ap1rog.params, np.array([5/8, 2/8, 3.875]))
-    ap1rog = test.to_ap1rog(exc_lvl=2)
-    assert np.allclose(ap1rog.params, np.array([4/7, 1/7, 7*4/7 - 2*1/7]))
+    """Tests CIPairs.to_ap1rog."""
+    test = CIPairs(2, 6, dtype=float)
+    params = np.arange(9, 0, -1, dtype=float).reshape(3, 3)
+    test.assign_params(params[:, 0].flatten())
+    ap1rog = test.to_ap1rog()
+    assert np.allclose(ap1rog.params, np.array([6/9, 3/9]))
+    test.assign_params(params[:, 1].flatten())
+    ap1rog = test.to_ap1rog()
+    assert np.allclose(ap1rog.params, np.array([5/8, 2/8]))
+    test.assign_params(params[:, 2].flatten())
+    ap1rog = test.to_ap1rog()
+    assert np.allclose(ap1rog.params, np.array([4/7, 1/7]))
 
 
 # FIXME: implement after solver is implemented
