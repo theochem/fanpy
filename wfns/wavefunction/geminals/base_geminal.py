@@ -316,13 +316,15 @@ class BaseGeminal(BaseWavefunction):
         self.cache = {}
         self.d_cache = {}
 
-    def compute_permanent(self, col_inds, deriv_row_col=None):
+    def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
         """Compute the permanent that corresponds to the given orbital pairs
 
         Parameters
         ----------
         col_inds : np.ndarray
             Indices of the columns of geminal coefficient matrices that will be used.
+        row_inds : np.ndarray
+            Indices of the rows of geminal coefficient matrices that will be used.
         deriv : 2-tuple of int, None
             Row and column indices of the element with respect to which the permanent is derivatized
             Default is no derivatization
@@ -331,10 +333,13 @@ class BaseGeminal(BaseWavefunction):
         -------
         permanent :float
         """
-        row_inds = np.arange(self.ngem)
+        if row_inds is None:
+            row_inds = np.arange(self.ngem)
+        else:
+            row_inds = np.array(row_inds)
         col_inds = np.array(col_inds)
         # select function that evaluates the permanent
-        if col_inds.size <= row_inds.size <= 3:
+        if col_inds.size <= 3 >= row_inds.size:
             permanent = math_tools.permanent_ryser
         else:
             permanent = math_tools.permanent_combinatoric
@@ -344,11 +349,14 @@ class BaseGeminal(BaseWavefunction):
         else:
             # cut out rows and columns that corresponds to the element with which the permanent is
             # derivatized
-            row_inds = row_inds[row_inds != deriv_row_col[0]]
-            col_inds = col_inds[col_inds != deriv_row_col[1]]
-            if row_inds.size == self.ngem or col_inds.size == self.npair:
+            row_inds_trunc = row_inds[row_inds != deriv_row_col[0]]
+            col_inds_trunc = col_inds[col_inds != deriv_row_col[1]]
+            if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
                 return 0.0
-            return permanent(self.params[row_inds, :][:, col_inds])
+            elif row_inds_trunc.size == col_inds_trunc.size == 0:
+                return 1.0
+            else:
+                return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the geminal wavefunction and a Slater determinant.
