@@ -1,127 +1,122 @@
-""" Tests wfns.wavefunction.ap1rog.AP1roG
-"""
+"""Test wfns.wavefunction.geminals.ap1rog.AP1roG."""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 import scipy
-from wfns.solver.solver import solve
-from wfns.wavefunction.ap1rog import AP1roG
+# from wfns.solver.solver import solve
+from wfns.wavefunction.geminals.ap1rog import AP1roG
 from wfns.tools import find_datafile
 
-def test_assign_ngem():
-    """ Tests AP1roG.assign_ngem
-    """
-    test = AP1roG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    # check error
-    assert_raises(TypeError, test.assign_ngem, 4.0)
-    assert_raises(ValueError, test.assign_ngem, 1)
+
+class TestAP1roG(AP1roG):
+    """AP1roG that skips initialization."""
+    def __init__(self):
+        pass
+
+
+def test_ap1rog_assign_ref_sd():
+    """Test AP1roG.assign_ref_sd."""
+    test = TestAP1roG()
+    test.assign_nelec(4)
+    test.assign_nspin(8)
+    test.assign_ref_sd(None)
+    assert test.ref_sd == 0b00110011
+    test.assign_ref_sd(0b00110011)
+    assert test.ref_sd == 0b00110011
+    assert_raises(ValueError, test.assign_ref_sd, 0b00010001)
+    assert_raises(ValueError, test.assign_ref_sd, 0b01110001)
+    assert_raises(ValueError, test.assign_ref_sd, 0b01010011)
+    # NOTE: multiple references is not supported
+    assert_raises(ValueError, test.assign_ref_sd, [0b00110011, 0b01010101])
+    # this is equivalent to
+    assert_raises(ValueError, test.assign_ref_sd, [51, 85])
+    # which means that the 51st and the 85th orbitals are occupied
+
+
+def test_ap1rog_assign_ngem():
+    """Test AP1roG.assign_ngem."""
+    test = TestAP1roG()
+    test.assign_nelec(4)
     assert_raises(NotImplementedError, test.assign_ngem, 3)
-    # None
-    test.assign_ngem(None)
-    assert test.ngem == 2
 
 
-def test_assign_ref_sds():
-    """ Tests AP1roG.assign_ref_sds
-    """
-    test = AP1roG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert_raises(NotImplementedError, test.assign_ref_sds, [0b00110011, 0b01010101])
-    test.assign_ref_sds(None)
-    assert test.ref_sds == (0b00110011, )
-    test.assign_ref_sds(0b00110011)
-    assert test.ref_sds == (0b00110011, )
+def test_ap1rog_assign_orbpairs():
+    """Test AP1roG.assign_orbpairs."""
+    test = TestAP1roG()
+    test.assign_nelec(4)
+    test.assign_nspin(6)
+    test.assign_ref_sd()
+    test.assign_orbpairs()
+    assert test.dict_orbpair_ind == {(2, 5): 0}
+    assert test.dict_ind_orbpair == {0: (2, 5)}
 
 
-def test_template_coeffs():
-    """ Tests wfns.wavefunction.ap1rog.AP1roG.template_coeffs
-    """
-    # ngem 1
-    test = AP1roG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert np.allclose(test.template_coeffs, np.array([0, 0, 0]))
-    # ngem 2
-    test = AP1roG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    assert np.allclose(test.template_coeffs, np.array([[0, 0],
-                                                       [0, 0]]))
+def test_ap1rog_template_params():
+    """Test AP1roG.template_params."""
+    test = TestAP1roG()
+    test.assign_dtype(float)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_nspin(6)
+    test.assign_ref_sd()
+    test.assign_orbpairs()
+    assert np.allclose(test.template_params, np.zeros((2, 1)))
+    test = TestAP1roG()
+    test.assign_dtype(float)
+    test.assign_nelec(6)
+    test.assign_ngem(3)
+    test.assign_nspin(20)
+    test.assign_ref_sd()
+    test.assign_orbpairs()
+    assert np.allclose(test.template_params, np.zeros((3, 7)))
 
 
-def test_compute_overlap():
-    """ Tests wfns.wavefunction.ap1rog.AP1roG.compute_overlap
-    """
-    # two electrons
-    test = AP1roG(2, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.array([2, 3, 4, 0], dtype=float))
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00010010)
-    assert_raises(ValueError, test.compute_overlap, 0b00110011)
-    # overlap
-    assert test.compute_overlap(0b00010001, deriv=None) == 1
-    assert test.compute_overlap(0b00100010, deriv=None) == 2
-    assert test.compute_overlap(0b01000100, deriv=None) == 3
-    assert test.compute_overlap(0b10001000, deriv=None) == 4
-    # differentiate
-    assert test.compute_overlap(0b00010001, deriv=0) == 0
-    assert test.compute_overlap(0b00010001, deriv=1) == 0
-    assert test.compute_overlap(0b00010001, deriv=2) == 0
-    assert test.compute_overlap(0b00010001, deriv=3) == 0
-    assert test.compute_overlap(0b00100010, deriv=0) == 1
-    assert test.compute_overlap(0b00100010, deriv=1) == 0
-    assert test.compute_overlap(0b00100010, deriv=2) == 0
-    assert test.compute_overlap(0b00100010, deriv=5) == 0
-    assert test.compute_overlap(0b01000100, deriv=0) == 0
-    assert test.compute_overlap(0b01000100, deriv=1) == 1
-    assert test.compute_overlap(0b01000100, deriv=2) == 0
-    assert test.compute_overlap(0b01000100, deriv=6) == 0
-    assert test.compute_overlap(0b10001000, deriv=0) == 0
-    assert test.compute_overlap(0b10001000, deriv=1) == 0
-    assert test.compute_overlap(0b10001000, deriv=2) == 1
-    assert test.compute_overlap(0b10001000, deriv=99) == 0
-    # fout electrons
-    test = AP1roG(4, np.ones((4, 4)), np.ones((4, 4, 4, 4)))
-    test.assign_params(np.array([3, 4,
-                                 7, 8, 0], dtype=float))
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00010010)
-    assert_raises(ValueError, test.compute_overlap, 0b00110101)
-    # overlap
-    assert test.compute_overlap(0b00110011, deriv=None) == 1*1 + 0*0
-    assert test.compute_overlap(0b01010101, deriv=None) == 1*7 + 3*0
-    assert test.compute_overlap(0b10011001, deriv=None) == 1*8 + 4*0
-    assert test.compute_overlap(0b01100110, deriv=None) == 0*7 + 3*1
-    assert test.compute_overlap(0b10101010, deriv=None) == 0*8 + 4*1
-    assert test.compute_overlap(0b11001100, deriv=None) == 3*8 + 4*7
-    # differentiate
-    assert test.compute_overlap(0b00110011, deriv=0) == 0
-    assert test.compute_overlap(0b00110011, deriv=1) == 0
-    assert test.compute_overlap(0b00110011, deriv=2) == 0
-    assert test.compute_overlap(0b00110011, deriv=3) == 0
-    assert test.compute_overlap(0b00110011, deriv=4) == 0
-    assert test.compute_overlap(0b01010101, deriv=0) == 0
-    assert test.compute_overlap(0b01010101, deriv=1) == 0
-    assert test.compute_overlap(0b01010101, deriv=2) == 1
-    assert test.compute_overlap(0b01010101, deriv=3) == 0
-    assert test.compute_overlap(0b01010101, deriv=4) == 0
-    assert test.compute_overlap(0b10011001, deriv=0) == 0
-    assert test.compute_overlap(0b10011001, deriv=1) == 0
-    assert test.compute_overlap(0b10011001, deriv=2) == 0
-    assert test.compute_overlap(0b10011001, deriv=3) == 1
-    assert test.compute_overlap(0b10011001, deriv=4) == 0
-    assert test.compute_overlap(0b01100110, deriv=0) == 1
-    assert test.compute_overlap(0b01100110, deriv=1) == 0
-    assert test.compute_overlap(0b01100110, deriv=2) == 0
-    assert test.compute_overlap(0b01100110, deriv=3) == 0
-    assert test.compute_overlap(0b01100110, deriv=4) == 0
-    assert test.compute_overlap(0b10101010, deriv=0) == 0
-    assert test.compute_overlap(0b10101010, deriv=1) == 1
-    assert test.compute_overlap(0b10101010, deriv=2) == 0
-    assert test.compute_overlap(0b10101010, deriv=3) == 0
-    assert test.compute_overlap(0b10101010, deriv=4) == 0
-    assert test.compute_overlap(0b11001100, deriv=0) == 8
-    assert test.compute_overlap(0b11001100, deriv=1) == 7
-    assert test.compute_overlap(0b11001100, deriv=2) == 4
-    assert test.compute_overlap(0b11001100, deriv=3) == 3
-    assert test.compute_overlap(0b11001100, deriv=4) == 0
+def test_ap1rog_get_overlap():
+    """Test TestAP1roG.get_overlap."""
+    test = TestAP1roG()
+    test.assign_dtype(float)
+    test.assign_nelec(4)
+    test.assign_nspin(10)
+    test.assign_ngem(2)
+    test.assign_ref_sd()
+    test.assign_orbpairs()
+    test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
+    assert test.get_overlap(0b0001100011) == 1.0
+    assert test.get_overlap(0b0010100101) == 3.0
+    assert test.get_overlap(0b0000001111) == 0.0
+    assert test.get_overlap(0b0110001100) == 0*4 + 1*3
+    # check caching
+    test.cache[0b0000001111] = 2
+    assert test.get_overlap(0b0000001111) == 2
+    test.cache[0b0001100011] = 2
+    assert test.get_overlap(0b0001100011) == 2
+    # check caching of zero contributors
+    test.cache = {}
+    assert test.get_overlap(0b0000001111) == 0
+    assert 0b0000001111 not in test.cache
+    # check derivatives
+    test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
+    assert test.get_overlap(0b0001100011, deriv=0) == 0
+    assert test.get_overlap(0b0001100011, deriv=1) == 0
+    assert test.get_overlap(0b0001100011, deriv=99) == 0
+    assert test.get_overlap(0b0011000110, deriv=0) == 1
+    assert test.get_overlap(0b0011000110, deriv=3) == 0
+    assert test.get_overlap(0b0011000110, deriv=99) == 0
+    assert test.get_overlap(0b0010100101, deriv=0) == 0
+    assert test.get_overlap(0b0010100101, deriv=3) == 1
+    assert test.get_overlap(0b0110001100, deriv=99) == 0
+    assert test.get_overlap(0b0110001100, deriv=0) == 4
+    assert test.get_overlap(0b0110001100, deriv=1) == 3
+    assert test.get_overlap(0b0110001100, deriv=3) == 1
+    assert test.get_overlap(0b0110001100, deriv=4) == 0
+    assert test.get_overlap(0b0110001100, deriv=99) == 0
+
+    test.d_cache[(0b001111, 0)] = 7
+    assert test.get_overlap(0b001111, deriv=0) == 7
+    assert (0b0110001100, 4) not in test.d_cache
 
 
+# TODO: refactor after the solver code
 def answer_ap1rog_h2_sto6g():
     """ Finds the AP1roG/STO-6G wavefunction by scanning through the coefficients for the lowest
     energy
