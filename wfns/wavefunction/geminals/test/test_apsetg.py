@@ -1,9 +1,28 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from nose.plugins.attrib import attr
-from wfns.solver.solver import solve
-from wfns.wavefunction.apsetg import APsetG
+import types
+# from wfns.solver.solver import solve
+from wfns.backend import graphs
+from wfns.wavefunction.geminals.apsetg import APsetG
 from wfns.tools import find_datafile
+
+
+class TestAPsetG(APsetG):
+    """APsetG that skips initialization."""
+    def __init__(self):
+        pass
+
+
+def test_assign_pmatch_generator():
+    """Test APsetG.generate_possible_orbpairs"""
+    test = TestAPsetG()
+    test.assign_nspin(6)
+    sd = (0, 1, 2, 3, 4, 5)
+    assert isinstance(test.generate_possible_orbpairs(sd), types.GeneratorType)
+    for i, j in zip(test.generate_possible_orbpairs(sd),
+                    graphs.generate_biclique_pmatch((0, 1, 2), (3, 4, 5))):
+        assert i == j
 
 
 @attr('slow')
