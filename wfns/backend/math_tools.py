@@ -62,7 +62,7 @@ def adjugate(matrix):
     det = np.linalg.det(matrix)
     if abs(det) <= 1e-12:
         raise np.linalg.LinAlgError('Matrix is singular')
-    return  det * np.linalg.inv(matrix)
+    return det * np.linalg.inv(matrix)
 
 
 def permanent_combinatoric(matrix):
