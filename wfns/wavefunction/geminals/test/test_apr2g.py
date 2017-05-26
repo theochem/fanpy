@@ -1,130 +1,296 @@
-""" Tests wfns.wavefunction.apr2g.APr2G
-"""
+"""Test wfns.wavefunction.geminals.apr2g.APr2G."""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 import numpy as np
-from wfns.solver.solver import solve
-from wfns.wavefunction.apr2g import APr2G
-from wfns.wavefunction.apig import APIG
+# from wfns.solver.solver import solve
+from wfns.wavefunction.geminals.apr2g import APr2G
+# from wfns.wavefunction.apig import APIG
 from wfns.tools import find_datafile
 
 
-def test_template_coeffs():
-    """ Tests APr2G.template_coeffs
-    """
-    one_int = np.arange(-16, 0, 1, dtype=float).reshape(4, 4)
+class TestAPr2G(APr2G):
+    """APr2G that skips initialization."""
+    def __init__(self):
+        pass
+
+
+def test_apr2g_params_from_apig():
+    """Test APr2G.params_from_apig."""
+    apig_params = np.eye(4, 10) + 0.001*np.random.rand(4, 10)
+    test = APr2G.params_from_apig(apig_params)
+    assert np.allclose(apig_params, test[14:24]/(test[:4, np.newaxis] - test[4:14]),
+                       atol=0.1, rtol=0)
+
+    apig_params = np.array([[1.033593181822e+00, 3.130903350751e-04, -4.321247538977e-03,
+                             -1.767251395337e-03, -1.769214953534e-03, -1.169729179981e-03],
+                            [-5.327889357199e-01, 9.602580629349e-01, -1.139839360648e-02,
+                             -2.858698370621e-02, -2.878270043699e-02, -1.129324573431e-01]])
+    test = APr2G.params_from_apig(apig_params)
+    assert np.allclose(apig_params, test[8:14]/(test[:2, np.newaxis] - test[2:8]),
+                       atol=0.1, rtol=0)
+
+
+def test_apr2g_template_params():
+    """Test APr2G.template_params."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(10)
+    test.assign_orbpairs()
+    test.assign_nelec(2)
     # ngem 1
-    test = APr2G(2, one_int, np.ones((4, 4, 4, 4)))
-    print(test.template_coeffs)
-    assert np.allclose(test.template_coeffs, np.array([1, -16, -12, -8, -4, 1, 0.01, 0.01, 0.01]))
+    test.assign_ngem(1)
+    template = test.template_params
+    lambdas = template[:1, np.newaxis]
+    epsilons = template[1:6]
+    zetas = template[6:]
+    assert np.allclose(zetas / (lambdas - epsilons), np.eye(1, 5), atol=0.001, rtol=0)
     # ngem 2
-    test = APr2G(4, one_int, np.ones((4, 4, 4, 4)))
-    assert np.allclose(test.template_coeffs, np.array([1, 0.9, -16, -12, -8, -4, 1, 1, 0.01, 0.01]))
+    test.assign_ngem(2)
+    template = test.template_params
+    lambdas = template[:2, np.newaxis]
+    epsilons = template[2:7]
+    zetas = template[7:]
+    assert np.allclose(zetas / (lambdas - epsilons), np.eye(2, 5), atol=0.001, rtol=0)
+    # ngem 3
+    test.assign_ngem(3)
+    template = test.template_params
+    lambdas = template[:3, np.newaxis]
+    epsilons = template[3:8]
+    zetas = template[8:]
+    assert np.allclose(zetas / (lambdas - epsilons), np.eye(3, 5), atol=0.001, rtol=0)
 
 
-def test_assign_params():
+def test_apr2g_assign_params():
     """ Tests APr2G.assign_params
     """
-    one_int = np.arange(-1, -17, -1, dtype=float).reshape(4, 4)
-    test = APr2G(4, one_int, np.ones((4, 4, 4, 4)))
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_orbpairs()
+    # check assignment
+    test.assign_params(np.array([1, 2, 0, 0, 0, 0, 1, 1, 1, 1.0]))
+    assert np.allclose(test.params, np.array([1, 2, 0, 0, 0, 0, 1, 1, 1, 1.0]))
+    # check default
+    test.assign_params(None)
+    lambdas = test.params[:2, np.newaxis]
+    epsilons = test.params[2:6]
+    zetas = test.params[6:]
+    assert np.allclose(zetas / (lambdas - epsilons), np.eye(2, 4), atol=0.001, rtol=0)
     # check error
-    assert_raises(ValueError, test.assign_params, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 1, 9, 9, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 1, 9, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 1, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 1, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 2, 9, 9, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 2, 9, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 2, 9, 0, 0, 0, 0, 1.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 2, 0, 0, 0, 0, 1.0]))
+    assert_raises(ValueError, test.assign_params, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 1, 9, 9, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 1, 9, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 1, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 1, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 2, 9, 9, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 2, 9, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 2, 9, 0, 0, 0, 0.0]))
+    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 2, 0, 0, 0, 0.0]))
 
 
-def test_compute_overlap():
-    """ Tests APr2G.compute_overlap manually
-    """
+def test_apr2g_lambdas():
+    """Test APr2G.lambdas."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_orbpairs()
+    test.assign_params(np.arange(10, dtype=float))
+    assert np.allclose(test.lambdas.flatten(), test.params[:2])
+
+
+def test_apr2g_epsilons():
+    """Test APr2G.epsilons."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_orbpairs()
+    test.assign_params(np.arange(10, dtype=float))
+    assert np.allclose(test.epsilons.flatten(), test.params[2:6])
+
+
+def test_apr2g_zetas():
+    """Test APr2G.zetas."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_orbpairs()
+    test.assign_params(np.arange(10, dtype=float))
+    assert np.allclose(test.zetas.flatten(), test.params[6:10])
+
+
+def test_apr2g_apig_params():
+    """Test APr2G.apig_params."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_orbpairs()
+    test.assign_params(np.arange(10, dtype=float))
+    assert np.allclose(test.apig_params,
+                       test.params[6:10] / (test.params[:2, np.newaxis] - test.params[2:6]))
+
+
+def test_apr2g_compute_permanent():
+    """Test APr2G.compute_permanent."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_orbpairs()
     # two electrons
-    one_int = np.arange(-1, -17, -1, dtype=float).reshape(4, 4)
-    test = APr2G(2, one_int, np.ones((4, 4, 4, 4)))
-
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00110011)
-    assert_raises(ValueError, test.compute_overlap, 0b00010010)
-
-    lambdas = test.params[:test.npair]
-    epsilons = test.params[test.npair:test.npair+test.nspatial]
-    zetas = test.params[test.npair+test.nspatial:test.npair+test.nspatial*2]
-    coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
+    test.assign_nelec(2)
+    test.assign_ngem(1)
+    test.assign_params(np.arange(1, 10, dtype=float))
     # overlap
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=None), coeffs[0, 0])
-    assert np.allclose(test.compute_overlap(0b00100010, deriv=None), coeffs[0, 1])
-    assert np.allclose(test.compute_overlap(0b01000100, deriv=None), coeffs[0, 2])
-    assert np.allclose(test.compute_overlap(0b10001000, deriv=None), coeffs[0, 3])
+    assert np.allclose(test.compute_permanent([0], deriv=None), test.apig_params[0, 0])
+    assert np.allclose(test.compute_permanent([1], deriv=None), test.apig_params[0, 1])
+    assert np.allclose(test.compute_permanent([2], deriv=None), test.apig_params[0, 2])
+    assert np.allclose(test.compute_permanent([3], deriv=None), test.apig_params[0, 3])
     # differentiate
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=0),
-                       -zetas[0]/(lambdas[0] - epsilons[0])**2)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=1),
-                       zetas[0]/(lambdas[0]-epsilons[0])**2)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=2), 0)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=3), 0)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=4), 0)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=5), 1.0/(lambdas[0]-epsilons[0]))
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=6), 0)
-    assert np.allclose(test.compute_overlap(0b00010001, deriv=7), 0)
-    assert test.compute_overlap(0b00010001, deriv=8) == 0
-    assert test.compute_overlap(0b00010001, deriv=99) == 0
+    assert test.compute_permanent([0], deriv=0) == -test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2
+    assert test.compute_permanent([0], deriv=1) == test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2
+    assert test.compute_permanent([0], deriv=2) == 0
+    assert test.compute_permanent([0], deriv=3) == 0
+    assert test.compute_permanent([0], deriv=4) == 0
+    assert test.compute_permanent([0], deriv=5) == 1.0/(test.lambdas[0]-test.epsilons[0])
+    assert test.compute_permanent([0], deriv=6) == 0
+    assert test.compute_permanent([0], deriv=7) == 0
+    assert test.compute_permanent([0], deriv=8) == 0
+    assert_raises(ValueError, test.compute_permanent, [0], deriv=99)
+    assert_raises(ValueError, test.compute_permanent, [0], deriv=-1)
 
-    # four electron
-    one_int = np.arange(-1, -17, -1, dtype=float).reshape(4, 4)
-    test = APr2G(4, one_int, np.ones((4, 4, 4, 4)))
-
-    # bad SD
-    assert_raises(ValueError, test.compute_overlap, 0b00010001)
-    assert_raises(ValueError, test.compute_overlap, 0b00110101)
-
-    lambdas = test.params[:test.npair]
-    epsilons = test.params[test.npair:test.npair+test.nspatial]
-    zetas = test.params[test.npair+test.nspatial:test.npair+test.nspatial*2]
-    coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
+    # four electrons
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_params(np.arange(1, 11, dtype=float))
     # overlap
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=None), (coeffs[0, 0]*coeffs[1, 1]
-                                                                      + coeffs[0, 1]*coeffs[1, 0]))
-    assert np.allclose(test.compute_overlap(0b01010101, deriv=None), (coeffs[0, 0]*coeffs[1, 2]
-                                                                      + coeffs[1, 0]*coeffs[0, 2]))
-    assert np.allclose(test.compute_overlap(0b10011001, deriv=None), (coeffs[0, 0]*coeffs[1, 3]
-                                                                      + coeffs[1, 0]*coeffs[0, 3]))
-    assert np.allclose(test.compute_overlap(0b01100110, deriv=None), (coeffs[0, 1]*coeffs[1, 2]
-                                                                      + coeffs[1, 1]*coeffs[0, 2]))
-    assert np.allclose(test.compute_overlap(0b10101010, deriv=None), (coeffs[0, 1]*coeffs[1, 3]
-                                                                      + coeffs[1, 1]*coeffs[0, 3]))
-    assert np.allclose(test.compute_overlap(0b11001100, deriv=None), (coeffs[0, 2]*coeffs[1, 3]
-                                                                      + coeffs[1, 2]*coeffs[0, 3]))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=None),
+                       (test.apig_params[0, 0]*test.apig_params[1, 1]
+                        + test.apig_params[0, 1]*test.apig_params[1, 0]))
+    assert np.allclose(test.compute_permanent([0, 2], deriv=None),
+                       (test.apig_params[0, 0]*test.apig_params[1, 2]
+                        + test.apig_params[1, 0]*test.apig_params[0, 2]))
+    assert np.allclose(test.compute_permanent([0, 3], deriv=None),
+                       (test.apig_params[0, 0]*test.apig_params[1, 3]
+                        + test.apig_params[1, 0]*test.apig_params[0, 3]))
+    assert np.allclose(test.compute_permanent([1, 2], deriv=None),
+                       (test.apig_params[0, 1]*test.apig_params[1, 2]
+                        + test.apig_params[1, 1]*test.apig_params[0, 2]))
+    assert np.allclose(test.compute_permanent([1, 3], deriv=None),
+                       (test.apig_params[0, 1]*test.apig_params[1, 3]
+                        + test.apig_params[1, 1]*test.apig_params[0, 3]))
+    assert np.allclose(test.compute_permanent([2, 3], deriv=None),
+                       (test.apig_params[0, 2]*test.apig_params[1, 3]
+                        + test.apig_params[1, 2]*test.apig_params[0, 3]))
     # differentiate
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=0),
-                       (coeffs[1, 1]*(-zetas[0]/(lambdas[0] - epsilons[0])**2)
-                        + coeffs[1, 0]*(-zetas[1]/(lambdas[0] - epsilons[1])**2)))
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=1),
-                       (coeffs[0, 1]*(-zetas[0]/(lambdas[1] - epsilons[0])**2)
-                        + coeffs[0, 0]*(-zetas[1]/(lambdas[1] - epsilons[1])**2)))
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=2),
-                       (coeffs[1, 1]*(zetas[0]/(lambdas[0]-epsilons[0])**2)
-                        + coeffs[0, 1]*(zetas[0]/(lambdas[1] - epsilons[0])**2)))
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=3),
-                       (coeffs[1, 0]*(zetas[1]/(lambdas[0]-epsilons[1])**2)
-                        + coeffs[0, 0]*(zetas[1]/(lambdas[1] - epsilons[1])**2)))
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=4), 0)
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=5), 0)
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=6),
-                       (coeffs[1, 1]*(1.0/(lambdas[0]-epsilons[0]))
-                        + coeffs[0, 1]*(1.0/(lambdas[1] - epsilons[0]))))
-    assert np.allclose(test.compute_overlap(0b00110011, deriv=7),
-                       (coeffs[1, 0]*(1.0/(lambdas[0]-epsilons[1]))
-                        + coeffs[0, 0]*(1.0/(lambdas[1] - epsilons[1]))))
-    assert test.compute_overlap(0b00110011, deriv=8) == 0
-    assert test.compute_overlap(0b00110011, deriv=99) == 0
+    assert np.allclose(test.compute_permanent([0, 1], deriv=0),
+                       (test.apig_params[1, 1]
+                        * (-test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2)
+                        + test.apig_params[1, 0]
+                        * (-test.zetas[1]/(test.lambdas[0] - test.epsilons[1])**2)))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=1),
+                       (test.apig_params[0, 1]
+                        * (-test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)
+                        + test.apig_params[0, 0]
+                        * (-test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=2),
+                       (test.apig_params[1, 1]
+                        * (test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2)
+                        + test.apig_params[0, 1]
+                        * (test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=3),
+                       (test.apig_params[1, 0]
+                        * (test.zetas[1]/(test.lambdas[0]-test.epsilons[1])**2)
+                        + test.apig_params[0, 0]
+                        * (test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=4), 0)
+    assert np.allclose(test.compute_permanent([0, 1], deriv=5), 0)
+    assert np.allclose(test.compute_permanent([0, 1], deriv=6),
+                       (test.apig_params[1, 1]
+                        * (1.0/(test.lambdas[0]-test.epsilons[0]))
+                        + test.apig_params[0, 1]
+                        * (1.0/(test.lambdas[1] - test.epsilons[0]))))
+    assert np.allclose(test.compute_permanent([0, 1], deriv=7),
+                       (test.apig_params[1, 0]
+                        * (1.0/(test.lambdas[0]-test.epsilons[1]))
+                        + test.apig_params[0, 0]
+                        * (1.0/(test.lambdas[1] - test.epsilons[1]))))
+    assert test.compute_permanent([0, 1], deriv=8) == 0
+    assert_raises(ValueError, test.compute_permanent, [0, 1], deriv=99)
 
 
-def test_compute_overlap_apig():
+def test_apr2g_get_overlap():
+    """Test APr2G.get_overlap."""
+    test = TestAPr2G()
+    test.assign_dtype(float)
+    test.assign_nspin(8)
+    test.assign_orbpairs()
+    test.assign_nelec(4)
+    test.assign_ngem(2)
+    test.assign_params(np.arange(1, 11, dtype=float))
+    # check overlap
+    assert np.allclose(test.get_overlap(0b00110011), (test.apig_params[0, 0]*test.apig_params[1, 1]
+                                                      + test.apig_params[0, 1]*test.apig_params[1, 0]))
+    assert np.allclose(test.get_overlap(0b01010101), (test.apig_params[0, 0]*test.apig_params[1, 2]
+                                                      + test.apig_params[1, 0]*test.apig_params[0, 2]))
+    assert np.allclose(test.get_overlap(0b10011001), (test.apig_params[0, 0]*test.apig_params[1, 3]
+                                                      + test.apig_params[1, 0]*test.apig_params[0, 3]))
+    assert np.allclose(test.get_overlap(0b01100110), (test.apig_params[0, 1]*test.apig_params[1, 2]
+                                                      + test.apig_params[1, 1]*test.apig_params[0, 2]))
+    assert np.allclose(test.get_overlap(0b10101010), (test.apig_params[0, 1]*test.apig_params[1, 3]
+                                                      + test.apig_params[1, 1]*test.apig_params[0, 3]))
+    assert np.allclose(test.get_overlap(0b11001100), (test.apig_params[0, 2]*test.apig_params[1, 3]
+                                                      + test.apig_params[1, 2]*test.apig_params[0, 3]))
+    # check caching
+    test.cache[0b00110011] = 2
+    assert test.get_overlap(0b00110011) == 2
+    # check derivative
+    assert np.allclose(test.get_overlap(0b00110011, deriv=0),
+                       (test.apig_params[1, 1]
+                        * (-test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2)
+                        + test.apig_params[1, 0]
+                        * (-test.zetas[1]/(test.lambdas[0] - test.epsilons[1])**2)))
+    assert np.allclose(test.get_overlap(0b00110011, deriv=1),
+                       (test.apig_params[0, 1]
+                        * (-test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)
+                        + test.apig_params[0, 0]
+                        * (-test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(test.get_overlap(0b00110011, deriv=2),
+                       (test.apig_params[1, 1]
+                        * (test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2)
+                        + test.apig_params[0, 1]
+                        * (test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)))
+    assert np.allclose(test.get_overlap(0b00110011, deriv=3),
+                       (test.apig_params[1, 0]
+                        * (test.zetas[1]/(test.lambdas[0]-test.epsilons[1])**2)
+                        + test.apig_params[0, 0]
+                        * (test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(test.get_overlap(0b00110011, deriv=4), 0)
+    assert np.allclose(test.get_overlap(0b00110011, deriv=5), 0)
+    assert np.allclose(test.get_overlap(0b00110011, deriv=6),
+                       (test.apig_params[1, 1]
+                        * (1.0/(test.lambdas[0]-test.epsilons[0]))
+                        + test.apig_params[0, 1]
+                        * (1.0/(test.lambdas[1] - test.epsilons[0]))))
+    assert np.allclose(test.get_overlap(0b00110011, deriv=7),
+                       (test.apig_params[1, 0]
+                        * (1.0/(test.lambdas[0]-test.epsilons[1]))
+                        + test.apig_params[0, 0]
+                        * (1.0/(test.lambdas[1] - test.epsilons[1]))))
+    assert test.get_overlap(0b00110011, deriv=8) == 0
+    assert_raises(ValueError, test.get_overlap, [0, 1], deriv=99)
+
+
+def test_apr2g_compute_overlap_apig():
     """ Tests APr2G.compute_overlap by comparing results with equivalent APIG wavefunction
 
     Note
@@ -157,52 +323,13 @@ def test_compute_overlap_apig():
         assert np.allclose(apig.compute_overlap(sd), test.compute_overlap(sd))
 
 
-def test_normalize():
-    """ Tests APr2G.normalize
-    """
-    one_int = np.arange(-1, -5, -1, dtype=float).reshape(2, 2)
-    test = APr2G(2, one_int, np.ones((2, 2, 2, 2)), dtype=float)
-    #check
-    test.assign_ref_sds(0b0101)
-    test.assign_params(np.array([0, 1, 1, 0, 0, 1.0]))
-    assert_raises(ValueError, test.normalize)
-    test.assign_dtype(complex)
-    test.assign_params(np.array([0, 1j, 1, 1, 1, 1.0]))
-    assert_raises(ValueError, test.normalize)
-
-    # one geminal, one reference
-    test = APr2G(2, one_int, np.ones((2, 2, 2, 2)), dtype=float)
-    test.assign_params(np.array([0, 1, 1, 2, 1, 1.0]))
-    test.assign_ref_sds(0b0101)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # one geminal, two reference
-    test.assign_params(np.array([0, 1, 1, 2, 3, 1.0]))
-    test.assign_ref_sds([0b0101, 0b1010])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-    one_int = np.arange(-1, -17, -1, dtype=float).reshape(4, 4)
-    test = APr2G(4, one_int, np.ones((4, 4, 4, 4)))
-    # multiple geminal, one reference
-    test.assign_params(np.array([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0], dtype=float))
-    test.assign_ref_sds(0b00110011)
-    test.normalize()
-    assert test.compute_norm() == 1
-    # multiple geminal, multiple reference
-    test.assign_params(np.array([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0], dtype=float))
-    test.assign_ref_sds([0b00110011, 0b01010101])
-    test.normalize()
-    assert test.compute_norm() == 1
-
-
 def answer_apr2g_h2_631gdp():
     """ Finds the APr2G/6-31G** wavefunction by scanning through the coefficients for the lowest
     energy
 
     Note
     ----
-    Uses APIG answer from test_apig.answer_apig_h2_631gdp, converting it to APr2G
+    Uses APIG answer from test_apr2g_apig.answer_apig_h2_631gdp, converting it to APr2G
     """
     nelec = 2
     one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
@@ -224,7 +351,7 @@ def answer_apr2g_h2_631gdp():
 
 
 @attr('slow')
-def test_apr2g_h2_631gdp():
+def test_apr2g_apr2g_h2_631gdp():
     """ Tests ground state APr2G wavefunction using H2 with HF/6-31G** orbital
 
     Answers obtained from answer_apr2g_h2_631
@@ -296,7 +423,7 @@ def answer_apr2g_lih_sto6g():
 
     Note
     ----
-    Uses APIG answer from test_apig.answer_apig_lih_sto6g, converting it to APr2G
+    Uses APIG answer from test_apr2g_apig.answer_apig_lih_sto6g, converting it to APr2G
     """
     nelec = 4
     one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
@@ -320,7 +447,7 @@ def answer_apr2g_lih_sto6g():
 
 
 @attr('slow')
-def test_apr2g_lih_sto6g():
+def test_apr2g_apr2g_lih_sto6g():
     """ Tests APr2G wavefunction using LiH with HF/STO-6G orbital
 
     Answers obtained from answer_apr2g_lih_sto6g
