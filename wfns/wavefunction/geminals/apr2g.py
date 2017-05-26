@@ -1,177 +1,128 @@
-""" APr2G wavefunction
-"""
+"""Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction."""
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from .apig import APIG
-from ..backend import slater
-from ..backend.math_tools import permanent_borchardt, adjugate
+from ...backend import slater, math_tools
 
 __all__ = []
 
 
 class APr2G(APIG):
-    """ Antisymmetric Product of rank-2 Geminals
-
-    ..math::
-        \ket{\Psi_{\mathrm{APr2G}}}
-        &= \prod_{p=1}^P G_p^\dagger \ket{\theta}\\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
-        \ket{\mathbf{m}}
-    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-    Slater determinant (DOCI).
-
-    Class Variables
-    ---------------
-    _nconstraints : int
-        Number of constraints
-    _seniority : int, None
-        Seniority of the wavefunction
-        None means that all seniority is allowed
-    _spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
+    """Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction.
 
     Attributes
     ----------
     nelec : int
         Number of electrons
-    one_int : 1- or 2-tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        1-tuple for spatial (restricted) and generalized orbitals
-        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    two_int : 1- or 3-tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        In physicist's notation
-        1-tuple for spatial (restricted) and generalized orbitals
-        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+    nspin : int
+        Number of spin orbitals (alpha and beta)
     dtype : {np.float64, np.complex128}
-        Numpy data type
-    nuc_nuc : float
-        Nuclear-nuclear repulsion energy
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital used in obtaining the one-electron and two-electron integrals
-    pspace : tuple of gmpy2.mpz
-        Slater determinants onto which the wavefunction is projected
-    ref_sds : tuple of gmpy2.mpz
-        Slater determinants that will be used as a reference for the wavefunction (e.g. for
-        initial guess, energy calculation, normalization, etc)
+        Data type of the wavefunction
     params : np.ndarray
-        Parameters of the wavefunction (including energy)
-    cache : dict of sd to float
-        Cache of the overlaps that are calculated for each Slater determinant encountered
-    d_cache : dict of gmpy2.mpz to float
-        Cache of the derivative of overlaps that are calculated for each Slater determinant and
-        derivative index encountered
+        Parameters of the wavefunction
     dict_orbpair_ind : dict of 2-tuple of int to int
         Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
         to the column index of the geminal coefficient matrix
     dict_ind_orbpair : dict of int to 2-tuple of int
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
         where i and j are spin orbital indices and i < j
+    cache : dict of sd to float
+        Cache of the overlaps that are calculated for each Slater determinant encountered
+    d_cache : dict of gmpy2.mpz to float
+        Cache of the derivative of overlaps that are calculated for each Slater determinant and
+        derivative index encountered
 
     Properties
     ----------
-    nspin : int
-        Number of spin orbitals (alpha and beta)
+    npairs : int
+        Number of electorn pairs
     nspatial : int
         Number of spatial orbitals
-    nparams : int
-        Number of parameters
-    nproj : int
-        Number of Slater determinants
-    npair : int
-        Number of electron pairs
     ngem : int
         Number of geminals
-    template_coeffs : np.ndarray
-        Initial guess coefficient matrix for the given reference Slater determinants
-    template_orbpairs : tuple
-        List of orbital pairs that will be used to construct the geminals
+    spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
+    seniority : int, None
+        Seniority (number of unpaired electrons) of the wavefunction
+        None means that all seniority is allowed
+    nparams : int
+        Number of parameters
+    params_shape : 2-tuple of int
+        Shape of the parameters
+    template_params : np.ndarray
+        Template for the initial guess of geminal coefficient matrix
+        Depends on the attributes given
 
-    Method
-    ------
-    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
+    Methods
+    -------
+    __init__(self, nelec, one_int, two_int, dtype=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
+    assign_nspin(self, nspin)
+        Assigns the number of spin orbitals
     assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_nuc_nuc(nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
-    assign_integrals(self, one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-    assign_pspace(self, pspace=None)
-        Assigns the tuple of Slater determinants onto which the wavefunction is projected
-        Default uses `generate_pspace`
-    generate_pspace(self)
-        Generates the default tuple of Slater determinants with the appropriate spin and seniority
-        in increasing excitation order.
-
-        number (42)
+    assign_params(self, params)
+        Assigns the parameters of the wavefunction
     assign_ref_sds(self, ref_sds=None)
         Assigns the reference Slater determinants from which the initial guess, energy, and norm are
         calculated
         Default is the first Slater determinant of projection space
-    assign_params(self, params=None)
-        Assigns the parameters of the wavefunction (including energy)
-        Default contains coefficients from abstract property, `template_coeffs`, and the energy of
-        the reference Slater determinants with the coefficients from `template_coeffs`
     assign_orbpairs(self, orbpairs=None)
         Assigns the orbital pairs that will be used to construct geminals
-    get_overlap(self, sd, deriv=None)
+    compute_permanent(self, orbpairs, deriv_row_col=None)
+        Compute the permanent that corresponds to the given orbital pairs
+    get_overlap(self, sd, deriv_ind=None)
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
-    compute_norm(self, ref_sds=None, deriv=None)
-        Calculates the norm from given Slater determinants
-        Default `ref_sds` is the `ref_sds` given by the intialization
-        Default is no derivatization
-    compute_hamitonian(self, slater_d, deriv=None)
-        Calculates the expectation value of the Hamiltonian projected onto the given Slater
-        determinant, `slater_d`
-        By default no derivatization
-    compute_energy(self, include_nuc=False, ref_sds=None, deriv=None)
-        Calculates the energy projected onto given Slater determinants
-        Default `ref_sds` is the `ref_sds` given by the intialization
-        By default, electronic energy, no derivatization
-    objective(self, x, weigh_constraints=True)
-        Objective of the equations that will need to be solved (to solve the Projected Schrodinger
-        equation)
-    jacobian(self, x, weigh_constraints=True)
-        Jacobian of the objective
-    compute_overlap(self, sd, deriv=None)
-        Calculates the overlap between the wavefunction and a Slater determinant
-        Function in FancyCI
+    generate_possible_orbpairs(self, occ_indices)
+        Yields the possible orbital pairs that can construct the given Slater determinant.
     """
     # FIXME: add constraints to parameters
     #        zetas should be less than 1
     #        lambda - epsilon should be greater than 1
     #        lambda should be around 1 (epsilons should be less than 0)
     @property
-    def template_coeffs(self):
-        """ Default parameters for the given reference Slater determinantes
+    def template_params(self):
+        """Return the template of the parameters in a APr2G wavefunction.
 
         Ordered as [lambda_1, ... , lambda_p, epsilon_1, ... , epsilon_k, zeta_1, ... , zeta_k]
 
         Note
         ----
-        Returned value must be a numpy array in the desired shape
+        Requires calculation. May be slow.
         """
-        # FIXME: not a very good guess
-        params = np.zeros(self.npair + self.nspatial*2)
-        # set lambdas
-        params[:self.npair] = np.arange(1, 0.8, -0.2/self.npair)
-        # set epsilons to orbital energies
-        lowest_orb_energy = self.one_int[0][0, 0]
-        params[self.npair:self.npair + self.nspatial] = np.arange(lowest_orb_energy, 0,
-                                                                  -lowest_orb_energy/self.nspatial)
-        # set first npair zetas to 1
-        params[self.npair + self.nspatial:2*self.npair + self.nspatial] = 1.0
-        # set rest to 0.01
-        params[2*self.npair + self.nspatial:self.npair + 2*self.nspatial] = 0.01
-        return params
+        apig_template = super().template_params
+        apig_template += 0.0001*np.random.rand(*apig_template.shape)
+        return self.params_from_apig(apig_template, rmsd=0.01)
 
+    @property
+    def lambdas(self):
+        """Return the :math:`lambda` part of the APr2G parameters."""
+        return self.params[:self.ngem, np.newaxis]
+
+    @property
+    def epsilons(self):
+        """Return the :math:`epsilons` part of the APr2G parameters."""
+        return self.params[self.ngem:self.ngem+self.norbpair]
+
+    @property
+    def zetas(self):
+        """Return the :math:`zetas` part of the APr2G parameters."""
+        return self.params[self.ngem+self.norbpair:]
+
+    @property
+    def apig_params(self):
+        """Return corresponding APIG parameters.
+
+        Returns
+        -------
+        apig_params : np.ndarray(P, K)
+        """
+        return self.zetas / (self.lambdas - self.epsilons)
 
     def assign_params(self, params=None):
         """ Assigns the parameters of the wavefunction
@@ -180,10 +131,6 @@ class APr2G(APIG):
         ----------
         params : np.ndarray, None
             Parameters of the wavefunction
-            Last parameter is the energy
-            Default is the `template_coeffs` for the coefficient and energy of the reference
-            Slater determinants
-            If energy is given as zero, the energy of the reference Slater determinants are used
         add_noise : bool
             Flag to add noise to the given parameters
 
@@ -193,171 +140,322 @@ class APr2G(APIG):
             If `params` is not a numpy array
             If `params` does not have data type of `float`, `complex`, `np.float64` and
             `np.complex128`
-            If `params` has data type of `float or `np.float64` and wavefunction does not have data
-            type of `np.float64`
+            If `params` has complex data type and wavefunction has float data type
         ValueError
-            If `params` is None (default) and `ref_sds` has more than one Slater determinants
-            If `params` is not a one dimensional numpy array with appropriate dimensions
-            If geminal coefficient matrix has a zero in the denominator
+            If `params` does not have the same shape as the template_params
+            If APr2G parameters result in geminal coefficient matrix with a zero denominator
+
+        Note
+        ----
+        Depends on dtype, template_params, and nparams
         """
-        super(self.__class__, self).assign_params(params=params)
+        super().assign_params(params=params)
         # check for zeros in denominator
-        lambdas = self.params[:self.npair]
-        epsilons = self.params[self.npair:self.npair+self.nspatial]
-        if np.any(np.abs(lambdas[:, np.newaxis] - epsilons) < 1e-9):
-            raise ValueError('Geminal coefficient matrix has a division by zero')
+        if np.any(np.abs(self.lambdas - self.epsilons) < 1e-9):
+            raise ValueError('Corresponding geminal coefficient matrix has a division by zero')
 
+    def compute_permanent(self, col_inds, deriv=None):
+        """Compute the permanent that corresponds to the given orbital pairs
 
-    def compute_overlap(self, sd, deriv=None):
-        """ Computes the overlap between the wavefunction and a Slater determinant
+        Parameters
+        ----------
+        col_inds : np.ndarray
+            Indices of the columns of geminal coefficient matrices that will be used.
+        deriv : int, None
+            Indices of the element (in APr2G parameters) with respect to which the permanent is
+            derivatized
+            Default is no derivatization
+
+        Returns
+        -------
+        permanent :float
+
+        Raises
+        ------
+        ValueError
+            If index with respect to which the permanent is derivatized is invalid
+        """
+        row_inds = np.arange(self.ngem)
+        col_inds = np.array(col_inds)
+
+        if deriv is None:
+            return math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds],
+                                                  self.epsilons[col_inds], self.zetas[col_inds])
+        # if differentiating along row (lambda)
+        # FIXME: not the best way of evaluating
+        elif 0 <= deriv < self.npair:
+            row_to_remove = deriv
+            row_inds_trunc = row_inds[row_inds != row_to_remove]
+            val = 0.0
+            for col_to_remove in col_inds:
+                col_inds_trunc = col_inds[col_inds != col_to_remove]
+                # this will never happen (but just in case)
+                if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
+                    continue
+                # derivative of matrix element c_ij wrt lambda_i
+                der_cij_rowi = (-self.zetas[col_to_remove] /
+                                (self.lambdas[row_to_remove] - self.epsilons[col_to_remove])**2)
+                if row_inds_trunc.size == col_inds_trunc.size == 0:
+                    val += der_cij_rowi
+                else:
+                    val += (der_cij_rowi
+                            * math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds_trunc],
+                                                             self.epsilons[col_inds_trunc],
+                                                             self.zetas[col_inds_trunc]))
+            return val
+        # if differentiating along column (epsilon or zeta)
+        elif self.ngem <= deriv < self.ngem + 2*self.norbpair:
+            col_to_remove = (deriv - self.ngem) % self.norbpair
+            col_inds_trunc = col_inds[col_inds != col_to_remove]
+            if col_inds_trunc.size == col_inds.size:
+                return 0.0
+
+            val = 0.0
+            for row_to_remove in row_inds:
+                row_inds_trunc = row_inds[row_inds != row_to_remove]
+                # differentiating wrt column
+                if self.ngem <= deriv < self.ngem + self.norbpair:
+                    # derivative of matrix element c_ij wrt epsilon_j
+                    der_cij_colj = (self.zetas[col_to_remove] /
+                                    (self.lambdas[row_to_remove] - self.epsilons[col_to_remove])**2)
+                else:
+                    # derivative of matrix element c_ij wrt zeta_j
+                    der_cij_colj = 1.0/(self.lambdas[row_to_remove] - self.epsilons[col_to_remove])
+
+                if row_inds_trunc.size == col_inds_trunc.size == 0:
+                    val += der_cij_colj
+                else:
+                    val += (der_cij_colj
+                            * math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds_trunc],
+                                                             self.epsilons[col_inds_trunc],
+                                                             self.zetas[col_inds_trunc]))
+            return val
+        else:
+            raise ValueError('Invalid derivatization index.')
+
+    # FIXME: mostly replicates BaseGeminal.get_overlap
+    def get_overlap(self, sd, deriv=None):
+        """Compute the overlap between the geminal wavefunction and a Slater determinant.
 
         The results are cached in self.cache and self.d_cache.
+
+        .. math::
+
+            \big| \Psi \big>
+            &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
+            \big| \mathbf{m} \big>
+
+        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
+
         Parameters
         ----------
         sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
         deriv : None, int
-            Index of the paramater to derivatize the overlap with respect to
+            Index of the paramater with respect to which the overlap is derivatized
             Default is no derivatization
 
         Returns
         -------
         overlap : float
 
-        Raises
-        ------
-        ValueError
-            If `sd` does not have same number of electrons as ground state HF
-            If `sd` does not have seniority zero
+        Note
+        ----
+        Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = slater.internal_sd(sd)
-        # get indices of the occupied orbitals
-        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        occ_indices = slater.occ_indices(alpha_sd)
-        if len(occ_indices) != self.npair:
-            raise ValueError('Given Slater determinant, {0}, does not have the same number of'
-                             ' electrons as ground state HF wavefunction'.format(bin(sd)))
-        if occ_indices != slater.occ_indices(beta_sd):
-            raise ValueError('Given Slater determinant, {0}, does not belong'
-                             ' to the DOCI Slater determinants'.format(bin(sd)))
+        try:
+            if deriv is None:
+                return self.cache[sd]
+            else:
+                return self.d_cache[(sd, deriv)]
+        except KeyError:
+            occ_indices = slater.occ_indices(sd)
 
-        # get the appropriate parameters: parameters are assumed to be ordered as [lambda, epsilon,
-        # zeta]
-        lambdas = self.params[:self.npair]
-        epsilons = self.params[self.npair:self.npair+self.nspatial]
-        zetas = self.params[self.npair+self.nspatial:self.npair+self.nspatial*2]
+            val = 0.0
+            # if no derivatization
+            if deriv is None:
+                for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+                    val += self.compute_permanent(col_inds)
+                if val != 0:
+                    self.cache[sd] = val
+                return val
+            # if derivatization
+            elif isinstance(deriv, int):
+                # if differentiating along column/epsilon/zeta
+                if self.ngem <= deriv < self.ngem + 2*self.norbpair:
+                    col_to_remove = (deriv - self.ngem) % self.norbpair
+                    orb_1, orb_2 = self.dict_ind_orbpair[col_to_remove]
+                    # if differentiating along column that is not used by the Slater determinant
+                    if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+                        return val
 
-        gem_coeffs = zetas / (lambdas[:, np.newaxis] - epsilons)
+                for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
+                    val += self.compute_permanent(col_inds, deriv=deriv)
+                if val != 0:
+                    self.d_cache[(sd, deriv)] = val
+                return val
 
-        val = 0.0
-        # if no derivatization
-        if deriv is None:
-            val = permanent_borchardt(lambdas, epsilons[occ_indices,], zetas[occ_indices,])
-            self.cache[sd] = val
-        # if derivatization
-        elif isinstance(deriv, int) and deriv < self.params.size - 1:
-            # FIXME: move to math_tools.permanent_borchardt?
-            # dumb way for debugging purposes
-            if deriv < self.npair:
-                row_to_remove = deriv
-                for col_to_remove in occ_indices:
-                    row_inds = [i for i in range(int(self.npair)) if i != row_to_remove]
-                    col_inds = [i for i in occ_indices if i != col_to_remove]
-                    submatrix = gem_coeffs[row_inds, :][:, col_inds]
-                    if len(row_inds) == 0 and len(col_inds) == 0:
-                        val += (-zetas[col_to_remove]/(lambdas[row_to_remove]
-                                                       - epsilons[col_to_remove])**2)
-                    else:
-                        val += (np.linalg.det(submatrix**2)/np.linalg.det(submatrix)
-                                * (-zetas[col_to_remove]/(lambdas[row_to_remove]
-                                                          - epsilons[col_to_remove])**2))
-            elif self.npair <= deriv < self.npair + 2*self.nspatial:
-                col_to_remove = (deriv - self.npair) % self.nspatial
-                if col_to_remove in occ_indices:
-                    for row_to_remove in range(int(self.npair)):
-                        row_inds = [i for i in range(int(self.npair)) if i != row_to_remove]
-                        col_inds = [i for i in occ_indices if i != col_to_remove]
-                        submatrix = gem_coeffs[row_inds, :][:, col_inds]
-                        if deriv < self.npair + self.nspatial:
-                            if len(row_inds) == 0 and len(col_inds) == 0:
-                                val += (zetas[col_to_remove]/(lambdas[row_to_remove]
-                                                              - epsilons[col_to_remove])**2)
-                            else:
-                                val += (np.linalg.det(submatrix**2) / np.linalg.det(submatrix)
-                                        * (zetas[col_to_remove]/(lambdas[row_to_remove]
-                                                                 - epsilons[col_to_remove])**2))
-                        else:
-                            if len(row_inds) == 0 and len(col_inds) == 0:
-                                val += 1.0/(lambdas[row_to_remove] - epsilons[col_to_remove])
-                            else:
-                                val += (np.linalg.det(submatrix**2)/np.linalg.det(submatrix)
-                                        * (1.0/(lambdas[row_to_remove] - epsilons[col_to_remove])))
-            self.d_cache[(sd, deriv)] = val
+    @staticmethod
+    def params_from_apig(apig_params, rmsd=0.1, method='least squares'):
+        """Convert APIG parameters to APr2G wavefunction.
 
-            # FIXME: needs to be debugged
-            # # compute derivative of the geminal coefficient matrix
-            # d_gemcoeffs = np.zeros((self.npair, self.npair))
-            # d_ewsquare = np.zeros((self.npair, self.npair))
+        Using least squares, the APIG geminal coefficients are converted to the APr2G variant, i.e.
+        find the coefficients :math:`\{\lambda_j\}`, :math:`\{\epsilon_i\}`, and :math:`\{\zeta_i\}`
+        such that following equation is best satisfied
+        ..math::
+            C_{ij} &= \frac{\zeta_i}{\epsilon_i + \lambda_j}\\
+            0 &= \zeta_i - C_{ij} \epsilon_i - C_{ij} \lambda_j\\
 
-            # # if derivatizing with respect to row elements (lambdas)
-            # if 0 <= deriv < self.npair:
-            #     d_gemcoeffs[deriv, :] = -zetas / (lambdas[deriv] - epsilons) ** 2
-            #     d_ewsquare[deriv, :] = -2*zetas**2 / (lambdas[deriv] - epsilons)**3
-            # # if derivatizing with respect to column elements (epsilons, zetas)
-            # elif self.npair <= deriv < self.npair + 2*self.nspatial:
-            #     # convert deriv index to the column index
-            #     deriv = (deriv - self.npair) % self.nspatial
-            #     if deriv not in occ_indices:
-            #         return 0.0
-            #     # if derivatizing with respect to epsilons
-            #     elif deriv < self.npair + self.nspatial:
-            #         # convert deriv index to index within occ_indices
-            #         deriv = occ_indices.index(deriv)
-            #         # calculate derivative
-            #         d_gemcoeffs[:, deriv] = zetas[deriv] / (lambdas - epsilons[deriv])**2
-            #         d_ewsquare[:, deriv] = 2*zetas[deriv]**2 / (lambdas - epsilons[deriv])**3
-            #     # if derivatizing with respect to zetas
-            #     elif deriv >= self.npair + self.nspatial:
-            #         # convert deriv index to index within occ_indices
-            #         deriv = occ_indices.index(deriv)
-            #         # calculate derivative
-            #         d_gemcoeffs[:, deriv] = 1.0 / (lambdas - epsilons[deriv])
-            #         d_ewsquare[:, deriv] = 2*zetas[deriv] / (lambdas - epsilons[deriv])**2
-            # else:
-            #     return 0.0
-
-            # # compute determinants and adjugate matrices
-            # det_gemcoeffs = np.linalg.det(gem_coeffs)
-            # det_ewsquare = np.linalg.det(gem_coeffs**2)
-            # adj_gemcoeffs = adjugate(gem_coeffs)
-            # adj_ewsquare = adjugate(gem_coeffs**2)
-
-            # val = (np.trace(adj_ewsquare.dot(d_ewsquare)) / det_gemcoeffs
-            #       - det_ewsquare / (det_gemcoeffs * 2) * np.trace(adj_gemcoeffs.dot(d_gemcoeffs)))
-
-            self.d_cache[(sd, deriv)] = val
-        return val
+        The least square has the form of :math:`Ax=b`. Given that the :math:`b=0`
+        and the unknowns are
+        ..math::
+            x = \begin{bmatrix}
+            \lambda_1 \\ \vdots\\ \lambda_K\\
+            \zeta_1 \\ \vdots\\ \zeta_P\\
+            \epsilon_1 \\ \vdots\\ \epsilon_P\\
+            \end{bmatrix},
+        then A must be
+        ..math::
+            A = \begin{bmatrix}
+            -C_{11} & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            -C_{12} & 0 & \dots & 0 & 0 & -C_{12} & \dots & 0 &  & 0 & 1 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            -C_{1K} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{1K} &  & 0 & 0 & \dots & 1\\
+            0 & -C_{21} & \dots & 0 & -C_{21} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            0 & -C_{2K} & \dots & 0 & 0 & 0 & \dots & -C_{2K} &  & 0 & 0 & \dots & 1\\
+            0 & 0 & \dots & -C_{PK} & -C_{P1} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
+            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+            & \vdots & \vdots\\
+            0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & -C_{PK} &  & 0 & 0 & \dots & 1\\
+            \end{bmatrix}
 
 
-    def normalize(self):
-        """ Normalizes the wavefunction using the norm defined in compute_norm
+        Parameters
+        ----------
+        apig_params : np.ndarray(P,K)
+            APIG geminal coefficient matrix
+            Number of rows is the number of geminals
+            Number of columns is the number of orbital pairs
+        rmsd : float
+            Root mean square deviation allowed for the generated APr2G coefficient matrix (compared
+            to the APIG coefficient matrix)
+            Default is 0.1
+        method : {'least squares', 'svd'}
+            Method by which the APr2G parameters are obtained
+            Default is 'least squares'
+
+        Returns
+        -------
+        apr2g_params : APr2G instance
+            APr2G parameters that best corresponds to the given APIG parameters
 
         Raises
         ------
         ValueError
-            If the norm is zero
-            If the norm is negative
+            If generate APr2G coefficient matrix has a root mean square deviation with the APIG
+            coefficient matrix that is greater than the threshold value
+
+        Example
+        -------
+        Assuming we have a system with 2 electron pairs and 4 spatial orbitals,
+        we have
+        ..math::
+            C = \begin{bmatrix}
+            C_{11} & \dots & C_{1K}\\
+            C_{21} & \dots & C_{2K}
+            \end{bmatrix}
+        ..math::
+            A = \begin{bmatrix}
+            C_{11} & 0 & -C_{11} & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+            C_{12} & 0 & 0 & -C_{12} & 0 & 0 & 0 & 1 & 0 & 0\\
+            C_{13} & 0 & 0 & 0 & -C_{13} & 0 & 0 & 0 & 1 & 0\\
+            C_{14} & 0 & 0 & 0 & 0 & -C_{14} & 0 & 0 & 0 & 1\\
+            0 & C_{21} & -C_{21} & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+            0 & C_{22} & 0 & -C_{22} & 0 & 0 & 0 & 1 & 0 & 0\\
+            0 & C_{23} & 0 & 0 & -C_{23} & 0 & 0 & 0 & 1 & 0\\
+            0 & C_{24} & 0 & 0 & 0 & -C_{24} & 0 & 0 & 0 & 1\\
+            \end{bmatrix}
+
+        ..math::
+            x = \begin{bmatrix}
+            \lambda_ 1& \lambda_2
+            \epsilon_1 \\ \epsilon_2\ \\ \epsilon_3 \\ \epsilon_4\\
+            \zeta_1 \\ \zeta_2\\
+            \end{bmatrix}
+
+        Note
+        ----
+        This does not always work. You will likely need to tinker with some of the parameters inside
+        this function.
         """
-        # compute norm
-        norm = self.compute_norm(ref_sds=self.ref_sds)
-        # check norm
-        if abs(norm) < 1e-9:
-            raise ValueError('Norm of the wavefunction is zero. Cannot normalize')
-        if norm < 0:
-            raise ValueError('Norm of the wavefunction is negative. Cannot normalize')
-        # set attributes
-        self.params[self.npair+self.nspatial:self.npair+2*self.nspatial] *= norm**(-0.5/self.ngem)
-        self.cache = {sd : val * norm**(-0.5) for sd, val in self.cache.iteritems()}
-        self.d_cache = {d_sd : val * norm**(-0.5) for d_sd, val in self.cache.iteritems()}
+        ngem, norbpair = apig_params.shape
+        # assign least squares matrix by reference
+        matrix = np.zeros((apig_params.size, ngem + 2*norbpair), dtype=apig_params.dtype)
+        # set up submatrices that references a specific part of the matrix
+        # NOTE: these values are broadcasted to `matrix`
+        lambdas = matrix[:, :ngem]
+        epsilons = matrix[:, ngem:ngem + norbpair]
+        zetas = matrix[:, ngem + norbpair:ngem + 2*norbpair]
+        for i in range(ngem):
+            lambdas[i*norbpair:(i + 1)*norbpair, i] = -apig_params[i, :]
+            epsilons[i*norbpair:(i + 1)*norbpair, :] = np.diag(apig_params[i, :])
+            zetas[i*norbpair:(i + 1)*norbpair, :] = np.identity(norbpair)
+
+        # solve by Least Squares
+        if method == 'least squares':
+            # Turn system of equations heterogeneous
+            indices = np.zeros(ngem + 2*norbpair, dtype=bool)
+            vals = np.array([])
+
+            # assign lambdas
+            # indices[:ngem] = True
+            # vals = np.hstack((vals, [1]*ngem))
+
+            # assign epsilons
+            # indices[ngem] = True
+            # indices[ngem+norbpair-1] = True
+            # vals = np.hstack((vals, [-10, -1]))
+
+            # assign zetas
+            indices[ngem + norbpair] = True
+            vals = np.hstack((vals, [1]))
+            # indices[ngem + norbpair:ngem + 2*norbpair] = True
+            # vals = np.hstack((vals, np.ones(norbpair)))
+
+            ordinate = -matrix[:, indices].dot(vals)
+
+            # Solve the least-squares system
+            apr2g_params = np.zeros(indices.size)
+            apr2g_params[indices] = vals
+            apr2g_params[-indices] = np.linalg.lstsq(matrix[:, -indices], ordinate)[0]
+        # solve by SVD
+        elif method == 'svd':
+            u, s, vT = np.linalg.svd(matrix, full_matrices=False)
+            # find null vectors
+            indices = np.abs(s) < 1
+            # guess solution
+            b = np.vstack([np.random.rand(ngem, 1),
+                           np.sort(np.random.rand(norbpair, 1)) - 1,
+                           np.ones((norbpair, 1))])
+            # linearly combine right null vectors
+            lin_comb = np.linalg.lstsq(vT[indices].T, b)[0]
+            apr2g_params = vT[indices].T.dot(lin_comb).flatten()
+
+        # Check
+        lambdas = apr2g_params[:ngem, np.newaxis]
+        epsilons = apr2g_params[ngem:ngem+norbpair]
+        zetas = apr2g_params[ngem+norbpair:]
+        apr2g_coeffs = zetas / (lambdas - epsilons)
+        deviation = (np.sum((apig_params - apr2g_coeffs)**2)/apig_params.size)**(0.5)
+        if np.isnan(deviation) or deviation > rmsd:
+            raise ValueError('APr2G coefficient matrix has RMSD of {0} with the APIG coefficient'
+                             ' matrix'.format(deviation))
+
+        return apr2g_params
