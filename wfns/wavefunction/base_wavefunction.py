@@ -26,6 +26,8 @@ class BaseWavefunction:
         Data type of the wavefunction
     params : np.ndarray
         Parameters of the wavefunction
+    memory : float
+        Memory available for the wavefunction
 
     Properties
     ----------
@@ -80,10 +82,14 @@ class BaseWavefunction:
         dtype : {float, complex, np.float64, np.complex128, None}
             Numpy data type
             Default is `np.float64`
+        memory : {float, int, str, None}
+            Memory available for the wavefunction
+            Default does not limit memory usage (i.e. infinite)
         """
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
         self.assign_dtype(dtype)
+        self.assign_memory(memory)
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
@@ -170,8 +176,38 @@ class BaseWavefunction:
         else:
             raise TypeError("dtype must be float or complex")
 
+    def assign_memory(self, memory=None):
+        """Assign memory associated with the wavefunction.
+
+        Parameters
+        ----------
+        memory : {int, str, None}
+            Memory available for the wavefunction
+
+        Raises
+        ------
+        ValueError
+            If memory is given as a string and does not end with "mb" or "gb"
+        TypeError
+            If memory is not given as a None, int, float, or string.
+        """
+        if memory is None:
+            memory = np.inf
+        elif isinstance(memory, (int, float)):
+            memory = float(memory)
+        elif isinstance(memory, str):
+            if 'mb' in memory.lower():
+                memory = 1e6 * float(memory.rstrip('mb .'))
+            elif 'gb' in memory.lower():
+                memory = 1e9 * float(memory.rstrip('gb .'))
+            else:
+                raise ValueError('Memory given as a string should end with either "mb" or "gb".')
+        else:
+            raise TypeError('Memory should be given as a `None`, int, float, or string.')
+        self.memory = memory
+
     def assign_params(self, params=None, add_noise=False):
-        """ Assigns the parameters of the wavefunction
+        """Assign the parameters of the wavefunction.
 
         Parameters
         ----------
