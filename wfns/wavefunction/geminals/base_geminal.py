@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import abc
 import numpy as np
+import functools
 from ...backend import slater
 from ...backend import math_tools
 from ..base_wavefunction import BaseWavefunction
@@ -59,11 +60,6 @@ class BaseGeminal(BaseWavefunction):
     dict_ind_orbpair : dict of int to 2-tuple of int
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
         where i and j are spin orbital indices and i < j
-    cache : dict of sd to float
-        Cache of the overlaps that are calculated for each Slater determinant encountered
-    d_cache : dict of gmpy2.mpz to float
-        Cache of the derivative of overlaps that are calculated for each Slater determinant and
-        derivative index encountered
 
     Properties
     ----------
@@ -313,8 +309,6 @@ class BaseGeminal(BaseWavefunction):
         Depends on dtype, template_params, and nparams
         """
         super().assign_params(params=params, add_noise=add_noise)
-        self.cache = {}
-        self.d_cache = {}
 
     def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
         """Compute the permanent that corresponds to the given orbital pairs
@@ -361,7 +355,7 @@ class BaseGeminal(BaseWavefunction):
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the geminal wavefunction and a Slater determinant.
 
-        The results are cached in self.cache and self.d_cache.
+        The results are cached in self._cache_fns.
 
         .. math::
 
@@ -384,54 +378,81 @@ class BaseGeminal(BaseWavefunction):
         -------
         overlap : float
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not gmpy2.mpz object.
+
         Note
         ----
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
         """
-        sd = slater.internal_sd(sd)
-        try:
-            if deriv is None:
-                return self.cache[sd]
-            else:
-                return self.d_cache[(sd, deriv)]
-        except KeyError:
-            occ_indices = slater.occ_indices(sd)
+        if not slater.is_internal_sd(sd):
+            sd = slater.internal_sd(sd)
 
-            val = 0.0
-            # if no derivatization
-            if deriv is None:
-                for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
-                    val += self.compute_permanent(col_inds)
-                if val != 0:
-                    self.cache[sd] = val
-                return val
-            # if derivatization
-            elif isinstance(deriv, int):
-                # convert parameter index to row and col index
-                row_to_remove = deriv // self.norbpair
-                col_to_remove = deriv % self.norbpair
-                # find orbital pair that corresponds to removed column
-                orb_1, orb_2 = self.dict_ind_orbpair[col_to_remove]
-                # if either of these orbitals are not present in the Slater determinant, skip
-                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+        # if no derivatization
+        if deriv is None:
+            if 'overlap' not in self._cache_fns:
+                @functools.lru_cache(maxsize=2**9, typed=False)
+                def _olp(sd):
+                    # FIXME: ugly, repeats code
+                    # NOTE: sd is used as the key because it uses less memory
+                    # NOTE: Need to recreate occ_indices
+                    occ_indices = slater.occ_indices(sd)
+
+                    val = 0.0
+                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                        val += self.compute_permanent(col_inds)
                     return val
-                # otherwise
-                for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                    # if orbital pairs is not present, skip
-                    # ASSUMES: permanent evaluation is much more expensive than the lookup
-                    if (orb_1, orb_2) not in orbpairs:
-                        continue
-                    # otherwise, compute permanent
-                    # FIXME: have generate_possible_orbpairs provide a signature (sign)
-                    sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
-                                                      occ_indices, is_creator=True)
-                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
-                    val += sgn*self.compute_permanent(col_inds,
-                                                      deriv_row_col=(row_to_remove, col_to_remove))
-                if val != 0:
-                    self.d_cache[(sd, deriv)] = val
-                return val
+
+                self._cache_fns['overlap'] = _olp
+            else:
+                _olp = self._cache_fns['overlap']
+
+            return _olp(sd)
+        # if derivatization
+        elif isinstance(deriv, int):
+            # convert parameter index to row and col index
+            col_removed = deriv % self.norbpair
+            # find orbital pair that corresponds to removed column
+            orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
+
+            # if either of these orbitals are not present in the Slater determinant, skip
+            if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+                return 0.0
+
+            # otherwise
+            if 'overlap derivative' not in self._cache_fns:
+                @functools.lru_cache(maxsize=2**9, typed=False)
+                def _olp_deriv(sd, deriv):
+                    # FIXME: ugly, repeats code
+                    # NOTE: sd and deriv is used as the key because it uses less memory
+                    # NOTE: Need to recreate occ_indices, row_removed, col_removed
+                    occ_indices = slater.occ_indices(sd)
+                    row_removed = deriv // self.norbpair
+                    col_removed = deriv % self.norbpair
+
+                    val = 0.0
+                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                        # if orbital pairs is not present, skip
+                        # ASSUMES: permanent evaluation is much more expensive than the lookup
+                        if (orb_1, orb_2) not in orbpairs:
+                            continue
+                        # otherwise, compute permanent
+                        # FIXME: have generate_possible_orbpairs provide a signature (sign)
+                        sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
+                                                          occ_indices, is_creator=True)
+                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                        val += sgn*self.compute_permanent(col_inds,
+                                                          deriv_row_col=(row_removed, col_removed))
+                        return val
+
+                self._cache_fns['overlap derivative'] = _olp_deriv
+            else:
+                _olp_deriv = self._cache_fns['overlap derivative']
+
+            return _olp_deriv(sd, deriv)
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):

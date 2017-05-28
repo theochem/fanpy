@@ -25,11 +25,6 @@ class APsetG(BaseGeminal):
     dict_ind_orbpair : dict of int to 2-tuple of int
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
         where i and j are spin orbital indices and i < j
-    cache : dict of sd to float
-        Cache of the overlaps that are calculated for each Slater determinant encountered
-    d_cache : dict of gmpy2.mpz to float
-        Cache of the derivative of overlaps that are calculated for each Slater determinant and
-        derivative index encountered
 
     Properties
     ----------

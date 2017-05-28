@@ -33,6 +33,7 @@ def test_apr2g_params_from_apig():
 
 def test_apr2g_template_params():
     """Test APr2G.template_params."""
+    # FIXME: doesn't always pass
     test = TestAPr2G()
     test.assign_dtype(float)
     test.assign_nspin(10)
@@ -250,9 +251,6 @@ def test_apr2g_get_overlap():
                                                       + test.apig_params[1, 1]*test.apig_params[0, 3]))
     assert np.allclose(test.get_overlap(0b11001100), (test.apig_params[0, 2]*test.apig_params[1, 3]
                                                       + test.apig_params[1, 2]*test.apig_params[0, 3]))
-    # check caching
-    test.cache[0b00110011] = 2
-    assert test.get_overlap(0b00110011) == 2
     # check derivative
     assert np.allclose(test.get_overlap(0b00110011, deriv=0),
                        (test.apig_params[1, 1]

@@ -1,5 +1,6 @@
 """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals wavefunction."""
 from __future__ import absolute_import, division, print_function
+import functools
 import numpy as np
 from ...backend import slater
 from ..base_wavefunction import BaseWavefunction
@@ -34,11 +35,6 @@ class AP1roG(APIG):
         Data type of the wavefunction
     params : np.ndarray
         Parameters of the wavefunction
-    cache : dict of sd to float
-        Cache of the overlaps that are calculated for each Slater determinant encountered
-    d_cache : dict of gmpy2.mpz to float
-        Cache of the derivative of overlaps that are calculated for each Slater determinant and
-        derivative index encountered
     dict_orbpair_ind : dict of 2-tuple of int to int
         Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
         to the column index of the geminal coefficient matrix
@@ -264,7 +260,7 @@ class AP1roG(APIG):
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the AP1roG wavefunction and a Slater determinant.
 
-        The results are cached in self.cache and self.d_cache.
+        The results are cached in self._cache_fns
 
         .. math::
 
@@ -287,53 +283,83 @@ class AP1roG(APIG):
         -------
         overlap : float
         """
-        sd = slater.internal_sd(sd)
+        if not slater.is_internal_sd(sd):
+            sd = slater.internal_sd(sd)
         # ASSUMES: Slater determinants are seniority zero
         # cut off beta part (for just the alpha/spatial part)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
         spatial_sd, _ = slater.split_spin(sd, self.nspatial)
-        try:
-            if deriv is None:
-                return self.cache[sd]
+        # get indices of the occupied orbitals
+        orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+
+        # if different number of electrons
+        if len(orbs_annihilated) != len(orbs_created):
+            return 0.0
+        # if different seniority
+        if slater.get_seniority(sd, self.nspatial) != 0:
+            return 0.0
+
+        # convert to spatial orbitals
+        # NOTE: these variables are essentially the same as the output of
+        #       generate_possible_orbpairs
+        # ASSUMES: each orbital pair is a spatial orbital (alpha and beta orbitals)
+        # FIXME: code will fail if an alternative orbpair is used
+        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
+                                     for i in orbs_annihilated])
+        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
+                                 for i in orbs_created])
+
+        # if no derivatization
+        if deriv is None:
+            if inds_annihilated.size == inds_created.size == 0:
+                return 1.0
+
+            if 'overlap' not in self._cache_fns:
+                @functools.lru_cache(maxsize=2**9, typed=False)
+                def _olp(sd):
+                    # FIXME: ugly, repeats code
+                    # NOTE: sd is used as the key because it uses less memory
+                    # NOTE: Need to recreate inds_annihilated and inds_created
+                    spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+                    orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+                    inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
+                                                 for i in orbs_annihilated])
+                    inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
+                                             for i in orbs_created])
+
+                    return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
+
+                self._cache_fns['overlap'] = _olp
             else:
-                return self.d_cache[(sd, deriv)]
-        except KeyError:
-            # get indices of the occupied orbitals
-            orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+                _olp = self._cache_fns['overlap']
 
-            # if different number of electrons
-            if len(orbs_annihilated) != len(orbs_created):
-                return 0.0
-            # if different seniority
-            if slater.get_seniority(sd, self.nspatial) != 0:
+            return _olp(sd)
+        # if derivatization
+        else:
+            if inds_annihilated.size == inds_created.size == 0:
                 return 0.0
 
-            # convert to spatial orbitals
-            # NOTE: these variables are essentially the same as the output of
-            #       generate_possible_orbpairs
-            # ASSUMES: each orbital pair is a spatial orbital (alpha and beta orbitals)
-            # FIXME: code will fail if an alternative orbpair is used
-            inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                         for i in orbs_annihilated])
-            inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_created])
+            if 'overlap derivative' not in self._cache_fns:
+                @functools.lru_cache(maxsize=2**9, typed=False)
+                def _olp_deriv(sd, deriv):
+                    # FIXME: ugly, repeats code
+                    # NOTE: sd and deriv is used as the key because it uses less memory
+                    # NOTE: Need to recreate inds_annihilated and inds_created, row_removed,
+                    #       col_removed
+                    spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+                    orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+                    row_removed = deriv // self.norbpair
+                    col_removed = deriv % self.norbpair
+                    inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
+                                                 for i in orbs_annihilated])
+                    inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
+                                             for i in orbs_created])
 
-            # if no derivatization
-            if deriv is None:
-                if inds_annihilated.size == inds_created.size == 0:
-                    return 1.0
-                val = self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
-                if val != 0:
-                    self.cache[sd] = val
-                return val
-            # if derivatization
+                    return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
+                                                  deriv_row_col=(row_removed, col_removed))
+
+                self._cache_fns['overlap derivative'] = _olp_deriv
             else:
-                row_to_remove = deriv // self.norbpair
-                col_to_remove = deriv % self.norbpair
-                if inds_annihilated.size == inds_created.size == 0:
-                    return 0.0
-                val = self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
-                                             deriv_row_col=(row_to_remove, col_to_remove))
-                if val != 0:
-                    self.d_cache[(sd, deriv)] = val
-                return val
+                _olp_deriv = self._cache_fns['overlap derivative']
+
+            return _olp_deriv(sd, deriv)
