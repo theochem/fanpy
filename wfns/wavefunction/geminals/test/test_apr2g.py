@@ -234,9 +234,10 @@ def test_apr2g_get_overlap():
     test = TestAPr2G()
     test.assign_dtype(float)
     test.assign_nspin(8)
-    test.assign_orbpairs()
     test.assign_nelec(4)
+    test.assign_memory()
     test.assign_ngem(2)
+    test.assign_orbpairs()
     test.assign_params(np.arange(1, 11, dtype=float))
     # check overlap
     assert np.allclose(test.get_overlap(0b00110011), (test.apig_params[0, 0]*test.apig_params[1, 1]

@@ -76,6 +76,21 @@ def test_assign_dtype():
         assert test.dtype == np.complex128
 
 
+def test_assign_memory():
+    """Test BaseWavefunction.assign_memory."""
+    test = TestWavefunction()
+    test.assign_memory(None)
+    assert test.memory == np.inf
+    test.assign_memory(10)
+    assert test.memory == 10
+    test.assign_memory(20.0)
+    assert test.memory == 20
+    test.assign_memory('10mb')
+    assert test.memory == 1e6 * 10
+    test.assign_memory('20.1gb')
+    assert test.memory == 1e9 * 20.1
+
+
 def test_assign_params():
     """Test BaseWavefunction.assign_params."""
     # default

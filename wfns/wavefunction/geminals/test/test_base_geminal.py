@@ -197,6 +197,7 @@ def test_gem_get_overlap():
     test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_nspin(6)
+    test.assign_memory()
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
