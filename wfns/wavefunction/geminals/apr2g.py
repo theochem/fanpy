@@ -274,8 +274,17 @@ class APr2G(APIG):
                 if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                     return 0.0
 
+            # if cached function has not been created yet
             if 'overlap derivative' not in self._cache_fns:
-                @functools.lru_cache(maxsize=2**9, typed=False)
+                # assign memory allocated to cache
+                if self.memory == np.inf:
+                    memory = None
+                else:
+                    memory = int((self.memory - 5*8*self.params.size)
+                                 / (self.params.size + 1) * self.params.size)
+
+                # create function that will be cached
+                @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp_deriv(sd, deriv):
                     occ_indices = slater.occ_indices(sd)
 
@@ -285,8 +294,11 @@ class APr2G(APIG):
                         val += self.compute_permanent(col_inds, deriv=deriv)
                     return val
 
+                # store the cached function
                 self._cache_fns['overlap derivative'] = _olp_deriv
+            # if cached function already exists
             else:
+                # reload cached function
                 _olp_deriv = self._cache_fns['overlap derivative']
 
             return _olp_deriv(sd, deriv)

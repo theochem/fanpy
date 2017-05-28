@@ -392,8 +392,16 @@ class BaseGeminal(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
+            # if cached function has not been created yet
             if 'overlap' not in self._cache_fns:
-                @functools.lru_cache(maxsize=2**9, typed=False)
+                # assign memory allocated to cache
+                if self.memory == np.inf:
+                    memory = None
+                else:
+                    memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+
+                # create function that will be cached
+                @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp(sd):
                     # FIXME: ugly, repeats code
                     # NOTE: sd is used as the key because it uses less memory
@@ -406,8 +414,11 @@ class BaseGeminal(BaseWavefunction):
                         val += self.compute_permanent(col_inds)
                     return val
 
+                # store the cached function
                 self._cache_fns['overlap'] = _olp
+            # if cached function already exists
             else:
+                # reload cached function
                 _olp = self._cache_fns['overlap']
 
             return _olp(sd)
@@ -422,9 +433,17 @@ class BaseGeminal(BaseWavefunction):
             if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                 return 0.0
 
-            # otherwise
+            # if cached function has not been created yet
             if 'overlap derivative' not in self._cache_fns:
-                @functools.lru_cache(maxsize=2**9, typed=False)
+                # assign memory allocated to cache
+                if self.memory == np.inf:
+                    memory = None
+                else:
+                    memory = int((self.memory - 5*8*self.params.size)
+                                 / (self.params.size + 1) * self.params.size)
+
+                # create function that will be cached
+                @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp_deriv(sd, deriv):
                     # FIXME: ugly, repeats code
                     # NOTE: sd and deriv is used as the key because it uses less memory
@@ -448,8 +467,11 @@ class BaseGeminal(BaseWavefunction):
                                                           deriv_row_col=(row_removed, col_removed))
                         return val
 
+                # store the cached function
                 self._cache_fns['overlap derivative'] = _olp_deriv
+            # if cached function already exists
             else:
+                # reload cached function
                 _olp_deriv = self._cache_fns['overlap derivative']
 
             return _olp_deriv(sd, deriv)
