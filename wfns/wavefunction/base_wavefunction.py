@@ -68,7 +68,7 @@ class BaseWavefunction:
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
     """
-    def __init__(self, nelec, nspin, dtype=None):
+    def __init__(self, nelec, nspin, dtype=None, memory=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -218,7 +218,40 @@ class BaseWavefunction:
             scale = 0.2 / self.nparams
             self.params += scale * (np.random.rand(*self.params_shape) - 0.5)
             if self.dtype in [complex, np.complex128]:
-                self.params += 0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
+                self.params += 0.01j * scale * (np.random.rand(*self.params_shape).astype(complex)
+                                                - 0.5)
+
+        # create cached functions
+        self._cache_fns = {}
+
+    def clear_cache(self, key=None):
+        """Clear the cache associated with the wavefunction.
+
+        Parameters
+        ----------
+        key : str
+            Key to the cached function in _cache_fns
+            Default clears all cached functions
+
+        Raises
+        ------
+        KeyError
+            If given key is not present in the _cache_fns
+        ValueError
+            If cached function does not have decorator functools.lru_cache
+        """
+        try:
+            if key is None:
+                for fn in self._cache_fns:
+                    print(fn)
+                    fn.clear_cache()
+            else:
+                self._cache_fns[key].clear_cache()
+        except KeyError as error:
+            raise KeyError('Given function key is not present in _cache_fns') from error
+        except AttributeError as error:
+            raise AttributeError('Given cached function does not have decorator '
+                                 '`functools.lru_cache`')
 
     @abc.abstractproperty
     def spin(self):

@@ -1,5 +1,6 @@
 """Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction."""
 from __future__ import absolute_import, division, print_function
+import functools
 import numpy as np
 from .apig import APIG
 from ...backend import slater, math_tools
@@ -26,11 +27,6 @@ class APr2G(APIG):
     dict_ind_orbpair : dict of int to 2-tuple of int
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
         where i and j are spin orbital indices and i < j
-    cache : dict of sd to float
-        Cache of the overlaps that are calculated for each Slater determinant encountered
-    d_cache : dict of gmpy2.mpz to float
-        Cache of the derivative of overlaps that are calculated for each Slater determinant and
-        derivative index encountered
 
     Properties
     ----------
@@ -237,7 +233,7 @@ class APr2G(APIG):
     def get_overlap(self, sd, deriv=None):
         """Compute the overlap between the geminal wavefunction and a Slater determinant.
 
-        The results are cached in self.cache and self.d_cache.
+        The results are cached in self._cache_fns
 
         .. math::
 
@@ -264,40 +260,36 @@ class APr2G(APIG):
         ----
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
         """
-        sd = slater.internal_sd(sd)
-        try:
-            if deriv is None:
-                return self.cache[sd]
+        if not slater.is_internal_sd(sd):
+            sd = slater.internal_sd(sd)
+
+        if deriv is None:
+            return super().get_overlap(sd)
+        else:
+            # if differentiating along column/epsilon/zeta
+            if self.ngem <= deriv < self.ngem + 2*self.norbpair:
+                col_removed = (deriv - self.ngem) % self.norbpair
+                orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
+                # if differentiating along column that is not used by the Slater determinant
+                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+                    return 0.0
+
+            if 'overlap derivative' not in self._cache_fns:
+                @functools.lru_cache(maxsize=2**9, typed=False)
+                def _olp_deriv(sd, deriv):
+                    occ_indices = slater.occ_indices(sd)
+
+                    val = 0.0
+                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                        val += self.compute_permanent(col_inds, deriv=deriv)
+                    return val
+
+                self._cache_fns['overlap derivative'] = _olp_deriv
             else:
-                return self.d_cache[(sd, deriv)]
-        except KeyError:
-            occ_indices = slater.occ_indices(sd)
+                _olp_deriv = self._cache_fns['overlap derivative']
 
-            val = 0.0
-            # if no derivatization
-            if deriv is None:
-                for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
-                    val += self.compute_permanent(col_inds)
-                if val != 0:
-                    self.cache[sd] = val
-                return val
-            # if derivatization
-            elif isinstance(deriv, int):
-                # if differentiating along column/epsilon/zeta
-                if self.ngem <= deriv < self.ngem + 2*self.norbpair:
-                    col_to_remove = (deriv - self.ngem) % self.norbpair
-                    orb_1, orb_2 = self.dict_ind_orbpair[col_to_remove]
-                    # if differentiating along column that is not used by the Slater determinant
-                    if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
-                        return val
-
-                for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                    col_inds = np.array([self.dict_orbpair_ind[orbpair] for orbpair in orbpairs])
-                    val += self.compute_permanent(col_inds, deriv=deriv)
-                if val != 0:
-                    self.d_cache[(sd, deriv)] = val
-                return val
+            return _olp_deriv(sd, deriv)
 
     @staticmethod
     def params_from_apig(apig_params, rmsd=0.1, method='least squares'):

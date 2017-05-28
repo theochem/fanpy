@@ -153,8 +153,7 @@ def test_gem_assign_params():
     np.allclose(test.params, np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
-    assert test.cache == {}
-    assert test.d_cache == {}
+    assert test._cache_fns == {}
 
 
 def test_gem_compute_permanent():
@@ -202,14 +201,6 @@ def test_gem_get_overlap():
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
-    # check caching
-    test.cache[0b001111] = 2
-    assert test.get_overlap(0b001111) == 2
-    # check caching of zero contributors
-    test.params[:, 0] = 0
-    test.cache = {}
-    assert test.get_overlap(0b001111) == 0
-    assert 0b001111 not in test.cache
     # check derivatives
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert test.get_overlap(0b001111, deriv=0) == 24*1 + 39*1
@@ -217,6 +208,3 @@ def test_gem_get_overlap():
     assert test.get_overlap(0b001111, deriv=9) == 15*1 + 30*1
     assert test.get_overlap(0b001111, deriv=15) == 9*1 + 39*1
     assert test.get_overlap(0b001111, deriv=39) == 0*1 + 15*1
-    test.d_cache[(0b001111, 0)] = 7
-    assert test.get_overlap(0b001111, deriv=0) == 7
-    assert (0b001111, 1) not in test.d_cache

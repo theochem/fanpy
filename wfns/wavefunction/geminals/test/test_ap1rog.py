@@ -72,7 +72,7 @@ def test_ap1rog_template_params():
 
 
 def test_ap1rog_get_overlap():
-    """Test TestAP1roG.get_overlap."""
+    """Test AP1roG.get_overlap."""
     test = TestAP1roG()
     test.assign_dtype(float)
     test.assign_nelec(4)
@@ -85,15 +85,6 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0010100101) == 3.0
     assert test.get_overlap(0b0000001111) == 0.0
     assert test.get_overlap(0b0110001100) == 0*4 + 1*3
-    # check caching
-    test.cache[0b0000001111] = 2
-    assert test.get_overlap(0b0000001111) == 2
-    test.cache[0b0001100011] = 2
-    assert test.get_overlap(0b0001100011) == 2
-    # check caching of zero contributors
-    test.cache = {}
-    assert test.get_overlap(0b0000001111) == 0
-    assert 0b0000001111 not in test.cache
     # check derivatives
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
     assert test.get_overlap(0b0001100011, deriv=0) == 0
@@ -110,10 +101,6 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0110001100, deriv=3) == 1
     assert test.get_overlap(0b0110001100, deriv=4) == 0
     assert test.get_overlap(0b0110001100, deriv=99) == 0
-
-    test.d_cache[(0b001111, 0)] = 7
-    assert test.get_overlap(0b001111, deriv=0) == 7
-    assert (0b0110001100, 4) not in test.d_cache
 
 
 # TODO: refactor after the solver code
