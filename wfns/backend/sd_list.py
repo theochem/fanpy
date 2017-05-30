@@ -47,10 +47,10 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     Parameters
     ----------
-    nspatial : int
-        Number of spatial orbitals
     nelec : int
         Number of electrons
+    nspatial : int
+        Number of spatial orbitals
     num_limit : int, None
         Maximum number of Slater determinants to be generated
         Default is infinite
