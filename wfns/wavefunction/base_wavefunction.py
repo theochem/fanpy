@@ -279,7 +279,6 @@ class BaseWavefunction:
         try:
             if key is None:
                 for fn in self._cache_fns:
-                    print(fn)
                     fn.clear_cache()
             else:
                 self._cache_fns[key].clear_cache()
