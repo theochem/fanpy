@@ -7,8 +7,8 @@ from ..wavefunction.base_wavefunction import BaseWavefunction
 from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
-def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_file='',
-                  energy_is_param=False, energy_guess=None, solver=None, solver_kwargs=None):
+def system_solver(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
+                  energy_guess=None, eqn_weights=None, solver=None, solver_kwargs=None):
     """Solve the given wavefunction in the given Hamiltonian as a system of nonlinear equations.
 
     Reference Slater determinants are used to calculate the norm and possibly the energy of the
@@ -35,10 +35,6 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
     ref_sds : tuple/list of int, None
         One or more Slater determinant with respect to which the energy and the norm are calculated
         Default is ground state HF
-    eqn_weights : np.ndarray
-        Weights of each equation
-        By default, all equations are given weight of 1 except for the normalization constraint,
-        which is weighed by the number of equations.
     save_file : str
         Name of the numpy file that contains the wavefunction parameters of the last optimization
         step
@@ -51,6 +47,10 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
         Starting guess for the energy of the wavefunction
         By default, energy is calculated with respect to the reference Slater determinants
         Energy must be a parameter
+    eqn_weights : np.ndarray
+        Weights of each equation
+        By default, all equations are given weight of 1 except for the normalization constraint,
+        which is weighed by the number of equations.
     solver : function, None
         Solver that will solve the objective function (system of equations)
         By default scipy's least_squares function will be used
@@ -70,11 +70,11 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
         If wavefunction is not an instance (or instance of a child) of BaseWavefunction
         If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
         If wavefunction and Hamiltonian do not have the same data type
-        If eqn_weights is not a numpy array
-        If eqn_weights do not have the same data type as wavefunction and Hamiltonian
         If save_file is not a string
         If energy_is_param is not a boolean
         If energy_guess is not a float
+        If eqn_weights is not a numpy array
+        If eqn_weights do not have the same data type as wavefunction and Hamiltonian
         If solver_kwargs is not a dictionary or None
     ValueError
         If wavefunction and Hamiltonian do not have the same data type
@@ -106,18 +106,6 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
     else:
         ref_sds = [slater.internal_sd(sd) for sd in ref_sds]
 
-    if eqn_weights is None:
-        eqn_weights = np.ones(nproj + 1)
-        eqn_weights[-1] *= (nproj + 1)
-    elif not isinstance(eqn_weights, np.ndarray):
-        raise TypeError('Weights of the equations must be given as a numpy array')
-    elif eqn_weights.dtype != wfn.dtype:
-        raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
-                        'and Hamiltonian.')
-    elif eqn_weights.shape != (nproj+1, ):
-        raise ValueError('Weights of the equations must be given as a one-dimensional array of '
-                         'shape, {0}.'.format((nproj+1, )))
-
     if not isinstance(save_file, str):
         raise TypeError('save_file must be a string.')
 
@@ -133,49 +121,17 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
     if energy_is_param:
         nparams += 1
 
-    if solver is None:
-        solver = scipy.optimize.least_squares
-    elif (solver.__name__ == 'root' and 'scipy.optimize' in solver.__module__
-          and nproj + 1 != nparams):
-        raise ValueError('Cannot use root solver if the number of equations (including constraints)'
-                         ' does not match with the number of parameters')
-
-    if solver_kwargs is None:
-        solver_kwargs = {}
-    elif not isinstance(solver_kwargs, dict):
-        raise TypeError('solver_kwargs must be a dictionary or None')
-
-    # set default keyword arguments
-    if solver.__name__ == 'least_squares' and 'scipy.optimize' in solver.__module__:
-        default_kwargs = {'xtol': 1.0e-15, 'ftol': 1.0e-15, 'gtol': 1.0e-15,
-                          'max_nfev': 1000*nparams}
-        # if no jacobian
-        if (solver_kwargs is not None
-                and 'jac' in solver_kwargs
-                    and solver_kwargs['jac'] in [None, False]):
-            del solver_kwargs['jac']
-            if wfn.dtype == np.float64:
-                default_kwargs['jac'] = '3-point'
-            elif wfn.dtype == np.complex128:
-                default_kwargs['jac'] = 'cs'
-    elif solver.__name__ == 'root' and 'scipy.optimize' in solver.__module__:
-        default_kwargs = {'method': 'hybr', 'options': {'xtol': 1.0e-9}}
-        # if no jacobian
-        if (solver_kwargs is not None
-                and 'jac' in solver_kwargs
-                    and solver_kwargs['jac'] in [None, False]):
-            del solver_kwargs['jac']
-            default_kwargs.update({'method': 'krylov',
-                                   'options': {'fatol': 1.0e-9, 'xatol': 1.0e-7}})
-    elif solver.__name__ == 'paraopt.cma':
-        default_kwargs = {'npop': 2*nparams, 'verbose': False, 'sigma0': 0.01, 'max_iter': 1000,
-                          'wtol': 1e-10}
-    else:
-        default_kwargs = {}
-
-    # overwrite default keyword arguments
-    default_kwargs.update(solver_kwargs)
-    solver_kwargs = default_kwargs
+    if eqn_weights is None:
+        eqn_weights = np.ones(nproj + 1)
+        eqn_weights[-1] *= (nproj + 1)
+    elif not isinstance(eqn_weights, np.ndarray):
+        raise TypeError('Weights of the equations must be given as a numpy array')
+    elif eqn_weights.dtype != wfn.dtype:
+        raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
+                        'and Hamiltonian.')
+    elif eqn_weights.shape != (nproj+1, ):
+        raise ValueError('Weights of the equations must be given as a one-dimensional array of '
+                         'shape, {0}.'.format((nproj+1, )))
 
     def _objective(params):
         """System of equations that corresponds to the (projected) Schrodinger equation.
@@ -297,9 +253,47 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
 
         return jac
 
-    # add jacobian to solver_kwargs (if alternative is not given)
-    if 'jac' not in solver_kwargs:
-        solver_kwargs['jac'] = _jacobian
+    # check solver
+    if solver is None:
+        solver = scipy.optimize.least_squares
+    elif (solver.__name__ == 'root' and 'scipy.optimize' in solver.__module__
+          and nproj + 1 != nparams):
+        raise ValueError('Cannot use root solver if the number of equations (including constraints)'
+                         ' does not match with the number of parameters')
+
+    # check keyword arguments
+    if solver_kwargs is None:
+        solver_kwargs = {}
+    elif not isinstance(solver_kwargs, dict):
+        raise TypeError('solver_kwargs must be a dictionary or None')
+
+    # set default keyword arguments
+    if solver.__name__ == 'least_squares' and 'scipy.optimize' in solver.__module__:
+        default_kwargs = {'xtol': 1.0e-15, 'ftol': 1.0e-15, 'gtol': 1.0e-15,
+                          'max_nfev': 1000*nparams, 'jac': _jacobian}
+        # if no jacobian
+        if 'jac' in solver_kwargs and solver_kwargs['jac'] in [None, False]:
+            del solver_kwargs['jac']
+            if wfn.dtype == np.float64:
+                default_kwargs['jac'] = '3-point'
+            elif wfn.dtype == np.complex128:
+                default_kwargs['jac'] = 'cs'
+    elif solver.__name__ == 'root' and 'scipy.optimize' in solver.__module__:
+        default_kwargs = {'method': 'hybr', 'jac': _jacobian, 'options': {'xtol': 1.0e-9}}
+        # if no jacobian
+        if 'jac' in solver_kwargs and solver_kwargs['jac'] in [None, False]:
+            del solver_kwargs['jac']
+            default_kwargs.update({'method': 'krylov',
+                                   'options': {'fatol': 1.0e-9, 'xatol': 1.0e-7}})
+    elif solver.__name__ == 'paraopt.cma':
+        default_kwargs = {'npop': 2*nparams, 'verbose': False, 'sigma0': 0.01, 'max_iter': 1000,
+                          'wtol': 1e-10}
+    else:
+        default_kwargs = {}
+
+    # overwrite default keyword arguments
+    default_kwargs.update(solver_kwargs)
+    solver_kwargs = default_kwargs
 
     # apply solver
     if energy_is_param:
@@ -311,191 +305,3 @@ def system_solver(wfn, ham, pspace=None, ref_sds=None, eqn_weights=None, save_fi
         return solver(_objective, np.hstack([wfn.params, energy_guess]), **solver_kwargs)
     else:
         return solver(_objective, wfn.params, **solver_kwargs)
-
-
-def system_solver_type2(wfn, ham, energy=None, pspace=None, ref_sds=None, eqn_weights=None,
-                        save_file='', solver=None, solver_kwargs=None):
-    """Solve the given wavefunction in the given Hamiltonian as a system of nonlinear equations.
-
-    Reference Slater determinants are used to calculate the norm of the wavefunction.
-    ..math::
-
-        N = \sum_{\Phi \in S_{ref}} \braket{\Psi | \Phi} \braket{\Phi | \Psi}
-
-    where and :math:`N` is the norm.
-    Energy is treated as a parameter that will be optimized alongside wavefunction parameters.
-
-    Parameters
-    ----------
-    wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
-    ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
-    energy : float
-        Starting energy of the wavefunction
-    pspace : tuple/list, None
-        Slater determinants onto which the wavefunction is projected
-        Tuple of objects that are compatible with the internal_sd format
-        By default, the largest space is used
-    ref_sds : tuple/list of int, None
-        One or more Slater determinant with respect to which the energy and the norm are calculated
-        Default is ground state HF
-    eqn_weights : np.ndarray
-        Weights of each equation
-
-        which is weighed by the number of equations.
-    save_file : str
-        Name of the numpy file that contains the wavefunction parameters of the last optimization
-        step
-        By default, does not save
-    solver : function, None
-        Solver that will solve the objective function (system of equations)
-        By default scipy's least_squares function will be used
-    solver_kwargs : dict
-        Keyword arguments for the solver
-        Default keyword arguments depend on the solver.
-
-    Returns
-    -------
-    Output of the solver
-
-    Raises
-    ------
-    TypeError
-        If wavefunction is not an instance (or instance of a child) of BaseWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
-        If wavefunction and Hamiltonian do not have the same data type
-        If eqn_weights is not a numpy array
-        If eqn_weights do not have the same data type as wavefunction and Hamiltonian
-        If solver_kwargs is not a dictionary or None
-        If energy is not float
-    ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If eqn_weights do not have the correct shape
-
-    Note
-    ----
-    Assumes only one constraint (normalization constraint)
-    """
-    # Preprocess variables
-    (wfn, ham, pspace, ref_sds, eqn_weights,
-     save_file, solver, solver_kwargs) = _initialize(wfn, ham, pspace, ref_sds, eqn_weights,
-                                                     save_file, solver, solver_kwargs)
-
-    nproj = len(pspace)
-
-    def _objective(params):
-        """System of equations that corresponds to the (projected) Schrodinger equation.
-
-        ..math::
-            f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}
-            &\vdots
-            f_K(x) &= \braket{\Phi_K | H | \Psi} - E \braket{\Phi_K | \Psi}
-            f_{K+1}(x) &= constraint_1
-            &\vdots
-
-        where :math:`K` is the number of Slater determinant onto which the wavefunction is projected
-        Equations after the :math:`K`th index are the constraints on the system of equations.
-        The constraints, hopefully, will move out into their own module some time in the future.
-        By default, the normalization constraint
-        ..math::
-            f_{K+1} = norm - 1
-        is present where :math:`norm` is defined by ProjectedWavefunction.compute_norm.
-
-        Energy is treated as a parameter that is optimized.
-
-        Parameters
-        ----------
-        params : 1-index np.ndarray
-            Wavefunction parameters and the energy
-
-        Returns
-        -------
-        objective : np.ndarray(nproj+1, )
-
-        Note
-        ----
-        Wavefunction and Hamiltonian objects are updated iteratively.
-        """
-        # Update the wavefunction parameters
-        wfn.params = params[:-1]
-        # Save params
-        if save_file != '':
-            np.save('{0}_temp.npy'.format(save_file), params)
-        # Clear cache
-        wfn.clear_cache()
-
-        # define norm and energy
-        norm = sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
-        energy = params[-1]
-
-        obj = np.empty(nproj + 1, dtype=wfn.dtype)
-        # <SD|H|Psi> - E<SD|Psi> == 0
-        for i, sd in enumerate(pspace):
-            obj[i] = sum(ham.integrate_wfn_sd(wfn, sd)) - energy * wfn.get_overlap(sd)
-        # Add constraints
-        obj[nproj] = norm - 1
-
-        # weigh equations
-        obj *= eqn_weights
-
-        return obj
-
-    def _jacobian(params):
-        """Jacobian of the objective function.
-
-        If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
-        ..math::
-            J_{ij}(\vec{x}) = \frac{\partial f_i(\vec{x})}{\partial x_j}
-        where :math:`\vec{x}` is the parameters at a given iteration.
-
-        Parameters
-        ----------
-        params : 1-index np.ndarray
-            Wavefunction parameters
-
-        Returns
-        -------
-        jac : np.ndarray(nproj+1, nparams)
-            Value of the Jacobian :math:`J_{ij}`
-        """
-        # define norm and energy
-        energy = params[-1]
-        # set energy
-        jac = np.empty((nproj + 1, wfn.nparams + 1), dtype=wfn.dtype)
-
-        for j in range(jac.shape[1]):
-            if j == wfn.nparams:
-                d_norm = 0
-                d_energy = 1
-            else:
-                d_norm = sum(2 * wfn.get_overlap(sd) * wfn.get_overlap(sd, deriv=j)
-                             for sd in ref_sds)
-                d_energy = 0
-            for i, sd in enumerate(pspace):
-                # <SD|H|Psi> - E<SD|Psi> = 0
-                jac[i, j] = (sum(ham.integrate_wfn_sd(wfn, sd, deriv=j))
-                             - energy*wfn.get_overlap(sd, deriv=j)
-                             - d_energy*wfn.get_overlap(sd))
-            # Add normalization constraint
-            jac[-1, j] = d_norm
-
-        # weigh equations
-        jac *= eqn_weights[:, np.newaxis]
-
-        return jac
-
-    # add jacobian to solver_kwargs (if alternative is not given)
-    if 'jac' not in solver_kwargs:
-        solver_kwargs['jac'] = _jacobian
-
-    if energy is None:
-        # compute starting energy
-        energy = sum(sum(ham.integrate_wfn_sd(wfn, sd)) * wfn.get_overlap(sd) for sd in ref_sds)
-        energy /= sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
-    elif not isinstance(energy, float):
-        raise TypeError('Starting energy must be a float.')
-
-    # apply solver
-    return solver(_objective, np.hstack([wfn.params, energy]), **solver_kwargs)
