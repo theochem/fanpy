@@ -65,7 +65,7 @@ class TestChemicalHamiltonian(ChemicalHamiltonian):
 
 
 def test_system_solver_initialize():
-    """Test input checks of wfns.solver.system_solver.system_solver.
+    """Test input checks of wfns.solver.system_solver.optimize_wfn_system.
 
     Note
     ----
@@ -75,50 +75,50 @@ def test_system_solver_initialize():
     # check wfn and hamiltonian
     test_wfn = TestBaseWavefunction()
     test_ham = TestChemicalHamiltonian()
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, None,
-                  None, None, None, '', False, None, None, None)
-    assert_raises(TypeError, system_solver.system_solver, None, test_ham,
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, None, None, None, '',
+                  False, None, None, None, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, None, test_ham,
                   None, None, None, '', False, None, None, None)
     test_wfn.dtype = np.float64
     test_ham.dtype = np.complex128
-    assert_raises(ValueError, system_solver.system_solver, test_wfn, test_ham,
-                  None, None, None, None, False, None, None, None)
-
-    # eqn_weights
-    test_wfn = TestBaseWavefunction()
-    test_ham = TestChemicalHamiltonian()
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham,
-                  [0b00110011, 0b01010101], None, [0, 0, 0], '', False, None, None, None)
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham,
-                  [0b00110011, 0b01010101], None, np.array([0, 0, 0], dtype=complex), '', False,
-                  None, None, None)
-    assert_raises(ValueError, system_solver.system_solver, test_wfn, test_ham,
-                  [0b00110011, 0b01010101], None, np.array([0, 0, 0, 0], dtype=float), '', False,
-                  None, None, None)
+    assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham,
+                  None, None, None, '', False, None, None, None)
 
     # save_files
     test_wfn = TestBaseWavefunction()
     test_ham = TestChemicalHamiltonian()
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham, None, None, None,
-                  None, False, None, None, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham, None, None,
+                  None, None, False, None, None, None)
 
     # energy_is_param
     test_wfn = TestBaseWavefunction()
     test_ham = TestChemicalHamiltonian()
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham, None, None, None,
-                  None, None, None, None, None)
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham, None, None, None,
-                  None, False, 1.0, None, None)
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham, None, None, None,
-                  None, True, 0, None, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham, None, None,
+                  '', None, None, None, None, None)
+    assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham, None, None,
+                  '', False, 1.0, None, None, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham, None, None,
+                  '', True, 0, None, None, None)
+
+    # eqn_weights
+    test_wfn = TestBaseWavefunction()
+    test_ham = TestChemicalHamiltonian()
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham,
+                  [0b00110011, 0b01010101], None, '', False, None, [0, 0, 0], None, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham,
+                  [0b00110011, 0b01010101], None, '', False, None,
+                  np.array([0, 0, 0], dtype=complex), None, None)
+    assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham,
+                  [0b00110011, 0b01010101], None, '', False, None,
+                  np.array([0, 0, 0, 0], dtype=float), None, None)
 
     # solver
     test_wfn = TestBaseWavefunction()
     test_ham = TestChemicalHamiltonian()
-    assert_raises(ValueError, system_solver.system_solver, test_wfn, test_ham, [0b0011], None, None,
-                  '', False, None, scipy.optimize.root, None)
-    assert_raises(TypeError, system_solver.system_solver, test_wfn, test_ham, None, None, None, '',
-                  False, None, None, [])
+    assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham, [0b0011], None,
+                  '', False, None, None, scipy.optimize.root, None)
+    assert_raises(TypeError, system_solver.optimize_wfn_system, test_wfn, test_ham, None, None,
+                  '', False, None, None, None, [])
 
 
 def trial_run_system_solver(num_runs, rtol_num_errors, atol=None, energy_is_param=False,
@@ -163,7 +163,7 @@ def trial_run_system_solver(num_runs, rtol_num_errors, atol=None, energy_is_para
     for i in range(num_runs):
         try:
             wfn.params = init_guess()
-            result = system_solver.system_solver(wfn, ham, pspace=pspace, ref_sds=ref_sds,
+            result = system_solver.optimize_wfn_system(wfn, ham, pspace=pspace, ref_sds=ref_sds,
                                                  energy_is_param=energy_is_param,
                                                  energy_guess=energy, solver=solver_type,
                                                  solver_kwargs=solver_kwargs)
@@ -180,7 +180,7 @@ def trial_run_system_solver(num_runs, rtol_num_errors, atol=None, energy_is_para
 
 
 def test_system_solver_energy_not_param():
-    """Test wfns.solver.system_solver.system_solver where energy is not a parameter."""
+    """Test wfns.solver.system_solver.optimize_wfn_system where energy is not a parameter."""
     # least squares
     # bad init guess
     trial_run_system_solver(20, 0.5, atol=1e-8, energy_is_param=False,
@@ -222,7 +222,7 @@ def test_system_solver_energy_not_param():
 
 
 def test_system_solver_energy_param():
-    """Test system_solver.system_solver where energy is a parameter."""
+    """Test system_solver.optimize_wfn_system where energy is a parameter."""
     # least squares
     # bad init guess
     trial_run_system_solver(20, 0.5, atol=1e-8, energy_is_param=True, energy=10*np.random.random(),
