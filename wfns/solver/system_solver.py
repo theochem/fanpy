@@ -7,9 +7,9 @@ from ..wavefunction.base_wavefunction import BaseWavefunction
 from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
-def system_solver(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
-                  energy_guess=None, eqn_weights=None, solver=None, solver_kwargs=None):
-    """Solve the given wavefunction in the given Hamiltonian as a system of nonlinear equations.
+def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
+                        energy_guess=None, eqn_weights=None, solver=None, solver_kwargs=None):
+    """Optimize the wavefunction with the given Hamiltonian as a system of nonlinear equations.
 
     Reference Slater determinants are used to calculate the norm and possibly the energy of the
     wavefunction.
