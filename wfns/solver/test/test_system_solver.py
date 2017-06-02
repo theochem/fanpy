@@ -64,7 +64,7 @@ class TestChemicalHamiltonian(ChemicalHamiltonian):
         pass
 
 
-def test_system_solver_initialize():
+def test_optimize_wfn_system_initialize():
     """Test input checks of wfns.solver.system_solver.optimize_wfn_system.
 
     Note
@@ -164,9 +164,9 @@ def trial_run_system_solver(num_runs, rtol_num_errors, atol=None, energy_is_para
         try:
             wfn.params = init_guess()
             result = system_solver.optimize_wfn_system(wfn, ham, pspace=pspace, ref_sds=ref_sds,
-                                                 energy_is_param=energy_is_param,
-                                                 energy_guess=energy, solver=solver_type,
-                                                 solver_kwargs=solver_kwargs)
+                                                       energy_is_param=energy_is_param,
+                                                       energy_guess=energy, solver=solver_type,
+                                                       solver_kwargs=solver_kwargs)
             if result['success']:
                 if energy_is_param:
                     assert np.allclose(result['x'][-1], 2, atol=atol)
@@ -179,7 +179,7 @@ def trial_run_system_solver(num_runs, rtol_num_errors, atol=None, energy_is_para
                              ''.format(solver_type))
 
 
-def test_system_solver_energy_not_param():
+def test_optimize_wfn_system_energy_not_param():
     """Test wfns.solver.system_solver.optimize_wfn_system where energy is not a parameter."""
     # least squares
     # bad init guess
@@ -221,7 +221,7 @@ def test_system_solver_energy_not_param():
         print('Module, paraopt, is not available.')
 
 
-def test_system_solver_energy_param():
+def test_optimize_wfn_system_energy_param():
     """Test system_solver.optimize_wfn_system where energy is a parameter."""
     # least squares
     # bad init guess

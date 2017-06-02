@@ -283,6 +283,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         # if no jacobian
         if 'jac' in solver_kwargs and solver_kwargs['jac'] in [None, False]:
             del solver_kwargs['jac']
+            del default_kwargs['jac']
             default_kwargs.update({'method': 'krylov',
                                    'options': {'fatol': 1.0e-9, 'xatol': 1.0e-7}})
     elif solver.__name__ == 'paraopt.cma':
