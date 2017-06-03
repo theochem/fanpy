@@ -91,7 +91,6 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
     TypeError
         If wavefunction is not an instance (or instance of a child) of BaseWavefunction
         If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
-        If wavefunction and Hamiltonian do not have the same data type
         If save_file is not a string
         If solver_kwargs is not a dictionary or None
     ValueError
