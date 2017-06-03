@@ -54,6 +54,8 @@ class CIWavefunction(BaseWavefunction):
         Number of parameters
     params_shape : 2-tuple of int
         Shape of the parameters
+    nsd : int
+        Number of Slater determinants
 
     Methods
     -------
@@ -146,6 +148,11 @@ class CIWavefunction(BaseWavefunction):
         `None` means that all possible spins are allowed
         """
         return self._spin
+
+    @property
+    def nsd(self):
+        """"Return the number of Slater determinants."""
+        return len(self.sd_vec)
 
     def assign_spin(self, spin=None):
         """Set the spin of each Slater determinant.
