@@ -227,4 +227,8 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
     default_kwargs.update(solver_kwargs)
     solver_kwargs = default_kwargs
 
-    return solver(_objective, wfn.params.flat, **solver_kwargs)
+    # add energy to results
+    results = solver(_objective, wfn.params.flat, **solver_kwargs)
+    results['energy'] = results['fun']
+
+    return results
