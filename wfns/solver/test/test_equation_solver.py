@@ -189,3 +189,5 @@ def test_optimize_wfn_variational():
                                   solver_type=paraopt.cma, solver_kwargs={})
     except ModuleNotFoundError:
         print('Module, paraopt, is not available.')
+
+# FIXME: need tests for the gradient
