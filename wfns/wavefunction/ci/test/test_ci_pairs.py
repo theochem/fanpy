@@ -5,6 +5,8 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wavefunction.ci.ci_pairs import CIPairs
+from wfns.hamiltonian.sen0_hamiltonian import SeniorityZeroHamiltonian
+from wfns.solver import ci_solver
 
 
 class TestCIPairs(CIPairs):
@@ -27,7 +29,7 @@ def test_assign_sd_vec():
 
 
 def test_to_ap1rog():
-    """Tests CIPairs.to_ap1rog."""
+    """Test CIPairs.to_ap1rog."""
     test = CIPairs(2, 6, dtype=float)
     params = np.arange(9, 0, -1, dtype=float).reshape(3, 3)
     test.assign_params(params[:, 0].flatten())
@@ -41,11 +43,11 @@ def test_to_ap1rog():
     assert np.allclose(ap1rog.params, np.array([4/7, 1/7]))
 
 
-# FIXME: implement after solver is implemented
 def test_to_ap1rog_h2_sto6g_ground():
-    """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals
-    """
+    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals."""
     nelec = 2
+    nspin = 4
+    cipairs = CIPairs(nelec, nspin)
 
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
@@ -55,27 +57,21 @@ def test_to_ap1rog_h2_sto6g_ground():
     one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
+    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
-    solve(cipair)
     # ground state
-    test_ap1rog = cipair.to_ap1rog(exc_lvl=0)
-    test_ap1rog.normalize()
-    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b0101, ))
-    proj_solve(ap1rog)
-    assert np.allclose(test_ap1rog.params, ap1rog.params)
+    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
+    raise NotImplementedError
     # excited state
-    test_ap1rog = cipair.to_ap1rog(exc_lvl=1)
-    test_ap1rog.normalize()
-    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc, ref_sds=(0b1010, ))
-    proj_solve(ap1rog)
-    assert np.allclose(test_ap1rog.params, ap1rog.params)
+    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=1)
+    raise NotImplementedError
 
 
 def test_to_ap1rog_lih_sto6g():
-    """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals
-    """
+    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals."""
     nelec = 4
+    nspin = 12
+    cipairs = CIPairs(nelec, nspin)
 
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
@@ -85,20 +81,18 @@ def test_to_ap1rog_lih_sto6g():
     one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
     two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
     nuc_nuc = 0.995317634356
+    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
-    solve(cipair)
-    test_ap1rog = cipair.to_ap1rog(exc_lvl=0)
-    test_ap1rog.normalize()
-    ap1rog = AP1roG(nelec, one_int, two_int, nuc_nuc=nuc_nuc)
-    proj_solve(ap1rog)
-    assert np.all(test_ap1rog.params / ap1rog.params > 0.99)
+    # ground state
+    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
+    raise NotImplementedError
 
 
 def test_to_ap1rog_h4_sto6g():
-    """ Tests wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals
-    """
+    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals."""
     nelec = 4
+    nspin = 8
+    cipairs = CIPairs(nelec, nspin)
 
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
@@ -108,14 +102,7 @@ def test_to_ap1rog_h4_sto6g():
     one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
     nuc_nuc = 2.70710678119
+    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    cipair = CIPairs(nelec, one_int, two_int, nuc_nuc=nuc_nuc, excs=[0, 1])
-    solve(cipair)
-    test_ap1rog = cipair.to_ap1rog(exc_lvl=1)
-    #FIXME: SD 0b10101010 cannot be obtained by single pair excitation of 0b01010101 (reference)
-    #       this means that one coefficient is discarded when converted to ap1rog
-    #       Maybe it will be better to keep 0b00110011 as the reference and modify the normalization
-    sd_coeffs = cipair.sd_coeffs[:, 1].flatten()/ cipair.sd_coeffs[1, 1]
-    assert np.allclose(sd_coeffs[0], test_ap1rog.params[2])
-    assert np.allclose(sd_coeffs[1], 1)
-    assert np.allclose(sd_coeffs[2], test_ap1rog.params[3])
+    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
+    raise NotImplementedError

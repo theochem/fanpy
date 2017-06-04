@@ -59,7 +59,7 @@ class CIWavefunction(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, params=None, sd_vec=None, spin=None, seniority=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
