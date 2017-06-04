@@ -135,7 +135,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
     def _objective(params):
         """Energy of the Schrodinger equation after projecting out the left and right sides."""
         # update wavefunction
-        wfn.params = params
+        wfn.params = params.reshape(wfn.params_shape)
 
         # save params
         if save_file != '':
@@ -160,21 +160,20 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
                         numerator += wfn.get_overlap(sd1) * sd_energy * wfn.get_overlap(sd2)
                     if sd1 == sd2:
                         denominator += wfn.get_overlap(sd1)**2
-
         return numerator / denominator
 
     # FIXME: incredibly slow implementation
     # gradiant
     def _gradient(params):
         """Gradient of the energy of the Schrodinger equation after projection."""
-        grad = np.empty(wfn.nparams, dtype=wfn.dtype)
+        grad = np.zeros(wfn.nparams, dtype=wfn.dtype)
         for j in range(grad.size):
             # energy
-            numerator = 0
-            d_numerator = 0
+            numerator = 0.0
+            d_numerator = 0.0
             # norm
-            denominator = 0
-            d_denominator = 0
+            denominator = 0.0
+            d_denominator = 0.0
             for sd1 in left_pspace:
                 if right_pspace is None:
                     sd_energy = sum(ham.integrate_wfn_sd(wfn, sd1))
@@ -184,11 +183,11 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
                     denominator += wfn.get_overlap(sd1)**2
                     d_numerator += wfn.get_overlap(sd1, deriv=j) * sd_energy
                     d_numerator += wfn.get_overlap(sd1) * d_sd_energy
-                    d_denominator += 2 * wfn.get_overlap(sd1, deriv=j)
+                    d_denominator += 2 * wfn.get_overlap(sd1) * wfn.get_overlap(sd1, deriv=j)
                 else:
                     for sd2 in right_pspace:
+                        # sd_energy is independent of wavefunction parameters
                         sd_energy = sum(ham.integrate_sd_sd(sd1, sd2))
-                        d_sd_energy = sum(ham.integrate_sd_sd(sd1, sd2, deriv=j))
                         # NOTE: caching here would be important
                         if sd_energy != 0:
                             numerator += wfn.get_overlap(sd1) * sd_energy * wfn.get_overlap(sd2)
@@ -196,12 +195,11 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
                                             * wfn.get_overlap(sd2))
                             d_numerator += (wfn.get_overlap(sd1) * sd_energy
                                             * wfn.get_overlap(sd2, deriv=j))
-                        if d_sd_energy != 0:
-                            d_numerator += wfn.get_overlap(sd1) * d_sd_energy * wfn.get_overlap(sd2)
                         if sd1 == sd2:
                             denominator += wfn.get_overlap(sd1)**2
-                            d_denominator += 2*wfn.get_overlap(sd1, deriv=j)
-            grad[j] = (numerator * d_denominator + d_numerator * denominator) / denominator**2
+                            d_denominator += 2*wfn.get_overlap(sd1) * wfn.get_overlap(sd1, deriv=j)
+
+            grad[j] = (numerator * d_denominator - d_numerator * denominator) / denominator**2
         return grad
 
     # check solver
@@ -229,4 +227,4 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
     default_kwargs.update(solver_kwargs)
     solver_kwargs = default_kwargs
 
-    return solver(_objective, wfn.params, **solver_kwargs)
+    return solver(_objective, wfn.params.flat, **solver_kwargs)
