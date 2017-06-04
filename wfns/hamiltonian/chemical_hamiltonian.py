@@ -283,7 +283,7 @@ class ChemicalHamiltonian(object):
 
         return one_electron, coulomb, exchange
 
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2):
         """Integrates the Hamiltonian with against two Slater determinants.
 
         ..math::
@@ -298,9 +298,6 @@ class ChemicalHamiltonian(object):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : int, None
-            Index of the parameter against which the expectation value is derivatized.
-            Default is no derivatization
 
         Returns
         -------
