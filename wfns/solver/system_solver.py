@@ -170,9 +170,10 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         """
         # Update the wavefunction parameters
         if energy_is_param:
-            wfn.params = params[:-1]
+            wfn.params = params[:-1].reshape(wfn.params_shape)
         else:
-            wfn.params = params
+            wfn.params = params.reshape(wfn.params_shape)
+
         # Save params
         if save_file != '':
             np.save('{0}_temp.npy'.format(save_file), wfn.params)
@@ -227,13 +228,13 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
 
         for j in range(jac.shape[1]):
             if energy_is_param:
-                if j == wfn.nparams:
-                    d_norm = 0
-                    d_energy = 1
+                if j == nparams - 1:
+                    d_norm = 0.0
+                    d_energy = 1.0
                 else:
                     d_norm = sum(2 * wfn.get_overlap(sd) * wfn.get_overlap(sd, deriv=j)
                                  for sd in ref_sds)
-                    d_energy = 0
+                    d_energy = 0.0
             else:
                 d_norm = sum(2 * wfn.get_overlap(sd) * wfn.get_overlap(sd, deriv=j)
                              for sd in ref_sds)
@@ -254,7 +255,6 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
 
         # weigh equations
         jac *= eqn_weights[:, np.newaxis]
-
         return jac
 
     # check solver
@@ -307,6 +307,6 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
             energy_guess = sum(sum(ham.integrate_wfn_sd(wfn, sd)) * wfn.get_overlap(sd)
                                for sd in ref_sds)
             energy_guess /= sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
-        return solver(_objective, np.hstack([wfn.params, energy_guess]), **solver_kwargs)
+        return solver(_objective, np.hstack([wfn.params.flat, energy_guess]), **solver_kwargs)
     else:
-        return solver(_objective, wfn.params, **solver_kwargs)
+        return solver(_objective, wfn.params.flat, **solver_kwargs)
