@@ -40,7 +40,7 @@ class BaseWavefunction:
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
@@ -48,6 +48,8 @@ class BaseWavefunction:
         Assigns the number of spin orbitals
     assign_dtype(self, dtype)
         Assigns the data type of parameters used to define the wavefunction
+    assign_memory(self, memory=None)
+        Assigns the memory allocated for the wavefunction
     assign_params(self, params)
         Assigns the parameters of the wavefunction
 
