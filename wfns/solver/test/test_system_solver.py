@@ -59,6 +59,7 @@ class TestBaseWavefunction(BaseWavefunction):
 class TestChemicalHamiltonian(ChemicalHamiltonian):
     """ChemicalHamiltonian that bypasses abc structure and overwrite properties and attributes."""
     dtype = np.float64
+    nspin = 8
 
     def __init__(self):
         pass
@@ -79,8 +80,14 @@ def test_optimize_wfn_system_initialize():
                   False, None, None, None, None)
     assert_raises(TypeError, system_solver.optimize_wfn_system, None, test_ham,
                   None, None, None, '', False, None, None, None)
-    test_wfn.dtype = np.float64
+    test_wfn = TestBaseWavefunction()
+    test_ham = TestChemicalHamiltonian()
     test_ham.dtype = np.complex128
+    assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham,
+                  None, None, None, '', False, None, None, None)
+    test_wfn = TestBaseWavefunction()
+    test_ham = TestChemicalHamiltonian()
+    test_ham.nspin = 6
     assert_raises(ValueError, system_solver.optimize_wfn_system, test_wfn, test_ham,
                   None, None, None, '', False, None, None, None)
 

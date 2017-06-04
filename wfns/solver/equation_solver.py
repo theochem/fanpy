@@ -95,6 +95,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
         If solver_kwargs is not a dictionary or None
     ValueError
         If wavefunction and Hamiltonian do not have the same data type
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals
 
     Note
     ----
@@ -110,6 +111,9 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, save
                         'child).')
     if wfn.dtype != ham.dtype:
         raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
+    if wfn.nspin != ham.nspin:
+        raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
+                         'spin orbitals')
 
     if left_pspace is None and right_pspace is None:
         left_pspace = np.array(sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin,
