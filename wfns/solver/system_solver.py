@@ -307,6 +307,12 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
             energy_guess = sum(sum(ham.integrate_wfn_sd(wfn, sd)) * wfn.get_overlap(sd)
                                for sd in ref_sds)
             energy_guess /= sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
-        return solver(_objective, np.hstack([wfn.params.flat, energy_guess]), **solver_kwargs)
+        results = solver(_objective, np.hstack([wfn.params.flat, energy_guess]), **solver_kwargs)
+        results['energy'] = results['x'][-1]
     else:
-        return solver(_objective, wfn.params.flat, **solver_kwargs)
+        results = solver(_objective, wfn.params.flat, **solver_kwargs)
+        results['energy'] = sum(sum(ham.integrate_wfn_sd(wfn, sd)) * wfn.get_overlap(sd)
+                                for sd in ref_sds)
+        results['energy'] /= sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
+
+    return results
