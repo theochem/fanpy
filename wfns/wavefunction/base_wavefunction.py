@@ -280,10 +280,10 @@ class BaseWavefunction:
         """
         try:
             if key is None:
-                for fn in self._cache_fns:
-                    fn.clear_cache()
+                for fn in self._cache_fns.values():
+                    fn.cache_clear()
             else:
-                self._cache_fns[key].clear_cache()
+                self._cache_fns[key].cache_clear()
         except KeyError as error:
             raise KeyError('Given function key is not present in _cache_fns') from error
         except AttributeError as error:
