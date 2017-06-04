@@ -31,6 +31,9 @@ def test_solve_eigh():
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=complex),
                                        np.ones((2, 2, 2, 2), dtype=complex))
     assert_raises(ValueError, ci_solver.eigen_solve, test_wfn, test_ham, 0)
+    test_ham = TestChemicalHamiltonian(np.ones((3, 3), dtype=complex),
+                                       np.ones((3, 3, 3, 3), dtype=complex))
+    assert_raises(ValueError, ci_solver.eigen_solve, test_wfn, test_ham, 0)
 
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),

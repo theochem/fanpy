@@ -78,6 +78,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         If solver_kwargs is not a dictionary or None
     ValueError
         If wavefunction and Hamiltonian do not have the same data type
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals
         If eqn_weights do not have the correct shape
         If energy_guess is given and energy is not a parameter.
 
@@ -94,6 +95,9 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
                         'child).')
     if wfn.dtype != ham.dtype:
         raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
+    if wfn.nspin != ham.nspin:
+        raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
+                         'spin orbitals')
 
     if pspace is None:
         pspace = sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)

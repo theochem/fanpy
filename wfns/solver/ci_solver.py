@@ -39,6 +39,7 @@ def eigen_solve(wfn, ham, exc_lvl=0):
         If exc_lvl is not a positive integer
     ValueError
         If wavefunction and Hamiltonian do not have the same data type
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals
     """
     # Preprocess variables
     if not isinstance(wfn, CIWavefunction):
@@ -49,6 +50,9 @@ def eigen_solve(wfn, ham, exc_lvl=0):
                         'child).')
     if wfn.dtype != ham.dtype:
         raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
+    if wfn.nspin != ham.nspin:
+        raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
+                         'spin orbitals')
     if not (isinstance(exc_lvl, int) and exc_lvl >= 0):
         raise TypeError('Given exc_lvl is not a positive integer')
 
