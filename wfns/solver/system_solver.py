@@ -169,16 +169,16 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         Wavefunction and Hamiltonian objects are updated iteratively.
         """
         # Update the wavefunction parameters
-        if energy_is_param:
+        if energy_is_param and not np.allclose(params[:-1], wfn.params.flat, atol=1e-14, rtol=0):
             wfn.params = params[:-1].reshape(wfn.params_shape)
-        else:
+            wfn.clear_cache()
+        elif not energy_is_param and not np.allclose(params, wfn.params.flat, atol=1e-14, rtol=0):
             wfn.params = params.reshape(wfn.params_shape)
+            wfn.clear_cache()
 
         # Save params
         if save_file != '':
             np.save('{0}_temp.npy'.format(save_file), wfn.params)
-        # Clear cache
-        wfn.clear_cache()
 
         # define norm and energy
         norm = sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
@@ -218,6 +218,14 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         jac : np.ndarray(nproj+1, nparams)
             Value of the Jacobian :math:`J_{ij}`
         """
+        # update wavefunction
+        if energy_is_param and not np.allclose(params[:-1], wfn.params.flat, atol=1e-14, rtol=0):
+            wfn.params = params[:-1].reshape(wfn.params_shape)
+            wfn.clear_cache()
+        elif not energy_is_param and not np.allclose(params, wfn.params.flat, atol=1e-14, rtol=0):
+            wfn.params = params.reshape(wfn.params_shape)
+            wfn.clear_cache()
+
         # define norm and energy
         norm = sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
         if energy_is_param:
