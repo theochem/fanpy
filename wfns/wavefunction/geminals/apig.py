@@ -61,7 +61,7 @@ class APIG(BaseGeminal):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
