@@ -86,7 +86,7 @@ class BaseGeminal(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
@@ -113,7 +113,8 @@ class BaseGeminal(BaseWavefunction):
     generate_possible_orbpairs(self, occ_indices)
         Yields the possible orbital pairs that can construct the given Slater determinant.
     """
-    def __init__(self, nelec, nspin, dtype=None, ngem=None, orbpairs=None, params=None):
+    def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None,
+                 params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -284,32 +285,6 @@ class BaseGeminal(BaseWavefunction):
         self.dict_orbpair_ind = dict_orbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in dict_orbpair_ind.items()}
 
-    def assign_params(self, params=None, add_noise=False):
-        """ Assigns the parameters of the wavefunction
-
-        Parameters
-        ----------
-        params : np.ndarray, None
-            Parameters of the wavefunction
-        add_noise : bool
-            Flag to add noise to the given parameters
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`
-            If `params` has complex data type and wavefunction has float data type
-        ValueError
-            If `params` does not have the same shape as the template_params
-
-        Note
-        ----
-        Depends on dtype, template_params, and nparams
-        """
-        super().assign_params(params=params, add_noise=add_noise)
-
     def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
         """Compute the permanent that corresponds to the given orbital pairs
 
@@ -424,6 +399,8 @@ class BaseGeminal(BaseWavefunction):
             return _olp(sd)
         # if derivatization
         elif isinstance(deriv, int):
+            if deriv >= self.nparams:
+                return 0.0
             # convert parameter index to row and col index
             col_removed = deriv % self.norbpair
             # find orbital pair that corresponds to removed column
@@ -454,18 +431,16 @@ class BaseGeminal(BaseWavefunction):
 
                     val = 0.0
                     for orbpairs in self.generate_possible_orbpairs(occ_indices):
-                        # if orbital pairs is not present, skip
                         # ASSUMES: permanent evaluation is much more expensive than the lookup
-                        if (orb_1, orb_2) not in orbpairs:
-                            continue
-                        # otherwise, compute permanent
                         # FIXME: have generate_possible_orbpairs provide a signature (sign)
+                        # NOTE: derivatization with respect to parameters that are not present in
+                        #       the sd is already skipped by line 410
                         sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
                                                           occ_indices, is_creator=True)
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
                         val += sgn*self.compute_permanent(col_inds,
                                                           deriv_row_col=(row_removed, col_removed))
-                        return val
+                    return val
 
                 # store the cached function
                 self._cache_fns['overlap derivative'] = _olp_deriv
