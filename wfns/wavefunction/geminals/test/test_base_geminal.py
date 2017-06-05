@@ -191,6 +191,35 @@ def test_gem_compute_permanent():
                     1)
 
 
+def test_gem_compute_permanent_deriv():
+    """Test derivatives ofBaseGeminal.compute_permanent using finite difference."""
+    test = TestBaseGeminal()
+    test.assign_dtype(float)
+    test.assign_nelec(6)
+    test.assign_nspin(6)
+    test.assign_orbpairs()
+    test.assign_ngem(3)
+    test.assign_params(np.random.rand(3, 15)*10)
+
+    original_params = test.params[:]
+    delta = np.zeros(test.params_shape)
+    step = 1e-3
+    for i in range(test.params_shape[0]):
+        for j in range(test.params_shape[1]):
+            delta *= 0
+            delta[i, j] = step
+            test.assign_params(original_params)
+            test.clear_cache()
+            one = test.compute_permanent(range(15))
+            test.assign_params(test.params + delta)
+            test.clear_cache()
+            two = test.compute_permanent(range(15))
+            # FIXME: not quite sure why the difference between permanent derivative and finite
+            #        difference increases as the step size decreases
+            assert np.allclose(test.compute_permanent(range(15), deriv_row_col=(i, j)),
+                               (two - one) / step, rtol=0, atol=1e-5)
+
+
 def test_gem_get_overlap():
     """Test BaseGeminal.get_overlap."""
     test = TestBaseGeminal()
