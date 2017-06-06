@@ -119,23 +119,29 @@ def answer_apig_h2_sto6g():
     energies = []
     for i in np.arange(-2, 2, 0.1):
         for j in np.arange(-2, 2, 0.1):
-            apig.assign_params(np.array([i, j]))
-            if np.allclose(apig.compute_norm(), 0):
+            apig.assign_params(np.array([[i, j]]))
+            # FIXME: need function to compute norm
+            norm = sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+            if np.allclose(norm, 0):
                 continue
-            apig.normalize()
-            xs.append(apig.params[0])
-            ys.append(apig.params[1])
-            energies.append(apig.compute_energy())
+            # FIXME: need to normalize
+            xs.append(apig.params[0, 0])
+            ys.append(apig.params[0, 1])
+            # FIXME: need function to compute energy
+            energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
+                         * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
+            energy /= norm
+            energies.append(energy)
 
-    # import matplotlib.pyplot as plt
-    # from mpl_toolkits.mplot3d import Axes3D
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # ax.scatter(ys, energies)
-    # print(sorted(zip(xs,ys,energies), key=lambda x:x[2])[:10])
-    # # ax2 = fig.add_subplot(1, 1, 1, projection='3d')
-    # # ax2.scatter(xs, ys, energies)
-    # plt.show()
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.scatter(ys, energies)
+    print(sorted(zip(xs, ys, energies), key=lambda x: x[2])[:10])
+    ax2 = fig.add_subplot(1, 1, 1, projection='3d')
+    ax2.scatter(xs, ys, energies)
+    plt.show()
 
     # print out results
     # print(sorted(zip(xs, ys, energies), key=lambda x: x[2])[0])
@@ -144,8 +150,12 @@ def answer_apig_h2_sto6g():
     # find exact minimum
     def min_energy(params):
         """ Find minimum energy"""
-        apig.assign_params(np.hstack((params, 0)))
-        return apig.compute_energy()
+        apig.assign_params(params.reshape(apig.params_shape))
+        energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
+                     * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
+        energy /= sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+        return energy
+
     res = scipy.optimize.minimize(min_energy, np.array([0.99388373467361912, -0.1104315260748444]))
     print('Minimum energy')
     print(res)
@@ -153,8 +163,12 @@ def answer_apig_h2_sto6g():
     # find exact maximum
     def max_energy(params):
         """ Find maximum energy"""
-        apig.assign_params(np.hstack((params, 0)))
-        return -apig.compute_energy()
+        apig.assign_params(params.reshape(apig.params_shape))
+        energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
+                     * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
+        energy /= sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+        return -energy
+
     res = scipy.optimize.minimize(max_energy, np.array([0.11043152607484739, 0.99388373467361879]))
     print('Maximum energy')
     print(res)
@@ -181,7 +195,6 @@ def test_apig_h2_sto6g_ground():
 
     nelec = 2
     nspin = 4
-    apig = APIG(nelec, nspin)
 
     # Least squares system solver.
     apig = APIG(nelec, nspin)
