@@ -73,7 +73,8 @@ class AP1roG(APIG):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
+             params=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
@@ -97,7 +98,8 @@ class AP1roG(APIG):
     generate_possible_orbpairs(self, occ_indices)
         Yields the possible orbital pairs that can construct the given Slater determinant.
     """
-    def __init__(self, nelec, nspin, dtype=None, ngem=None, orbpairs=None, ref_sd=None, params=None):
+    def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
+                 params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -346,7 +348,9 @@ class AP1roG(APIG):
 
             return _olp(sd)
         # if derivatization
-        else:
+        elif isinstance(deriv, int):
+            if deriv >= self.nparams:
+                return 0.0
             if inds_annihilated.size == inds_created.size == 0:
                 return 0.0
 
