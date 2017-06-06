@@ -190,20 +190,11 @@ def test_internal_sd():
     # Check error
     assert_raises(TypeError, lambda: slater.internal_sd(None))
     assert_raises(TypeError, lambda: slater.internal_sd('5'))
-    assert_raises(TypeError, lambda: slater.internal_sd(['1', '2']))
+    assert_raises(TypeError, lambda: slater.internal_sd([0, 3]))
 
     # integer
     assert slater.internal_sd(5) == gmpy2.mpz(5)
     assert isinstance(slater.internal_sd(5), type(gmpy2.mpz(5)))
-    # iterable
-    assert slater.internal_sd([1, 2, 3]) == gmpy2.mpz(0b1110)
-    assert isinstance(slater.internal_sd([1, 2, 3]), type(gmpy2.mpz(0b1110)))
-    assert slater.internal_sd((1, 2, 3)) == gmpy2.mpz(0b1110)
-    assert isinstance(slater.internal_sd((1, 2, 3)), type(gmpy2.mpz(0b1110)))
-    assert slater.internal_sd({1:None, 2:None, 3:None}) == gmpy2.mpz(0b1110)
-    assert isinstance(slater.internal_sd({1:None, 2:None, 3:None}), type(gmpy2.mpz(0b1110)))
-    assert slater.internal_sd((i for i in range(4))) == gmpy2.mpz(0b1111)
-    assert isinstance(slater.internal_sd((i for i in range(4))), type(gmpy2.mpz(0b1111)))
     # gmpy2 object
     assert slater.internal_sd(gmpy2.mpz(5)) == gmpy2.mpz(5)
     assert isinstance(slater.internal_sd(gmpy2.mpz(5)), type(gmpy2.mpz(5)))

@@ -312,16 +312,9 @@ def internal_sd(identifier):
     ------
     TypeError
         If not an integer and not an iterable
-        If is an iterable of non integers
     """
     if isinstance(identifier, int):
         return gmpy2.mpz(identifier)
-    elif hasattr(identifier, '__iter__'):
-        identifier, test = tee(identifier, 2)
-        if all(isinstance(i, int) for i in test):
-            return create(gmpy2.mpz(0), *identifier)
-        else:
-            raise TypeError('Iterable must contain only integers to describe a Slater determinant')
     elif is_internal_sd(identifier):
         return identifier
     else:
