@@ -285,6 +285,55 @@ class BaseGeminal(BaseWavefunction):
         self.dict_orbpair_ind = dict_orbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in dict_orbpair_ind.items()}
 
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the geminal wavefunction.
+
+        Parameters
+        ----------
+        params : np.ndarray, BaseGeminal, None
+            Parameters of the wavefunction
+            If BaseGeminal instance is given, then the parameter of this instance are used.
+        add_noise : bool
+            Flag to add noise to the given parameters
+
+        Raises
+        ------
+        TypeError
+            If `params` is not a numpy array
+            If `params` does not have data type of `float`, `complex`, `np.float64` and
+            `np.complex128`
+            If `params` has complex data type and wavefunction has float data type
+        ValueError
+            If `params` does not have the same shape as the template_params
+            If given BaseGeminal instance does not have the same number of electrons as self
+            If given BaseGeminal instance does not have the same number of spin orbitals as self
+            If given BaseGeminal instance does not have the same number of geminals as self
+
+        Note
+        ----
+        Depends on dtype, template_params, and nparams
+        """
+        if isinstance(params, self.__class__):
+            other = params
+            if self.nelec != other.nelec:
+                raise ValueError('The number of electrons in the two wavefunctions must be the '
+                                 'same.')
+            if self.nspin != other.nspin:
+                raise ValueError('The number of spin orbitals in the two wavefunctions must be the '
+                                 'same.')
+            if self.ngem != other.ngem:
+                raise ValueError('The number of geminals in the two wavefunctions must be the '
+                                 'same.')
+            params = np.zeros(self.params_shape, dtype=self.dtype)
+            for ind, orbpair in other.dict_ind_orbpair.items():
+                if orbpair in self.dict_orbpair_ind:
+                    params[:, self.dict_orbpair_ind[orbpair]] = other.params[:, ind]
+                else:
+                    print('The orbital pair of the given wavefunction, {0}, is not possible in the '
+                          'current wavefunction. Parameters corresponding to this orbital pair will'
+                          ' be ignored.')
+        super().assign_params(params=params, add_noise=add_noise)
+
     def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
         """Compute the permanent that corresponds to the given orbital pairs
 

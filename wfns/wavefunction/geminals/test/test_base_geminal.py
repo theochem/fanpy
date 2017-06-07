@@ -155,6 +155,27 @@ def test_gem_assign_params():
                                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
     assert test._cache_fns == {}
 
+    test2 = TestBaseGeminal()
+    test2.assign_dtype(float)
+    test2.assign_nelec(4)
+    assert_raises(ValueError, test.assign_params, test2)
+    test2.assign_nelec(6)
+    test2.assign_nspin(8)
+    assert_raises(ValueError, test.assign_params, test2)
+    test2.assign_nelec(6)
+    test2.assign_nspin(6)
+    test2.assign_ngem(4)
+    assert_raises(ValueError, test.assign_params, test2)
+    test2.assign_nelec(6)
+    test2.assign_nspin(6)
+    test2.assign_ngem(3)
+    test2.dict_ind_orbpair = {0: (0, 4), 1: (1, 3)}
+    test2.params = np.arange(6).reshape(3, 2)
+    test.assign_params(test2)
+    np.allclose(test.params, np.array([[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                                       [0, 0, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+                                       [0, 0, 0, 4, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0]]))
+
 
 def test_gem_compute_permanent():
     """Test BaseGeminal.compute_permanent."""
