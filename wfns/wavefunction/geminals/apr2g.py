@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from .apig import APIG
+from .base_geminal import BaseGeminal
 from ...backend import slater, math_tools
 
 __all__ = []
@@ -53,7 +54,7 @@ class APr2G(APIG):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
@@ -98,7 +99,7 @@ class APr2G(APIG):
     @property
     def lambdas(self):
         """Return the :math:`lambda` part of the APr2G parameters."""
-        return self.params[:self.ngem, np.newaxis]
+        return self.params[:self.ngem]
 
     @property
     def epsilons(self):
@@ -118,7 +119,7 @@ class APr2G(APIG):
         -------
         apig_params : np.ndarray(P, K)
         """
-        return self.zetas / (self.lambdas - self.epsilons)
+        return self.zetas / (self.lambdas[:, np.newaxis] - self.epsilons)
 
     def assign_params(self, params=None):
         """ Assigns the parameters of the wavefunction
@@ -145,9 +146,12 @@ class APr2G(APIG):
         ----
         Depends on dtype, template_params, and nparams
         """
+        if isinstance(params, BaseGeminal):
+            raise NotImplementedError('APr2G wavefunction cannot assign parameters using a '
+                                      'BaseGeminal instance.')
         super().assign_params(params=params)
         # check for zeros in denominator
-        if np.any(np.abs(self.lambdas - self.epsilons) < 1e-9):
+        if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
             raise ValueError('Corresponding geminal coefficient matrix has a division by zero')
 
     def compute_permanent(self, col_inds, deriv=None):
@@ -175,7 +179,7 @@ class APr2G(APIG):
         col_inds = np.array(col_inds)
 
         if deriv is None:
-            return math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds],
+            return math_tools.permanent_borchardt(self.lambdas[row_inds],
                                                   self.epsilons[col_inds], self.zetas[col_inds])
         # if differentiating along row (lambda)
         # FIXME: not the best way of evaluating
@@ -195,7 +199,7 @@ class APr2G(APIG):
                     val += der_cij_rowi
                 else:
                     val += (der_cij_rowi
-                            * math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds_trunc],
+                            * math_tools.permanent_borchardt(self.lambdas[row_inds_trunc],
                                                              self.epsilons[col_inds_trunc],
                                                              self.zetas[col_inds_trunc]))
             return val
@@ -222,7 +226,7 @@ class APr2G(APIG):
                     val += der_cij_colj
                 else:
                     val += (der_cij_colj
-                            * math_tools.permanent_borchardt(self.lambdas.flatten()[row_inds_trunc],
+                            * math_tools.permanent_borchardt(self.lambdas[row_inds_trunc],
                                                              self.epsilons[col_inds_trunc],
                                                              self.zetas[col_inds_trunc]))
             return val
@@ -265,7 +269,9 @@ class APr2G(APIG):
 
         if deriv is None:
             return super().get_overlap(sd)
-        else:
+        elif isinstance(deriv, int):
+            if deriv >= self.nparams:
+                return 0.0
             # if differentiating along column/epsilon/zeta
             if self.ngem <= deriv < self.ngem + 2*self.norbpair:
                 col_removed = (deriv - self.ngem) % self.norbpair
