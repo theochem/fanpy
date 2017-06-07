@@ -313,7 +313,8 @@ class BaseGeminal(BaseWavefunction):
         ----
         Depends on dtype, template_params, and nparams
         """
-        if isinstance(params, self.__class__):
+        # FIXME: self.__class__ doesn't work if the method is inherited
+        if isinstance(params, BaseGeminal):
             other = params
             if self.nelec != other.nelec:
                 raise ValueError('The number of electrons in the two wavefunctions must be the '
