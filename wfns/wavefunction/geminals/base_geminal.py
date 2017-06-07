@@ -435,6 +435,8 @@ class BaseGeminal(BaseWavefunction):
 
                     val = 0.0
                     for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                        if len(orbpairs) == 0:
+                            continue
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
                         val += self.compute_permanent(col_inds)
                     return val
@@ -485,6 +487,8 @@ class BaseGeminal(BaseWavefunction):
                         # FIXME: have generate_possible_orbpairs provide a signature (sign)
                         # NOTE: derivatization with respect to parameters that are not present in
                         #       the sd is already skipped by line 410
+                        if len(orbpairs) == 0:
+                            continue
                         sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
                                                           occ_indices, is_creator=True)
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
