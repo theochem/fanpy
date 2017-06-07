@@ -51,7 +51,7 @@ class APsetG(BaseGeminal):
 
     Methods
     -------
-    __init__(self, nelec, one_int, two_int, dtype=None)
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
         Initializes wavefunction
     assign_nelec(self, nelec)
         Assigns the number of electrons
@@ -89,6 +89,11 @@ class APsetG(BaseGeminal):
             Indices of the creation operators (grouped by orbital pairs) that construct the Slater
             determinant.
         """
-        alpha_occ_indices = [i for i in occ_indices if i < self.nspatial]
-        beta_occ_indices = [i for i in occ_indices if i >= self.nspatial]
+        alpha_occ_indices = []
+        beta_occ_indices = []
+        for i in occ_indices:
+            if i < self.nspatial:
+                alpha_occ_indices.append(i)
+            else:
+                beta_occ_indices.append(i)
         yield from graphs.generate_biclique_pmatch(alpha_occ_indices, beta_occ_indices)
