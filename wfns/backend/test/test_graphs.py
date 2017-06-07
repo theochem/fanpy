@@ -7,10 +7,10 @@ from wfns.backend.graphs import generate_complete_pmatch, generate_biclique_pmat
 def test_generate_complete_pmatch():
     """ Tests the generator for the perfect matchings of a complete graph
     """
-    # check for assert statements
-    assert_raises(ValueError, lambda: list(generate_complete_pmatch([])))
-    assert_raises(ValueError, lambda: list(generate_complete_pmatch([1])))
-    assert_raises(ValueError, lambda: list(generate_complete_pmatch([1, 2, 3])))
+    # bad input
+    assert list(generate_complete_pmatch([])) == [tuple()]
+    assert list(generate_complete_pmatch([1])) == [tuple()]
+    assert list(generate_complete_pmatch([1, 2, 3])) == [tuple()]
 
     # 4 vertices
     occ_indices = [0, 1, 3, 4]
@@ -43,11 +43,10 @@ def test_generate_complete_pmatch():
 def test_generate_biclique_pmatch():
     """ Tests the generator for the perfect matchings of a complete bipartite graph
     """
-    # check for assert statements
-    assert_raises(ValueError, lambda: list(generate_biclique_pmatch([], [])))
-    assert_raises(ValueError, lambda: list(generate_biclique_pmatch([], [1, 2])))
-    assert_raises(ValueError, lambda: list(generate_biclique_pmatch([1], [2, 3])))
-    assert_raises(ValueError, lambda: list(generate_biclique_pmatch([1, 2], [2, 3])))
+    # bad input
+    assert list(generate_biclique_pmatch([], [])) == [tuple()]
+    assert list(generate_biclique_pmatch([], [1, 2])) == [tuple()]
+    assert list(generate_biclique_pmatch([1, 2], [2, 3])) == [tuple()]
 
     # 4 vertices
     indices_one = [0, 1]

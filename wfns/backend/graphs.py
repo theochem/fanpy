@@ -36,9 +36,8 @@ def generate_complete_pmatch(indices):
     indices = tuple(indices)
     n = len(indices)
     if n % 2 == 1 or n < 2:
-        raise ValueError('Given indices cannot produce a perfect matching (odd number of occupied'
-                         ' indices)')
-    if n == 2:
+        yield tuple()
+    elif n == 2:
         yield ((indices[0], indices[1]), )
     else:
         # smaller subset (all pairs without the last two indices)
@@ -86,12 +85,12 @@ def generate_biclique_pmatch(indices_one, indices_two):
     indices_one = tuple(sorted(indices_one))
     indices_two = tuple(sorted(indices_two))
     if len(indices_one) == 0 or len(indices_one) == 0:
-        raise ValueError('Cannot find the perfect matches of a disconnected bipartite graph')
-    if len(indices_one) != len(indices_two):
-        raise ValueError('Cannot make perfect matchings unless the number of vertices in each set'
-                         ' is equal')
-    if (len(set(indices_one).symmetric_difference(set(indices_two)))
+        yield tuple()
+    elif len(indices_one) != len(indices_two):
+        yield tuple()
+    elif (len(set(indices_one).symmetric_difference(set(indices_two)))
             < len(indices_one + indices_two)):
-        raise ValueError('A Bipartite graph cannot share vertices between the two sets')
-    for new_indices in it.permutations(indices_two):
-        yield tuple(zip(indices_one, new_indices))
+        yield tuple()
+    else:
+        for new_indices in it.permutations(indices_two):
+            yield tuple(zip(indices_one, new_indices))
