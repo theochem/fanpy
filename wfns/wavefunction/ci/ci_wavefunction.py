@@ -79,7 +79,7 @@ class CIWavefunction(BaseWavefunction):
         Gets the overlap from cache and compute if not in cache
         Default is no derivatization
     """
-    def __init__(self, nelec, nspin, dtype=None, params=None, sd_vec=None, spin=None,
+    def __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
                  seniority=None):
         """Initialize the wavefunction.
 
@@ -92,6 +92,9 @@ class CIWavefunction(BaseWavefunction):
         dtype : {float, complex, np.float64, np.complex128, None}
             Numpy data type
             Default is `np.float64`
+        memory : {float, int, str, None}
+            Memory available for the wavefunction
+            Default does not limit memory usage (i.e. infinite)
         params : np.ndarray
             Coefficients of the Slater determinants of a CI wavefunction
         sd_vec : iterable of int
@@ -106,7 +109,7 @@ class CIWavefunction(BaseWavefunction):
             Seniority of the wavefunction
             Default is no seniority (all seniority possible)
         """
-        super().__init__(nelec, nspin, dtype=dtype)
+        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_spin(spin=spin)
         self.assign_seniority(seniority=seniority)
         self.assign_sd_vec(sd_vec=sd_vec)
