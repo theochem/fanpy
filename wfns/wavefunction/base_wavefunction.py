@@ -95,6 +95,9 @@ class BaseWavefunction:
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
+        # create cached functions
+        self._cache_fns = {}
+
     @property
     def nspatial(self):
         """Return the number of spatial orbitals."""
@@ -258,9 +261,6 @@ class BaseWavefunction:
             if self.dtype in [complex, np.complex128]:
                 self.params += 0.01j * scale * (np.random.rand(*self.params_shape).astype(complex)
                                                 - 0.5)
-
-        # create cached functions
-        self._cache_fns = {}
 
     def clear_cache(self, key=None):
         """Clear the cache associated with the wavefunction.
