@@ -54,7 +54,6 @@ find_num_trans_dumb(jumbled_set, ordered_set=None, is_creator=True)
     Returns the number of transpostions necessary to convert a set of indices into increasing order
     using brute force
 """
-from itertools import tee
 import gmpy2
 import numpy as np
 
