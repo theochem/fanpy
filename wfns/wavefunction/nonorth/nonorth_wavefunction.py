@@ -5,7 +5,7 @@ A parameterized multideterminantal wavefunction can be written as
 ..math::
     \ket{\Psi} = \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
 
-where :math:`\ket{mathbf{m}}` is a Slater determinant. If the Slater determinants are constructed
+where :math:`\ket{\mathbf{m}}` is a Slater determinant. If the Slater determinants are constructed
 from nonorthonormal orbitals, then each Slater determinant can be expressed as a linear combination
 of Slater determinants constructed from orthonormal orbitals.
 
@@ -15,7 +15,14 @@ of Slater determinants constructed from orthonormal orbitals.
     &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}}
     |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}\\
     &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
-    |f(\mathbf{n}) C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+    f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+
+where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed from
+orthonormal and nonorthonormal orbitals.
+The nonorthonormal orbitals are constructed by linearly transforming the orbitals of
+:math:`\ket{\mathbf{m}}` with :math:`C`.
+The :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of :math:`C` where rows are selected according
+to :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
 """
 from __future__ import absolute_import, division, print_function
 import itertools as it
@@ -28,6 +35,7 @@ from ..ci.ci_wavefunction import CIWavefunction
 __all__ = []
 
 
+# FIXME: needs refactoring
 class NonorthWavefunction(BaseWavefunction):
     """Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
@@ -256,6 +264,8 @@ class NonorthWavefunction(BaseWavefunction):
         self.params = params
 
     # FIXME: incredibly slow/bad approach
+    # TODO: instead of all possible combinations (itertools), have something that selects a smaller
+    #       subset
     def get_overlap(self, sd, deriv=None):
         """Return the overlap of the wavefunction with an orthonormal Slater determinant.
 
