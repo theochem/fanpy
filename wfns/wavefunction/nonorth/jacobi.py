@@ -269,24 +269,22 @@ class JacobiWavefunction(BaseWavefunction):
                 if self.memory == np.inf:
                     memory = None
                 else:
-                    memory = int((self.memory - 5*8*sum(self.nparams)) / (sum(self.nparams) + 1))
+                    memory = int((self.memory - 5*8*self.nparams) / (self.nparams + 1))
 
                 # create function that will be cached
                 @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp(sd):
                     p, q = self.jacobi_indices
-                    theta = self.params[0]
+                    theta = self.params
                     if self.orbtype in ['generalized', 'unrestricted']:
                         if slater.occ(sd, p) == slater.occ(sd, q):
                             return self.wfn.get_overlap(sd)
                         elif slater.occ(sd, p) and not slater.occ(sd, q):
                             return (self.wfn.get_overlap(sd) * np.cos(theta) +
-                                    self.wfn.get_overlap(slater.excite(sd, p, q))
-                                    * np.sin(theta))
+                                    self.wfn.get_overlap(slater.excite(sd, p, q)) * np.sin(theta))
                         elif not slater.occ(sd, p) and slater.occ(sd, q):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta)
-                                    - self.wfn.get_overlap(slater.excite(sd, q, p))
-                                    * np.sin(theta))
+                            return (self.wfn.get_overlap(sd) * np.cos(theta) -
+                                    self.wfn.get_overlap(slater.excite(sd, q, p)) * np.sin(theta))
                     else:
                         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
                         # alpha block contains both p and q or neither p and q
@@ -392,13 +390,13 @@ class JacobiWavefunction(BaseWavefunction):
                 if self.memory == np.inf:
                     memory = None
                 else:
-                    memory = int((self.memory - 5*8*sum(self.nparams))
-                                 / (sum(self.nparams) + 1) * sum(self.nparams))
+                    memory = int((self.memory - 5*8*self.nparams)
+                                 / (self.nparams + 1) * self.nparams)
 
                 @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp_deriv(sd, deriv):
                     p, q = self.jacobi_indices
-                    theta = self.params[0]
+                    theta = self.params
                     if self.orbtype in ['generalized', 'unrestricted']:
                         if slater.occ(sd, p) == slater.occ(sd, q):
                             return 0.0
