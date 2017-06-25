@@ -633,17 +633,17 @@ def test_find_num_trans_swap():
     assert_raises(ValueError, slater.find_num_trans_swap, 0b00, 0, 1)
     assert_raises(ValueError, slater.find_num_trans_swap, 0b11, 0, 1)
 
-    assert slater.find_num_trans_swap(0b000001, 0, 1) == 1
-    assert slater.find_num_trans_swap(0b000001, 0, 2) == 1
-    assert slater.find_num_trans_swap(0b000011, 0, 2) == 2
-    assert slater.find_num_trans_swap(0b000001, 0, 3) == 1
-    assert slater.find_num_trans_swap(0b000011, 0, 3) == 2
-    assert slater.find_num_trans_swap(0b000101, 0, 3) == 2
-    assert slater.find_num_trans_swap(0b000111, 0, 3) == 3
-    assert slater.find_num_trans_swap(0b000010, 1, 0) == 1
-    assert slater.find_num_trans_swap(0b000100, 2, 0) == 1
-    assert slater.find_num_trans_swap(0b000110, 2, 0) == 2
-    assert slater.find_num_trans_swap(0b001000, 3, 0) == 1
-    assert slater.find_num_trans_swap(0b001010, 3, 0) == 2
-    assert slater.find_num_trans_swap(0b001100, 3, 0) == 2
-    assert slater.find_num_trans_swap(0b001110, 3, 0) == 3
+    assert slater.find_num_trans_swap(0b000001, 0, 1) == 0
+    assert slater.find_num_trans_swap(0b000001, 0, 2) == 0
+    assert slater.find_num_trans_swap(0b000011, 0, 2) == 1
+    assert slater.find_num_trans_swap(0b000001, 0, 3) == 0
+    assert slater.find_num_trans_swap(0b000011, 0, 3) == 1
+    assert slater.find_num_trans_swap(0b000101, 0, 3) == 1
+    assert slater.find_num_trans_swap(0b000111, 0, 3) == 2
+    assert slater.find_num_trans_swap(0b000010, 1, 0) == 0
+    assert slater.find_num_trans_swap(0b000100, 2, 0) == 0
+    assert slater.find_num_trans_swap(0b000110, 2, 0) == 1
+    assert slater.find_num_trans_swap(0b001000, 3, 0) == 0
+    assert slater.find_num_trans_swap(0b001010, 3, 0) == 1
+    assert slater.find_num_trans_swap(0b001100, 3, 0) == 1
+    assert slater.find_num_trans_swap(0b001110, 3, 0) == 2

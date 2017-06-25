@@ -881,7 +881,7 @@ def find_num_trans_swap(sd, pos_current, pos_future):
     if pos_current > pos_future:
         pos_current, pos_future = pos_future, pos_current
 
-    output = 1
+    output = 0
     pos_last = pos_current
     while True:
         pos_last = gmpy2.bit_scan1(sd, pos_last + 1)
