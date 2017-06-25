@@ -540,7 +540,7 @@ def deinterleave_index(i, nspatial):
         raise ValueError('Index must be greater than or equal to zero')
     elif i >= 2*nspatial:
         raise ValueError('Index must be less than the number of spin orbitals')
-    if i%2 == 0:
+    if i % 2 == 0:
         return i//2
     else:
         return i//2 + nspatial
@@ -839,3 +839,54 @@ def find_num_trans_dumb(jumbled_set, ordered_set=None, is_creator=True):
             elif j == i:
                 break
     return num_trans
+
+
+# FIXME: location? and pretty similar to occ_indices
+def find_num_trans_swap(sd, pos_current, pos_future):
+    """ Finds the number of transpositions necessary to swap one orbital into the given position.
+
+    Parameters
+    ----------
+    sd : int
+        Integer that describes the occupation of a Slater determinant as a bitstring
+    pos_current : int
+        Position of the orbital that needs to be moved
+    pos_future : int
+        Position to which the orbital is moved
+
+    Returns
+    -------
+    num_trans : int
+        Number of hops needed to move the orbital
+
+    Raises
+    ------
+    ValueError
+        If Slater determinant is None
+        If position is not a positive integer
+        If current orbital position is not occupied
+        If future orbital position is occupied
+    """
+    if sd is None:
+        raise ValueError('Bad Slater determinant is given.')
+    if not (isinstance(pos_current, int) and 0 <= pos_current):
+        raise ValueError('The current orbital position must be a positive integer.')
+    if not (isinstance(pos_future, int) and 0 <= pos_future):
+        raise ValueError('The future orbital position must be a positive integer.')
+    if not occ(sd, pos_current):
+        raise ValueError('Given orbital is not occupied in the given Slater determinant.')
+    if occ(sd, pos_future):
+        raise ValueError('Given future orbital is occupied in the given Slater determinant.')
+
+    if pos_current > pos_future:
+        pos_current, pos_future = pos_future, pos_current
+
+    output = 1
+    pos_last = pos_current
+    while True:
+        pos_last = gmpy2.bit_scan1(sd, pos_last + 1)
+        if pos_last is None or pos_last >= pos_future:
+            break
+        else:
+            output += 1
+    return output
