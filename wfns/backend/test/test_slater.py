@@ -517,6 +517,7 @@ def test_find_num_trans():
     assert slater.find_num_trans([6, 4, 1, 3], [1, 3, 4, 6], is_creator=True) == 5
     assert slater.find_num_trans([6, 4, 3, 1], [1, 3, 4, 6], is_creator=True) == 6
 
+
 def test_find_num_trans_dumb():
     """
     Test slater.find_num_trans_dumb
@@ -620,3 +621,29 @@ def test_find_num_trans_dumb():
     assert slater.find_num_trans_dumb([6, 3, 4, 1], [1, 3, 4, 6], is_creator=True) == 5
     assert slater.find_num_trans_dumb([6, 4, 1, 3], [1, 3, 4, 6], is_creator=True) == 5
     assert slater.find_num_trans_dumb([6, 4, 3, 1], [1, 3, 4, 6], is_creator=True) == 6
+
+
+def test_find_num_trans_swap():
+    """
+    Test slater.find_num_trans_swap.
+    """
+    assert_raises(ValueError, slater.find_num_trans_swap, None, 0, 1)
+    assert_raises(ValueError, slater.find_num_trans_swap, 0b01, -1, 1)
+    assert_raises(ValueError, slater.find_num_trans_swap, 0b01, 0, -1)
+    assert_raises(ValueError, slater.find_num_trans_swap, 0b00, 0, 1)
+    assert_raises(ValueError, slater.find_num_trans_swap, 0b11, 0, 1)
+
+    assert slater.find_num_trans_swap(0b000001, 0, 1) == 1
+    assert slater.find_num_trans_swap(0b000001, 0, 2) == 1
+    assert slater.find_num_trans_swap(0b000011, 0, 2) == 2
+    assert slater.find_num_trans_swap(0b000001, 0, 3) == 1
+    assert slater.find_num_trans_swap(0b000011, 0, 3) == 2
+    assert slater.find_num_trans_swap(0b000101, 0, 3) == 2
+    assert slater.find_num_trans_swap(0b000111, 0, 3) == 3
+    assert slater.find_num_trans_swap(0b000010, 1, 0) == 1
+    assert slater.find_num_trans_swap(0b000100, 2, 0) == 1
+    assert slater.find_num_trans_swap(0b000110, 2, 0) == 2
+    assert slater.find_num_trans_swap(0b001000, 3, 0) == 1
+    assert slater.find_num_trans_swap(0b001010, 3, 0) == 2
+    assert slater.find_num_trans_swap(0b001100, 3, 0) == 2
+    assert slater.find_num_trans_swap(0b001110, 3, 0) == 3
