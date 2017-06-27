@@ -262,6 +262,7 @@ class JacobiWavefunction(BaseWavefunction):
         TypeError
             If given Slater determinant is not compatible with the format used internally
         """
+        # FIXME: use function in slater that converts spatial index into spin index
         if deriv is None:
             # if cached function has not been created yet
             if 'overlap' not in self._cache_fns:
@@ -275,18 +276,23 @@ class JacobiWavefunction(BaseWavefunction):
                 @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp(sd):
                     p, q = self.jacobi_indices
-                    theta = self.params
+                    ns = self.nspatial
+                    sin = np.sin(self.params)
+                    cos = np.cos(self.params)
                     if self.orbtype in ['generalized', 'unrestricted']:
                         if slater.occ(sd, p) == slater.occ(sd, q):
                             return self.wfn.get_overlap(sd)
                         elif slater.occ(sd, p) and not slater.occ(sd, q):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) +
-                                    self.wfn.get_overlap(slater.excite(sd, p, q)) * np.sin(theta))
+                            # get signature for the excited Slater determinant
+                            sign = (-1) ** slater.find_num_trans_swap(sd, p, q)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    + sign * sin * self.wfn.get_overlap(slater.excite(sd, p, q)))
                         elif not slater.occ(sd, p) and slater.occ(sd, q):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd, q, p)) * np.sin(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(sd, q, p)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    - sign * sin * self.wfn.get_overlap(slater.excite(sd, q, p)))
                     else:
-                        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
+                        alpha_sd, beta_sd = slater.split_spin(sd, ns)
                         # alpha block contains both p and q or neither p and q
                         # beta block contains both p and q or neither p and q
                         if (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
@@ -295,83 +301,87 @@ class JacobiWavefunction(BaseWavefunction):
                         # beta block contains p and not q
                         elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) +
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p + self.nspatial,
-                                                                       q + self.nspatial))
-                                    * np.sin(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    + sin * sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      p + ns,
+                                                                                      q + ns)))
                         # beta block contains q and not p
                         elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       q + self.nspatial,
-                                                                       p + self.nspatial))
-                                    * np.sin(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    - sign * sin * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      q + ns,
+                                                                                      p + ns)))
                         # alpha block contains p and not q
                         # beta block contains both p and q or neither p and q
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd, p, q)) * np.sin(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    + sign * sin * self.wfn.get_overlap(slater.excite(sd, p, q)))
                         # beta block contains p and not q
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (np.cos(theta)**2) +
-                                    (self.wfn.get_overlap(slater.excite(sd, p, q)) +
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        p + self.nspatial,
-                                                                        q + self.nspatial)))
-                                    * np.cos(theta) * np.sin(theta) +
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p, p + self.nspatial,
-                                                                       q, q + self.nspatial))
-                                    * (np.sin(theta)**2))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (cos**2 * self.wfn.get_overlap(sd)
+                                    + (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
+                                       + beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        p + ns,
+                                                                                        q + ns))) *
+                                    cos * sin
+                                    + alpha_sign * beta_sign * sin**2 *
+                                    self.wfn.get_overlap(slater.excite(sd, p, p + ns, q, q + ns)))
                         # beta block contains q and not p
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (np.cos(theta)**2) +
-                                    (self.wfn.get_overlap(slater.excite(sd, p, q)) -
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        q + self.nspatial,
-                                                                        p + self.nspatial)))
-                                    * np.cos(theta) * np.sin(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p, q + self.nspatial,
-                                                                       q, p + self.nspatial))
-                                    * (np.sin(theta)**2))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (cos**2 * self.wfn.get_overlap(sd)
+                                    + (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
+                                       - beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        q + ns,
+                                                                                        p + ns))) *
+                                    cos * sin
+                                    - alpha_sign * beta_sign * sin**2 *
+                                    self.wfn.get_overlap(slater.excite(sd, p, q + ns, q, p + ns)))
                         # alpha block contains q and not p
                         # beta block contains both p and q or neither p and q
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * np.cos(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd, q, p)) * np.sin(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            return (cos * self.wfn.get_overlap(sd)
+                                    - sign * sin * self.wfn.get_overlap(slater.excite(sd, q, p)))
                         # beta block contains p and not q
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (np.cos(theta)**2) +
-                                    (-self.wfn.get_overlap(slater.excite(sd, q, p)) +
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        p + self.nspatial,
-                                                                        q + self.nspatial)))
-                                    * np.cos(theta) * np.sin(theta) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       q, p + self.nspatial,
-                                                                       p, q + self.nspatial))
-                                    * (np.sin(theta)**2))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (cos**2 * self.wfn.get_overlap(sd)
+                                    + (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p)) +
+                                       beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      p + ns,
+                                                                                      q + ns)))
+                                    * cos * sin
+                                    - alpha_sign * beta_sign * sin**2 *
+                                    self.wfn.get_overlap(slater.excite(sd, q, p + ns, p, q + ns)))
                         # beta block contains q and not p
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (np.cos(theta)**2) +
-                                    (-self.wfn.get_overlap(slater.excite(sd, q, p)) -
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        q + self.nspatial,
-                                                                        p + self.nspatial)))
-                                    * np.cos(theta) * np.sin(theta) +
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (cos**2 * self.wfn.get_overlap(sd)
+                                    + (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p))
+                                       - beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        q + ns,
+                                                                                        p + ns)))
+                                    * cos * sin
+                                    + alpha_sign * beta_sign * sin**2 *
                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                       q, q + self.nspatial,
-                                                                       p, p + self.nspatial))
-                                    * (np.sin(theta)**2))
+                                                                       q, q + ns,
+                                                                       p, p + ns)))
 
                 # store the cached function
                 self._cache_fns['overlap'] = _olp
@@ -396,20 +406,28 @@ class JacobiWavefunction(BaseWavefunction):
                 @functools.lru_cache(maxsize=memory, typed=False)
                 def _olp_deriv(sd, deriv):
                     p, q = self.jacobi_indices
-                    theta = self.params
+                    ns = self.nspatial
+                    sin = np.sin(self.params)
+                    cos = np.cos(self.params)
+                    if self.orbtype in ['generalized', 'unrestricted']:
+                        pass
+                    else:
+                        alpha_sd, beta_sd = slater.split_spin(sd, ns)
+
                     if self.orbtype in ['generalized', 'unrestricted']:
                         if slater.occ(sd, p) == slater.occ(sd, q):
                             return 0.0
                         elif slater.occ(sd, p) and not slater.occ(sd, q):
-                            return (-self.wfn.get_overlap(sd, deriv=None) * np.sin(theta)
-                                    + self.wfn.get_overlap(slater.excite(sd, p, q), deriv=None)
-                                    * np.cos(theta))
+                            # get signature for the excited Slater determinant
+                            sign = (-1) ** slater.find_num_trans_swap(sd, p, q)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    + sign * cos * self.wfn.get_overlap(slater.excite(sd, p, q)))
                         elif not slater.occ(sd, p) and slater.occ(sd, q):
-                            return (-self.wfn.get_overlap(sd, deriv=None) * np.sin(theta)
-                                    - self.wfn.get_overlap(slater.excite(sd, q, p), deriv=None)
-                                    * np.cos(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(sd, q, p)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    - sign * cos * self.wfn.get_overlap(slater.excite(sd, q, p)))
                     else:
-                        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
+                        alpha_sd, beta_sd = slater.split_spin(sd, ns)
                         # alpha block contains both p and q or neither p and q
                         # beta block contains both p and q or neither p and q
                         if (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
@@ -418,83 +436,87 @@ class JacobiWavefunction(BaseWavefunction):
                         # beta block contains p and not q
                         elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-np.sin(theta)) +
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p + self.nspatial,
-                                                                       q + self.nspatial))
-                                    * np.cos(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    + cos * sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      p + ns,
+                                                                                      q + ns)))
                         # beta block contains q and not p
                         elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-np.sin(theta)) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       q + self.nspatial,
-                                                                       p + self.nspatial))
-                                    * np.cos(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    - sign * cos * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      q + ns,
+                                                                                      p + ns)))
                         # alpha block contains p and not q
                         # beta block contains both p and q or neither p and q
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-np.sin(theta)) -
-                                    self.wfn.get_overlap(slater.excite(sd, p, q)) * np.cos(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    + sign * cos * self.wfn.get_overlap(slater.excite(sd, p, q)))
                         # beta block contains p and not q
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-2 * np.cos(theta)*np.sin(theta)) +
-                                    (self.wfn.get_overlap(slater.excite(sd, p, q)) +
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        p + self.nspatial,
-                                                                        q + self.nspatial)))
-                                    * (-np.sin(theta)*np.sin(theta) + np.cos(theta)*np.cos(theta)) +
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p, p + self.nspatial,
-                                                                       q, q + self.nspatial))
-                                    * (2 * np.sin(theta) * np.cos(theta)))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (-2*cos*sin * self.wfn.get_overlap(sd)
+                                    + (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
+                                       + beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        p + ns,
+                                                                                        q + ns))) *
+                                    (cos*cos - sin*sin)
+                                    + alpha_sign * beta_sign * 2*sin*cos *
+                                    self.wfn.get_overlap(slater.excite(sd, p, p + ns, q, q + ns)))
                         # beta block contains q and not p
                         elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-2 * np.cos(theta)*np.sin(theta)) +
-                                    (self.wfn.get_overlap(slater.excite(sd, p, q)) -
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        q + self.nspatial,
-                                                                        p + self.nspatial)))
-                                    * (-np.sin(theta)*np.sin(theta) + np.cos(theta)*np.cos(theta)) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       p, q + self.nspatial,
-                                                                       q, p + self.nspatial))
-                                    * (2 * np.sin(theta) * np.cos(theta)))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, p, q)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (-2*cos*sin * self.wfn.get_overlap(sd)
+                                    + (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
+                                       - beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        q + ns,
+                                                                                        p + ns))) *
+                                    (cos*cos - sin*sin)
+                                    - alpha_sign * beta_sign * 2*sin*cos *
+                                    self.wfn.get_overlap(slater.excite(sd, p, q + ns, q, p + ns)))
                         # alpha block contains q and not p
                         # beta block contains both p and q or neither p and q
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-np.sin(theta)) -
-                                    self.wfn.get_overlap(slater.excite(sd, q, p)) * np.cos(theta))
+                            sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            return (-sin * self.wfn.get_overlap(sd)
+                                    - sign * cos * self.wfn.get_overlap(slater.excite(sd, q, p)))
                         # beta block contains p and not q
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-2 * np.cos(theta)*np.sin(theta)) +
-                                    (-self.wfn.get_overlap(slater.excite(sd, q, p)) +
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        p + self.nspatial,
-                                                                        q + self.nspatial)))
-                                    * (-np.sin(theta)*np.sin(theta) + np.cos(theta)*np.cos(theta)) -
-                                    self.wfn.get_overlap(slater.excite(sd,
-                                                                       q, p + self.nspatial,
-                                                                       p, q + self.nspatial))
-                                    * (2 * np.sin(theta) * np.cos(theta)))
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, p, q)
+                            return (-2*cos*sin * self.wfn.get_overlap(sd)
+                                    + (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p)) +
+                                       beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                      p + ns,
+                                                                                      q + ns))) *
+                                    (cos*cos - sin*sin)
+                                    - alpha_sign * beta_sign * 2*sin*cos *
+                                    self.wfn.get_overlap(slater.excite(sd, q, p + ns, p, q + ns)))
                         # beta block contains q and not p
                         elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                               not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                            return (self.wfn.get_overlap(sd) * (-2 * np.cos(theta)*np.sin(theta)) +
-                                    (-self.wfn.get_overlap(slater.excite(sd, q, p)) -
-                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                        q + self.nspatial,
-                                                                        p + self.nspatial)))
-                                    * (-np.sin(theta)*np.sin(theta) + np.cos(theta)*np.cos(theta)) +
+                            alpha_sign = (-1) ** slater.find_num_trans_swap(alpha_sd, q, p)
+                            beta_sign = (-1) ** slater.find_num_trans_swap(beta_sd, q, p)
+                            return (-2*cos*sin * self.wfn.get_overlap(sd)
+                                    + (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p))
+                                       - beta_sign * self.wfn.get_overlap(slater.excite(sd,
+                                                                                        q + ns,
+                                                                                        p + ns))) *
+                                    (cos*cos - sin*sin)
+                                    + alpha_sign * beta_sign * 2*sin*cos *
                                     self.wfn.get_overlap(slater.excite(sd,
-                                                                       q, q + self.nspatial,
-                                                                       p, p + self.nspatial))
-                                    * (2 * np.sin(theta) * np.cos(theta)))
+                                                                       q, q + ns,
+                                                                       p, p + ns)))
 
                 # store the cached function
                 self._cache_fns['overlap derivative'] = _olp_deriv
