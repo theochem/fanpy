@@ -19,6 +19,59 @@ def test_jacobi_template_params():
     assert np.allclose(test.template_params, [0])
 
 
+def test_jacobi_jacobi_rotation():
+    """Tests JacobiWavefunction.jacobi_rotation."""
+    test = TestJacobiWavefunction()
+    theta = 2 * np.pi * (np.random.random() - 0.5)
+    test.dtype = float
+    test.params = np.array(theta)
+    test.nspin = 6
+
+    # generalized
+    test.orbtype = 'generalized'
+    test.jacobi_indices = (0, 4)
+    answer = np.identity(6)
+    answer[0, 0] = np.cos(theta)
+    answer[0, 4] = np.sin(theta)
+    answer[4, 0] = -np.sin(theta)
+    answer[4, 4] = np.cos(theta)
+    assert len(test.jacobi_rotation) == 1
+    assert np.allclose(test.jacobi_rotation[0], answer)
+
+    # restricted
+    test.orbtype = 'restricted'
+    test.jacobi_indices = (0, 2)
+    answer = np.identity(3)
+    answer[0, 0] = np.cos(theta)
+    answer[0, 2] = np.sin(theta)
+    answer[2, 0] = -np.sin(theta)
+    answer[2, 2] = np.cos(theta)
+    assert len(test.jacobi_rotation) == 1
+    assert np.allclose(test.jacobi_rotation[0], answer)
+
+    # unrestricted
+    test.orbtype = 'unrestricted'
+    test.jacobi_indices = (0, 2)
+    answer = np.identity(3)
+    answer[0, 0] = np.cos(theta)
+    answer[0, 2] = np.sin(theta)
+    answer[2, 0] = -np.sin(theta)
+    answer[2, 2] = np.cos(theta)
+    assert len(test.jacobi_rotation) == 2
+    assert np.allclose(test.jacobi_rotation[0], answer)
+    assert np.allclose(test.jacobi_rotation[1], np.identity(3))
+
+    test.jacobi_indices = (3, 4)
+    answer = np.identity(3)
+    answer[0, 0] = np.cos(theta)
+    answer[0, 1] = np.sin(theta)
+    answer[1, 0] = -np.sin(theta)
+    answer[1, 1] = np.cos(theta)
+    assert len(test.jacobi_rotation) == 2
+    assert np.allclose(test.jacobi_rotation[0], np.identity(3))
+    assert np.allclose(test.jacobi_rotation[1], answer)
+
+
 def test_jacobi_assign_orbtype():
     """Test JacobiWavefunction.assign_orbtype."""
     test = TestJacobiWavefunction()
