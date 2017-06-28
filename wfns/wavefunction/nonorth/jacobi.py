@@ -151,6 +151,43 @@ class JacobiWavefunction(BaseWavefunction):
         """
         return np.array(0.0)
 
+    @property
+    def jacobi_rotation(self):
+        """Returns the rotation matrix that corresponds given parameter.
+
+        Returns
+        -------
+        jacobi_rotation : tuple of np.ndarray
+            If the orbitals are restricted, then the rotation matrix for the spatial orbitals is
+            returned
+            If the orbitals are unrestricted, then the rotation matrices for alpha and beta orbitals
+            are returned
+            If the orbitals are generalized, then the rotation matrices for spin orbitals are
+            returned
+        """
+        if self.orbtype in ['restricted', 'unrestricted']:
+            jacobi_rotation = np.identity(self.nspatial, dtype=self.dtype)
+        else:
+            jacobi_rotation = np.identity(self.nspin, dtype=self.dtype)
+
+        p, q = self.jacobi_indices
+        # FIXME: use function that converts spin to spatial
+        if self.orbtype == 'unrestricted' and p >= self.nspatial <= q:
+            p -= self.nspatial
+            q -= self.nspatial
+
+        jacobi_rotation[p, p] = np.cos(self.params)
+        jacobi_rotation[p, q] = np.sin(self.params)
+        jacobi_rotation[q, p] = -np.sin(self.params)
+        jacobi_rotation[q, q] = np.cos(self.params)
+
+        if self.orbtype in ['restricted', 'generalized']:
+            return (jacobi_rotation, )
+        elif all(i < self.nspatial for i in self.jacobi_indices):
+            return (jacobi_rotation, np.identity(self.nspatial, dtype=self.dtype))
+        else:
+            return (np.identity(self.nspatial, dtype=self.dtype), jacobi_rotation)
+
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type of the orbital rotation.
 
