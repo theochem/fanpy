@@ -199,6 +199,75 @@ class OneElectronIntegrals(BaseIntegrals):
             raise TypeError('Unknown orbital type, {0}'.format(orbtype))
         return 0.0
 
+    # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
+    def rotate_jacobi(self, jacobi_indices, theta):
+        """Apply Jacobi rotation to the integrals (orbitals).
+
+        .. math::
+            J_{pq}
+
+        Parameters
+        ----------
+        jacobi_indices : tuple/list of ints
+            2-tuple/list of indices of the orbitals that will be rotated
+        theta : float
+            Angle with which the orbitals are rotated
+
+        TypeError
+            If `jacobi_indices` is not a tuple or list
+            If `jacobi_indices` does not have two elements
+            If `jacobi_indices` does not only contain integers
+            If `theta` is not a single float
+        ValueError
+            If the indices are negative.
+            If the two indices are the same
+        """
+        # FIXME: this part is duplicated
+        if not isinstance(jacobi_indices, (tuple, list)):
+            raise TypeError('Indices `jacobi_indices` must be a tuple or list.')
+        elif len(jacobi_indices) != 2:
+            raise TypeError('Indices `jacobi_indices` must be have two elements.')
+        elif not all(isinstance(i, int) for i in jacobi_indices):
+            raise TypeError('Indices `jacobi_indices` must only contain integers.')
+        if not all(0 <= i for i in jacobi_indices):
+            raise ValueError('Indices cannot be negative.')
+        if jacobi_indices[0] == jacobi_indices[1]:
+            raise ValueError('Two indices are the same.')
+        if (self.possible_orbtypes == ('restricted', 'generalized')
+                and any(i >= self.num_orbs for i in jacobi_indices)):
+            raise ValueError('Indices for Jacobi rotation are greater than the number of '
+                             'orbitals')
+        elif self.possible_orbtypes == ('unrestricted', ):
+            if any(i >= 2*self.num_orbs for i in jacobi_indices):
+                raise ValueError('Indices for Jacobi rotation are greater than the number of '
+                                 'orbitals')
+            elif jacobi_indices[0] // self.num_orbs != jacobi_indices[1] // self.num_orbs:
+                raise ValueError('Indices for Jacobi rotation cannot mix alpha and beta orbitals.')
+
+        if not (isinstance(theta, float) or (isinstance(theta, np.ndarray) and theta.size == 1)):
+            raise TypeError('Angle `theta` must be a single float.')
+
+        p, q = jacobi_indices
+        if p > q:
+            p, q = q, p
+
+        if len(self.integrals) == 2:
+            spin_index = p // self.num_orbs
+            p, q = p % self.num_orbs, q % self.num_orbs
+        else:
+            spin_index = 0
+
+        p_col = self.integrals[spin_index][:, p]
+        q_col = self.integrals[spin_index][:, q]
+        (self.integrals[spin_index][:, p],
+         self.integrals[spin_index][:, q]) = (np.cos(theta)*p_col - np.sin(theta)*q_col,
+                                              np.sin(theta)*p_col + np.cos(theta)*q_col)
+        p_row = self.integrals[spin_index][p, :]
+        q_row = self.integrals[spin_index][q, :]
+        (self.integrals[spin_index][p, :],
+         self.integrals[spin_index][q, :]) = (np.cos(theta)*p_row - np.sin(theta)*q_row,
+                                              np.sin(theta)*p_row + np.cos(theta)*q_row)
+
 
 class TwoElectronIntegrals(BaseIntegrals):
     """Class for storing two-electron integrals.
@@ -372,3 +441,105 @@ class TwoElectronIntegrals(BaseIntegrals):
         else:
             raise TypeError('Unknown orbital type, {0}'.format(orbtype))
         return 0.0
+
+    # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
+    def rotate_jacobi(self, jacobi_indices, theta):
+        """Apply Jacobi rotation to the integrals (orbitals).
+
+        Parameters
+        ----------
+        jacobi_indices : tuple/list of ints
+            2-tuple/list of indices of the orbitals that will be rotated
+        theta : float
+            Angle with which the orbitals are rotated
+
+        TypeError
+            If `jacobi_indices` is not a tuple or list
+            If `jacobi_indices` does not have two elements
+            If `jacobi_indices` does not only contain integers
+            If `theta` is not a single float
+        ValueError
+            If the indices are negative.
+            If the two indices are the same
+        """
+        # FIXME: this part is duplicated
+        if not isinstance(jacobi_indices, (tuple, list)):
+            raise TypeError('Indices `jacobi_indices` must be a tuple or list.')
+        elif len(jacobi_indices) != 2:
+            raise TypeError('Indices `jacobi_indices` must be have two elements.')
+        elif not all(isinstance(i, int) for i in jacobi_indices):
+            raise TypeError('Indices `jacobi_indices` must only contain integers.')
+        if not all(0 <= i for i in jacobi_indices):
+            raise ValueError('Indices cannot be negative.')
+        if jacobi_indices[0] == jacobi_indices[1]:
+            raise ValueError('Two indices are the same.')
+        if (self.possible_orbtypes == ('restricted', 'generalized')
+                and any(i >= self.num_orbs for i in jacobi_indices)):
+            raise ValueError('Indices for Jacobi rotation are greater than the number of '
+                             'orbitals')
+        elif self.possible_orbtypes == ('unrestricted', ):
+            if any(i >= 2*self.num_orbs for i in jacobi_indices):
+                raise ValueError('Indices for Jacobi rotation are greater than the number of '
+                                 'orbitals')
+            elif (jacobi_indices[0] // self.num_orbs) != (jacobi_indices[1] // self.num_orbs):
+                raise ValueError('Indices for Jacobi rotation cannot mix alpha and beta orbitals.')
+
+        if not (isinstance(theta, float) or (isinstance(theta, np.ndarray) and theta.size == 1)):
+            raise TypeError('Angle `theta` must be a single float.')
+
+        p, q = jacobi_indices
+        if p > q:
+            p, q = q, p
+
+        if self.possible_orbtypes == ('unrestricted', ):
+            spin_index = 2 if p // self.num_orbs == 1 else 0
+            p, q = p % self.num_orbs, q % self.num_orbs
+        else:
+            spin_index = 0
+
+        p_slice = self.integrals[spin_index][:, :, :, p]
+        q_slice = self.integrals[spin_index][:, :, :, q]
+        (self.integrals[spin_index][:, :, :, p],
+         self.integrals[spin_index][:, :, :, q]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                                    np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+
+        p_slice = self.integrals[spin_index][:, :, p, :]
+        q_slice = self.integrals[spin_index][:, :, q, :]
+        (self.integrals[spin_index][:, :, p, :],
+         self.integrals[spin_index][:, :, q, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                                    np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+
+        p_slice = self.integrals[spin_index][:, p, :, :]
+        q_slice = self.integrals[spin_index][:, q, :, :]
+        (self.integrals[spin_index][:, p, :, :],
+         self.integrals[spin_index][:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                                    np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+
+        p_slice = self.integrals[spin_index][p, :, :, :]
+        q_slice = self.integrals[spin_index][q, :, :, :]
+        (self.integrals[spin_index][p, :, :, :],
+         self.integrals[spin_index][q, :, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                                    np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+
+        if self.possible_orbtypes == ('unrestricted', ) and spin_index == 0:
+            p_slice = self.integrals[1][:, :, p, :]
+            q_slice = self.integrals[1][:, :, q, :]
+            (self.integrals[1][:, :, p, :],
+             self.integrals[1][:, :, q, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                               np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            p_slice = self.integrals[1][p, :, :, :]
+            q_slice = self.integrals[1][q, :, :, :]
+            (self.integrals[1][p, :, :, :],
+             self.integrals[1][q, :, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                               np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        elif self.possible_orbtypes == ('unrestricted', ) and spin_index == 2:
+            p_slice = self.integrals[1][:, :, :, p]
+            q_slice = self.integrals[1][:, :, :, q]
+            (self.integrals[1][:, :, :, p],
+             self.integrals[1][:, :, :, q]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                               np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            p_slice = self.integrals[1][:, p, :, :]
+            q_slice = self.integrals[1][:, q, :, :]
+            (self.integrals[1][:, p, :, :],
+             self.integrals[1][:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
+                                               np.sin(theta)*p_slice + np.cos(theta)*q_slice)

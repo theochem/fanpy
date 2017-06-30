@@ -1,6 +1,7 @@
 """Test wfns.backend.integrals
 """
 from nose.tools import assert_raises
+import itertools as it
 import numpy as np
 from wfns.backend.integrals import BaseIntegrals, OneElectronIntegrals, TwoElectronIntegrals
 
@@ -130,6 +131,73 @@ def test_one_get_value():
     assert test.get_value(5, 5, 'generalized') == 45.0
 
 
+def test_one_rotate_jacobi():
+    """Test wfns.backend.integrals.OneElectronIntegrals.rotate_jacobi."""
+    # check errors
+    one_int = np.arange(16, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals(one_int)
+
+    assert_raises(TypeError, test.rotate_jacobi, set([0, 1]), 0)
+    assert_raises(TypeError, test.rotate_jacobi, np.array([1, 2]), 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1, 2], 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, '1'], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, -1], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 0], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 4], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [5, 4], 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1], 0+0j)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1], np.array([0, 1]))
+
+    test = OneElectronIntegrals([one_int, one_int])
+    assert_raises(ValueError, test.rotate_jacobi, [4, 8], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 7], 0)
+
+    # restricted and generalized
+    one_int = np.arange(16, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals(one_int)
+    theta = 2 * np.pi * (np.random.random() - 0.5)
+    answer = np.copy(one_int)
+
+    for p, q in it.combinations(range(4), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p, p] = np.cos(theta)
+        jacobi_rotation[p, q] = np.sin(theta)
+        jacobi_rotation[q, p] = -np.sin(theta)
+        jacobi_rotation[q, q] = np.cos(theta)
+        answer = jacobi_rotation.T.dot(answer).dot(jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer)
+
+    # unrestricted
+    one_int_alpha = np.arange(16, dtype=float).reshape(4, 4)
+    one_int_beta = np.arange(16, 32, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals([one_int_alpha, one_int_beta])
+    answer_alpha = np.copy(one_int_alpha)
+    answer_beta = np.copy(one_int_beta)
+
+    for p, q in it.combinations(range(4), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p, p] = np.cos(theta)
+        jacobi_rotation[p, q] = np.sin(theta)
+        jacobi_rotation[q, p] = -np.sin(theta)
+        jacobi_rotation[q, q] = np.cos(theta)
+        answer_alpha = jacobi_rotation.T.dot(answer_alpha).dot(jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer_alpha)
+        assert np.allclose(test.integrals[1], answer_beta)
+
+    for p, q in it.combinations(range(4, 8), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p-4, p-4] = np.cos(theta)
+        jacobi_rotation[p-4, q-4] = np.sin(theta)
+        jacobi_rotation[q-4, p-4] = -np.sin(theta)
+        jacobi_rotation[q-4, q-4] = np.cos(theta)
+        answer_beta = jacobi_rotation.T.dot(answer_beta).dot(jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer_alpha)
+        assert np.allclose(test.integrals[1], answer_beta)
+
+
 def test_two_init():
     """Test wfns.backend.integrals.TwoElectronIntegrals.__init__."""
     assert_raises(TypeError, TwoElectronIntegrals, 2*(np.random.rand(4, 4, 4, 4), ))
@@ -238,3 +306,88 @@ def test_two_get_value():
     assert test.get_value(4, 0, 4, 5, 'generalized') == 2085.0
     assert test.get_value(4, 4, 0, 5, 'generalized') == 2309.0
     assert test.get_value(4, 4, 4, 5, 'generalized') == 2341.0
+
+
+def test_two_rotate_jacobi():
+    """Test wfns.backend.integrals.TwoElectronIntegrals.rotate_jacobi."""
+    # check errors
+    two_int = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals(two_int)
+
+    assert_raises(TypeError, test.rotate_jacobi, set([0, 1]), 0)
+    assert_raises(TypeError, test.rotate_jacobi, np.array([1, 2]), 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1, 2], 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, '1'], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, -1], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 0], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 4], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [5, 4], 0)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1], 0+0j)
+    assert_raises(TypeError, test.rotate_jacobi, [0, 1], np.array([0, 1]))
+
+    test = TwoElectronIntegrals([two_int, two_int, two_int])
+    assert_raises(ValueError, test.rotate_jacobi, [4, 8], 0)
+    assert_raises(ValueError, test.rotate_jacobi, [0, 7], 0)
+
+    # restricted and generalized
+    two_int = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals(two_int)
+    theta = 2 * np.pi * (np.random.random() - 0.5)
+    answer = np.copy(two_int)
+
+    for p, q in it.combinations(range(4), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p, p] = np.cos(theta)
+        jacobi_rotation[p, q] = np.sin(theta)
+        jacobi_rotation[q, p] = -np.sin(theta)
+        jacobi_rotation[q, q] = np.cos(theta)
+        answer = np.einsum('ijkl,ia->ajkl', answer, jacobi_rotation)
+        answer = np.einsum('ajkl,jb->abkl', answer, jacobi_rotation)
+        answer = np.einsum('abkl,kc->abcl', answer, jacobi_rotation)
+        answer = np.einsum('abcl,ld->abcd', answer, jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer)
+
+    # unrestricted
+    two_int_aaaa = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    two_int_abab = np.arange(256, 512, dtype=float).reshape(4, 4, 4, 4)
+    two_int_bbbb = np.arange(512, 768, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals([two_int_aaaa, two_int_abab, two_int_bbbb])
+
+    answer_aaaa = np.copy(two_int_aaaa)
+    answer_abab = np.copy(two_int_abab)
+    answer_bbbb = np.copy(two_int_bbbb)
+
+    for p, q in it.combinations(range(4), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p, p] = np.cos(theta)
+        jacobi_rotation[p, q] = np.sin(theta)
+        jacobi_rotation[q, p] = -np.sin(theta)
+        jacobi_rotation[q, q] = np.cos(theta)
+        answer_aaaa = np.einsum('ijkl,ia->ajkl', answer_aaaa, jacobi_rotation)
+        answer_aaaa = np.einsum('ajkl,jb->abkl', answer_aaaa, jacobi_rotation)
+        answer_aaaa = np.einsum('abkl,kc->abcl', answer_aaaa, jacobi_rotation)
+        answer_aaaa = np.einsum('abcl,ld->abcd', answer_aaaa, jacobi_rotation)
+        answer_abab = np.einsum('ijkl,ia->ajkl', answer_abab, jacobi_rotation)
+        answer_abab = np.einsum('ajkl,kc->ajcl', answer_abab, jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer_aaaa)
+        assert np.allclose(test.integrals[1], answer_abab)
+        assert np.allclose(test.integrals[2], answer_bbbb)
+
+    for p, q in it.combinations(range(4, 8), 2):
+        jacobi_rotation = np.identity(4)
+        jacobi_rotation[p-4, p-4] = np.cos(theta)
+        jacobi_rotation[p-4, q-4] = np.sin(theta)
+        jacobi_rotation[q-4, p-4] = -np.sin(theta)
+        jacobi_rotation[q-4, q-4] = np.cos(theta)
+        answer_abab = np.einsum('ijkl,jb->ibkl', answer_abab, jacobi_rotation)
+        answer_abab = np.einsum('ibkl,ld->ibkd', answer_abab, jacobi_rotation)
+        answer_bbbb = np.einsum('ijkl,ia->ajkl', answer_bbbb, jacobi_rotation)
+        answer_bbbb = np.einsum('ajkl,jb->abkl', answer_bbbb, jacobi_rotation)
+        answer_bbbb = np.einsum('abkl,kc->abcl', answer_bbbb, jacobi_rotation)
+        answer_bbbb = np.einsum('abcl,ld->abcd', answer_bbbb, jacobi_rotation)
+        test.rotate_jacobi((p, q), theta)
+        assert np.allclose(test.integrals[0], answer_aaaa)
+        assert np.allclose(test.integrals[1], answer_abab)
+        assert np.allclose(test.integrals[2], answer_bbbb)
