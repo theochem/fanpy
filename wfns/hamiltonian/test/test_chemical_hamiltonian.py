@@ -2,6 +2,7 @@
 import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
+import numpy as np
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.tools import find_datafile
 
@@ -257,3 +258,30 @@ def test_integrate_sd_sd_particlenum():
     assert np.allclose(sum(ham.integrate_sd_sd(civec[0], civec[1], deriv=None)), 0)
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
     assert np.allclose(sum(ham.integrate_sd_sd(civec[1], civec[1], deriv=None)), 4)
+
+
+def test_orb_rotate_jacobi():
+    """Test ChemicalHamiltonian.orb_rotate_jacobi."""
+    one_int = np.arange(1, 17, dtype=float).reshape(4, 4)
+    two_int = np.arange(1, 257, dtype=float).reshape(4, 4, 4, 4)
+    ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
+
+    theta = 2 * np.pi * (np.random.random() - 0.5)
+    p, q = 0, 3
+    jacobi_matrix = np.identity(4)
+    jacobi_matrix[p, p] = np.cos(theta)
+    jacobi_matrix[p, q] = np.sin(theta)
+    jacobi_matrix[q, p] = -np.sin(theta)
+    jacobi_matrix[q, q] = np.cos(theta)
+    one_answer = np.copy(one_int)
+    one_answer = np.einsum('ij,ia->aj', one_answer, jacobi_matrix)
+    one_answer = np.einsum('aj,jb->ab', one_answer, jacobi_matrix)
+    two_answer = np.copy(two_int)
+    two_answer = np.einsum('ijkl,ia->ajkl', two_answer, jacobi_matrix)
+    two_answer = np.einsum('ajkl,jb->abkl', two_answer, jacobi_matrix)
+    two_answer = np.einsum('abkl,kc->abcl', two_answer, jacobi_matrix)
+    two_answer = np.einsum('abcl,ld->abcd', two_answer, jacobi_matrix)
+
+    ham.orb_rotate_jacobi((p, q), theta)
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)

@@ -95,7 +95,7 @@ class ChemicalHamiltonian(object):
         """Return the data type of the integrals."""
         return self.one_int.dtype
 
-    #FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
+    # FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
 
@@ -351,3 +351,16 @@ class ChemicalHamiltonian(object):
             exchange -= sign * self.two_int.get_value(i, j, b, a, self.orbtype)
 
         return one_electron, coulomb, exchange
+
+    def orb_rotate_jacobi(self, jacobi_indices, theta):
+        """Rotate orbitals using Jacobi matrix.
+
+        Parameters
+        ----------
+        jacobi_indices : tuple/list of ints
+            2-tuple/list of indices of the orbitals that will be rotated
+        theta : float
+            Angle with which the orbitals are rotated
+        """
+        self.one_int.rotate_jacobi(jacobi_indices, theta)
+        self.two_int.rotate_jacobi(jacobi_indices, theta)
