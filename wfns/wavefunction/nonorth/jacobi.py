@@ -117,6 +117,7 @@ class JacobiWavefunction(BaseWavefunction):
             2-tuple or list of indices of the orbitals that will be rotated
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        self.assign_params(None)
         self.assign_wfn(wfn)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
