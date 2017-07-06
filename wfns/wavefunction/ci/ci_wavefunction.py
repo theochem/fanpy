@@ -304,9 +304,12 @@ class CIWavefunction(BaseWavefunction):
             If given Slater determinant is not compatible with the format used internally
         """
         sd = slater.internal_sd(sd)
-        if deriv is None:
-            return self.params[self.dict_sd_index[sd]]
-        elif deriv == self.dict_sd_index[sd]:
-            return 1
-        else:
-            return 0
+        try:
+            if deriv is None:
+                return self.params[self.dict_sd_index[sd]]
+            elif deriv == self.dict_sd_index[sd]:
+                return 1.0
+            else:
+                return 0.0
+        except KeyError:
+            return 0.0
