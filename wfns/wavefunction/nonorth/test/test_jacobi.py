@@ -2,7 +2,10 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
+from wfns.backend.sd_list import sd_list
 from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
+from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
+from wfns.wavefunction.ci.doci import DOCI
 
 
 class TestJacobiWavefunction(JacobiWavefunction):
@@ -619,3 +622,53 @@ def test_jacobi_get_overlap_restricted_der():
                        + (cos**2 - sin**2) * wfn_sd_coeff[0b00110110]
                        + (cos**2 - sin**2) * wfn_sd_coeff[0b01100011]
                        + 2*sin*cos * wfn_sd_coeff[0b00110011]))
+
+
+def test_jacobi_compare_nonorth():
+    """Test overlap of Jacobi rotated wavefunction with that of nonorthonormal wavefunction."""
+    nelec = 4
+    nspin = 8
+    doci = DOCI(nelec, nspin)
+    doci.assign_params(np.array([7.06555071e-01, -7.06555071e-01, -4.16333634e-15, -3.88578059e-15,
+                                 -2.79272538e-02, 2.79272538e-02]))
+
+    # one rotation
+    jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci,
+                                orbtype='restricted', jacobi_indices=(0, 1))
+    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci)
+
+    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+
+    for sd in sds:
+        for theta in np.linspace(-np.pi, np.pi, 100):
+            nonorth.assign_params((np.array([[np.cos(theta), np.sin(theta), 0, 0],
+                                             [-np.sin(theta), np.cos(theta), 0, 0],
+                                             [0, 0, 1, 0],
+                                             [0, 0, 0, 1]]), ))
+            nonorth.clear_cache()
+            jacobi.assign_params(np.array(theta))
+            jacobi.clear_cache()
+            assert np.isclose(nonorth.get_overlap(sd), jacobi.get_overlap(sd))
+
+    # two rotations
+    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci)
+    for sd in sds:
+        for theta_one in np.linspace(-np.pi, np.pi, 10):
+            jacobi_one = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
+                                            wfn=doci, orbtype='restricted', jacobi_indices=(0, 1))
+            jacobi_one.assign_params(np.array(theta_one))
+            jacobi_one.clear_cache()
+            for theta_two in np.linspace(-np.pi, np.pi, 10):
+                jacobi_two = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
+                                                wfn=jacobi_one, orbtype='restricted',
+                                                jacobi_indices=(2, 3))
+                jacobi_two.assign_params(np.array(theta_two))
+                jacobi_two.clear_cache()
+
+                nonorth.assign_params((np.array([[np.cos(theta_one), np.sin(theta_one), 0, 0],
+                                                 [-np.sin(theta_one), np.cos(theta_one), 0, 0],
+                                                 [0, 0, np.cos(theta_two), np.sin(theta_two)],
+                                                 [0, 0, -np.sin(theta_two), np.cos(theta_two)]]), ))
+                nonorth.clear_cache()
+
+                assert np.isclose(nonorth.get_overlap(sd), jacobi_two.get_overlap(sd))
