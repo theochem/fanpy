@@ -198,6 +198,56 @@ def test_one_rotate_jacobi():
         assert np.allclose(test.integrals[1], answer_beta)
 
 
+def test_one_rotate_matrix():
+    """Test wfns.backend.integrals.OneElectronIntegrals.rotate_matrix."""
+    # check errors
+    one_int = np.arange(16, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals(one_int)
+
+    assert_raises(TypeError, test.rotate_matrix, np.random.rand(4, 4))
+    assert_raises(TypeError, test.rotate_matrix, (np.random.rand(4, 4).tolist(), ))
+    assert_raises(ValueError, test.rotate_matrix, (np.random.rand(4, 4), np.random.rand(4, 4)))
+    assert_raises(ValueError, test.rotate_matrix, ())
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(3, 4)])
+
+    test = OneElectronIntegrals([one_int, one_int])
+    assert_raises(ValueError, test.rotate_matrix, (np.random.rand(4, 4), ))
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(3, 4), np.random.rand(4, 4)])
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(4, 4), np.random.rand(3, 4)])
+
+    # restricted and generalized
+    one_int = np.arange(16, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals(one_int)
+    matrix = np.random.rand(4, 3)
+    answer = np.copy(one_int)
+
+    answer = np.einsum('ij,ia->aj', answer, matrix)
+    answer = np.einsum('aj,jb->ab', answer, matrix)
+    test.rotate_matrix([matrix])
+    assert np.allclose(test.integrals[0], answer)
+
+    # unrestricted
+    one_int_alpha = np.arange(16, dtype=float).reshape(4, 4)
+    one_int_beta = np.arange(16, 32, dtype=float).reshape(4, 4)
+    test = OneElectronIntegrals([one_int_alpha, one_int_beta])
+
+    matrix_alpha = np.random.rand(4, 3)
+    matrix_beta = np.random.rand(4, 4)
+
+    answer_alpha = np.copy(one_int_alpha)
+    answer_beta = np.copy(one_int_beta)
+
+    answer_alpha = np.einsum('ij,ia->aj', answer_alpha, matrix_alpha)
+    answer_alpha = np.einsum('aj,jb->ab', answer_alpha, matrix_alpha)
+    answer_beta = np.einsum('ij,ia->aj', answer_beta, matrix_beta)
+    answer_beta = np.einsum('aj,jb->ab', answer_beta, matrix_beta)
+
+    test.rotate_matrix([matrix_alpha, matrix_beta])
+
+    assert np.allclose(test.integrals[0], answer_alpha)
+    assert np.allclose(test.integrals[1], answer_beta)
+
+
 def test_two_init():
     """Test wfns.backend.integrals.TwoElectronIntegrals.__init__."""
     assert_raises(TypeError, TwoElectronIntegrals, 2*(np.random.rand(4, 4, 4, 4), ))
@@ -391,3 +441,68 @@ def test_two_rotate_jacobi():
         assert np.allclose(test.integrals[0], answer_aaaa)
         assert np.allclose(test.integrals[1], answer_abab)
         assert np.allclose(test.integrals[2], answer_bbbb)
+
+
+def test_two_rotate_matrix():
+    """Test wfns.backend.integrals.TwoElectronIntegrals.rotate_matrix."""
+    # check errors
+    two_int = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals(two_int)
+
+    assert_raises(TypeError, test.rotate_matrix, np.random.rand(4, 4))
+    assert_raises(TypeError, test.rotate_matrix, (np.random.rand(4, 4).tolist(), ))
+    assert_raises(ValueError, test.rotate_matrix, (np.random.rand(4, 4), np.random.rand(4, 4)))
+    assert_raises(ValueError, test.rotate_matrix, ())
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(3, 4)])
+
+    test = TwoElectronIntegrals([two_int, two_int, two_int])
+    assert_raises(ValueError, test.rotate_matrix, (np.random.rand(4, 4), ))
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(3, 4), np.random.rand(4, 4)])
+    assert_raises(ValueError, test.rotate_matrix, [np.random.rand(4, 4), np.random.rand(3, 4)])
+
+    # restricted and generalized
+    two_int = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals(two_int)
+    matrix = np.random.rand(4, 3)
+    answer = np.copy(two_int)
+
+    answer = np.einsum('ijkl,ia->ajkl', answer, matrix)
+    answer = np.einsum('ajkl,jb->abkl', answer, matrix)
+    answer = np.einsum('abkl,kc->abcl', answer, matrix)
+    answer = np.einsum('abcl,ld->abcd', answer, matrix)
+    test.rotate_matrix([matrix])
+    assert np.allclose(test.integrals[0], answer)
+
+    # unrestricted
+    two_int_aaaa = np.arange(256, dtype=float).reshape(4, 4, 4, 4)
+    two_int_abab = np.arange(256, 512, dtype=float).reshape(4, 4, 4, 4)
+    two_int_bbbb = np.arange(512, 768, dtype=float).reshape(4, 4, 4, 4)
+    test = TwoElectronIntegrals([two_int_aaaa, two_int_abab, two_int_bbbb])
+
+    matrix_alpha = np.random.rand(4, 3)
+    matrix_beta = np.random.rand(4, 4)
+
+    answer_aaaa = np.copy(two_int_aaaa)
+    answer_abab = np.copy(two_int_abab)
+    answer_bbbb = np.copy(two_int_bbbb)
+
+    answer_aaaa = np.einsum('ijkl,ia->ajkl', answer_aaaa, matrix_alpha)
+    answer_aaaa = np.einsum('ajkl,jb->abkl', answer_aaaa, matrix_alpha)
+    answer_aaaa = np.einsum('abkl,kc->abcl', answer_aaaa, matrix_alpha)
+    answer_aaaa = np.einsum('abcl,ld->abcd', answer_aaaa, matrix_alpha)
+
+    answer_abab = np.einsum('ijkl,ia->ajkl', answer_abab, matrix_alpha)
+    answer_abab = np.einsum('ajkl,jb->abkl', answer_abab, matrix_beta)
+    answer_abab = np.einsum('abkl,kc->abcl', answer_abab, matrix_alpha)
+    answer_abab = np.einsum('abcl,ld->abcd', answer_abab, matrix_beta)
+
+    answer_bbbb = np.einsum('ijkl,ia->ajkl', answer_bbbb, matrix_beta)
+    answer_bbbb = np.einsum('ajkl,jb->abkl', answer_bbbb, matrix_beta)
+    answer_bbbb = np.einsum('abkl,kc->abcl', answer_bbbb, matrix_beta)
+    answer_bbbb = np.einsum('abcl,ld->abcd', answer_bbbb, matrix_beta)
+
+    test.rotate_matrix([matrix_alpha, matrix_beta])
+
+    assert np.allclose(test.integrals[0], answer_aaaa)
+    assert np.allclose(test.integrals[1], answer_abab)
+    assert np.allclose(test.integrals[2], answer_bbbb)

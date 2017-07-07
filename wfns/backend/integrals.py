@@ -268,6 +268,40 @@ class OneElectronIntegrals(BaseIntegrals):
          self.integrals[spin_index][q, :]) = (np.cos(theta)*p_row - np.sin(theta)*q_row,
                                               np.sin(theta)*p_row + np.cos(theta)*q_row)
 
+    # FIXME: duplicated code
+    def rotate_matrix(self, transforms):
+        """Apply transformation matrix to the integrals.
+
+        Parameters
+        ----------
+        transforms : tuple of np.array
+            Transformation matrix
+            One transformation matrix is needed for restricted and generalized orbital types
+            Two transformation matrix is needed for unrestricted orbital types
+
+        Raises
+        ------
+        TypeError
+            If the transformation matrix is not a list/tuple of numpy arrays
+        ValueError
+            If the number of transformation matrix does not match the number of integral blocks
+            If the number of orbitals does not match up with the transformation matrix
+        """
+        if not (isinstance(transforms, (list, tuple)) and
+                all(isinstance(i, np.ndarray) for i in transforms)):
+            raise TypeError('Transformation matrices is not a list/tuple of numpy arrays.')
+        elif len(self.integrals) != len(transforms):
+            raise ValueError('Number of transformation matrices must match the number of integral '
+                             'blocks.')
+        elif not all(i == transform.shape[0] for integral in self.integrals for i in integral.shape
+                     for transform in transforms):
+            raise ValueError('Shape of the integral does not match with the transformation matrix.')
+
+        new_integrals = []
+        for integral, transform in zip(self.integrals, transforms):
+            new_integrals.append(transform.T.dot(integral).dot(transform))
+        self.integrals = tuple(new_integrals)
+
 
 class TwoElectronIntegrals(BaseIntegrals):
     """Class for storing two-electron integrals.
@@ -316,7 +350,7 @@ class TwoElectronIntegrals(BaseIntegrals):
         """
         super().__init__(integrals)
         if len(self.integrals) not in (1, 3):
-            raise TypeError('Unsupported number of one-electron integral matrices.')
+            raise TypeError('Unsupported number of two-electron integral matrices.')
         for matrix in self.integrals:
             if len(matrix.shape) != 4:
                 raise TypeError('Two-electron integral matrices must be four dimensional.')
@@ -543,3 +577,59 @@ class TwoElectronIntegrals(BaseIntegrals):
             (self.integrals[1][:, p, :, :],
              self.integrals[1][:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
                                                np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+
+    # FIXME: duplicated code
+    def rotate_matrix(self, transforms):
+        """Apply transformation matrix to the integrals.
+
+        Parameters
+        ----------
+        transforms : tuple of np.array
+            Transformation matrix
+            One transformation matrix is needed for restricted and generalized orbital types
+            Two transformation matrix is needed for unrestricted orbital types
+
+        Raises
+        ------
+        TypeError
+            If the transformation matrix is not a list/tuple of numpy arrays
+        ValueError
+            If the orbitals are restricted/generalized and the number of transformation matrices is
+            not exactly 1
+            If the orbitals are unrestricted and the number of transformation matrices is not
+            exactly 2
+            If the number of orbitals does not match up with the transformation matrix
+        """
+        if not (isinstance(transforms, (list, tuple)) and
+                all(isinstance(i, np.ndarray) for i in transforms)):
+            raise TypeError('Transformation matrices is not a list/tuple of numpy arrays.')
+        elif self.possible_orbtypes == ('restricted', 'generalized') and len(transforms) != 1:
+            raise ValueError('One transformation matrix must be provided for restricted/generalized'
+                             ' orbitals.')
+        elif self.possible_orbtypes == ('unrestricted', ) and len(transforms) != 2:
+            raise ValueError('Two transformation matrix must be provided for unrestricted '
+                             'orbitals.')
+        elif not all(i == transform.shape[0] for integral in self.integrals for i in integral.shape
+                     for transform in transforms):
+            raise ValueError('Shape of the integral does not match with the transformation matrix.')
+
+        new_integrals = []
+        new_integral = np.einsum('ijkl,ia->ajkl', self.integrals[0], transforms[0])
+        new_integral = np.einsum('ajkl,jb->abkl', new_integral, transforms[0])
+        new_integral = np.einsum('abkl,kc->abcl', new_integral, transforms[0])
+        new_integral = np.einsum('abcl,ld->abcd', new_integral, transforms[0])
+        new_integrals.append(new_integral)
+
+        if self.possible_orbtypes == ('unrestricted', ):
+            new_integral = np.einsum('ijkl,ia->ajkl', self.integrals[1], transforms[0])
+            new_integral = np.einsum('ajkl,jb->abkl', new_integral, transforms[1])
+            new_integral = np.einsum('abkl,kc->abcl', new_integral, transforms[0])
+            new_integral = np.einsum('abcl,ld->abcd', new_integral, transforms[1])
+            new_integrals.append(new_integral)
+            new_integral = np.einsum('ijkl,ia->ajkl', self.integrals[2], transforms[1])
+            new_integral = np.einsum('ajkl,jb->abkl', new_integral, transforms[1])
+            new_integral = np.einsum('abkl,kc->abcl', new_integral, transforms[1])
+            new_integral = np.einsum('abcl,ld->abcd', new_integral, transforms[1])
+            new_integrals.append(new_integral)
+
+        self.integrals = tuple(new_integrals)
