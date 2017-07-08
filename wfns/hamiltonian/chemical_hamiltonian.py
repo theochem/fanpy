@@ -10,6 +10,7 @@ Class
 ChemicalHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+import numpy as np
 from itertools import combinations
 from ..backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 from ..backend import slater
@@ -364,3 +365,19 @@ class ChemicalHamiltonian(object):
         """
         self.one_int.rotate_jacobi(jacobi_indices, theta)
         self.two_int.rotate_jacobi(jacobi_indices, theta)
+
+    def orb_rotate_matrix(self, matrix):
+        """Rotate orbitals using a transformation matrix.
+
+        Parameters
+        ----------
+        matrix : np.ndarray
+            Transformation matrix.
+        """
+        if isinstance(matrix, np.ndarray):
+            matrix = [matrix]
+        if len(matrix) == 1 and self.orbtype == 'unrestricted':
+            matrix *= 2
+
+        self.one_int.rotate_matrix(matrix)
+        self.two_int.rotate_matrix(matrix)

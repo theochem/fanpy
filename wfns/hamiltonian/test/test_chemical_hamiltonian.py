@@ -2,7 +2,6 @@
 import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
-import numpy as np
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.tools import find_datafile
 
@@ -285,3 +284,52 @@ def test_orb_rotate_jacobi():
     ham.orb_rotate_jacobi((p, q), theta)
     assert np.allclose(ham.one_int.integrals[0], one_answer)
     assert np.allclose(ham.two_int.integrals[0], two_answer)
+
+
+def test_orb_rotate_matrix():
+    """Test ChemicalHamiltonian.orb_rotate_matrix."""
+    one_int = np.arange(1, 17, dtype=float).reshape(4, 4)
+    two_int = np.arange(1, 257, dtype=float).reshape(4, 4, 4, 4)
+
+    random = np.random.rand(4, 4)
+    transform = np.linalg.eigh(random + random.T)[1]
+
+    one_answer = np.copy(one_int)
+    one_answer = np.einsum('ij,ia->aj', one_answer, transform)
+    one_answer = np.einsum('aj,jb->ab', one_answer, transform)
+    two_answer = np.copy(two_int)
+    two_answer = np.einsum('ijkl,ia->ajkl', two_answer, transform)
+    two_answer = np.einsum('ajkl,jb->abkl', two_answer, transform)
+    two_answer = np.einsum('abkl,kc->abcl', two_answer, transform)
+    two_answer = np.einsum('abcl,ld->abcd', two_answer, transform)
+
+    ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    ham.orb_rotate_matrix(transform)
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)
+    ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    ham.orb_rotate_matrix([transform])
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)
+
+    ham = ChemicalHamiltonian((one_int, one_int), (two_int, two_int, two_int), 'unrestricted')
+    ham.orb_rotate_matrix(transform)
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.one_int.integrals[1], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)
+    assert np.allclose(ham.two_int.integrals[1], two_answer)
+    assert np.allclose(ham.two_int.integrals[2], two_answer)
+    ham = ChemicalHamiltonian((one_int, one_int), (two_int, two_int, two_int), 'unrestricted')
+    ham.orb_rotate_matrix([transform])
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.one_int.integrals[1], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)
+    assert np.allclose(ham.two_int.integrals[1], two_answer)
+    assert np.allclose(ham.two_int.integrals[2], two_answer)
+    ham = ChemicalHamiltonian((one_int, one_int), (two_int, two_int, two_int), 'unrestricted')
+    ham.orb_rotate_matrix([transform, transform])
+    assert np.allclose(ham.one_int.integrals[0], one_answer)
+    assert np.allclose(ham.one_int.integrals[1], one_answer)
+    assert np.allclose(ham.two_int.integrals[0], two_answer)
+    assert np.allclose(ham.two_int.integrals[1], two_answer)
+    assert np.allclose(ham.two_int.integrals[2], two_answer)
