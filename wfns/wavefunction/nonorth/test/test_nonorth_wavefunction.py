@@ -2,9 +2,12 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
+from wfns.tools import find_datafile
+from wfns.backend.sd_list import sd_list
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 class TestNonorthWavefunction(NonorthWavefunction):
@@ -445,3 +448,49 @@ def test_nonorth_get_overlap_deriv():
                                                           2 * wfn_sd_coeff[0b0110] +
                                                           0 * wfn_sd_coeff[0b1100]),
                       rtol=0, atol=1e-12)
+
+
+# FIXME: this is a problem. Either there is a bug in the NonorthWavefunction or the math is wrong.
+def test_nonorth_energy_unitary_transform_hamiltonian():
+    """Test the energy of NonorthWavefunction by comparing it to the transformed Hamiltonian.
+
+    While the NonorthWavefunction does not necessarily need to have unitary wavefunction, this test
+    requires that the transformation applied to the Hamiltonian is unitary.
+    """
+    nelec = 4
+    nspin = 8
+    doci = CIWavefunction(nelec, nspin, seniority=0)
+    # optimized parameters for the transformed hamiltonian
+    doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01, -4.22775180e-02,
+                                 2.01842251e-01, 8.50414717e-04]))
+
+    ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                              np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
+                              orbtype='restricted')
+
+    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+
+    # transformed hamiltonian
+    transform = np.array([[0.707106752870, -0.000004484084, 0.000006172115, -0.707106809462],
+                          [0.707106809472, -0.000004868924, -0.000006704609, 0.707106752852],
+                          [0.000004942751, 0.707106849959, 0.707106712365, 0.000006630781],
+                          [0.000004410256, 0.707106712383, -0.707106849949, -0.000006245943]])
+    trans_ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                                    np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
+                                    orbtype='restricted')
+    trans_ham.orb_rotate_matrix(transform)
+
+    # nonorthonormal wavefunction
+    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci,
+                                  orth_to_nonorth=transform)
+
+    def get_energy(wfn, ham):
+        norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
+        return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds) / norm
+
+    print(-4.59205536957)
+    print(get_energy(doci, ham))
+    print(get_energy(doci, trans_ham))
+    print(get_energy(nonorth, ham))
+    print(get_energy(nonorth, trans_ham))
+    assert False
