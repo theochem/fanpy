@@ -18,6 +18,3 @@ except ImportError as error:
             ' and that PYTHONPATH is set properly')
     print(error)
     pyscf_mia = True
-
-if horton_mia and pyscf_mia:
-    raise ImportError('One of HORTON and PySCF must be installed.')
