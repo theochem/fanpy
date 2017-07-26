@@ -146,7 +146,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
         print('Orbital optimization did not converge after {0} iterations'.format(num_iterations))
 
 
-def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None):
+def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_solver_kwargs=None):
     """Optimize orbitals of the given hamiltonian to minimize energy using Jacobi rotations.
 
     The Jacobi rotated wavefunction, :math:`\hat{\mathbf{J}}^\dagger_{pq} \ket{\Psi}`, is
@@ -233,7 +233,9 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None):
         delta = 0.0
 
         if wfn_solver is not None:
-            wfn_solver(wfn, ham)
+            if wfn_solver_kwargs is None:
+                wfn_solver_kwargs = {}
+            wfn_solver(wfn, ham, **wfn_solver_kwargs)
 
         for p, q in it.combinations(range(wfn.nspatial), 2):
             res = scipy.optimize.minimize_scalar(_objective, args=(p, q), method='brent')
@@ -248,7 +250,7 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None):
 
         # if last rotation does nothing (i.e. converged)
         if np.isclose(delta, 0.0):
-            return orb_rot, thetas
+            return orb_rot, thetas, _objective(0.0)
     # if end of loop is reached (i.e. did not converge)
     else:
         print('Orbital optimization did not converge after {0} iterations'.format(num_iterations))
