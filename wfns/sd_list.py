@@ -1,71 +1,126 @@
-from . import slater
-from itertools import combinations, product
+""" Functions used to generate Slater determinants
 
-"""
 Functions
 ---------
-ci_sd_list
-    Generates a list of Slater determinants that corresponds to the given order of excitations
-doci_sd_list
-    Generates a list of doubly occupied Slater determinants that corresponds to the given order of
-    (double) excitations
+satisfies_conditions(sd, nspatial, spin, seniority)
+    Checks to see if Slater determinant has the desired spin and seniority
+sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=None)
+    Generates a list of Slater determinants with the specified excitations from ground state, spin,
+    and seniority
 
 """
+from itertools import combinations, product
+from . import slater
+
+__all__ = ['sd_list']
+
+def satisfies_conditions(sd, nspatial, spin, seniority):
+    """ Checks to see if Slater determinant has the desired spin and seniority
+
+    Paramaters
+    ----------
+    sd : gmpy2.mpz
+        Slater determinant
+    nspatial : int
+        Number of spatial orbitals
+    spin : int
+        Spin of the desired Slater determinant
+        :math:`\frac{1}{2} (N_{\alpha} - N_{\beta})`
+        If `None` then all spin is allowed
+    seniority : int
+        Seniority of the desired Slater determinant
+        Maximum number of unpaired electrons
+        If `None` then all seniority is allowed
+
+    Returns
+    -------
+    True if Slater determinant has the desired spin and seniority
+    False if Slater determinant does not have the desired spin and seniority
+    """
+    return (spin in [None, slater.get_spin(sd, nspatial)]
+            and (seniority is None or seniority >= slater.get_seniority(sd, nspatial)))
 
 
-def ci_sd_list(self, num_limit, exc_orders=[], spin=None):
+def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniority=None):
     """ Generates Slater determinants
-
-    Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-    state, next are the first excitations from exc_orders, then second excitation from
-    exc_orders, etc
 
     Parameters
     ----------
-    self : instance of Wavefunction
-        Any instance that contains nspatial and nelec
-    num_limit : int
+    nspatial : int
+        Number of spatial orbitals
+    nelec : int
+        Number of electrons
+    num_limit : int, None
         Maximum number of Slater determinants to be generated
-    exc_orders : list of int
-        Orders of excitations that is to be included (with respect to ground state
-        Slater determinant)
-        Slater determinants of the first excitation will be included first, second excitations
-        included second, etc
+        Default is infinite
+    exc_orders : list of int, None
+        Orders of excitations that is to be included (with respect to ground state Slater
+        determinant) in the order that they appear
+        Default is all orders of excitations (in the order of lowest order to highest)
     spin : int, float, None
-        Total spin of the generated slater determinants
-        Default is no spin
-        0.5 is singlet, 1 is doublet, 1.5 is triplet, etc
+        Total spin of the generated Slater determinants
+        Default is no spin restrictions
         If positive, then the number of alpha orbitals is greater than the
         number of beta orbitals
         If negative, then the number of alpha orbitals is less than the number
         of beta orbitals
+        0.5 is singlet, 1 is doublet, 1.5 is triplet, etc
+    seniority : int, None
+        Maximum number of unpaired electrons
+        Default is no seniority restritions
 
     Returns
     -------
     civec : list of ints
         Integer that describes the occupation of a Slater determinant as a bitstring
 
-    Note
-    ----
-    Crashes if order of excitation is less than 0
+    Raises
+    ------
+    TypeError
+        If nspatial is not an integer
+        If nelec is not an integer
+        If num_limit is not an integer
+        If exc_orders is not a iterable of integers
+        If spin is not an integer or float
+        If seniority is not an integer
+    ValueError
+        If seniority is not compatible with the spin
     """
-    nspatial = self.nspatial
-    nelec = self.nelec
-    civec = []
-    if exc_orders == []:
-        exc_orders = range(1, nelec + 1)
-    # assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
+    if not isinstance(nspatial, int):
+        raise TypeError('Number of spatial orbitals should be an integer')
 
-    # ASSUME: certain structure for civec
-    # spin orbitals are ordered by energy
-    ground = slater.ground(nelec, 2 * nspatial)
-    if spin is None or spin == slater.get_spin(ground, nspatial):
+    if not isinstance(nelec, int):
+        raise TypeError('Number of electrons should be an integer')
+
+    if num_limit is None:
+        num_limit = -1
+    elif not isinstance(num_limit, (int, long)):
+        raise TypeError('Number of Slater determinants should be an integer')
+
+    if exc_orders is None:
+        exc_orders = range(1, nelec + 1)
+    elif not (hasattr(exc_orders, '__iter__') and all(isinstance(i, int) for i in exc_orders)):
+        raise TypeError('Orders of excitations should be given as a list or tuple of integers')
+
+    if not isinstance(spin, (int, float, type(None))):
+        raise TypeError('Spin should be given as an integer or a floating point')
+
+    if not isinstance(seniority, (int, type(None))):
+        raise TypeError('Seniority should be given as an integer')
+    elif None not in [spin, seniority] and seniority < abs(2*spin):
+        raise ValueError('Cannot have spin, {0}, with seniority, {1}.'.format(spin, seniority))
+
+    civec = []
+    # ASSUME: spin orbitals are ordered by increasing energy
+    ground = slater.ground(nelec, 2*nspatial)
+    if satisfies_conditions(ground, nspatial, spin, seniority):
         civec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
-    vir_indices = slater.vir_indices(ground, 2 * nspatial)
+    vir_indices = slater.vir_indices(ground, 2*nspatial)
     # order by energy
-    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True)
+    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x,
+                         reverse=True)
     vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
 
     count = 1
@@ -73,76 +128,11 @@ def ci_sd_list(self, num_limit, exc_orders=[], spin=None):
         occ_combinations = combinations(occ_indices, nexc)
         vir_combinations = combinations(vir_indices, nexc)
         for occ, vir in product(occ_combinations, vir_combinations):
-            sd = slater.annihilate(ground, *occ)
-            sd = slater.create(sd, *vir)
-            if spin is not None and spin != slater.get_spin(sd, nspatial):
+            sd = slater.excite(ground, *(occ+vir))
+            if not satisfies_conditions(sd, nspatial, spin, seniority):
                 continue
             civec.append(sd)
             count += 1
-            if count >= num_limit:
+            if count >= num_limit >= 0:
                 return civec[:num_limit]
-    else:
-        return civec[:num_limit]
-
-
-def doci_sd_list(self, num_limit, exc_orders=[]):
-    """ Generates doubly occupied (DOCI) Slater determinants
-
-    Number of Slater determinants is limited by num_limit. First Slater determinant is the ground
-    state, next are the first excitations from exc_orders, then second excitation from
-    exc_orders, etc
-
-
-    DOCI Slater determinants are all pairwise (alpha beta) excitations of the ground state
-    singlet Slater determinant
-
-    Parameters
-    ----------
-    self : instance of Wavefunction
-        Any instance that contains nspatial, nelec, and npair
-    num_limit : int
-        Maximum number of Slater determinants to be generated
-    exc_orders : list of int
-        Orders of excitations that is to be included (with respect to ground state
-        Slater determinant)
-        Slater determinants of the first excitation will be included first, second excitations
-        included second, etc
-
-    Returns
-    -------
-    civec : list of ints
-        Integer that describes the occupation of a Slater determinant as a bitstring
-
-    Note
-    ----
-    Crashes if order of excitation is less than 0
-    DOCI is always singlet
-    """
-    nspatial = self.nspatial
-    nelec = self.nelec
-    npair = self.npair
-    civec = []
-    if exc_orders == []:
-        exc_orders = range(1, npair + 1)
-    # assert all(i>0 for i in exc_orders), 'Excitation orders must be greater than 0'
-    # ASSUME: certain structure for civec
-    # spin orbitals are ordered by energy
-    ground = slater.ground(nelec, 2 * nspatial)
-    civec.append(ground)
-
-    count = 1
-    for nexc in exc_orders:
-        # this part assumes that the ground state has the first N electrons occupied
-        occ_combinations = combinations(reversed(range(npair)), nexc)
-        vir_combinations = combinations(range(npair, nspatial), nexc)
-        for occ, vir in product(occ_combinations, vir_combinations):
-            occ = [i for i in occ] + [i + nspatial for i in occ]
-            vir = [a for a in vir] + [a + nspatial for a in vir]
-            sd = slater.annihilate(ground, *occ)
-            sd = slater.create(sd, *vir)
-            civec.append(sd)
-            count += 1
-            if count >= num_limit:
-                return civec[:num_limit]
-    else:
-        return civec[:num_limit]
+    return civec

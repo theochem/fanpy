@@ -1,47 +1,71 @@
+""" Parent class of projected wavefunctions
+
+This module describes wavefunction that are solved projectively
+"""
 from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod, abstractproperty
-
 import numpy as np
-from gmpy2 import mpz
-
 from ..wavefunction import Wavefunction
+from ..sd_list import sd_list
+from .. import slater
+from .proj_hamiltonian import hamiltonian, sen0_hamiltonian
+
+__all__ = []
 
 
-class ProjectionWavefunction(Wavefunction):
-    """ Wavefunction obtained through projection
+# TODO: move out hamiltonian into a separate module? (include orbital rotation)
+# TODO: move out constraints to somewhere else
+# TODO: move out pspace, constraints, objective, jacobian to solver? rename ProjectedWavefunction to
+#       FancyCIWavefunction?
+class ProjectedWavefunction(Wavefunction):
+    """ Projected Wavefunction class
 
-    Contains the necessary information to projectively solve the wavefunction
+    Contains the necessary information to solve the wavefunction
+
+    Class Variables
+    ---------------
+    _nconstraints : int
+        Number of constraints
+    _seniority : int, None
+        Seniority of the wavefunction
+        None means that all seniority is allowed
+    _spin : float, None
+        Spin of the wavefunction
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
+        None means that all spins are allowed
 
     Attributes
     ----------
-    dtype : {np.float64, np.complex128}
-        Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
-        and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        If tuple of np.ndarray (length 3), two electron integrals for the
-        (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
-        (beta, beta, beta, beta) unrestricted orbitals
-    nuc_nuc : float
-        Nuclear nuclear repulsion value
     nelec : int
         Number of electrons
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    one_int : 1- or 2-tuple np.ndarray(K,K)
+        One electron integrals for restricted, unrestricted, or generalized orbitals
+        1-tuple for spatial (restricted) and generalized orbitals
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
+    two_int : 1- or 3-tuple np.ndarray(K,K)
+        Two electron integrals for restricted, unrestricted, or generalized orbitals
+        In physicist's notation
+        1-tuple for spatial (restricted) and generalized orbitals
+        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
+        beta-beta-beta-beta components)
+    dtype : {np.float64, np.complex128}
+        Numpy data type
+    nuc_nuc : float
+        Nuclear-nuclear repulsion energy
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
-    params : np.ndarray(K)
-        Guess for the parameters
-        Iteratively updated during convergence
-        Initial guess before convergence
-        Coefficients after convergence
-    cache : dict of mpz to float
-        Cache of the Slater determinant to the overlap of the wavefunction with this
-        Slater determinant
-    d_cache : dict of (mpz, int) to float
-        Cache of the Slater determinant to the derivative(with respect to some index)
-        of the overlap of the wavefunction with this Slater determinan
+    pspace : tuple of gmpy2.mpz
+        Slater determinants onto which the wavefunction is projected
+    ref_sds : tuple of gmpy2.mpz
+        Slater determinants that will be used as a reference for the wavefunction (e.g. for
+        initial guess, energy calculation, normalization, etc)
+    params : np.ndarray
+        Parameters of the wavefunction (including energy)
+    cache : dict of sd to float
+        Cache of the overlaps that are calculated for each Slater determinant encountered
+    d_cache : dict of gmpy2.mpz to float
+        Cache of the derivative of overlaps that are calculated for each Slater determinant and
+        derivative index encountered
 
     Properties
     ----------
@@ -49,281 +73,305 @@ class ProjectionWavefunction(Wavefunction):
         Number of spin orbitals (alpha and beta)
     nspatial : int
         Number of spatial orbitals
-    npair : int
-        Number of electron pairs (rounded down)
-    nparam : int
-        Number of parameters used to define the wavefunction
+    nparams : int
+        Number of parameters
     nproj : int
-        Number of Slater determinants to project against
-    ref_sd : int or list of int
-        Reference Slater determinants with respect to which the norm and the energy
-        are calculated
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Or list of integers
+        Number of Slater determinants
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+    __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
-    __call__(method="default", **kwargs)
-        Solves the wavefunction
-    assign_dtype(dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orb_type=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
-        (and the wavefunction)
-    assign_nuc_nuc(nuc_nuc=None)
-        _Assigns the nuclear nuclear repulsion
-    assign_nelec(nelec)
+    assign_nelec(self, nelec)
         Assigns the number of electrons
-    _solve_least_squares(**kwargs)
-        Solves the system of nonliear equations (and the wavefunction) using
-        least squares method
-    assign_params(params=None)
-        Assigns the parameters used to describe the wavefunction.
-        Adds random noise from the template if necessary
-    assign_pspace(pspace=None)
-        Assigns projection space
-    overlap(sd, deriv=None)
-        Retrieves overlap from the cache if available, otherwise compute overlap
-    compute_norm(sd=None, deriv=None)
-        Computes the norm of the wavefunction
-    compute_energy(include_nuc=False, sd=None, deriv=None)
-        Computes the energy of the wavefunction
-    objective(x)
-        The objective (system of nonlinear equations) associated with the projected
-        Schrodinger equation
-    jacobian(x)
-        The Jacobian of the objective
+    assign_dtype(self, dtype)
+        Assigns the data type of parameters used to define the wavefunction
+    assign_nuc_nuc(nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion
+    assign_integrals(self, one_int, two_int, orbtype=None)
+        Assigns integrals of the one electron basis set used to describe the Slater determinants
+    assign_pspace(self, pspace=None)
+        Assigns the tuple of Slater determinants onto which the wavefunction is projected
+        Default uses `generate_pspace`
+    generate_pspace(self)
+        Generates the default tuple of Slater determinants with the appropriate spin and seniority
+        in increasing excitation order.
+        The number of Slater determinants is truncated by the number of parameters plus a magic
+        number (42)
+    assign_ref_sds(self, ref_sds=None)
+        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
+        calculated
+        Default is the first Slater determinant of projection space
+    assign_params(self, params=None)
+        Assigns the parameters of the wavefunction (including energy)
+        Default contains coefficients from abstract property, `template_coeffs`, and the energy of
+        the reference Slater determinants with the coefficients from `template_coeffs`
+    get_overlap(self, sd, deriv=None)
+        Gets the overlap from cache and compute if not in cache
+        Default is no derivatization
+    compute_norm(self, ref_sds=None, deriv=None)
+        Calculates the norm from given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        Default is no derivatization
+    compute_hamitonian(self, slater_d, deriv=None)
+        Calculates the expectation value of the Hamiltonian projected onto the given Slater
+        determinant, `slater_d`
+        By default no derivatization
+    compute_energy(self, include_nuc=False, ref_sds=None, deriv=None)
+        Calculates the energy projected onto given Slater determinants
+        Default `ref_sds` is the `ref_sds` given by the intialization
+        By default, electronic energy, no derivatization
+    objective(self, x, weigh_constraints=True)
+        Objective of the equations that will need to be solved (to solve the Projected Schrodinger
+        equation)
+    jacobian(self, x, weigh_constraints=True)
+        Jacobian of the objective
 
     Abstract Property
     -----------------
-    template_coeffs : np.ndarray(K)
-        Default numpy array of parameters.
-        This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
+    template_coeffs : np.ndarray
+        Initial guess coefficient matrix for the given reference Slater determinants
 
     Abstract Method
     ---------------
-    compute_pspace
-        Generates a tuple of Slater determinants onto which the wavefunction is projected
-    compute_overlap
-        Computes the overlap of the wavefunction with one or more Slater determinants
-    compute_hamiltonian
-        Computes the hamiltonian of the wavefunction with respect to one or more Slater
-        determinants
-        By default, the energy is determined with respect to ref_sd
-    normalize
-        Normalizes the wavefunction (different definitions available)
-        By default, the norm should the projection against the ref_sd squared
+    compute_overlap(self, sd, deriv=None)
+        Calculates the overlap between the wavefunction and a Slater determinant
+        Function in FancyCI
+
     """
-    # FIXME: turn C into property and have a better attribute name
     __metaclass__ = ABCMeta
+    # Default wavefunction properties
+    _nconstraints = 1
+    _seniority = None
+    _spin = None
 
-    #
-    # Abstract Property
-    #
-    # FIXME: does this need to be changed into an abstract property
-    @abstractproperty
-    def template_coeffs(self):
-        """ Default numpy array of parameters.
+    def __init__(self, nelec, one_int, two_int, dtype=None, nuc_nuc=None, orbtype=None, pspace=None,
+                 ref_sds=None, params=None):
+        """ Initializes a wavefunction
 
-        This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
+        Parameters
+        ----------
+        nelec : int
+            Number of electrons
 
-        Returns
-        -------
-        template_coeffs : np.ndarray(K, )
+        one_int : np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K)
+            One electron integrals
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unretricted spin orbitals, 2-tuple of np.ndarray
 
+        two_int : np.ndarray(K,K,K,K), 1- or 3-tuple np.ndarray(K,K,K,K)
+            For spatial and generalized orbitals, np.ndarray or 1-tuple of np.ndarray
+            For unrestricted orbitals, 3-tuple of np.ndarray
+
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type
+            Default is `np.float64`
+
+        nuc_nuc : {float, None}
+            Nuclear nuclear repulsion value
+            Default is `0.0`
+
+        orbtype : {'restricted', 'unrestricted', 'generalized', None}
+            Type of the orbital used in obtaining the one-electron and two-electron integrals
+            Default is `'restricted'`
+
+        pspace : list/tuple of int/long/gmpy2.mpz, None
+            Slater determinants onto which the wavefunction is projected
+            Default uses `generate_pspace`
+
+        ref_sds : int/long/gmpy2.mpz, list/tuple of int/long/gmpy2.mpz, None
+            Slater determinants that will be used as a reference for the wavefunction (e.g. for
+            initial guess, energy calculation, normalization, etc)
+            Default uses first Slater determinant of `pspace`
+
+        params : np.ndarray, None
+            Parameters of the wavefunction (including energy)
+            Default uses `template_coeffs` and energy of the reference Slater determinants
         """
-        pass
+        super(ProjectedWavefunction, self).__init__(nelec, one_int, two_int, dtype=dtype,
+                                                    nuc_nuc=nuc_nuc, orbtype=orbtype)
 
-    #
-    # Properties
-    #
+        self.cache = {}
+        self.d_cache = {}
+        self.assign_pspace(pspace=pspace)
+        self.assign_ref_sds(ref_sds=ref_sds)
+        self.assign_params(params=params)
+
+
+    ##############
+    # Properties #
+    ##############
     @property
-    def nparam(self):
+    def nparams(self):
         """ Number of parameters
-
-        Returns
-        -------
-        nparam : int
         """
-        return self.params.size
+        return self.template_coeffs.size + 1
+
 
     @property
     def nproj(self):
         """ Number of Slater determinants to project against
-
-        Returns
-        -------
-        nproj : int
         """
         return len(self.pspace)
 
-    @property
-    def default_ref_sds(self):
-        """ Reference Slater determinant
 
-        You can overwrite this attribute if you want to change the reference Slater determinant
-
-        Returns
-        -------
-        default_ref_sd : int, list of int
-            Integer that describes the occupation of a Slater determinant as a bitstring
-            Or list of integers
-        """
-        return (self.pspace[0], )
-
-    @property
-    def bounds(self):
-        """ Boundaries for the parameters
-
-        Used to set bounds on the optimizer
+    ######################
+    # Assignment methods #
+    ######################
+    def generate_pspace(self):
+        """ Generates Slater determinants onto which the wavefunction is projected
 
         Returns
         -------
-        bounds : iterable of 2-tuples
-            Each 2-tuple correspond to the min and the max value for the parameter
-            with the same index.
+        pspace : list of gmpy2.mpz
+            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
         """
-        low_bounds = [-1.2 for i in range(self.nparam)]
-        upp_bounds = [1.2 for i in range(self.nparam)]
-        # remove boundary on energy
-        low_bounds[-1] = -np.inf
-        upp_bounds[-1] = np.inf
-        return (tuple(low_bounds), tuple(upp_bounds))
+        #FIXME
+        magic = 42
+        return sd_list(self.nelec, self.nspatial, num_limit=self.nparams+magic, spin=self._spin,
+                       seniority=self._seniority)
 
-
-    @property
-    def nconstraints(self):
-        """Number of constraints on the sollution of the projected wavefunction.
-
-        By default this is - 1 because we need one equation for normalization.
-
-        Returns
-        -------
-        nconstraints : int
-        """
-        self._nconstraints = 1
-        return self._nconstraints
-
-    #
-    # Special methods
-    #
-
-    def __init__(
-        self,
-        # Mandatory arguments
-        nelec=None,
-        H=None,
-        G=None,
-        # Arguments handled by base Wavefunction class
-        dtype=None,
-        nuc_nuc=None,
-        params=None,
-        pspace=None,
-        # Arguments for saving parameters
-        params_save_name=''
-    ):
-        super(ProjectionWavefunction, self).__init__(
-            nelec=nelec,
-            H=H,
-            G=G,
-            dtype=dtype,
-            nuc_nuc=nuc_nuc,
-        )
-        self.assign_params_save(params_save_name=params_save_name)
-        self.assign_params(params=params)
-        self.assign_pspace(pspace=pspace)
-        if params is None:
-            self.params[-1] = self.compute_energy(ref_sds=self.default_ref_sds)
-        del self._energy
-        self.cache = {}
-        self.d_cache = {}
-
-    #
-    # Assignment methods
-    #
-    def assign_params_save(self, params_save_name=''):
-        """ Assigns the npy file name that stores the parameters
-
-        Parameters
-        ----------
-        npy_name : str
-            Name of the npy file that will contain the parameters
-
-        """
-        if not isinstance(params_save_name, str):
-            raise TypeError('The numpy file name must be a string')
-        self.params_save_name = params_save_name
-
-    def assign_params(self, params=None):
-        """ Assigns the parameters to the wavefunction
-
-        Parameters
-        ----------
-        params : np.ndarray(K,)
-            Parameters of the wavefunction
-        """
-        # number of coefficients (non energy parameters)
-        ncoeffs = self.template_coeffs.size
-        if params is None:
-            params = self.template_coeffs.flatten()
-            # set scale
-            scale = 0.2 / ncoeffs
-            # add random noise to template
-            params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
-            if params.dtype == np.complex128:
-                params[:ncoeffs] += 0.001j * scale * (np.random.random(ncoeffs) - 0.5)
-            # set energy
-            # NOTE: the energy cannot be set with compute_energy right now because
-            # certain terms must be defined for compute_hamiltonian to work
-            energy = 0.0
-            params = np.hstack((params, energy))
-        if not isinstance(params, np.ndarray):
-            raise TypeError("params must be of type {0}".format(np.ndarray))
-        elif params.shape != (ncoeffs+1, ):
-            raise ValueError("params must be of right shape({0})".format(ncoeffs + 1))
-        elif params.dtype not in (float, complex, np.float64, np.complex128):
-            raise TypeError("params's dtype must be one of {0}".format((float, complex, np.float64, np.complex128)))
-
-        self.params = params
-        self.cache = {}
-        self.d_cache = {}
 
     def assign_pspace(self, pspace=None):
         """ Sets the Slater determinants on which to project against
 
         Parameters
         ----------
-        pspace : int, iterable of int,
-            If iterable, then it is a list of Slater determinants (in the form of integers that describe
-            the occupation as a bitstring)
-            If integer, then it is the number of Slater determinants to be generated
+        pspace : list/tuple of int/long/gmpy2.mpz, None
+            List/tuple of Slater determinants
+            Default uses `generate_pspace`
+
+        Raises
+        ------
+        TypeError
+            If projection space is not a list or a tuple
+            If Slater determinant is in a form that is not supported
         """
         if pspace is None:
-            pspace = self.compute_pspace(self.nparam - self.nconstraints)
-            # - the number of constraints already impored on the wfn
-            # in general this is - 1 because we need one equation for normalization
-        # FIXME: this is quite terrible
-        if isinstance(pspace, int):
-            pspace = self.compute_pspace(pspace)
-        elif isinstance(pspace, (list, tuple)):
-            if not all(type(i) in [int, type(mpz())] for i in pspace):
-                raise ValueError('Each Slater determinant must be an integer or mpz object')
-            pspace = [mpz(sd) for sd in pspace]
+            pspace = self.generate_pspace()
+        if not isinstance(pspace, (list, tuple)):
+            raise TypeError('`pspace` must be given as a list or tuple of Slater determinants')
+        pspace = tuple(slater.internal_sd(sd) for sd in pspace)
+        # filter
+        self.pspace = tuple(sd for sd in pspace if
+                            (self._spin in [None, slater.get_spin(sd, self.nspatial)]) and
+                            (self._seniority in [None, slater.get_seniority(sd, self.nspatial)]))
+
+
+    def assign_ref_sds(self, ref_sds=None):
+        """ Assigns the reference Slater determinants
+
+        Reference Slater determinants are used to calculate the `energy`, `norm`, and
+        `template_coeffs`.
+
+        Parameters
+        ----------
+        ref_sds : int/long/gmpy2.mpz, list/tuple of ints, None
+            Slater determinants that will be used as a reference for the wavefunction (e.g. for
+            initial guess, energy calculation, normalization, etc)
+            If `int` or `gmpy2.mpz`, then the equivalent Slater determinant (see `wfns.slater`) is
+            used as a reference
+            If `list` or `tuple` of Slater determinants, then multiple Slater determinants will be
+            used as a reference. Note that multiple references require an initial guess
+            Default is the first element of the `self.pspace`
+
+        Raises
+        ------
+        TypeError
+            If Slater determinants in a list or tuple are not compatible with the format used
+            internally
+            If Slater determinants are given in a form that is not int/long/gmpy2.mpz, list/tuple of
+            ints or None
+        """
+        # FIXME: repeated code (from assign_ref_sds)
+        if ref_sds is None:
+            self.ref_sds = (self.pspace[0], )
+        elif isinstance(ref_sds, (int, long)) or slater.is_internal_sd(ref_sds):
+            self.ref_sds = (slater.internal_sd(ref_sds), )
+        elif isinstance(ref_sds, (list, tuple)):
+            self.ref_sds = tuple(slater.internal_sd(i) for i in ref_sds)
         else:
-            raise TypeError("pspace must be an int, list or tuple")
-        self.pspace = tuple(pspace)
+            raise TypeError('Unsupported reference Slater determinants, {0}'.format(type(ref_sds)))
 
-    #
-    # View method
-    #
+        for sd in self.ref_sds:
+            if slater.total_occ(sd) != self.nelec:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same number'
+                                 ' of electrons as the wavefunction'.format(bin(sd)))
+            elif self._spin not in [None, slater.get_spin(sd, self.nspatial)]:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same spin'
+                                 ' as the selected spin, {1}'.format(bin(sd), self._spin))
+            elif self._seniority not in [None, slater.get_seniority(sd, self.nspatial)]:
+                raise ValueError('Reference Slater determinant, {0}, does not have the same'
+                                 ' seniority as the selected seniority, {1}'
+                                 ''.format(bin(sd), self._seniority))
 
-    def overlap(self, sd, deriv=None):
+
+    def assign_params(self, params=None, add_noise=False):
+        """ Assigns the parameters of the wavefunction
+
+        Parameters
+        ----------
+        params : np.ndarray, None
+            Parameters of the wavefunction
+            Last parameter is the energy
+            Default is the `template_coeffs` for the coefficient and energy of the reference
+            Slater determinants
+            If energy is given as zero, the energy of the reference Slater determinants are used
+        add_noise : bool
+            Flag to add noise to the given parameters
+
+        Raises
+        ------
+        TypeError
+            If `params` is not a numpy array
+            If `params` does not have data type of `float`, `complex`, `np.float64` and
+            `np.complex128`
+            If `params` has data type of `float or `np.float64` and wavefunction does not have data
+            type of `np.float64`
+        ValueError
+            If `params` is None (default) and `ref_sds` has more than one Slater determinants
+            If `params` is not a one dimensional numpy array with appropriate dimensions
+        """
+        if params is None:
+            if len(self.ref_sds) > 1:
+                raise ValueError('Cannot use default initial parameters if there is more than one'
+                                 ' reference Slater determinants.')
+            params = self.template_coeffs.astype(self.dtype).flatten()
+            params = np.hstack((params, 0))
+
+        ncoeffs = self.template_coeffs.size
+        # check input
+        if not isinstance(params, np.ndarray):
+            raise TypeError('Parameters must be given as a np.ndarray')
+        elif params.shape != (self.nparams, ):
+            raise ValueError('Parameters must be given as a one dimension array of size, {0}'
+                             ''.format(self.nparams))
+        elif params.dtype not in (float, complex, np.float64, np.complex128):
+            raise TypeError('Data type of the parameters must be one of `float`, `complex`,'
+                            ' `np.float64` and `np.complex128`')
+        if params.dtype in (complex, np.complex128) and self.dtype != np.complex128:
+            raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction'
+                            ' must be `np.complex128`')
+
+        # add random noise
+        if add_noise:
+            # set scale
+            scale = 0.2 / ncoeffs
+            params[:ncoeffs] += scale * (np.random.random(ncoeffs) - 0.5)
+            if params.dtype == np.complex128:
+                params[:ncoeffs] += 0.001j * scale * (np.random.random(ncoeffs) - 0.5)
+
+        self.params = params.astype(self.dtype)
+        # add energy
+        if self.params[-1] == 0:
+            self.params[-1] = self.compute_energy(ref_sds=self.ref_sds)
+        # clear cache
+        self.cache = {}
+        self.d_cache = {}
+
+
+
+    def get_overlap(self, sd, deriv=None):
         """ Returns the overlap of the wavefunction with a Slater determinant
 
         ..math::
@@ -340,38 +388,40 @@ class ProjectionWavefunction(Wavefunction):
         Returns
         -------
         overlap : float
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not compatible with the format used internally
         """
-        sd = mpz(sd)
+        sd = slater.internal_sd(sd)
         try:
             if deriv is None:
                 return self.cache[sd]
             else:
-                # construct new mpz to describe the slater determinant and
-                # derivation index
                 return self.d_cache[(sd, deriv)]
         except KeyError:
             return self.compute_overlap(sd, deriv=deriv)
+
 
     def compute_norm(self, ref_sds=None, deriv=None):
         """ Returns the norm of the wavefunction
 
         ..math::
-            \big< \Phi_i \big| \Psi \big> &= \sum_j c_j \big< \Phi_i \big| \Phi_j \big>\\
-                                          &= c_i
-        or
-        ..math::
-            c_i \big< \Phi_i \big| \Psi \big> &= c_i \sum_j c_j \big< \Phi_i \big| \Phi_j \big>\\
-                                              &= c_i^2
-        or
-        ..math::
-            \sum_i c_i \big< \Phi_i \big| \Psi \big> &= \sum_i c_i \sum_j c_j \big< \Phi_i \big| \Phi_j \big>\\
-                                                     &= \sum_i c_i^2
+            \sum_i c_i \braket{\Phi_i | \Psi}
+            &= \sum_i c_i \sum_j c_j \braket{\Phi_i | \Phi_j}
+            &= \sum_i c_i^2
 
         Parameters
         ----------
-        ref_sds : iterable of (int, gmpy2.mpz)
-            If iterable, then list of integers that describes the occupation of
-            a Slater determinant as a bitstring
+        ref_sds : int/long/gmpy2.mpz, list/tuple of ints, None
+            Slater determinants that will be used as a reference for the wavefunction (e.g. for
+            initial guess, energy calculation, normalization, etc)
+            If `int` or `gmpy2.mpz`, then the equivalent Slater determinant (see `wfns.slater`) is
+            used as a reference
+            If `list` or `tuple` of Slater determinants, then multiple Slater determinants will be
+            used as a reference. Note that multiple references require an initial guess
+            Default uses `self.ref_sds`
         deriv : int
             Index of the parameter to derivatize
             Default is no derivatization
@@ -379,41 +429,38 @@ class ProjectionWavefunction(Wavefunction):
         Returns
         -------
         norm : float
+
+        Raises
+        ------
+        TypeError
+            If Slater determinants in a list or tuple are not compatible with the format used
+            internally
+            If Slater determinants are given in a form that is not int/long/gmpy2.mpz, list/tuple of
+            ints or None
         """
+        # FIXME: repeated code (from assign_ref_sds)
         if ref_sds is None:
-            ref_sds = self.default_ref_sds
-        if not isinstance(ref_sds, (list, tuple)):
-            raise TypeError('The reference Slater determinants must be given as a list or tuple')
-        if not all(type(i) in [int, type(mpz())] for i in ref_sds):
-            raise TypeError('Each reference Slater determinant must be of type int or mpz')
-        # convert to mpz
-        ref_sds = [mpz(i) for i in ref_sds]
+            ref_sds = self.ref_sds
+        elif isinstance(ref_sds, (int, long)) or slater.is_internal_sd(ref_sds):
+            ref_sds = (slater.internal_sd(ref_sds), )
+        elif isinstance(ref_sds, (list, tuple)):
+            ref_sds = tuple(slater.internal_sd(i) for i in ref_sds)
+        else:
+            raise TypeError('Unsupported reference Slater determinants, {0}'.format(type(ref_sds)))
+
         # if not derivatized
         if deriv is None:
-            return sum(self.overlap(i)**2 for i in ref_sds)
+            return sum(self.get_overlap(i)**2 for i in ref_sds)
         # if derivatized
         else:
-            return sum(2 * self.overlap(i) * self.overlap(i, deriv=deriv) for i in ref_sds)
+            return sum(2 * self.get_overlap(i) * self.get_overlap(i, deriv=deriv) for i in ref_sds)
 
-    def compute_energy(self, include_nuc=False, ref_sds=None, deriv=None):
-        """ Returns the energy of the system
 
-        ..math::
-            \big< \Phi_i \big| H \big| \Psi \big>
+    def get_energy(self, include_nuc=False, deriv=None):
+        """ Returns the energy of the system (from the projected Schrodinger equation)
 
         Parameters
         ----------
-        ref_sds : int, mpz, list of (int, gmpy2.mpz)
-            If an int or mpz is given,
-            ..math::
-                \frac{c_i \big< \Phi_i \big| H \big| \Psi \big>}{\big< \Phi_i \big| \Psi \big>}
-            is calculated
-            If a list of int or mpz is given,
-            ..math::
-                \frac{\sum_i \big< \Phi_i \big| \Psi \big> \big< \Phi_i \big| H \big| \Psi \big>}{\sum_j \big< \Phi_j \big| \Psi \big>^2}
-            is calculated
-            This is only useful if the energy is not a parameter
-            Default is the self.default_ref_sds
         include_nuc : bool
             Flag to include nuclear nuclear repulsion
             Default is False
@@ -428,105 +475,193 @@ class ProjectionWavefunction(Wavefunction):
             If include_nuc is False, then electronic energy
             Default is electronic energy
         """
-        # set nuclear nuclear repulsion
         nuc_nuc = 0.0
         if include_nuc:
             nuc_nuc = self.nuc_nuc
-        if ref_sds is None:
-            # if not derivatized
-            if deriv is None:
-                return self.params[-1] + nuc_nuc
-            # if derivatized
-            elif deriv == self.params.size - 1:
-                return 1.0
-            else:
-                return 0.0
+
+        # if not derivatized
+        if deriv is None:
+            return self.params[-1] + nuc_nuc
+        # if derivatized
+        elif deriv == self.params.size - 1:
+            return 1.0
         else:
-            if not isinstance(ref_sds, (list, tuple)):
-                raise TypeError('The reference Slater determinants must given as a list or tuple')
-            if not all(type(i) in [int, type(mpz())] for i in ref_sds):
-                raise TypeError('Each Slater determinants must be of type int or mpz')
-            # convert to mpz
-            ref_sds = [mpz(sd) for sd in ref_sds]
-
-            # if not derivatized
-            if deriv is None:
-                elec_energy = sum(self.overlap(i) * self.compute_hamiltonian(i) for i in ref_sds)
-                elec_energy /= self.compute_norm(ref_sds=ref_sds)
-            # if derivatized
-            else:
-                olp = np.array([self.overlap(i) for i in ref_sds])
-                d_olp = np.array([self.overlap(i, deriv=deriv) for i in ref_sds])
-                ham = np.array([self.compute_hamiltonian(i) for i in ref_sds])
-                d_ham = np.array([self.compute_hamiltonian(i, deriv=deriv) for i in ref_sds])
-                norm = self.compute_norm(ref_sds=ref_sds)
-                d_norm = self.compute_norm(ref_sds=ref_sds, deriv=deriv)
-                elec_energy = np.sum(d_olp * ham + olp * d_ham) / norm
-                elec_energy += np.sum(olp * ham) / (-norm**2) * d_norm
-            return elec_energy + nuc_nuc
+            return 0.0
 
 
-    #
-    # Objective
-    #
-    def objective(self, x, weigh_norm=True):
-        """ System of nonlinear functions that corresponds to the projected Schrodinger equation
+    def compute_hamiltonian(self, slater_d, deriv=None):
+        """ Computes the hamiltonian of the wavefunction with respect to a Slater
+        determinant
 
-        The set of equations is
         ..math::
-            f_i(x) = \big< \Phi_i \big| H \big| \Psi \big> - E \big< \Phi_i \big| \Psi \big>
-        where :math:`E` is defined by ProjectionWavefunction.compute_energy.
-        An extra equation is added at the end so that the waavefunction is normalized
+            \big< \Phi_i \big| H \big| \Psi \big>
+
+        Parameters
+        ----------
+        slater_d : int, gmpy2.mpz
+            Slater Determinant against which to project.
+        deriv : None, int
+            Index of the parameter with which to derivatize against
+            Default is no derivatization
+
+        Returns
+        -------
+        one_electron : float
+            Electron nuclear attraction energy
+        coulomb : float
+            Coulomb electron electron repulsion energy
+        exchange : float
+            Exchange electron electron repulsion energy
+        """
+        if self._seniority == 0:
+            return sen0_hamiltonian(self, slater_d, self.orbtype, deriv=deriv)
+        else:
+            return hamiltonian(self, slater_d, self.orbtype, deriv=deriv)
+
+
+    def compute_energy(self, include_nuc=None, ref_sds=None, deriv=None):
+        """ Computes the energy projected against some set of Slater determinants
+
         ..math::
-            f_{last} = norm - 1
-        where :math:`norm` is defined by ProjectionWavefunction.compute_norm.
-        This function will be zero if the function is normalized.
-        The solver solves for `x` such that
+            \frac{\sum_i \braket{\Phi_i | \Psi} \braket{\Phi_i | H | \Psi}}
+            {\sum_j \braket{\Phi_j | \Psi}^2}
+
+        Parameters
+        ----------
+        include_nuc : bool
+            Flag to include nuclear nuclear repulsion
+            Default is False
+        ref_sds : int/long/gmpy2.mpz, list/tuple of ints, None
+            Slater determinants that will be used as a reference for the wavefunction (e.g. for
+            initial guess, energy calculation, normalization, etc)
+            If `int` or `gmpy2.mpz`, then the equivalent Slater determinant (see `wfns.slater`) is
+            used as a reference
+            If `list` or `tuple` of Slater determinants, then multiple Slater determinants will be
+            used as a reference. Note that multiple references require an initial guess
+            Default uses `self.ref_sds`
+        deriv : int
+            Index of the parameter to derivatize
+            Default is no derivatization
+
+        Returns
+        -------
+        energy : float
+            If include_nuc is True, then total energy
+            If include_nuc is False, then electronic energy
+            Default is electronic energy
+
+        Raises
+        ------
+        TypeError
+            If the given reference Slater determinants are not supported
+        ValueError
+            If the norm of the wavefunction is zero
+            If the norm of the wavefunction is negative
+        """
+        nuc_nuc = 0.0
+        if include_nuc:
+            nuc_nuc = self.nuc_nuc
+
+        # FIXME: repeated code (from assign_ref_sds)
+        if ref_sds is None:
+            ref_sds = self.ref_sds
+        elif isinstance(ref_sds, (int, long)) or slater.is_internal_sd(ref_sds):
+            ref_sds = (slater.internal_sd(ref_sds), )
+        elif isinstance(ref_sds, (list, tuple)):
+            ref_sds = tuple(slater.internal_sd(i) for i in ref_sds)
+        else:
+            raise TypeError('Unsupported reference Slater determinants, {0}'.format(type(ref_sds)))
+
+        norm = self.compute_norm(ref_sds=ref_sds)
+        if np.abs(norm) < 1e-9:
+            raise ValueError('Norm of the waefunction is zero')
+        elif isinstance(norm, (complex, np.complex128)) and (norm.real < 1e-9 or
+                                                             abs(norm.imag) > 1e-9):
+            raise ValueError('Norm of the wavefunction is complex')
+        # if not derivatized
+        if deriv is None:
+            elec_energy = sum(self.get_overlap(i)*sum(self.compute_hamiltonian(i)) for i in ref_sds)
+            elec_energy /= norm
+        # if derivatized
+        else:
+            olp = np.array([self.get_overlap(i) for i in ref_sds])
+            d_olp = np.array([self.get_overlap(i, deriv=deriv) for i in ref_sds])
+
+            ham = np.array([sum(self.compute_hamiltonian(i)) for i in ref_sds])
+            d_ham = np.array([sum(self.compute_hamiltonian(i, deriv=deriv)) for i in ref_sds])
+
+            d_norm = self.compute_norm(ref_sds=ref_sds, deriv=deriv)
+
+            elec_energy = np.sum(d_olp * ham + olp * d_ham) / norm
+            elec_energy += np.sum(olp * ham) / (-norm**2) * d_norm
+
+        return elec_energy + nuc_nuc
+
+
+    #############
+    # Objective #
+    #############
+    def objective(self, x, weigh_constraints=True, save_file=None):
+        """ System of (usually) nonlinear functions that corresponds to the projected Schrodinger
+        equation
+
         ..math::
-            f_i(x) = 0
+            f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}
+            &\vdots
+            f_K(x) &= \braket{\Phi_K | H | \Psi} - E \braket{\Phi_K | \Psi}
+            f_{K+1}(x) &= constraint_1
+            &\vdots
+
+        where :math:`K` is the number of Slater determinant onto which the wavefunction is projected
+        Equations after the :math:`K`th index are the constraints on the system of equations.
+        The constraints, hopefully, will move out into their own module some time in the future.
+        By default, the normalization constraint
+        ..math::
+            f_{K+1} = norm - 1
+        is present where :math:`norm` is defined by ProjectedWavefunction.compute_norm.
 
         Parameters
         ----------
         x : 1-index np.ndarray
-            The coefficient vector
-        weigh_norm : bool
+            Coefficient vector
+        weigh_constraints : bool
             Flag for weighing the norm heavier by some arbitrary value
-            By default, the norm equation is weighted heavier by a factor of
-            1000*(number of terms in the system of nonlinear equations)
+            By default, the norm equation is weighted heavier by a factor of 1000*(number of terms
+            in the system of nonlinear equations)
+        save_file : str
+            Name of the `.npy` file that will be used to store the parameters in the course of the
+            optimization
+            Default is no save file
 
         Returns
         -------
-        value : np.ndarray(self.nproj+1,)
-            Value of the function :math:`f`
-
+        obj : np.ndarray(self.nproj+self._nconstraints,)
         """
         # Update the coefficient vector
         self.params[:] = x
-        # Normalize
-        # self.normalize()
         # Save params
-        if self.params_save_name:
-            np.save('{0}_temp.npy'.format(self.params_save_name), self.params)
+        if save_file is not None:
+            np.save('{0}_temp.npy'.format(save_file), self.params)
         # Clear cache
         self.cache = {}
-        self.d_cache = {}
 
-        # set energy
-        energy = self.compute_energy()
-        obj = np.empty(self.nproj + 1, dtype=self.dtype)
-
+        obj = np.empty(self.nproj + self._nconstraints, dtype=self.dtype)
         # <SD|H|Psi> - E<SD|H|Psi> == 0
         for i, sd in enumerate(self.pspace):
-            obj[i] = self.compute_hamiltonian(sd) - energy * self.overlap(sd)
-        # Add normalization constraint
-        if weigh_norm:
-            obj[-1] = (self.compute_norm() - 1.0)*self.params.size*(len(self.pspace)+1)*1000
-        else:
-            obj[-1] = (self.compute_norm() - 1.0)
+            obj[i] = sum(self.compute_hamiltonian(sd)) - self.get_energy() * self.get_overlap(sd)
+        # Add constraints
+        # FIXME: constraint weight needs to be repeated in jacobian
+        # FIXME: need some way of adding arbitrary constraints
+        if self._nconstraints == 1:
+            if weigh_constraints:
+                obj[self.nproj] = (self.compute_norm() - 1)*(self.nproj + self._nconstraints)
+            else:
+                obj[self.nproj] = (self.compute_norm() - 1)
 
         return obj
 
-    def jacobian(self, x):
+
+    def jacobian(self, x, weigh_constraints=True):
         """ Jacobian of the objective function
 
         A matrix is returned
@@ -537,54 +672,61 @@ class ProjectionWavefunction(Wavefunction):
         Parameters
         ----------
         x : 1-index np.ndarray
-            The coefficient vector
+            Coefficient vector
+        weigh_constraints : bool
+            Flag for weighing the norm heavier by some arbitrary value
+            By default, the norm equation is weighted heavier by a factor of 1000*(number of terms
+            in the system of nonlinear equations)
 
         Returns
         -------
-        value : np.ndarray(self.nproj+1, self.nparam)
+        jac : np.ndarray(self.nproj+self._nconstraints, self.nparams)
             Value of the Jacobian :math:`J_{ij}`
-
         """
-        # Update the coefficient vector
-        self.params[:] = x
+        # FIXME: double check if this is necessary
         # Clear cache
         self.cache = {}
         self.d_cache = {}
 
         # set energy
-        energy = self.compute_energy()
-        jac = np.empty((self.nproj + 1, self.nparam), dtype=self.dtype)
+        energy = self.get_energy()
+        jac = np.empty((self.nproj + self._nconstraints, self.nparams), dtype=self.dtype)
 
-        for j in range(self.nparam):
-            d_energy = self.compute_energy(deriv=j)
+        for j in range(self.nparams):
+            d_energy = self.get_energy(deriv=j)
             for i, sd in enumerate(self.pspace):
                 # <SD|H|Psi> - E<SD|H|Psi> = 0
-                jac[i, j] = (self.compute_hamiltonian(sd, deriv=j) -
-                             energy * self.overlap(sd, deriv=j) - d_energy * self.overlap(sd))
+                jac[i, j] = (sum(self.compute_hamiltonian(sd, deriv=j))
+                             - energy*self.get_overlap(sd, deriv=j) - d_energy*self.get_overlap(sd))
             # Add normalization constraint
-            jac[-1, j] = self.compute_norm(deriv=j)*self.params.size*(len(self.pspace)+1)*1000
+            # FIXME: constrain weight needs to be repeated here
+            # FIXME: need some way of adding arbitrary constraints
+            if self._nconstraints == 1:
+                if weigh_constraints:
+                    jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)*(self.nproj+self._nconstraints)
+                else:
+                    jac[self.nproj, j] = (self.compute_norm(deriv=j)-1)
+
         return jac
 
-    #
-    # Abstract Methods
-    #
-    @abstractmethod
-    def compute_pspace(self, num_sd):
-        """ Generates Slater determinants to project onto
 
-        Parameters
-        ----------
-        num_sd : int
-            Number of Slater determinants to generate
+    #####################
+    # Abstract Property #
+    #####################
+    @abstractproperty
+    def template_coeffs(self):
+        """ Default parameters for the given reference Slater determinantes
 
-        Returns
-        -------
-        pspace : list of gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
+        Note
+        ----
+        Returned value must be a numpy array in the desired shape
         """
         pass
 
+
+    ####################
+    # Abstract Methods #
+    ####################
     @abstractmethod
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
@@ -604,38 +746,10 @@ class ProjectionWavefunction(Wavefunction):
         -------
         overlap : float
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
-        sd = gmpy2.mpz(sd)
-        pass
-
-    @abstractmethod
-    def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
-        determinant
-
-        ..math::
-            \big< \Phi_i \big| H \big| \Psi \big>
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
-            as a bitstring
-        deriv : None, int
-            Index of the paramater to derivatize the overlap with respect to
-            Default is no derivatization
-
-        Returns
-        -------
-        float
-        """
         pass
 
     @abstractmethod
     def normalize(self):
-        """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
-
-        Some of the cache are emptied because the parameters are rewritten
+        """ Normalizes the wavefunction such that the norm with respect to `ref_sds` is 1
         """
         pass

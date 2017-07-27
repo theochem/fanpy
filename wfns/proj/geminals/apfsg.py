@@ -3,30 +3,29 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from gmpy2 import mpz
 
-from .proj_wavefunction import ProjectionWavefunction
-from .. import slater
-from ..sd_list import doci_sd_list
-from .proj_hamiltonian import doci_hamiltonian
-from ..math_tools import permanent_combinatoric
+from ..proj_wavefunction import ProjectedWavefunction
+from ... import slater
+from ...sd_list import sd_list
+from ...math_tools import permanent_ryser
+from ..proj_hamiltonian import hamiltonian
 
-class AP1roG(ProjectionWavefunction):
-    """ Antisymmetric Product of One-Reference-Orbital Geminals
+__all__ = []
+
+
+class APfsG(ProjectedWavefunction):
+    """ Antisymmetric Product of Factorized Set Geminals
 
     ..math::
-        \big| \Psi_{\mathrm{AP1roG}} \big>
-        &= \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
-        &= \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> \\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big| \mathbf{m} \big>
-    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-    Slater determinant (DOCI).
-
+        \big| \Psi_{\mathrm{APFSG}} \big>
+        &= \prod_{q=1}^R T_q^\dagger \big| \theta \big>\\
+        &= \prod_{q=1}^R \left(c_{q;0} + \sum_{i=1}^{B} c^{(CS)}_{q;i}a_{2i-1}^\dagger a_{2i}^\dagger + \sum_{j \in S_1} \sum_{k \in S_2}a^{(os)}_{q;i}b^{(os)}_{jk}a_j^\dagger a_k^\dagger (1 - \hat{n_{j'}}) (1-\hat{n_{k'}}) \right) \big| \theta \big>
     Attributes
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : tuple of np.ndarray(K,K)
+    one_int : tuple of np.ndarray(K,K)
         One electron integrals for the spatial orbitals
-    G : tuple of np.ndarray(K,K,K,K)
+    two_int : tuple of np.ndarray(K,K,K,K)
         Two electron integrals for the spatial orbitals
     nuc_nuc : float
         Nuclear nuclear repulsion value
@@ -36,7 +35,7 @@ class AP1roG(ProjectionWavefunction):
         Number of spin orbitals (alpha and beta)
     nelec : int
         Number of electrons
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
     params : np.ndarray(K)
         Guess for the parameters
@@ -64,7 +63,7 @@ class AP1roG(ProjectionWavefunction):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -81,13 +80,13 @@ class AP1roG(ProjectionWavefunction):
 
     Methods
     -------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orb_type=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
@@ -113,7 +112,7 @@ class AP1roG(ProjectionWavefunction):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -125,43 +124,29 @@ class AP1roG(ProjectionWavefunction):
         Normalizes the wavefunction (different definitions available)
         By default, the norm should the projection against the ref_sd squared
     """
+
     @property
     def template_coeffs(self):
         """ Default numpy array of parameters.
 
         This will be used to determine the number of parameters
-        Initial guess, if not provided, will be obtained by adding random noise to
-        this template
+        Initial guess, if not provided, will be obtained by adding random noise to this template
 
         Returns
         -------
         template_coeffs : np.ndarray(K, )
-
         """
-        return np.zeros((self.npair, self.nspatial-self.npair), dtype=self.dtype)
+        init_pair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        init_unpair = np.eye(self.npair, self.nspatial, dtype=self.dtype)
+        init_spatial = np.hstack((init_pair, init_unpair)).flatten()
+        init_spin = np.eye(self.nspatial,
+                           self.nspatial, dtype=self.dtype).flatten()
+        return np.hstack((init_spatial, init_spin))
 
-    @property
-    def nconstraints(self):
-        """Number of constraints on the sollution of the projected wavefunction.
-
-        For AP1roG this is 0 because the intermediate normalization is satisfied by construction.
-
-        Returns
-        -------
-        nconstraints : int
-        """
-
-        self._nconstraints = 0
-
-        return self._nconstraints
-
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
-        # FIXME: wording
-        Since APIG wavefunction only consists of Slater determinants with orbitals that are
-        paired (alpha and beta orbitals corresponding to the same spatial orbital are occupied),
-        the Slater determinants used correspond to those in DOCI wavefunction
+        # to do: add some more detailed doc
 
         Parameters
         ----------
@@ -174,31 +159,28 @@ class AP1roG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return doci_sd_list(self, num_sd)
+        number_sd = 2 * self.npair * self.nspatial + self.nspatial ** 2
+        return sd_list(self.nelec, self.nspatial, num_limit=number_sd)
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
         ..math::
-            \big< \Phi_q^i \big| \Psi_{\mathrm{AP1roG}} \big>
-            &= \big< \Phi_q^i \big| \prod_{q=1}^P T_q^\dagger \big| \theta \big>\\
-            &= \big< \Phi_q^i \big| \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger + \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right) \big| \theta \big> = c_{q;i}^{(\mathrm{AP1roG})} \\
-        &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \big < \Phi_q^i \big| \mathbf{m} \big> = | C(\Phi_q^i) |^+
-    where :math:`P` is the number of electron pairs, :math:`\mathbf{m}` is a
-        Slater determinant (DOCI).
-    The geminal coefficient matrix :math:`\mathbf{C}`) of AP1roG links the geminals with the underlying one-particle basis functions and has the following form,
-
-    .. math::
-        :label: cia
-
-        \mathbf{C}_{\mathrm{AP1roG}}  =
-        \begin{pmatrix}
-            1      & 0       & \cdots & 0       & c_{1;P+1} & c_{1;P+2}&\cdots &c_{1;K}\\
-            0      & 1       & \cdots & 0       & c_{2;P+1} & c_{2;P+2}&\cdots &c_{2;K}\\
-            \vdots & \vdots  & \ddots & \vdots  & \vdots    & \vdots   &\ddots &\vdots\\
-            0      & 0       & \cdots & 1       & c_{P;P+1} & c_{P;P+2}&\cdots & c_{P;K}
-        \end{pmatrix}
+            \big< \Phi_q^i \big| \Psi_{\mathrm{APFSG}} \big>
+            &= \big< \Phi_q^i \big| \prod_{q=1}^Q T_q^\dagger \big| \theta \big>\\
+            &=\begin{vmatrix}
+            c^{(cs)}_{1;i_1} & c^{(cs)}_{1;i_2} & \dots & c^{(cs)}_{1;i_{N_{cs}}} & a^{(os)}_{1;i_1} & a^{(os)}_{1;i_2} & \dots & a^{(os)}_{1;i_{N_{cs}}}\\
+            c^{(cs)}_{2;i_1} & c^{(cs)}_{2;i_2} & \dots & c^{(cs)}_{2;i_{N_{cs}}} & a^{(os)}_{2;i_1} & a^{(os)}_{2;i_2} & \dots & a^{(os)}_{2;i_{N_{cs}}}\\
+            \vdots & \vdots  &  & \vdots  & \vdots  & \vdots  &  &\vdots \\
+            c^{(cs)}_{Q;i_1} & c^{(cs)}_{Q;i_2} & \dots & c^{(cs)}_{Q;i_{N_{cs}}} & a^{(os)}_{Q;i_1} & a^{(os)}_{Q;i_2} & \dots & a^{(os)}_{Q;i_{N_{cs}}}
+            \end{vmatrix}^+
+            \begin{vmatrix}
+            b^{(os)}_{j_1k_1} & b^{(os)}_{j_1k_2} & \dots & b^{(os)}_{j_1k_{N_{os}}} \\
+            b^{(os)}_{j_2k_1} & b^{(os)}_{j_2k_2} & \dots & b^{(os)}_{j_2k_{N_{os}}} \\
+            \vdots & \vdots & & \vdots \\
+            b^{(os)}_{j_{N_{cs}}k_1} & b^{(os)}_{j_{N_{cs}}k_2} & \dots & b^{(os)}_{j_{N_{cs}}k_{N_{os}}}
+            \end{vmatrix}
 
 
         Parameters
@@ -214,51 +196,55 @@ class AP1roG(ProjectionWavefunction):
         -------
         overlap : float
         """
-        # caching is done wrt mpz objects, so you should convert sd to mpz first
         sd = mpz(sd)
-        # get indices of the occupied orbitals
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
         occ_alpha_indices = slater.occ_indices(alpha_sd)
         occ_beta_indices = slater.occ_indices(beta_sd)
-        if occ_alpha_indices != occ_beta_indices:
-            raise ValueError('Given Slater determinant, {0}, does not belong'
-                             ' to the DOCI Slater determinants'.format(bin(sd)))
-        # if the alpha and the beta parts are the same, then the orbitals
-        # correspond to the spatial orbitals
-        occ_indices = occ_alpha_indices
-        # get indices of the virtual orbitals
-        vir_indices = slater.vir_indices(alpha_sd, self.nspatial)
+        if len(occ_alpha_indices) != len(occ_beta_indices):
+            return 0.0
+        pair_sd = slater.shared(alpha_sd, beta_sd)
+        pair_list = slater.occ_indices(pair_sd)
+        diff_alpha_occ, diff_beta_occ  =  slater.diff(alpha_sd, beta_sd)
+        unpair_list = diff_alpha_occ + diff_beta_occ
+        # build the occupations of bosons and fermions
+        boson_list = list(pair_list) + [i + len(pair_list) for i in unpair_list]
+        # build geminal and sd coefficient
+        num_boson_part = self.npair*self.nspatial*2
+        boson_part = self.params[:num_boson_part].reshape(self.npair, 2*self.nspatial)
+        fermion_part = self.params[num_boson_part: -1].reshape(self.nspatial, self.nspatial)
 
-        # build geminal coefficient
-        gem_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
-
-        # get the indices that need to be swapped from virtual to occupied
-        vo_col = [i - self.npair for i in range(self.npair, self.nspatial) if i in occ_indices]
-        vo_row = [j for j in range(self.npair) if j not in occ_indices]
-        assert len(vo_row) == len(vo_col)
-
-        val = 0.0
-        # if no derivatization
+        val = 0
         if deriv is None:
-            if len(vo_row) == 0:
-                val = 1
-            else:
-                val = permanent_combinatoric(gem_coeffs[vo_row][:, vo_col])
+            val = permanent_ryser(boson_part[:, boson_list])
+            val *= np.linalg.det(fermion_part[occ_alpha_indices, :][:, occ_beta_indices])
             self.cache[sd] = val
-        # if derivatization
-        elif isinstance(deriv, int) and deriv < self.params.size - 1:
-            if len(vo_row) > 0:
-                row_to_remove = deriv // self.template_coeffs.shape[1]
-                col_to_remove = deriv %  self.template_coeffs.shape[1]
-                # find indices that excludes the specified row and column
-                row_inds = [i for i in vo_row if i != row_to_remove]
-                col_inds = [i for i in vo_col if i != col_to_remove]
-                # compute
-                if len(row_inds) == 0 and len(col_inds) == 0:
-                    val = 1
-                elif len(row_inds) < len(vo_row) and len(col_inds) < len(vo_col):
-                    val = permanent_combinatoric(gem_coeffs[row_inds][:, col_inds])
-                self.d_cache[(sd, deriv)] = val
+        else:
+            # if the parameter to derivatize is in the permanent
+            if deriv < num_boson_part:
+                row_to_remove = deriv // boson_part.shape[1]
+                col_to_remove = deriv % boson_part.shape[1]
+                if col_to_remove in boson_list:
+                    row_inds = [i for i in range(boson_part.shape[0]) if i != row_to_remove]
+                    col_inds = [i for i in boson_list if i != col_to_remove]
+                    if len(row_inds) == 0 or len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = permanent_ryser(boson_part[row_inds, :][:, col_inds])
+                    val *= np.linalg.det(fermion_part)
+                    self.d_cache[(sd, deriv)] = val
+            # if the parameter to derivatize is in the determinant
+            elif deriv < self.params.size - 1:
+                row_to_remove = deriv - boson_part.size // fermion_part.shape[1]
+                col_to_remove = deriv - boson_part.size % fermion_part.shape[1]
+                if row_to_remove in occ_alpha_indices and col_to_remove in occ_beta_indices:
+                    row_inds = [i for i in occ_alpha_indices if i != row_to_remove]
+                    col_inds = [i for i in occ_beta_indices if i != col_to_remove]
+                    if len(row_inds) == len(col_inds) == 0:
+                        val = 1
+                    else:
+                        val = np.linalg.det(fermion_part[row_inds, :][:, col_inds])
+                    val *= permanent_ryser(boson_part)
+                    self.d_cache[(sd, deriv)] = val
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
@@ -266,9 +252,9 @@ class AP1roG(ProjectionWavefunction):
         determinant
 
         ..math::
-            \big< \Phi_i \big| H \big| \Psi_{mathrm{AP1roG}} \big>
+            \big< \Phi_i \big| H \big| \Psi_{mathrm{APFSG}} \big>
 
-        Since only Slater determinants from DOCI will be used, we can use the DOCI
+        Since only Slater determinants from CI will be used, we can use the CI
         Hamiltonian
 
         Parameters
@@ -284,14 +270,14 @@ class AP1roG(ProjectionWavefunction):
         -------
         float
         """
-        return sum(doci_hamiltonian(self, sd, self.orb_type, deriv=deriv))
+        return sum(hamiltonian(self, sd, self.orbtype, deriv=deriv))
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
 
-        AP1roG is normalized by contruction.
+        APFSG is normalized by contruction.
         """
         pass

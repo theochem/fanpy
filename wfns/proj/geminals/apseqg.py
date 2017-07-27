@@ -1,29 +1,31 @@
 from __future__ import absolute_import, division, print_function
 
+import itertools as it
 import numpy as np
 from gmpy2 import mpz, bit_scan1
-import itertools as it
 
-from .. import slater
-from ..math_tools import permanent_ryser
-from ..sd_list import ci_sd_list
+from ... import slater
+from ...math_tools import permanent_ryser
+from ...sd_list import sd_list
 
-from .proj_wavefunction import ProjectionWavefunction
-from .proj_hamiltonian import hamiltonian
+from ..proj_wavefunction import ProjectedWavefunction
+from ..proj_hamiltonian import hamiltonian
+
+__all__ = []
 
 
-class APseqG(ProjectionWavefunction):
+class APseqG(ProjectedWavefunction):
     """ Antisymmetric Product of Sequantially Interacting Geminals
 
     Attributes
     ----------
     dtype : {np.float64, np.complex128}
         Numpy data type
-    H : np.ndarray(K,K) or tuple np.ndarray(K,K)
+    one_int : np.ndarray(K,K) or tuple np.ndarray(K,K)
         One electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 2), one electron integrals for the (alpha, alpha)
         and the (beta, beta) unrestricted orbitals
-    G : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
+    two_int : np.ndarray(K,K,K,K) or tuple np.ndarray(K,K)
         Two electron integrals for restricted, unrestricted, or generalized orbitals
         If tuple of np.ndarray (length 3), two electron integrals for the
         (alpha, alpha, alpha, alpha), (alpha, beta, alpha, beta), and
@@ -32,7 +34,7 @@ class APseqG(ProjectionWavefunction):
         Nuclear nuclear repulsion value
     nelec : int
         Number of electrons
-    orb_type : {'restricted', 'unrestricted', 'generalized'}
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used in obtaining the one-electron and two-electron integrals
     params : np.ndarray(K)
         Guess for the parameters
@@ -56,7 +58,7 @@ class APseqG(ProjectionWavefunction):
         Number of spatial orbitals
     npair : int
         Number of electron pairs (rounded down)
-    nparam : int
+    nparams : int
         Number of parameters used to define the wavefunction
     nproj : int
         Number of Slater determinants to project against
@@ -73,13 +75,13 @@ class APseqG(ProjectionWavefunction):
 
     Method
     ------
-    __init__(nelec=None, H=None, G=None, dtype=None, nuc_nuc=None, orb_type=None)
+    __init__(nelec=None, one_int=None, two_int=None, dtype=None, nuc_nuc=None, orbtype=None)
         Initializes wavefunction
     __call__(method="default", **kwargs)
         Solves the wavefunction
     assign_dtype(dtype)
         Assigns the data type of parameters used to define the wavefunction
-    assign_integrals(H, G, orb_type=None)
+    assign_integrals(one_int, two_int, orbtype=None)
         Assigns integrals of the one electron basis set used to describe the Slater determinants
         (and the wavefunction)
     assign_nuc_nuc(nuc_nuc=None)
@@ -105,7 +107,7 @@ class APseqG(ProjectionWavefunction):
         Schrodinger equation
     jacobian(x)
         The Jacobian of the objective
-    compute_pspace
+    generate_pspace
         Generates a tuple of Slater determinants onto which the wavefunction is projected
     compute_overlap
         Computes the overlap of the wavefunction with one or more Slater determinants
@@ -121,8 +123,8 @@ class APseqG(ProjectionWavefunction):
     def __init__(self,
                  # Mandatory arguments
                  nelec=None,
-                 H=None,
-                 G=None,
+                 one_int=None,
+                 two_int=None,
                  # Arguments handled by base Wavefunction class
                  dtype=None,
                  nuc_nuc=None,
@@ -135,9 +137,9 @@ class APseqG(ProjectionWavefunction):
                  params_save_name=''
                  ):
         # FIXME: this fucking mess
-        super(ProjectionWavefunction, self).__init__(nelec=nelec,
-                                                     H=H,
-                                                     G=G,
+        super(ProjectedWavefunction, self).__init__(nelec=nelec,
+                                                     one_int=one_int,
+                                                     two_int=two_int,
                                                      dtype=dtype,
                                                      nuc_nuc=nuc_nuc,
                                                      )
@@ -227,14 +229,14 @@ class APseqG(ProjectionWavefunction):
             # num_max_gems = sum(self.nspin-1-seq for seq in self.seq_list)
             # select as many projections as possible
             # NOTE: the projections need to be truncated afterwards!
-            # pspace = self.compute_pspace(num_max_gems+1)
+            # pspace = self.generate_pspace(num_max_gems+1)
             # + 1 because we need one equation for normalization
 
             # choose all singles and doubles
-            pspace = self.compute_pspace(9999999999999999)
+            pspace = self.generate_pspace(9999999999999999)
         # FIXME: this is quite terrible
         if isinstance(pspace, int):
-            pspace = self.compute_pspace(pspace)
+            pspace = self.generate_pspace(pspace)
         elif isinstance(pspace, (list, tuple)):
             if not all(type(i) in [int, type(mpz())] for i in pspace):
                 raise ValueError('Each Slater determinant must be an integer or mpz object')
@@ -346,7 +348,7 @@ class APseqG(ProjectionWavefunction):
                                                   raise_error=False)
 
 
-    def compute_pspace(self, num_sd):
+    def generate_pspace(self, num_sd):
         """ Generates Slater determinants to project onto
 
         Parameters
@@ -360,7 +362,7 @@ class APseqG(ProjectionWavefunction):
             Integer (gmpy2.mpz) that describes the occupation of a Slater determinant
             as a bitstring
         """
-        return ci_sd_list(self, num_sd, exc_orders=[1,2])
+        return sd_list(self.nelec, self.nspatial, num_limit=num_sd, exc_orders=[1, 2])
 
     def compute_overlap(self, sd, deriv=None):
         """ Computes the overlap between the wavefunction and a Slater determinant
@@ -439,11 +441,11 @@ class APseqG(ProjectionWavefunction):
         -------
         float
         """
-        return sum(hamiltonian(self, sd, self.orb_type, deriv=deriv))
+        return sum(hamiltonian(self, sd, self.orbtype, deriv=deriv))
 
     def normalize(self):
         """ Normalizes the wavefunction using the norm defined in
-        ProjectionWavefunction.compute_norm
+        ProjectedWavefunction.compute_norm
 
         Some of the cache are emptied because the parameters are rewritten
         """
