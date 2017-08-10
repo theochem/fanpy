@@ -1,110 +1,20 @@
-""" Wrapper of PySCF
-
-At this moment, we mainly need the integrals (in MO basis) and the energies (electron, nuclear
-nuclear repulsion) to construct a wavefunction. Here, we use PySCF to get these values.
+""" Script for generating one and two electron integrals using PySCF
 
 Functions
 ---------
-hartreefock(xyz_file, basis, is_unrestricted=False)
-    Runs HF in PySCF
 generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
     Generates the FCI Hamiltonian CI matrix
 """
 from __future__ import absolute_import, division, print_function
-import os
+import sys
 import ctypes
 import numpy as np
-from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
-from ..backend import slater
-from ..tools import find_datafile
 
 __all__ = []
 
 LIBFCI = load_library('libfci')
-
-
-def hartreefock(xyz_file, basis, is_unrestricted=False):
-    """ Runs HF using PySCF
-
-    Parameters
-    ----------
-    xyz_file : str
-        XYZ file location
-    basis : str
-        Basis set available in PySCF
-    is_unrestricted : bool
-        Flag to run unrestricted HF
-        Default is restricted HF
-
-    Returns
-    -------
-    result : dict
-        "el_energy"
-            electronic energy
-        "nuc_nuc_energy"
-            nuclear repulsion energy
-        "one_int"
-            tuple of the one-electron interal
-        "two_int"
-            tuple of the two-electron integral in Physicist's notation
-
-    Raises
-    ------
-    ValueError
-        If given xyz file does not exist
-    NotImplementedError
-        If calculation is unrestricted or generalized
-    """
-    # check xyz file
-    cwd = os.path.dirname(__file__)
-    if os.path.isfile(xyz_file):
-        pass
-    elif os.path.isfile(os.path.join(cwd, xyz_file)):
-        xyz_file = os.path.join(cwd, xyz_file)
-    else:
-        try:
-            xyz_file = find_datafile(xyz_file)
-        except IOError:
-            raise ValueError('Given xyz_file does not exist')
-
-    # get coordinates
-    with open(xyz_file, 'r') as f:
-        lines = [i.strip() for i in f.readlines()[2:]]
-        atoms = ';'.join(lines)
-
-    # get mol
-    mol = gto.M(atom=atoms, basis=basis, parse_arg=False, unit='angstrom')
-
-    # get hf
-    if is_unrestricted:
-        raise NotImplementedError('Unrestricted or Generalized orbitals are not supported in this'
-                                  ' PySCF wrapper (yet).')
-    hf = scf.RHF(mol)
-    # run hf
-    hf.scf()
-    # energies
-    E_nuc = hf.energy_nuc()
-    E_tot = hf.kernel()  # HF is solved here
-    E_elec = E_tot - E_nuc
-    # mo_coeffs
-    mo_coeff = hf.mo_coeff
-    # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
-    # get 1e integral
-    one_int_ab = mol.intor_symmetric('cint1e_kin_sph') + mol.intor_symmetric('cint1e_nuc_sph')
-    one_int = mo_coeff.T.dot(one_int_ab).dot(mo_coeff)
-    # get 2e integral
-    eri = ao2mo.full(mol, mo_coeff, verbose=0, intor='cint2e_sph')
-    two_int = ao2mo.restore(1, eri, mol.nao_nr())
-    # NOTE: PySCF uses Chemist's notation
-    two_int = np.einsum('ijkl->ikjl', two_int)
-    # results
-    result = {'el_energy': E_elec,
-              'nuc_nuc_energy': E_nuc,
-              'one_int': (one_int,),
-              'two_int': (two_int,)}
-    return result
 
 
 def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
@@ -218,6 +128,25 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
         addra, addrb = divmod(i, nb)
         alpha_bit = cistring.addr2str(norb, neleca, addra)
         beta_bit = cistring.addr2str(norb, nelecb, addrb)
-        pspace.append(slater.combine_spin(alpha_bit, beta_bit, norb))
+        # hard code in slater.combine_spin
+        pspace.append(alpha_bit | (beta_bit << norb))
 
     return ci_matrix, pspace
+
+
+if __name__ == '__main__':
+    # extract keyword from command line
+    kwargs = {key: val for key, val in zip(sys.argv[3::2], sys.argv[4::2])}
+    # change data types
+    if 'h1e' in kwargs:
+        kwargs['h1e'] = np.load(kwargs['h1e'])
+    if 'eri' in kwargs:
+        kwargs['eri'] = np.load(kwargs['eri'])
+    if 'nelec' in kwargs:
+        kwargs['nelec'] = int(kwargs['nelec'])
+    if 'is_chemist_notation' in kwargs:
+        kwargs['is_chemist_notation'] = bool(kwargs['is_chemist_notation'])
+
+    ci_matrix, pspace = generate_fci_cimatrix(**kwargs)
+    np.save(sys.argv[1], ci_matrix)
+    np.save(sys.argv[2], pspace)
