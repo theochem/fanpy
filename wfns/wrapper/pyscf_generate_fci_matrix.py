@@ -68,15 +68,13 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # to one another. i.e. From one bit string, and several indices that describes
     # certain excitation, we can get the other bit string
     # NOTE: PySCF treats alpha and the beta bits separately
-    link_indexa = cistring.gen_linkstr_index(range(norb), neleca)
-    link_indexb = cistring.gen_linkstr_index(range(norb), nelecb)
+    occslista = np.asarray(cistring.gen_strings4orblist(range(norb), neleca))
+    occslistb = np.asarray(cistring.gen_strings4orblist(range(norb), nelecb))
     # number of Slater determinants
-    na = link_indexa.shape[0]  # number of "alpha" Slater determinants
-    nb = link_indexb.shape[0]  # number of "beta" Slater determinants
-    num_sd = na*nb  # number of Slater determinants in total
+    na = len(occslista)  # number of "alpha" Slater determinants
+    nb = len(occslistb)  # number of "beta" Slater determinants
+    num_sd = na * nb  # number of Slater determinants in total
 
-    occslista = np.asarray(link_indexa[:, :neleca, 0], order='C')
-    occslistb = np.asarray(link_indexb[:, :nelecb, 0], order='C')
     # Diagonal of CI Hamiltonian matrix
     hdiag = np.empty(num_sd)
     # Coulomb integrals
@@ -102,7 +100,7 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # adapted/copied from pyscf.fci.direct_spin1.pspace
     # PySCF has a fancy indicing of Slater determinants (bitstrings to consecutive integers)
     addr = np.arange(hdiag.size)
-    # again, separate the alpha and the bet aparts
+    # again, separate the alpha and the beta parts
     addra, addrb = divmod(addr, nb)
     # bit strings for the alpha and beta parts
     stra = np.array([cistring.addr2str(norb, neleca, ia) for ia in addra], dtype=np.uint64)
@@ -145,7 +143,7 @@ if __name__ == '__main__':
     if 'nelec' in kwargs:
         kwargs['nelec'] = int(kwargs['nelec'])
     if 'is_chemist_notation' in kwargs:
-        kwargs['is_chemist_notation'] = bool(kwargs['is_chemist_notation'])
+        kwargs['is_chemist_notation'] = (kwargs['is_chemist_notation'] == 'True')
 
     ci_matrix, pspace = generate_fci_cimatrix(**kwargs)
     np.save(sys.argv[1], ci_matrix)

@@ -43,6 +43,17 @@ def check_data_h2_uhf_sto6g(el_energy, nuc_nuc_energy, one_int, two_ints):
                                                 [0.000000000000, 6.98855952e-01]]]]))
 
 
+# NOTE: the integrals from PySCF have different sign from HORTON's for some reason
+# def check_data_h2_rhf_631gdp(el_energy, nuc_nuc_energy, one_int, two_int):
+#     """Check data for LiH rhf sto6g calculation."""
+#     assert np.allclose(el_energy, -1.84444667027)
+#     assert np.allclose(nuc_nuc_energy, 0.7131768310)
+
+#     # check types of the integrals
+#     assert np.allclose(one_int, np.load(find_datafile('test/h2_hf_631gdp_oneint.npy')))
+#     assert np.allclose(two_int, np.load(find_datafile('test/h2_hf_631gdp_twoint.npy')))
+
+
 def check_data_lih_rhf_sto6g(*data):
     """Check data for LiH rhf sto6g calculation."""
     el_energy, nuc_nuc_energy, one_int, two_int = data
@@ -115,9 +126,8 @@ def test_pyscf_hartreefock_lih_rhf_sto6g():
     check_data_lih_rhf_sto6g(*hf_data)
 
 
-def test_generate_fci_cimatrix_h2_631gs():
+def test_generate_fci_cimatrix_h2_631gd():
     """Test PySCF's FCI calculation against H2 FCI 6-31G* data from Gaussian.
-
     HF energy: -1.13126983927
     FCI energy: -1.1651487496
     """
@@ -130,10 +140,9 @@ def test_generate_fci_cimatrix_h2_631gs():
 
     nelec = 2
     el_energy, nuc_nuc, one_int, two_int = hf_data
-    print(el_energy, nuc_nuc, el_energy+nuc_nuc)
 
     # physicist notation
-    ci_matrix, psapce = generate_fci_results('/usr/bin/python2',
+    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
                                              cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
@@ -145,7 +154,7 @@ def test_generate_fci_cimatrix_h2_631gs():
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
     # chemist notation
-    ci_matrix, psapce = generate_fci_results('/usr/bin/python2',
+    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
                                              cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
@@ -174,7 +183,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
     el_energy, nuc_nuc, one_int, two_int = hf_data
 
     # physicist notation
-    ci_matrix, psapce = generate_fci_results('/usr/bin/python2',
+    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
                                              cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
@@ -185,7 +194,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
     # chemist notation
-    ci_matrix, psapce = generate_fci_results('/usr/bin/python2',
+    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
                                              cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
@@ -193,7 +202,5 @@ def test_generate_fci_cimatrix_lih_sto6g():
                                              eri=np.einsum('ikjl->ijkl', two_int),
                                              nelec=nelec,
                                              is_chemist_notation=True)
-    ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
-    assert abs(ground_energy - (-1.1651486697)) < 1e-7
     ground_energy = scipy.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
