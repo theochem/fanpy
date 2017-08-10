@@ -81,7 +81,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     mo_coeff = hf.mo_coeff
     # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
     # get 1e integral
-    one_int_ab = mol.intor_symmetric('cint1e_kin_sph') + mol.intor_symmetric('cint1e_nuc_sph')
+    one_int_ab = mol.intor('cint1e_nuc_sph') + mol.intor('cint1e_kin_sph')
     one_int = mo_coeff.T.dot(one_int_ab).dot(mo_coeff)
     # get 2e integral
     eri = ao2mo.full(mol, mo_coeff, verbose=0, intor='cint2e_sph')
