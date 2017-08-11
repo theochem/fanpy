@@ -258,29 +258,73 @@ class ChemicalHamiltonian(object):
         coulomb = 0.0
         exchange = 0.0
 
+        # NOTE: regarding signs and transpositions
+        # Assume that the Slater determinant is on the right
+        # Assume that creators are ordered from smallest to largest (left to right) as are the
+        # `occ_indices`
+        # The orbital to be annihilated must be moved towards the Hamiltonian. It must "jump" over
+        # all of the other occupied orbitals that have smaller indices (b/c they are ordered)
+        # The `counter` of the orbital in the `occ_indices` is the number of transpositions.
+        # Then, this orbital can be annihilated and replaced with the appropriate virtual orbital
+        # e.g. h_{73} a^\dagger_7 a_5 a^\dagger_1 a^\dagger_3 a^\dagger_5 (-1)^0
+        #      h_{73} a^\dagger_7 a_5 a^\dagger_1 a^\dagger_5 a^\dagger_3 (-1)^1
+        #      h_{73} a^\dagger_7 a_5 a^\dagger_5 a^\dagger_1 a^\dagger_3 (-1)^2
+        #      h_{73} a^\dagger_7 a^\dagger_1 a^\dagger_3 (-1)^2
+        # To maintain the order within the Slater determinant, the newly created virtual orbital
+        # must move to its appropriate spot.
+        # The number of transpositions a virtual orbital must make to maintain the order is fixed
+        # for a given set of occupied orbitals
+        num_trans_vir = [sum(a > i for i in occ_indices) for a in vir_indices]
+        # However, one orbital was removed and this may influence the number of transpositions if
+        # the created virtual orbital has an index greater than the annihilated occupied orbital
+        # e.g. h_{23} a^\dagger_2 a^\dagger_1 a^\dagger_3 (-1)^2
+        #      h_{23} a^\dagger_1 a^\dagger_2 a^\dagger_3 (-1)^(2+1)
+        # e.g. h_{73} a^\dagger_7 a^\dagger_1 a^\dagger_3 (-1)^2
+        #      h_{73} a^\dagger_1 a^\dagger_7 a^\dagger_3 (-1)^(2+1)
+        #      h_{73} a^\dagger_1 a^\dagger_3 a^\dagger_7 (-1)^(2+2)
+        #      h_{73} a^\dagger_1 a^\dagger_3 a^\dagger_7 (-1)^(2+3-1)
+        # Note that the number of transpositions a^\dagger_7 must make in the original Slater
+        # determinant is 3 and the number of transpositions a^\dagger_2 must make is 1.
+        # Since the annihilated orbital had an index of 3, only creators with index greater than 3
+        # will be affected
+        # NOTE: g_{ijkl} corresponds to operations a_i a_j a^\dagger_l a^\dagger_k
+
         # sum over zeroth order excitation
         coeff = wfn.get_overlap(sd, deriv=deriv)
-        for counter, i in enumerate(occ_indices):
+        for counter_i, i in enumerate(occ_indices):
+            # no signature because the creator and annihilators cancel each other out
             one_electron += coeff * self.one_int.get_value(i, i, self.orbtype)
-            for j in occ_indices[counter+1:]:
+            for counter_j, j in enumerate(occ_indices[counter_i+1:]):
                 coulomb += coeff * self.two_int.get_value(i, j, i, j, self.orbtype)
                 exchange -= coeff * self.two_int.get_value(i, j, j, i, self.orbtype)
 
         # sum over one electron excitation
-        for counter, i in enumerate(occ_indices):
-            for a in vir_indices:
+        for counter_i, i in enumerate(occ_indices):
+            for counter_a, a in enumerate(vir_indices):
+                sign = (-1)**(counter_i + num_trans_vir[counter_a] - int(a > i))
+
                 coeff = wfn.get_overlap(slater.excite(sd, i, a), deriv=deriv)
-                one_electron += coeff * self.one_int.get_value(i, a, self.orbtype)
-                for j in occ_indices[:counter] + occ_indices[counter+1:]:
-                    coulomb += coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
-                    exchange -= coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
+                one_electron += sign * coeff * self.one_int.get_value(i, a, self.orbtype)
+                for counter_j, j in enumerate(occ_indices[:counter_i]):
+                    coulomb += sign * coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
+                    exchange -= sign * coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
+                for counter_j, j in enumerate(occ_indices[counter_i+1:]):
+                    coulomb += sign * coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
+                    exchange -= sign * coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
 
         # sum over two electron excitation
-        for i, j in combinations(occ_indices, 2):
-            for a, b in combinations(vir_indices, 2):
-                coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
-                coulomb += coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
-                exchange -= coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
+        for counter_i, i in enumerate(occ_indices):
+            for counter_j, j in enumerate(occ_indices[counter_i+1:]):
+                for counter_a, a in enumerate(vir_indices):
+                    for counter_b, b in enumerate(vir_indices[counter_a+1:]):
+                        sign = (-1)**(2*counter_i + counter_j)
+                        sign *= (-1)**(num_trans_vir[counter_a + 1 + counter_b] - int(b > i)
+                                       - int(b > j))
+                        sign *= (-1)**(num_trans_vir[counter_a] - int(a > i) - int(a > j))
+
+                        coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
+                        coulomb += sign * coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
+                        exchange -= sign * coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
 
         return one_electron, coulomb, exchange
 
@@ -321,7 +365,26 @@ class ChemicalHamiltonian(object):
             return 0.0, 0.0, 0.0
         diff_order = len(diff_sd1)
 
-        # moving all the shared orbitals toward one another (in the middle)
+        # Assume the creators are ordered from smallest to largest (left to rigth) and
+        # annihilators are ordered from largest to smallest.
+        # Move all of the creators and annihilators that are not shared between the two Slater
+        # determinants towards the middle
+        # e.g. Given left Slater determinant a_8 a_6 a_3 a_2 a_1 and
+        #      right Slater determinant a^\dagger_1 a^\dagger_2 a^dagger_5 a^\dagger_7 a^\dagger_8,
+        #      annihilators and creators of orbitals 1, 2, and 8 must move towards one another for
+        #      mutual destruction
+        #    0    a_8 a_6 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    1    a_8 a_6 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    2    a_6 a_8 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    3    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_8 a^\dagger_8
+        #    4    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_8 a^\dagger_7
+        #    5    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_8 a^\dagger_5 a^\dagger_7
+        # where first column is the number of transpositions, second column is the ordering of the
+        # annhilators (left SD) and third column is the ordering of the creators (right SD)
+
+        # NOTE: after moving all of the different creators toward the middle, the unshared creators
+        # will be ordered from smallest to largest and the shared creators will be ordered from
+        # smallest to largest
         num_transpositions_0 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd1)
         num_transpositions_1 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd2)
         num_transpositions = num_transpositions_0 + num_transpositions_1
