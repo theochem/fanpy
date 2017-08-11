@@ -450,7 +450,6 @@ def test_nonorth_get_overlap_deriv():
                       rtol=0, atol=1e-12)
 
 
-# FIXME: this is a problem. Either there is a bug in the NonorthWavefunction or the math is wrong.
 def test_nonorth_energy_unitary_transform_hamiltonian():
     """Test the energy of NonorthWavefunction by comparing it to the transformed Hamiltonian.
 
@@ -459,14 +458,6 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
     """
     nelec = 4
     nspin = 8
-    doci = CIWavefunction(nelec, nspin, seniority=0)
-    # optimized parameters for the transformed hamiltonian
-    doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01, -4.22775180e-02,
-                                 2.01842251e-01, 8.50414717e-04]))
-
-    ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                              np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
-                              orbtype='restricted')
 
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
@@ -475,22 +466,36 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
                           [0.707106809472, -0.000004868924, -0.000006704609, 0.707106752852],
                           [0.000004942751, 0.707106849959, 0.707106712365, 0.000006630781],
                           [0.000004410256, 0.707106712383, -0.707106849949, -0.000006245943]])
-    trans_ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                                    np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
-                                    orbtype='restricted')
-    trans_ham.orb_rotate_matrix(transform)
 
-    # nonorthonormal wavefunction
-    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci,
-                                  orth_to_nonorth=transform)
+    # NOTE: we need to be a little careful with the hamiltonian construction because the integrals
+    #       are stored by reference and using the same hamiltonian while transforming it will cause
+    #       some headach
+    def get_energy(wfn_type, expectation_type):
+        doci = CIWavefunction(nelec, nspin, seniority=0)
+        # optimized parameters for the transformed hamiltonian
+        doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01, -4.22775180e-02,
+                                     2.01842251e-01, 8.50414717e-04]))
 
-    def get_energy(wfn, ham):
+        ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
+                                  orbtype='restricted')
+
+        # rotating hamiltonian using orb_rotate_matrix
+        if wfn_type == 'doci':
+            wfn = doci
+            ham.orb_rotate_matrix(transform)
+        # rotating wavefunction as a NonorthWavefunction
+        elif wfn_type == 'nonorth':
+            wfn = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
+                                      wfn=doci, orth_to_nonorth=transform)
+
         norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
-        return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds) / norm
+        if expectation_type == 'ci matrix':
+            return sum(wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2))
+                       * wfn.get_overlap(sd2) for sd1 in sds for sd2 in sds) / norm
+        elif expectation_type == 'projected':
+            return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds)/norm
 
-    print(-4.59205536957)
-    print(get_energy(doci, ham))
-    print(get_energy(doci, trans_ham))
-    print(get_energy(nonorth, ham))
-    print(get_energy(nonorth, trans_ham))
-    assert False
+    assert np.allclose(get_energy('doci', 'ci matrix'), get_energy('nonorth', 'ci matrix'))
+    assert np.allclose(get_energy('doci', 'projected'), get_energy('nonorth', 'projected'))
+    assert np.allclose(get_energy('doci', 'ci matrix'), get_energy('doci', 'projected'))
