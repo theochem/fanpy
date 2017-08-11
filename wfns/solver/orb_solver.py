@@ -218,12 +218,11 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
 
     # FIXME: not memory efficient
     def _objective(theta, p=0, q=1):
-        rotated_ham = copy.deepcopy(ham)
-        rotated_ham.orb_rotate_jacobi((p, q), theta)
-
+        ham.orb_rotate_jacobi((p, q), theta)
         norm = sum(wfn.get_overlap(sd)**2 for sd in ref_sds)
-        energy = sum(wfn.get_overlap(sd) * sum(rotated_ham.integrate_wfn_sd(wfn, sd))
+        energy = sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd))
                      for sd in ref_sds)
+        ham.orb_rotate_jacobi((p, q), -theta)
         return energy / norm
 
     num_iterations = 50
