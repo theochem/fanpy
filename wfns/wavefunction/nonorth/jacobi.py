@@ -93,7 +93,7 @@ class JacobiWavefunction(BaseWavefunction):
         Default is no derivatization
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orbtype=None,
-                 jacobi_indices=None):
+                 jacobi_indices=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -117,7 +117,7 @@ class JacobiWavefunction(BaseWavefunction):
             2-tuple or list of indices of the orbitals that will be rotated
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
-        self.assign_params(None)
+        self.assign_params(params)
         self.assign_wfn(wfn)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
