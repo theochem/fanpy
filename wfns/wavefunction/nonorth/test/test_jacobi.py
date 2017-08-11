@@ -2,10 +2,14 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
+import itertools as it
+from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
 from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
 from wfns.wavefunction.ci.doci import DOCI
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.solver import ci_solver
 
 
 class TestJacobiWavefunction(JacobiWavefunction):
@@ -672,3 +676,63 @@ def test_jacobi_compare_nonorth():
                 nonorth.clear_cache()
 
                 assert np.isclose(nonorth.get_overlap(sd), jacobi_two.get_overlap(sd))
+
+
+def test_jacobi_energy():
+    """Test energy of Jacobi rotated wavefunction with that of rotated Hamiltonian."""
+    nelec = 4
+    nspin = 8
+    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+
+    # NOTE: we need to be a little careful with the hamiltonian construction because the integrals
+    #       are stored by reference and using the same hamiltonian while transforming it will cause
+    #       some headache
+    def get_energy(theta, orbpair, wfn_type, expectation_type):
+        doci = DOCI(nelec, nspin)
+        ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
+                                  orbtype='restricted')
+        ci_solver.eigen_solve(doci, ham, exc_lvl=0)
+        jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
+                                    wfn=doci, orbtype='restricted', jacobi_indices=orbpair,
+                                    params=np.array(theta))
+
+        # check that rotation is unitary
+        rotation = jacobi.jacobi_rotation[0]
+        assert np.allclose(rotation.dot(rotation.T), np.identity(4))
+        assert np.allclose(rotation.T.dot(rotation), np.identity(4))
+
+        # rotating hamiltonian using orb_rotate_jacobi
+        if wfn_type == 'doci':
+            wfn = doci
+            ham.orb_rotate_jacobi(orbpair, theta)
+        # rotating hamiltonian using orb_rotate_matrix
+        elif wfn_type == 'doci_full':
+            wfn = doci
+            ham.orb_rotate_matrix(jacobi.jacobi_rotation[0])
+        # rotating wavefunction as a JacobiWavefunction
+        elif wfn_type == 'jacobi':
+            wfn = jacobi
+        # rotating wavefunction as a NonorthWavefunction
+        elif wfn_type == 'nonorth':
+            wfn = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
+                                      wfn=doci, orth_to_nonorth=jacobi.jacobi_rotation)
+        norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
+        if expectation_type == 'ci matrix':
+            return sum(wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2))
+                       * wfn.get_overlap(sd2) for sd1 in sds for sd2 in sds) / norm
+        elif expectation_type == 'projected':
+            return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds)/norm
+
+    for orbpair in it.combinations(range(4), 2):
+        theta = np.pi * (np.random.random() - 0.5)
+        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
+                           get_energy(theta, orbpair, 'jacobi', 'ci matrix'))
+        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
+                           get_energy(theta, orbpair, 'nonorth', 'ci matrix'))
+        assert np.allclose(get_energy(theta, orbpair, 'doci', 'projected'),
+                           get_energy(theta, orbpair, 'jacobi', 'projected'))
+        assert np.allclose(get_energy(theta, orbpair, 'doci', 'projected'),
+                           get_energy(theta, orbpair, 'nonorth', 'projected'))
+        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
+                           get_energy(theta, orbpair, 'doci', 'projected'))
