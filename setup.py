@@ -14,7 +14,7 @@ setup(
               'wfns.backend',
               'wfns.hamiltonian',
               'wfns.solver',
-              'wfns.wavefunction', 'wfns.wavefunction.ci', 'wfns.wavefunction.ci', 'wfns.wavefunction.geminals', 'wfns.wavefunction.nonorth',
+              'wfns.wavefunction', 'wfns.wavefunction.ci', 'wfns.wavefunction.geminals', 'wfns.wavefunction.nonorth',
               'wfns.wrapper'],
     # test_suite='nose.collector',
     requires=['numpy', 'scipy', 'gmpy2'],
