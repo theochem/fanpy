@@ -124,6 +124,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
         raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
                          'spin orbitals')
 
+    # get left and right projection spaces
     if left_pspace is None and right_pspace is None:
         left_pspace = np.array(sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin,
                                                seniority=wfn.seniority))
@@ -136,6 +137,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
         left_pspace = np.array([slater.internal_sd(sd) for sd in left_pspace])
         right_pspace = np.array([slater.internal_sd(sd) for sd in right_pspace])
 
+    # get reference slater determinants (for norm calculation)
     if ref_sds is None:
         ref_sds = sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)
     else:
@@ -144,15 +146,16 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     if not isinstance(save_file, str):
         raise TypeError('save_file must be a string.')
 
+    # define constraints (normalization)
     def _constraint(params):
         if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = params.reshape(wfn.params_shape)
+            wfn.params = np.array(params).reshape(wfn.params_shape)
             wfn.clear_cache()
         return sum(wfn.get_overlap(sd)**2 for sd in ref_sds) - 1
 
     def _d_constraint(params):
         if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = params.reshape(wfn.params_shape)
+            wfn.params = np.array(params).reshape(wfn.params_shape)
             wfn.clear_cache()
         return np.array([sum(2 * wfn.get_overlap(sd) * wfn.get_overlap(sd, deriv=j)
                              for sd in ref_sds)
@@ -164,7 +167,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
         """Energy of the Schrodinger equation after projecting out the left and right sides."""
         # update wavefunction
         if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = params.reshape(wfn.params_shape)
+            wfn.params = np.array(params).reshape(wfn.params_shape)
             wfn.clear_cache()
 
         # save params
@@ -194,7 +197,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     def _gradient(params):
         """Gradient of the energy of the Schrodinger equation after projection."""
         if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = params.reshape(wfn.params_shape)
+            wfn.params = np.array(params).reshape(wfn.params_shape)
             wfn.clear_cache()
 
         grad = np.zeros(wfn.nparams, dtype=wfn.dtype)
@@ -236,11 +239,17 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
 
     # check solver
     if solver is None:
-        solver_name = 'bfgs'
         solver = scipy.optimize.minimize
-    elif isinstance(solver, str) and solver.lower() in ['bfgs', 'powell']:
-        solver_name = solver.lower()
+        default_kwargs = {'method': 'BFGS', 'jac': _gradient, 'options': {'gtol': 1e-8}}
+    elif solver.lower() == 'powell':
         solver = scipy.optimize.minimize
+        default_kwargs = {'method': 'Powell', 'options': {'xtol': 1e-9, 'ftol': 1e-9}}
+    elif solver == 'cma':
+        import cma
+        solver = cma.fmin
+        default_kwargs = {'sigma0': 0.01, 'gradf': _gradient}
+    else:
+        default_kwargs = {}
 
     # check keyword arguments
     if solver_kwargs is None:
@@ -248,19 +257,13 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     elif not isinstance(solver_kwargs, dict):
         raise TypeError('solver_kwargs must be a dictionary or None')
 
-    # set keyword arguments
-    default_kwargs = {}
-    if solver_name == 'bfgs':
-        default_kwargs = {'method': 'BFGS', 'jac': _gradient, 'options': {'gtol': 1e-8}}
-    elif solver_name == 'powell':
-        default_kwargs.update({'method': 'Powell', 'options': {'xtol': 1e-9, 'ftol': 1e-9}})
-
     # overwrite default keyword arguments
     default_kwargs.update(solver_kwargs)
     solver_kwargs = default_kwargs
 
     # add energy to results
     results = solver(_objective, wfn.params.flat, **solver_kwargs)
-    results['energy'] = results['fun']
 
     return results
+
+# TODO: add support for least squares problem

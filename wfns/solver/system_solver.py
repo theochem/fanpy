@@ -312,9 +312,6 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
             del default_kwargs['jac']
             default_kwargs.update({'method': 'krylov',
                                    'options': {'fatol': 1.0e-9, 'xatol': 1.0e-7}})
-    elif solver.__name__ == 'paraopt.cma':
-        default_kwargs = {'npop': 2*nparams, 'verbose': False, 'sigma0': 0.01, 'max_iter': 1000,
-                          'wtol': 1e-10}
     else:
         default_kwargs = {}
 
