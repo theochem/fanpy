@@ -242,6 +242,9 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
     orb_rot = np.identity(wfn.nspatial)
     # FIXME: thetas are not necessary
     thetas = {orbpair: 0 for orbpair in it.combinations(range(wfn.nspatial), 2)}
+
+    print('Orbital optimization')
+    print('{0:<5}{1:>11}{2:>15}'.format('Iter', 'wfn energy', 'orb+wfn energy'))
     for i in range(num_iterations):
         delta = 0.0
 
@@ -249,7 +252,7 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
             if wfn_solver_kwargs is None:
                 wfn_solver_kwargs = {}
             wfn_solver(wfn, ham, **wfn_solver_kwargs)
-
+        wfn_energy = _objective(0.0)
         for p, q in it.combinations(range(wfn.nspatial), 2):
             res = scipy.optimize.minimize_scalar(_objective, args=(p, q), method='brent')
             if res.success:
@@ -260,6 +263,8 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
                 (orb_rot[:, p], orb_rot[:, q]) = (np.cos(res.x)*p_col - np.sin(res.x)*q_col,
                                                   np.sin(res.x)*p_col + np.cos(res.x)*q_col)
                 thetas[(p, q)] += res.x
+
+        print('{0:<5}{1:>11.8f}{2:>15.8f}'.format(i, wfn_energy, _objective(0.0)))
 
         if save_file != '':
             np.save(save_file, orb_rot)
