@@ -247,7 +247,7 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     elif solver == 'cma':
         import cma
         solver = cma.fmin
-        default_kwargs = {'sigma0': 0.01, 'gradf': _gradient}
+        default_kwargs = {'sigma0': 0.01, 'gradf': _gradient, 'options': {'ftarget': 1e-7}}
     else:
         default_kwargs = {}
 
