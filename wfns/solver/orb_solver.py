@@ -27,7 +27,7 @@ from wfns.wrapper.docstring import docstring
 
 
 @docstring(indent_level=1)
-def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
+def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None, save_file=''):
     r"""Optimize orbitals of the given wavefunction to minimize energy using Jacobi rotations.
 
     The Jacobi rotated wavefunction, :math:`\hat{\mathbf{J}}^\dagger_{pq} \ket{\Psi}`, is
@@ -145,6 +145,8 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
             delta += abs(wfn.params)
             ham.orb_rotate_jacobi(orbpair, wfn.params)
             test = test.dot(wfn.jacobi_rotation[0])
+        if save_file != '':
+            np.save(save_file, transformation)
         # if last rotation does nothing (i.e. converged)
         if np.isclose(delta, 0.0):
             return test
@@ -154,7 +156,8 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
         print('Orbital optimization did not converge after {0} iterations'.format(num_iterations))
 
 
-def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_solver_kwargs=None):
+def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_solver_kwargs=None,
+                                 save_file=''):
     r"""Optimize orbitals of the given hamiltonian to minimize energy using Jacobi rotations.
 
     The Jacobi rotated wavefunction, :math:`\hat{\mathbf{J}}^\dagger_{pq} \ket{\Psi}`, is
@@ -235,7 +238,9 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
         return energy / norm
 
     num_iterations = 50
+    # FIXME: orb_rot is specific to restricted orbitals
     orb_rot = np.identity(wfn.nspatial)
+    # FIXME: thetas are not necessary
     thetas = {orbpair: 0 for orbpair in it.combinations(range(wfn.nspatial), 2)}
     for i in range(num_iterations):
         delta = 0.0
@@ -256,6 +261,8 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
                                                   np.sin(res.x)*p_col + np.cos(res.x)*q_col)
                 thetas[(p, q)] += res.x
 
+        if save_file != '':
+            np.save(save_file, orb_rot)
         # if last rotation does nothing (i.e. converged)
         if np.isclose(delta, 0.0):
             return orb_rot, thetas, _objective(0.0)
