@@ -444,7 +444,8 @@ class APr2G(APIG):
             # Solve the least-squares system
             apr2g_params = np.zeros(indices.size)
             apr2g_params[indices] = vals
-            apr2g_params[-indices] = np.linalg.lstsq(matrix[:, -indices], ordinate)[0]
+            not_indices = np.logical_not(indices)
+            apr2g_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
         # solve by SVD
         elif method == 'svd':
             u, s, vT = np.linalg.svd(matrix, full_matrices=False)
