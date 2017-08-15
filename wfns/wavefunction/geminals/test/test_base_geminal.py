@@ -8,7 +8,7 @@ from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 class TestBaseGeminal(BaseGeminal):
     """GeminalWavefunction that skips initialization."""
     def __init__(self):
-        pass
+        self._cache_fns = {}
 
     def generate_possible_orbpairs(self, occ_indices):
         if occ_indices == (0, 1, 2, 3):

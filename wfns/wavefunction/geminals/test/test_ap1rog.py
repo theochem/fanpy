@@ -11,7 +11,7 @@ from wfns import solver
 class TestAP1roG(AP1roG):
     """AP1roG that skips initialization."""
     def __init__(self):
-        pass
+        self._cache_fns = {}
 
 
 def test_ap1rog_assign_ref_sd():
@@ -27,9 +27,9 @@ def test_ap1rog_assign_ref_sd():
     assert_raises(ValueError, test.assign_ref_sd, 0b01110001)
     assert_raises(ValueError, test.assign_ref_sd, 0b01010011)
     # NOTE: multiple references is not supported
-    assert_raises(ValueError, test.assign_ref_sd, [0b00110011, 0b01010101])
+    assert_raises(TypeError, test.assign_ref_sd, [0b00110011, 0b01010101])
     # this is equivalent to
-    assert_raises(ValueError, test.assign_ref_sd, [51, 85])
+    assert_raises(TypeError, test.assign_ref_sd, [51, 85])
     # which means that the 51st and the 85th orbitals are occupied
 
 
