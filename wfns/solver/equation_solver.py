@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.optimize
+from wfns.solver import energies
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 import wfns.backend.slater as slater
@@ -124,45 +125,10 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
         raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
                          'spin orbitals')
 
-    # get left and right projection spaces
-    if left_pspace is None and right_pspace is None:
-        left_pspace = np.array(sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin,
-                                               seniority=wfn.seniority))
-        right_pspace = None
-    elif ((left_pspace is None and right_pspace is not None) or
-          (left_pspace is not None and right_pspace is None)):
-        left_pspace = np.array([slater.internal_sd(sd) for sd in left_pspace])
-        right_pspace = None
-    else:
-        left_pspace = np.array([slater.internal_sd(sd) for sd in left_pspace])
-        right_pspace = np.array([slater.internal_sd(sd) for sd in right_pspace])
-
-    # get reference slater determinants (for norm calculation)
-    if ref_sds is None:
-        ref_sds = sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)
-    else:
-        ref_sds = [slater.internal_sd(sd) for sd in ref_sds]
-
     if not isinstance(save_file, str):
         raise TypeError('save_file must be a string.')
 
-    # define constraints (normalization)
-    def _constraint(params):
-        if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = np.array(params).reshape(wfn.params_shape)
-            wfn.clear_cache()
-        return sum(wfn.get_overlap(sd)**2 for sd in ref_sds) - 1
-
-    def _d_constraint(params):
-        if not np.allclose(params, wfn.params.flat, atol=1e-12, rtol=0):
-            wfn.params = np.array(params).reshape(wfn.params_shape)
-            wfn.clear_cache()
-        return np.array([sum(2 * wfn.get_overlap(sd) * wfn.get_overlap(sd, deriv=j)
-                             for sd in ref_sds)
-                         for j in range(wfn.nparams)])
-
     # FIXME: incredibly slow implementation
-    # objective
     def _objective(params):
         """Energy of the Schrodinger equation after projecting out the left and right sides."""
         # update wavefunction
@@ -174,25 +140,19 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
         if save_file != '':
             np.save('{0}_temp.npy'.format(save_file), wfn.params)
 
-        # energy
-        numerator = 0
-        for sd1 in left_pspace:
-            if right_pspace is None:
-                numerator += wfn.get_overlap(sd1) * sum(ham.integrate_wfn_sd(wfn, sd1))
-            else:
-                for sd2 in right_pspace:
-                    sd_energy = sum(ham.integrate_sd_sd(sd1, sd2))
-                    # NOTE: caching here would be important
-                    if sd_energy != 0:
-                        numerator += wfn.get_overlap(sd1) * sd_energy * wfn.get_overlap(sd2)
-        # norm
-        if not norm_constrained:
-            denominator = _constraint(params) + 1
+        if left_pspace is not None and right_pspace is not None:
+            return energies.get_energy_two_proj(wfn, ham, l_pspace_energy=left_pspace,
+                                                r_pspace_energy=right_pspace, pspace_norm=ref_sds,
+                                                use_norm=not norm_constrained, return_grad=False)
+        elif right_pspace is None:
+            return energies.get_energy_one_proj(wfn, ham, pspace_energy=left_pspace,
+                                                pspace_norm=ref_sds, use_norm=not norm_constrained,
+                                                return_grad=False)
         else:
-            denominator = 1.0
-        return numerator / denominator
+            return energies.get_energy_one_proj(wfn, ham, pspace_energy=right_pspace,
+                                                pspace_norm=ref_sds, use_norm=not norm_constrained,
+                                                return_grad=False)
 
-    # FIXME: incredibly slow implementation
     # gradiant
     def _gradient(params):
         """Gradient of the energy of the Schrodinger equation after projection."""
@@ -200,42 +160,18 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
             wfn.params = np.array(params).reshape(wfn.params_shape)
             wfn.clear_cache()
 
-        grad = np.zeros(wfn.nparams, dtype=wfn.dtype)
-
-        if not norm_constrained:
-            # FIXME: might not be too efficient
-            denominator = _constraint(params) + 1
-            d_denominator = _d_constraint(params)
+        if left_pspace is not None and right_pspace is not None:
+            return energies.get_energy_two_proj(wfn, ham, l_pspace_energy=left_pspace,
+                                                r_pspace_energy=right_pspace, pspace_norm=ref_sds,
+                                                use_norm=not norm_constrained, return_grad=True)
+        elif right_pspace is None:
+            return energies.get_energy_one_proj(wfn, ham, pspace_energy=left_pspace,
+                                                pspace_norm=ref_sds, use_norm=not norm_constrained,
+                                                return_grad=True)
         else:
-            denominator = 1.0
-            d_denominator = np.zeros(wfn.nparams, dtype=wfn.dtype)
-
-        # energy
-        numerator = 0.0
-        d_numerator = np.zeros(grad.size, dtype=wfn.dtype)
-        for sd1 in left_pspace:
-            if right_pspace is None:
-                sd_energy = sum(ham.integrate_wfn_sd(wfn, sd1))
-                numerator += wfn.get_overlap(sd1) * sd_energy
-                for j in range(grad.size):
-                    d_numerator[j] += wfn.get_overlap(sd1, deriv=j) * sd_energy
-                    d_numerator[j] += wfn.get_overlap(sd1) * sum(ham.integrate_wfn_sd(wfn, sd1,
-                                                                                      deriv=j))
-            else:
-                for sd2 in right_pspace:
-                    # sd_energy is independent of wavefunction parameters
-                    sd_energy = sum(ham.integrate_sd_sd(sd1, sd2))
-                    # NOTE: caching here would be important
-                    if sd_energy != 0:
-                        numerator += wfn.get_overlap(sd1) * sd_energy * wfn.get_overlap(sd2)
-                        for j in range(grad.size):
-                            d_numerator[j] += (wfn.get_overlap(sd1, deriv=j) * sd_energy
-                                               * wfn.get_overlap(sd2))
-                            d_numerator[j] += (wfn.get_overlap(sd1) * sd_energy
-                                               * wfn.get_overlap(sd2, deriv=j))
-
-        grad = (d_numerator * denominator - numerator * d_denominator) / denominator**2
-        return grad
+            return energies.get_energy_one_proj(wfn, ham, pspace_energy=right_pspace,
+                                                pspace_norm=ref_sds, use_norm=not norm_constrained,
+                                                return_grad=True)
 
     # check solver
     if solver is None:
