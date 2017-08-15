@@ -437,8 +437,14 @@ class BaseGeminal(BaseWavefunction):
                     for orbpairs in self.generate_possible_orbpairs(occ_indices):
                         if len(orbpairs) == 0:
                             continue
+
+                        # FIXME: this part is unnecessarily terrible
+                        # get sign
+                        orbs = [i for pair in orbpairs for i in pair]
+                        sign = (-1)**slater.find_num_trans(orbs, occ_indices)
+
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                        val += self.compute_permanent(col_inds)
+                        val += sign * self.compute_permanent(col_inds)
                     return val
 
                 # store the cached function
@@ -486,7 +492,7 @@ class BaseGeminal(BaseWavefunction):
                         # ASSUMES: permanent evaluation is much more expensive than the lookup
                         # FIXME: have generate_possible_orbpairs provide a signature (sign)
                         # NOTE: derivatization with respect to parameters that are not present in
-                        #       the sd is already skipped by line 410
+                        #       the sd is already skipped by line 468
                         if len(orbpairs) == 0:
                             continue
                         sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
