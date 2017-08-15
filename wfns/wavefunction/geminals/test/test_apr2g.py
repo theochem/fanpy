@@ -11,7 +11,7 @@ from wfns import solver
 class TestAPr2G(APr2G):
     """APr2G that skips initialization."""
     def __init__(self):
-        pass
+        self._cache_fns = {}
 
 
 def answer_apr2g_h2_631gdp():
