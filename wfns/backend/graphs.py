@@ -8,13 +8,17 @@ generate_biclique_pmatch(indices_one, indices_two)
     Yields a perfect matching of a complete bipartite graph with given the partitions, `indices_one`
     and `indices_two`
 """
-import itertools as it
+from .slater import find_num_trans
 
 __all__ = []
 
 
-def generate_complete_pmatch(indices):
-    """ Generates all of the perfect matches of a complete (sub)graph
+def generate_complete_pmatch(indices, sign=1):
+    """Generate all of the perfect matches of a complete (sub)graph.
+
+    Generated perfect matches correspond to a pairing scheme in geminal wavefunctions and the
+    signature is needed to find the sign of the Slater determinant after "unpacking" the pairing
+    scheme.
 
     Parameters
     ----------
@@ -25,39 +29,39 @@ def generate_complete_pmatch(indices):
     ------
     pairing_scheme : tuple of tuple of 2 ints
         Contains the edges needed to make a perfect match
-    ValueError
-        If the number of indices is less than two
-        If the number of indices is odd
+    sign : int
+        Signature of the transpositions required to shuffle the `pairing_scheme` back into the
+        original order in `indices`.
 
     Note
     ----
-    The generator must be iterated to raise error
+    The `sign` gives the signature with respect to the original `indices`. If the `indices` are not
+    ordered, then signatures won't really mean anything.
     """
     indices = tuple(indices)
     n = len(indices)
     if n % 2 == 1 or n < 2:
-        yield tuple()
+        yield tuple(), sign
     elif n == 2:
-        yield ((indices[0], indices[1]), )
+        yield ((indices[0], indices[1]), ), sign
     else:
         # smaller subset (all pairs without the last two indices)
-        Sn_2 = generate_complete_pmatch(indices[:-2])
-        for scheme in Sn_2:
+        Sn_2 = generate_complete_pmatch(indices[:-2], sign=sign)
+        for scheme, inner_sign in Sn_2:
             # add in the last two indices
-            yield scheme + (indices[-2:],)
-            # swap the last two indices wth an existing pair
-            # remove the ith pair and shuffle the indices with the last pair
+            yield scheme + (indices[-2:],), inner_sign
+            # starting from the last
             for i in reversed(range(n//2 - 1)):
-                # this part of the scheme is kept constant
+                # replace ith pair in the scheme with last pair
                 yield (scheme[:i] +
                        ((scheme[i][0], indices[-2]), (scheme[i][1], indices[-1])) +
-                       scheme[i+1:])
+                       scheme[i+1:]), -inner_sign
                 yield (scheme[:i] +
                        ((scheme[i][0], indices[-1]), (scheme[i][1], indices[-2])) +
-                       scheme[i+1:])
+                       scheme[i+1:]), inner_sign
 
 
-def generate_biclique_pmatch(indices_one, indices_two):
+def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
     """ Generates all of the perfect matches of a complete bipartite (sub)graph
 
     Parameters
@@ -68,29 +72,74 @@ def generate_biclique_pmatch(indices_one, indices_two):
     indices_two : list of int
         List of indices of the vertices used to create the second half of the complete bipartite
         graph
+    is_decreasing : bool
+        If True, indices are ordered so that they are decreasing. (Sometimes creators are ordered
+        from greatest to smallest)
+        Default is False.
 
     Yields
     ------
     pairing_scheme : tuple of tuple of 2 ints
         Contains the edges needed to make a perfect match
-    ValueError
-        If the either one of the the two partitions have zero vertices
-        If the number of vertices in the two partitions are not equal
-        If the two partitions share vertices
 
     Note
     ----
     The generator must be iterated to raise error
     """
-    indices_one = tuple(sorted(indices_one))
-    indices_two = tuple(sorted(indices_two))
+    # assume indices_one and indices_two are sorted
+    sign = 1
+    orig_sign = (-1)**find_num_trans(indices_one + indices_two, is_decreasing=is_decreasing)
+    # orig_sign is the signature of the transpositions requires to sort indices_one + indices_two
+    # from smallest to largest
+    orig_sign *= (-1)**((len(indices_one)//2) % 2)
+    # When indices are zipped, first element will take (n-1) swaps, second (n-2), etc to a total of
+    # (n-1)+(n-2)+...+1 = n(n-1)/2. If n is even then n-1 is odd, and vice versa. If n is even and
+    # n/2 is odd, then n(n-1)/2 is odd; same result when n-1 is even and (n-1)/2 is odd. i.e.
+    # if n//2 is odd, then odd number of transpositions is required.
+
     if len(indices_one) == 0 or len(indices_one) == 0:
-        yield tuple()
+        yield tuple(), sign
     elif len(indices_one) != len(indices_two):
-        yield tuple()
+        yield tuple(), sign
     elif (len(set(indices_one).symmetric_difference(set(indices_two)))
             < len(indices_one + indices_two)):
-        yield tuple()
+        yield tuple(), sign
     else:
-        for new_indices in it.permutations(indices_two):
-            yield tuple(zip(indices_one, new_indices))
+        # for new_indices in it.permutations(indices_two):
+        #     yield tuple(zip(indices_one, new_indices))
+        # NOTE: This is the code when life was simpler. Now, permutations code need to be
+        #       implemented to account for the signature changes
+        # Following code was adapted from the example permutations code in itertools.permutations
+        # documentations
+        pool = tuple(indices_two)
+        # pool is the set of object from which you will be selecting
+        n = len(pool)
+        indices = list(range(n))
+        # indices select the specific ordering
+        cycles = list(reversed(range(1, n+1)))
+        # cycles keeps track of the number of swaps and the positions of elements that are swapped
+        yield tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+        # NOTE: to obtain the signature, the jumbld pair structure must be unzipped, then sorted
+        #       from largest to smallest. orig_sign accounts for this transposition/permutation
+        while n:
+            for i in reversed(range(n)):
+                cycles[i] -= 1
+                if cycles[i] == 0:
+                    # move ith index to the end
+                    indices[i:] = indices[i+1:] + indices[i:i+1]
+                    # in order to move ith element to the end, it must jump over n-i-1 elements
+                    # (because i starts from 0)
+                    sign *= (-1)**(n - i - 1)
+                    # reset cycles (back to its original number)
+                    cycles[i] = n - i
+                else:
+                    j = cycles[i]
+                    # swap
+                    indices[i], indices[-j] = indices[-j], indices[i]
+                    # change sign because swapping any two elements with x elements in between will
+                    # require x+(x+1)=2x+1 swaps
+                    sign *= -1
+                    yield tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+                    break
+            else:
+                return
