@@ -83,11 +83,15 @@ class APG(BaseGeminal):
         ----------
         occ_indices : N-tuple of int
             Indices of the orbitals from which the Slater determinant is constructed
+            Must be strictly increasing.
 
         Yields
         ------
         orbpairs : P-tuple of 2-tuple of ints
             Indices of the creation operators (grouped by orbital pairs) that construct the Slater
             determinant.
+        sign : int
+            Signature of the transpositions required to shuffle the `orbitalpairs` back into the
+            original order in `occ_indices`.
         """
-        yield from generate_complete_pmatch(occ_indices)
+        yield from generate_complete_pmatch(occ_indices, is_decreasing=False)

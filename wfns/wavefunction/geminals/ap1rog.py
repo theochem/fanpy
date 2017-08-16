@@ -337,6 +337,7 @@ class AP1roG(APIG):
                     inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
                                              for i in orbs_created])
 
+                    # FIXME: missing signature. see apig
                     return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
 
                 # store the cached function
@@ -379,6 +380,7 @@ class AP1roG(APIG):
                     inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
                                              for i in orbs_created])
 
+                    # FIXME: missing signature. see apig
                     return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
                                                   deriv_row_col=(row_removed, col_removed))
 
