@@ -151,12 +151,16 @@ class APIG(BaseGeminal):
         ----------
         occ_indices : N-tuple of int
             Indices of the orbitals from which the Slater determinant is constructed
+            Must be strictly increasing.
 
         Yields
         ------
         orbpairs : P-tuple of 2-tuple of ints
             Indices of the creation operators (grouped by orbital pairs) that construct the Slater
             determinant.
+        sign : int
+            Signature of the transpositions required to shuffle the `orbitalpairs` back into the
+            original order in `occ_indices`.
 
         Raises
         ------
@@ -168,18 +172,16 @@ class APIG(BaseGeminal):
         if len(occ_indices) != self.nelec:
             raise ValueError('The number of electrons in the Slater determinant does not match up '
                              'with the number of electrons in the wavefunction.')
-        orbpairs = set()
-        for i in occ_indices:
-            if i < self.nspatial:
-                orbpairs.add((i, i+self.nspatial))
-            else:
-                orbpairs.add((i-self.nspatial, i))
+        orbpairs = tuple((i, i+self.nspatial) for i in occ_indices if i < self.nspatial)
 
-        if len(orbpairs) != self.npair:
+        if set(occ_indices) != set(j for i in orbpairs for j in i):
             raise ValueError('This Slater determinant cannot be created using the pairing scheme of'
                              ' APIG wavefunction.')
 
-        yield tuple(orbpairs)
+        # signature to turn orbpairs into strictly INCREASING order.
+        sign = (-1)**((self.npair//2) % 2)
+
+        yield orbpairs, sign
 
     # TODO: refactor when APG is set up
     def to_apg(self):

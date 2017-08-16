@@ -434,14 +434,9 @@ class BaseGeminal(BaseWavefunction):
                     occ_indices = slater.occ_indices(sd)
 
                     val = 0.0
-                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
                         if len(orbpairs) == 0:
                             continue
-
-                        # FIXME: this part is unnecessarily terrible
-                        # get sign
-                        orbs = [i for pair in orbpairs for i in pair]
-                        sign = (-1)**slater.find_num_trans(orbs, occ_indices)
 
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
                         val += sign * self.compute_permanent(col_inds)
@@ -488,18 +483,15 @@ class BaseGeminal(BaseWavefunction):
                     col_removed = deriv % self.norbpair
 
                     val = 0.0
-                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
                         # ASSUMES: permanent evaluation is much more expensive than the lookup
-                        # FIXME: have generate_possible_orbpairs provide a signature (sign)
                         # NOTE: derivatization with respect to parameters that are not present in
-                        #       the sd is already skipped by line 468
+                        #       the sd is already skipped by line 463
                         if len(orbpairs) == 0:
                             continue
-                        sgn = (-1)**slater.find_num_trans([i for pair in orbpairs for i in pair],
-                                                          occ_indices, is_creator=True)
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                        val += sgn*self.compute_permanent(col_inds,
-                                                          deriv_row_col=(row_removed, col_removed))
+                        val += sign*self.compute_permanent(col_inds,
+                                                           deriv_row_col=(row_removed, col_removed))
                     return val
 
                 # store the cached function
@@ -519,11 +511,15 @@ class BaseGeminal(BaseWavefunction):
         ----------
         occ_indices : N-tuple of int
             Indices of the orbitals from which the Slater determinant is constructed
+            Must be strictly increasing.
 
         Yields
         ------
         orbpairs : P-tuple of 2-tuple of ints
             Indices of the creation operators (grouped by orbital pairs) that construct the Slater
             determinant.
+        sign : int
+            Signature of the transpositions required to shuffle the `orbitalpairs` back into the
+            original order in `occ_indices`.
         """
         pass

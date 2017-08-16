@@ -295,7 +295,7 @@ class APr2G(APIG):
                     occ_indices = slater.occ_indices(sd)
 
                     val = 0.0
-                    for orbpairs in self.generate_possible_orbpairs(occ_indices):
+                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
                         col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
                         val += self.compute_permanent(col_inds, deriv=deriv)
                     return val
