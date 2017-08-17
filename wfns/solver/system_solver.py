@@ -9,7 +9,7 @@ from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
                         energy_guess=None, eqn_weights=None, solver=None, solver_kwargs=None):
-    """Optimize the wavefunction with the given Hamiltonian as a system of nonlinear equations.
+    r"""Optimize the wavefunction with the given Hamiltonian as a system of nonlinear equations.
 
     Reference Slater determinants are used to calculate the norm and possibly the energy of the
     wavefunction.
@@ -138,7 +138,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
                          'shape, {0}.'.format((nproj+1, )))
 
     def _objective(params):
-        """System of equations that corresponds to the (projected) Schrodinger equation.
+        r"""System of equations that corresponds to the (projected) Schrodinger equation.
 
         ..math::
             f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}
@@ -201,7 +201,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         return obj
 
     def _jacobian(params):
-        """Jacobian of the objective function.
+        r"""Jacobian of the objective function.
 
         If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
         ..math::

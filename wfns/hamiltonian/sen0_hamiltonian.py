@@ -1,4 +1,4 @@
-"""Seniority-zero Hamiltonian object that interacts with the wavefunction.
+r"""Seniority-zero Hamiltonian object that interacts with the wavefunction.
 
 #FIXME: this needs to be checked
 ..math::
@@ -55,7 +55,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
                                       'Hamiltonian.')
 
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        """Integrates the seniority-zero Hamiltonian with against a wavefunction and Slater
+        r"""Integrates the seniority-zero Hamiltonian with against a wavefunction and Slater
         determinant.
 
         ..math::

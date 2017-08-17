@@ -10,7 +10,7 @@ from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 # FIXME: copies most of system_solver for initialization and docstring
 def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_sds=None,
                              save_file='', solver=None, solver_kwargs=None, norm_constrained=False):
-    """Optimize the wavefunction with the given Hamiltonian as a single equation for energy.
+    r"""Optimize the wavefunction with the given Hamiltonian as a single equation for energy.
 
     Solves the following equation
     ..math::

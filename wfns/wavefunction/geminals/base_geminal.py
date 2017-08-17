@@ -11,7 +11,7 @@ __all__ = []
 
 
 class BaseGeminal(BaseWavefunction):
-    """Base Geminal Wavefunctions.
+    r"""Base Geminal Wavefunctions.
 
     A Geminal is a two-electron wavefunction.
     .. math::
@@ -378,7 +378,7 @@ class BaseGeminal(BaseWavefunction):
                 return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
     def get_overlap(self, sd, deriv=None):
-        """Compute the overlap between the geminal wavefunction and a Slater determinant.
+        r"""Compute the overlap between the geminal wavefunction and a Slater determinant.
 
         The results are cached in self._cache_fns.
 

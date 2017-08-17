@@ -56,7 +56,7 @@ class BaseIntegrals:
 
 
 class OneElectronIntegrals(BaseIntegrals):
-    """Class for storing one-electron integrals.
+    r"""Class for storing one-electron integrals.
 
     #FIXME: substitute \hat{h} with real eqn
     ..math::
@@ -137,7 +137,7 @@ class OneElectronIntegrals(BaseIntegrals):
         return self.integrals[0].dtype
 
     def get_value(self, i, k, orbtype):
-        """Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
+        r"""Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
 
         ..math::
             h_{ik} = \big< \phi_i \big | \hat{h} | \phi_k \big>
@@ -201,7 +201,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
     def rotate_jacobi(self, jacobi_indices, theta):
-        """Apply Jacobi rotation to the integrals (orbitals).
+        r"""Apply Jacobi rotation to the integrals (orbitals).
 
         .. math::
             J_{pq}
@@ -390,7 +390,7 @@ class TwoElectronIntegrals(BaseIntegrals):
         return self.integrals[0].dtype
 
     def get_value(self, i, j, k, l, orbtype, notation='physicist'):
-        """ Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
+        r""" Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
         ..math::
             \big< \theta \big | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \big> =

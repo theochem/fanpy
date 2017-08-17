@@ -43,7 +43,7 @@ def binomial(n, k):
 
 
 def adjugate(matrix):
-    """ Returns the adjugate of a matrix
+    r""" Returns the adjugate of a matrix
 
     Adjugate of a matrix is the transpose of its cofactor matrix
     ..math::
@@ -66,7 +66,7 @@ def adjugate(matrix):
 
 
 def permanent_combinatoric(matrix):
-    """ Calculates the permanent of a matrix naively using combinatorics
+    r""" Calculates the permanent of a matrix naively using combinatorics
 
     If :math:`A` is an :math:`m` by :math:`n` matrix
     ..math::
@@ -112,7 +112,7 @@ def permanent_combinatoric(matrix):
 
 
 def permanent_ryser(matrix):
-    """ Calculates the permanent of a matrix using Ryser algorithm
+    r""" Calculates the permanent of a matrix using Ryser algorithm
 
     Cost of :math:`\mathcal{O}(2^n n)`
 
@@ -196,7 +196,7 @@ def permanent_ryser(matrix):
 
 
 def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
-    """ Calculate the permanent of a square or rectangular matrix using the Borchardt theorem
+    r""" Calculate the permanent of a square or rectangular matrix using the Borchardt theorem
 
     Borchardt Theorem
     -----------------

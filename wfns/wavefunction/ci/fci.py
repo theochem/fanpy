@@ -7,7 +7,7 @@ __all__ = []
 
 
 class FCI(CIWavefunction):
-    """ Full Configuration Interaction Wavefunction
+    r""" Full Configuration Interaction Wavefunction
 
     Attributes
     ----------
@@ -72,7 +72,7 @@ class FCI(CIWavefunction):
         Default is no derivatization
     """
     def assign_seniority(self, seniority=None):
-        """Set the seniority of each Slater determinant.
+        r"""Set the seniority of each Slater determinant.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
         All seniority must be allowed for a FCI wavefunction.

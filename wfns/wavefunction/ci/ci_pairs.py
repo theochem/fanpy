@@ -11,7 +11,7 @@ __all__ = []
 
 
 class CIPairs(DOCI):
-    """CI Pairs Wavefunction.
+    r"""CI Pairs Wavefunction.
 
     DOCI wavefunction with only first order pairwise excitations
 

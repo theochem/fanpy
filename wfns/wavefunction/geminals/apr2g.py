@@ -10,7 +10,7 @@ __all__ = []
 
 
 class APr2G(APIG):
-    """Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction.
+    r"""Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction.
 
     Attributes
     ----------
@@ -98,17 +98,17 @@ class APr2G(APIG):
 
     @property
     def lambdas(self):
-        """Return the :math:`lambda` part of the APr2G parameters."""
+        r"""Return the :math:`lambda` part of the APr2G parameters."""
         return self.params[:self.ngem]
 
     @property
     def epsilons(self):
-        """Return the :math:`epsilons` part of the APr2G parameters."""
+        r"""Return the :math:`epsilons` part of the APr2G parameters."""
         return self.params[self.ngem:self.ngem+self.norbpair]
 
     @property
     def zetas(self):
-        """Return the :math:`zetas` part of the APr2G parameters."""
+        r"""Return the :math:`zetas` part of the APr2G parameters."""
         return self.params[self.ngem+self.norbpair:]
 
     @property
@@ -235,7 +235,7 @@ class APr2G(APIG):
 
     # FIXME: mostly replicates BaseGeminal.get_overlap
     def get_overlap(self, sd, deriv=None):
-        """Compute the overlap between the geminal wavefunction and a Slater determinant.
+        r"""Compute the overlap between the geminal wavefunction and a Slater determinant.
 
         The results are cached in self._cache_fns
 
@@ -311,7 +311,7 @@ class APr2G(APIG):
 
     @staticmethod
     def params_from_apig(apig_params, rmsd=0.1, method='least squares'):
-        """Convert APIG parameters to APr2G wavefunction.
+        r"""Convert APIG parameters to APr2G wavefunction.
 
         Using least squares, the APIG geminal coefficients are converted to the APr2G variant, i.e.
         find the coefficients :math:`\{\lambda_j\}`, :math:`\{\epsilon_i\}`, and :math:`\{\zeta_i\}`

@@ -10,7 +10,7 @@ __all__ = []
 
 
 class AP1roG(APIG):
-    """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction
+    r"""Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction
 
     .. math::
 
@@ -260,7 +260,7 @@ class AP1roG(APIG):
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
     def get_overlap(self, sd, deriv=None):
-        """Compute the overlap between the AP1roG wavefunction and a Slater determinant.
+        r"""Compute the overlap between the AP1roG wavefunction and a Slater determinant.
 
         The results are cached in self._cache_fns
 

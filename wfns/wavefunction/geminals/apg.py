@@ -8,7 +8,7 @@ __all__ = []
 
 
 class APG(BaseGeminal):
-    """Antisymmeterized Product of Geminals (APG) Wavefunction.
+    r"""Antisymmeterized Product of Geminals (APG) Wavefunction.
 
     Attributes
     ----------

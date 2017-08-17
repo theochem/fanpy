@@ -12,7 +12,7 @@ __all__ = []
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseWavefunction:
-    """Base wavefunction class.
+    r"""Base wavefunction class.
 
     Contains the necessary information to solve the wavefunction
 
@@ -292,7 +292,7 @@ class BaseWavefunction:
 
     @abc.abstractproperty
     def spin(self):
-        """Return the spin of the wavefunction.
+        r"""Return the spin of the wavefunction.
 
         ..math::
             \frac{1}{2}(N_\alpha - N_\beta)
@@ -337,7 +337,7 @@ class BaseWavefunction:
 
     @abc.abstractmethod
     def get_overlap(self, sd, deriv=None):
-        """Return the overlap of the wavefunction with a Slater determinant.
+        r"""Return the overlap of the wavefunction with a Slater determinant.
 
         ..math::
             \big< \Phi_i \big| \Psi \big>

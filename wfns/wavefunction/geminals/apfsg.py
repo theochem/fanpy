@@ -13,7 +13,7 @@ __all__ = []
 
 
 class APfsG(ProjectedWavefunction):
-    """ Antisymmetric Product of Factorized Set Geminals
+    r""" Antisymmetric Product of Factorized Set Geminals
 
     ..math::
         \big| \Psi_{\mathrm{APFSG}} \big>
@@ -163,7 +163,7 @@ class APfsG(ProjectedWavefunction):
         return sd_list(self.nelec, self.nspatial, num_limit=number_sd)
 
     def compute_overlap(self, sd, deriv=None):
-        """ Computes the overlap between the wavefunction and a Slater determinant
+        r""" Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
         ..math::
@@ -248,7 +248,7 @@ class APfsG(ProjectedWavefunction):
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
+        r""" Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
 
         ..math::

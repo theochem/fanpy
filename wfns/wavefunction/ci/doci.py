@@ -10,7 +10,7 @@ __all__ = []
 
 
 class DOCI(CIWavefunction):
-    """Doubly Occupied Configuration Interaction (DOCI) Wavefunction.
+    r"""Doubly Occupied Configuration Interaction (DOCI) Wavefunction.
 
     CI wavefunction constructed from all of the seniority zero Slater determiannts within the given
     basis.
@@ -97,7 +97,7 @@ class DOCI(CIWavefunction):
             raise ValueError('`nelec` must be an even number')
 
     def assign_spin(self, spin=None):
-        """Set the spin of each Slater determinant.
+        r"""Set the spin of each Slater determinant.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
@@ -123,7 +123,7 @@ class DOCI(CIWavefunction):
             raise ValueError('DOCI wavefunction can only be singlet')
 
     def assign_seniority(self, seniority=None):
-        """Set the seniority of each Slater determinant of the DOCI wavefunction.
+        r"""Set the seniority of each Slater determinant of the DOCI wavefunction.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 

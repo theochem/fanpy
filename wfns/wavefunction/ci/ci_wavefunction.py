@@ -13,7 +13,7 @@ __all__ = []
 
 
 class CIWavefunction(BaseWavefunction):
-    """Wavefunction that can be expressed as a linear combination of Slater determinants.
+    r"""Wavefunction that can be expressed as a linear combination of Slater determinants.
 
     Attributes
     ----------
@@ -137,7 +137,7 @@ class CIWavefunction(BaseWavefunction):
 
     @property
     def spin(self):
-        """Return the spin of the wavefunction.
+        r"""Return the spin of the wavefunction.
 
         ..math::
             \frac{1}{2}(N_\alpha - N_\beta)
@@ -158,7 +158,7 @@ class CIWavefunction(BaseWavefunction):
         return len(self.sd_vec)
 
     def assign_spin(self, spin=None):
-        """Set the spin of each Slater determinant.
+        r"""Set the spin of each Slater determinant.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
@@ -199,7 +199,7 @@ class CIWavefunction(BaseWavefunction):
         return self._seniority
 
     def assign_seniority(self, seniority=None):
-        """Set the seniority of each Slater determinant.
+        r"""Set the seniority of each Slater determinant.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
@@ -276,7 +276,7 @@ class CIWavefunction(BaseWavefunction):
         self.sd_vec = tuple(sd_vec)
 
     def get_overlap(self, sd, deriv=None):
-        """Return the overlap of the CI wavefunction with a Slater determinant.
+        r"""Return the overlap of the CI wavefunction with a Slater determinant.
 
         i.e. the Slater determinnt coefficient
         ..math::

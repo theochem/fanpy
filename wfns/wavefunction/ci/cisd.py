@@ -7,7 +7,7 @@ __all__ = []
 
 
 class CISD(CIWavefunction):
-    """Configuration Interaction Singles and Doubles Wavefunction.
+    r"""Configuration Interaction Singles and Doubles Wavefunction.
 
     CI with HF Ground state and all single and double excitations
 
