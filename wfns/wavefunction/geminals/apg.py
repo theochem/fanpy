@@ -1,8 +1,8 @@
 """Antisymmeterized Product of Geminals (APG) Wavefunction.
 """
 from __future__ import absolute_import, division, print_function
-from .base_geminal import BaseGeminal
-from ...backend.graphs import generate_complete_pmatch
+from wfns.wavefunction.geminals.base_geminal import BaseGeminal
+from wfns.backend.graphs import generate_complete_pmatch
 
 __all__ = []
 

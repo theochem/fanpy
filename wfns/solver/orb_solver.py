@@ -15,12 +15,10 @@ import itertools as it
 import copy
 import numpy as np
 import scipy.optimize
-from .equation_solver import optimize_wfn_variational
-from ..backend import slater
-from ..backend import sd_list
-from ..wavefunction.base_wavefunction import BaseWavefunction
-from ..wavefunction.nonorth.jacobi import JacobiWavefunction
-from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.solver.equation_solver import optimize_wfn_variational
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):

@@ -2,9 +2,9 @@
 from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
-from .apig import APIG
-from .base_geminal import BaseGeminal
-from ...backend import slater, math_tools
+from wfns.wavefunction.geminals.apig import APIG
+from wfns.wavefunction.geminals.base_geminal import BaseGeminal
+from wfns.backend import slater, math_tools
 
 __all__ = []
 

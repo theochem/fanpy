@@ -11,9 +11,8 @@ ChemicalHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-from itertools import combinations
-from ..backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
-from ..backend import slater
+from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
+from wfns.backend import slater
 
 
 class ChemicalHamiltonian(object):

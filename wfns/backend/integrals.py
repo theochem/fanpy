@@ -9,7 +9,7 @@ TwoElectronIntegrals
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-from ..backend import slater
+from wfns.backend import slater
 # TODO: store fraction of integrals
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
 

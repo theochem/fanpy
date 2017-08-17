@@ -2,9 +2,8 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.linalg
-from ..backend import slater, sd_list
-from ..wavefunction.ci.ci_wavefunction import CIWavefunction
-from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 __all__ = []
 

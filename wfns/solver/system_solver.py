@@ -2,9 +2,9 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.optimize
-from ..backend import slater, sd_list
-from ..wavefunction.base_wavefunction import BaseWavefunction
-from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.backend import slater, sd_list
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
