@@ -16,7 +16,7 @@ __all__ = ['sd_list']
 
 
 def satisfies_conditions(sd, nspatial, spin, seniority):
-    """ Checks to see if Slater determinant has the desired spin and seniority
+    r""" Checks to see if Slater determinant has the desired spin and seniority
 
     Paramaters
     ----------

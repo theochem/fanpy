@@ -16,7 +16,7 @@ __all__ = ['density_matrix']
 
 
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
-    """ Adds some value to the appropriate density matrix element
+    r""" Adds some value to the appropriate density matrix element
 
     ..math::
         \braket{\Phi_1 | a_i a_j^\dagger | \Phi_2}
@@ -89,7 +89,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
 
 
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
-    """ Adds some value to the appropriate one electron density matrix element
+    r""" Adds some value to the appropriate one electron density matrix element
 
     ..math::
         \braket{\Phi_1 | a_i a_j a_k^\dagger a_l^\dagger | \Phi_2}
@@ -183,7 +183,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 # TODO: generalize to arbitrary order density matrix
 def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                    orbtype='restricted'):
-    """ Returns the first and second order density matrices
+    r""" Returns the first and second order density matrices
 
     Second order density matrix uses the Physicist's notation:
     ..math::

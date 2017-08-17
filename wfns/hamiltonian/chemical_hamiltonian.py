@@ -1,4 +1,4 @@
-"""Hamiltonian object that interacts with the wavefunction.
+r"""Hamiltonian object that interacts with the wavefunction.
 
 ..math::
     \hat{H} = \sum_{ik} h_{ik} a^\dagger_i a_k
@@ -17,7 +17,7 @@ from ..backend import slater
 
 
 class ChemicalHamiltonian(object):
-    """Hamiltonian used for a typical chemical system.
+    r"""Hamiltonian used for a typical chemical system.
 
     ..math::
         \hat{H} &= \\
@@ -222,7 +222,7 @@ class ChemicalHamiltonian(object):
         self.two_int = two_int
 
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        """Integrates the Hamiltonian with against a wavefunction and Slater determinant.
+        r"""Integrates the Hamiltonian with against a wavefunction and Slater determinant.
 
         ..math::
             \big< \Psi \big| \hat{H} \big| \Phi \big>
@@ -329,7 +329,7 @@ class ChemicalHamiltonian(object):
         return one_electron, coulomb, exchange
 
     def integrate_sd_sd(self, sd1, sd2):
-        """Integrates the Hamiltonian with against two Slater determinants.
+        r"""Integrates the Hamiltonian with against two Slater determinants.
 
         ..math::
             H_{ij} = \big< \Phi_i \big| \hat{H} \big| \Phi_j \big>

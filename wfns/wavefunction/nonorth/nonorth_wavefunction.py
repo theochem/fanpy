@@ -1,4 +1,4 @@
-"""Wavefunction with nonorthonormal orbitals.
+r"""Wavefunction with nonorthonormal orbitals.
 
 A parameterized multideterminantal wavefunction can be written as
 
@@ -37,7 +37,7 @@ __all__ = []
 
 # FIXME: needs refactoring
 class NonorthWavefunction(BaseWavefunction):
-    """Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
+    r"""Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
     Nonorthonormal orbitals are expressed with respect to orthonormal orbitals.
 
@@ -90,7 +90,7 @@ class NonorthWavefunction(BaseWavefunction):
         Default is no derivatization
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orth_to_nonorth=None):
-        """Initialize the wavefunction.
+        r"""Initialize the wavefunction.
 
         Parameters
         ----------
@@ -267,7 +267,7 @@ class NonorthWavefunction(BaseWavefunction):
     # TODO: instead of all possible combinations (itertools), have something that selects a smaller
     #       subset
     def get_overlap(self, sd, deriv=None):
-        """Return the overlap of the wavefunction with an orthonormal Slater determinant.
+        r"""Return the overlap of the wavefunction with an orthonormal Slater determinant.
 
         A wavefunction built using nonorthonormal Slater determinants, :math:`\mathbf{n}`, can be
         expressed with respect to orthonormal Slater determinants, :math:`\mathbf{m}`:

@@ -1,4 +1,4 @@
-"""Orbital optimization.
+r"""Orbital optimization.
 
 Orbital optimization essentially minimizes
 
@@ -24,7 +24,7 @@ from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
-    """Optimize orbitals of the given wavefunction to minimize energy using Jacobi rotations.
+    r"""Optimize orbitals of the given wavefunction to minimize energy using Jacobi rotations.
 
     The Jacobi rotated wavefunction, :math:`\hat{\mathbf{J}}^\dagger_{pq} \ket{\Psi}`, is
     iteratively optimized, where :math:`\hat{\mathbf{J}}^\dagger_{pq}` is the Jacobi orbital
@@ -147,7 +147,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
 
 
 def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_solver_kwargs=None):
-    """Optimize orbitals of the given hamiltonian to minimize energy using Jacobi rotations.
+    r"""Optimize orbitals of the given hamiltonian to minimize energy using Jacobi rotations.
 
     The Jacobi rotated wavefunction, :math:`\hat{\mathbf{J}}^\dagger_{pq} \ket{\Psi}`, is
     iteratively optimized, where :math:`\hat{\mathbf{J}}^\dagger_{pq}` is the Jacobi orbital

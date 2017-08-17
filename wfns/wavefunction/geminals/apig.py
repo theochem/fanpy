@@ -7,7 +7,7 @@ __all__ = []
 
 
 class APIG(BaseGeminal):
-    """Antisymmetric Product of Interacting Geminals (APIG) Wavefunction.
+    r"""Antisymmetric Product of Interacting Geminals (APIG) Wavefunction.
 
     .. math::
 

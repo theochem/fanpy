@@ -1,5 +1,5 @@
 # FIXME: Need consistent notaiton for orbital rotation
-"""Wavefunction with orbitals rotated by Jacobi matrix.
+r"""Wavefunction with orbitals rotated by Jacobi matrix.
 
 A wavefunction constructed from nonorthonormal orbitals can be written as
 
@@ -40,7 +40,7 @@ __all__ = []
 
 # FIXME: needs refactoring
 class JacobiWavefunction(BaseWavefunction):
-    """Wavefunction with jacobi rotated orbitals expressed with respect to orthonormal orbitals.
+    r"""Wavefunction with jacobi rotated orbitals expressed with respect to orthonormal orbitals.
 
     Rotated orbitals are expressed with respect to orthonormal orbitals.
 

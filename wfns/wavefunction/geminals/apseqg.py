@@ -15,7 +15,7 @@ __all__ = []
 
 
 class APseqG(ProjectedWavefunction):
-    """ Antisymmetric Product of Sequantially Interacting Geminals
+    r""" Antisymmetric Product of Sequantially Interacting Geminals
 
     Attributes
     ----------
@@ -419,7 +419,7 @@ class APseqG(ProjectedWavefunction):
         return val
 
     def compute_hamiltonian(self, sd, deriv=None):
-        """ Computes the hamiltonian of the wavefunction with respect to a Slater
+        r""" Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
 
         ..math::
