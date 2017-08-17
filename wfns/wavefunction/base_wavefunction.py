@@ -294,7 +294,7 @@ class BaseWavefunction:
     def spin(self):
         r"""Return the spin of the wavefunction.
 
-        ..math::
+        .. math::
             \frac{1}{2}(N_\alpha - N_\beta)
 
         Returns
@@ -339,7 +339,7 @@ class BaseWavefunction:
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
-        ..math::
+        .. math::
             \big< \Phi_i \big| \Psi \big>
 
         Parameters

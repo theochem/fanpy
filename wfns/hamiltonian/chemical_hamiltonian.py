@@ -1,6 +1,6 @@
 r"""Hamiltonian object that interacts with the wavefunction.
 
-..math::
+.. math::
     \hat{H} = \sum_{ik} h_{ik} a^\dagger_i a_k
     + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
 where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron integral.
@@ -19,9 +19,10 @@ from ..backend import slater
 class ChemicalHamiltonian(object):
     r"""Hamiltonian used for a typical chemical system.
 
-    ..math::
-        \hat{H} &= \\
-        &= \sum_{ij} h_{ij} a^\dagger_i a_j + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l\\
+    .. math::
+
+        \hat{H} = \sum_{ij} h_{ij} a^\dagger_i a_j
+        + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
 
     Attributes
     ----------
@@ -224,7 +225,8 @@ class ChemicalHamiltonian(object):
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
         r"""Integrates the Hamiltonian with against a wavefunction and Slater determinant.
 
-        ..math::
+        .. math::
+
             \big< \Psi \big| \hat{H} \big| \Phi \big>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
@@ -331,7 +333,8 @@ class ChemicalHamiltonian(object):
     def integrate_sd_sd(self, sd1, sd2):
         r"""Integrates the Hamiltonian with against two Slater determinants.
 
-        ..math::
+        .. math::
+
             H_{ij} = \big< \Phi_i \big| \hat{H} \big| \Phi_j \big>
 
         where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are

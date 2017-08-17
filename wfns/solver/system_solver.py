@@ -13,8 +13,8 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
 
     Reference Slater determinants are used to calculate the norm and possibly the energy of the
     wavefunction.
-    ..math::
 
+    .. math::
         E = \sum_{\Phi \in S_{ref}} \braket{\Psi | \Phi} \braket{\Phi | \hat{H} | \Psi}
         N = \sum_{\Phi \in S_{ref}} \braket{\Psi | \Phi} \braket{\Phi | \Psi}
 
@@ -140,18 +140,18 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
     def _objective(params):
         r"""System of equations that corresponds to the (projected) Schrodinger equation.
 
-        ..math::
-            f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}
-            &\vdots
-            f_K(x) &= \braket{\Phi_K | H | \Psi} - E \braket{\Phi_K | \Psi}
-            f_{K+1}(x) &= constraint_1
+        .. math::
+            f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}\\
+            &\vdots\\
+            f_K(x) &= \braket{\Phi_K | H | \Psi} - E \braket{\Phi_K | \Psi}\\
+            f_{K+1}(x) &= constraint_1\\
             &\vdots
 
         where :math:`K` is the number of Slater determinant onto which the wavefunction is projected
         Equations after the :math:`K`th index are the constraints on the system of equations.
         The constraints, hopefully, will move out into their own module some time in the future.
         By default, the normalization constraint
-        ..math::
+        .. math::
             f_{K+1} = norm - 1
         is present where :math:`norm` is defined by ProjectedWavefunction.compute_norm.
 
@@ -204,8 +204,10 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         r"""Jacobian of the objective function.
 
         If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
-        ..math::
+
+        .. math::
             J_{ij}(\vec{x}) = \frac{\partial f_i(\vec{x})}{\partial x_j}
+
         where :math:`\vec{x}` is the parameters at a given iteration.
 
         Parameters

@@ -18,7 +18,8 @@ __all__ = ['density_matrix']
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
     r""" Adds some value to the appropriate density matrix element
 
-    ..math::
+    .. math::
+
         \braket{\Phi_1 | a_i a_j^\dagger | \Phi_2}
 
     Parameters
@@ -91,7 +92,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     r""" Adds some value to the appropriate one electron density matrix element
 
-    ..math::
+    .. math::
         \braket{\Phi_1 | a_i a_j a_k^\dagger a_l^\dagger | \Phi_2}
 
     Parameters
@@ -186,10 +187,15 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
     r""" Returns the first and second order density matrices
 
     Second order density matrix uses the Physicist's notation:
-    ..math::
+
+    .. math::
+
         \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+
     Chemist's notation is also implemented
-    ..math::
+
+    .. math::
+
         \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
 
     Paramaters

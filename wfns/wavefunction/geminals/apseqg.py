@@ -422,7 +422,7 @@ class APseqG(ProjectedWavefunction):
         r""" Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
 
-        ..math::
+        .. math::
             \big< \Phi_i \big| H \big| \Psi_{mathrm{APIG}} \big>
 
         Since only Slater determinants from DOCI will be used, we can use the DOCI

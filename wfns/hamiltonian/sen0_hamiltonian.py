@@ -1,7 +1,8 @@
+# FIXME: this needs to be checked
 r"""Seniority-zero Hamiltonian object that interacts with the wavefunction.
 
-#FIXME: this needs to be checked
-..math::
+.. math::
+
     \hat{H} = \sum_{i} \big( h_{ii} a^\dagger_i a_i
                              + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}} \big)
     + \sum_{ij} \big( g_{ijij} a^\dagger_i a^\dagger_j a_i a_j
@@ -11,6 +12,7 @@ r"""Seniority-zero Hamiltonian object that interacts with the wavefunction.
                       a^\dagger_{\bar{\i}} a^\dagger_{\bar{\j}} a_{\bar{\i}} a_{\bar{\j}}
                       + g_{j\bar{\j}i\bar{\i}} a^\dagger_j a^\dagger_{\bar{\j}} a_i a_{\bar{\i}}
                 \big)
+
 where :math:`i` and :math:`\bar{\i}` are the indices that correspond to the ith alpha and beta spin
 orbtials, :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron
 integral.
@@ -58,7 +60,8 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         r"""Integrates the seniority-zero Hamiltonian with against a wavefunction and Slater
         determinant.
 
-        ..math::
+        .. math::
+
             \big< \Psi \big| \hat{H} \big| \Phi \big>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the seniority-zero Hamiltonian

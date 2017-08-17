@@ -13,7 +13,6 @@ class AP1roG(APIG):
     r"""Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction
 
     .. math::
-
         \ket{\Psi_{\mathrm{AP1roG}}}
         &= \prod_{q=1}^P T_q^\dagger \ket{\theta}\\
         &= \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger +
@@ -265,7 +264,6 @@ class AP1roG(APIG):
         The results are cached in self._cache_fns
 
         .. math::
-
             \big| \Psi \big>
             &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
             &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
