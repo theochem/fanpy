@@ -2,9 +2,8 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.optimize
-from ..backend import slater, sd_list
-from ..wavefunction.base_wavefunction import BaseWavefunction
-from ..hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 # FIXME: copies most of system_solver for initialization and docstring

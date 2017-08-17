@@ -1,6 +1,6 @@
 """Hamiltonian of the system."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from . import chemical_hamiltonian
-from . import sen0_hamiltonian
-from . import density
+from wfns.hamiltonian import chemical_hamiltonian
+from wfns.hamiltonian import sen0_hamiltonian
+from wfns.hamiltonian import density

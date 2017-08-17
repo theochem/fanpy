@@ -1,7 +1,7 @@
 """Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction."""
 from __future__ import absolute_import, division, print_function
-from ...backend import graphs
-from .base_geminal import BaseGeminal
+from wfns.backend import graphs
+from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 
 __all__ = []
 

@@ -8,7 +8,7 @@ generate_biclique_pmatch(indices_one, indices_two)
     Yields a perfect matching of a complete bipartite graph with given the partitions, `indices_one`
     and `indices_two`
 """
-from .slater import find_num_trans
+from wfns.backend.slater import find_num_trans
 
 __all__ = []
 

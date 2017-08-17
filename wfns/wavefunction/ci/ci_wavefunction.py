@@ -5,9 +5,9 @@ This module includes wavefunctions that are expressed as linear combination of S
 from __future__ import absolute_import, division, print_function
 import itertools
 import numpy as np
-from ..base_wavefunction import BaseWavefunction
-from ...backend import slater
-from ...backend.sd_list import sd_list
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.backend import slater
+from wfns.backend.sd_list import sd_list
 
 __all__ = []
 

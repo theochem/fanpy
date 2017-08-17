@@ -28,9 +28,9 @@ from __future__ import absolute_import, division, print_function
 import itertools as it
 import functools
 import numpy as np
-from ...backend import slater
-from ..base_wavefunction import BaseWavefunction
-from ..ci.ci_wavefunction import CIWavefunction
+from wfns.backend import slater
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 
 __all__ = []
 

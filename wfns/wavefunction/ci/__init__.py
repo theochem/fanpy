@@ -1,8 +1,8 @@
 """CI Wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from . import ci_wavefunction
-from . import fci
-from . import doci
-from . import cisd
-from . import ci_pairs
+from wfns.wavefunction.ci import ci_wavefunction
+from wfns.wavefunction.ci import fci
+from wfns.wavefunction.ci import doci
+from wfns.wavefunction.ci import cisd
+from wfns.wavefunction.ci import ci_pairs

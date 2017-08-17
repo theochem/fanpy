@@ -1,7 +1,7 @@
 """APIG wavefunction."""
 from __future__ import absolute_import, division, print_function
 import numpy as np
-from .base_geminal import BaseGeminal
+from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 
 __all__ = []
 

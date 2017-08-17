@@ -3,9 +3,9 @@ from __future__ import absolute_import, division, print_function
 import abc
 import numpy as np
 import functools
-from ...backend import slater
-from ...backend import math_tools
-from ..base_wavefunction import BaseWavefunction
+from wfns.backend import slater
+from wfns.backend import math_tools
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
 
 __all__ = []
 

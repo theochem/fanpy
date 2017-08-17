@@ -2,10 +2,10 @@
 """
 from __future__ import absolute_import, division, print_function
 import numpy as np
-from .doci import DOCI
-from ..geminals.ap1rog import AP1roG
-from ...backend.sd_list import sd_list
-from ...backend import slater
+from wfns.wavefunction.ci.doci import DOCI
+from wfns.wavefunction.geminals.ap1rog import AP1roG
+from wfns.backend.sd_list import sd_list
+from wfns.backend import slater
 
 __all__ = []
 

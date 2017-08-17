@@ -4,7 +4,7 @@ Seniority zero means that only Slater determinants constructed from alpha-beta p
 orbitals
 """
 from __future__ import absolute_import, division, print_function
-from .ci_wavefunction import CIWavefunction
+from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 
 __all__ = []
 

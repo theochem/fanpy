@@ -31,9 +31,9 @@ corresponds to orbitals :math:`p` and  :math:`q`
 from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
-from ...backend import slater
-from ..base_wavefunction import BaseWavefunction
-from .nonorth_wavefunction import NonorthWavefunction
+from wfns.backend import slater
+from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
 
 __all__ = []
 

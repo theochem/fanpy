@@ -10,7 +10,7 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 
 """
 from itertools import combinations, product
-from . import slater
+from wfns.backend import slater
 
 __all__ = ['sd_list']
 

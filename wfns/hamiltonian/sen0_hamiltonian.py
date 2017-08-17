@@ -22,8 +22,8 @@ Class
 SeniorityZeroHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from .chemical_hamiltonian import ChemicalHamiltonian
-from ..backend import slater
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.backend import slater
 
 
 class SeniorityZeroHamiltonian(ChemicalHamiltonian):
