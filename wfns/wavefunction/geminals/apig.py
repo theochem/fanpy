@@ -10,7 +10,6 @@ class APIG(BaseGeminal):
     r"""Antisymmetric Product of Interacting Geminals (APIG) Wavefunction.
 
     .. math::
-
         \big| \Psi_{\mathrm{APIG}} \big>
         &= \prod_{p=1}^P a^\dagger_p \big| \theta \big>\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+

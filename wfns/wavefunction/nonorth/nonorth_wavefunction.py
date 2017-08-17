@@ -2,14 +2,14 @@ r"""Wavefunction with nonorthonormal orbitals.
 
 A parameterized multideterminantal wavefunction can be written as
 
-..math::
+.. math::
     \ket{\Psi} = \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
 
 where :math:`\ket{\mathbf{m}}` is a Slater determinant. If the Slater determinants are constructed
 from nonorthonormal orbitals, then each Slater determinant can be expressed as a linear combination
 of Slater determinants constructed from orthonormal orbitals.
 
-..math::
+.. math::
     \ket{\Psi}
     &= \sum_{\mathbf{n}} f(\mathbf{n}) \ket{\mathbf{n}}\\
     &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}}
@@ -271,16 +271,20 @@ class NonorthWavefunction(BaseWavefunction):
 
         A wavefunction built using nonorthonormal Slater determinants, :math:`\mathbf{n}`, can be
         expressed with respect to orthonormal Slater determinants, :math:`\mathbf{m}`:
-        ..math::
+
+        .. math::
             \ket{\Psi}
             &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}} |U(\mathbf{m}, \mathbf{n})|^+
             \ket{\mathbf{m}}\\
             &= \sum_{\mathbf{m}} \sum_{\mathbf{n}} f(\mathbf{n}) |U(\mathbf{m}, \mathbf{n})|^+
             \ket{\mathbf{m}}
+
         Then, the overlap with an orthonormal Slater determinant is
-        ..math::
+
+        .. math::
             \braket{\Phi_i | \Psi}
             &= \sum_{\mathbf{n}} f(\mathbf{n}) |U(\Phi_i, \mathbf{n})|^+
+
         where :math:`U(\Phi_i, \mathbf{n})` is the transformation matrix with rows and columns that
         correspond to the Slater determinants :math:`\Phi_i` and :math:`\mathbf{n}`, respectively.
 

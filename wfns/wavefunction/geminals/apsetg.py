@@ -7,7 +7,7 @@ __all__ = []
 
 
 class APsetG(BaseGeminal):
-    """Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction.
+    r"""Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction.
 
     Attributes
     ----------

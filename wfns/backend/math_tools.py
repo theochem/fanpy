@@ -46,7 +46,8 @@ def adjugate(matrix):
     r""" Returns the adjugate of a matrix
 
     Adjugate of a matrix is the transpose of its cofactor matrix
-    ..math::
+
+    .. math::
         adj(A) = det(A) A^{-1}
 
     Returns
@@ -69,7 +70,8 @@ def permanent_combinatoric(matrix):
     r""" Calculates the permanent of a matrix naively using combinatorics
 
     If :math:`A` is an :math:`m` by :math:`n` matrix
-    ..math::
+
+    .. math::
         perm(A) = \sum_{\sigma \in P_{n,m}} \prod_{i=1}^n a_{i,\sigma(i)}
 
     Cost of :math:`\mathcal{O}(n!)`
@@ -201,10 +203,13 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     Borchardt Theorem
     -----------------
     If a matrix is rank two (Cauchy) matrix of the form
-    ..math::
+
+    .. math::
         A_{ij} = \frac{1}{\epsilon_j - \lambda_i}
+
     Then
-    ..math::
+
+    .. math::
         perm(A) = det(A \circ A) det(A^{-1})
 
     Parameters

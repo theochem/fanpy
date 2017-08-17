@@ -14,14 +14,14 @@ class BaseGeminal(BaseWavefunction):
     r"""Base Geminal Wavefunctions.
 
     A Geminal is a two-electron wavefunction.
-    .. math::
 
+    .. math::
         G^\dagger_p = \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q
 
     All Geminal wavefunctions can be expresed as an antisymmeterized product of geminals:
-    .. math::
 
-        \big| \Psi \big> = \prod_{p=1}^P G^\dagger_p \big| \theta \big>
+    .. math::
+        \ket{\Psi} = \prod_{p=1}^P G^\dagger_p \ket{\theta}
 
     These wavefunctions can be re-expressed in terms of orbital pairs (i.e.
     :math:`a^\dagger_p a^\dagger_q`), where the overlap of the wavefunction with a Slater
@@ -383,7 +383,6 @@ class BaseGeminal(BaseWavefunction):
         The results are cached in self._cache_fns.
 
         .. math::
-
             \big| \Psi \big>
             &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
             &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+

@@ -2,7 +2,7 @@ r"""Orbital optimization.
 
 Orbital optimization essentially minimizes
 
-..math::
+.. math::
     \braket{\Psi | \hat{U} \hat{H} \hat{U}^\dagger | \Psi}
 
 where :math:`\hat{U}^\dagger` is orbital rotation operator (usually unitary).
@@ -30,7 +30,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
     iteratively optimized, where :math:`\hat{\mathbf{J}}^\dagger_{pq}` is the Jacobi orbital
     rotation operator.
 
-    ..math::
+    .. math::
         \hat{\mathbf{J}}_{pq} \hat{H} \hat{\mathbf{J}}_{pq}^\dagger
         = \sum_{ab}
         \left( \sum_{ij} (J_{pq})_{ai} h_{ij} (J_{pq})^\dagger_{jb} \right)
@@ -42,16 +42,16 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
 
     where :math:`J_{pq}` is the Jacobi rotation matrix.
 
-    ..math::
+    .. math::
         (J_{pq})_{ij}
-        &= \delta_{ij} \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}
-        &= \cos \theta \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}
-        &= \sin \theta \mbox {if $(i,j) = (p,q)$}
-        &= -\sin \theta \mbox {if $(i,j) = (q,p)$}
+        &= \delta_{ij} \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}\\
+        &= \cos \theta \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}\\
+        &= \sin \theta \mbox {if $(i,j) = (p,q)$}\\
+        &= -\sin \theta \mbox {if $(i,j) = (q,p)$}\\
 
     When the operator is applied to the wavefunction,
 
-    ..math::
+    .. math::
         \hat{\mathbf{J}}_{pq}^\dagger \ket{\Psi}
         &= \sum_{\mathbf{n} \not\ni p,q} f(\mathbf{n}) \ket{\mathbf{n}}
         + \sum_{\mathbf{n} \ni p,q} f(\mathbf{n}) \ket{\mathbf{n}}\\
@@ -153,7 +153,7 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
     iteratively optimized, where :math:`\hat{\mathbf{J}}^\dagger_{pq}` is the Jacobi orbital
     rotation operator.
 
-    ..math::
+    .. math::
         \hat{\mathbf{J}}_{pq} \hat{H} \hat{\mathbf{J}}_{pq}^\dagger
         = \sum_{ab}
         \left( \sum_{ij} (J_{pq})_{ai} h_{ij} (J_{pq})^\dagger_{jb} \right)
@@ -165,11 +165,11 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
 
     where :math:`J_{pq}` is the Jacobi rotation matrix.
 
-    ..math::
+    .. math::
         (J_{pq})_{ij}
-        &= \delta_{ij} \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}
-        &= \cos \theta \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}
-        &= \sin \theta \mbox {if $(i,j) = (p,q)$}
+        &= \delta_{ij} \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}\\
+        &= \cos \theta \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}\\
+        &= \sin \theta \mbox {if $(i,j) = (p,q)$}\\
         &= -\sin \theta \mbox {if $(i,j) = (q,p)$}
 
     Parameters

@@ -139,7 +139,7 @@ class CIWavefunction(BaseWavefunction):
     def spin(self):
         r"""Return the spin of the wavefunction.
 
-        ..math::
+        .. math::
             \frac{1}{2}(N_\alpha - N_\beta)
 
         Returns
@@ -279,11 +279,13 @@ class CIWavefunction(BaseWavefunction):
         r"""Return the overlap of the CI wavefunction with a Slater determinant.
 
         i.e. the Slater determinnt coefficient
-        ..math::
+
+        .. math::
             \big< \Phi_i \big| \Psi \big> = c_i
 
         where
-        ..math::
+
+        .. math::
             \big| \Psi \big> = \sum_i c_i \big| \Phi_i \big>
 
         Parameters

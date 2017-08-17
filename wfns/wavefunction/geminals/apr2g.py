@@ -240,7 +240,6 @@ class APr2G(APIG):
         The results are cached in self._cache_fns
 
         .. math::
-
             \big| \Psi \big>
             &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
             &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
@@ -316,36 +315,42 @@ class APr2G(APIG):
         Using least squares, the APIG geminal coefficients are converted to the APr2G variant, i.e.
         find the coefficients :math:`\{\lambda_j\}`, :math:`\{\epsilon_i\}`, and :math:`\{\zeta_i\}`
         such that following equation is best satisfied
-        ..math::
+
+        .. math::
             C_{ij} &= \frac{\zeta_i}{\epsilon_i + \lambda_j}\\
             0 &= \zeta_i - C_{ij} \epsilon_i - C_{ij} \lambda_j\\
 
         The least square has the form of :math:`Ax=b`. Given that the :math:`b=0`
         and the unknowns are
-        ..math::
+
+        .. math::
             x = \begin{bmatrix}
             \lambda_1 \\ \vdots\\ \lambda_K\\
             \zeta_1 \\ \vdots\\ \zeta_P\\
             \epsilon_1 \\ \vdots\\ \epsilon_P\\
             \end{bmatrix},
-        then A must be
-        ..math::
-            A = \begin{bmatrix}
-            -C_{11} & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
-            -C_{12} & 0 & \dots & 0 & 0 & -C_{12} & \dots & 0 &  & 0 & 1 & \dots & 0\\
-            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
-            & \vdots & \vdots\\
-            -C_{1K} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{1K} &  & 0 & 0 & \dots & 1\\
-            0 & -C_{21} & \dots & 0 & -C_{21} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
-            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
-            & \vdots & \vdots\\
-            0 & -C_{2K} & \dots & 0 & 0 & 0 & \dots & -C_{2K} &  & 0 & 0 & \dots & 1\\
-            0 & 0 & \dots & -C_{PK} & -C_{P1} & 0 & \dots & 0 &  & 1 & 0 & \dots & 0\\
-            \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
-            & \vdots & \vdots\\
-            0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & -C_{PK} &  & 0 & 0 & \dots & 1\\
-            \end{bmatrix}
 
+        then A must be
+
+        .. math::
+            A =
+            \left[
+            \begin{array}{@{}*{12}{c}@{}}
+                -C_{11} & 0 & \dots & 0 & -C_{11} & 0 & \dots & 0 & 1 & 0 & \dots & 0\\
+                -C_{12} & 0 & \dots & 0 & 0 & -C_{12} & \dots & 0 & 0 & 1 & \dots & 0\\
+                \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+                & \vdots & \vdots & \vdots\\
+                -C_{1K} & 0 & \dots & 0 & 0 & 0 & \dots & -C_{1K} & 0 & 0 & \dots & 1\\
+                0 & -C_{21} & \dots & 0 & -C_{21} & 0 & \dots & 0 & 1 & 0 & \dots & 0\\
+                \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+                & \vdots & \vdots & \vdots\\
+                0 & -C_{2K} & \dots & 0 & 0 & 0 & \dots & -C_{2K} & 0 & 0 & \dots & 1\\
+                0 & 0 & \dots & -C_{PK} & -C_{P1} & 0 & \dots & 0 & 1 & 0 & \dots & 0\\
+                \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots
+                & \vdots & \vdots & \vdots\\
+                0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & -C_{PK} & 0 & 0 & \dots & 1\\
+            \end{array}
+            \right]
 
         Parameters
         ----------
@@ -376,12 +381,14 @@ class APr2G(APIG):
         -------
         Assuming we have a system with 2 electron pairs and 4 spatial orbitals,
         we have
-        ..math::
+
+        .. math::
             C = \begin{bmatrix}
             C_{11} & \dots & C_{1K}\\
             C_{21} & \dots & C_{2K}
             \end{bmatrix}
-        ..math::
+
+        .. math::
             A = \begin{bmatrix}
             C_{11} & 0 & -C_{11} & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
             C_{12} & 0 & 0 & -C_{12} & 0 & 0 & 0 & 1 & 0 & 0\\
@@ -393,7 +400,7 @@ class APr2G(APIG):
             0 & C_{24} & 0 & 0 & 0 & -C_{24} & 0 & 0 & 0 & 1\\
             \end{bmatrix}
 
-        ..math::
+        .. math::
             x = \begin{bmatrix}
             \lambda_ 1& \lambda_2
             \epsilon_1 \\ \epsilon_2\ \\ \epsilon_3 \\ \epsilon_4\\

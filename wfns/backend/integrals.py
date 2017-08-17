@@ -56,10 +56,10 @@ class BaseIntegrals:
 
 
 class OneElectronIntegrals(BaseIntegrals):
+    #FIXME: substitute \hat{h} with real eqn
     r"""Class for storing one-electron integrals.
 
-    #FIXME: substitute \hat{h} with real eqn
-    ..math::
+    .. math::
         h_{ik} = \big< \phi_i \big | \hat{h} | \phi_k \big>
 
     Attributes
@@ -139,7 +139,7 @@ class OneElectronIntegrals(BaseIntegrals):
     def get_value(self, i, k, orbtype):
         r"""Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
 
-        ..math::
+        .. math::
             h_{ik} = \big< \phi_i \big | \hat{h} | \phi_k \big>
 
         Parameters
@@ -392,7 +392,7 @@ class TwoElectronIntegrals(BaseIntegrals):
     def get_value(self, i, j, k, l, orbtype, notation='physicist'):
         r""" Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
 
-        ..math::
+        .. math::
             \big< \theta \big | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \big> =
             \big< \phi_i \phi_j \big | \hat{g} | \phi_k \phi_l \big>
 

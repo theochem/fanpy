@@ -13,7 +13,9 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     r"""Optimize the wavefunction with the given Hamiltonian as a single equation for energy.
 
     Solves the following equation
-    ..math::
+
+    .. math::
+
         \bra{\Psi}
         \sum_{\mathbf{m} \in P_{left}} \ket{\mathbf{m}} \bra{\mathbf{m}}
         \hat{H}
@@ -32,7 +34,9 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     left and right sides of the Schrodinger equation are projected.
 
     Wavefunction is optimized by minimizing the energy.
-    ..math::
+
+    .. math::
+
         E =
         \frac{
             \sum_{\mathbf{m} \in P_{left}} \sum_{\mathbf{n} \in P_{right}}

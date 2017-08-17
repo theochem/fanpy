@@ -3,7 +3,7 @@ r"""Wavefunction with orbitals rotated by Jacobi matrix.
 
 A wavefunction constructed from nonorthonormal orbitals can be written as
 
-..math::
+.. math::
     \ket{\Psi}
     &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
     f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
@@ -16,7 +16,7 @@ rows are selected according to :math:`\ket{\mathbf{n}}` and columns to :math:`\k
 If the orbitals are transformed with a Jacobi rotation, then many of the determinants are
 simplified.
 
-..math::
+.. math::
     \braket{\mathbf{m} | J^\dagger_{pq} | \Psi}
     &= f(\mathbf{m}) \mbox{ if $p \not\in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
     &= f(\mathbf{m}) \mbox{ if $p \in \mathbf{m}$ and $q \in \mathbf{m}$}\\

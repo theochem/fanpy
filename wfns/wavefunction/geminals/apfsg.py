@@ -15,10 +15,11 @@ __all__ = []
 class APfsG(ProjectedWavefunction):
     r""" Antisymmetric Product of Factorized Set Geminals
 
-    ..math::
+    .. math::
         \big| \Psi_{\mathrm{APFSG}} \big>
         &= \prod_{q=1}^R T_q^\dagger \big| \theta \big>\\
         &= \prod_{q=1}^R \left(c_{q;0} + \sum_{i=1}^{B} c^{(CS)}_{q;i}a_{2i-1}^\dagger a_{2i}^\dagger + \sum_{j \in S_1} \sum_{k \in S_2}a^{(os)}_{q;i}b^{(os)}_{jk}a_j^\dagger a_k^\dagger (1 - \hat{n_{j'}}) (1-\hat{n_{k'}}) \right) \big| \theta \big>
+
     Attributes
     ----------
     dtype : {np.float64, np.complex128}
@@ -166,7 +167,8 @@ class APfsG(ProjectedWavefunction):
         r""" Computes the overlap between the wavefunction and a Slater determinant
 
         The results are cached in self.cache and self.d_cache.
-        ..math::
+
+        .. math::
             \big< \Phi_q^i \big| \Psi_{\mathrm{APFSG}} \big>
             &= \big< \Phi_q^i \big| \prod_{q=1}^Q T_q^\dagger \big| \theta \big>\\
             &=\begin{vmatrix}
@@ -181,7 +183,6 @@ class APfsG(ProjectedWavefunction):
             \vdots & \vdots & & \vdots \\
             b^{(os)}_{j_{N_{cs}}k_1} & b^{(os)}_{j_{N_{cs}}k_2} & \dots & b^{(os)}_{j_{N_{cs}}k_{N_{os}}}
             \end{vmatrix}
-
 
         Parameters
         ----------
@@ -251,7 +252,7 @@ class APfsG(ProjectedWavefunction):
         r""" Computes the hamiltonian of the wavefunction with respect to a Slater
         determinant
 
-        ..math::
+        .. math::
             \big< \Phi_i \big| H \big| \Psi_{mathrm{APFSG}} \big>
 
         Since only Slater determinants from CI will be used, we can use the CI
