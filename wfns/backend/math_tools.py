@@ -76,8 +76,8 @@ def permanent_combinatoric(matrix):
 
     Cost of :math:`\mathcal{O}(n!)`
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     matrix : np.ndarray(nrow, ncol)
         Matrix
 
@@ -118,8 +118,8 @@ def permanent_ryser(matrix):
 
     Cost of :math:`\mathcal{O}(2^n n)`
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     matrix : np.ndarray(nrow, ncol)
         Matrix
 

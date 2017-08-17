@@ -86,8 +86,8 @@ def occ(sd, i):
 def is_alpha(i, nspatial):
     """ Checks if index `i` belongs to an alpha spin orbital
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     i : int
         Index of the spin orbital in the Slater determinant
     nspatial : int
@@ -110,8 +110,8 @@ def spatial_index(i, nspatial):
     """ Returns the index of the spatial orbital that corresponds to the
     spin orbital `i`
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     i : int
         Index of the spin orbital in the Slater determinant
     nspatial : int
@@ -279,8 +279,8 @@ def is_internal_sd(sd):
     """ Checks if given Slater determinant is the same type as the one used internally in this
     module
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     sd
          Some representation of a Slater determinant
 
@@ -489,8 +489,8 @@ def interleave_index(i, nspatial):
     """ Converts index of an orbital in block sd notation to that of interleaved
     sd notation
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     i : int
         Index of orbital in block sd notation
     nspatial : int
@@ -519,8 +519,8 @@ def interleave_index(i, nspatial):
 def deinterleave_index(i, nspatial):
     """ Converts index of an orbital in interleaved sd notation to that of block sd notation
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     i : int
         Index of orbital in interleaved sd notation
     nspatial : int
