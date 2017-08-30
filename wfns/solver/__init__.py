@@ -1,4 +1,4 @@
-"""Solver of the wavefunction given the Hamiltonian."""
+"""Module for optimizing a wavefunction and/or Hamiltonian."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from wfns.solver import system_solver

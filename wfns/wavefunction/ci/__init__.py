@@ -1,4 +1,4 @@
-"""CI Wavefunction."""
+"""Module for creating CI Wavefunctions."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from wfns.wavefunction.ci import ci_wavefunction

@@ -1,6 +1,4 @@
-"""Geminal Wavefunction."""
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+"""Module for creating Geminal wavefunction."""
 from wfns.wavefunction.geminals import base_geminal
 from wfns.wavefunction.geminals import ap1rog
 from wfns.wavefunction.geminals import apr2g

@@ -1,4 +1,4 @@
-"""Backend for wfns code."""
+"""Module for backend utility tools."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from wfns.backend import slater
