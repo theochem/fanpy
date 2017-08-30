@@ -1,4 +1,4 @@
-"""Hamiltonian of the system."""
+"""Module for creating the Hamiltonians."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from wfns.hamiltonian import chemical_hamiltonian
