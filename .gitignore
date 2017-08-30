@@ -41,3 +41,6 @@ var/
 # Ignore testing output
 .coverage
 qaworkdir
+
+# backup file
+*.bak
