@@ -90,8 +90,8 @@ class CISD(CIWavefunction):
         ValueError
             If the sd_vec is not `None` (default value)
 
-        Note
-        ----
+        Notes
+        -----
         Needs to have `nelec`, `nspin`, `spin`, `seniority`
         """
         if sd_vec is None:
