@@ -8,106 +8,59 @@ import numpy as np
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
+@docstring_class(indent_level=1)
 class CIWavefunction(BaseWavefunction):
     r"""Wavefunction that can be expressed as a linear combination of Slater determinants.
 
+    .. math::
+
+        \ket{\Psi} &= \sum_i c_i \ket{\Phi_i}\\
+        &= \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \ket{\mathbf{m}}\\
+
+    where :math:`\Phi_i` is Slater determinants. The :math:`\mathbf{m}` is the occupation vector of
+    a Slater determinant (and therefore can be used interchangeably with the Slater determinant) and
+    :math:`S` is the set of Slater determinants used to create the wavefunction.
+
     Attributes
     ----------
-    nelec : int
-        Number of electrons
-    nspin : int
-        Number of spin orbitals (alpha and beta)
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    params : np.ndarray
-        Parameters of the wavefunction
     _spin : float
-        Total spin of each Slater determinant
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)`
-        Default is no spin (all spins possible)
+        Total spin of each Slater determinant.
+        :math:`\frac{1}{2}(N_\alpha - N_\beta)`.
+        Default is no spin (all spins possible).
     _seniority : int
-        Number of unpaired electrons in each Slater determinant
+        Number of unpaired electrons in each Slater determinant.
     sd_vec : tuple of int
-        List of Slater determinants used to construct the CI wavefunction
+        List of Slater determinants used to construct the CI wavefunction.
     dict_sd_index : dictionary of int to int
-        Dictionary from Slater determinant to its index in sd_vec
+        Dictionary from Slater determinant to its index in sd_vec.
 
-    Properties
-    ----------
-    nspatial : int
-        Number of spatial orbitals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    template_params : np.ndarray
-        Template of the wavefunction parameters
-        Depends on the attributes given
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    nsd : int
-        Number of Slater determinants
-
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, params=None, sd_vec=None, spin=None, seniority=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_spin(self, spin=None)
-        Assigns the spin of the wavefunction
-    assign_seniority(self, seniority=None)
-        Assigns the seniority of the wavefunction
-    assign_sd_vec(self, sd_vec=None)
-        Assigns the tuple of Slater determinants used in the CI wavefunction
-    get_overlap(self, sd, deriv=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
     """
+
     def __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
                  seniority=None):
         """Initialize the wavefunction.
 
         Parameters
         ----------
-        nelec : int
-            Number of electrons
-        nspin : int
-            Number of spin orbitals
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type
-            Default is `np.float64`
-        memory : {float, int, str, None}
-            Memory available for the wavefunction
-            Default does not limit memory usage (i.e. infinite)
         params : np.ndarray
-            Coefficients of the Slater determinants of a CI wavefunction
+            Coefficients of the Slater determinants of a CI wavefunction.
         sd_vec : iterable of int
-            List of Slater determinants used to construct the CI wavefunction
+            List of Slater determinants used to construct the CI wavefunction.
         spin : float
-            Total spin of the wavefunction
-            Default is no spin (all spins possible)
-            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc
-            Positive spin means that there are more alpha orbitals than beta orbitals
-            Negative spin means that there are more beta orbitals than alpha orbitals
+            Total spin of the wavefunction.
+            Default is no spin (all spins possible).
+            0 is singlet, 0.5 and -0.5 are doublets, 1 and -1 are triplets, etc.
+            Positive spin means that there are more alpha orbitals than beta orbitals.
+            Negative spin means that there are more beta orbitals than alpha orbitals.
         seniority : int
-            Seniority of the wavefunction
-            Default is no seniority (all seniority possible)
+            Seniority of the wavefunction.
+            Default is no seniority (all seniority possible).
+
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_spin(spin=spin)
@@ -125,11 +78,13 @@ class CIWavefunction(BaseWavefunction):
 
         Returns
         -------
-        np.ndarray
+        params : np.ndarray
+            Default parameters.
 
-        Note
-        ----
-        Instance must contain `sd_vec`
+        Notes
+        -----
+        `CIWavefunction` instance must contain `sd_vec` to access this property.
+
         """
         params = np.zeros(len(self.sd_vec), dtype=self.dtype)
         params[0] = 1
@@ -137,24 +92,18 @@ class CIWavefunction(BaseWavefunction):
 
     @property
     def spin(self):
-        r"""Return the spin of the wavefunction.
-
-        .. math::
-            \frac{1}{2}(N_\alpha - N_\beta)
-
-        Returns
-        -------
-        float
-
-        Note
-        ----
-        `None` means that all possible spins are allowed
-        """
         return self._spin
 
     @property
     def nsd(self):
-        """"Return the number of Slater determinants."""
+        """Return the number of Slater determinants.
+
+        Returns
+        -------
+        nsd : int
+            Number of Slater determinants.
+
+        """
         return len(self.sd_vec)
 
     def assign_spin(self, spin=None):
@@ -165,15 +114,16 @@ class CIWavefunction(BaseWavefunction):
         Parameters
         ----------
         spin : float
-            Spin of each Slater determinant
-            Default is no spin (all spins possible)
+            Spin of each Slater determinant.
+            Default is no spin (all spins possible).
 
         Raises
         ------
         TypeError
-            If the spin is not an integer, float, or None
+            If the spin is not an integer, float, or None.
         ValueError
-            If the spin is not an integral multiple of 0.5
+            If the spin is not an integral multiple of `0.5`.
+
         """
         if spin is None:
             self._spin = spin
@@ -186,16 +136,6 @@ class CIWavefunction(BaseWavefunction):
 
     @property
     def seniority(self):
-        """Return the seniority (number of unpaired electrons) of the wavefunction.
-
-        Returns
-        -------
-        int
-
-        Note
-        ----
-        `None` means that all possible seniority are allowed
-        """
         return self._seniority
 
     def assign_seniority(self, seniority=None):
@@ -206,15 +146,16 @@ class CIWavefunction(BaseWavefunction):
         Parameters
         ----------
         seniority : float
-            Seniority of each Slater determinant
-            Default is no seniority (all seniorities possible)
+            Seniority of each Slater determinant.
+            Default is no seniority (all seniorities possible).
 
         Raises
         ------
         TypeError
-            If the seniority is not an integer, float, or None
+            If the seniority is not an integer, float, or None.
         ValueError
-            If the seniority is a negative integer
+            If the seniority is a negative integer.
+
         """
         if not (seniority is None or isinstance(seniority, int)):
             raise TypeError('Invalid seniority of the wavefunction')
@@ -228,23 +169,23 @@ class CIWavefunction(BaseWavefunction):
         Parameters
         ----------
         sd_vec : iterable of int
-            List of Slater determinants (in the form of integers that describe the occupation as a
-            bitstring)
+            List of Slater determinants.
 
         Raises
         ------
         TypeError
-            If sd_vec is not iterable
-            If a Slater determinant cannot be turned into the internal form
+            If sd_vec is not iterable.
+            If a Slater determinant cannot be turned into the internal form.
         ValueError
-            If an empty iterator was provided
-            If a Slater determinant does not have the correct number of electrons
-            If a Slater determinant does not have the correct spin
-            If a Slater determinant does not have the correct seniority
+            If an empty iterator was provided.
+            If a Slater determinant does not have the correct number of electrons.
+            If a Slater determinant does not have the correct spin.
+            If a Slater determinant does not have the correct seniority.
 
-        Note
-        ----
-        Needs to have `nelec`, `nspin`, `spin`, `seniority`
+        Notes
+        -----
+        Needs to have `nelec`, `nspin`, `spin`, `seniority`.
+
         """
         # FIXME: terrible memory usage
         # FIXME: no check for repeated entries
@@ -278,32 +219,29 @@ class CIWavefunction(BaseWavefunction):
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the CI wavefunction with a Slater determinant.
 
-        i.e. the Slater determinnt coefficient
+        The overlap of the CI wavefunction with a Slater determinant is the coefficient of that
+        Slater determinant in the wavefunction.
 
         .. math::
-            \big< \Phi_i \big| \Psi \big> = c_i
+
+            \braket{\Phi_i | \Psi} = c_i
 
         where
 
         .. math::
-            \big| \Psi \big> = \sum_i c_i \big| \Phi_i \big>
 
-        Parameters
-        ----------
-        sd : int, mpz
-            Slater Determinant against which to project.
-        deriv : int
-            Index of the parameter to derivatize
-            Default does not derivatize
+            \ket{\Psi} = \sum_i c_i \ket{\Phi_i}
 
         Returns
         -------
         overlap : float
+            Overlap of the CI wavefunction with the Slater determinant.
 
         Raises
         ------
         TypeError
-            If given Slater determinant is not compatible with the format used internally
+            If given Slater determinant is not compatible with the format used internally.
+
         """
         sd = slater.internal_sd(sd)
         try:
