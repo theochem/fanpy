@@ -1,96 +1,55 @@
 # FIXME: Need consistent notaiton for orbital rotation
-r"""Wavefunction with orbitals rotated by Jacobi matrix.
-
-A wavefunction constructed from nonorthonormal orbitals can be written as
-
-.. math::
-    \ket{\Psi}
-    &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
-    f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
-
-where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed from
-orthonormal and nonorthonormal orbitals.
-The :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of the transformation matrix :math:`C` where
-rows are selected according to :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
-
-If the orbitals are transformed with a Jacobi rotation, then many of the determinants are
-simplified.
-
-.. math::
-    \braket{\mathbf{m} | J^\dagger_{pq} | \Psi}
-    &= f(\mathbf{m}) \mbox{ if $p \not\in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
-    &= f(\mathbf{m}) \mbox{ if $p \in \mathbf{m}$ and $q \in \mathbf{m}$}\\
-    &= f(\mathbf{m}) (\cos\theta + \sin\theta)
-    \mbox{ if $p \in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
-    &= f(\mathbf{m}) (\cos\theta - \sin\theta)
-    \mbox{ if $p \not\in \mathbf{m}$ and $q \in \mathbf{m}$}\\
-
-where :math:`J^\dagger_{pq}` is the orbital rotation operator that mixes the orbitals that
-corresponds to orbitals :math:`p` and  :math:`q`
-"""
+r"""Wavefunction with orbitals rotated by Jacobi matrix."""
 from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from wfns.backend import slater
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
 # FIXME: needs refactoring
+@docstring_class(indent_level=1)
 class JacobiWavefunction(BaseWavefunction):
     r"""Wavefunction with jacobi rotated orbitals expressed with respect to orthonormal orbitals.
 
-    Rotated orbitals are expressed with respect to orthonormal orbitals.
+    A wavefunction constructed from nonorthonormal orbitals can be written as
+
+    .. math::
+        \ket{\Psi}
+        &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
+        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+
+    where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed
+    from orthonormal and nonorthonormal orbitals. The :math:`C(\mathbf{n}, \mathbf{m})` is a
+    submatrix of the transformation matrix :math:`C` where rows are selected according to
+    :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
+
+    If the orbitals are transformed with a Jacobi rotation, then many of the determinants are
+    simplified.
+
+    .. math::
+        \braket{\mathbf{m} | J^\dagger_{pq} | \Psi}
+        &= f(\mathbf{m}) \mbox{ if $p \not\in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
+        &= f(\mathbf{m}) \mbox{ if $p \in \mathbf{m}$ and $q \in \mathbf{m}$}\\
+        &= f(\mathbf{m}) (\cos\theta + \sin\theta)
+        \mbox{ if $p \in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
+        &= f(\mathbf{m}) (\cos\theta - \sin\theta)
+        \mbox{ if $p \not\in \mathbf{m}$ and $q \in \mathbf{m}$}\\
+
+    where :math:`J^\dagger_{pq}` is the orbital rotation operator that mixes the orbitals that
+    corresponds to orbitals :math:`p` and :math:`q`.
 
     Attributes
     ----------
-    nelec : int
-        Number of electrons
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    memory : float
-        Memory available for the wavefunction
-    nspin : int
-        Number of orthonormal spin orbitals (alpha and beta)
+    wfn : BaseWavefunction
+        Wavefunction whose orbitals are rotated.
+    jacobi_indices : 2-tuple of ints
+        Orbitals that are rotated.
 
-    Properties
-    ----------
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    nspatial : int
-        Number of orthonormal spatial orbitals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    template_params : np.ndarray
-        Template of the wavefunction parameters
-        Depends on the attributes given
-
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_memory(self, memory=None)
-        Assigns the memory allocated for the wavefunction
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    get_overlap(self, sd, deriv=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orbtype=None,
                  jacobi_indices=None, params=None):
@@ -98,23 +57,14 @@ class JacobiWavefunction(BaseWavefunction):
 
         Parameters
         ----------
-        nelec : int
-            Number of electrons
-        nspin : int
-            Number of spin orbitals
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type
-            Default is `np.float64`
-        memory : {float, int, str, None}
-            Memory available for the wavefunction
-            Default does not limit memory usage (i.e. infinite)
         wfn : BaseWavefunction
-            Wavefunction that will be built up using nonorthnormal orbitals
+            Wavefunction that will be built using nonorthnormal orbitals.
         orbtype : str
-            Type of orbital used by the wavefunction
-            One of 'restricted', 'unrestricted', and 'generalized'
-        jacobi_indices : tuple of ints
-            2-tuple or list of indices of the orbitals that will be rotated
+            Type of orbital used by the wavefunction.
+            One of 'restricted', 'unrestricted', and 'generalized'.
+        jacobi_indices : 2-tuple/list of ints
+            Orbitals that will be rotated.
+
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_params(params)
@@ -125,46 +75,39 @@ class JacobiWavefunction(BaseWavefunction):
     # FIXME: copied from NonorthWavefunction
     @property
     def spin(self):
-        """Spin of the wavefunction.
-
-        Since the orbitals may mix regardless of the spin, the spin of the wavefunction is hard to
-        determine.
-
-        Returns
-        -------
-        spin
-            Spin of the (composite) wavefunction if the orbitals are restricted or unrestricted
-            None if the orbital is generalized
-        """
         return NonorthWavefunction.spin.__get__(self)
 
     # FIXME: copied from NonorthWavefunction
     @property
     def seniority(self):
-        """Seniority of the wavefunction."""
         return NonorthWavefunction.seniority.__get__(self)
 
     @property
     def template_params(self):
-        """Return the shape of the wavefunction parameters.
+        """
 
-        The orbital transformations are the wavefunction parameters.
+        Returns
+        -------
+        params : np.ndarray(1)
+            Angle with which the orbitals are rotated.
+
         """
         return np.array(0.0)
 
     @property
     def jacobi_rotation(self):
-        """Returns the rotation matrix that corresponds given parameter.
+        """Returns the rotation matrix that corresponds to the given parameter.
 
         Returns
         -------
         jacobi_rotation : tuple of np.ndarray
             If the orbitals are restricted, then the rotation matrix for the spatial orbitals is
-            returned
+            returned.
             If the orbitals are unrestricted, then the rotation matrices for alpha and beta orbitals
-            are returned
+            are returned.
             If the orbitals are generalized, then the rotation matrices for spin orbitals are
-            returned
+            returned.
+
         """
         if self.orbtype in ['restricted', 'unrestricted']:
             jacobi_rotation = np.identity(self.nspatial, dtype=self.dtype)
@@ -189,14 +132,20 @@ class JacobiWavefunction(BaseWavefunction):
         else:
             return (np.identity(self.nspatial, dtype=self.dtype), jacobi_rotation)
 
+    def assign_params(self, params=None):
+        if isinstance(params, (int, float)):
+            params = np.array(params)
+        super().assign_params(params=params)
+
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type of the orbital rotation.
 
         Parameters
         ----------
         orbtype : str
-            Type of the orbital that are rotated
-            One of 'restricted', 'unrestricted', and 'generalized'
+            Type of the orbital that are rotated.
+            One of 'restricted', 'unrestricted', and 'generalized'.
+
         """
         if orbtype is None:
             orbtype = 'restricted'
@@ -207,29 +156,30 @@ class JacobiWavefunction(BaseWavefunction):
         self.orbtype = orbtype
 
     def assign_jacobi_indices(self, jacobi_indices):
-        """Assign the indices of the orbitals associated with the Jacobi rotation.
+        """Assign the indices of the orbitals that will be rotated.
 
         Parameters
         ----------
         jacobi_indices : tuple/list of ints
-            2-tuple/list of indices of the orbitals that will be rotated
+            2-tuple/list of indices of the orbitals that will be rotated.
 
         Raises
         ------
         TypeError
-            If `jacobi_indices` is not a tuple or list
-            If `jacobi_indices` does not have two elements
-            If `jacobi_indices` must only contain integers
+            If `jacobi_indices` is not a tuple or list.
+            If `jacobi_indices` does not have two elements.
+            If `jacobi_indices` must only contain integers.
         ValueError
             If the indices are negative.
-            If the two indices are the same
-            If orbitals are generalized and indices are greater than `nspin`
-            If orbitals are restricted and indices are greater than `nspatial`
+            If the two indices are the same.
+            If orbitals are generalized and indices are greater than `nspin`.
+            If orbitals are restricted and indices are greater than `nspatial`.
             If orbitals are unrestricted and indices mix alpha and beta orbitals.
 
-        Note
-        ----
+        Notes
+        -----
         `orbtype` is used in this method.
+
         """
         if not isinstance(jacobi_indices, (tuple, list)):
             raise TypeError('Indices `jacobi_indices` must be a tuple or list.')
@@ -259,47 +209,29 @@ class JacobiWavefunction(BaseWavefunction):
 
     # FIXME: copied from NonorthWavefunction
     def assign_wfn(self, wfn=None):
-        """Assign the wavefunction.
+        """Assign the wavefunction whose orbitals will be transformed.
 
         Parameters
         ----------
         wfn : BaseWavefunction
-            Wavefunction that will be built up using nonorthnormal orbitals
+            Wavefunction that will be built up using the rotated orbitals.
+            Default is a FCI wavefunction.
 
         Raises
         ------
         ValueError
-            If the given wavefunction is not an instance of BaseWavefunction
+            If the given wavefunction is not an instance of BaseWavefunction.
             If the given wavefunction does not have the same number of electrons as the instantiated
-            NonorthWavefunction
+            JacobiWavefunction.
             If the given wavefunction does not have the same data type as the instantiated
-            NonorthWavefunction.
+            JacobiWavefunction.
             If the given wavefunction does not have the same memory as the instantiated
-            NonorthWavefunction.
+            JacobiWavefunction.
         """
         NonorthWavefunction.assign_wfn(self, wfn=wfn)
 
     # FIXME: there probably is a more elegant way of handling restricted orbital case.
     def get_overlap(self, sd, deriv=None):
-        """Return the overlap of the wavefunction with an orthonormal Slater determinant.
-
-        Parameters
-        ----------
-        sd : int, mpz
-            Slater Determinant against which to project.
-        deriv : int
-            Index of the parameter to derivatize
-            Default does not derivatize
-
-        Returns
-        -------
-        overlap : float
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally
-        """
         # FIXME: use function in slater that converts spatial index into spin index
         if deriv is None:
             # if cached function has not been created yet

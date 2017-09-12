@@ -1,29 +1,4 @@
-r"""Wavefunction with nonorthonormal orbitals.
-
-A parameterized multideterminantal wavefunction can be written as
-
-.. math::
-    \ket{\Psi} = \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
-
-where :math:`\ket{\mathbf{m}}` is a Slater determinant. If the Slater determinants are constructed
-from nonorthonormal orbitals, then each Slater determinant can be expressed as a linear combination
-of Slater determinants constructed from orthonormal orbitals.
-
-.. math::
-    \ket{\Psi}
-    &= \sum_{\mathbf{n}} f(\mathbf{n}) \ket{\mathbf{n}}\\
-    &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}}
-    |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}\\
-    &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
-    f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
-
-where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed from
-orthonormal and nonorthonormal orbitals.
-The nonorthonormal orbitals are constructed by linearly transforming the orbitals of
-:math:`\ket{\mathbf{m}}` with :math:`C`.
-The :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of :math:`C` where rows are selected according
-to :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
-"""
+"""Wavefunction with nonorthonormal orbitals."""
 from __future__ import absolute_import, division, print_function
 import itertools as it
 import functools
@@ -31,85 +6,67 @@ import numpy as np
 from wfns.backend import slater
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
 # FIXME: needs refactoring
+@docstring_class(indent_level=1)
 class NonorthWavefunction(BaseWavefunction):
     r"""Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
-    Nonorthonormal orbitals are expressed with respect to orthonormal orbitals.
+    A parameterized multideterminantal wavefunction can be written as
+
+    .. math::
+        \ket{\Psi} = \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
+
+    where :math:`\ket{\mathbf{m}}` is a Slater determinant. If the Slater determinants are
+    constructed from nonorthonormal orbitals, then each Slater determinant can be expressed as a
+    linear combination of Slater determinants constructed from orthonormal orbitals.
+
+    .. math::
+        \ket{\Psi}
+        &= \sum_{\mathbf{n}} f(\mathbf{n}) \ket{\mathbf{n}}\\
+        &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}}
+        |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}\\
+        &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
+        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+
+    where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed
+    from orthonormal and nonorthonormal orbitals. The nonorthonormal orbitals are constructed by
+    linearly transforming the orbitals of :math:`\ket{\mathbf{m}}` with :math:`C`. The
+    :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of :math:`C` where rows are selected according
+    to :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
 
     Attributes
     ----------
-    nelec : int
-        Number of electrons
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    memory : float
-        Memory available for the wavefunction
-    nspin : int
-        Number of orthonormal spin orbitals (alpha and beta)
+    params : tuple of np.ndarray
+        Orbital transformation matrices.
+        If one transformation matrix is given, then the transformation coresponds to those of
+        restricted orbitals, where the spatial orbitals are transformed or to those of generalized
+        orbitals, where spin orbitals are transformed.
+        If two transformation matrices are given, then the transformation corresponds to those of
+        unrestricted orbitals, where the spatial orbitals are transformed.
+    wfn : BaseWavefunction
+        Wavefunction whose orbitals are rotated.
 
-    Properties
-    ----------
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    nspatial : int
-        Number of orthonormal spatial orbitals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    template_params : np.ndarray
-        Template of the wavefunction parameters
-        Depends on the attributes given
-
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_memory(self, memory=None)
-        Assigns the memory allocated for the wavefunction
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    get_overlap(self, sd, deriv=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orth_to_nonorth=None):
         r"""Initialize the wavefunction.
 
         Parameters
         ----------
-        nelec : int
-            Number of electrons
-        nspin : int
-            Number of spin orbitals
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type
-            Default is `np.float64`
-        memory : {float, int, str, None}
-            Memory available for the wavefunction
-            Default does not limit memory usage (i.e. infinite)
         wfn : BaseWavefunction
-            Wavefunction that will be built up using nonorthnormal orbitals
+            Wavefunction that will be built using nonorthnormal orbitals.
         orth_to_nonorth : np.ndarray
-            Transformation matrix from orthonormal orbitals to nonorthonormal orbitals
-            :math:`\ket{\tilde{\phi}_i} = \sum_{j} \ket{\phi_j} T_{ji}`
+            Transformation matrix from orthonormal orbitals to nonorthonormal orbitals.
+            .. math::
+
+                `\ket{\tilde{\phi}_i} = \sum_{j} \ket{\phi_j} T_{ji}`
+
             Default is an identity matrix.
+
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_wfn(wfn)
@@ -117,16 +74,18 @@ class NonorthWavefunction(BaseWavefunction):
 
     @property
     def spin(self):
-        """Spin of the wavefunction.
+        """
 
-        Since the orbitals may mix regardless of the spin, the spin of the wavefunction is hard to
-        determine.
+        If the orbitals are restricted or unrestricted, the spin should be same as the original.
+        Otherwise, the orbitals may mix regardless of the spin, the spin of the wavefunction is hard
+        to determine.
 
         Returns
         -------
-        spin
-            Spin of the (composite) wavefunction if the orbitals are restricted or unrestricted
-            None if the orbital is generalized
+        spin : float
+            Spin of the (composite) wavefunction if the orbitals are restricted or unrestricted.
+            None if the orbital is generalized.
+
         """
         if self.orbtype in ['restricted', 'unrestricted']:
             return self.wfn.spin
@@ -135,7 +94,20 @@ class NonorthWavefunction(BaseWavefunction):
 
     @property
     def seniority(self):
-        """Seniority of the wavefunction."""
+        """
+
+        If the orbitals are restricted or unrestricted, the seniority should be same as the
+        original. Otherwise, the orbitals may mix regardless of the seniority, the seniority of the
+        wavefunction is hard to determine.
+
+        Returns
+        -------
+        seniority : int
+            Seniority of the (composite) wavefunction if the orbitals are restricted or
+            unrestricted.
+            None if the orbital is generalized.
+
+        """
         if self.orbtype in ['restricted', 'unrestricted']:
             return self.wfn.seniority
         else:
@@ -143,28 +115,60 @@ class NonorthWavefunction(BaseWavefunction):
 
     @property
     def template_params(self):
-        """Return the shape of the wavefunction parameters.
+        """
 
-        The orbital transformations are the wavefunction parameters.
+        The orbital transformation matrix is the parameter of this (composite) wavefunction.
+
         """
         return (np.eye(self.nspatial, self.wfn.nspatial, dtype=self.dtype), )
 
     @property
     def nparams(self):
-        """Return the number of wavefunction parameters."""
+        """Return the number of wavefunction parameters.
+
+        Returns
+        -------
+        nparams : tuple of int
+            Number of elements in each transformation matrix.
+        """
         return tuple(i.size for i in self.params)
 
     @property
     def params_shape(self):
-        """Return the shape of the wavefunction parameters."""
+        """Return the shape of the wavefunction parameters.
+
+        Returns
+        -------
+        params_shape : tuple of 2-tuple of ints
+            Shape of each transformation matrix.
+
+        """
         return tuple(i.shape for i in self.params)
 
     @property
     def orbtype(self):
-        """Return the orbital type."""
+        """Return the orbital type.
+
+        Returns
+        -------
+        orbtype : str
+            'restricted' if only one transformation matrix is given and the number of rows
+            corresponds to the number of spatial orbitals.
+            'unrestricted' if two transformation matrices are given and the number of rows
+            corresponds to the number of spatial orbitals.
+            'restricted' if only one transformation matrix is given and the number of rows
+            corresponds to the number of spin orbitals.
+
+        Raises
+        ------
+        NotImplementedError
+            If unsupported transformation matrices are given.
+
+        """
         if len(self.params) == 1 and self.params[0].shape[0] == self.nspatial:
             return 'restricted'
-        elif len(self.params) == 2:
+        elif (len(self.params) == 2 and self.params[0].shape[0] == self.nspatial and
+              self.params[1].shape[0] == self.nspatial):
             return 'unrestricted'
         elif len(self.params) == 1 and self.params[0].shape[0] == self.nspin:
             return 'generalized'
@@ -172,24 +176,26 @@ class NonorthWavefunction(BaseWavefunction):
             raise NotImplementedError('Unsupported orbital type.')
 
     def assign_wfn(self, wfn=None):
-        """Assign the wavefunction.
+        """Assign the wavefunction whose orbitals will be transformed.
 
         Parameters
         ----------
         wfn : BaseWavefunction
-            Wavefunction that will be built up using nonorthnormal orbitals
+            Wavefunction that will be built up using nonorthnormal orbitals.
+            Default is a FCI wavefunction.
 
         Raises
         ------
         ValueError
-            If the given wavefunction is not an instance of BaseWavefunction
+            If the given wavefunction is not an instance of BaseWavefunction.
             If the given wavefunction does not have the same number of electrons as the instantiated
-            NonorthWavefunction
+            NonorthWavefunction.
             If the given wavefunction does not have the same data type as the instantiated
             NonorthWavefunction.
             If the given wavefunction does not have the same memory as the instantiated
             NonorthWavefunction.
         """
+        # FIXME: I don't think this is necessary
         if wfn is None:
             wfn = CIWavefunction(self.nelec, self.nspin, dtype=self.dtype, memory=self.memory)
         elif not isinstance(wfn, BaseWavefunction):
@@ -212,15 +218,23 @@ class NonorthWavefunction(BaseWavefunction):
 
         Parameters
         ----------
-        params : np.ndarray
-            Transformation matrix
+        params : {np.ndarray, tuple of np.ndarray}
+            Transformation matrices.
+            If one transformation matrix is given, then the transformation coresponds to those of
+            restricted orbitals, where the spatial orbitals are transformed or to those of
+            generalized orbitals, where spin orbitals are transformed.
+            If two transformation matrices are given, then the transformation corresponds to those
+            of unrestricted orbitals, where the spatial orbitals are transformed.
+            Default is the template parameters.
 
         Raises
         ------
         TypeError
-            If transformation matrix is not a numpy array or 1- or 2-tuple/list of numpy arrays
-            If transformation matrix is not a two dimension numpy array
-            If transformation matrix is not a two dimension numpy array
+            If transformation matrix is not a numpy array or 1- or 2-tuple/list of numpy arrays.
+            If transformation matrix is not a two dimension numpy array.
+            If transformation matrix is not a two dimension numpy array.
+        ValueError
+            If transformation matrix does not have the right shape.
         """
         if params is None:
             params = self.template_params
@@ -228,10 +242,6 @@ class NonorthWavefunction(BaseWavefunction):
         if isinstance(params, np.ndarray):
             params = (params, )
         elif not (isinstance(params, (tuple, list)) and len(params) in [1, 2]):
-            # FIXME: set orbtype? right now, the orbital type depends on the number of
-            #        transformation matrices and they must match up with the hamiltonian
-            # NOTE: maybe it's not a problem b/c orbital transformation is the only part that'll
-            #       touch the different types of orbitals
             raise TypeError('Transformation matrix must be a two dimensional numpy array or a '
                             '1- or 2-tuple/list of two dimensional numpy arrays. Only one numpy '
                             'arrays indicate that the orbitals are restricted or generalized and '
@@ -288,22 +298,6 @@ class NonorthWavefunction(BaseWavefunction):
         where :math:`U(\Phi_i, \mathbf{n})` is the transformation matrix with rows and columns that
         correspond to the Slater determinants :math:`\Phi_i` and :math:`\mathbf{n}`, respectively.
 
-        Parameters
-        ----------
-        sd : int, mpz
-            Slater Determinant against which to project.
-        deriv : int
-            Index of the parameter to derivatize
-            Default does not derivatize
-
-        Returns
-        -------
-        overlap : float
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally
         """
         if deriv is None:
             # if cached function has not been created yet
