@@ -5,19 +5,26 @@ import numpy as np
 from wfns.backend import slater
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.geminals.apig import APIG
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
+@docstring_class(indent_level=1)
 class AP1roG(APIG):
     r"""Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction
 
+    APIG wavefunction where a part of the geminal coefficient matrix, :math:`C`, is constrained to
+    be an identity matrix. This part corresponds uniquely to a reference Slater determinant. Then,
+    the wavefunction can be redescribed with respect to the reference Slater determinant, similar to
+    Coupled Cluster wavefunctions.
+
     .. math::
         \ket{\Psi_{\mathrm{AP1roG}}}
-        &= \prod_{q=1}^P T_q^\dagger \ket{\theta}\\
-        &= \prod_{q=1}^P \left( a_q^\dagger a_{\bar{q}}^\dagger +
+        &= \prod_{q=1}^P T_q^\dagger \ket{\Phi_{\mathrm{ref}}}\\
+        &= \prod_{q=1}^P \left( a_i^\dagger a_{\bar{i}}^\dagger +
            \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right)
-           \ket{\theta}\\
+           \ket{\Phi_{\mathrm{ref}}}\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
            | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \ket{\mathbf{m}}
 
@@ -26,103 +33,31 @@ class AP1roG(APIG):
 
     Attributes
     ----------
-    nelec : int
-        Number of electrons
-    nspin : int
-        Number of spin orbitals (alpha and beta)
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    params : np.ndarray
-        Parameters of the wavefunction
     dict_orbpair_ind : dict of 2-tuple of int to int
-        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
-        to the column index of the geminal coefficient matrix
-        These orbital pairs are not occupied in the reference Slater determinant
+        Dictionary of orbital pair that are not occupied in the reference Slater determinant to the
+        column index of the geminal coefficient matrix (after removal of the identity submatrix).
+    dict_reforbpair_ind : dict of int to 2-tuple of int
+        Dictionary of orbital pair that correspond to the reference Slater determinant to the column
+        index of the identity submatrix.
     dict_ind_orbpair : dict of int to 2-tuple of int
-        Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
-        where i and j are spin orbital indices and i < j
-        These orbital pairs are not occupied in the reference Slater determinant
-    dict_reforbpair_ind
-        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
-        to the row index of the geminal coefficient matrix
-        These orbital pairs are occupied in the reference Slater determinant
+        Dictionary of column index of the geminal coefficient matrix (after removal of the identity
+        submatrix) to the orbital pair that are no occupied in the reference Slater determinant.
 
-    Properties
-    ----------
-    npairs : int
-        Number of electorn pairs
-    nspatial : int
-        Number of spatial orbitals
-    ngem : int
-        Number of geminals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    template_params : np.ndarray
-        Template for the initial guess of geminal coefficient matrix
-        Depends on the attributes given
-
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
-             params=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    assign_ref_sds(self, ref_sds=None)
-        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
-        calculated
-        Default is the first Slater determinant of projection space
-    assign_orbpairs(self, orbpairs=None)
-        Assigns the orbital pairs that will be used to construct geminals
-    compute_permanent(self, orbpairs, deriv_row_col=None)
-        Compute the permanent that corresponds to the given orbital pairs
-    get_overlap(self, sd, deriv_ind=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
-    generate_possible_orbpairs(self, occ_indices)
-        Yields the possible orbital pairs that can construct the given Slater determinant.
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
                  params=None):
-        """Initialize the wavefunction.
+        """
 
         Parameters
         ----------
-        nelec : int
-            Number of electrons
-        nspin : int
-            Number of spin orbitals
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type
-            Default is `np.float64`
-        ngem : int, None
-            Number of geminals
-        orbpairs : iterable of 2-tuple of ints
-            Indices of the orbital pairs that will be used to construct each geminal
-        ref_sd : int, gmpy2.mpz, None
-            Reference Slater determinant
-            Default is the HF ground state
-        params : np.ndarray
-            Geminal coefficient matrix
+        ref_sd : {int, gmpy2.mpz, None}
+            Reference Slater determinant.
+            Default is the HF ground state.
 
-        Note
-        ----
+        Notes
+        -----
         Need to skip over APIG.__init__ because `assign_ref_sd` must come before `assign_params`.
+
         """
         BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype)
         self.assign_ngem(ngem=ngem)
@@ -132,17 +67,11 @@ class AP1roG(APIG):
 
     @property
     def template_params(self):
-        """Return the template of the parameters in a AP1roG wavefunction.
+        """
 
-        Uses the spatial orbitals (alpha beta pair) of HF ground state as reference.
+        Since part of the coefficient matrix is constrained, these parts will be removed from the
+        coefficient matrix.
 
-        Returns
-        -------
-        np.ndarray
-
-        Note
-        ----
-        Need `nelec`, `norbpair` (i.e. `dict_ind_orbpair`), and `dtype`
         """
         params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
         return params
@@ -152,25 +81,24 @@ class AP1roG(APIG):
 
         Parameters
         ----------
-        sd : int, gmpy2.mpz, None
-            Slater determinant the the AP1roG will use as a reference
-            Default is the HF ground state
+        sd : {int, None}
+            Slater determinant to use as a reference.
+            Default is the HF ground state.
 
         Raises
         ------
         TypeError
-            If given sd cannot be turned into a Slater determinant (i.e. not integer or list of
-            integers)
+            If given `sd` cannot be turned into a Slater determinant (i.e. not integer or list of
+            integers).
         ValueError
-            If given sd does not have the correct spin
-            If given sd does not have the correct seniority
+            If given `sd` does not have the correct spin.
+            If given `sd` does not have the correct seniority.
 
-        Note
-        ----
-        Depends on `nelec`, `nspin`, `spin`, `seniority`
-        Multiple Slater determinant references is not allowed. Passing an list of ints will be
-        treated like the indices of the occupied orbitals rather than the corresponding Slater
-        determinants.
+        Notes
+        -----
+        This method depends on `nelec`, `nspin`, `spin`, and `seniority`.
+
+        Multiple Slater determinant references are not allowed.
         """
         if sd is None:
             sd = slater.ground(self.nelec, self.nspin)
@@ -185,25 +113,13 @@ class AP1roG(APIG):
         self.ref_sd = sd
 
     def assign_ngem(self, ngem=None):
-        """Set the number of geminals.
-
-        Parameters
-        ----------
-        ngem : int, None
-            Number of geminals
+        """
 
         Raises
         ------
-        TypeError
-            If number of geminals is not an integer
-        ValueError
-            If number of geminals is less than the number of electron pairs
         NotImplementedError
-            If number of geminals is not equal to the number of electron pairs
+            If number of geminals is not equal to the number of electron pairs.
 
-        Note
-        ----
-        Needs to have `npair` defined (i.e. `nelec` must be defined)
         """
         super().assign_ngem(ngem)
         if self.ngem != self.npair:
@@ -211,81 +127,38 @@ class AP1roG(APIG):
                                       ' right number of geminals (i.e. number of electron pairs).')
 
     def assign_orbpairs(self, orbpairs=None):
-        """Set the orbital pairs that will be used to construct the AP1roG.
+        """
 
-        Parameters
-        ----------
-        orbpairs : iterable of 2-tuple of ints
-            Indices of the orbital pairs that will be used to construct each geminal
-            Default is all possible orbital pairs
+        Since a part of the coefficient matrix is constrained, the column indices that correspond to
+        these parts will be ignored. Instead, the column indices of the coefficient matrix after the
+        removal of the constrained parts will be used.
 
-        Raises
-        ------
-        TypeError
-            If `orbpairs` is not an iterable
-            If an orbital pair is not given as a list or a tuple
-            If an orbital pair does not contain exactly two elements
-            If an orbital index is not an integer
-        ValueError
-            If an orbital pair has the same integer
-            If an orbital pair occurs more than once
+        Notes
+        -----
+        Must have `ref_sd` and `nspin` defined for the default option.
 
-        Note
-        ----
-        Must have `ref_sd` and `nspin` defined for the default option
-        Remove columns that corresponds to the reference Slater determinant
         """
         super().assign_orbpairs(orbpairs=orbpairs)
-        # Need to split up the orbital pairs by those occuped by the reference Slater determinant
-        # and those that are not
-        occ_counter = 0
-        vir_counter = 0
-        # delete existing dict_orbpair_ind (there still is dict_ind_orbpair)
-        del self.dict_orbpair_ind
+        # removing orbital indices that correspond to the reference Slater determinant
         dict_orbpair_ind = {}
         dict_reforbpair_ind = {}
-        for i in range(self.norbpair):
-            orbpair = self.dict_ind_orbpair[i]
+        for orbpair in self.dict_ind_orbpair.values():
             # if orbital pair is occupied in the reference Slater determinant
             if slater.occ(self.ref_sd, orbpair[0]) and slater.occ(self.ref_sd, orbpair[1]):
-                dict_reforbpair_ind[orbpair] = occ_counter
-                occ_counter += 1
+                dict_reforbpair_ind[orbpair] = len(dict_reforbpair_ind)
             # otherwise
             else:
-                dict_orbpair_ind[orbpair] = vir_counter
-                vir_counter += 1
+                dict_orbpair_ind[orbpair] = len(dict_orbpair_ind)
+
         self.dict_orbpair_ind = dict_orbpair_ind
         self.dict_reforbpair_ind = dict_reforbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
     def get_overlap(self, sd, deriv=None):
-        r"""Compute the overlap between the AP1roG wavefunction and a Slater determinant.
-
-        The results are cached in self._cache_fns
-
-        .. math::
-            \big| \Psi \big>
-            &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
-            \big| \mathbf{m} \big>
-
-        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
-        deriv : None, int
-            Index of the paramater with respect to which the overlap is derivatized
-            Default is no derivatization
-
-        Returns
-        -------
-        overlap : float
-        """
         if not slater.is_internal_sd(sd):
             sd = slater.internal_sd(sd)
-        # ASSUMES: Slater determinants are seniority zero
+
+        # ASSUMES pairing scheme (alpha-beta spin orbital of same spatial orbital)
         # cut off beta part (for just the alpha/spatial part)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
         spatial_sd, _ = slater.split_spin(sd, self.nspatial)

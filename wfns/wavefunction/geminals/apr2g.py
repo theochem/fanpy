@@ -5,78 +5,27 @@ import numpy as np
 from wfns.wavefunction.geminals.apig import APIG
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 from wfns.backend import slater, math_tools
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
+@docstring_class(indent_level=1)
 class APr2G(APIG):
     r"""Antisymmeterized Product of Rank-2 Geminals (APr2G) Wavefunction.
 
-    Attributes
-    ----------
-    nelec : int
-        Number of electrons
-    nspin : int
-        Number of spin orbitals (alpha and beta)
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    params : np.ndarray
-        Parameters of the wavefunction
-    dict_orbpair_ind : dict of 2-tuple of int to int
-        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
-        to the column index of the geminal coefficient matrix
-    dict_ind_orbpair : dict of int to 2-tuple of int
-        Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
-        where i and j are spin orbital indices and i < j
+    APIG wavefunction where the geminal coefficient is parameterized as a rank-2 Cauchy matrix.
 
-    Properties
-    ----------
-    npairs : int
-        Number of electorn pairs
-    nspatial : int
-        Number of spatial orbitals
-    ngem : int
-        Number of geminals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    template_params : np.ndarray
-        Template for the initial guess of geminal coefficient matrix
-        Depends on the attributes given
+    .. math::
 
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    assign_ref_sds(self, ref_sds=None)
-        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
-        calculated
-        Default is the first Slater determinant of projection space
-    assign_orbpairs(self, orbpairs=None)
-        Assigns the orbital pairs that will be used to construct geminals
-    compute_permanent(self, orbpairs, deriv_row_col=None)
-        Compute the permanent that corresponds to the given orbital pairs
-    get_overlap(self, sd, deriv_ind=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
-    generate_possible_orbpairs(self, occ_indices)
-        Yields the possible orbital pairs that can construct the given Slater determinant.
+        C_{pi} = \frac{\zeta_i}{\epsilon_i - \lambda_p}
+
+    Then, the evaluation of the permanent is equilalent to product of determinants.
+
+    .. math::
+
+        |C|^+ = \frac{|C \circ C|^-}{|C|^-}
+
     """
     # FIXME: add constraints to parameters
     #        zetas should be less than 1
@@ -84,13 +33,15 @@ class APr2G(APIG):
     #        lambda should be around 1 (epsilons should be less than 0)
     @property
     def template_params(self):
-        """Return the template of the parameters in a APr2G wavefunction.
+        """
 
-        Ordered as [lambda_1, ... , lambda_p, epsilon_1, ... , epsilon_k, zeta_1, ... , zeta_k]
+        Parameters are ordered as follows: lambda_1, ..., lambda_p, epsilon_1, ..., epsilon_k,
+        zeta_1, ..., zeta_k.
 
-        Note
-        ----
+        Notes
+        -----
         Requires calculation. May be slow.
+
         """
         apig_template = super().template_params
         apig_template += 0.0001*np.random.rand(*apig_template.shape)
@@ -98,17 +49,38 @@ class APr2G(APIG):
 
     @property
     def lambdas(self):
-        r"""Return the :math:`lambda` part of the APr2G parameters."""
+        r"""Return the :math:`lambda` part of the APr2G parameters.
+
+        Returns
+        -------
+        lambdas : np.ndarray(ngem)
+            The :math:`lambda` part of the APr2G parameters.
+
+        """
         return self.params[:self.ngem]
 
     @property
     def epsilons(self):
-        r"""Return the :math:`epsilons` part of the APr2G parameters."""
+        r"""Return the :math:`epsilons` part of the APr2G parameters.
+
+        Returns
+        -------
+        epsilons : np.ndarray(nspatial)
+            The :math:`epsilon` part of the APr2G parameters.
+
+        """
         return self.params[self.ngem:self.ngem+self.norbpair]
 
     @property
     def zetas(self):
-        r"""Return the :math:`zetas` part of the APr2G parameters."""
+        r"""Return the :math:`zetas` part of the APr2G parameters.
+
+        Returns
+        -------
+        zetas : np.ndarray(nspatial)
+            The :math:`zeta` part of the APr2G parameters.
+
+        """
         return self.params[self.ngem+self.norbpair:]
 
     @property
@@ -117,34 +89,28 @@ class APr2G(APIG):
 
         Returns
         -------
-        apig_params : np.ndarray(P, K)
+        apig_params : np.ndarray(ngem, nspatial)
+            Geminal coefficient matrix.
+
         """
         return self.zetas / (self.lambdas[:, np.newaxis] - self.epsilons)
 
     def assign_params(self, params=None):
-        """ Assigns the parameters of the wavefunction
-
-        Parameters
-        ----------
-        params : np.ndarray, None
-            Parameters of the wavefunction
-        add_noise : bool
-            Flag to add noise to the given parameters
+        """
 
         Raises
         ------
         TypeError
-            If `params` is not a numpy array
+            If `params` is not a numpy array.
             If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`
-            If `params` has complex data type and wavefunction has float data type
+            `np.complex128`.
+            If `params` has complex data type and wavefunction has float data type.
         ValueError
-            If `params` does not have the same shape as the template_params
-            If APr2G parameters result in geminal coefficient matrix with a zero denominator
+            If `params` does not have the same shape as the template_params.
+            If APr2G parameters create a zero in the denominator.
+        NotImplementedError
+            If BaseGeminal instance is given as the parameter.
 
-        Note
-        ----
-        Depends on dtype, template_params, and nparams
         """
         if isinstance(params, BaseGeminal):
             raise NotImplementedError('APr2G wavefunction cannot assign parameters using a '
@@ -155,32 +121,35 @@ class APr2G(APIG):
             raise ValueError('Corresponding geminal coefficient matrix has a division by zero')
 
     def compute_permanent(self, col_inds, deriv=None):
-        """Compute the permanent that corresponds to the given orbital pairs
+        """
 
         Parameters
         ----------
         col_inds : np.ndarray
             Indices of the columns of geminal coefficient matrices that will be used.
-        deriv : int, None
+        deriv : {int, None}
             Indices of the element (in APr2G parameters) with respect to which the permanent is
-            derivatized
-            Default is no derivatization
+            derivatized.
+            Default is no derivatization.
 
         Returns
         -------
-        permanent :float
+        permanent : float
+            Permanent of the matrix that corresponds to the given column indices.
 
         Raises
         ------
         ValueError
-            If index with respect to which the permanent is derivatized is invalid
+            If index with respect to which the permanent is derivatized is invalid.
+
         """
         row_inds = np.arange(self.ngem)
         col_inds = np.array(col_inds)
 
         if deriv is None:
             return math_tools.permanent_borchardt(self.lambdas[row_inds],
-                                                  self.epsilons[col_inds], self.zetas[col_inds])
+                                                  self.epsilons[col_inds],
+                                                  self.zetas[col_inds])
         # if differentiating along row (lambda)
         # FIXME: not the best way of evaluating
         elif 0 <= deriv < self.npair:
@@ -235,34 +204,6 @@ class APr2G(APIG):
 
     # FIXME: mostly replicates BaseGeminal.get_overlap
     def get_overlap(self, sd, deriv=None):
-        r"""Compute the overlap between the geminal wavefunction and a Slater determinant.
-
-        The results are cached in self._cache_fns
-
-        .. math::
-            \big| \Psi \big>
-            &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
-            \big| \mathbf{m} \big>
-
-        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
-
-        Parameters
-        ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
-        deriv : None, int
-            Index of the paramater with respect to which the overlap is derivatized
-            Default is no derivatization
-
-        Returns
-        -------
-        overlap : float
-
-        Note
-        ----
-        Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
-        """
         if not slater.is_internal_sd(sd):
             sd = slater.internal_sd(sd)
 
@@ -314,14 +255,14 @@ class APr2G(APIG):
 
         Using least squares, the APIG geminal coefficients are converted to the APr2G variant, i.e.
         find the coefficients :math:`\{\lambda_j\}`, :math:`\{\epsilon_i\}`, and :math:`\{\zeta_i\}`
-        such that following equation is best satisfied
+        such that following equation is best satisfied:
 
         .. math::
             C_{ij} &= \frac{\zeta_i}{\epsilon_i + \lambda_j}\\
             0 &= \zeta_i - C_{ij} \epsilon_i - C_{ij} \lambda_j\\
 
-        The least square has the form of :math:`Ax=b`. Given that the :math:`b=0`
-        and the unknowns are
+        The least square has the form of :math:`Ax=b`. Given that the :math:`b=0` and the unknowns
+        are
 
         .. math::
             x = \begin{bmatrix}
@@ -330,7 +271,7 @@ class APr2G(APIG):
             \epsilon_1 \\ \vdots\\ \epsilon_P\\
             \end{bmatrix},
 
-        then A must be
+        Then, A must be
 
         .. math::
             A =
@@ -355,32 +296,36 @@ class APr2G(APIG):
         Parameters
         ----------
         apig_params : np.ndarray(P,K)
-            APIG geminal coefficient matrix
-            Number of rows is the number of geminals
-            Number of columns is the number of orbital pairs
+            Geminal coefficient matrix.
+            Number of rows is the number of geminals.
+            Number of columns is the number of orbital pairs.
         rmsd : float
             Root mean square deviation allowed for the generated APr2G coefficient matrix (compared
-            to the APIG coefficient matrix)
-            Default is 0.1
+            to the APIG coefficient matrix).
+            Default is `0.1`.
         method : {'least squares', 'svd'}
-            Method by which the APr2G parameters are obtained
-            Default is 'least squares'
+            Method by which the APr2G parameters are obtained.
+            Default is 'least squares'.
 
         Returns
         -------
         apr2g_params : APr2G instance
-            APr2G parameters that best corresponds to the given APIG parameters
+            APr2G parameters that "best" corresponds to the given APIG parameters.
 
         Raises
         ------
         ValueError
             If generate APr2G coefficient matrix has a root mean square deviation with the APIG
-            coefficient matrix that is greater than the threshold value
+            coefficient matrix that is greater than the threshold value.
 
-        Example
-        -------
-        Assuming we have a system with 2 electron pairs and 4 spatial orbitals,
-        we have
+        Notes
+        -----
+        This does not always work. You will likely need to tinker with some of the parameters inside
+        this function.
+
+        Examples
+        --------
+        Assuming we have a system with 2 electron pairs and 4 spatial orbitals, we have
 
         .. math::
             C = \begin{bmatrix}
@@ -407,10 +352,6 @@ class APr2G(APIG):
             \zeta_1 \\ \zeta_2\\
             \end{bmatrix}
 
-        Note
-        ----
-        This does not always work. You will likely need to tinker with some of the parameters inside
-        this function.
         """
         ngem, norbpair = apig_params.shape
         # assign least squares matrix by reference

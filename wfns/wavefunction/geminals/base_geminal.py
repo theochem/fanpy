@@ -1,4 +1,4 @@
-"""Base class for Geminal wavefunction."""
+"""Base class for Geminal wavefunctions."""
 from __future__ import absolute_import, division, print_function
 import abc
 import numpy as np
@@ -6,132 +6,68 @@ import functools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from pydocstring.wrapper import docstring_class
 
 __all__ = []
 
 
+@docstring_class(indent_level=1)
 class BaseGeminal(BaseWavefunction):
-    r"""Base Geminal Wavefunctions.
+    r"""Base Geminal Wavefunction.
 
     A Geminal is a two-electron wavefunction.
 
     .. math::
-        G^\dagger_p = \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q
+
+        G^\dagger_p = \sum_{ij} C_{pij} a^\dagger_i a^\dagger_j
 
     All Geminal wavefunctions can be expresed as an antisymmeterized product of geminals:
 
     .. math::
-        \ket{\Psi} = \prod_{p=1}^P G^\dagger_p \ket{\theta}
 
-    These wavefunctions can be re-expressed in terms of orbital pairs (i.e.
-    :math:`a^\dagger_p a^\dagger_q`), where the overlap of the wavefunction with a Slater
-    determinant is the sum over all possible combinations of orbital pairs that construct the
-    Slater determinant (each set of orbital pairs must be disjoint to follow Slater-Condon rule).
-    These combinations are equivalent to the perfect matchings (disjoint and exhaustive pairing) of
-    the orbitals of a Slater determinant.
-    Different flavors of geminals can allow a different set of perfect matchings for a given Slater
-    determinant.
-    The method `generate_possible_orbpairs` yields a perfect matching for a given Slater
-    determinant.
-    The symmetery of electron pair interchange is captured through the evaluation of a permanent.
-    Different approximations of the permanent can be implemented using the method
-    `compute_permanent`.
+        \ket{\Psi} &= \prod_{p=1}^P G^\dagger_p \ket{\theta}\\
+
+    These wavefunctions can be re-expressed in terms of orbital pairs (i.e. :math:`a^\dagger_p
+    a^\dagger_q`), where the overlap of the wavefunction with a Slater determinant is the sum over
+    all possible combinations of orbital pairs that construct the Slater determinant (each set of
+    orbital pairs must be disjoint to follow Slater-Condon rule). These combinations are equivalent
+    to the perfect matchings (disjoint and exhaustive pairing) of the orbitals of a Slater
+    determinant. Different flavors of geminals can allow a different set of perfect matchings for a
+    given Slater determinant. The method `generate_possible_orbpairs` yields a perfect matching for
+    a given Slater determinant. The symmetery of electron pair interchange is captured through the
+    evaluation of a permanent. Different approximations of the permanent can be implemented using
+    the method `compute_permanent`.
 
     Alternatively, the sum over the different perfect matchings and the permanent evaluation can be
-    merged to construct a different combinatorial sum (such as Pffafian).
-    To implement these wavefunctions, the method `get_overlap` should be changed to use this sum and
-    to ignore `generate_possible_orbpairs` and `compute_permanent`.
-    These methods are only called in `get_overlap` so there should be no issue.
-    If you'd like, you can always raise NotImplementedError.
+    merged to construct a different combinatorial sum (such as Pffafian). To implement these
+    wavefunctions, the method `get_overlap` should be changed to use this sum and to ignore
+    `generate_possible_orbpairs` and `compute_permanent`. These methods are only called in
+    `get_overlap` so there should be no issue. If you'd like, you can always raise
+    NotImplementedError.
 
     Attributes
     ----------
-    nelec : int
-        Number of electrons
-    nspin : int
-        Number of spin orbitals (alpha and beta)
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction
-    params : np.ndarray
-        Parameters of the wavefunction
     dict_orbpair_ind : dict of 2-tuple of int to int
-        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j
-        to the column index of the geminal coefficient matrix
+        Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j to the
+        column index of the geminal coefficient matrix.
     dict_ind_orbpair : dict of int to 2-tuple of int
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
-        where i and j are spin orbital indices and i < j
+        where i and j are spin orbital indices and i < j.
 
-    Properties
-    ----------
-    npairs : int
-        Number of electorn pairs
-    nspatial : int
-        Number of spatial orbitals
-    ngem : int
-        Number of geminals
-    spin : float, None
-        Spin of the wavefunction
-        :math:`\frac{1}{2}(N_\alpha - N_\beta)` (Note that spin can be negative)
-        None means that all spins are allowed
-    seniority : int, None
-        Seniority (number of unpaired electrons) of the wavefunction
-        None means that all seniority is allowed
-    nparams : int
-        Number of parameters
-    params_shape : 2-tuple of int
-        Shape of the parameters
-    template_params : np.ndarray
-        Template for the initial guess of geminal coefficient matrix
-        Depends on the attributes given
-
-    Methods
-    -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
-        Initializes wavefunction
-    assign_nelec(self, nelec)
-        Assigns the number of electrons
-    assign_nspin(self, nspin)
-        Assigns the number of spin orbitals
-    assign_dtype(self, dtype)
-        Assigns the data type of parameters used to define the wavefunction
-    assign_params(self, params)
-        Assigns the parameters of the wavefunction
-    assign_ref_sds(self, ref_sds=None)
-        Assigns the reference Slater determinants from which the initial guess, energy, and norm are
-        calculated
-        Default is the first Slater determinant of projection space
-    assign_orbpairs(self, orbpairs=None)
-        Assigns the orbital pairs that will be used to construct geminals
-    compute_permanent(self, orbpairs, deriv_row_col=None)
-        Compute the permanent that corresponds to the given orbital pairs
-    get_overlap(self, sd, deriv_ind=None)
-        Gets the overlap from cache and compute if not in cache
-        Default is no derivatization
-
-    Abstract Method
-    ---------------
-    generate_possible_orbpairs(self, occ_indices)
-        Yields the possible orbital pairs that can construct the given Slater determinant.
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None,
                  params=None):
-        """Initialize the wavefunction.
+        """
 
         Parameters
         ----------
-        nelec : int
-            Number of electrons
-        nspin : int
-            Number of spin orbitals
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type
-            Default is `np.float64`
-        ngem : int, None
-            Number of geminals
+        ngem : {int, None}
+            Number of geminals.
         orbpairs : iterable of 2-tuple of ints
-            Indices of the orbital pairs that will be used to construct each geminal
+            Indices of the orbital pairs that will be used to construct each geminal.
         params : np.ndarray
-            Geminal coefficient matrix
+            Geminal coefficient matrix.
+
         """
         super().__init__(nelec, nspin, dtype=dtype)
         self.assign_ngem(ngem=ngem)
@@ -140,36 +76,69 @@ class BaseGeminal(BaseWavefunction):
 
     @property
     def spin(self):
-        """Spin of geminal wavefunction."""
+        """Spin of geminal wavefunction.
+
+        In general, a geminal wavefunction does not have a particular spin.
+
+        Returns
+        -------
+        spin : None
+            Spin of the geminal geminal wavefunction.
+
+        """
         return None
 
     @property
     def seniority(self):
-        """Seniority of geminal wavefunction."""
+        """Seniority of geminal wavefunction.
+
+        In general, a geminal wavefunction does not have a particular seniority.
+
+        Returns
+        -------
+        seniority : None
+            Seniority of the geminal geminal wavefunction.
+
+        """
         return None
 
     @property
     def npair(self):
-        """Return number of electron pairs"""
+        """Return number of electron pairs.
+
+        Returns
+        -------
+        npair : int
+            Number of electron pairs.
+
+        """
         return self.nelec//2
 
     @property
     def norbpair(self):
-        """Return number of orbital pairs used to construct the geminals"""
+        """Return the number of orbital pairs used to construct the geminals.
+
+        Returns
+        -------
+        norbpair : int
+            Number of orbital pairs used to construct the geminals.
+
+        """
         return len(self.dict_ind_orbpair)
 
     @property
     def template_params(self):
-        """Return the template of the parameters in a Geminal wavefunction.
+        """
 
-        Uses the spatial orbitals (alpha beta pair) of HF ground state as reference.
+        Uses the spatial orbitals (alpha-beta spin orbital pairs) of HF ground state as reference.
 
         Returns
         -------
-        np.ndarray
+        template_params : np.ndarray(ngem, norbpair)
+            Default parameters of the geminal wavefunction.
 
-        Note
-        ----
+        Notes
+        -----
         Need `nelec`, `norbpair` (i.e. `dict_ind_orbpair`), and `dtype`
         """
         params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
@@ -184,21 +153,14 @@ class BaseGeminal(BaseWavefunction):
         return params
 
     def assign_nelec(self, nelec):
-        """Set the number of electrons.
-
-        Parameters
-        ----------
-        nelec : int
-            Number of electrons
+        """
 
         Raises
         ------
-        TypeError
-            If number of electrons is not an integer or long
         ValueError
-            If number of electrons is not a positive number
-        NotImplementedError
-            If number of electrons is odd
+            If number of electrons is not a positive number.
+            If number of electrons is odd.
+
         """
         super().assign_nelec(nelec)
         if self.nelec % 2 != 0:
@@ -209,19 +171,21 @@ class BaseGeminal(BaseWavefunction):
 
         Parameters
         ----------
-        ngem : int, None
-            Number of geminals
+        ngem : {int, None}
+            Number of geminals.
+            Default is the number of electron pairs.
 
         Raises
         ------
         TypeError
-            If number of geminals is not an integer
+            If number of geminals is not an integer.
         ValueError
-            If number of geminals is less than the number of electron pairs
+            If number of geminals is less than the number of electron pairs.
 
-        Note
-        ----
-        Needs to have `npair` defined (i.e. `nelec` must be defined)
+        Notes
+        -----
+        Needs to have `npair` defined (i.e. `nelec` must be defined).
+
         """
         if ngem is None:
             ngem = self.npair
@@ -236,24 +200,25 @@ class BaseGeminal(BaseWavefunction):
 
         Parameters
         ----------
-        orbpairs : iterable of 2-tuple of ints
-            Indices of the orbital pairs that will be used to construct each geminal
-            Default is all possible orbital pairs
+        orbpairs : iterable of 2-tuple/list of ints
+            Indices of the orbital pairs that will be used to construct each geminal.
+            Default is all possible orbital pairs.
 
         Raises
         ------
         TypeError
-            If `orbpairs` is not an iterable
-            If an orbital pair is not given as a list or a tuple
-            If an orbital pair does not contain exactly two elements
-            If an orbital index is not an integer
+            If `orbpairs` is not an iterable.
+            If an orbital pair is not given as a list or a tuple.
+            If an orbital pair does not contain exactly two elements.
+            If an orbital index is not an integer.
         ValueError
-            If an orbital pair has the same integer
-            If an orbital pair occurs more than once
+            If an orbital pair has the same integer.
+            If an orbital pair occurs more than once.
 
-        Note
-        ----
-        Must have `nspin` defined for the default option
+        Notes
+        -----
+        Must have `nspin` defined for the default option.
+
         """
         # FIXME: terrible memory usage
         if orbpairs is None:
@@ -274,6 +239,7 @@ class BaseGeminal(BaseWavefunction):
                 raise ValueError('Orbital pair of the same orbital is invalid')
 
             orbpair = tuple(orbpair)
+            # sort orbitals within the pair
             if orbpair[0] > orbpair[1]:
                 orbpair = orbpair[::-1]
             if orbpair in dict_orbpair_ind:
@@ -290,30 +256,24 @@ class BaseGeminal(BaseWavefunction):
 
         Parameters
         ----------
-        params : np.ndarray, BaseGeminal, None
-            Parameters of the wavefunction
-            If BaseGeminal instance is given, then the parameter of this instance are used.
-        add_noise : bool
-            Flag to add noise to the given parameters
+        params : {np.ndarray, BaseGeminal, None}
+            Parameters of the geminal wavefunction.
+            If BaseGeminal instance is given, then the parameters of this instance are used.
+            Default uses the template parameters.
 
         Raises
         ------
-        TypeError
-            If `params` is not a numpy array
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`
-            If `params` has complex data type and wavefunction has float data type
         ValueError
-            If `params` does not have the same shape as the template_params
-            If given BaseGeminal instance does not have the same number of electrons as self
-            If given BaseGeminal instance does not have the same number of spin orbitals as self
-            If given BaseGeminal instance does not have the same number of geminals as self
+            If `params` does not have the same shape as the template_params.
+            If given BaseGeminal instance does not have the same number of electrons.
+            If given BaseGeminal instance does not have the same number of spin orbitals.
+            If given BaseGeminal instance does not have the same number of geminals.
 
-        Note
-        ----
-        Depends on dtype, template_params, and nparams
+        Notes
+        -----
+        Depends on dtype, template_params, and nparams.
+
         """
-        # FIXME: self.__class__ doesn't work if the method is inherited
         if isinstance(params, BaseGeminal):
             other = params
             if self.nelec != other.nelec:
@@ -336,21 +296,25 @@ class BaseGeminal(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
 
     def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
-        """Compute the permanent that corresponds to the given orbital pairs
+        """Compute the permanent of the matrix that corresponds to the given orbital pairs.
 
         Parameters
         ----------
         col_inds : np.ndarray
             Indices of the columns of geminal coefficient matrices that will be used.
-        row_inds : np.ndarray
+        row_inds : {np.ndarray, None}
             Indices of the rows of geminal coefficient matrices that will be used.
-        deriv : 2-tuple of int, None
-            Row and column indices of the element with respect to which the permanent is derivatized
-            Default is no derivatization
+            Default is all rows.
+        deriv : {2-tuple/list of int, None}
+            Row and column indices of the element with respect to which the permanent is
+            derivatized.
+            Default is no derivatization.
 
         Returns
         -------
-        permanent :float
+        permanent : float
+            Permanent of the selected submatrix.
+
         """
         if row_inds is None:
             row_inds = np.arange(self.ngem)
@@ -358,6 +322,7 @@ class BaseGeminal(BaseWavefunction):
             row_inds = np.array(row_inds)
         col_inds = np.array(col_inds)
         # select function that evaluates the permanent
+        # Ryser algorithm is faster if the number of rows and columns are greater than 3
         if col_inds.size <= 3 >= row_inds.size:
             permanent = math_tools.permanent_ryser
         else:
@@ -378,38 +343,40 @@ class BaseGeminal(BaseWavefunction):
                 return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
     def get_overlap(self, sd, deriv=None):
-        r"""Compute the overlap between the geminal wavefunction and a Slater determinant.
-
-        The results are cached in self._cache_fns.
+        r"""
 
         .. math::
-            \big| \Psi \big>
-            &= \prod_{p=1}^{N_{gem}} \sum_{pq} C_{pq} a^\dagger_p a^\dagger_q \big| \theta \big>\\
+            \ket{\Psi}
+            &= \prod_{p=1}^{N_{gem}} \sum_{ij} C_{pij} a^\dagger_i a^\dagger_j \ket{\theta}\\
             &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
-            \big| \mathbf{m} \big>
+            \ket{\mathbf{m}}
 
         where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
 
         Parameters
         ----------
-        sd : int, gmpy2.mpz
-            Integer (gmpy2.mpz) that describes the occupation of a Slater determinant as a bitstring
-        deriv : None, int
-            Index of the paramater with respect to which the overlap is derivatized
+        sd : int
+            Integer that describes the occupation of a Slater determinant as a bitstring.
+            See `wfns.backend.slater` for details.
+        deriv : {int, None}
+            Index (within the flattened array of parameters) with respect to which the overlap is
+            derivatized.
             Default is no derivatization
 
         Returns
         -------
         overlap : float
+            Overlap of the geminal wavefunction and the Slater determinant.
 
         Raises
         ------
         TypeError
             If Slater determinant is not gmpy2.mpz object.
 
-        Note
-        ----
+        Notes
+        -----
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
+
         """
         if not slater.is_internal_sd(sd):
             sd = slater.internal_sd(sd)
@@ -509,7 +476,7 @@ class BaseGeminal(BaseWavefunction):
         Parameters
         ----------
         occ_indices : N-tuple of int
-            Indices of the orbitals from which the Slater determinant is constructed
+            Indices of the orbitals from which the Slater determinant is constructed.
             Must be strictly increasing.
 
         Yields
@@ -518,7 +485,8 @@ class BaseGeminal(BaseWavefunction):
             Indices of the creation operators (grouped by orbital pairs) that construct the Slater
             determinant.
         sign : int
-            Signature of the transpositions required to shuffle the `orbitalpairs` back into the
+            Signature of the transpositions required to shuffle the `orbpairs` back into the
             original order in `occ_indices`.
+
         """
         pass
