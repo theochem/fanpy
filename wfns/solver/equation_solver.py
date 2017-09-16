@@ -6,7 +6,7 @@ from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 import wfns.backend.slater as slater
 import wfns.backend.sd_list as sd_list
-from pydocstring.wrapper import docstring
+from wfns.wrapper.docstring import docstring
 
 
 # FIXME: copies most of system_solver for initialization and docstring

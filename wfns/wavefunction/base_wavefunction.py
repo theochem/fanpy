@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import abc
 import six
 import numpy as np
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
 

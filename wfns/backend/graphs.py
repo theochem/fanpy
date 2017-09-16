@@ -10,7 +10,7 @@ generate_biclique_pmatch(indices_one, indices_two)
 
 """
 from wfns.backend.slater import find_num_trans
-from pydocstring.wrapper import docstring
+from wfns.wrapper.docstring import docstring
 
 
 @docstring(indent_level=1)

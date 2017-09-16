@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 from wfns.backend import slater
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.docstring import docstring_class
 
 
 @docstring_class(indent_level=1)

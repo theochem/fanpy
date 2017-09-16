@@ -8,7 +8,7 @@ import numpy as np
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
 

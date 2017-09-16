@@ -6,7 +6,7 @@ import functools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
 
@@ -352,21 +352,6 @@ class BaseGeminal(BaseWavefunction):
             \ket{\mathbf{m}}
 
         where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
-
-        Parameters
-        ----------
-        sd : int
-            Integer that describes the occupation of a Slater determinant as a bitstring.
-            See `wfns.backend.slater` for details.
-        deriv : {int, None}
-            Index (within the flattened array of parameters) with respect to which the overlap is
-            derivatized.
-            Default is no derivatization
-
-        Returns
-        -------
-        overlap : float
-            Overlap of the geminal wavefunction and the Slater determinant.
 
         Raises
         ------

@@ -5,7 +5,7 @@ from wfns.wavefunction.ci.doci import DOCI
 from wfns.wavefunction.geminals.ap1rog import AP1roG
 from wfns.backend.sd_list import sd_list
 from wfns.backend import slater
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
 

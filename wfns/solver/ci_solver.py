@@ -4,7 +4,7 @@ import numpy as np
 import scipy.linalg
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
-from pydocstring.wrapper import docstring
+from wfns.wrapper.docstring import docstring
 
 __all__ = []
 
