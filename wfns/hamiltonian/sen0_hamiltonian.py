@@ -1,35 +1,31 @@
 # FIXME: this needs to be checked
-r"""Seniority-zero Hamiltonian object that interacts with the wavefunction.
-
-.. math::
-
-    \hat{H} = \sum_{i} \big( h_{ii} a^\dagger_i a_i
-                             + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}} \big)
-    + \sum_{ij} \big( g_{ijij} a^\dagger_i a^\dagger_j a_i a_j
-                      + g_{i\bar{\j}i\bar{\j}} a^\dagger_i a^\dagger_{\bar{\j}} a_i a_{\bar{\j}}
-                      + g_{\bar{\i}j\bar{\i}j} a^\dagger_{\bar{\i}} a^\dagger_j a_{\bar{\i}} a_j
-                      + g_{\bar{\i}\bar{\i}\bar{\i}\bar{\j}}
-                      a^\dagger_{\bar{\i}} a^\dagger_{\bar{\j}} a_{\bar{\i}} a_{\bar{\j}}
-                      + g_{j\bar{\j}i\bar{\i}} a^\dagger_j a^\dagger_{\bar{\j}} a_i a_{\bar{\i}}
-                \big)
-
-where :math:`i` and :math:`\bar{\i}` are the indices that correspond to the ith alpha and beta spin
-orbtials, :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron
-integral.
-
-Class
------
-SeniorityZeroHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
-"""
+r"""Seniority-zero Hamiltonian object that interacts with the wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.backend import slater
 
 
 class SeniorityZeroHamiltonian(ChemicalHamiltonian):
-    """
+    """Hamiltonian that involvese only the zero-seniority terms.
 
-    Seniority zero means that there are no unpaired electrons
+    .. math::
+
+        \hat{H} = \sum_{i} \big( h_{ii} a^\dagger_i a_i
+                                + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}} \big)
+        + \sum_{ij} \big( g_{ijij} a^\dagger_i a^\dagger_j a_i a_j
+                        + g_{i\bar{\j}i\bar{\j}} a^\dagger_i a^\dagger_{\bar{\j}} a_i a_{\bar{\j}}
+                        + g_{\bar{\i}j\bar{\i}j} a^\dagger_{\bar{\i}} a^\dagger_j a_{\bar{\i}} a_j
+                        + g_{\bar{\i}\bar{\i}\bar{\i}\bar{\j}}
+                        a^\dagger_{\bar{\i}} a^\dagger_{\bar{\j}} a_{\bar{\i}} a_{\bar{\j}}
+                        + g_{j\bar{\j}i\bar{\i}} a^\dagger_j a^\dagger_{\bar{\j}} a_i a_{\bar{\i}}
+                    \big)
+
+    where :math:`i` and :math:`\bar{\i}` are the indices that correspond to the ith alpha- and beta-
+    spin orbtials, :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-
+    electron integral.
+
+    Seniority zero means that there are no unpaired electrons.
+
     """
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
@@ -38,18 +34,15 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         ----------
         orbtype : {'restricted', 'unrestricted', 'generalized', None}
             Type of the orbitals used.
-            Default is `'restricted'`
+            Default is `'restricted'`.
 
         Raises
         ------
         ValueError
-            If orbtype is not one of ['restricted', 'unrestricted']
+            If orbtype is not one of 'restricted' or 'unrestricted'.
         NotImplementedError
             If orbtype is 'generalized'
 
-        Note
-        ----
-        Should be executed before assign_integrals.
         """
         super().assign_orbtype(orbtype)
         if orbtype == 'generalized':
@@ -62,7 +55,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         .. math::
 
-            \big< \Psi \big| \hat{H} \big| \Phi \big>
+            \braket{\Psi | \hat{H} | \Phi}
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the seniority-zero Hamiltonian
         operator, and :math:`\Phi` is the Slater determinant.
@@ -71,21 +64,21 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         ----------
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
-            Needs to have the following in `__dict__`: `get_overlap`
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
         deriv : int, None
             Index of the parameter against which the expectation value is derivatized.
-            Default is no derivatization
+            Default is no derivatization.
 
         Returns
         -------
         one_electron : float
-            One electron energy
+            One electron energy.
         coulomb : float
-            Coulomb energy
+            Coulomb energy.
         exchange : float
-            Exchange energy
+            Exchange energy.
+
         """
         # FIXME: incredibly slow/bad approach
         nspatial = self.nspin // 2

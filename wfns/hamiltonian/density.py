@@ -1,22 +1,26 @@
-""" Functions used to obtain the density matrix Functions
+"""Functions used to obtain the density matrices.
+
+Functions
 ---------
 add_one_density(matrices, i, j, val, orbtype)
-    Adds value to the one electron density matrix appropriately
+    Adds value to the one electron density matrix appropriately.
 add_two_density(matrices, i, j, k, l, val, orbtype)
-    Adds value to the two electron density matrix appropriately
+    Adds value to the two electron density matrix appropriately.
 density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                orbtype='restricted')
-    Returns the one and two electron density matrices
+    Returns the one and two electron density matrices.
 """
 import numpy as np
 from wfns.backend import slater
+from pydocstring.wrapper import docstring
 
 __all__ = ['density_matrix']
+
+
+@docstring(indent_level=1)
 # FIXME: incredibly slow/bad approach
-
-
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
-    r""" Adds some value to the appropriate density matrix element
+    r"""Add some value to the appropriate density matrix element.
 
     .. math::
 
@@ -24,29 +28,29 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
 
     Parameters
     ----------
-    matrices : list of np.ndarray
-        List of one electron density matrices
-        If 1-list, then restricted or generalized orbitals
-        If 2-list, then unrestricted orbitals (alpha-alpha and beta-beta components)
+    matrices : tuple/list of np.ndarray
+        List of one electron density matrices.
+        If 1-tuple/list, then restricted or generalized orbitals.
+        If 2-tuple/list, then unrestricted orbitals (alpha-alpha and beta-beta components).
     spin_i : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     spin_j : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     val : float
-        Value that will be added to the density matrix
+        Value that will be added to the density matrix.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital
+        Type of the orbital.
 
     Raises
     ------
     TypeError
-        If matrices are not a list of numpy arrays
-        If matrices are not two dimensional
-        If matrices are not square
+        If matrices are not a list of numpy arrays.
+        If matrices are not two dimensional.
+        If matrices are not square.
     ValueError
-        If restricted or generalized orbitals and number of matrices is not one
-        If unrestricted orbitals and number of matrices is not two
-        If orbital type is not one of 'restricted', 'unrestricted', 'generalized'
+        If restricted or generalized orbitals and number of matrices is not one.
+        If unrestricted orbitals and number of matrices is not two.
+        If orbital type is not one of 'restricted', 'unrestricted', 'generalized'.
     """
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
         raise TypeError('Matrices must be given as a list of numpy arrays')
@@ -89,44 +93,47 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         raise ValueError('Unsupported orbital type')
 
 
+@docstring(indent_level=1)
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
-    r""" Adds some value to the appropriate one electron density matrix element
+    r"""Add some value to the appropriate one electron density matrix element.
 
     .. math::
+
         \braket{\Phi_1 | a_i a_j a_k^\dagger a_l^\dagger | \Phi_2}
 
     Parameters
     ----------
-    matrices : list of np.ndarray
-        List of two electron density matrices
-        If 1-list, then restricted or generalized orbitals
-        If 3-list, then unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+    matrices : tuple/list of np.ndarray
+        List of two electron density matrices.
+        If 1-tuple/list, then restricted or generalized orbitals.
+        If 3-tuple/list, then unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta,
+        and beta-beta-beta-beta components).
     spin_i : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     spin_j : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     spin_k : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     spin_l : int
-        Spin orbital index of the density matrix
+        Spin orbital index of the density matrix.
     val : float
-        Value that will be added to the density matrix
+        Value that will be added to the density matrix.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital
+        Type of the orbital.
 
     Raises
     ------
     TypeError
-        If matrices are not a list of numpy arrays
+        If matrices are not a list of numpy arrays.
     ValueError
-        If restricted or generalized orbitals and number of matrices is not one
-        If unrestricted orbitals and number of matrices is not two
-        If orbital type is not one of 'restricted', 'unrestricted', 'generalized'
+        If restricted or generalized orbitals and number of matrices is not one.
+        If unrestricted orbitals and number of matrices is not two.
+        If orbital type is not one of 'restricted', 'unrestricted', 'generalized'.
 
-    Note
-    ----
-    Assumes that the spin orbital indices are given with the physicist's notation
+    Notes
+    -----
+    Assumes that the spin orbital indices are given with the physicist's notation.
+
     """
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
         raise TypeError('Matrices must be given as a list of numpy arrays')
@@ -180,58 +187,60 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
         raise ValueError('Unsupported orbital type')
 
 
-# FIXME: make input of Wavefunction and CIWavefunction  instead of sd_coeffs, civec, nspatial, ...
+# FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
 # TODO: generalize to arbitrary order density matrix
+@docstring(indent_level=1)
 def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                    orbtype='restricted'):
-    r""" Returns the first and second order density matrices
+    r"""Return the first and second order density matrices.
 
     Second order density matrix uses the Physicist's notation:
 
     .. math::
 
-        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi >
+        \Gamma_{ijkl} = \braket{\Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi}
 
     Chemist's notation is also implemented
 
     .. math::
 
-        \Gamma_{ijkl} = < \Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi >
+        \Gamma_{ijkl} = \braket{\Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi}
 
-    Paramaters
+    Parameters
     ----------
     sd_coeffs : list of float
-        Slater determinant coefficients
+        Slater determinant coefficients.
     civec : list of int/gmpy2.mpz
-        Slater determinant
+        Slater determinant.
     nspatial : int
-        Number of spatial orbitals
+        Number of spatial orbitals.
     is_chemist_notation : bool
-        True if chemist's notation
-        False if physicist's notation
-        Default is Physicist's notation
+        True if chemist's notation.
+        False if physicist's notation.
+        Default is Physicist's notation.
     val_threshold : float
-        Threshold for truncating the density matrice entries
+        Threshold for truncating the density matrice entries.
         Skips all of the Slater determinants whose maximal sum of contributions to density matrices
-        is less than threshold value
+        is less than threshold value.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital
+        Type of the orbital.
 
     Returns
     -------
     one_densities : tuple of np.ndarray
-        One electron density matrix
-        For spatial and generalized orbitals, 1-tuple of np.ndarray
-        For unretricted spin orbitals, 2-tuple of np.ndarray
+        One electron density matrix.
+        For spatial and generalized orbitals, 1-tuple of np.ndarray.
+        For unretricted spin orbitals, 2-tuple of np.ndarray.
     two_densities : tuple of np.ndarray
-        Two electron density matrix
-        For spatial and generalized orbitals, 1-tuple of np.ndarray
-        For unrestricted orbitals, 3-tuple of np.ndarray
+        Two electron density matrix.
+        For spatial and generalized orbitals, 1-tuple of np.ndarray.
+        For unrestricted orbitals, 3-tuple of np.ndarray.
 
     Raises
     ------
     TypeError
         If the orbital type is not one of 'restricted', 'unrestricted', 'generalized'
+
     """
     # TODO: generalize to arbitrary order density matrix
     # sort coefficients and sd's by the magintude of coefficient (useful for truncating)
