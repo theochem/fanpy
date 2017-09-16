@@ -1,9 +1,10 @@
-""" Script for generating one and two electron integrals from Gaussian using HORTON
+"""Script for generating one- and two-electron integrals from Gaussian using HORTON.
 
 Functions
 ---------
 gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
-    Extracts appropriate information from a Gaussian FCHK file
+    Extract appropriate information from a Gaussian FCHK file.
+
 """
 from __future__ import absolute_import, division, print_function
 import sys
@@ -13,39 +14,34 @@ from horton import IOData, compute_nucnuc
 __all__ = []
 
 
+# FIXME: remove horton_internal
 def gaussian_fchk(fchk_file, horton_internal=False):
-    """ Extracts the appropriate data from Gaussian fchk file (using HORTON)
+    """Extract the appropriate data from Gaussian fchk file (using HORTON).
 
     Parameters
     ----------
     fchk_file : str
-        Formatted chk file
+        Formatted chk file.
     horton_internal : bool
-        Flag to return horton_internal variables
+        Flag to return horton_internal variables.
 
     Returns
     -------
     result : dict
         "el_energy"
-            Electronic energy
+            Electronic energy.
         "nuc_nuc_energy"
-            Nuclear nuclear repulsion energy
+            Nuclear nuclear repulsion energy.
         "one_int"
-            Tuple of the one-electron Hamiltonian;
+            Tuple of the one-electron Hamiltonian.
         "two_int"
-            Tuple of the two-electron Hamiltonian;
-        "horton_internal"
-            Dictionary that  contains horton's internal object
-            "mol"
-                horton.io.iodata.IOData object that contains fchk data
-            "lf"
-                horton.matrix.dense.LinalgFactory that creates horton matrices
-            "one"
-                horton.matrix.dense.DenseTwoIndex that contain the one electron integrals
-            "two"
-                horton.matrix.dense.DenseTwoIndex that contain the two electron integrals
-            "orb"
-                horton.matrix.dense.DenseExpansion that contains the MO info
+            Tuple of the two-electron Hamiltonian.
+
+    Raises
+    ------
+    NotImplementedError
+        If `horton_internal` is True.
+
     """
     mol = IOData.from_file(fchk_file)
 
@@ -87,13 +83,13 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     if horton_internal:
         raise NotImplementedError('horton_internal storage is unsupported until it become Python '
                                   '3.6 compatible.')
-        output["horton_internal"] = {
-            "mol": mol,
-            "lf": mol.lf,
-            "one": one_mo,
-            "two": two_mo,
-            "orb": exps,
-        }
+        # output["horton_internal"] = {
+        #     "mol": mol,
+        #     "lf": mol.lf,
+        #     "one": one_mo,
+        #     "two": two_mo,
+        #     "orb": exps,
+        # }
     return output
 
 

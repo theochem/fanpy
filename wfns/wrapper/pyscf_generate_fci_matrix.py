@@ -1,9 +1,10 @@
-""" Script for generating one and two electron integrals using PySCF
+"""Script for generating one- and two-electron integrals using PySCF.
 
 Functions
 ---------
 generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
-    Generates the FCI Hamiltonian CI matrix
+    Generate the FCI Hamiltonian CI matrix.
+
 """
 from __future__ import absolute_import, division, print_function
 import sys
@@ -18,33 +19,34 @@ LIBFCI = load_library('libfci')
 
 
 def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
-    """ Constructs the FCI CI Hamiltonian matrix using PySCF
+    """Construct the FCI CI Hamiltonian matrix using PySCF.
 
     Parameters
     ----------
     h1e : np.ndarray(K, K)
-        One electron integrals
+        One electron integrals.
     eri : np.ndarray(K, K, K, K)
-        Two electron integrals
+        Two electron integrals.
     nelec : int
-        Number of electrons
+        Number of electrons.
     is_chemist_notation : bool
-        Flag to set the notation for the two electron integrals
-        By default, it is assumed that the Physicist's notation is used for the
-        two electron integrals
+        Flag to set the notation for the two electron integrals.
+        By default, it is assumed that the Physicist's notation is used for the two electron
+        integrals.
 
     Returns
     -------
     ci_matrix : np.ndarray(M, M)
-        CI Hamiltonian matrix
+        CI Hamiltonian matrix.
     pspace : list(M)
-        List of the Slater determinants (in bitstring) that corresponds to each
-        row/column of the ci_matrix
+        List of the Slater determinants (in bitstring) that corresponds to each row/column of the
+        `ci_matrix`.
 
     Raises
     ------
     ValueError
-        If number of electrons is invalid
+        If number of electrons is invalid.
+
     """
     if not is_chemist_notation:
         eri = np.einsum('ijkl->ikjl', eri)
