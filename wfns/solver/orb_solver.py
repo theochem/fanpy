@@ -3,24 +3,30 @@ r"""Orbital optimization.
 Orbital optimization essentially minimizes
 
 .. math::
+
     \braket{\Psi | \hat{U} \hat{H} \hat{U}^\dagger | \Psi}
 
 where :math:`\hat{U}^\dagger` is orbital rotation operator (usually unitary).
+
 This equation can be approached as finding the best wavefunction with rotated orbitals, i.e.
-:math:`\hat{U}^\dagger \ket{\Psi}`, or as finding the best hamiltonian with rotated orbitals,
-i.e. :math:`\hat{U} \hat{H} \hat{U}^\dagger` or some mix of the two.
+:math:`\hat{U}^\dagger \ket{\Psi}`, or as finding the best hamiltonian with rotated orbitals, i.e.
+:math:`\hat{U} \hat{H} \hat{U}^\dagger` or some mix of the two.
+
 """
 from __future__ import absolute_import, division, print_function
 import itertools as it
-import copy
 import numpy as np
 import scipy.optimize
+import wfns.backend.slater as slater
+import wfns.backend.sd_list as sd_list
 from wfns.solver.equation_solver import optimize_wfn_variational
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from pydocstring.wrapper import docstring
 
 
+@docstring(indent_level=1)
 def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
     r"""Optimize orbitals of the given wavefunction to minimize energy using Jacobi rotations.
 
@@ -29,6 +35,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
     rotation operator.
 
     .. math::
+
         \hat{\mathbf{J}}_{pq} \hat{H} \hat{\mathbf{J}}_{pq}^\dagger
         = \sum_{ab}
         \left( \sum_{ij} (J_{pq})_{ai} h_{ij} (J_{pq})^\dagger_{jb} \right)
@@ -41,6 +48,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
     where :math:`J_{pq}` is the Jacobi rotation matrix.
 
     .. math::
+
         (J_{pq})_{ij}
         &= \delta_{ij} \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}\\
         &= \cos \theta \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}\\
@@ -50,6 +58,7 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
     When the operator is applied to the wavefunction,
 
     .. math::
+
         \hat{\mathbf{J}}_{pq}^\dagger \ket{\Psi}
         &= \sum_{\mathbf{n} \not\ni p,q} f(\mathbf{n}) \ket{\mathbf{n}}
         + \sum_{\mathbf{n} \ni p,q} f(\mathbf{n}) \ket{\mathbf{n}}\\
@@ -59,35 +68,36 @@ def optimize_wfn_orbitals_jacobi(wfn, ham, wfn_solver=None):
         + \sum_{\mathbf{n} \ni q, \not\ni p}
         f(\mathbf{n}) (\cos\theta - \sin\theta) \ket{\mathbf{n}}
 
-    This wavefunction's parameter, :math:`\theta` , is optimized for the lowest energy in the
-    given Hamiltonian.
+    This wavefunction's parameter, :math:`\theta` , is optimized for the lowest energy in the given
+    Hamiltonian.
 
     Parameters
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
+        Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
+        Hamiltonian that defines the system under study.
     wfn_solver : function(wfn, ham)
-        Function for solving the wavefunction in the given Hamiltonian
+        Function for solving the wavefunction in the given Hamiltonian.
         This solver will only have access to its required arguments (`wfn` and `ham`) so all keyword
-        arguments need to be added before passing the function. i.e. with
-        `lambda wfn, ham: solver(wfn, ham, **kwargs)` where `kwargs` have been defined somewhere.
-        Default raises NotImplementedError
+        arguments need to be added before passing the function. i.e. with `lambda wfn, ham:
+        solver(wfn, ham, **kwargs)` where `kwargs` have been defined somewhere.
+        Default raises NotImplementedError.
 
     Returns
     -------
-    Output of solver
+    output : dict
+        Output of solver.
 
     Raises
     ------
     TypeError
-        If wavefunction is not an instance (or instance of a child) of BaseWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
+        If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
+        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
     ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If wavefunction and Hamiltonian do not have the same number of spin orbitals
+        If wavefunction and Hamiltonian do not have the same data type.
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals.
+
     """
     # Preprocess variables
     if not isinstance(wfn, BaseWavefunction):
@@ -152,6 +162,7 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
     rotation operator.
 
     .. math::
+
         \hat{\mathbf{J}}_{pq} \hat{H} \hat{\mathbf{J}}_{pq}^\dagger
         = \sum_{ab}
         \left( \sum_{ij} (J_{pq})_{ai} h_{ij} (J_{pq})^\dagger_{jb} \right)
@@ -173,29 +184,29 @@ def optimize_ham_orbitals_jacobi(wfn, ham, ref_sds=None, wfn_solver=None, wfn_so
     Parameters
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
+        Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
+        Hamiltonian that defines the system under study.
     wfn_solver : function(wfn, ham)
-        Function for solving the wavefunction in the given Hamiltonian
+        Function for solving the wavefunction in the given Hamiltonian.
         This solver will only have access to its required arguments (`wfn` and `ham`) so all keyword
-        arguments need to be added before passing the function. i.e. with
-        `lambda wfn, ham: solver(wfn, ham, **kwargs)` where `kwargs` have been defined somewhere.
-        Default raises NotImplementedError
+        arguments need to be added before passing the function. i.e. with `lambda wfn, ham:
+        solver(wfn, ham, **kwargs)` where `kwargs` have been defined somewhere.
+        Default raises NotImplementedError.
 
     Returns
     -------
-    Output of solver
+    output : dict
+        Output of solver.
 
     Raises
     ------
     TypeError
-        If wavefunction is not an instance (or instance of a child) of BaseWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
+        If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
+        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
     ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If wavefunction and Hamiltonian do not have the same number of spin orbitals
+        If wavefunction and Hamiltonian do not have the same data type.
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
     """
     # Preprocess variables

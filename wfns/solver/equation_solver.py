@@ -4,14 +4,18 @@ import numpy as np
 import scipy.optimize
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+import wfns.backend.slater as slater
+import wfns.backend.sd_list as sd_list
+from pydocstring.wrapper import docstring
 
 
 # FIXME: copies most of system_solver for initialization and docstring
+@docstring(indent_level=1)
 def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_sds=None,
                              save_file='', solver=None, solver_kwargs=None, norm_constrained=False):
     r"""Optimize the wavefunction with the given Hamiltonian as a single equation for energy.
 
-    Solves the following equation
+    Solves the following equation:
 
     .. math::
 
@@ -50,61 +54,62 @@ def optimize_wfn_variational(wfn, ham, left_pspace=None, right_pspace=None, ref_
     Parameters
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
+        Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
-    left_pspace : tuple/list, None
-        Slater determinants onto which the left side of the Schrodinger equation is projected
-        Tuple of objects that are compatible with the internal_sd format
-        By default, the largest space is used
-    right_pspace : tuple/list, None
-        Slater determinants onto which the right side of the Schrodinger equation is projected
-        Tuple of objects that are compatible with the internal_sd format
-        By default, the largest space is used
-    ref_sds : tuple/list of int, None
-        One or more Slater determinant with respect to which the energy and the norm are calculated
-        Default is ground state HF
+        Hamiltonian that defines the system under study.
+    left_pspace : {tuple/list, None}
+        Slater determinants onto which the left side of the Schrodinger equation is projected.
+        Tuple of objects that are compatible with the internal_sd format.
+        By default, the largest space is used.
+    right_pspace : {tuple/list, None}
+        Slater determinants onto which the right side of the Schrodinger equation is projected.
+        Tuple of objects that are compatible with the internal_sd format.
+        By default, the largest space is used.
+    ref_sds : {tuple/list of int, None}
+        One or more Slater determinant with respect to which the energy and the norm are calculated.
+        Default is ground state HF.
     save_file : str
         Name of the numpy file that contains the wavefunction parameters of the last optimization
-        step
-        By default, does not save
+        step.
+        By default, does not save.
     energy_is_param : bool
         Flag to control whether energy is calculated with respect to the reference Slater
-        determinants or is optimized as a parameter
-        By default, energy is not a parameter
+        determinants or is optimized as a parameter.
+        By default, energy is not a parameter.
     energy_guess : float
-        Starting guess for the energy of the wavefunction
-        By default, energy is calculated with respect to the reference Slater determinants
-        Energy must be a parameter
-    solver : function, None
-        Solver that will solve the objective function (system of equations)
-        By default scipy's least_squares function will be used
+        Starting guess for the energy of the wavefunction.
+        By default, energy is calculated with respect to the reference Slater determinants.
+        Energy must be a parameter.
+    solver : {function, None}
+        Solver that will solve the objective function (system of equations).
+        By default scipy's least_squares function will be used.
     solver_kwargs : dict
-        Keyword arguments for the solver
+        Keyword arguments for the solver.
         In order to disable default keyword arguments, the appropriate key need to be created with
-        value `None`
+        value `None`.
         Default keyword arguments depend on the solver.
 
     Returns
     -------
-    Output of the solver
+    output : dict
+        Output of the solver.
 
     Raises
     ------
     TypeError
-        If wavefunction is not an instance (or instance of a child) of BaseWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
-        If save_file is not a string
-        If solver_kwargs is not a dictionary or None
+        If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
+        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+        If save_file is not a string.
+        If solver_kwargs is not a dictionary or `None`.
     ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If wavefunction and Hamiltonian do not have the same number of spin orbitals
+        If wavefunction and Hamiltonian do not have the same data type.
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
-    Note
-    ----
+    Notes
+    -----
     Optimized wavefunction may not be variational; especially if the left and right projection space
     are not equal.
+
     """
     # Preprocess variables
     if not isinstance(wfn, BaseWavefunction):
