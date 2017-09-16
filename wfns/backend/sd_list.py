@@ -11,81 +11,84 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 """
 from itertools import combinations, product
 from wfns.backend import slater
+from pydocstring.wrapper import docstring
 
 __all__ = ['sd_list']
 
 
 def satisfies_conditions(sd, nspatial, spin, seniority):
-    r""" Checks to see if Slater determinant has the desired spin and seniority
+    r"""Check to see if Slater determinant has the desired spin and seniority.
 
     Paramaters
     ----------
-    sd : gmpy2.mpz
-        Slater determinant
+    sd : int
+        Slater determinant.
     nspatial : int
-        Number of spatial orbitals
+        Number of spatial orbitals.
     spin : int
-        Spin of the desired Slater determinant
-        :math:`\frac{1}{2} (N_{\alpha} - N_{\beta})`
-        If `None` then all spin is allowed
+        Spin of the desired Slater determinant.
+        :math:`\frac{1}{2} (N_{\alpha} - N_{\beta})`.
+        If `None` then all spin is allowed.
     seniority : int
-        Seniority of the desired Slater determinant
-        Maximum number of unpaired electrons
-        If `None` then all seniority is allowed
+        Seniority of the desired Slater determinant.
+        Maximum number of unpaired electrons.
+        If `None` then all seniority is allowed.
 
     Returns
     -------
-    True if Slater determinant has the desired spin and seniority
-    False if Slater determinant does not have the desired spin and seniority
+    condition : bool
+        True if Slater determinant has the desired spin and seniority.
+        False if Slater determinant does not have the desired spin and seniority.
+
     """
     return (spin in [None, slater.get_spin(sd, nspatial)]
             and (seniority is None or seniority >= slater.get_seniority(sd, nspatial)))
 
 
+@docstring(indent_level=1)
 def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniority=None):
-    """ Generates Slater determinants
+    """Return a list of Slater determinants.
 
     Parameters
     ----------
     nelec : int
-        Number of electrons
+        Number of electrons.
     nspatial : int
-        Number of spatial orbitals
-    num_limit : int, None
-        Maximum number of Slater determinants to be generated
-        Default is infinite
-    exc_orders : list of int, None
+        Number of spatial orbitals.
+    num_limit : {int, None}
+        Maximum number of Slater determinants to be generated.
+        Default is infinite.
+    exc_orders : {list of int, None}
         Orders of excitations that is to be included (with respect to ground state Slater
-        determinant) in the order that they appear
-        Default is all orders of excitations (in the order of lowest order to highest)
-    spin : int, float, None
-        Total spin of the generated Slater determinants
-        Default is no spin restrictions
-        If positive, then the number of alpha orbitals is greater than the
-        number of beta orbitals
-        If negative, then the number of alpha orbitals is less than the number
-        of beta orbitals
-        0.5 is singlet, 1 is doublet, 1.5 is triplet, etc
-    seniority : int, None
-        Maximum number of unpaired electrons
-        Default is no seniority restritions
+        determinant) in the order that they appear.
+        Default is all orders of excitations (in the order of lowest order to highest).
+    spin : {int, float, None}
+        Total spin of the generated Slater determinants.
+        Default is no spin restrictions.
+        If positive, then the number of alpha orbitals is greater than the number of beta orbitals.
+        If negative, then the number of alpha orbitals is less than the number of beta orbitals.
+        0.5 is singlet, 1 is doublet, 1.5 is triplet, etc.
+    seniority : {int, None}
+        Maximum number of unpaired electrons.
+        Default is no seniority restritions.
 
     Returns
     -------
     sd_vec : list of ints
-        Integer that describes the occupation of a Slater determinant as a bitstring
+        Integer that describes the occupation of a Slater determinant as a bitstring.
 
     Raises
     ------
     TypeError
-        If nspatial is not an integer
-        If nelec is not an integer
-        If num_limit is not an integer
-        If exc_orders is not a iterable of integers
-        If spin is not an integer or float
-        If seniority is not an integer
+        If nspatial is not an integer.
+        If nelec is not an integer.
+        If num_limit is not an integer.
+        If exc_orders is not a iterable of integers.
+        If spin is not an integer or float.
+        If seniority is not an integer.
     ValueError
-        If seniority is not compatible with the spin
+        If seniority is not compatible with the spin.
+
     """
     if not isinstance(nspatial, int):
         raise TypeError('Number of spatial orbitals should be an integer')
