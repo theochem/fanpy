@@ -1,20 +1,12 @@
-r"""Hamiltonian object that interacts with the wavefunction.
-
-.. math::
-    \hat{H} = \sum_{ik} h_{ik} a^\dagger_i a_k
-    + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
-where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron integral.
-
-Class
------
-ChemicalHamiltonian(one_int, two_int, orbtype=None, energy_nuc_nuc=None)
-"""
+r"""Hamiltonian object that interacts with the wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 from wfns.backend import slater
+from pydocstring.wrapper import docstring_class
 
 
+@docstring_class(indent_level=1)
 class ChemicalHamiltonian(object):
     r"""Hamiltonian used for a typical chemical system.
 
@@ -23,36 +15,26 @@ class ChemicalHamiltonian(object):
         \hat{H} = \sum_{ij} h_{ij} a^\dagger_i a_j
         + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
 
+    where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron
+    integral in Physicists' notation.
+
     Attributes
     ----------
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used.
     energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy
-    one_int : 1- or 2-tuple np.ndarray(K,K)
-        One electron integrals for restricted, unrestricted, or generalized orbitals
-        1-tuple for spatial (restricted) and generalized orbitals
-        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-    two_int : 1- or 3-tuple np.ndarray(K,K)
-        Two electron integrals for restricted, unrestricted, or generalized orbitals
-        In physicist's notation
-        1-tuple for spatial (restricted) and generalized orbitals
+        Nuclear-nuclear repulsion energy.
+    one_int : {1- or 2-tuple np.ndarray(K, K)}
+        One electron integrals for restricted, unrestricted, or generalized orbitals.
+        1-tuple for spatial (restricted) and generalized orbitals.
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components).
+    two_int : {1- or 3-tuple np.ndarray(K, K)}
+        Two electron integrals for restricted, unrestricted, or generalized orbitals.
+        Uses the physicist's notation.
+        1-tuple for spatial (restricted) and generalized orbitals.
         3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-        beta-beta-beta-beta components)
+        beta-beta-beta-beta components).
 
-    Properties
-    ----------
-    dtype
-        Data type of the integrals.
-
-    Methods
-    -------
-    assign_orbtype(self, dtype)
-        Assigns the orbital type.
-    assign_energy_nuc_nuc(nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion
-    assign_integrals(self, one_int, two_int, orbtype=None)
-        Assigns integrals of the one electron basis set used to describe the Slater determinants
     """
 
     def __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None):
@@ -60,21 +42,21 @@ class ChemicalHamiltonian(object):
 
         Parameters
         ----------
-        one_int : np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K)
-            One-electron integrals
+        one_int : {np.ndarray(K, K), 1- or 2-tuple np.ndarray(K, K)}
+            One-electron integrals.
             If orbitals are spatial or generalized, then integrals are given as np.ndarray or
-            1-tuple of np.ndarray
-            If orbitals are unretricted, then integrals are 2-tuple of np.ndarray
-        two_int : np.ndarray(K,K,K,K), 1- or 3-tuple np.ndarray(K,K,K,K)
+            1-tuple of np.ndarray.
+            If orbitals are unretricted, then integrals are 2-tuple of np.ndarray.
+        two_int : {np.ndarray(K, K, K, K), 1- or 3-tuple np.ndarray(K, K, K, K)}
             If orbitals are spatial or generalized, then integrals are given as np.ndarray or
-            1-tuple of np.ndarray
-            If orbitals are unretricted, then integrals are 3-tuple of np.ndarray
+            1-tuple of np.ndarray.
+            If orbitals are unretricted, then integrals are 3-tuple of np.ndarray.
         orbtype : {'restricted', 'unrestricted', 'generalized', None}
             Type of the orbitals used.
-            Default is `'restricted'`
+            Default is `'restricted'`.
         energy_nuc_nuc : {float, None}
-            Nuclear nuclear repulsion energy
-            Default is `0.0`
+            Nuclear nuclear repulsion energy.
+            Default is `0.0`.
 
         """
         self.assign_orbtype(orbtype)
@@ -83,7 +65,14 @@ class ChemicalHamiltonian(object):
 
     @property
     def nspin(self):
-        """Return the number of spin orbitals."""
+        """Return the number of spin orbitals.
+
+        Returns
+        -------
+        nspin : int
+            Number of spin orbitals.
+
+        """
         if self.orbtype in ('restricted', 'unrestricted'):
             return 2*self.one_int.num_orbs
         elif self.orbtype == 'generalized':
@@ -93,7 +82,14 @@ class ChemicalHamiltonian(object):
 
     @property
     def dtype(self):
-        """Return the data type of the integrals."""
+        """Return the data type of the integrals.
+
+        Returns
+        -------
+        dtype : {'restricted', 'unrestricted', 'generalized'}
+            Number of spin orbitals.
+
+        """
         return self.one_int.dtype
 
     # FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
@@ -104,16 +100,13 @@ class ChemicalHamiltonian(object):
         ----------
         orbtype : {'restricted', 'unrestricted', 'generalized', None}
             Type of the orbitals used.
-            Default is `'restricted'`
+            Default is 'restricted'.
 
         Raises
         ------
         ValueError
-            If orbtype is not one of ['restricted', 'unrestricted', 'generalized']
+            If orbtype is not one of 'restricted', 'unrestricted', or 'generalized'.
 
-        Note
-        ----
-        Should be executed before assign_integrals.
         """
         if orbtype is None:
             orbtype = 'restricted'
@@ -127,14 +120,15 @@ class ChemicalHamiltonian(object):
 
         Parameters
         ----------
-        energy_nuc_nuc : int, float, None
-            Nuclear-nuclear repulsion energy
-            Default is 0.0
+        energy_nuc_nuc : {int, float, None}
+            Nuclear-nuclear repulsion energy.
+            Default is `0.0`.
 
         Raises
         ------
         TypeError
-            If energy_nuc_nuc is not int or float or None
+            If `energy_nuc_nuc` is not int or float or None.
+
         """
         if energy_nuc_nuc is None:
             energy_nuc_nuc = 0.0
@@ -149,57 +143,52 @@ class ChemicalHamiltonian(object):
 
         Parameters
         ----------
-        one_int : {np.ndarray(K,K), 1- or 2-tuple np.ndarray(K,K), OneElectronIntegrals}
-            One electron integrals for restricted, unrestricted, or generalized orbitals
-            1-tuple for spatial (restricted) and generalized orbitals
-            2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components)
-        two_int : {np.ndarray(K,K), 1- or 3-tuple np.ndarray(K,K), TwoElectronIntegrals}
-            Two electron integrals for restricted, unrestricted, or generalized orbitals
-            In physicist's notation
-            1-tuple for spatial (restricted) and generalized orbitals
+        one_int : {np.ndarray(K, K), 1- or 2-tuple np.ndarray(K, K), OneElectronIntegrals}
+            One electron integrals for restricted, unrestricted, or generalized orbitals.
+            1-tuple for spatial (restricted) and generalized orbitals.
+            2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components).
+        two_int : {np.ndarray(K, K), 1- or 3-tuple np.ndarray(K, K), TwoElectronIntegrals}
+            Two electron integrals for restricted, unrestricted, or generalized orbitals.
+            Uses physicist's notation.
+            1-tuple for spatial (restricted) and generalized orbitals.
             3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
-            beta-beta-beta-beta components)
+            beta-beta-beta-beta components).
 
         Raises
         ------
         TypeError
-            If integrals are not provided as a numpy array or a tuple of numpy arrays
-            If integral matrices do not have dtype of `float` or `complex`
-            If integral matrices do not have the same dtype
-            If the number of one-electron integral matrices is not 1 or 2
-            If one-electron integral matrices are not two dimensional
-            If one-electron integral matrices are not square
+            If integrals are not provided as a numpy array or a tuple of numpy arrays.
+            If integral matrices do not have dtype of `float` or `complex`.
+            If integral matrices do not have the same dtype.
+            If the number of one-electron integral matrices is not 1 or 2.
+            If one-electron integral matrices are not two dimensional.
+            If one-electron integral matrices are not square.
             If one-electron integrals (for the unrestricted orbitals) has different number of alpha
-            and beta orbitals
-            If the number of two-electron integral matrices is not 1 or 3
-            If two-electron integral matrices are not four dimensional
-            If two-electron integral matrices does not have same dimensionality in all axis
+            and beta orbitals.
+            If the number of two-electron integral matrices is not 1 or 3.
+            If two-electron integral matrices are not four dimensional.
+            If two-electron integral matrices does not have same dimensionality in all axis.
             If two-electron integrals (for the unrestricted orbitals) has different number of alpha
-            and beta orbitals
-            If one- and two-electron integrals do not have the same number of orbitals
-            If one- and two-electron integrals do not have the same data type
+            and beta orbitals.
+            If one- and two-electron integrals do not have the same number of orbitals.
+            If one- and two-electron integrals do not have the same data type.
             If one- and two-electron integrals do not correspond to the same orbital type (i.e.
             restricted, unrestricted, generalized).
-            If orbital type of the integrals do not match with the given orbital type
+            If orbital type of the integrals do not match with the given orbital type.
         NotImplementedError
-            If generalized orbitals and odd number of spin orbitals
+            If generalized orbitals and odd number of spin orbitals.
 
-        Note
-        ----
-        Should be executed after assign_orbtype.
-        Depending on the orbital type, the form of the integrals can vary:
-            Restricted Orbitals
-                one_int can be a np.ndarray or a 1-tuple of np.ndarray
-                two_int can be a np.ndarray or a 1-tuple of np.ndarray
-                orbtype = 'restricted'
-            Unrestricted Orbitals
-                one_int can be a 2-tuple of np.ndarray
-                two_int can be a 3-tuple of np.ndarray
-                orbtype = 'unrestricted'
-            Generalized Orbitals
-                one_int can be a np.ndarray or a 1-tuple of np.ndarray
-                two_int can be a np.ndarray or a 1-tuple of np.ndarray
-                orbtype = 'generalized'
+        Notes
+        -----
+        Needs `orbype` defined.
+
+        Depending on the orbital type, the form of the integrals can vary. If the `orbtype` is
+        'restricted', then `one_int` can be a np.ndarray or a 1-tuple of np.ndarray and `two_int`
+        can be a np.ndarray or a 1-tuple of np.ndarray. If the `orbtype` is 'unrestricted', then
+        `one_int` can be a 2-tuple of np.ndarray and `two_int` can be a 3-tuple of np.ndarray. If
+        the `orbtype` is 'generalized', then `one_int` can be a np.ndarray or a 1-tuple of
+        np.ndarray and `two_int` can be a np.ndarray or a 1-tuple of np.ndarray.
+
         """
         one_int = OneElectronIntegrals(one_int)
         two_int = TwoElectronIntegrals(two_int)
@@ -222,11 +211,11 @@ class ChemicalHamiltonian(object):
         self.two_int = two_int
 
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        r"""Integrates the Hamiltonian with against a wavefunction and Slater determinant.
+        r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::
 
-            \big< \Psi \big| \hat{H} \big| \Phi \big>
+            \braket{\Phi | \hat{H} | \Psi}
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
         :math:`\Phi` is the Slater determinant.
@@ -238,18 +227,18 @@ class ChemicalHamiltonian(object):
             Needs to have the following in `__dict__`: `get_overlap`.
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : int, None
+        deriv : {int, None}
             Index of the parameter against which the expectation value is derivatized.
-            Default is no derivatization
+            Default is no derivatization.
 
         Returns
         -------
         one_electron : float
-            One electron energy
+            One-electron energy.
         coulomb : float
-            Coulomb energy
+            Coulomb energy.
         exchange : float
-            Exchange energy
+            Exchange energy.
         """
         # FIXME: incredibly slow/bad approach
         occ_indices = slater.occ_indices(sd)
@@ -330,11 +319,11 @@ class ChemicalHamiltonian(object):
         return one_electron, coulomb, exchange
 
     def integrate_sd_sd(self, sd1, sd2):
-        r"""Integrates the Hamiltonian with against two Slater determinants.
+        r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
 
-            H_{ij} = \big< \Phi_i \big| \hat{H} \big| \Phi_j \big>
+            H_{ij} = \braket{\Phi_i | \hat{H} | \Phi_j}
 
         where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
         Slater determinants.
@@ -349,11 +338,12 @@ class ChemicalHamiltonian(object):
         Returns
         -------
         one_electron : float
-            One electron energy
+            One-electron energy.
         coulomb : float
-            Coulomb energy
+            Coulomb energy.
         exchange : float
-            Exchange energy
+            Exchange energy.
+
         """
         # FIXME: incredibly slow/bad approach
         one_electron = 0.0
@@ -438,6 +428,7 @@ class ChemicalHamiltonian(object):
         ----------
         matrix : np.ndarray
             Transformation matrix.
+
         """
         if isinstance(matrix, np.ndarray):
             matrix = [matrix]
