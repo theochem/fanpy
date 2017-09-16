@@ -295,7 +295,7 @@ class APr2G(APIG):
 
         Parameters
         ----------
-        apig_params : np.ndarray(P,K)
+        apig_params : np.ndarray(P, K)
             Geminal coefficient matrix.
             Number of rows is the number of geminals.
             Number of columns is the number of orbital pairs.
