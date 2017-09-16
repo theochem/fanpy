@@ -1,18 +1,19 @@
-""" Methods for constructing perfect matchings of a given graph
+"""Functions for constructing perfect matchings of a given graph.
 
 Functions
 ---------
 generate_complete_pmatch(indices)
-    Yields a perfect matching of a complete graph with given vertices, `indices`
+    Yields a perfect matching of a complete graph with given vertices, `indices`.
 generate_biclique_pmatch(indices_one, indices_two)
     Yields a perfect matching of a complete bipartite graph with given the partitions, `indices_one`
-    and `indices_two`
+    and `indices_two`.
+
 """
 from wfns.backend.slater import find_num_trans
+from pydocstring.wrapper import docstring
 
-__all__ = []
 
-
+@docstring(indent_level=1)
 def generate_complete_pmatch(indices, sign=1):
     """Generate all of the perfect matches of a complete (sub)graph.
 
@@ -23,20 +24,21 @@ def generate_complete_pmatch(indices, sign=1):
     Parameters
     ----------
     indices : list of int
-         List of indices of the vertices used to create the complete graph
+        List of indices of the vertices used to create the complete graph.
 
     Yields
     ------
     pairing_scheme : tuple of tuple of 2 ints
-        Contains the edges needed to make a perfect match
+        Contains the edges needed to make a perfect match.
     sign : int
         Signature of the transpositions required to shuffle the `pairing_scheme` back into the
         original order in `indices`.
 
-    Note
-    ----
+    Notes
+    -----
     The `sign` gives the signature with respect to the original `indices`. If the `indices` are not
     ordered, then signatures won't really mean anything.
+
     """
     indices = tuple(indices)
     n = len(indices)
@@ -61,30 +63,32 @@ def generate_complete_pmatch(indices, sign=1):
                        scheme[i+1:]), inner_sign
 
 
+@docstring(indent_level=1)
 def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
-    """ Generates all of the perfect matches of a complete bipartite (sub)graph
+    """Generate all of the perfect matches of a complete bipartite (sub)graph.
 
     Parameters
     ----------
     indices_one : list of int
         List of indices of the vertices used to create the first half of the complete bipartite
-        graph
+        graph.
     indices_two : list of int
         List of indices of the vertices used to create the second half of the complete bipartite
-        graph
+        graph.
     is_decreasing : bool
         If True, indices are ordered so that they are decreasing. (Sometimes creators are ordered
-        from greatest to smallest)
+        from greatest to smallest).
         Default is False.
 
     Yields
     ------
     pairing_scheme : tuple of tuple of 2 ints
-        Contains the edges needed to make a perfect match
+        Contains the edges needed to make a perfect match.
 
-    Note
-    ----
-    The generator must be iterated to raise error
+    Notes
+    -----
+    The generator must be iterated to raise error.
+
     """
     # assume indices_one and indices_two are sorted
     sign = 1

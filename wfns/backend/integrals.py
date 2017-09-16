@@ -1,19 +1,13 @@
-"""Class for storing integrals.
-
-Classes
--------
-BaseIntegrals
-
-OneElectronIntegrals
-TwoElectronIntegrals
-"""
+"""Classes for storing integrals."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 from wfns.backend import slater
+from pydocstring.wrapper import docstring_class
 # TODO: store fraction of integrals
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
 
 
+@docstring_class(indent_level=1)
 class BaseIntegrals:
     """Base class for storing integrals.
 
@@ -21,6 +15,7 @@ class BaseIntegrals:
     ----------
     integrals : tuple of np.ndarray
         Values of the integrals corresponding to some basis set.
+
     """
     def __init__(self, integrals):
         """Initialize Integrals.
@@ -33,9 +28,10 @@ class BaseIntegrals:
         Raises
         ------
         TypeError
-            If integrals are not provided as a numpy array or a tuple of numpy arrays
-            If integral matrices do not have dtype of `float` or `complex`
-            If integral matrices do not have the same dtype
+            If integrals are not provided as a numpy array or a tuple of numpy arrays.
+            If integral matrices do not have dtype of `float` or `complex`.
+            If integral matrices do not have the same dtype.
+
         """
         if isinstance(integrals, np.ndarray):
             integrals = (integrals, )
@@ -54,51 +50,72 @@ class BaseIntegrals:
                 raise TypeError('Integral matrices must have the same dtype.')
         self.integrals = integrals
 
+    @property
+    def num_orbs(self):
+        """Number of orbitals.
 
+        Assumes that the integrals have the same dimensionality in all axis.
+
+        Returns
+        -------
+        num_orbs : int
+            Number of orbitals.
+        """
+        return self.integrals[0].shape[0]
+
+    @property
+    def dtype(self):
+        """Return the data type of the integrals.
+
+        Assumes that the integrals have the same datatypes.
+
+        Returns
+        -------
+        dtype : {int, float, complex}
+            Data type of the integrals.
+
+        """
+        return self.integrals[0].dtype
+
+
+# FIXME: substitute \hat{h} with real eqn
+@docstring_class(indent_level=1)
 class OneElectronIntegrals(BaseIntegrals):
-    #FIXME: substitute \hat{h} with real eqn
     r"""Class for storing one-electron integrals.
 
     .. math::
-        h_{ik} = \big< \phi_i \big | \hat{h} | \phi_k \big>
+
+        h_{ik} = \braket{\phi_i | \hat{h} | \phi_k}
 
     Attributes
     ----------
     integrals : tuple of np.ndarray
         Values of the one-electron integrals corresponding to some basis set.
 
-    Properties
-    ----------
-    possible_orbtypes : tuple of str
-        Possible orbital types from the given integrals.
-    num_orbs : int
-        Number of orbitals.
-
-    Methods:
-    ---------
-    __init__(self, integrals)
-    get_value(self, i, k, orbtype)
     """
 
     def __init__(self, integrals):
-        """Initialize Integrals.
+        """
 
         Parameters
         ----------
         integrals : {np.ndarray, tuple of np.ndarray}
             Values of the one-electron integrals corresponding to some basis set.
+            If one numpy array is given, then the orbitals are restricted or generalized.
+            If two numpy arrys are given, then the orbitals are unrestricted.
 
         Raises
         ------
         TypeError
-            If integrals are not provided as a numpy array or a tuple of numpy arrays
-            If integral matrices do not have dtype of `float` or `complex`
-            If integral matrices do not have the same dtype
-            If the number of one-electron integral matrices is not 1 or 2
-            If one-electron integral matrices are not two dimensional
-            If one-electron integral matrices are not square
+            If integrals are not provided as a numpy array or a tuple of numpy arrays.
+            If integral matrices do not have dtype of `float` or `complex`.
+            If integral matrices do not have the same dtype.
+            If the number of one-electron integral matrices is not 1 or 2.
+            If one-electron integral matrices are not two dimensional.
+            If one-electron integral matrices are not square.
             If one-electron integrals (for the unrestricted orbitals) has different number of alpha
-            and beta orbitals
+            and beta orbitals.
+
         """
         super().__init__(integrals)
         if len(self.integrals) not in (1, 2):
@@ -114,55 +131,54 @@ class OneElectronIntegrals(BaseIntegrals):
 
     @property
     def possible_orbtypes(self):
-        """Possible orbital types from the given orbitals."""
+        """Possible orbital types from the given orbitals.
+
+        Returns
+        -------
+        possible_orbtypes : tuple of str
+            Possible orbital types of the given integrals.
+            If one numpy array is given, then the orbitals are restricted or generalized.
+            If two numpy arrys are given, then the orbitals are unrestricted.
+
+        """
         if len(self.integrals) == 1:
             return ('restricted', 'generalized')
         elif len(self.integrals) == 2:
             return ('unrestricted', )
+        # FIXME: not the place for error
         else:
             raise NotImplementedError('Only one and two one-electron integral matrices are '
                                       'supported.')
-
-    @property
-    def num_orbs(self):
-        """Number of orbitals.
-
-        Assumes that the integrals have the same dimensionality in all axis
-        """
-        return self.integrals[0].shape[0]
-
-    @property
-    def dtype(self):
-        """Return the data type of the integrals."""
-        return self.integrals[0].dtype
 
     def get_value(self, i, k, orbtype):
         r"""Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
 
         .. math::
-            h_{ik} = \big< \phi_i \big | \hat{h} | \phi_k \big>
+
+            h_{ik} = \braket{\phi_i | \hat{h} | \phi_k}
 
         Parameters
         ----------
         i : int
-            Index of the spin orbital
+            Index of the spin orbital.
         k : int
-            Index of the spin orbital
+            Index of the spin orbital.
         orbtype : {'restricted', 'unrestricted', 'generalized'}
-            Flag that indicates the type of the orbital
+            Flag that indicates the type of the orbital.
 
         Returns
         -------
         h_ik : float
-            Value of the one-electron integral
+            Value of the one-electron integral.
 
         Raises
         ------
         ValueError
-            If indices are less than zero
-            If indices are greater than the number of spin orbitals
+            If indices are less than zero.
+            If indices are greater than the number of spin orbitals.
         TypeError
-            If orbtype is not one of 'restricted', 'unrestricted', 'generalized'
+            If orbtype is not one of 'restricted', 'unrestricted', 'generalized'.
+
         """
         # NOTE: NECESARY?
         if i < 0 or k < 0:
@@ -204,23 +220,33 @@ class OneElectronIntegrals(BaseIntegrals):
         r"""Apply Jacobi rotation to the integrals (orbitals).
 
         .. math::
-            J_{pq}
+
+            (J_{pq})_{ij} =
+            \begin{cases}
+                \delta_{ij} & \mbox{if $(i,j) \not\in \{(p,p), (p,q), (q,p), (q,q)\}$}\\
+                \cos \theta & \mbox {if $(i,j) \in \{(p,p), (q,q)\}$}\\
+                \sin \theta & \mbox {if $(i,j) = (p,q)$}\\
+                -\sin \theta & \mbox {if $(i,j) = (q,p)$}\\
+            \end{cases}
 
         Parameters
         ----------
         jacobi_indices : tuple/list of ints
-            2-tuple/list of indices of the orbitals that will be rotated
+            2-tuple/list of indices of the orbitals that will be rotated.
         theta : float
-            Angle with which the orbitals are rotated
+            Angle with which the orbitals are rotated.
 
+        Raises
+        ------
         TypeError
-            If `jacobi_indices` is not a tuple or list
-            If `jacobi_indices` does not have two elements
-            If `jacobi_indices` does not only contain integers
-            If `theta` is not a single float
+            If `jacobi_indices` is not a tuple or list.
+            If `jacobi_indices` does not have two elements.
+            If `jacobi_indices` does not only contain integers.
+            If `theta` is not a single float.
         ValueError
             If the indices are negative.
-            If the two indices are the same
+            If the two indices are the same.
+
         """
         # FIXME: this part is duplicated
         if not isinstance(jacobi_indices, (tuple, list)):
@@ -275,17 +301,18 @@ class OneElectronIntegrals(BaseIntegrals):
         Parameters
         ----------
         transforms : tuple of np.array
-            Transformation matrix
-            One transformation matrix is needed for restricted and generalized orbital types
-            Two transformation matrix is needed for unrestricted orbital types
+            Transformation matrix.
+            One transformation matrix is needed for restricted and generalized orbital types.
+            Two transformation matrix is needed for unrestricted orbital types.
 
         Raises
         ------
         TypeError
-            If the transformation matrix is not a list/tuple of numpy arrays
+            If the transformation matrix is not a list/tuple of numpy arrays.
         ValueError
-            If the number of transformation matrix does not match the number of integral blocks
-            If the number of orbitals does not match up with the transformation matrix
+            If the number of transformation matrix does not match the number of integral blocks.
+            If the number of orbitals does not match up with the transformation matrix.
+
         """
         if not (isinstance(transforms, (list, tuple)) and
                 all(isinstance(i, np.ndarray) for i in transforms)):
@@ -303,50 +330,43 @@ class OneElectronIntegrals(BaseIntegrals):
         self.integrals = tuple(new_integrals)
 
 
+@docstring_class(indent_level=1)
 class TwoElectronIntegrals(BaseIntegrals):
     """Class for storing two-electron integrals.
 
     Attributes
     ----------
     integrals : tuple of np.ndarray
-        Values of the two-electron integrals corresponding to some basis set.
+        Values of the two-electron integrals corresponding to some basis set
 
-    Properties
-    ----------
-    possible_orbtypes : tuple of str
-        Possible orbital types from the given integrals.
-    num_orbs : int
-        Number of orbitals.
-
-    Methods:
-    ---------
-    __init__(self, integrals)
-    get_value(self, i, k, orbtype)
     """
 
     def __init__(self, integrals, notation='physicist'):
-        """Initialize Integrals.
+        """
 
         Parameters
         ----------
         integrals : {np.ndarray, tuple of np.ndarray}
             Values of the one-electron integrals corresponding to some basis set.
+            If one numpy array is given, then the orbitals are restricted or generalized.
+            If three numpy arrys are given, then the orbitals are unrestricted.
         notation : {'physicist', 'chemist'}
             Notation of the integrals.
 
         Raises
         ------
         TypeError
-            If integrals are not provided as a numpy array or a tuple of numpy arrays
-            If integral matrices do not have dtype of `float` or `complex`
-            If integral matrices do not have the same dtype
-            If the number of two-electron integral matrices is not 1 or 3
-            If two-electron integral matrices are not four dimensional
-            If two-electron integral matrices does not have same dimensionality in all axis
+            If integrals are not provided as a numpy array or a tuple of numpy arrays.
+            If integral matrices do not have dtype of `float` or `complex`.
+            If integral matrices do not have the same dtype.
+            If the number of two-electron integral matrices is not 1 or 3.
+            If two-electron integral matrices are not four dimensional.
+            If two-electron integral matrices does not have same dimensionality in all axis.
             If two-electron integrals (for the unrestricted orbitals) has different number of alpha
-            and beta orbitals
+            and beta orbitals.
         ValueError
-            If the notation of the integrals is not supported
+            If the notation of the integrals is not supported.
+
         """
         super().__init__(integrals)
         if len(self.integrals) not in (1, 3):
@@ -367,7 +387,16 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     @property
     def possible_orbtypes(self):
-        """Possible orbital types from the given orbitals."""
+        """Possible orbital types from the given orbitals.
+
+        Returns
+        -------
+        possible_orbtypes : tuple of str
+            Possible orbital types of the given integrals.
+            If one numpy array is given, then the orbitals are restricted or generalized.
+            If three numpy arrys are given, then the orbitals are unrestricted.
+
+        """
         if len(self.integrals) == 1:
             return ('restricted', 'generalized')
         elif len(self.integrals) == 3:
@@ -376,53 +405,42 @@ class TwoElectronIntegrals(BaseIntegrals):
             raise NotImplementedError('Only one and three two-electron integral matrices are '
                                       'supported.')
 
-    @property
-    def num_orbs(self):
-        """Number of orbitals.
-
-        Assumes that the integrals have the same dimensionality in all axis
-        """
-        return self.integrals[0].shape[0]
-
-    @property
-    def dtype(self):
-        """Return the data type of the integrals."""
-        return self.integrals[0].dtype
-
     def get_value(self, i, j, k, l, orbtype, notation='physicist'):
-        r""" Gets value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`
+        r"""Get value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`.
 
         .. math::
-            \big< \theta \big | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \big> =
-            \big< \phi_i \phi_j \big | \hat{g} | \phi_k \phi_l \big>
+
+            \braket{\theta | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \theta} =
+            \braket{\phi_i \phi_j | \hat{g} | \phi_k \phi_l}
 
         Parameters
         ----------
         i : int
-            Index of the spin orbital
+            Index of the spin orbital.
         j : int
-            Index of the spin orbital
+            Index of the spin orbital.
         k : int
-            Index of the spin orbital
+            Index of the spin orbital.
         l : int
-            Index of the spin orbital
+            Index of the spin orbital.
         orbtype : {'restricted', 'unrestricted', 'generalized'}
-            Flag that indicates the type of the orbital
+            Flag that indicates the type of the orbital.
         notation : {'physicist', 'chemist'}
             Notation used to access the integrals.
 
         Returns
         -------
         g_ijkl : float
-            Value of the one electron hamiltonian
+            Value of the one electron hamiltonian.
 
         Raises
         ------
         ValueError
-            If indices are less than zero
-            If indices are greater than the number of spin orbitals
+            If indices are less than zero.
+            If indices are greater than the number of spin orbitals.
         TypeError
-            If orbtype is not one of 'restricted', 'unrestricted', 'generalized'
+            If orbtype is not one of 'restricted', 'unrestricted', 'generalized'.
+
         """
         # NOTE: NECESARY?
         if i < 0 or j < 0 or k < 0 or l < 0:
@@ -483,18 +501,20 @@ class TwoElectronIntegrals(BaseIntegrals):
         Parameters
         ----------
         jacobi_indices : tuple/list of ints
-            2-tuple/list of indices of the orbitals that will be rotated
+            2-tuple/list of indices of the orbitals that will be rotated.
         theta : float
-            Angle with which the orbitals are rotated
+            Angle with which the orbitals are rotated.
 
+        Raises
+        ------
         TypeError
-            If `jacobi_indices` is not a tuple or list
-            If `jacobi_indices` does not have two elements
-            If `jacobi_indices` does not only contain integers
-            If `theta` is not a single float
+            If `jacobi_indices` is not a tuple or list.
+            If `jacobi_indices` does not have two elements.
+            If `jacobi_indices` does not only contain integers.
+            If `theta` is not a single float.
         ValueError
             If the indices are negative.
-            If the two indices are the same
+            If the two indices are the same.
         """
         # FIXME: this part is duplicated
         if not isinstance(jacobi_indices, (tuple, list)):
@@ -585,20 +605,21 @@ class TwoElectronIntegrals(BaseIntegrals):
         Parameters
         ----------
         transforms : tuple of np.array
-            Transformation matrix
-            One transformation matrix is needed for restricted and generalized orbital types
-            Two transformation matrix is needed for unrestricted orbital types
+            Transformation matrix.
+            One transformation matrix is needed for restricted and generalized orbital types.
+            Two transformation matrix is needed for unrestricted orbital types.
 
         Raises
         ------
         TypeError
-            If the transformation matrix is not a list/tuple of numpy arrays
+            If the transformation matrix is not a list/tuple of numpy arrays.
         ValueError
             If the orbitals are restricted/generalized and the number of transformation matrices is
-            not exactly 1
+            not exactly 1.
             If the orbitals are unrestricted and the number of transformation matrices is not
-            exactly 2
-            If the number of orbitals does not match up with the transformation matrix
+            exactly 2.
+            If the number of orbitals does not match up with the transformation matrix.
+
         """
         if not (isinstance(transforms, (list, tuple)) and
                 all(isinstance(i, np.ndarray) for i in transforms)):

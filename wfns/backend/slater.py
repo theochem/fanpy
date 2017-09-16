@@ -1,151 +1,193 @@
-""" Collection of functions used to construct and manipulate Slater determinants
+"""Collection of functions used to construct and manipulate Slater determinants.
+
+Slater determinants are represented with a bitstring that describes their occupation. The :math:`0`
+would correspond to an unoccupied orbital and the :math:`1` would correspond to the occupied
+orbital. For example, `0b00110011` will have the occupied orbitals with indices :math:`0, 1, 4, 5`.
+
+For most of the time, the orbitals are spin orbitals, and their spin is designated by splitting the
+orbitals into two blocks. If there are :math:`K` spatial orbitals, then the first :math:`K` spin
+orbitals are the alpha orbitals, and the second :math:`K` spin orbitals are the beta orbitals. The
+spin orbitals can be equivalently described with alternating alpha and beta spin orbitals, but in
+the current module, the Slater determinant will be assumed to be organized in the "block" format.
+
+Though Python integers (in the binary format) can be used as a representation of the occupation
+vector, the `gmpy2.mpz` object is used by default. The `gmpy2` is a module that efficiently handles
+the bitwise operation of arbitrary length bitstrings. Note that all of these methods can work with
+both integers and `gmpy2.mpz` objects. However, the two objects, e.g. `2` and `gmpy2.mpz(2)` are
+different objects and may cause conflict when storing and finding them from a list/dictionary/set.
 
 Functions
 ---------
-occ(sd, i)
-    Check if the orbital, `i`, is occupied in Slater determinant, `sd`
-is_alpha(i, nspatial)
-    Checks if spin orbital index `i` belongs to an alpha spin orbital
-spatial_index(i, nspatial)
-    Converts the spin orbital index, `i`, to the spatial orbital index
-total_occ(sd)
-    Returns the total number of occupied orbitals in a Slater determinant
-annihilate(sd, *indices)
-    Annihilates occupied orbitals of a Slater determinant
-create(sd, *indices)
-    Creates orbitals in a Slater determinant
-excite(sd, *indices)
-    Excites electrons from one set of orbitals to another in a Slater determinant
-ground(nocc, norbs)
-    Creates the ground state Slater determinant with `nocc` occupied orbitals and `norbs` spin
-    orbitals
-is_internal_sd(sd)
-    Checks if given Slater determinant is consistent with the internal Slater determinant
-    representation
-internal_sd(identifier)
-    Creates a Slater determinant that is consistent with the inner workings of this module
-occ_indices(sd)
-    Returns indices of all of the occupied orbitals
-vir_indices(sd, norbs)
-    Returns indices of all of the virtual orbitals
-shared(sd1, sd2)
-    Returns indices of all orbitals shared between two Slater determinants, `sd1` and `sd2`
-diff(sd1, sd2)
-    Returns the difference between two Slater determinants, `sd1` and `sd2`
-combine_spin(alpha_bits, beta_bits, nspatial)
-    Constructs a Slater determinant in block form from alpha and beta occupations
-split_spin(block_sd, nspatial)
-    Splits a Slater determinant in block form to the alpha and beta parts
-interleave_index(i, nspatial)
-    Converts orbital index, `i`, of Slater determinant in block form to shuffled form
-deinterleave_index(i, nspatial)
-    Converts orbital index, `i`, of Slater determinant in shuffled form to block form
-interleave(block_sd, nspatial)
-    Converts Slater determinants from block form to shuffled form
-deinterleave(shuffled_sd, nspatial)
-    Converts Slater determinants from shuffled form to block form
-get_spin(sd, nspatial)
-    Returns the spin of the given slater determinant
-get_seniority(sd, nspatial)
-    Returns the seniority of the given Slater determinant
-find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True)
-    Returns the number of adjacent swaps necessary to convert a set of indices into increasing order
-find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True)
-    Returns the number of transpostions necessary to convert a set of indices into increasing order
-    using brute force
+is_internal_sd(sd) : bool
+    Check if given Slater determinant is the same type as the one used internally in this module.
+internal_sd(identifier) : gmpy2.mpz
+    Create a Slater detrminant as a `gmpy2.mpz` object.
+occ(sd, i) : bool
+    Check if a given Slater determinant has orbital `i` occupied.
+occ_indices(sd) : tuple of ints
+    Return indices of the occupied orbitals.
+vir_indices(sd, norbs) : tuple of ints
+    Return the indices of all of the virtual orbitals.
+total_occ(sd) : int
+    Return the total number of occupied orbitals in a Slater determinant.
+is_alpha(i, nspatial) : bool
+    Check if index `i` is an alpha spin orbital.
+spatial_index(i, nspatial) : int
+    Return the spatial orbital index that corresponds to the spin orbital `i`.
+annihilate(sd, *indices) : {gmpy2.mpz, None}
+    Annihilate the occupied orbital `i` from a Slater determinant.
+create(sd, *indices) : {gmpy2.mpz, None}
+    Create electrons in the orbitals that correspond to the given indices.
+excite(sd, *indices) : {gmpy2.mpz, None}
+    Excite electrons from occupied orbitals to virtual orbitals.
+ground(nocc, norbs) : {gmpy2.mpz}
+    Create a ground state Slater determinant.
+shared(sd1, sd2) : gmpy2.mpz
+    Return similarity between two Slater determinants.
+diff(sd1, sd2) : 2-tuple of tuple of ints
+    Return the difference between two Slater determinants.
+combine_spin(alpha_bits, beta_bits, nspatial) : gmpy2.mpz
+    Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
+
 """
 import gmpy2
 import numpy as np
+from pydocstring.wrapper import docstring
 
-__all__ = []
 
-
-def occ(sd, i):
-    """
-    Checks if a given Slater determinant has orbital `i` occupied.
+# FIXME: necessary?
+@docstring(indent_level=1)
+def is_internal_sd(sd):
+    """Check if given Slater determinant is a `gmpy2.mpz` object.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    i : int
-        Index for an occupied orbital
+    sd : {int, gmpy2.mpz}
+        Some representation of a Slater determinant.
 
     Returns
     -------
-    bool
-        True if occupied
-        False if not occupied
+    True if it is the right type.
+    False if it is not the right type.
+
+    """
+    return isinstance(sd, type(gmpy2.mpz()))
+
+
+# FIXME: necessary?
+@docstring(indent_level=1)
+def internal_sd(identifier):
+    """Create a Slater detrminant as a `gmpy2.mpz` object.
+
+    Parameters
+    ----------
+    identifier : {int, gmpy2.mpz}
+        Occupation vector of a Slater determinant.
+        Binary form of the integer describes the occupation of each orbital.
+
+    Returns
+    -------
+    sd : gmpy2.mpz
+        Representation of Slater determinant within this module.
+
+    Raises
+    ------
+    TypeError
+        If `identifier` not an integer or `gmpy2.mpz` object.
+
+    """
+    if isinstance(identifier, int):
+        return gmpy2.mpz(identifier)
+    elif is_internal_sd(identifier):
+        return identifier
+    else:
+        raise TypeError('Unsupported Slater determinant form, {0}'.format(type(identifier)))
+
+
+@docstring(indent_level=1)
+def occ(sd, i):
+    """Check if a given Slater determinant has orbital `i` occupied.
+
+    Parameters
+    ----------
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    i : int
+        Index of an orbital.
+
+    Returns
+    -------
+    is_occ : bool
+        True if orbital is occupied.
+        False if orbital is not occupied.
+
+    """
+    return sd is not None and gmpy2.bit_test(sd, i)
+
+
+@docstring(indent_level=1)
+def occ_indices(sd):
+    """Return indices of the occupied orbitals.
+
+    Parameters
+    ----------
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+
+    Returns
+    -------
+    occ_indices : tuple of int
+        Tuple of occupied orbitals indices.
+
     """
     if sd is None:
-        return False
-    else:
-        return gmpy2.bit_test(sd, i)
+        return ()
+    output = [gmpy2.bit_scan1(sd, 0)]
+    while output[-1] is not None:
+        output.append(gmpy2.bit_scan1(sd, output[-1] + 1))
+    return tuple(output[:-1])
 
 
-def is_alpha(i, nspatial):
-    """ Checks if index `i` belongs to an alpha spin orbital
-
-    Parameters
-    ----------
-    i : int
-        Index of the spin orbital in the Slater determinant
-    nspatial : int
-        Number of spatial orbitals
-
-    Returns
-    -------
-    True if alpha orbital
-    False if beta orbital
-
-    Note
-    ----
-    Erratic behaviour of nspatial <= 0
-    Erratic behaviour of i < 0 or i > 2*nspatial
-    """
-    return i < nspatial
-
-
-def spatial_index(i, nspatial):
-    """ Returns the index of the spatial orbital that corresponds to the
-    spin orbital `i`
+@docstring(indent_level=1)
+def vir_indices(sd, norbs):
+    """Return the indices of all of the virtual orbitals.
 
     Parameters
     ----------
-    i : int
-        Index of the spin orbital in the Slater determinant
-    nspatial : int
-        Number of spatial orbitals
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    norbs : int
+        Total number of orbitals.
 
     Returns
     -------
-    ind_spatial : int
-        Index of the spatial orbital that corresponds to the spin orbital `i`
+    occ_indices : tuple of int
+        Tuple of virtual orbital indices.
 
-    Note
-    ----
-    Erratic behaviour of nspatial <= 0
-    Erratic behaviour of i < 0 or i > 2*nspatial
     """
-    if is_alpha(i, nspatial):
-        return i
-    else:
-        return i - nspatial
+    # FIXME: no check for the total number of orbitals (can be less than actual number)
+    if sd is None or norbs <= 0:
+        return ()
+    output = [gmpy2.bit_scan0(sd, 0)]
+    while output[-1] < norbs:
+        output.append(gmpy2.bit_scan0(sd, output[-1] + 1))
+    return tuple(output[:-1])
 
 
+@docstring(indent_level=1)
 def total_occ(sd):
-    """
-    Returns the total number of occupied orbitals in a Slater determinant
+    """Return the total number of occupied orbitals in a Slater determinant.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
 
     Returns
     -------
-    int
-        Number of occupied orbitals in Slater determinant
+    total _occ : int
+        Number of occupied orbitals.
+
     """
     if sd is None:
         return 0
@@ -153,48 +195,113 @@ def total_occ(sd):
         return gmpy2.popcount(sd)
 
 
-def annihilate(sd, *indices):
-    """
-    Annihilates an electron in the orbital `i` in a Slater determinant.
+@docstring(indent_level=1)
+def is_alpha(i, nspatial):
+    """Check if index `i` is an alpha spin orbital.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    indices : int
-        The indices of the orbitals to annihilate
+    i : int
+        Index of the spin orbital in the Slater determinant.
+    nspatial : int
+        Number of spatial orbitals.
 
     Returns
     -------
-    sd : int or None
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        If the orbital is not occupied is annihilated, None is returned.
+    is_alpha : bool
+        True if alpha orbital.
+        False if beta orbital.
+
+    Raises
+    ------
+    ValueError
+        If `nspatial <= 0`.
+        If `i < 0`.
+        If `i > 2*nspatial`.
+
+    """
+    if nspatial <= 0 or i < 0 or i > 2*nspatial:
+        raise ValueError('If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.')
+    return i < nspatial
+
+
+@docstring(indent_level=1)
+def spatial_index(i, nspatial):
+    """Return the spatial orbital index that corresponds to the spin orbital `i`.
+
+    Parameters
+    ----------
+    i : int
+        Spin orbital index in the Slater determinant.
+    nspatial : int
+        Number of spatial orbitals.
+
+    Returns
+    -------
+    ind_spatial : int
+        Spatial orbital index that corresponds to the spin orbital `i`.
+
+    Raises
+    ------
+    ValueError
+        If `nspatial <= 0`.
+        If `i < 0`.
+        If `i > 2*nspatial`.
+
+    """
+    if nspatial <= 0 or i < 0 or i > 2*nspatial:
+        raise ValueError('If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.')
+
+    if is_alpha(i, nspatial):
+        return i
+    else:
+        return i - nspatial
+
+
+@docstring(indent_level=1)
+def annihilate(sd, *indices):
+    """Annihilate the occupied orbital `i` from a Slater determinant.
+
+    Parameters
+    ----------
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    indices : int
+        The indices of the orbitals to annihilate.
+
+    Returns
+    -------
+    sd : {gmpy2.mpz, None}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        If an electron is annihilated in a virtual orbital, `None` is returned.
+
     """
     for i in indices:
-        # if orbital is occupied
-        if occ(sd, i):
-            sd = gmpy2.bit_flip(sd, i)
-        else:
+        # if orbital is not occupied
+        if not occ(sd, i):
             return None
+        # if orbital is not occupied
+        sd = gmpy2.bit_flip(sd, i)
     return sd
 
 
+@docstring(indent_level=1)
 def create(sd, *indices):
-    """
-    Creates an electron in the orbital `i` in a Slater determinant.
+    """Create electrons in the orbitals that correspond to the given indices.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
     indices : int
-        The indices of the orbitals to create
+        The indices of the orbitals to create.
 
     Returns
     -------
-    sd : int or None
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        If the orbital is occupied is annihilated, None is returned.
+    sd : {gmpy2.mpz, None}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        If an electron is created in an occupied orbital, `None` is returned.
+
     """
     for i in indices:
         if not occ(sd, i) and sd is not None:
@@ -204,30 +311,30 @@ def create(sd, *indices):
     return sd
 
 
+@docstring(indent_level=1)
 def excite(sd, *indices):
-    """
-    Excite electrons from first half of `indices:` to the second half of `indices`
+    """Excite electrons from occupied orbitals to virtual orbitals.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
     indices : int
-        The indices of the orbitals to annihilate and create
-        The first half contain indices of orbitals to annihilate
-        The second half contain indices of orbitals to create
+        The indices of the orbitals to annihilate and create.
+        The first half contain indices of orbitals to annihilate.
+        The second half contain indices of orbitals to create.
 
     Returns
     -------
-    excited_sd : int or None
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    If the orbital `i` is unoccupied or the orbital `a` is occupied,
-        None is returned
+    excited_sd : {gmpy2.mpz, None}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        If an occupied orbital is unoccupied or a virtual orbital is occupied, `None` is returned.
 
     Raises
     ------
     ValueError
-        If the length of indices is not even
+        If the length of indices is not even (cannot evenly split up the indices in two).
+
     """
     if (len(indices) % 2) != 0:
         raise ValueError("Unqual number of creators and annihilators")
@@ -236,34 +343,35 @@ def excite(sd, *indices):
     return sd
 
 
+@docstring(indent_level=1)
 def ground(nocc, norbs):
-    """
-    Creates a ground state Slater determinant (no occupied spin-orbitals)
+    """Create a ground state Slater determinant.
+
+    If the number of electrons is odd, then the last electron is put into an alpha orbital.
 
     Parameters
     ----------
-    n : int
-        Number of occupied spin-orbitals
+    nocc : int
+        Number of occupied spin-orbitals.
     norbs : int
-        Total number of spin-orbitals
+        Total number of spin-orbitals.
 
     Returns
     -------
-    ground_sd : gmpy2.mpz instance
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    ground_sd : gmpy2.mpz
+        Integer that describes the occupation of a Slater determinant as a bitstring.
 
     Raises
     ------
     ValueError
-        If the number of occupied orbitals is greater than the total number of orbitals
-        If the total number of spin orbitals is odd
+        If `nocc > norbs`.
+        If `norbs` is odd.
 
-    Note
-    ----
-    Assumes that the spin-orbitals are ordered by energy and that the ground state Slater
-    determinant is composed of the orbitals with the lowest energy
-    Orders the alpha orbitals first, then the beta orbitals
-    If the number of electrons is odd, then the last electron is put into an alpha orbital
+    Notes
+    -----
+    Assumes that the spin-orbitals are ordered by energy from lowest to greatest. The occupation is
+    assumed to have the alpha block frist, then the beta block.
+
     """
     if nocc > norbs:
         raise ValueError('Number of occupied spin-orbitals must be less than the total number of'
@@ -275,136 +383,45 @@ def ground(nocc, norbs):
     return alpha_bits | beta_bits
 
 
-def is_internal_sd(sd):
-    """ Checks if given Slater determinant is the same type as the one used internally in this
-    module
-
-    Parameters
-    ----------
-    sd
-         Some representation of a Slater determinant
-
-    Returns
-    -------
-    True if it is the right type
-    True if it is not the right type
-    """
-    return isinstance(sd, type(gmpy2.mpz()))
-
-
-def internal_sd(identifier):
-    """ Creates a Slater determinant that is consistent with the inner workings of this module
-
-    Parameters
-    ----------
-    identifier : int, list of int
-        Some form of identifying a Slater determinant
-        Can be an integer, whose binary form corresponds to the occupations
-        Can be a list of integer, the indices of spin orbitals that are occupied
-
-    Returns
-    -------
-    sd : gmpy2.mpz
-        Internal representation of Slater determinant within this module
-
-    Raises
-    ------
-    TypeError
-        If not an integer and not an iterable
-    """
-    if isinstance(identifier, int):
-        return gmpy2.mpz(identifier)
-    elif is_internal_sd(identifier):
-        return identifier
-    else:
-        raise TypeError('Unsupported Slater determinant form, {0}'.format(type(identifier)))
-
-
-def occ_indices(sd):
-    """
-    Returns indices of all of the occupied orbitals
-
-    Parameters
-    ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-
-    Returns
-    -------
-    occ_indices : tuple of int
-        Tuple of indices that corresponds to the occupied orbitals
-    """
-    if sd is None:
-        return ()
-    output = [gmpy2.bit_scan1(sd, 0)]
-    while output[-1] is not None:
-        output.append(gmpy2.bit_scan1(sd, output[-1] + 1))
-    return tuple(output[:-1])
-
-
-def vir_indices(sd, norbs):
-    """
-    Returns indices of all of the virtual orbitals
-
-    Parameters
-    ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    norbs : int
-        Total number of spin orbitals
-
-    Returns
-    -------
-    occ_indices : tuple of int
-        Tuple of indices that corresponds to the virtual orbitals
-    """
-    # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if sd is None or norbs <= 0:
-        return ()
-    output = [gmpy2.bit_scan0(sd, 0)]
-    while output[-1] < norbs:
-        output.append(gmpy2.bit_scan0(sd, output[-1] + 1))
-    return tuple(output[:-1])
-
-
+# FIXME: API for shared and diff are too different.
+@docstring(indent_level=1)
 def shared(sd1, sd2):
-    """
-    Finds the orbitals shared between two Slater determinants
+    """Return similarity between two Slater determinants.
 
     Parameters
     ----------
-    sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd1 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    sd2 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
 
     Returns
     -------
-    tuple of ints
-        Tuple of ints are the indices of the occupied orbitals shared by the two
-        Slater determinants
+    shared : gmpy2.mpz
+        Integer that describes the occupied orbitals that are shared between two Slater
+        determinants.
+
     """
     return sd1 & sd2
 
 
+@docstring(indent_level=1)
 def diff(sd1, sd2):
-    """
-    Returns the difference between two Slater determinants
+    """Return the difference between two Slater determinants.
 
     Parameters
     ----------
-    sd1 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-    sd2 : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd1 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    sd2 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
 
     Returns
     -------
-    2-tuple of tuple of ints
-        First tuple of ints are the indices of the occupied orbitals of sd1 that
-        are not occupied in sd2
-        Second tuple of ints are the indices of the occupied orbitals of sd2 that
-        are not occupied in sd1
+    diff : 2-tuple of tuple of ints
+        First tuple are the occupied orbital indices of `sd1` that are not occupied in `sd2`.
+        Second tuple are the occupied orbital indices of `sd2` that are not occupied in `sd1`.
+
     """
     sd_diff = sd1 ^ sd2
     sd1_diff = sd_diff & sd1
@@ -412,70 +429,73 @@ def diff(sd1, sd2):
     return (occ_indices(sd1_diff), occ_indices(sd2_diff))
 
 
+@docstring(indent_level=1)
 def combine_spin(alpha_bits, beta_bits, nspatial):
-    """ Constructs a Slater determinant from the occupation of alpha and beta spin orbitals
+    """Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
 
     Parameters
     ----------
-    alpha_bits : int
-        Integer that describes the occupation of alpha spin orbitals as a bitstring
-    beta_bits : int
-        Integer that describes the occupation of beta spin orbitals as a bitstring
+    alpha_bits : {int, gmpy2.mpz}
+        Integer that describes the occupation of alpha spin orbitals as a bitstring.
+    beta_bits : {int, gmpy2.mpz}
+        Integer that describes the occupation of beta spin orbitals as a bitstring.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
-    block_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than nspatial correspond to the alpha spin orbitals
-        Indices greater than or equal to nspatial correspond to the beta spin orbitals
-
-    Note
-    ----
-    Erratic behaviour if the total number of spatial orbitals is less than the the
-    actual number (i.e. if there are any occupied orbitals with indices greater than
-    nspatial)
+    block_sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Indices less than `nspatial` correspond to the alpha spin orbitals.
+        Indices greater than or equal to `nspatial` correspond to the beta spin orbitals.
 
     Raises
     ------
     ValueError
-        If number of spatial orbitals is less than or equal to 0
+        If `nspatial <= 0`.
+
+    Notes
+    -----
+    Erratic behaviour if the total number of spatial orbitals is less than the the actual number
+    (i.e. if there are any occupied orbitals with indices greater than nspatial).
+
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
-        raise ValueError('Number of spatial orbitals must be greater than 0')
+        raise ValueError('Number of spatial orbitals must be greater than 0.')
     return alpha_bits | (beta_bits << nspatial)
 
 
+@docstring(indent_level=1)
 def split_spin(block_sd, nspatial):
-    """ Splits a Slater determinant into the alpha and beta parts
+    """Split a Slater determinant into the alpha and beta parts.
 
     Parameters
     ----------
-    block_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than nspatial correspond to the alpha spin orbitals
-        Indices greater than or equal to nspatial correspond to the beta spin orbitals
+    block_sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Indices less than `nspatial` correspond to the alpha spin orbitals.
+        Indices greater than or equal to `nspatial` correspond to the beta spin orbitals.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
     alpha_bits : int
-        Integer that describes the occupation of alpha spin orbitals as a bitstring
+        Integer that describes the occupation of alpha spin-orbitals as a bitstring.
     beta_bits : int
-        Integer that describes the occupation of beta spin orbitals as a bitstring
+        Integer that describes the occupation of beta spin-orbitals as a bitstring.
 
     Raises
     ------
     ValueError
-        If the number of spatial orbitals is less than or equal to 0
-    Note
-    ----
-    Erratic behaviour if the total number of spatial orbitals is less than the the
-    actual number (i.e. if there are any occupied orbitals with indices greater than
-    nspatial)
+        If `nspatial <= 0`.
+
+    Notes
+    -----
+    Erratic behaviour if the total number of spatial orbitals is less than the the actual number
+    (i.e. if there are any occupied orbitals with indices greater than nspatial).
+
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
@@ -485,101 +505,106 @@ def split_spin(block_sd, nspatial):
     return (alpha_bits, beta_bits)
 
 
+@docstring(indent_level=1)
 def interleave_index(i, nspatial):
-    """ Converts index of an orbital in block sd notation to that of interleaved
-    sd notation
+    """Convert orbital index in block-sd notation to that of interleaved-sd notation.
 
     Parameters
     ----------
     i : int
-        Index of orbital in block sd notation
+        Index of orbital in block-sd notation.
     nspatial : int
-        Number of spatial orbitals
+        Number of spatial orbitals.
 
     Returns
     -------
-    Index of the same orbital in interleaved notation
+    interleave_index : int
+        Index of the same orbital in interleaved notation.
 
     Raises
     ------
     ValueError
-        If the index is less than zero
-        If the index is greater than or equal to the number of spin orbitals
+        If the index is less than zero.
+        If the index is greater than or equal to the number of spin orbitals.
+
     """
     if i < 0:
-        raise ValueError('Index must be greater than or equal to zero')
+        raise ValueError('Index must be greater than or equal to zero.')
     elif i >= 2*nspatial:
-        raise ValueError('Index must be less than the number of spin orbitals')
+        raise ValueError('Index must be less than the number of spin orbitals.')
     if i < nspatial:
         return 2*i
     else:
         return 2*(i - nspatial) + 1
 
 
+@docstring(indent_level=1)
 def deinterleave_index(i, nspatial):
-    """ Converts index of an orbital in interleaved sd notation to that of block sd notation
+    """Convert an orbital index in interleaved-sd notation to that of block-sd notation.
 
     Parameters
     ----------
     i : int
-        Index of orbital in interleaved sd notation
+        Index of orbital in interleaved-sd notation.
     nspatial : int
-        Number of spatial orbitals
+        Number of spatial orbitals.
 
     Returns
     -------
-    Index of the same orbital in block notation
+    block_index : int
+        Index of the same orbital in block notation.
 
     Raises
     ------
     ValueError
-        If the index is less than zero
-        If the index is greater than or equal to the number of spin orbitals
+        If the index is less than zero.
+        If the index is greater than or equal to the number of spin orbitals.
+
     """
     if i < 0:
-        raise ValueError('Index must be greater than or equal to zero')
+        raise ValueError('Index must be greater than or equal to zero.')
     elif i >= 2*nspatial:
-        raise ValueError('Index must be less than the number of spin orbitals')
+        raise ValueError('Index must be less than the number of spin orbitals.')
     if i % 2 == 0:
         return i//2
     else:
         return i//2 + nspatial
 
 
+@docstring(indent_level=1)
 def interleave(block_sd, nspatial):
-    """ Turns sd from block form to the shuffled form
+    """Convert block-sd to the interleaved-sd form.
 
-    Block form:
-        alpha1, alpha2, ..., beta1, beta2, ...
-    Shuffled form:
-        alpha1, beta1, alpha2, beta2, ...
+    Block form: alpha1, alpha2, ..., beta1, beta2, ...
+
+    Shuffled form: alpha1, beta1, alpha2, beta2, ...
 
     Parameters
     ----------
-    block_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than nspatial correspond to the alpha spin orbitals
-        Indices greater than or equal to nspatial correspond to the beta spin orbitals
+    block_sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Indices less than nspatial correspond to the alpha spin orbitals.
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
-    shuffled_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Odd indices correspond to the alpha spin orbitals
-        Even indices correspond to the beta spin orbitals
+    shuffled_sd : gmpy2.mpz
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Odd indices correspond to the alpha spin orbitals.
+        Even indices correspond to the beta spin orbitals.
 
     Raises
     ------
     ValueError
-        If the number of spatial orbitals is less than or equal to 0
+        If `nspatial <= 0`.
 
-    Note
-    ----
-    Erratic behaviour if the total number of spatial orbitals is less than the the
-    actual number (i.e. if there are any occupied orbitals with indices greater than
-    nspatial)
+    Notes
+    -----
+    Erratic behaviour if the total number of spatial orbitals is less than the the actual number
+    (i.e. if there are any occupied orbitals with indices greater than nspatial).
+
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
@@ -609,40 +634,40 @@ def interleave(block_sd, nspatial):
     # return shuffled_sd
 
 
+@docstring(indent_level=1)
 def deinterleave(shuffled_sd, nspatial):
-    """ Turns sd from shuffled form to the block form
+    """Turn sd from shuffled form to the block form
 
-    Shuffled form:
-        alpha1, beta1, alpha2, beta2, ...
-    Block form:
-        alpha1, alpha2, ..., beta1, beta2, ...
+    Block form: alpha1, alpha2, ..., beta1, beta2, ...
+
+    Shuffled form: alpha1, beta1, alpha2, beta2, ...
 
     Parameters
     ----------
-    shuffled_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Odd indices correspond to the alpha spin orbitals
-        Even indices correspond to the beta spin orbitals
+    shuffled_sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Odd indices correspond to the alpha spin orbitals.
+        Even indices correspond to the beta spin orbitals.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
-    block_sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
-        Indices less than nspatial correspond to the alpha spin orbitals
-        Indices greater than or equal to nspatial correspond to the beta spin orbitals
+    block_sd : gmpy2.mpz
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+        Indices less than nspatial correspond to the alpha spin orbitals.
+        Indices greater than or equal to nspatial correspond to the beta spin orbitals.
 
     Raises
     ------
     ValueError
-        If the number of spatial orbitals is less than or equal to 0
+        If `nspatial <= 0`.
 
-    Note
-    ----
-    Erratic behaviour if the total number of spatial orbitals is less than the the
-    actual number (i.e. if there are any occupied orbitals with indices greater than
-    nspatial)
+    Notes
+    -----
+    Erratic behaviour if the total number of spatial orbitals is less than the the actual number
+    (i.e. if there are any occupied orbitals with indices greater than nspatial).
+
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
@@ -673,93 +698,100 @@ def deinterleave(shuffled_sd, nspatial):
     # return shuffled_sd
 
 
+@docstring(indent_level=1)
 def get_spin(sd, nspatial):
-    """ Returns the spin of the given slater determinant
+    """Return the spin of the given Slater determinant.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
-    spin : int
-        Spin of the given slaterdeterminant
+    spin : float
+        Spin of the given Slater determinant.
 
     Raises
     ------
     ValueError
-        If number of spatial orbitals is less than or equal to zero
+        If `nspatial <= 0`.
 
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
     return (0.5)*(total_occ(alpha_bits) - total_occ(beta_bits))
 
 
+@docstring(indent_level=1)
 def get_seniority(sd, nspatial):
-    """ Returns the seniority of the given Slater determinant
+    """Return the seniority of the given Slater determinant.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
     nspatial : int
-        Total number of spatial orbitals
+        Total number of spatial orbitals.
 
     Returns
     -------
     seniority : int
-        Seniority of the given Slater determinant
+        Seniority of the given Slater determinant.
 
     Raises
     ------
     ValueError
-        If number of spatial orbitals is less than or equal to zero
+        If `nspatial <= 0`.
+
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
     return total_occ(alpha_bits ^ beta_bits)
 
 
 # FIXME: bad location
+@docstring(indent_level=1)
 def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=False):
-    """ Finds the number of transpositions necessary to order an arbitrary order
-    of annihilators into a strictly increasing order.
+    """Find the number of transpositions needed to order a set of annihilators.
+
+    Basically, we count the number of times each annihilator needs to hop over another to sort it.
+    If the indices of the annihilators to its left are greater than its index, then it hops over
+    those annihilators. Once the annihilator with the lowest index hops over all annihilators with a
+    lower index to its left, the annihilator with the second lowest index hops, and so on, until the
+    annihilators are ordered from smallest to largest indices.
 
     Parameters
     ----------
-    jumbled_set : tuple, iterable
-        Nonordered set of indices of the annihilators
-    ordered_set : tuple, iterable
-        Ordered set of indices that will be used to count the number of transpositions from the
-        jumbled set of indices.
-        If not provided, the ordered set is generated by sorting the jumbled set
-        If provided, the provided ordered set is used
-        Must be strictly increasing order
+    jumbled_set : {tuple, list}
+        Set of indices of the annihilators.
+    ordered_set : {tuple, list}
+        Set of indices ordered in increasing order.
+        If not provided, then the given indices are ordered.
     is_decreasing : bool
         If True, then the number of transpositions required to get strictly decreasing list is
-        returned. Note that the ordered_set must still be given in an increasing order.
+        returned. Note that the `ordered_set` must still be given in an increasing order.
         Default is False.
 
     Returns
     -------
     num_trans : int
-        Number of hops needed to sort the jumbled_set
+        Number of adjacent transpositions needed to sort the `jumbled_set`.
 
     Raises
     ------
     ValueError
-        If ordered_set is not strictly increasing
+        If `ordered_set` is not strictly increasing.
 
-    Note
-    ----
-    Basically, we count the number of times each annihilator needs to hop over another
-    to sort it. If the indices of the annihilators to its left are greater than its
-    indext, then it hops over that annihilator. Once the annihilator with the lowest index
-    hops over all annihilators with a lower index to its left, the annihilator with the
-    second lowest index hops, and so on, until the annihilators are ordered from
-    smallest to largest indices.
+    See Also
+    --------
+    * `wfns.slater.find_num_trans_dumb`
+
+    Notes
+    -----
+    Though only adjacent elements are swapped, the order of the permutation that orders the given
+    set should be the same.
+
     """
     jumbled_set = np.array(jumbled_set)
     if is_decreasing:
@@ -790,46 +822,36 @@ def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=False):
 
 
 # FIXME: bad location
+# FIXME: remove?
+@docstring(indent_level=1)
 def find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True):
-    """ Finds the number of transpositions necessary to order an arbitrary order
-    of annihilators (or annihilators) into a strictly increasing order.
+    """Find the number of transpositions needed to order a set of annihilators in increasing order.
 
-    Same as find_num_trans except it can loop over all numbers in the jumbled set
-    twice.
+    This method has the same functionality as `find_num_trans`, execept the number of swaps is
+    counted explicitly for each index. This was used for debugging purposes.
 
     Parameters
     ----------
-    jumbled_set : tuple, iterable
-        Nonordered set of indices of the annihilators
-    ordered_set : tuple, iterable
-        Ordered set of indices that will be used to count the number of transpositions from the
-        jumbled set of indices.
-        If not provided, the ordered set is generated by sorting the jumbled set
-        If provided, the provided ordered set is used
-        Must be strictly increasing
+    jumbled_set : {tuple, list}
+        Set of indices of the annihilators.
+    ordered_set : {tuple, list}
+        Set of indices ordered in increasing order.
+        If not provided, then the given indices are ordered.
     is_decreasing : bool
         If True, then the number of transpositions required to get strictly decreasing list is
-        returned. Note that the ordered_set must still be given in an increasing order.
+        returned. Note that the `ordered_set` must still be given in an increasing order.
         Default is False.
 
     Returns
     -------
     num_trans : int
-        Number of hops needed to sort the jumbled_set
+        Number of hops needed to sort the `jumbled_set`.
 
     Raises
     ------
     ValueError
-        If ordered_set is not strictly increasing
+        If `ordered_set` is not strictly increasing.
 
-    Note
-    ----
-    Basically, we count the number of times each annihilator needs to hop over another
-    to sort it. If the indices of the annihilators to its left are greater than its
-    indext, then it hops over that annihilator. Once the annihilator with the lowest index
-    hops over all annihilators with a lower index to its left, the annihilator with the
-    second lowest index hops, and so on, until the annihilators are ordered from
-    smallest to largest indices.
     """
     if is_decreasing:
         jumbled_set = jumbled_set[::-1]
@@ -854,30 +876,33 @@ def find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True):
 
 
 # FIXME: location? and pretty similar to occ_indices
+# FIXME: API different from other `find_num_trans`
+@docstring(indent_level=1)
 def find_num_trans_swap(sd, pos_current, pos_future):
-    """ Finds the number of transpositions necessary to swap one orbital into the given position.
+    """Find the number of swaps needed to move an orbital from one position to another.
 
     Parameters
     ----------
-    sd : int
-        Integer that describes the occupation of a Slater determinant as a bitstring
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
     pos_current : int
-        Position of the orbital that needs to be moved
+        Position of the orbital that needs to be moved.
     pos_future : int
-        Position to which the orbital is moved
+        Position to which the orbital is moved.
 
     Returns
     -------
     num_trans : int
-        Number of hops needed to move the orbital
+        Number of hops needed to move the orbital.
 
     Raises
     ------
     ValueError
-        If Slater determinant is None
-        If position is not a positive integer
-        If current orbital position is not occupied
-        If future orbital position is occupied
+        If Slater determinant is None.
+        If position is not a positive integer.
+        If current orbital position is not occupied.
+        If future orbital position is occupied.
+
     """
     if sd is None:
         raise ValueError('Bad Slater determinant is given.')

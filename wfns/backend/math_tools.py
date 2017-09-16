@@ -1,4 +1,4 @@
-""" Math backend
+"""Functions for doing some math.
 
 Functions
 ---------
@@ -12,19 +12,18 @@ adjugate(matrix)
     Returns adjugate of a matrix
 permanent_borchardt(matrix)
     Computes the permanent of rank-2 Cauchy matrix
+
 """
 from __future__ import absolute_import, division, print_function
 from itertools import permutations, combinations
 import numpy as np
 from scipy.misc import comb
+from pydocstring.wrapper import docstring
 
-__all__ = []
 
-
+@docstring(indent_level=1)
 def binomial(n, k):
-    """
-    Return the binomial coefficient of integers ``n`` and ``k``, or "``n``
-    choose ``k``".
+    """Return the binomial coefficient of integers ``n`` and ``k``, or "``n`` choose ``k``".
 
     Parameters
     ----------
@@ -36,29 +35,33 @@ def binomial(n, k):
     Returns
     -------
     result : int
-        n choose k.
+        Number of ways to select :math:`k` objects out of :math:`n` objects.
 
     """
     return comb(n, k, exact=True)
 
 
+@docstring(indent_level=1)
 def adjugate(matrix):
-    r""" Returns the adjugate of a matrix
+    r"""Return the adjugate of a matrix.
 
     Adjugate of a matrix is the transpose of its cofactor matrix
 
     .. math::
+
         adj(A) = det(A) A^{-1}
 
     Returns
     -------
     adjugate : float
+        Transpose of the cofactor matrix.
 
     Raises
     ------
     LinAlgError
-        If matrix is singular (determinant of zero)
-        If matrix is not two dimensional
+        If matrix is singular (determinant of zero).
+        If matrix is not two dimensional.
+
     """
     det = np.linalg.det(matrix)
     if abs(det) <= 1e-12:
@@ -66,31 +69,34 @@ def adjugate(matrix):
     return det * np.linalg.inv(matrix)
 
 
+@docstring(indent_level=1)
 def permanent_combinatoric(matrix):
-    r""" Calculates the permanent of a matrix naively using combinatorics
+    r"""Calculate the permanent of a matrix naively using combinatorics (brute force).
 
     If :math:`A` is an :math:`m` by :math:`n` matrix
 
     .. math::
+
         perm(A) = \sum_{\sigma \in P_{n,m}} \prod_{i=1}^n a_{i,\sigma(i)}
 
-    Cost of :math:`\mathcal{O}(n!)`
+    The cost of evaluation is :math:`\mathcal{O}(n!)`.
 
     Parameters
     ----------
     matrix : np.ndarray(nrow, ncol)
-        Matrix
+        Matrix whose permanent will be evaluated.
 
     Returns
     -------
     permanent : float
-        Permanent of matrix
+        Permanent of the matrix.
 
     Raises
     ------
     ValueError
-        If matrix is not two dimensional
-        If matrix has no numbers
+        If matrix is not two dimensional.
+        If matrix has no numbers.
+
     """
     nrow, ncol = matrix.shape
     if nrow == 0 or ncol == 0:
@@ -113,29 +119,35 @@ def permanent_combinatoric(matrix):
     return permanent
 
 
+@docstring(indent_level=1)
 def permanent_ryser(matrix):
-    r""" Calculates the permanent of a matrix using Ryser algorithm
+    r"""Calculate the permanent of a matrix using the Ryser algorithm.
 
-    Cost of :math:`\mathcal{O}(2^n n)`
+    Cost of evaluation is :math:`\mathcal{O}(2^n n)`.
 
     Parameters
     ----------
     matrix : np.ndarray(nrow, ncol)
-        Matrix
+        Matrix whose permanent is evaluated.
 
     Returns
     -------
     permanent : float
-        Permanent of matrix
+        Permanent of the matrix.
 
     Raises
     ------
     ValueError
-        If matrix is not two dimensional
-        If matrix has no numbers
+        If matrix is not two dimensional.
+        If matrix has no numbers.
+
+    References
+    ----------
+    Bjorklund et al., "Evaluation of permanents in rings and semirings", Information Processing
+    Letters, vol. 110, pp. 867-870.
+
     """
 
-    # Ryser formula (Bjorklund et al. 2009, On evaluation of permanents) works
     # on rectangular matrices A(m, n) where m <= n.
     nrow, ncol = matrix.shape
     if nrow == 0 or ncol == 0:
@@ -197,32 +209,33 @@ def permanent_ryser(matrix):
     return permanent * factor
 
 
+@docstring(indent_level=1)
 def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
-    r""" Calculate the permanent of a square or rectangular matrix using the Borchardt theorem
+    r"""Calculate the permanent of a square or rectangular matrix using the Borchardt theorem.
 
-    Borchardt Theorem
-    -----------------
-    If a matrix is rank two (Cauchy) matrix of the form
+    Borchardt theorem is as follows iIf a matrix is rank two (Cauchy) matrix of the form
 
     .. math::
+
         A_{ij} = \frac{1}{\epsilon_j - \lambda_i}
 
     Then
 
     .. math::
+
         perm(A) = det(A \circ A) det(A^{-1})
 
     Parameters
     ----------
     lambdas : np.ndarray(M,)
-        Flattened row matrix of the form :math:`\lambda_i`
+        Flattened row matrix of the form :math:`\lambda_i`.
     epsilons : np.ndarray(N,)
-        Flattened column matrix of the form :math:`\epsilon_j`
+        Flattened column matrix of the form :math:`\epsilon_j`.
     zetas : np.ndarray(N,)
-        Flattened column matrix of the form :math:`\zeta_j`
+        Flattened column matrix of the form :math:`\zeta_j`.
     etas : None, np.ndarray(M,)
-        Flattened row matrix of the form :math:`\eta_i`
-        By default, all of the etas are set to 1
+        Flattened row matrix of the form :math:`\eta_i`.
+        By default, all of the etas are set to 1.
 
     Returns
     -------
@@ -232,8 +245,9 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     Raises
     ------
     ValueError
-        If the number of zetas and epsilons (number of columns) are not equal
-        If the number of etas and lambdas (number of rows) are not equal
+        If the number of zetas and epsilons (number of columns) are not equal.
+        If the number of etas and lambdas (number of rows) are not equal.
+
     """
     if zetas.size != epsilons.size:
         raise ValueError('The the number of zetas and epsilons must be equal')
