@@ -4,6 +4,7 @@ import numpy as np
 import scipy.linalg
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from pydocstring.wrapper import docstring
 
 __all__ = []
 
@@ -11,47 +12,45 @@ __all__ = []
 # TODO: implement Davidson method
 # FIXME: incredibly slow implementation
 # FIXME: change return value
+@docstring(indent_level=1)
 def eigen_solve(wfn, ham, exc_lvl=0):
     """Optimize the CI wavefunction with the given Hamiltonian using eigenvalue decomposition.
-
-    Generates the CI Hamiltonian matrix and diagonalizes it using eigenvalue decomposition.
 
     Parameters
     ----------
     ci_wfn : CIWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
+        Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
+        Hamiltonian that defines the system under study.
     exc_lvl : int
-        Level of excitation of the CI wavefunction
+        Level of excitation of the CI wavefunction.
 
     Returns
     -------
-    Energy of the wavefunction
+    energy : float
+        Energy of the wavefunction.
 
     Raises
     ------
     TypeError
-        If wavefunction is not an instance (or instance of a child) of CIWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
-        If exc_lvl is not a positive integer
+        If wavefunction is not an instance (or instance of a child) of CIWavefunction.
+        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+        If exc_lvl is not a positive integer.
     ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If wavefunction and Hamiltonian do not have the same number of spin orbitals
+        If wavefunction and Hamiltonian do not have the same data type.
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals.
+
     """
     # Preprocess variables
     if not isinstance(wfn, CIWavefunction):
-        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
-                        'child).')
+        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its child).')
     if not isinstance(ham, ChemicalHamiltonian):
-        raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its '
-                        'child).')
+        raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its child).')
     if wfn.dtype != ham.dtype:
         raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
     if wfn.nspin != ham.nspin:
-        raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
-                         'spin orbitals')
+        raise ValueError('Wavefunction and Hamiltonian do not have the same number of spin '
+                         'orbitals')
     if not (isinstance(exc_lvl, int) and exc_lvl >= 0):
         raise TypeError('Given exc_lvl is not a positive integer')
 

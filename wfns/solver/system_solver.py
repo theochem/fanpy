@@ -5,8 +5,10 @@ import scipy.optimize
 from wfns.backend import slater, sd_list
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from pydocstring.wrapper import docstring
 
 
+@docstring(indent_level=1)
 def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energy_is_param=False,
                         energy_guess=None, eqn_weights=None, solver=None, solver_kwargs=None):
     r"""Optimize the wavefunction with the given Hamiltonian as a system of nonlinear equations.
@@ -15,89 +17,91 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
     wavefunction.
 
     .. math::
+
         E = \sum_{\Phi \in S_{ref}} \braket{\Psi | \Phi} \braket{\Phi | \hat{H} | \Psi}
         N = \sum_{\Phi \in S_{ref}} \braket{\Psi | \Phi} \braket{\Phi | \Psi}
 
-    where :math:`E` is the energy and :math:`N` is the norm. If the energy is used as a parameter,
-    then it is not calculated, rather updated through the optimization process.
+    where :math:`E` is the energy and :math:`N` is the norm.
+
+    If the energy is used as a parameter, then it is not calculated, rather updated through the
+    optimization process.
 
     Parameters
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited
-        state)
+        Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : ChemicalHamiltonian
-        Hamiltonian that defines the system under study
-    pspace : tuple/list, None
-        Slater determinants onto which the wavefunction is projected
-        Tuple of objects that are compatible with the internal_sd format
-        By default, the largest space is used
-    ref_sds : tuple/list of int, None
-        One or more Slater determinant with respect to which the energy and the norm are calculated
-        Default is ground state HF
+        Hamiltonian that defines the system under study.
+    pspace : {tuple/list, None}
+        Slater determinants onto which the wavefunction is projected.
+        Tuple of objects that are compatible with the `internal_sd` format.
+        By default, the largest space is used.
+    ref_sds : {tuple/list of int, None}
+        One or more Slater determinant with respect to which the energy and the norm are calculated.
+        Default is ground state HF.
     save_file : str
         Name of the numpy file that contains the wavefunction parameters of the last optimization
-        step
-        By default, does not save
+        step.
+        By default, does not save.
     energy_is_param : bool
         Flag to control whether energy is calculated with respect to the reference Slater
-        determinants or is optimized as a parameter
-        By default, energy is not a parameter
+        determinants or is optimized as a parameter.
+        By default, energy is not a parameter.
     energy_guess : float
-        Starting guess for the energy of the wavefunction
-        By default, energy is calculated with respect to the reference Slater determinants
-        Energy must be a parameter
+        Starting guess for the energy of the wavefunction.
+        By default, energy is calculated with respect to the reference Slater determinants.
+        Energy must be a parameter.
     eqn_weights : np.ndarray
-        Weights of each equation
+        Weights of each equation.
         By default, all equations are given weight of 1 except for the normalization constraint,
         which is weighed by the number of equations.
-    solver : function, None
-        Solver that will solve the objective function (system of equations)
-        By default scipy's least_squares function will be used
+    solver : {function, None}
+        Solver that will solve the objective function (system of equations).
+        By default scipy's least_squares function will be used.
     solver_kwargs : dict
-        Keyword arguments for the solver
+        Keyword arguments for the solver.
         In order to disable default keyword arguments, the appropriate key need to be created with
-        value `None`
+        value `None`.
         Default keyword arguments depend on the solver.
 
     Returns
     -------
-    Output of the solver
+    output : dict
+        Output of the solver.
 
     Raises
     ------
     TypeError
-        If wavefunction is not an instance (or instance of a child) of BaseWavefunction
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian
-        If wavefunction and Hamiltonian do not have the same data type
-        If save_file is not a string
-        If energy_is_param is not a boolean
-        If energy_guess is not a float
-        If eqn_weights is not a numpy array
-        If eqn_weights do not have the same data type as wavefunction and Hamiltonian
-        If solver_kwargs is not a dictionary or None
+        If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
+        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+        If wavefunction and Hamiltonian do not have the same data type.
+        If save_file is not a string.
+        If energy_is_param is not a boolean.
+        If energy_guess is not a float.
+        If eqn_weights is not a numpy array.
+        If eqn_weights do not have the same data type as wavefunction and Hamiltonian.
+        If solver_kwargs is not a dictionary or None.
     ValueError
-        If wavefunction and Hamiltonian do not have the same data type
-        If wavefunction and Hamiltonian do not have the same number of spin orbitals
-        If eqn_weights do not have the correct shape
+        If wavefunction and Hamiltonian do not have the same data type.
+        If wavefunction and Hamiltonian do not have the same number of spin orbitals.
+        If eqn_weights do not have the correct shape.
         If energy_guess is given and energy is not a parameter.
 
-    Note
-    ----
-    Assumes only one constraint (normalization constraint)
+    Notes
+    -----
+    Assumes only one constraint (normalization constraint).
+
     """
     # Preprocess variables
     if not isinstance(wfn, BaseWavefunction):
-        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
-                        'child).')
+        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its child).')
     if not isinstance(ham, ChemicalHamiltonian):
-        raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its '
-                        'child).')
+        raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its child).')
     if wfn.dtype != ham.dtype:
         raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
     if wfn.nspin != ham.nspin:
-        raise ValueError('Wavefunction and Hamiltonian do not have the same number of '
-                         'spin orbitals')
+        raise ValueError('Wavefunction and Hamiltonian do not have the same number of spin '
+                         'orbitals')
 
     if pspace is None:
         pspace = sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)
@@ -111,15 +115,15 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         ref_sds = [slater.internal_sd(sd) for sd in ref_sds]
 
     if not isinstance(save_file, str):
-        raise TypeError('save_file must be a string.')
+        raise TypeError('`save_file` must be a string.')
 
     if not isinstance(energy_is_param, bool):
-        raise TypeError('energy_is_param must be a boolean.')
+        raise TypeError('`energy_is_param` must be a boolean.')
 
     if not energy_is_param and energy_guess is not None:
-        raise ValueError('energy_guess cannot be given if energy is not a parameter.')
+        raise ValueError('`energy_guess` cannot be given if energy is not a parameter.')
     if energy_guess is not None and not isinstance(energy_guess, float):
-        raise TypeError('energy_guess must be a float')
+        raise TypeError('`energy_guess` must be a float')
 
     nparams = wfn.nparams
     if energy_is_param:
@@ -131,8 +135,8 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
     elif not isinstance(eqn_weights, np.ndarray):
         raise TypeError('Weights of the equations must be given as a numpy array')
     elif eqn_weights.dtype != wfn.dtype:
-        raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
-                        'and Hamiltonian.')
+        raise TypeError('Weights of the equations must have the same dtype as the wavefunction and '
+                        'Hamiltonian.')
     elif eqn_weights.shape != (nproj+1, ):
         raise ValueError('Weights of the equations must be given as a one-dimensional array of '
                          'shape, {0}.'.format((nproj+1, )))
@@ -141,6 +145,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         r"""System of equations that corresponds to the (projected) Schrodinger equation.
 
         .. math::
+
             f_1(x) &= \braket{\Phi_1 | H | \Psi} - E \braket{\Phi_1 | \Psi}\\
             &\vdots\\
             f_K(x) &= \braket{\Phi_K | H | \Psi} - E \braket{\Phi_K | \Psi}\\
@@ -148,25 +153,30 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
             &\vdots
 
         where :math:`K` is the number of Slater determinant onto which the wavefunction is projected
-        Equations after the :math:`K`th index are the constraints on the system of equations.
-        The constraints, hopefully, will move out into their own module some time in the future.
-        By default, the normalization constraint
+        Equations after the :math:`K`th index are the constraints on the system of equations. The
+        constraints, hopefully, will move out into their own module some time in the future. By
+        default, the normalization constraint
+
         .. math::
+
             f_{K+1} = norm - 1
+
         is present where :math:`norm` is defined by ProjectedWavefunction.compute_norm.
 
         Parameters
         ----------
-        params : 1-index np.ndarray
-            Wavefunction parameters
+        params : np.ndarray
+            Wavefunction parameters.
 
         Returns
         -------
         objective : np.ndarray(nproj+1, )
+            Output of the function that will be optimized.
 
-        Note
-        ----
+        Notes
+        -----
         Wavefunction and Hamiltonian objects are updated iteratively.
+
         """
         # Update the wavefunction parameters
         if energy_is_param and not np.allclose(params[:-1], wfn.params.flat, atol=1e-14, rtol=0):
@@ -206,6 +216,7 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
 
         .. math::
+
             J_{ij}(\vec{x}) = \frac{\partial f_i(\vec{x})}{\partial x_j}
 
         where :math:`\vec{x}` is the parameters at a given iteration.
@@ -213,12 +224,13 @@ def optimize_wfn_system(wfn, ham, pspace=None, ref_sds=None, save_file='', energ
         Parameters
         ----------
         params : 1-index np.ndarray
-            Wavefunction parameters
+            Wavefunction parameters.
 
         Returns
         -------
         jac : np.ndarray(nproj+1, nparams)
-            Value of the Jacobian :math:`J_{ij}`
+            Value of the Jacobian :math:`J_{ij}`.
+
         """
         # update wavefunction
         if energy_is_param and not np.allclose(params[:-1], wfn.params.flat, atol=1e-14, rtol=0):
