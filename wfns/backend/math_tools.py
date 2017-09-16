@@ -18,7 +18,7 @@ from __future__ import absolute_import, division, print_function
 from itertools import permutations, combinations
 import numpy as np
 from scipy.misc import comb
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 
 @docstring(indent_level=1)

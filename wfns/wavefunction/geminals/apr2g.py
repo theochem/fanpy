@@ -5,7 +5,7 @@ import numpy as np
 from wfns.wavefunction.geminals.apig import APIG
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 from wfns.backend import slater, math_tools
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.pydocstring import docstring_class
 
 __all__ = []
 

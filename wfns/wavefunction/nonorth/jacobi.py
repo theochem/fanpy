@@ -6,7 +6,7 @@ import numpy as np
 from wfns.backend import slater
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.pydocstring import docstring_class
 
 __all__ = []
 

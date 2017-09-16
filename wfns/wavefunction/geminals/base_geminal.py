@@ -6,7 +6,7 @@ import functools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.pydocstring import docstring_class
 
 __all__ = []
 

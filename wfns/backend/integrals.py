@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 from wfns.backend import slater
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.pydocstring import docstring_class
 # TODO: store fraction of integrals
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
 

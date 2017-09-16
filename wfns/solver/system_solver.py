@@ -5,7 +5,7 @@ import scipy.optimize
 from wfns.backend import slater, sd_list
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 
 @docstring(indent_level=1)

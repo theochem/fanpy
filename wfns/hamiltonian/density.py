@@ -12,7 +12,7 @@ density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_thresh
 """
 import numpy as np
 from wfns.backend import slater
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 __all__ = ['density_matrix']
 

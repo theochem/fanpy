@@ -11,7 +11,7 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 """
 from itertools import combinations, product
 from wfns.backend import slater
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 __all__ = ['sd_list']
 

@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
-from pydocstring.wrapper import docstring_class
+from wfns.wrapper.pydocstring import docstring_class
 
 __all__ = []
 

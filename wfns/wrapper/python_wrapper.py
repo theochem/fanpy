@@ -14,7 +14,7 @@ module can act as a temporary hack to access these modules.
 import os
 from subprocess import call
 import numpy as np
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 

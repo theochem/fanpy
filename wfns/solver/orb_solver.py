@@ -23,7 +23,7 @@ from wfns.solver.equation_solver import optimize_wfn_variational
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
-from pydocstring.wrapper import docstring
+from wfns.wrapper.pydocstring import docstring
 
 
 @docstring(indent_level=1)
