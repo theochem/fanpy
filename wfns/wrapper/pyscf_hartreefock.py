@@ -1,9 +1,10 @@
-""" Script for generating one and two electron integrals using PySCF
+"""Script for generating one and two electron integrals using PySCF.
 
 Functions
 ---------
 hartreefock(xyz_file, basis, is_unrestricted=False)
-    Runs HF in PySCF
+    Runs HF in PySCF.
+
 """
 from __future__ import absolute_import, division, print_function
 import os
@@ -18,36 +19,37 @@ LIBFCI = load_library('libfci')
 
 
 def hartreefock(xyz_file, basis, is_unrestricted=False):
-    """ Runs HF using PySCF
+    """Run HF using PySCF.
 
     Parameters
     ----------
     xyz_file : str
-        XYZ file location
+        XYZ file location.
     basis : str
-        Basis set available in PySCF
+        Basis set available in PySCF.
     is_unrestricted : bool
-        Flag to run unrestricted HF
-        Default is restricted HF
+        Flag to run unrestricted HF.
+        Default is restricted HF.
 
     Returns
     -------
     result : dict
         "el_energy"
-            electronic energy
+            The electronic energy.
         "nuc_nuc_energy"
-            nuclear repulsion energy
+            The nuclear repulsion energy.
         "one_int"
-            tuple of the one-electron interal
+            The tuple of the one-electron interal.
         "two_int"
-            tuple of the two-electron integral in Physicist's notation
+            The tuple of the two-electron integral in Physicist's notation.
 
     Raises
     ------
     ValueError
-        If given xyz file does not exist
+        If given xyz file does not exist.
     NotImplementedError
-        If calculation is unrestricted or generalized
+        If calculation is unrestricted or generalized.
+
     """
     # check xyz file
     cwd = os.path.dirname(__file__)

@@ -1,9 +1,10 @@
-""" Script for generating one and two electron integrals using HORTON
+"""Script for generating one and two electron integrals using HORTON.
 
 Functions
 ---------
 hartreefock(xyz_file, basis, is_unrestricted=False)
-    Runs HF in HORTON
+    Runs HF in HORTON.
+
 """
 from __future__ import absolute_import, division, print_function
 import sys
@@ -19,63 +20,49 @@ __all__ = []
 
 def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,
                 horton_internal=False, **kwargs):
-    """ Runs a HF calculation using HORTON
+    """Run a HF calculation using HORTON.
 
     Parameters
     ----------
     fn : str
-        File name
-        Supports XYZ file (in Angstrom)
+        File name.
+        Supports XYZ file (in Angstrom).
     basis : str
-        Basis set name
+        Basis set name.
     nelec : int
-        Number of electrons
-    solver : PlainSCFSolver, ODASSCFSolver, CDIISSCFSolver, EDIISSCFSolver,  EDIIS2SCFSolver
-        HORTON's SCF solver
+        Number of electrons.
+    solver : {PlainSCFSolver, ODASSCFSolver, CDIISSCFSolver, EDIISSCFSolver,  EDIIS2SCFSolver}
+        HORTON's SCF solver.
     tol : float
-        The convergence threshold for the wavefunction
+        The convergence threshold for the wavefunction.
     horton_internal : bool
-        Flag for returning HORTON's internal data
+        Flag for returning HORTON's internal data.
     kwargs
-        Other optional arguments for the SCF Solver
+        Other optional arguments for the SCF Solver.
 
     Returns
     -------
     result : dict
         "el_energy"
-            Electronic energy
+            Electronic energy.
         "nuc_nuc_energy"
-            Nuclear repulsion energy
+            Nuclear repulsion energy.
         "one_int"
-            Tuple of the one-electron Hamiltonian;
+            Tuple of the one-electron Hamiltonian.
         "two_int"
-            Tuple of the two-electron Hamiltonian;
-        "horton_internal"
-            Dictionary that  contains horton's internal object
-            "mol"
-                horton.io.iodata.IOData object that contains fchk data
-            "lf"
-                horton.matrix.dense.LinalgFactory that creates horton matrices
-            "occ_model"
-                horton.meanfield.occ.OccModel that describe the occupation of the orbitals
-            "one"
-                horton.matrix.dense.DenseTwoIndex that contain the one electron integrals
-            "two"
-                horton.matrix.dense.DenseTwoIndex that contain the two electron integrals
-            "orb"
-                horton.matrix.dense.DenseExpansion that contains the MO info
-            "olp"
-                horton.matrix.dense.DenseTwoIndex that contains the overlap matrix of the atomic
-                orbitals
+            Tuple of the two-electron Hamiltonian.
 
     Raises
     ------
     ValueError
-        If solver is not callable
+        If solver is not callable.
+    NotImplemntedError
+        If `horton_internal` is True.
 
-    Note
-    ----
+    Notes
+    -----
     While HORTON does support unrestricted calculations, the wrapper does not support it.
+
     """
     # Initialize molecule and basis set from specified file
     if isinstance(fn, IOData):

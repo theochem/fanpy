@@ -1,71 +1,70 @@
 """Wraps appropriate Python versions around current Python version (3.6+).
 
-Because HORTON and PySCF do not support many versions of Python, some sort of work around is needed.
-Since only certain arrays are needed from HORTON and PySCF, these arrays are extract and saved to
-disk as a npy file.
-Then, user can load these files to have access to these numbers.
+Because HORTON and PySCF do not support many versions of Python, some sort of workaround is needed.
+Since only certain arrays are needed from HORTON and PySCF, these arrays are extracted and saved to
+disk as a `.npy` file. Then, user can load these files to have access to these numbers.
 
-Note
-----
+Notes
+-----
 This is only a temporary solution. We can make things back-compatible to certain versions of HORTON
 and PySCF, or we can wait until these modules catch up to the latest Python versions. For now, this
 module can act as a temporary hack to access these modules.
+
 """
 import os
 from subprocess import call
 import numpy as np
-
+from pydocstring.wrapper import docstring
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
 
+@docstring(indent_level=1)
 def generate_hartreefock_results(python_name, calctype, energies_name='energies.npy',
                                  oneint_name='oneint.npy', twoint_name='twoint.npy',
                                  remove_npyfiles=False, **kwargs):
-    """Generate results of Hartree Fock calculation.
-
-    Results include: electronic energy, nuclear-nuclear repulsion energy, one electron integrals,
-    and two electron integrals.
+    """Extract results from a Hartree Fock calculation.
 
     Parameters
     ----------
     python_name : str
-        Name of the python to be used in the shell
+        Name of the python to be used in the shell.
     calctype : {'horton_hartreefock.py', 'horton_gaussian_fchk.py', 'pyscf_hartreefock.py'}
-        Name of the python script to be used
+        Name of the python script to be used.
     energies_name : {str, 'energies.npy}
         Name of the file to be generated that contains the electronic and nuclear-nuclear repulsion
-        energy
-        First entry is the electronic energy
-        Second entry is the nuclear-nuclear repulsion energy
+        energy.
+        First entry is the electronic energy.
+        Second entry is the nuclear-nuclear repulsion energy.
     oneint_name : {str, 'oneint.npy}
-        Name of the file to be generated that contains the one electron integrals
-        If two dimensional matrix, then the orbitals are restricted
-        If three dimensional matrix, then the orbitals are unrestricted
+        Name of the file to be generated that contains the one electron integrals.
+        If two-dimensional matrix, then the orbitals are restricted.
+        If three-dimensional matrix, then the orbitals are unrestricted.
     twoint_name : {str, 'twoint.npy}
-        Name of the file to be generated that contains the two electron integrals
-        If four dimensional matrix, then the orbitals are restricted
-        If five dimensional matrix, then the orbitals are unrestricted
+        Name of the file to be generated that contains the two electron integrals.
+        If four-dimensional matrix, then the orbitals are restricted.
+        If five-dimensional matrix, then the orbitals are unrestricted.
     remove_npyfiles : bool
-        Option to remove generated numpy files
-        True will remove numpy files
+        Option to remove generated numpy files.
+        True will remove numpy files.
     kwargs
-        Keyword arguments for the script
+        Keyword arguments for the script.
 
     Returns
     -------
     el_energy : float
-        Electronic energy
+        Electronic energy.
     nuc_nuc_energy : float
-        Nuclear-nuclear repulsion energy
-    oneint : np.ndarray, tuple of np.ndarray
-        One electron integrals
-        If numpy array, then orbitals are restricted
-        If tuple of numpy arrays, then orbitals are unrestricted
-    twoint : np.ndarray, tuple of np.ndarray
-        Two electron integrals
-        If numpy array, then orbitals are restricted
-        If tuple of numpy arrays, then orbitals are unrestricted
+        Nuclear-nuclear repulsion energy.
+    oneint : {np.ndarray, tuple of np.ndarray}
+        One electron integrals.
+        If numpy array, then orbitals are restricted.
+        If tuple of numpy arrays, then orbitals are unrestricted.
+    twoint : {np.ndarray, tuple of np.ndarray}
+        Two electron integrals.
+        If numpy array, then orbitals are restricted.
+        If tuple of numpy arrays, then orbitals are unrestricted.
+
     """
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
@@ -88,40 +87,37 @@ def generate_hartreefock_results(python_name, calctype, energies_name='energies.
     return el_energy, nuc_nuc_energy, oneint, twoint
 
 
+@docstring(indent_level=1)
 def generate_fci_results(python_name, cimatrix_name='cimatrix.npy', sds_name='sds.npy',
                          remove_npyfiles=False, **kwargs):
     """Generate results of FCI calculation (from PySCF).
 
-    Results include: ci matrix and pspace
-
     Parameters
     ----------
     python_name : str
-        Name of the python to be used in the shell
-    calctype : {}
-        Name of the python script to be used
+        Name of the python to be used in the shell.
     cimatrix_name : {str, 'cimatrix.npy}
-        Name of the file to be generated that contains the ci matrix coefficients
-    sds_name : {str, 'sds.npy}
-        Name of the file to be generated that contains the binary Slater determinant values
+        Name of the file to be generated that contains the ci matrix coefficients.
+    sds_name : {str, 'sds.npy'}
+        Name of the file to be generated that contains the binary Slater determinant values.
     remove_npyfiles : bool
-        Option to remove generated numpy files
-        True will remove numpy files
+        Option to remove generated numpy files.
+        True will remove numpy files.
     kwargs
-        Keyword arguments for the script
-        'h1e' : str
-            Name of the numpy file that contains the one electron integrals
-        'eri' : str
-            Name of the numpy file that contains the two electron integrals
-        'nelec' : int
-            Number of electrons
+        Keyword arguments for the script.
+        Key of 'h1e' corresponds to the name of the numpy file that contains the one electron
+        integrals.
+        Key of 'eri' corresponds to the name of the numpy file that contains the two electron
+        integrals.
+        Kye of 'nelec' corresponds to the number of electrons.
 
     Returns
     -------
     cimatrix : np.ndarray
-        CI matrix
+        CI matrix.
     sds : list of ints
-        List of binary Slater determinant values
+        List of binary Slater determinant values.
+
     """
     # convert integrals
     if isinstance(kwargs['h1e'], np.ndarray):
