@@ -4,8 +4,7 @@ import itertools as it
 import functools
 import numpy as np
 from wfns.backend import slater
-from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wavefunction.composite.base_composite_one import BaseCompositeOneWavefunction
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
@@ -13,7 +12,7 @@ __all__ = []
 
 # FIXME: needs refactoring
 @docstring_class(indent_level=1)
-class NonorthWavefunction(BaseWavefunction):
+class NonorthWavefunction(BaseCompositeOneWavefunction):
     r"""Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
     A parameterized multideterminantal wavefunction can be written as
@@ -52,26 +51,6 @@ class NonorthWavefunction(BaseWavefunction):
         Wavefunction whose orbitals are rotated.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orth_to_nonorth=None):
-        r"""Initialize the wavefunction.
-
-        Parameters
-        ----------
-        wfn : BaseWavefunction
-            Wavefunction that will be built using nonorthnormal orbitals.
-        orth_to_nonorth : np.ndarray
-            Transformation matrix from orthonormal orbitals to nonorthonormal orbitals.
-            .. math::
-
-                `\ket{\tilde{\phi}_i} = \sum_{j} \ket{\phi_j} T_{ji}`
-
-            Default is an identity matrix.
-
-        """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
-        self.assign_wfn(wfn)
-        self.assign_params(orth_to_nonorth)
-
     @property
     def spin(self):
         """
@@ -174,44 +153,6 @@ class NonorthWavefunction(BaseWavefunction):
             return 'generalized'
         else:
             raise NotImplementedError('Unsupported orbital type.')
-
-    def assign_wfn(self, wfn=None):
-        """Assign the wavefunction whose orbitals will be transformed.
-
-        Parameters
-        ----------
-        wfn : BaseWavefunction
-            Wavefunction that will be built up using nonorthnormal orbitals.
-            Default is a FCI wavefunction.
-
-        Raises
-        ------
-        ValueError
-            If the given wavefunction is not an instance of BaseWavefunction.
-            If the given wavefunction does not have the same number of electrons as the instantiated
-            NonorthWavefunction.
-            If the given wavefunction does not have the same data type as the instantiated
-            NonorthWavefunction.
-            If the given wavefunction does not have the same memory as the instantiated
-            NonorthWavefunction.
-        """
-        # FIXME: I don't think this is necessary
-        if wfn is None:
-            wfn = CIWavefunction(self.nelec, self.nspin, dtype=self.dtype, memory=self.memory)
-        elif not isinstance(wfn, BaseWavefunction):
-            raise ValueError('Given wavefunction must be an instance of BaseWavefunction (or its'
-                             ' child).')
-
-        if wfn.nelec != self.nelec:
-            raise ValueError('Given wavefunction does not have the same number of electrons as the'
-                             ' the instantiated NonorthWavefunction.')
-        elif wfn.dtype != self.dtype:
-            raise ValueError('Given wavefunction does not have the same data type as the '
-                             'instantiated NonorthWavefunction.')
-        elif wfn.memory != self.memory:
-            raise ValueError('Given wavefunction does not have the same memory as the '
-                             'instantiated NonorthWavefunction.')
-        self.wfn = wfn
 
     def assign_params(self, params=None):
         """Assign the orbital transformation matrix.
