@@ -21,7 +21,7 @@ import wfns.backend.slater as slater
 import wfns.backend.sd_list as sd_list
 from wfns.solver.equation_solver import optimize_wfn_variational
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
+from wfns.wavefunction.composite.jacobi import JacobiWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.wrapper.docstring import docstring
 

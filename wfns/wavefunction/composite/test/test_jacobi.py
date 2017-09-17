@@ -1,12 +1,12 @@
-"""Test wfns.wavefunction.nonorth.jacobi"""
+"""Test wfns.wavefunction.composite.jacobi"""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 import itertools as it
 from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
-from wfns.wavefunction.nonorth.jacobi import JacobiWavefunction
-from wfns.wavefunction.nonorth.nonorth_wavefunction import NonorthWavefunction
+from wfns.wavefunction.composite.jacobi import JacobiWavefunction
+from wfns.wavefunction.composite.nonorth_wavefunction import NonorthWavefunction
 from wfns.wavefunction.ci.doci import DOCI
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.solver import ci_solver
