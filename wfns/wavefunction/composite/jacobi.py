@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from wfns.backend import slater
-from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.wavefunction.composite.base_composite_one import BaseCompositeOneWavefunction
 from wfns.wavefunction.composite.nonorth_wavefunction import NonorthWavefunction
 from wfns.wrapper.docstring import docstring_class
 
@@ -13,7 +13,7 @@ __all__ = []
 
 # FIXME: needs refactoring
 @docstring_class(indent_level=1)
-class JacobiWavefunction(BaseWavefunction):
+class JacobiWavefunction(BaseCompositeOneWavefunction):
     r"""Wavefunction with jacobi rotated orbitals expressed with respect to orthonormal orbitals.
 
     A wavefunction constructed from nonorthonormal orbitals can be written as
@@ -206,29 +206,6 @@ class JacobiWavefunction(BaseWavefunction):
         if jacobi_indices[0] > jacobi_indices[1]:
             jacobi_indices = jacobi_indices[::-1]
         self.jacobi_indices = tuple(jacobi_indices)
-
-    # FIXME: copied from NonorthWavefunction
-    def assign_wfn(self, wfn=None):
-        """Assign the wavefunction whose orbitals will be transformed.
-
-        Parameters
-        ----------
-        wfn : BaseWavefunction
-            Wavefunction that will be built up using the rotated orbitals.
-            Default is a FCI wavefunction.
-
-        Raises
-        ------
-        ValueError
-            If the given wavefunction is not an instance of BaseWavefunction.
-            If the given wavefunction does not have the same number of electrons as the instantiated
-            JacobiWavefunction.
-            If the given wavefunction does not have the same data type as the instantiated
-            JacobiWavefunction.
-            If the given wavefunction does not have the same memory as the instantiated
-            JacobiWavefunction.
-        """
-        NonorthWavefunction.assign_wfn(self, wfn=wfn)
 
     # FIXME: there probably is a more elegant way of handling restricted orbital case.
     def get_overlap(self, sd, deriv=None):
