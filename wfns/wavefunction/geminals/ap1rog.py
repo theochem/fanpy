@@ -209,8 +209,6 @@ class AP1roG(APIG):
             spatial_sd, _ = slater.split_spin(sd, self.nspatial)
             spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
             orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
-            row_removed = deriv // self.norbpair
-            col_removed = deriv % self.norbpair
             inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
                                          for i in orbs_annihilated])
             inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
@@ -218,7 +216,7 @@ class AP1roG(APIG):
 
             # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
             return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
-                                          deriv_row_col=(row_removed, col_removed))
+                                          deriv=deriv)
 
         # create cache
         if not hasattr(self, '_cache_fns'):

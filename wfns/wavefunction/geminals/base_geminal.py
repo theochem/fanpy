@@ -295,7 +295,7 @@ class BaseGeminal(BaseWavefunction):
                           ' be ignored.')
         super().assign_params(params=params, add_noise=add_noise)
 
-    def compute_permanent(self, col_inds, row_inds=None, deriv_row_col=None):
+    def compute_permanent(self, col_inds, row_inds=None, deriv=None):
         """Compute the permanent of the matrix that corresponds to the given orbital pairs.
 
         Parameters
@@ -305,9 +305,9 @@ class BaseGeminal(BaseWavefunction):
         row_inds : {np.ndarray, None}
             Indices of the rows of geminal coefficient matrices that will be used.
             Default is all rows.
-        deriv : {2-tuple/list of int, None}
-            Row and column indices of the element with respect to which the permanent is
-            derivatized.
+        deriv : {int, None}
+            C-order index (in the flattened array) of the element with with respect to which the
+            permanent is derivatized.
             Default is no derivatization.
 
         Returns
@@ -328,13 +328,15 @@ class BaseGeminal(BaseWavefunction):
         else:
             permanent = math_tools.permanent_combinatoric
 
-        if deriv_row_col is None:
+        if deriv is None:
             return permanent(self.params[row_inds, :][:, col_inds])
         else:
+            row_removed = deriv // self.norbpair
+            col_removed = deriv % self.norbpair
             # cut out rows and columns that corresponds to the element with which the permanent is
             # derivatized
-            row_inds_trunc = row_inds[row_inds != deriv_row_col[0]]
-            col_inds_trunc = col_inds[col_inds != deriv_row_col[1]]
+            row_inds_trunc = row_inds[row_inds != row_removed]
+            col_inds_trunc = col_inds[col_inds != col_removed]
             if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
                 return 0.0
             elif row_inds_trunc.size == col_inds_trunc.size == 0:
@@ -396,8 +398,6 @@ class BaseGeminal(BaseWavefunction):
             """
             # NOTE: Need to recreate occ_indices, row_removed, col_removed
             occ_indices = slater.occ_indices(sd)
-            row_removed = deriv // self.norbpair
-            col_removed = deriv % self.norbpair
 
             val = 0.0
             for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
@@ -405,8 +405,7 @@ class BaseGeminal(BaseWavefunction):
                 if len(orbpairs) == 0:
                     continue
                 col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                val += sign * self.compute_permanent(col_inds, deriv_row_col=(row_removed,
-                                                                              col_removed))
+                val += sign * self.compute_permanent(col_inds, deriv=deriv)
             return val
 
         # create cache
