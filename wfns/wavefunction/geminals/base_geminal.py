@@ -342,6 +342,81 @@ class BaseGeminal(BaseWavefunction):
             else:
                 return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
+    def load_cache(self):
+        # assign memory allocated to cache
+        if self.memory == np.inf:
+            memory = None
+        else:
+            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+
+        # create function that will be cached
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp(sd):
+            """Calculate the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+
+            Returns
+            -------
+            olp : {float, complex}
+                Overlap of the current instance with the given Slater determinant.
+
+            """
+            # NOTE: Need to recreate occ_indices
+            occ_indices = slater.occ_indices(sd)
+
+            val = 0.0
+            for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
+                if len(orbpairs) == 0:
+                    continue
+
+                col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                val += sign * self.compute_permanent(col_inds)
+            return val
+
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp_deriv(sd, deriv):
+            """Calculate the derivative of the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+            deriv : int
+                Index of the parameter with respect to which the overlap is derivatized.
+
+            Returns
+            -------
+            olp : {float, complex}
+                Derivative of the overlap with respect to the given parameter.
+
+            """
+            # NOTE: Need to recreate occ_indices, row_removed, col_removed
+            occ_indices = slater.occ_indices(sd)
+            row_removed = deriv // self.norbpair
+            col_removed = deriv % self.norbpair
+
+            val = 0.0
+            for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
+                # ASSUMES: permanent evaluation is much more expensive than the lookup
+                if len(orbpairs) == 0:
+                    continue
+                col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                val += sign * self.compute_permanent(col_inds, deriv_row_col=(row_removed,
+                                                                              col_removed))
+            return val
+
+        # create cache
+        if not hasattr(self, '_cache_fns'):
+            self._cache_fns = {}
+
+        # store the cached function
+        self._cache_fns['overlap'] = _olp
+        self._cache_fns['overlap derivative'] = _olp_deriv
+
     def get_overlap(self, sd, deriv=None):
         r"""
 
@@ -353,54 +428,16 @@ class BaseGeminal(BaseWavefunction):
 
         where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
 
-        Raises
-        ------
-        TypeError
-            If Slater determinant is not gmpy2.mpz object.
-
         Notes
         -----
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
 
         """
-        if not slater.is_internal_sd(sd):
-            sd = slater.internal_sd(sd)
+        sd = slater.internal_sd(sd)
 
         # if no derivatization
         if deriv is None:
-            # if cached function has not been created yet
-            if 'overlap' not in self._cache_fns:
-                # assign memory allocated to cache
-                if self.memory == np.inf:
-                    memory = None
-                else:
-                    memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
-
-                # create function that will be cached
-                @functools.lru_cache(maxsize=memory, typed=False)
-                def _olp(sd):
-                    # FIXME: ugly, repeats code
-                    # NOTE: sd is used as the key because it uses less memory
-                    # NOTE: Need to recreate occ_indices
-                    occ_indices = slater.occ_indices(sd)
-
-                    val = 0.0
-                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
-                        if len(orbpairs) == 0:
-                            continue
-
-                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                        val += sign * self.compute_permanent(col_inds)
-                    return val
-
-                # store the cached function
-                self._cache_fns['overlap'] = _olp
-            # if cached function already exists
-            else:
-                # reload cached function
-                _olp = self._cache_fns['overlap']
-
-            return _olp(sd)
+            return self._cache_fns['overlap'](sd)
         # if derivatization
         elif isinstance(deriv, int):
             if deriv >= self.nparams:
@@ -414,45 +451,7 @@ class BaseGeminal(BaseWavefunction):
             if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                 return 0.0
 
-            # if cached function has not been created yet
-            if 'overlap derivative' not in self._cache_fns:
-                # assign memory allocated to cache
-                if self.memory == np.inf:
-                    memory = None
-                else:
-                    memory = int((self.memory - 5*8*self.params.size)
-                                 / (self.params.size + 1) * self.params.size)
-
-                # create function that will be cached
-                @functools.lru_cache(maxsize=memory, typed=False)
-                def _olp_deriv(sd, deriv):
-                    # FIXME: ugly, repeats code
-                    # NOTE: sd and deriv is used as the key because it uses less memory
-                    # NOTE: Need to recreate occ_indices, row_removed, col_removed
-                    occ_indices = slater.occ_indices(sd)
-                    row_removed = deriv // self.norbpair
-                    col_removed = deriv % self.norbpair
-
-                    val = 0.0
-                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
-                        # ASSUMES: permanent evaluation is much more expensive than the lookup
-                        # NOTE: derivatization with respect to parameters that are not present in
-                        #       the sd is already skipped by line 463
-                        if len(orbpairs) == 0:
-                            continue
-                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                        val += sign*self.compute_permanent(col_inds,
-                                                           deriv_row_col=(row_removed, col_removed))
-                    return val
-
-                # store the cached function
-                self._cache_fns['overlap derivative'] = _olp_deriv
-            # if cached function already exists
-            else:
-                # reload cached function
-                _olp_deriv = self._cache_fns['overlap derivative']
-
-            return _olp_deriv(sd, deriv)
+            return self._cache_fns['overlap derivative'](sd, deriv)
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):
