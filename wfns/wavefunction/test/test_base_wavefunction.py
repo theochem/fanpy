@@ -2,6 +2,7 @@
 """
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
+import functools
 import numpy as np
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 
@@ -129,6 +130,50 @@ def test_assign_params():
     assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01*0.1/100)
     assert not np.allclose(np.real(test.params), np.identity(10))
     assert not np.allclose(np.imag(test.params), np.zeros((10, 10)))
+
+
+def test_load_cache():
+    """Test BaseWavefunction.load_cache."""
+    test = TestWavefunction()
+    test.memory = 1000
+    test.params = np.array([1, 2, 3])
+    test.load_cache()
+    assert hasattr(test, '_cache_fns')
+    assert_raises(NotImplementedError, test._cache_fns['overlap'], 0)
+    assert_raises(NotImplementedError, test._cache_fns['overlap derivative'], 0, 1)
+
+
+def test_clear_cache():
+    """Test BaseWavefunction.clear_cache."""
+    test = TestWavefunction()
+    assert_raises(AttributeError, test.clear_cache)
+
+    @functools.lru_cache(2)
+    def olp(sd):
+        return 0.0
+
+    test._cache_fns = {}
+    test._cache_fns['overlap'] = olp
+    assert_raises(KeyError, test.clear_cache, 'overlap derivative')
+
+    @functools.lru_cache(2)
+    def olp_deriv(sd, deriv):
+        return 0.0
+
+    test._cache_fns['overlap derivative'] = olp_deriv
+
+    test._cache_fns['overlap'](2)
+    test._cache_fns['overlap'](3)
+    test._cache_fns['overlap derivative'](2, 0)
+    test._cache_fns['overlap derivative'](3, 0)
+    assert test._cache_fns['overlap'].cache_info().currsize == 2
+    assert test._cache_fns['overlap derivative'].cache_info().currsize == 2
+    test.clear_cache('overlap')
+    assert test._cache_fns['overlap'].cache_info().currsize == 0
+    assert test._cache_fns['overlap derivative'].cache_info().currsize == 2
+    test.clear_cache()
+    assert test._cache_fns['overlap'].cache_info().currsize == 0
+    assert test._cache_fns['overlap derivative'].cache_info().currsize == 0
 
 
 def test_nspatial():

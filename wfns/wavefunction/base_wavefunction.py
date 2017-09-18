@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import abc
 import six
+import functools
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
 
@@ -53,7 +54,7 @@ class BaseWavefunction:
         # more attributes than is given above
 
         # create cached functions
-        self._cache_fns = {}
+        self.load_cache()
 
     @property
     def nspatial(self):
@@ -244,6 +245,81 @@ class BaseWavefunction:
                 self.params += 0.01j * scale * (np.random.rand(*self.params_shape).astype(complex)
                                                 - 0.5)
 
+    def load_cache(self):
+        """Load the functions that will be cached.
+
+        To minimize the cache size, the input is made as small as possible. Therefore, the cached
+        function is not a method of an instance (because the instance is an input) and the smallest
+        representation of the Slater determinant (an integer) is used as the only input. However,
+        the functions must access other properties/methods of the instance, so they are defined
+        within this method so that the instance is available within the namespace w/o use of
+        `global` or `local`.
+
+        Since the bitstring is used to represent the Slater determinant, they need to be processed,
+        which may result in repeated processing depending on when the cached function is accessed.
+
+        It is assumed that the cached functions will not be used to calculate redundant results. All
+        simplifications that can be made is assumed to have already been made. For example, it is
+        assumed that the overlap derivatized with respect to a parameter that is not associated with
+        the given Slater determinant will never need to be evaluated because these conditions are
+        caught before calling the cached functions.
+
+        Notes
+        -----
+        Needs to access `memory` and `params`.
+
+        """
+        # assign memory allocated to cache
+        if self.memory == np.inf:
+            memory = None
+        else:
+            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+
+        # create function that will be cached
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp(sd):
+            """Calculate the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+
+            Raises
+            ------
+            NotImplementedError
+                If called.
+
+            """
+            raise NotImplementedError
+
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp_deriv(sd, deriv):
+            """Calculate the derivative of the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+            deriv : int
+                Index of the parameter with respect to which the overlap is derivatized.
+
+            Raises
+            ------
+            NotImplementedError
+                If called.
+
+            """
+            raise NotImplementedError
+
+        # create cache
+        if not hasattr(self, '_cache_fns'):
+            self._cache_fns = {}
+
+        # store the cached function
+        self._cache_fns['overlap'] = _olp
+        self._cache_fns['overlap derivative'] = _olp_deriv
+
     def clear_cache(self, key=None):
         """Clear the cache associated with the wavefunction.
 
@@ -271,7 +347,7 @@ class BaseWavefunction:
             raise KeyError('Given function key is not present in _cache_fns') from error
         except AttributeError as error:
             raise AttributeError('Given cached function does not have decorator '
-                                 '`functools.lru_cache`')
+                                 '`functools.lru_cache`') from error
 
     @abc.abstractproperty
     def spin(self):
