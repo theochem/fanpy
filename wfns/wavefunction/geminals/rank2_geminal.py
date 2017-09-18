@@ -200,6 +200,24 @@ class RankTwoGeminal(BaseGeminal):
         else:
             raise ValueError('Invalid derivatization index.')
 
+    def get_overlap(self, sd, deriv=None):
+        sd = slater.internal_sd(sd)
+
+        if deriv is None:
+            return self._cache_fns['overlap'](sd)
+        elif isinstance(deriv, int):
+            if deriv >= self.nparams:
+                return 0.0
+            # if differentiating along column (epsilon/zeta)
+            if self.ngem <= deriv < self.ngem + 2*self.norbpair:
+                col_removed = (deriv - self.ngem) % self.norbpair
+                orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
+                # if differentiating along column that is not used by the Slater determinant
+                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
+                    return 0.0
+
+            return self._cache_fns['overlap derivative'](sd, deriv)
+
 
 def full_to_rank2(params, rmsd=0.1, method='least squares'):
     r"""Convert full rank parameters to the rank-2 parameters.
