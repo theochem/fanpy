@@ -202,53 +202,6 @@ class APr2G(APIG):
         else:
             raise ValueError('Invalid derivatization index.')
 
-    # FIXME: mostly replicates BaseGeminal.get_overlap
-    def get_overlap(self, sd, deriv=None):
-        if not slater.is_internal_sd(sd):
-            sd = slater.internal_sd(sd)
-
-        if deriv is None:
-            return super().get_overlap(sd)
-        elif isinstance(deriv, int):
-            if deriv >= self.nparams:
-                return 0.0
-            # if differentiating along column/epsilon/zeta
-            if self.ngem <= deriv < self.ngem + 2*self.norbpair:
-                col_removed = (deriv - self.ngem) % self.norbpair
-                orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
-                # if differentiating along column that is not used by the Slater determinant
-                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
-                    return 0.0
-
-            # if cached function has not been created yet
-            if 'overlap derivative' not in self._cache_fns:
-                # assign memory allocated to cache
-                if self.memory == np.inf:
-                    memory = None
-                else:
-                    memory = int((self.memory - 5*8*self.params.size)
-                                 / (self.params.size + 1) * self.params.size)
-
-                # create function that will be cached
-                @functools.lru_cache(maxsize=memory, typed=False)
-                def _olp_deriv(sd, deriv):
-                    occ_indices = slater.occ_indices(sd)
-
-                    val = 0.0
-                    for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
-                        col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
-                        val += self.compute_permanent(col_inds, deriv=deriv)
-                    return val
-
-                # store the cached function
-                self._cache_fns['overlap derivative'] = _olp_deriv
-            # if cached function already exists
-            else:
-                # reload cached function
-                _olp_deriv = self._cache_fns['overlap derivative']
-
-            return _olp_deriv(sd, deriv)
-
     @staticmethod
     def params_from_apig(apig_params, rmsd=0.1, method='least squares'):
         r"""Convert APIG parameters to APr2G wavefunction.
