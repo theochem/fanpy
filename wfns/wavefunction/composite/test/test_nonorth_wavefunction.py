@@ -40,35 +40,6 @@ class TestWavefunction(BaseWavefunction):
         return np.identity(10)
 
 
-def test_nonorth_assign_wfn():
-    """Tests NonorthWavefunction.assign_wfn."""
-    test = TestNonorthWavefunction()
-    test.nelec = 4
-    test.nspin = 10
-    test.dtype = np.float64
-    test.memory = 10
-
-    # check default
-    test.assign_wfn(None)
-    assert isinstance(test.wfn, CIWavefunction)
-    assert test.wfn.nelec == test.nelec
-    assert test.wfn.nspin == test.nspin
-    assert test.wfn.dtype == test.dtype
-    assert test.wfn.memory == test.memory
-
-    # check type
-    assert_raises(ValueError, test.assign_wfn, int)
-    test_wfn = TestWavefunction()
-    test_wfn.nelec = 3
-    assert_raises(ValueError, test.assign_wfn, test_wfn)
-    test_wfn.nelec = 4
-    test_wfn.dtype = np.complex128
-    assert_raises(ValueError, test.assign_wfn, test_wfn)
-    test_wfn.dtype = np.float64
-    test_wfn.memory = 5
-    assert_raises(ValueError, test.assign_wfn, test_wfn)
-
-
 def test_nonorth_assign_params():
     """Tests NonorthWavefunction.assign_params."""
     test = TestNonorthWavefunction()
@@ -283,7 +254,7 @@ def test_nonorth_get_overlap():
     test.nspin = 4
     test.dtype = np.float64
     test.memory = 10
-    test.assign_wfn(None)
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
@@ -387,7 +358,7 @@ def test_nonorth_get_overlap_deriv():
     test.nspin = 4
     test.dtype = np.float64
     test.memory = 10
-    test.assign_wfn(None)
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
@@ -486,8 +457,8 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
             ham.orb_rotate_matrix(transform)
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == 'nonorth':
-            wfn = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
-                                      wfn=doci, orth_to_nonorth=transform)
+            wfn = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory,
+                                      params=transform)
 
         norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
         if expectation_type == 'ci matrix':
