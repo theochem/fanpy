@@ -4,10 +4,10 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 from wfns.wavefunction.geminals.apig import APIG
-from wfns.wavefunction.geminals.rank2_geminal import RankTwoGeminal, full_to_rank2
+from wfns.wavefunction.geminals.rank2_geminal import RankTwoApprox, full_to_rank2
 
 
-class TestRankTwoGeminal(RankTwoGeminal, BaseGeminal):
+class TestRankTwoGeminal(RankTwoApprox, BaseGeminal):
     """RankTwoGeminal that skips initialization."""
     def __init__(self):
         pass
