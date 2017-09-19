@@ -48,12 +48,11 @@ def test_apig_generate_possible_orbpairs():
     test.assign_orbpairs()
     possible_orbpairs = list(test.generate_possible_orbpairs([0, 5, 2, 7, 4, 9]))
     assert len(possible_orbpairs) == 1
-    assert len(possible_orbpairs[0]) == 3
-    assert (0, 5) in possible_orbpairs[0]
-    assert (2, 7) in possible_orbpairs[0]
-    assert (4, 9) in possible_orbpairs[0]
+    assert len(possible_orbpairs[0][0]) == 3
+    assert (0, 5) in possible_orbpairs[0][0]
+    assert (2, 7) in possible_orbpairs[0][0]
+    assert (4, 9) in possible_orbpairs[0][0]
     assert_raises(ValueError, lambda: next(test.generate_possible_orbpairs([0, 5, 2, 7])))
-    assert_raises(ValueError, lambda: next(test.generate_possible_orbpairs([0, 1, 2, 7, 4, 9])))
 
 
 def test_to_apg():

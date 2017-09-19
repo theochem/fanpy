@@ -42,7 +42,7 @@ class APIG(BaseGeminal):
 
         Notes
         -----
-        Seniority is not zero if you change the pairing scheme.
+        Spin is not zero if you change the pairing scheme.
 
         """
         return 0.0
@@ -103,16 +103,25 @@ class APIG(BaseGeminal):
         if len(occ_indices) != self.nelec:
             raise ValueError('The number of electrons in the Slater determinant does not match up '
                              'with the number of electrons in the wavefunction.')
-        orbpairs = tuple((i, i+self.nspatial) for i in occ_indices if i < self.nspatial)
-
-        if set(occ_indices) != set(j for i in orbpairs for j in i):
-            raise ValueError('This Slater determinant cannot be created using the pairing scheme of'
-                             ' APIG wavefunction.')
+        # ASSUME each orbital is associated with exactly one orbital pair
+        dict_orb_ind = {orbpair[0]: ind for orbpair, ind in self.dict_orbpair_ind.items()}
+        orbpairs = []
+        for i in occ_indices:
+            try:
+                ind = dict_orb_ind[i]
+            except KeyError:
+                continue
+            else:
+                orbpairs.append(self.dict_ind_orbpair[ind])
 
         # signature to turn orbpairs into strictly INCREASING order.
         sign = (-1)**((self.npair//2) % 2)
 
-        yield orbpairs, sign
+        # if Slater determinant cannot be constructed from the orbital pairing scheme
+        if len(occ_indices) != 2 * len(orbpairs):
+            yield [], 1
+        else:
+            yield tuple(orbpairs), sign
 
     # TODO: refactor when APG is set up
     def to_apg(self):
