@@ -214,6 +214,199 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         self.params = params
 
+    def load_cache(self):
+        # assign memory allocated to cache
+        if self.memory == np.inf:
+            memory = None
+        else:
+            memory = int((self.memory - 5*8*sum(self.nparams)) / (sum(self.nparams) + 1))
+
+        # create function that will be cached
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp(sd):
+            output = 0.0
+            if self.orbtype == 'generalized':
+                row_inds = slater.occ_indices(sd)
+                all_col_inds = range(self.wfn.nspin)
+                for col_inds in it.combinations(all_col_inds, self.nelec):
+                    nonorth_sd = slater.create(0, *col_inds)
+                    wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                    nonorth_coeff = np.linalg.det(self.params[0][row_inds, :][:, col_inds])
+                    output += wfn_coeff * nonorth_coeff
+            else:
+                alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
+                alpha_row_inds = slater.occ_indices(alpha_sd)
+                beta_row_inds = slater.occ_indices(beta_sd)
+                all_col_inds = range(self.wfn.nspatial)
+                for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)):
+                    if len(alpha_col_inds) == 0:
+                        alpha_coeff = 1.0
+                    else:
+                        alpha_coeff = np.linalg.det(self.params[0]
+                                                    [alpha_row_inds, :][:, alpha_col_inds])
+                    for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
+                        # FIXME: change i+nspatial to slater.to_beta
+                        nonorth_sd = slater.create(0, *alpha_col_inds,
+                                                   *[i + self.nspatial for i in beta_col_inds])
+                        wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                        if self.orbtype == 'restricted':
+                            i = 0
+                        elif self.orbtype == 'unrestricted':
+                            i = 1
+
+                        if len(beta_col_inds) == 0:
+                            beta_coeff = 1.0
+                        else:
+                            beta_coeff = np.linalg.det(self.params[i]
+                                                       [beta_row_inds, :][:, beta_col_inds])
+                        output += wfn_coeff * alpha_coeff * beta_coeff
+            return output
+
+        @functools.lru_cache(maxsize=memory, typed=False)
+        def _olp_deriv(sd, deriv):
+            # lots of repetition b/c slight variations with different orbital types
+            transform_ind = deriv // self.nparams[0]
+            row_removed = ((deriv % self.nparams[0]) // self.params_shape[transform_ind][1])
+            col_removed = ((deriv % self.nparams[0]) % self.params_shape[transform_ind][1])
+
+            output = 0.0
+            if self.orbtype == 'generalized':
+                row_inds = slater.occ_indices(slater.annihilate(sd, row_removed))
+                row_sign = (-1) ** np.sum(np.array(row_inds) < row_removed)
+                all_col_inds = (i for i in range(self.wfn.nspin) if i != col_removed)
+                for col_inds in it.combinations(all_col_inds, len(row_inds)):
+                    nonorth_sd = slater.create(0, col_removed, *col_inds)
+                    wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                    col_sign = (-1) ** np.sum(np.array(col_inds) < col_removed)
+                    nonorth_coeff = np.linalg.det(self.params[0][row_inds, :][:, col_inds])
+                    output += wfn_coeff * row_sign * col_sign * nonorth_coeff
+                return output
+
+            alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
+            if not (slater.occ(alpha_sd, row_removed) or slater.occ(beta_sd, row_removed)):
+                return 0.0
+            # FIXME/TODO: need to add signature for derivative
+            if (self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)
+                    and slater.occ(beta_sd, row_removed)):
+                # if both alpha and beta Slater determinants contain the orbital
+                alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd, row_removed))
+                beta_row_inds = slater.occ_indices(slater.annihilate(beta_sd, row_removed))
+
+                all_col_inds = [i for i in range(self.wfn.nspatial) if i != col_removed]
+
+                # alpha block includes derivatized column
+                for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)):
+                    if len(alpha_col_inds) == 0:
+                        der_alpha_coeff = 1.0
+                    else:
+                        der_alpha_coeff = np.linalg.det(self.params[0]
+                                                        [alpha_row_inds, :]
+                                                        [:, alpha_col_inds])
+                    alpha_coeff = np.linalg.det(self.params[0]
+                                                [alpha_row_inds+(row_removed, ), :]
+                                                [:, alpha_col_inds+(col_removed, )])
+                    # beta block includes derivatized column
+                    # FIXME: change i+nspatial to slater.to_beta
+                    for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
+                        nonorth_sd = slater.create(0, col_removed, col_removed + self.nspatial,
+                                                   *alpha_col_inds,
+                                                   *(i + self.nspatial for i in beta_col_inds))
+                        wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                        if len(beta_col_inds) == 0:
+                            der_beta_coeff = 1.0
+                        else:
+                            der_beta_coeff = np.linalg.det(self.params[0]
+                                                           [beta_row_inds, :]
+                                                           [:, beta_col_inds])
+                        beta_coeff = np.linalg.det(self.params[0]
+                                                   [beta_row_inds+(row_removed, ), :]
+                                                   [:, beta_col_inds+(col_removed, )])
+                        output += wfn_coeff * (der_alpha_coeff * beta_coeff +
+                                               alpha_coeff * der_beta_coeff)
+
+                    # beta block does not include derivatized column
+                    for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds) + 1):
+                        nonorth_sd = slater.create(0, col_removed, *alpha_col_inds,
+                                                   *(i + self.nspatial for i in beta_col_inds))
+                        wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                        beta_coeff = np.linalg.det(self.params[0]
+                                                   [beta_row_inds+(row_removed,), :]
+                                                   [:, beta_col_inds])
+                        output += wfn_coeff * der_alpha_coeff * beta_coeff
+                # alpha block does not include the derivatized column
+                for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)+1):
+                    alpha_coeff = np.linalg.det(self.params[0]
+                                                [alpha_row_inds+(row_removed, ), :]
+                                                [:, alpha_col_inds])
+                    # beta block includes derivatized column
+                    for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
+                        nonorth_sd = slater.create(0, col_removed + self.nspatial, *alpha_col_inds,
+                                                   *(i + self.nspatial for i in beta_col_inds))
+                        wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                        if len(beta_col_inds) == 0:
+                            der_beta_coeff = 1.0
+                        else:
+                            der_beta_coeff = np.linalg.det(self.params[0]
+                                                           [beta_row_inds, :][:, beta_col_inds])
+                        output += wfn_coeff * alpha_coeff * der_beta_coeff
+
+                return output
+
+            # if only one of alpha and beta Slater determinants contains the orbital
+                # elif slater.occ(alpha_sd, row_removed) != slater.occ(beta_sd, row_removed):
+            if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)) or
+                    (self.orbtype == 'unrestricted' and transform_ind == 0)):
+                alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd, row_removed))
+                beta_row_inds = slater.occ_indices(beta_sd)
+                row_sign = (-1) ** np.sum(np.array(alpha_row_inds) < row_removed)
+                all_alpha_col_inds = (i for i in range(self.wfn.nspatial) if i != col_removed)
+                all_beta_col_inds = range(self.wfn.nspatial)
+            else:
+                alpha_row_inds = slater.occ_indices(alpha_sd)
+                beta_row_inds = slater.occ_indices(slater.annihilate(beta_sd, row_removed))
+                row_sign = (-1) ** np.sum(np.array(beta_row_inds) < row_removed)
+                all_alpha_col_inds = range(self.wfn.nspatial)
+                all_beta_col_inds = (i for i in range(self.wfn.nspatial) if i != col_removed)
+
+            for alpha_col_inds in it.combinations(all_alpha_col_inds, len(alpha_row_inds)):
+                col_sign = 1
+                if transform_ind == 0:
+                    col_sign *= (-1) ** np.sum(np.array(alpha_col_inds) < col_removed)
+                if len(alpha_col_inds) == 0:
+                    alpha_coeff = 1.0
+                else:
+                    alpha_coeff = np.linalg.det(self.params[0]
+                                                [alpha_row_inds, :][:, alpha_col_inds])
+                for beta_col_inds in it.combinations(all_beta_col_inds, len(beta_row_inds)):
+                    # FIXME: change i+nspatial to slater.to_beta
+                    nonorth_sd = slater.create(0, *alpha_col_inds,
+                                               *[i + self.nspatial for i in beta_col_inds])
+                    if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed))
+                            or (self.orbtype == 'unrestricted' and transform_ind == 0)):
+                        nonorth_sd = slater.create(nonorth_sd, col_removed)
+                    else:
+                        nonorth_sd = slater.create(nonorth_sd, col_removed + self.nspatial)
+
+                    wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
+                    if transform_ind == 1:
+                        col_sign *= (-1) ** np.sum(np.array(beta_col_inds) < col_removed)
+                    if len(beta_col_inds) == 0:
+                        beta_coeff = 1.0
+                    else:
+                        orb_ind = 0 if self.orbtype == 'restricted' else 1
+                        beta_coeff = np.linalg.det(self.params[orb_ind]
+                                                   [beta_row_inds, :][:, beta_col_inds])
+                    output += wfn_coeff * row_sign * col_sign * alpha_coeff * beta_coeff
+            return output
+
+        # create cache
+        if not hasattr(self, '_cache_fns'):
+            self._cache_fns = {}
+
+        # store the cached function
+        self._cache_fns['overlap'] = _olp
+        self._cache_fns['overlap derivative'] = _olp_deriv
+
     # FIXME: incredibly slow/bad approach
     # TODO: instead of all possible combinations (itertools), have something that selects a smaller
     #       subset
@@ -241,64 +434,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if deriv is None:
-            # if cached function has not been created yet
-            if 'overlap' not in self._cache_fns:
-                # assign memory allocated to cache
-                if self.memory == np.inf:
-                    memory = None
-                else:
-                    memory = int((self.memory - 5*8*sum(self.nparams)) / (sum(self.nparams) + 1))
-
-                # create function that will be cached
-                @functools.lru_cache(maxsize=memory, typed=False)
-                def _olp(sd):
-                    output = 0.0
-                    if self.orbtype == 'generalized':
-                        row_inds = slater.occ_indices(sd)
-                        all_col_inds = range(self.wfn.nspin)
-                        for col_inds in it.combinations(all_col_inds, self.nelec):
-                            nonorth_sd = slater.create(0, *col_inds)
-                            wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                            nonorth_coeff = np.linalg.det(self.params[0][row_inds, :][:, col_inds])
-                            output += wfn_coeff * nonorth_coeff
-                    else:
-                        alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-                        alpha_row_inds = slater.occ_indices(alpha_sd)
-                        beta_row_inds = slater.occ_indices(beta_sd)
-                        all_col_inds = range(self.wfn.nspatial)
-                        for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)):
-                            if len(alpha_col_inds) == 0:
-                                alpha_coeff = 1.0
-                            else:
-                                alpha_coeff = np.linalg.det(self.params[0]
-                                                            [alpha_row_inds, :][:, alpha_col_inds])
-                            for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
-                                # FIXME: change i+nspatial to slater.to_beta
-                                nonorth_sd = slater.create(0, *alpha_col_inds,
-                                                           *[i + self.nspatial
-                                                             for i in beta_col_inds])
-                                wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                                if self.orbtype == 'restricted':
-                                    i = 0
-                                elif self.orbtype == 'unrestricted':
-                                    i = 1
-
-                                if len(beta_col_inds) == 0:
-                                    beta_coeff = 1.0
-                                else:
-                                    beta_coeff = np.linalg.det(self.params[i]
-                                                               [beta_row_inds, :][:, beta_col_inds])
-                                output += wfn_coeff * alpha_coeff * beta_coeff
-                    return output
-
-                # store the cached function
-                self._cache_fns['overlap'] = _olp
-            # if cached function already exists
-            else:
-                # reload cached function
-                _olp = self._cache_fns['overlap']
-
-            return _olp(sd)
+            return self._cache_fns['overlap'](sd)
 
         # if derivatization
         elif isinstance(deriv, int):
@@ -322,173 +458,4 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             elif self.orbtype == 'generalized' and not slater.occ(sd, row_removed):
                 return 0.0
 
-            # if cached function has not been created yet
-            if 'overlap derivative' not in self._cache_fns:
-                # assign memory allocated to cache
-                if self.memory == np.inf:
-                    memory = None
-                else:
-                    memory = int((self.memory - 5*8*sum(self.nparams))
-                                 / (sum(self.nparams) + 1) * sum(self.nparams))
-
-                # FIXME: giant fucking mess. Lot of repeated code. Messy, inconsistent namespace.
-                @functools.lru_cache(maxsize=memory, typed=False)
-                def _olp_deriv(sd, deriv):
-                    # lots of repetition b/c slight variations with different orbital types
-                    transform_ind = deriv // self.nparams[0]
-                    row_removed = ((deriv % self.nparams[0]) // self.params_shape[transform_ind][1])
-                    col_removed = ((deriv % self.nparams[0]) % self.params_shape[transform_ind][1])
-
-                    output = 0.0
-                    if self.orbtype == 'generalized':
-                        row_inds = slater.occ_indices(slater.annihilate(sd, row_removed))
-                        row_sign = (-1) ** np.sum(np.array(row_inds) < row_removed)
-                        all_col_inds = (i for i in range(self.wfn.nspin) if i != col_removed)
-                        for col_inds in it.combinations(all_col_inds, len(row_inds)):
-                            nonorth_sd = slater.create(0, col_removed, *col_inds)
-                            wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                            col_sign = (-1) ** np.sum(np.array(col_inds) < col_removed)
-                            nonorth_coeff = np.linalg.det(self.params[0][row_inds, :][:, col_inds])
-                            output += wfn_coeff * row_sign * col_sign * nonorth_coeff
-                        return output
-
-                    alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-                    if not (slater.occ(alpha_sd, row_removed) or slater.occ(beta_sd, row_removed)):
-                        return 0.0
-                    # FIXME/TODO: need to add signature for derivative
-                    if (self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)
-                            and slater.occ(beta_sd, row_removed)):
-                        # if both alpha and beta Slater determinants contain the orbital
-                        alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd,
-                                                                              row_removed))
-                        beta_row_inds = slater.occ_indices(slater.annihilate(beta_sd,
-                                                                             row_removed))
-
-                        all_col_inds = [i for i in range(self.wfn.nspatial) if i != col_removed]
-
-                        # alpha block includes derivatized column
-                        for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)):
-                            if len(alpha_col_inds) == 0:
-                                der_alpha_coeff = 1.0
-                            else:
-                                der_alpha_coeff = np.linalg.det(self.params[0]
-                                                                [alpha_row_inds, :]
-                                                                [:, alpha_col_inds])
-                            alpha_coeff = np.linalg.det(self.params[0]
-                                                        [alpha_row_inds+(row_removed, ), :]
-                                                        [:, alpha_col_inds+(col_removed, )])
-                            # beta block includes derivatized column
-                            # FIXME: change i+nspatial to slater.to_beta
-                            for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
-                                nonorth_sd = slater.create(0, col_removed,
-                                                           col_removed + self.nspatial,
-                                                           *alpha_col_inds,
-                                                           *(i + self.nspatial
-                                                             for i in beta_col_inds))
-                                wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                                if len(beta_col_inds) == 0:
-                                    der_beta_coeff = 1.0
-                                else:
-                                    der_beta_coeff = np.linalg.det(self.params[0]
-                                                                   [beta_row_inds, :]
-                                                                   [:, beta_col_inds])
-                                beta_coeff = np.linalg.det(self.params[0]
-                                                           [beta_row_inds+(row_removed, ), :]
-                                                           [:, beta_col_inds+(col_removed, )])
-                                output += wfn_coeff * (der_alpha_coeff * beta_coeff +
-                                                       alpha_coeff * der_beta_coeff)
-
-                            # beta block does not include derivatized column
-                            for beta_col_inds in it.combinations(all_col_inds,
-                                                                 len(beta_row_inds) + 1):
-                                nonorth_sd = slater.create(0, col_removed,
-                                                           *alpha_col_inds,
-                                                           *(i + self.nspatial
-                                                             for i in beta_col_inds))
-                                wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                                beta_coeff = np.linalg.det(self.params[0]
-                                                           [beta_row_inds+(row_removed,), :]
-                                                           [:, beta_col_inds])
-                                output += wfn_coeff * der_alpha_coeff * beta_coeff
-                        # alpha block does not include the derivatized column
-                        for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)+1):
-                            alpha_coeff = np.linalg.det(self.params[0]
-                                                        [alpha_row_inds+(row_removed, ), :]
-                                                        [:, alpha_col_inds])
-                            # beta block includes derivatized column
-                            for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
-                                nonorth_sd = slater.create(0, col_removed + self.nspatial,
-                                                           *alpha_col_inds,
-                                                           *(i + self.nspatial
-                                                             for i in beta_col_inds))
-                                wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                                if len(beta_col_inds) == 0:
-                                    der_beta_coeff = 1.0
-                                else:
-                                    der_beta_coeff = np.linalg.det(self.params[0]
-                                                                   [beta_row_inds, :]
-                                                                   [:, beta_col_inds])
-                                output += wfn_coeff * alpha_coeff * der_beta_coeff
-
-                        return output
-
-                    # if only one of alpha and beta Slater determinants contains the orbital
-                        # elif slater.occ(alpha_sd, row_removed) != slater.occ(beta_sd, row_removed):
-                    if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)) or
-                            (self.orbtype == 'unrestricted' and transform_ind == 0)):
-                        alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd,
-                                                                              row_removed))
-                        beta_row_inds = slater.occ_indices(beta_sd)
-                        row_sign = (-1) ** np.sum(np.array(alpha_row_inds) < row_removed)
-                        all_alpha_col_inds = (i for i in range(self.wfn.nspatial)
-                                              if i != col_removed)
-                        all_beta_col_inds = range(self.wfn.nspatial)
-                    else:
-                        alpha_row_inds = slater.occ_indices(alpha_sd)
-                        beta_row_inds = slater.occ_indices(slater.annihilate(beta_sd,
-                                                                             row_removed))
-                        row_sign = (-1) ** np.sum(np.array(beta_row_inds) < row_removed)
-                        all_alpha_col_inds = range(self.wfn.nspatial)
-                        all_beta_col_inds = (i for i in range(self.wfn.nspatial)
-                                             if i != col_removed)
-
-                    for alpha_col_inds in it.combinations(all_alpha_col_inds, len(alpha_row_inds)):
-                        col_sign = 1
-                        if transform_ind == 0:
-                            col_sign *= (-1) ** np.sum(np.array(alpha_col_inds) < col_removed)
-                        if len(alpha_col_inds) == 0:
-                            alpha_coeff = 1.0
-                        else:
-                            alpha_coeff = np.linalg.det(self.params[0]
-                                                        [alpha_row_inds, :][:, alpha_col_inds])
-                        for beta_col_inds in it.combinations(all_beta_col_inds,
-                                                             len(beta_row_inds)):
-                            # FIXME: change i+nspatial to slater.to_beta
-                            nonorth_sd = slater.create(0, *alpha_col_inds,
-                                                       *[i + self.nspatial for i in beta_col_inds])
-                            if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed))
-                                    or (self.orbtype == 'unrestricted' and transform_ind == 0)):
-                                nonorth_sd = slater.create(nonorth_sd, col_removed)
-                            else:
-                                nonorth_sd = slater.create(nonorth_sd, col_removed + self.nspatial)
-
-                            wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                            if transform_ind == 1:
-                                col_sign *= (-1) ** np.sum(np.array(beta_col_inds) < col_removed)
-                            if len(beta_col_inds) == 0:
-                                beta_coeff = 1.0
-                            else:
-                                orb_ind = 0 if self.orbtype == 'restricted' else 1
-                                beta_coeff = np.linalg.det(self.params[orb_ind]
-                                                           [beta_row_inds, :][:, beta_col_inds])
-                            output += wfn_coeff * row_sign * col_sign * alpha_coeff * beta_coeff
-                    return output
-
-                # store the cached function
-                self._cache_fns['overlap derivative'] = _olp_deriv
-            # if cached function already exists
-            else:
-                # reload cached function
-                _olp_deriv = self._cache_fns['overlap derivative']
-
-            return _olp_deriv(sd, deriv)
+            return self._cache_fns['overlap derivative'](sd, deriv)
