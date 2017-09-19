@@ -51,8 +51,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Orbitals that are rotated.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, wfn=None, orbtype=None,
-                 jacobi_indices=None, params=None):
+    def __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
+                 jacobi_indices=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -66,9 +66,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             Orbitals that will be rotated.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
-        self.assign_params(params)
-        self.assign_wfn(wfn)
+        super().__init__(nelec, nspin, wfn, dtype=dtype, memory=memory, params=params)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
 
