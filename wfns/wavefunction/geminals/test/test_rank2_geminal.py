@@ -2,11 +2,12 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
+from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 from wfns.wavefunction.geminals.apig import APIG
 from wfns.wavefunction.geminals.rank2_geminal import RankTwoGeminal, full_to_rank2
 
 
-class TestRankTwoGeminal(RankTwoGeminal):
+class TestRankTwoGeminal(RankTwoGeminal, BaseGeminal):
     """RankTwoGeminal that skips initialization."""
     def __init__(self):
         pass
