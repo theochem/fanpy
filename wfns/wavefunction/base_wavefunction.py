@@ -53,9 +53,6 @@ class BaseWavefunction:
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
-        # create cached functions
-        self.load_cache()
-
     @property
     def nspatial(self):
         """Return the number of spatial orbitals.

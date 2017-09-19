@@ -64,6 +64,7 @@ class AP1roG(APIG):
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
+        self.load_cache()
 
     @property
     def template_params(self):
