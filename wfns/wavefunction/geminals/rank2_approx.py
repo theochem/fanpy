@@ -1,4 +1,4 @@
-"""Rank-2 Geminal Wavefunction."""
+"""Rank-2 approximation to geminal wavefunction."""
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
@@ -12,8 +12,8 @@ __all__ = []
 #        be replaced with a wrapper instead? especially since ordering is necessary w/o splitting
 #        the BaseGeminal in two.
 @docstring_class(indent_level=1)
-class RankTwoGeminal:
-    r"""Rank-2 Geminals Wavefunction.
+class RankTwoApprox:
+    r"""Rank-2 approximation to the geminal wavefunction.
 
     Geminal wavefunction where the geminal coefficient is parameterized as a rank-2 Cauchy matrix.
 
