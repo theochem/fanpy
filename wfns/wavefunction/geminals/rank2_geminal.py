@@ -8,8 +8,11 @@ from wfns.wrapper.docstring import docstring_class
 __all__ = []
 
 
+# FIXME: parent was removed to allow easier multiple inheritance. Maybe multiple inheritance should
+#        be replaced with a wrapper instead? especially since ordering is necessary w/o splitting
+#        the BaseGeminal in two.
 @docstring_class(indent_level=1)
-class RankTwoGeminal(BaseGeminal):
+class RankTwoGeminal:
     r"""Rank-2 Geminals Wavefunction.
 
     Geminal wavefunction where the geminal coefficient is parameterized as a rank-2 Cauchy matrix.
