@@ -157,6 +157,7 @@ def test_jacobi_get_overlap():
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
+    test.load_cache()
 
     # generalized
     test.assign_orbtype('generalized')
@@ -299,6 +300,7 @@ def test_jacobi_get_overlap_restricted():
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
+    test.load_cache()
 
     sin = np.sin(test.params)
     cos = np.cos(test.params)
@@ -398,6 +400,7 @@ def test_jacobi_get_overlap_der():
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
+    test.load_cache()
     sin = np.sin(test.params)
     cos = np.cos(test.params)
 
@@ -538,6 +541,7 @@ def test_jacobi_get_overlap_restricted_der():
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
+    test.load_cache()
 
     sin = np.sin(test.params)
     cos = np.cos(test.params)

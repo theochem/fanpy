@@ -261,6 +261,7 @@ def test_nonorth_get_overlap():
 
     # generalized
     test.params = [np.arange(1, 17).reshape(4, 4)]
+    test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
     assert np.isclose(test.get_overlap(0b0101), ((1*10 - 2*9) * wfn_sd_coeff[0b0011] +
@@ -292,6 +293,7 @@ def test_nonorth_get_overlap():
     # unrestricted
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
+    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
     assert np.isclose(test.get_overlap(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
@@ -322,6 +324,7 @@ def test_nonorth_get_overlap():
     # restricted
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]])]
+    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(test.get_overlap(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
@@ -365,6 +368,7 @@ def test_nonorth_get_overlap_deriv():
 
     # generalized
     test.params = [np.arange(1, 17).reshape(4, 4)]
+    test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
     assert np.isclose(test.get_overlap(0b0101, deriv=0), (10 * wfn_sd_coeff[0b0011] +
@@ -380,6 +384,7 @@ def test_nonorth_get_overlap_deriv():
     # unrestricted
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
+    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
     assert np.isclose(test.get_overlap(0b0101, deriv=0), (0 * wfn_sd_coeff[0b0011] +
@@ -403,6 +408,7 @@ def test_nonorth_get_overlap_deriv():
     # restricted (one block)
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]])]
+    test.load_cache()
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(test.get_overlap(0b0110, deriv=0), (5 * wfn_sd_coeff[0b0101] +
