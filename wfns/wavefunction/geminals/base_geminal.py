@@ -73,6 +73,7 @@ class BaseGeminal(BaseWavefunction):
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
+        self.load_cache()
 
     @property
     def spin(self):
