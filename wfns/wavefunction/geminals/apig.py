@@ -1,6 +1,7 @@
 """Antisymmeterized Product of Interacting Geminals (APIG) wavefunction."""
 from __future__ import absolute_import, division, print_function
 import numpy as np
+from wfns.backend.slater import find_num_trans
 from wfns.wavefunction.geminals.base_geminal import BaseGeminal
 from wfns.wrapper.docstring import docstring_class
 
@@ -115,7 +116,7 @@ class APIG(BaseGeminal):
                 orbpairs.append(self.dict_ind_orbpair[ind])
 
         # signature to turn orbpairs into strictly INCREASING order.
-        sign = (-1)**((self.npair//2) % 2)
+        sign = (-1)**(find_num_trans([orb for orbpair in orbpairs for orb in orbpair]))
 
         # if Slater determinant cannot be constructed from the orbital pairing scheme
         if len(occ_indices) != 2 * len(orbpairs):
