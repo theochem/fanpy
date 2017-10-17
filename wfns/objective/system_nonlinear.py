@@ -12,16 +12,18 @@ class SystemEquations(BaseObjective):
 
     .. math::
 
-        \braket{\Phi_1 | \hat{H} | \Psi} &= E \braket{\Phi_1 | \Psi}\\
-        \braket{\Phi_2 | \hat{H} | \Psi} &= E \braket{\Phi_2 | \Psi}\\
+        \braket{\Phi_1 | \hat{H} | \Psi} - E \braket{\Phi_1 | \Psi} &= 0\\
+        \braket{\Phi_2 | \hat{H} | \Psi} - E \braket{\Phi_2 | \Psi} &= 0\\
         &\vdots\\
-        \braket{\Phi_K | \hat{H} | \Psi} &= E \braket{\Phi_K | \Psi}\\
+        \braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi} &= 0\\
 
-    Energy is calculated with respect to the reference state.
+    Energy is calculated with respect to the reference state,
 
     .. math::
 
-        E = \braket{\Phi_{ref} | \hat{H} | \Psi}
+        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
+
+    or as a parameter.
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -39,9 +41,15 @@ class SystemEquations(BaseObjective):
         Weights of each equation.
         By default, all equations are given weight of 1 except for the normalization constraint,
         which is weighed by the number of equations.
+    fixed_energy : {float, None}
+        Energy used in the Schrodinger equation.
+        If provided, the energy within the Schrodinger equation is fixed to the given value.
+        If not provided, the energy within the Schrodinger equation is given as a parameter (if
+        energy is a parameter) or is computed when needd (if energy is not a parameter).
+        By default, `fixed_energy` is not provided.
 
     """
-    def __init__(self, wfn, ham, pspace=None, ref_state=None, eqn_weights=None):
+    def __init__(self, wfn, ham, pspace=None, ref_state=None, eqn_weights=None, fixed_energy=None):
         """
 
         Parameters
@@ -58,12 +66,33 @@ class SystemEquations(BaseObjective):
             Weights of each equation.
             By default, all equations are given weight of 1 except for the normalization constraint,
             which is weighed by the number of equations.
+        fixed_energy : {float, None}
+            Energy of the Schrodinger equation.
+            If provided, the energy within the Schrodinger equation is fixed to the given value.
+            If not provided, the energy within the Schrodinger equation is given as a parameter (if
+            energy is a parameter) or is computed when needd (if energy is not a parameter).
+            By default, `fixed_energy` is not provided.
+
+        Raises
+        ------
+        ValueError
+            If fixed_energy is a parameter and `energy` is not None.
+        TypeError
+            If fixed_energy is not None or float.
 
         """
         super().__init__(wfn, ham)
         self.assign_pspace(pspace)
         self.assign_ref_state(ref_state)
         self.assign_eqn_weights(eqn_weights)
+
+        if 'energy' in self.param_types and fixed_energy is not None:
+            raise ValueError('Energy cannot be given and be a parameter at the same time. If the '
+                             'energy is given, then energy will be fixed to this value. If the '
+                             'energy is a parameter, then the energy is variable.')
+        elif not (fixed_energy is None or isinstance(fixed_energy, float)):
+            raise TypeError('`fixed_energy` must be a float or None.')
+        self.fixed_energy = fixed_energy
 
     def assign_pspace(self, pspace=None):
         """Set the projection space.
@@ -218,7 +247,10 @@ class SystemEquations(BaseObjective):
             ind_start, ind_end = self.param_ranges[type_ind]
             energy = params[ind_start]
         except ValueError:
-            energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
+            if self.fixed_energy is None:
+                energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
+            else:
+                energy = self.fixed_energy
 
         # objective
         obj = np.empty(self.nproj + 1)
@@ -279,7 +311,7 @@ class SystemEquations(BaseObjective):
         if isinstance(self.ref_state[0], CIWavefunction):
             ref_sds = self.ref_state[0].sd_vec
             ref_coeffs = self.ref_state[0].params
-            d_ref_coeffs = np.zeros((len(ref_sds), derivs.size), dtype=float)
+            d_ref_coeffs = np.zeros((len(ref_sds), derivs.size))
         else:
             ref_sds = self.ref_state
             ref_coeffs = get_overlap(ref_sds)
@@ -287,12 +319,12 @@ class SystemEquations(BaseObjective):
 
         # overlaps and integrals
         ref_olps = get_overlap(ref_sds)
-        ref_ints = integrate_wfn_sd(ref_sds)
         d_ref_olps = get_overlap(ref_sds[:, np.newaxis], derivs)
+        ref_ints = integrate_wfn_sd(ref_sds)
         d_ref_ints = integrate_wfn_sd(ref_sds[:, np.newaxis], derivs)
-        # NOTE: d_ref_olps and d_ref_ints are three dimensional tensors (axis 0 corresponds to the
-        # reference Slater determinants, 1 to the Slater determinants of the projection space, and
-        # 2 to the index of the parameter with respect to which the value is derivatized).
+        # NOTE: d_ref_olps and d_ref_ints are two dimensional tensors (axis 0 corresponds to the
+        # reference Slater determinants and 2 to the index of the parameter with respect to which
+        # the value is derivatized).
 
         # norm
         norm = np.sum(ref_olps * ref_coeffs)
@@ -306,15 +338,18 @@ class SystemEquations(BaseObjective):
             energy = params[ind_start]
             # ASSUMES: wavefunction and Hamiltonian and all other possible parameters are
             # independent of the energy
-            d_energy = np.zeros(params.size, dtype=float)
+            d_energy = np.zeros(params.size)
             d_energy[ind_start] = 1.0
         except ValueError:
-            energy = np.sum(ref_coeffs * ref_ints) / norm
-            # reshape for broadcasting
-            d_energy = np.sum(d_ref_ints * ref_olps[:, np.newaxis] +
-                              ref_ints[:, np.newaxis] * d_ref_olps -
-                              d_norm[np.newaxis, :] * energy,
-                              axis=0) / norm
+            if self.fixed_energy is None:
+                energy = np.sum(ref_coeffs * ref_ints) / norm
+                d_energy = np.sum(d_ref_ints * ref_olps[:, np.newaxis] +
+                                  ref_ints[:, np.newaxis] * d_ref_olps -
+                                  d_norm[np.newaxis, :] * energy,
+                                  axis=0) / norm
+            else:
+                energy = self.fixed_energy
+                d_energy = np.zeros(params.size)
 
         # reshape for broadcasting
         pspace = np.array(self.pspace)[:, np.newaxis]
