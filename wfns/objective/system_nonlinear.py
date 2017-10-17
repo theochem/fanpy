@@ -108,7 +108,6 @@ class SystemEquations(BaseObjective):
         """
         if ref_state is None:
             ref_state = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
-        # FIXME: hard codes int format of Slater determinant
         elif slater.is_internal_sd(ref_state) or isinstance(ref_state, (int, CIWavefunction)):
             ref_state = (ref_state, )
         # FIXME: hard codes int format of Slater determinant
@@ -193,14 +192,9 @@ class SystemEquations(BaseObjective):
         objective : np.ndarray(nproj+1, )
             Output of the function that will be optimized.
 
-        Notes
-        -----
-        Wavefunction and Hamiltonian objects are updated iteratively.
-
         """
-        wfn = self.wfn
         params = np.array(params)
-        # Assign params
+        # Assign params to wavefunction, hamiltonian, and other involved objects.
         self.assign_params(params)
         # Save params
         self.save_params(params)
@@ -218,12 +212,16 @@ class SystemEquations(BaseObjective):
             ref_coeffs = get_overlap(ref_sds)
 
         # reference values
-        norm = np.sum(get_overlap(ref_sds) * ref_coeffs)
-        energy = np.sum(integrate_wfn_sd(ref_sds) * ref_coeffs)
-        energy /= norm
+        norm = np.sum(ref_coeffs * get_overlap(ref_sds))
+        try:
+            type_ind = self.param_types.index('energy')
+            ind_start, ind_end = self.param_ranges[type_ind]
+            energy = params[ind_start]
+        except ValueError:
+            energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
 
         # objective
-        obj = np.empty(self.nproj + 1, dtype=wfn.dtype)
+        obj = np.empty(self.nproj + 1)
         # <SD|H|Psi> - E<SD|Psi> == 0
         obj[:self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
         # Add constraints
@@ -254,8 +252,14 @@ class SystemEquations(BaseObjective):
         jac : np.ndarray(nproj+1, nparams)
             Value of the Jacobian :math:`J_{ij}`.
 
+        Notes
+        -----
+        Much of the code is copied from `BaseObjective.get_energy_one_proj` to compute the energy.
+        It is not called because the norm is still needed for the constraint (meaning that much of
+        the code will be copied over anyways), and the derivative of the energy uses some of the
+        the same matrices.
+
         """
-        wfn = self.wfn
         params = np.array(params)
         # Assign params
         self.assign_params(params)
@@ -266,49 +270,60 @@ class SystemEquations(BaseObjective):
         get_overlap = np.vectorize(self.wrapped_get_overlap)
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
+        # indices with respect to which objective is derivatized
+        derivs = np.arange(self.nproj + 1)
+        # need to reshape to allow for summing over slater determinants
+        derivs = derivs[np.newaxis, :]
+
         # define reference
         if isinstance(self.ref_state[0], CIWavefunction):
             ref_sds = self.ref_state[0].sd_vec
             ref_coeffs = self.ref_state[0].params
+            d_ref_coeffs = np.zeros((len(ref_sds), derivs.size), dtype=float)
         else:
             ref_sds = self.ref_state
             ref_coeffs = get_overlap(ref_sds)
+            d_ref_coeffs = get_overlap(ref_sds[:, np.newaxis], derivs)
 
-        # indices with respect to which objective is derivatized
-        derivs, _ = np.meshgrid(np.arange(params.size), np.arange(params.size))
-        # need to reshape to allow for summing over slater determinants
-        derivs = derivs[np.newaxis, :, :]
-
-        # reference values
+        # overlaps and integrals
         ref_olps = get_overlap(ref_sds)
         ref_ints = integrate_wfn_sd(ref_sds)
-        d_ref_olps = get_overlap(ref_sds, derivs)
-        d_ref_ints = integrate_wfn_sd(ref_sds, derivs)
+        d_ref_olps = get_overlap(ref_sds[:, np.newaxis], derivs)
+        d_ref_ints = integrate_wfn_sd(ref_sds[:, np.newaxis], derivs)
+        # NOTE: d_ref_olps and d_ref_ints are three dimensional tensors (axis 0 corresponds to the
+        # reference Slater determinants, 1 to the Slater determinants of the projection space, and
+        # 2 to the index of the parameter with respect to which the value is derivatized).
 
+        # norm
         norm = np.sum(ref_olps * ref_coeffs)
-        energy = np.sum(ref_ints * ref_coeffs)
-        energy /= norm
+        d_norm = np.sum(ref_olps[:, np.newaxis]*d_ref_coeffs + d_ref_olps*ref_coeffs[:, np.newaxis],
+                        axis=0)
+
+        # energy
+        try:
+            type_ind = self.param_types.index('energy')
+            ind_start, ind_end = self.param_ranges[type_ind]
+            energy = params[ind_start]
+            # ASSUMES: wavefunction and Hamiltonian and all other possible parameters are
+            # independent of the energy
+            d_energy = np.zeros(params.size, dtype=float)
+            d_energy[ind_start] = 1.0
+        except ValueError:
+            energy = np.sum(ref_coeffs * ref_ints) / norm
+            # reshape for broadcasting
+            d_energy = np.sum(d_ref_ints * ref_olps[:, np.newaxis] +
+                              ref_ints[:, np.newaxis] * d_ref_olps -
+                              d_norm[np.newaxis, :] * energy,
+                              axis=0) / norm
 
         # reshape for broadcasting
-        ref_olps = get_overlap(ref_sds)[:, np.newaxis, np.newaxis]
-        ref_ints = integrate_wfn_sd(ref_sds)[:, np.newaxis, np.newaxis]
-
-        # sum over reference Slater determinants
-        d_norm = np.sum(2 * ref_olps * get_overlap(ref_sds, derivs), axis=0)
-        d_energy = np.sum(d_ref_ints * ref_olps / norm +
-                          ref_ints * d_ref_olps / norm -
-                          d_norm[np.newaxis, :, :] * ref_ints * ref_olps / (norm**2),
-                          axis=0)
-
-        # reshape for broadcasting
-        derivs = np.squeeze(derivs, axis=0)
         pspace = np.array(self.pspace)[:, np.newaxis]
 
         # jacobian
-        jac = np.empty((self.nproj+1, params.size), dtype=wfn.dtype)
+        jac = np.empty((self.nproj+1, params.size))
         jac[:self.nproj, :] = (integrate_wfn_sd(pspace, derivs) -
                                energy * get_overlap(pspace, derivs) -
-                               d_energy * get_overlap(pspace)[:, np.newaxis])
+                               d_energy[np.newaxis, :] * get_overlap(pspace))
         # Add normalization constraint
         jac[self.nproj, :] = d_norm
         # weigh equations
