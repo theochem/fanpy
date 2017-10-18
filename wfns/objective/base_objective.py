@@ -29,9 +29,9 @@ class BaseObjective(abc.ABC):
         By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    param_types : {'wfn', 'ham', 'wfn_components', 'energy'}
+    param_types : {'wfn', 'ham', 'wfn_components'}
         Types of parameters that will be used by the objective.
-        Each type must be one of 'wfn', 'ham', 'wfn_components', and 'energy'.
+        Each type must be one of 'wfn', 'ham', and 'wfn_components'.
         Default is 'wfn'.
         Type 'wfn' means that the objective will depend on the wavefunction parameters.
         Type 'ham' means that the objective will depend on the hamiltonian parameters.
@@ -39,7 +39,6 @@ class BaseObjective(abc.ABC):
         components of a composite wavefunction. Note that if the composite wavefunction has
         components that are also composite wavefunctions, then only the top layer (first layer of
         components) will be considered.
-        Type 'energy' means that the objective will depend on the energy as a parameter.
     param_ranges : tuple of {2-tuple of int, tuple of 2-tuple of int}
         Start and end indices (of the objective parameters) for each parameter type.
         If the parameter type is 'wfn_components', then each component should be associated with a
@@ -63,7 +62,7 @@ class BaseObjective(abc.ABC):
             method.
         param_types : {list/tuple, str, None}
             Types of parameters that will be used to construct the objective.
-            Each type must be one of 'wfn', 'ham', 'wfn_components', and 'energy'.
+            Each type must be one of 'wfn', 'ham', and 'wfn_components'.
             Default is 'wfn'.
             Type 'wfn' means that the objective will depend on the wavefunction parameters.
             Type 'ham' means that the objective will depend on the hamiltonian parameters.
@@ -71,7 +70,6 @@ class BaseObjective(abc.ABC):
             components of a composite wavefunction. Note that if the composite wavefunction has
             components that are also composite wavefunctions, then only the top layer (first layer
             of components) will be considered.
-            Type 'energy' means that the objective will depend on the energy as a parameter.
 
         Raises
         ------
@@ -79,8 +77,8 @@ class BaseObjective(abc.ABC):
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
             If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
             If save_file is not a string.
-            If param_types is not one of 'wfn', 'ham', 'wfn_components', and 'energy or a tuple/list
-            of these strings.
+            If param_types is not one of 'wfn', 'ham', and 'wfn_components' or a tuple/list of these
+            strings.
         ValueError
             If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
@@ -110,11 +108,11 @@ class BaseObjective(abc.ABC):
         elif isinstance(param_types, str):
             param_types = (param_types, )
 
-        allowed_types = ('wfn', 'ham', 'wfn_components', 'energy')
+        allowed_types = ('wfn', 'ham', 'wfn_components')
         if (not isinstance(param_types, (tuple, list)) or
                 not all(i in allowed_types for i in param_types)):
-            raise TypeError("Parameter types must be one of 'wfn', 'ham', 'wfn_components', and "
-                            "'energy' or a tuple/list of these strings.")
+            raise TypeError("Parameter types must be one of 'wfn', 'ham', and 'wfn_components' or a"
+                            " tuple/list of these strings.")
         elif len(set(param_types)) != len(param_types):
             raise ValueError('Parameter types cannot have repeated elements.')
         self.param_types = tuple(param_types)
@@ -137,8 +135,6 @@ class BaseObjective(abc.ABC):
                 nparams = self.wfn.nparams
             elif ptype == 'ham':
                 nparams = self.ham.nparams
-            elif ptype == 'energy':
-                nparams = 1
             param_ranges.append((ind, ind+nparams))
             ind += nparams
         self.param_ranges = tuple(param_ranges)
@@ -156,15 +152,12 @@ class BaseObjective(abc.ABC):
         params = np.array([])
         for ptype in self.param_types:
             if ptype == 'wfn':
-                params = np.hstack(params, self.wfn.params.flatten())
+                params = np.hstack((params, self.wfn.params.flatten()))
             elif ptype == 'ham':
-                params = np.hstack(params, self.ham.params.flatten())
+                params = np.hstack((params, self.ham.params.flatten()))
             elif ptype == 'wfn_components':
                 for wfn in self._wfn_components:
-                    params = np.hstack(params, self.wfn.params.flatten())
-            elif ptype == 'energy':
-                # FIXME: compute energy?
-                params = np.hstack(params, 0)
+                    params = np.hstack((params, self.wfn.params.flatten()))
         return params
 
     @property
@@ -232,11 +225,6 @@ class BaseObjective(abc.ABC):
                 self.wfn.clear_cache()
             elif ptype == 'ham':
                 self.ham.assign_params(params[ind_start: ind_end].reshape(self.ham.params_shape))
-            elif ptype == 'energy':
-                # Since energy is not processed any further (i.e. objective depends directly on
-                # energy and not a function of energy), we can skip assignment. It's already
-                # assigned to the params variable
-                pass
 
         if params.size != ind_end:
             raise ValueError('Number of parameter does not match the parameters selected by '
@@ -250,7 +238,7 @@ class BaseObjective(abc.ABC):
         func : function
             Function that will be derivatized within the context of the parameters of the objective.
             Has an argument `sd` and keyword argument `deriv`.
-        param_type : {'wfn', 'ham', 'wfn_components', 'energy', None}
+        param_type : {'wfn', 'ham', 'wfn_components', None}
             Type of the parameter the given function uses.
             `None` means that derivatization of the given function will always produce zero, i.e.
             function is not dependent on the parameters used in the objective.
