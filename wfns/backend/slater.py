@@ -51,7 +51,6 @@ combine_spin(alpha_bits, beta_bits, nspatial) : gmpy2.mpz
 
 """
 import gmpy2
-import numpy as np
 from wfns.wrapper.docstring import docstring
 
 
