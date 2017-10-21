@@ -350,8 +350,8 @@ class ChemicalHamiltonian(object):
         coulomb = 0.0
         exchange = 0.0
 
-        shared_indices = slater.occ_indices(slater.shared(sd1, sd2))
-        diff_sd1, diff_sd2 = slater.diff(sd1, sd2)
+        shared_indices = slater.shared_orbs(sd1, sd2)
+        diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
             return 0.0, 0.0, 0.0

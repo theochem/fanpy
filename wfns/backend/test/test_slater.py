@@ -232,23 +232,23 @@ def test_vir_indices():
     assert slater.vir_indices(0b10000, 1) == (0,)
 
 
-def test_shared():
+def test_shared_orbs():
     """
-    Test slater.shared
+    Test slater.shared_orbs
     """
-    assert slater.shared(0b001, 0b000) == 0
-    assert slater.shared(0b111, 0b001) == 0b001
-    assert slater.shared(0b111, 0b101) == 0b101
+    assert slater.shared_orbs(0b001, 0b000) == ()
+    assert slater.shared_orbs(0b111, 0b001) == (0,)
+    assert slater.shared_orbs(0b111, 0b101) == (0, 2)
 
 
-def test_diff():
+def test_diff_orbs():
     """
-    Test slater.diff
+    Test slater.diff_orbs
     """
-    assert slater.diff(0b001, 0b000) == ((0,), ())
-    assert slater.diff(0b001, 0b001) == ((), ())
-    assert slater.diff(0b011, 0b101) == ((1,), (2,))
-    assert slater.diff(0b101, 0b011) == ((2,), (1,))
+    assert slater.diff_orbs(0b001, 0b000) == ((0,), ())
+    assert slater.diff_orbs(0b001, 0b001) == ((), ())
+    assert slater.diff_orbs(0b011, 0b101) == ((1,), (2,))
+    assert slater.diff_orbs(0b101, 0b011) == ((2,), (1,))
 
 
 def test_combine_spin():
