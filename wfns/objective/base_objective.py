@@ -422,9 +422,8 @@ class BaseObjective(abc.ABC):
             #        component CI wavefunction of a linear combination of CI wavefunctions.
             if deriv is not None:
                 d_ref_coeffs = 0.0
-        # FIXME: hard codes int format of Slater determinant
         elif (isinstance(ref, (list, tuple)) and
-              all(slater.is_internal_sd(sd) or isinstance(sd, int) for sd in ref)):
+              all(slater.is_sd_compatible(sd) for sd in ref)):
             ref_sds = ref
             ref_coeffs = get_overlap(ref)
             if deriv is not None:
@@ -511,10 +510,9 @@ class BaseObjective(abc.ABC):
         if pspace_norm is None:
             pspace_norm = pspace_l
 
-        # FIXME: hard codes int format of Slater determinant
         for pspace in [pspace_l, pspace_r, pspace_norm]:
             if not (isinstance(pspace, (list, tuple)) and
-                    all(slater.is_internal_sd(sd) or isinstance(sd, int) for sd in pspace)):
+                    all(slater.is_sd_compatible(sd) for sd in pspace)):
                 raise TypeError('Projection space must be given as a list/tuple of ints. See '
                                 '`backend.slater` for compatible representations of the Slater '
                                 'determinants.')

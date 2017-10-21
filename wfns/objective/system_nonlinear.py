@@ -17,13 +17,12 @@ class SystemEquations(BaseObjective):
         &\vdots\\
         \braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi} &= 0\\
 
-    Energy is calculated with respect to the reference state,
+    Energy can be a constant, a parameter that gets optimized, or a function of the wavefunction and
+    hamiltonian parameters.
 
     .. math::
 
         E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
-
-    or as a parameter.
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -151,9 +150,8 @@ class SystemEquations(BaseObjective):
         if pspace is None:
             pspace = sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin,
                                      seniority=self.wfn.seniority)
-        # FIXME: hard codes int format of Slater determinant
         elif (isinstance(pspace, (list, tuple)) and
-              all(slater.is_internal_sd(state) or isinstance(state, (int, CIWavefunction))
+              all(slater.is_sd_compatible(state) or isinstance(state, CIWavefunction)
                   for state in pspace)):
             pspace = tuple(pspace)
         else:
@@ -175,12 +173,13 @@ class SystemEquations(BaseObjective):
         """
         if ref_state is None:
             ref_state = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
-        elif slater.is_internal_sd(ref_state) or isinstance(ref_state, (int, CIWavefunction)):
+        elif slater.is_sd_compatible(ref_state):
             ref_state = (ref_state, )
-        # FIXME: hard codes int format of Slater determinant
         elif (isinstance(ref_state, (list, tuple)) and
-              all(slater.is_internal_sd(sd) or isinstance(sd, int) for sd in ref_state)):
+              all(slater.is_sd_compatible(sd) for sd in ref_state)):
             ref_state = tuple(slater.internal_sd(sd) for sd in ref_state)
+        elif isinstance(ref_state, CIWavefunction):
+            ref_state = ref_state
         else:
             raise TypeError('Reference state must be given as a Slater determinant, a CI '
                             'Wavefunction, or a list/tuple of Slater determinants. See '
@@ -243,16 +242,17 @@ class SystemEquations(BaseObjective):
 
         where :math:`K` is the number of Slater determinant onto which the wavefunction is
         projected. The :math:`K+1`th equation is the normalization constraint. The norm is computed
-        with respect to the reference state. The energy is computed with respect to the reference
-        states:
+        with respect to the reference state. The energy can be a constant, a parameter that gets
+        optimized, or a function of the wavefunction and hamiltonian parameters.
 
         .. math::
-            E = \braket{\Phi_{ref} | \hat{H} | \Psi}
+
+            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
 
         Parameters
         ----------
         params : np.ndarray(N,)
-            Wavefunction parameters.
+            Parameters that describe the system of equations.
 
         Returns
         -------
@@ -290,6 +290,7 @@ class SystemEquations(BaseObjective):
         # objective
         obj = np.empty(self.nproj + 1)
         # <SD|H|Psi> - E<SD|Psi> == 0
+        # FIXME: does not support pspace that is linear combination of sd's
         obj[:self.nproj] = integrate_wfn_sd(self.pspace)
         obj[:self.nproj] -= energy * get_overlap(self.pspace)
         # Add constraints
@@ -313,7 +314,7 @@ class SystemEquations(BaseObjective):
         Parameters
         ----------
         params : np.ndarray(N,)
-            Wavefunction parameters.
+            Parameters that describe the system of equations.
 
         Returns
         -------
@@ -385,6 +386,7 @@ class SystemEquations(BaseObjective):
         pspace = np.array(self.pspace)[:, np.newaxis]
 
         # jacobian
+        # FIXME: does not support pspace that is linear combination of sd's
         jac = np.empty((self.nproj+1, params.size))
         jac[:self.nproj, :] = integrate_wfn_sd(pspace, derivs)
         jac[:self.nproj, :] -= energy * get_overlap(pspace, derivs)
