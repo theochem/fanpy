@@ -55,7 +55,6 @@ import numpy as np
 from wfns.wrapper.docstring import docstring
 
 
-# FIXME: necessary?
 @docstring(indent_level=1)
 def is_internal_sd(sd):
     """Check if given Slater determinant is a `gmpy2.mpz` object.
@@ -74,7 +73,24 @@ def is_internal_sd(sd):
     return isinstance(sd, type(gmpy2.mpz()))
 
 
-# FIXME: necessary?
+@docstring(indent_level=1)
+def is_sd_compatible(sd):
+    """Check if given Slater determinant is compatible.
+
+    Parameters
+    ----------
+    sd : {int, gmpy2.mpz}
+        Some representation of a Slater determinant.
+
+    Returns
+    -------
+    True if it is the right type.
+    False if it is not the right type.
+
+    """
+    return is_internal_sd(sd) or isinstance(sd, int)
+
+
 @docstring(indent_level=1)
 def internal_sd(identifier):
     """Create a Slater detrminant as a `gmpy2.mpz` object.
@@ -383,10 +399,9 @@ def ground(nocc, norbs):
     return alpha_bits | beta_bits
 
 
-# FIXME: API for shared and diff are too different.
 @docstring(indent_level=1)
-def shared(sd1, sd2):
-    """Return similarity between two Slater determinants.
+def shared_orbs(sd1, sd2):
+    """Return orbitals shared between two Slater determinants.
 
     Parameters
     ----------
@@ -397,17 +412,16 @@ def shared(sd1, sd2):
 
     Returns
     -------
-    shared : gmpy2.mpz
-        Integer that describes the occupied orbitals that are shared between two Slater
-        determinants.
+    shared_orbs : tuple of ints
+        Orbitals shared by the two Slater determinants
 
     """
-    return sd1 & sd2
+    return occ_indices(sd1 & sd2)
 
 
 @docstring(indent_level=1)
-def diff(sd1, sd2):
-    """Return the difference between two Slater determinants.
+def diff_orbs(sd1, sd2):
+    """Return the orbitals that are not shared between two Slater determinants.
 
     Parameters
     ----------
@@ -418,7 +432,7 @@ def diff(sd1, sd2):
 
     Returns
     -------
-    diff : 2-tuple of tuple of ints
+    diff_orbs : 2-tuple of tuple of ints
         First tuple are the occupied orbital indices of `sd1` that are not occupied in `sd2`.
         Second tuple are the occupied orbital indices of `sd2` that are not occupied in `sd1`.
 

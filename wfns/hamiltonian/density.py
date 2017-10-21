@@ -274,8 +274,8 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
                 break
 
             # orbitals that are not shared by the two determinants
-            left_diff, right_diff = slater.diff(sd1, sd2)
-            shared_indices = np.array(slater.occ_indices(slater.shared(sd1, sd2)))
+            left_diff, right_diff = slater.diff_orbs(sd1, sd2)
+            shared_indices = np.array(slater.shared_orbs(sd1, sd2))
 
             # moving all the shared orbitals toward one another (in the middle)
             num_transpositions_0 = np.sum(shared_indices[:, np.newaxis] < np.array(left_diff))
