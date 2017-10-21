@@ -1,8 +1,8 @@
 """Collection of functions used to construct and manipulate Slater determinants.
 
-Slater determinants are represented with a bitstring that describes their occupation. The :math:`0`
-would correspond to an unoccupied orbital and the :math:`1` would correspond to the occupied
-orbital. For example, `0b00110011` will have the occupied orbitals with indices :math:`0, 1, 4, 5`.
+Slater determinants are represented with a bitstring that describes their occupation. The `0` would
+ correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. For
+example, `0b00110011` will have the occupied orbitals with indices 0, 1, 4, and 5.
 
 For most of the time, the orbitals are spin orbitals, and their spin is designated by splitting the
 orbitals into two blocks. If there are :math:`K` spatial orbitals, then the first :math:`K` spin
@@ -16,10 +16,15 @@ the bitwise operation of arbitrary length bitstrings. Note that all of these met
 both integers and `gmpy2.mpz` objects. However, the two objects, e.g. `2` and `gmpy2.mpz(2)` are
 different objects and may cause conflict when storing and finding them from a list/dictionary/set.
 
+All references/changes to a Slater determinant should be made using this module, such that if we
+decide to change the format of the Slater determinant, only this module needs to be changed.
+
 Functions
 ---------
 is_internal_sd(sd) : bool
     Check if given Slater determinant is the same type as the one used internally in this module.
+is_sd_compatible(sd) : bool
+    Check if given Slater determinant is compatible.
 internal_sd(identifier) : gmpy2.mpz
     Create a Slater detrminant as a `gmpy2.mpz` object.
 occ(sd, i) : bool
@@ -42,12 +47,30 @@ excite(sd, *indices) : {gmpy2.mpz, None}
     Excite electrons from occupied orbitals to virtual orbitals.
 ground(nocc, norbs) : {gmpy2.mpz}
     Create a ground state Slater determinant.
-shared(sd1, sd2) : gmpy2.mpz
-    Return similarity between two Slater determinants.
-diff(sd1, sd2) : 2-tuple of tuple of ints
-    Return the difference between two Slater determinants.
+shared_orbs(sd1, sd2) : tuple of ints
+    Return indices of orbitals shared between two Slater determinants
+diff_orbs(sd1, sd2) : 2-tuple of tuple of ints
+    Return indices of the orbitals that are not shared between two Slater determinants.
 combine_spin(alpha_bits, beta_bits, nspatial) : gmpy2.mpz
     Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
+split_spin(block_sd, nspatial) : 2-tuple of ints
+    Split a Slater determinant into the alpha and beta parts.
+interleave_index(i, nspatial) : int
+    Convert orbital index in block-sd notation to that of interleaved-sd notation.
+deinterleave_index(i, nspatial) : int
+    Convert an orbital index in interleaved-sd notation to that of block-sd notation.
+interleave(block_sd, nspatial) : gmpy2.mpz
+    Convert block-sd to the interleaved-sd form.
+deinterleave(shuffled_sd, nspatial) : gmpy2.mpz
+    Turn sd from shuffled form to the block form.
+get_spin(sd, nspatial) : float
+    Return the spin of the given Slater determinant.
+get_seniority(sd, nspatial) : int
+    Return the seniority of the given Slater determinant.
+find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True) : int
+    Find the number of transpositions needed to order a set of annihilators in increasing order.
+find_num_trans_swap(sd, pos_current, pos_future) : int
+    Find the number of swaps needed to move an orbital from one position to another.
 
 """
 import gmpy2
@@ -400,7 +423,7 @@ def ground(nocc, norbs):
 
 @docstring(indent_level=1)
 def shared_orbs(sd1, sd2):
-    """Return orbitals shared between two Slater determinants.
+    """Return indices of orbitals shared between two Slater determinants.
 
     Parameters
     ----------
@@ -420,7 +443,7 @@ def shared_orbs(sd1, sd2):
 
 @docstring(indent_level=1)
 def diff_orbs(sd1, sd2):
-    """Return the orbitals that are not shared between two Slater determinants.
+    """Return indices of the orbitals that are not shared between two Slater determinants.
 
     Parameters
     ----------
@@ -649,7 +672,7 @@ def interleave(block_sd, nspatial):
 
 @docstring(indent_level=1)
 def deinterleave(shuffled_sd, nspatial):
-    """Turn sd from shuffled form to the block form
+    """Turn sd from shuffled form to the block form.
 
     Block form: alpha1, alpha2, ..., beta1, beta2, ...
 
