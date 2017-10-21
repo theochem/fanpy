@@ -764,162 +764,9 @@ def get_seniority(sd, nspatial):
     return total_occ(alpha_bits ^ beta_bits)
 
 
-# FIXME: bad location
 @docstring(indent_level=1)
-def find_num_trans_v2(jumbled_set, ordered_set=None, is_decreasing=False):
-    """Find the number of transpositions needed to order a set of annihilators.
-
-    Basically, we count the number of times each annihilator needs to hop over another to sort it.
-    If the indices of the annihilators to its left are greater than its index, then it hops over
-    those annihilators. Once the annihilator with the lowest index hops over all annihilators with a
-    lower index to its left, the annihilator with the second lowest index hops, and so on, until the
-    annihilators are ordered from smallest to largest indices.
-
-    Parameters
-    ----------
-    jumbled_set : {tuple, list}
-        Set of indices of the annihilators.
-    ordered_set : {tuple, list}
-        Set of indices ordered in increasing order.
-        If not provided, then the given indices are ordered.
-    is_decreasing : bool
-        If True, then the number of transpositions required to get strictly decreasing list is
-        returned. Note that the `ordered_set` must still be given in an increasing order.
-        Default is False.
-
-    Returns
-    -------
-    num_trans : int
-        Number of adjacent transpositions needed to sort the `jumbled_set`.
-
-    Raises
-    ------
-    ValueError
-        If `ordered_set` is not strictly increasing.
-
-    See Also
-    --------
-    * `wfns.slater.find_num_trans_dumb`
-
-    Notes
-    -----
-    Though only adjacent elements are swapped, the order of the permutation that orders the given
-    set should be the same.
-
-    """
-    jumbled_set = np.array(jumbled_set)
-    if is_decreasing:
-        jumbled_set = jumbled_set[::-1]
-
-    # convert numbers to the indices
-    if ordered_set is None:
-        # location of each number in the jumbled set
-        jumbled_inds = np.argsort(jumbled_set)
-    elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
-        raise ValueError('ordered_set must be strictly increasing order.')
-    else:
-        dict_num_ind = {num: ind for ind, num in enumerate(ordered_set)}
-        jumbled_inds = np.array([dict_num_ind[num] for num in jumbled_set])
-    ordered_inds = np.arange(jumbled_inds.size)
-
-    # displacement of each number from their rightful position
-    displacements = jumbled_inds - ordered_inds
-
-    # find first nonzero displacement index i.e. index of the first number that is misplaced
-    counter = 0
-    for start_index in range(displacements.size):
-        if displacements[start_index] == 0:
-            continue
-        # swap the number in current position with the number in its rightful position
-        correct_index = start_index + displacements[start_index]
-        displacements[start_index] += displacements[correct_index]
-        displacements[correct_index] = 0
-        counter += 1
-
-    # each swap requires an odd number of (adjacent) transpositions
-    # it takes displacements[start_index]*2 - 1 number of transpositions
-    return (-1)**counter
-
-
-# FIXME: bad location
-@docstring(indent_level=1)
-def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=False):
-    """Find the number of transpositions needed to order a set of annihilators.
-
-    Basically, we count the number of times each annihilator needs to hop over another to sort it.
-    If the indices of the annihilators to its left are greater than its index, then it hops over
-    those annihilators. Once the annihilator with the lowest index hops over all annihilators with a
-    lower index to its left, the annihilator with the second lowest index hops, and so on, until the
-    annihilators are ordered from smallest to largest indices.
-
-    Parameters
-    ----------
-    jumbled_set : {tuple, list}
-        Set of indices of the annihilators.
-    ordered_set : {tuple, list}
-        Set of indices ordered in increasing order.
-        If not provided, then the given indices are ordered.
-    is_decreasing : bool
-        If True, then the number of transpositions required to get strictly decreasing list is
-        returned. Note that the `ordered_set` must still be given in an increasing order.
-        Default is False.
-
-    Returns
-    -------
-    num_trans : int
-        Number of adjacent transpositions needed to sort the `jumbled_set`.
-
-    Raises
-    ------
-    ValueError
-        If `ordered_set` is not strictly increasing.
-
-    See Also
-    --------
-    * `wfns.slater.find_num_trans_dumb`
-
-    Notes
-    -----
-    Though only adjacent elements are swapped, the order of the permutation that orders the given
-    set should be the same.
-
-    """
-    jumbled_set = np.array(jumbled_set)
-    if is_decreasing:
-        jumbled_set = jumbled_set[::-1]
-
-    # Given that the first index corresponds to the smallest number, and the
-    # last index corresponds to the largest number,
-    if ordered_set is None:
-        # location of each number in the jumbled set
-        loc_jumbled_num = np.argsort(jumbled_set)
-        # ordered set
-        ordered_set = jumbled_set[loc_jumbled_num]
-    elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
-        raise ValueError('ordered_set must be strictly increasing order.')
-    else:
-        # FIXME: ordered_set not checked
-        ordered_set = np.array(ordered_set)
-        # location of each number in the jumbled set
-        loc_jumbled_num = np.where(jumbled_set == ordered_set[:, np.newaxis])[1]
-
-    # Find all the numbers that are greater than itself
-    truths_nums_greater = jumbled_set > ordered_set[:, np.newaxis]
-    # Find all the numbers to the right of itself
-    truths_nums_right = np.arange(jumbled_set.size) > loc_jumbled_num[:, np.newaxis]
-    # Find all the numbers that are greater than itself on the left
-    truths_nums_greater_left = truths_nums_greater.astype(int) - truths_nums_right.astype(int) > 0
-    return np.sum(truths_nums_greater_left)
-
-
-# FIXME: bad location
-# FIXME: remove?
-@docstring(indent_level=1)
-def find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True):
+def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True):
     """Find the number of transpositions needed to order a set of annihilators in increasing order.
-
-    This method has the same functionality as `find_num_trans`, execept the number of swaps is
-    counted explicitly for each index. This was used for debugging purposes.
 
     Parameters
     ----------
@@ -951,7 +798,7 @@ def find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True):
     if ordered_set is None:
         ordered_set = sorted(jumbled_set)
     elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
-        raise ValueError('ordered_set must be strictly increasing order.')
+        raise ValueError('ordered_set must be strictly increasing.')
 
     num_trans = 0
     # for each ordered number
@@ -966,8 +813,6 @@ def find_num_trans_dumb(jumbled_set, ordered_set=None, is_decreasing=True):
     return num_trans
 
 
-# FIXME: location? and pretty similar to occ_indices
-# FIXME: API different from other `find_num_trans`
 @docstring(indent_level=1)
 def find_num_trans_swap(sd, pos_current, pos_future):
     """Find the number of swaps needed to move an orbital from one position to another.
