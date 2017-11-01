@@ -167,6 +167,12 @@ class Energy(BaseObjective):
             yield from self._pspace_n
 
     def objective(self, params):
+        params = np.array(params)
+        # Assign params
+        self.assign_params(params)
+        # Save params
+        self.save_params(params)
+
         if self._pspace_r is None and self._pspace_n:
             return self.get_energy_one_proj(self.pspace_l)
         else:
@@ -186,6 +192,12 @@ class Energy(BaseObjective):
             Derivative of the objective with respect to each of the parameters.
 
         """
+        params = np.array(params)
+        # Assign params
+        self.assign_params(params)
+        # Save params
+        self.save_params(params)
+
         derivs = np.arange(params.size)
         if self._pspace_r is None and self._pspace_n:
             get_energy = np.vectorize(lambda deriv: self.get_energy_one_proj(self.pspace_l, deriv))
