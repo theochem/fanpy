@@ -15,51 +15,6 @@ from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 import wfns.backend.slater as slater
 
 
-# parameters
-#  passed to objective as a numpy array
-#  save parameters
-#  update parameters to some object
-#  select correct index when derivatizing
-#   execute correct derivatization (need to know which object parameter belongs to)
-#  freeze certain parameters from optimization
-#
-#  extract relevant parameters for objective (packing)
-#  load relevant parameters to objects (unpacking)
-#  derivatization with respect to parameters
-# parameter types
-#  wavefunction
-#  composite wavefunctions
-#  hamiltonian
-#  energy
-# attributes
-#  index in the active parameters, active indices, object/label, index within object
-#  object type to mask (requires upto 4x memory for the parameters)
-#   e.g. wfn to boolean array of wfn parameters that are active
-#        wfn to active wfn parameters from all active parameters
-#  param type to indices of active parameters (within object)(find active parameters from an object)
-#  active param toparam type (find active parameters of a certain object/type)
-#  active param index to param type (find the type of the given active parameter)
-
-#  masks_objective
-#   dict of obj to boolean array of the parameters (from objective) that corresponds to that object
-#  masks_object
-#   dict of obj to boolean array of the parameters (from object) that corresponds to that object
-#
-# methods
-#  extract parameters (get values of the parameters that are active)
-#   get the correct object (in the right order)
-#   get active parameters (in the right order) from each object
-#  load parameters (assign values of the parameters to the appropriate object)
-#   update only the active parameters (if possible)
-#   for each object
-#    get all parameters
-#    overwrite active parameters
-#    update all parameters
-#  derivatize
-#   get index of parameter within the cor
-#   return 0 if the called function does correspond to the selected object
-#   call the appropriate function
-
 # FIXME: names (object/obj/objects)
 @docstring_class(indent_level=1)
 class ParamMask(abc.ABC):
@@ -84,17 +39,6 @@ class ParamMask(abc.ABC):
         Mask of objective parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of each object are active in the optimization.
         Note that the indicing here is done with booleans.
-
-    Methods
-    -------
-    extract_params(self) : np.ndarray
-        Extract out the active parameters from the objects.
-    load_params(self, params) : np.ndarray
-        Assign given parameters of the objective to the appropriate objects.
-    derivative_index(self, object, index) : {int, None}
-        Return the index within the objective parameters as the index within the given object.
-        If the selected objective parameter is not part of the given object, then `None` is
-        returned.
 
     Notes
     -----
@@ -259,6 +203,7 @@ class ParamMask(abc.ABC):
         else:
             return None
 
+
 @docstring_class(indent_level=1)
 class BaseObjective(abc.ABC):
     """Base objective function.
@@ -267,7 +212,6 @@ class BaseObjective(abc.ABC):
     ----------
     wfn : BaseWavefunction
         Wavefunction that defines the state of the system (number of electrons and excited state).
-
     ham : ChemicalHamiltonian
         Hamiltonian that defines the system under study.
     tmpfile : str
