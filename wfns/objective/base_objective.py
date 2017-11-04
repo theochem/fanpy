@@ -74,12 +74,12 @@ class ParamMask(abc.ABC):
 
     Attributes
     ----------
-    masks_objective_params : dict of instance to np.ndarray of bool
-        Mask of objective parameters for each object (wavfunction or Hamiltonian).
-        Shows which parameters of each object are active in the optimization.
     masks_object_params : dict of instance to np.ndarray of bool
         Mask of object parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of the objective belong to which object.
+    masks_objective_params : dict of instance to np.ndarray of bool
+        Mask of objective parameters for each object (wavfunction or Hamiltonian).
+        Shows which parameters of each object are active in the optimization.
 
     Methods
     -------
@@ -93,7 +93,92 @@ class ParamMask(abc.ABC):
         returned.
 
     """
-    pass
+    def __init__(self, *object_selection):
+        """Initialize the masks.
+
+        Parameters
+        ----------
+        object_selection : 2-tuple
+            Object and its parameters that will be used in the objective.
+            First element is the object (wavefunction or Hamiltonian) that contains the parameters.
+            Second element is a numpy index array (boolean or indices) that will select the
+            parameters from the object that will bge used in the objective.
+            If the second element is `None`, then all parameters of the object will be active.
+
+        Notes
+        -----
+        The order in which `object_selection` is loaded will affect the ordering of the objective
+        parameters.
+
+        """
+        self.masks_object_params = {}
+        for obj, sel in object_selection:
+            self.load_mask_object_params(obj, sel)
+
+        self.masks_objective_params = {}
+        self.load_masks_objective_params()
+
+    def load_mask_object_params(self, obj, sel):
+        """Load the one mask for the active object parameters.
+
+        Parameters
+        ----------
+        obj : {ChemicalHamiltonian, BaseWavefunction, str}
+            Object with parameters that can affect the objective.
+        sel : {np.ndarray, None}
+            Index array (boolean or indices) that selects the parameters from the given object to be
+            used in the objective.
+            If `None`, then all parameters of the object will be active.
+
+        Raises
+        ------
+        TypeError
+            If `obj` is not a `ChemicalHamiltonian`,  `BaseWavefunction`, or str.
+            If `sel` is not a numpy array.
+            If `sel` does not have a data type of int or bool.
+            If `sel` does not have the same number of indices as there are parameters in the object.
+
+        """
+        nparams = obj.nparams
+        if not isinstance(obj, (ChemicalHamiltonian, BaseWavefunction, str)):
+            raise TypeError('The provided object must be a `ChemicalHamiltonian`,  '
+                            '`BaseWavefunction`, or str.')
+
+        if sel is None:
+            sel = np.ones(nparams, dtype=bool)
+        elif not isinstance(sel, np.ndarray):
+            raise TypeError('The provided selection must be a numpy array.')
+        # check index types
+        if sel.dtype == int:
+            bool_sel = np.zeros(nparams, dtype=bool)
+            bool_sel[sel] = True
+            sel = bool_sel
+        elif sel.dtype != bool:
+            raise TypeError('The provided selection must have dtype of bool or int.')
+        # check number of indices
+        if sel.size != nparams:
+            raise TypeError('The provided selection must have the same number of indices as '
+                            'there are parameters in the provided object.')
+        self.masks_object_params[obj] = sel
+
+    def load_masks_objective_params(self):
+        """Load the masks for objective parameters.
+
+        Though this method can simply be a property, this mask is stored within the instance because
+        it will be accessed rather frquently and its not cheap enough (I think) to construct on the
+        fly.
+
+        """
+        nparams_objective = sum(np.sum(sel) for sel in self.masks_object_params.values())
+        nparams_cumsum = 0
+        masks_objective_params = {}
+        for obj, sel in self.masks_object_params.items():
+            nparams_sel = np.sum(sel)
+            objective_sel = np.zeros(nparams_objective, dtype=bool)
+            objective_sel[nparams_cumsum: nparams_cumsum+nparams_sel] = True
+            masks_objective_params[obj] = objective_sel
+            nparams_cumsum += nparams_sel
+        self.masks_objective_params = masks_objective_params
 
 
 @docstring_class(indent_level=1)
@@ -104,6 +189,7 @@ class BaseObjective(abc.ABC):
     ----------
     wfn : BaseWavefunction
         Wavefunction that defines the state of the system (number of electrons and excited state).
+
     ham : ChemicalHamiltonian
         Hamiltonian that defines the system under study.
     tmpfile : str
