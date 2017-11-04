@@ -4,6 +4,7 @@ The objective is used to optimize the wavefunction and/or Hamiltonian.
 
 """
 import abc
+import collections
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
@@ -59,6 +60,7 @@ import wfns.backend.slater as slater
 #   return 0 if the called function does correspond to the selected object
 #   call the appropriate function
 
+# FIXME: names (object/obj/objects)
 @docstring_class(indent_level=1)
 class ParamMask(abc.ABC):
     """Class for handling subset of a collection of different types of parameters.
@@ -74,10 +76,12 @@ class ParamMask(abc.ABC):
 
     Attributes
     ----------
-    masks_object_params : dict of instance to np.ndarray of bool
+    objects : list
+        Objects with parameters.
+    masks_object_params : OrderedDict of instance to np.ndarray of bool
         Mask of object parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of the objective belong to which object.
-    masks_objective_params : dict of instance to np.ndarray of bool
+    masks_objective_params : OrderedDict of instance to np.ndarray of bool
         Mask of objective parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of each object are active in the optimization.
 
@@ -111,11 +115,11 @@ class ParamMask(abc.ABC):
         parameters.
 
         """
-        self.masks_object_params = {}
+        self.masks_object_params = collections.OrderedDict()
         for obj, sel in object_selection:
             self.load_mask_object_params(obj, sel)
 
-        self.masks_objective_params = {}
+        self.masks_objective_params = collections.OrderedDict()
         self.load_masks_objective_params()
 
     def load_mask_object_params(self, obj, sel):
