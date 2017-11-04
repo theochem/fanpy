@@ -201,6 +201,63 @@ class ParamMask(abc.ABC):
             nparams_cumsum += nparams_sel
         self._masks_objective_params = masks_objective_params
 
+    def extract_params(self):
+        """Extract out the active parameters from the objects.
+
+        Returns
+        -------
+        params : np.ndarray
+            Parameters that are selected for optimization.
+            Parameters are first ordered by the ordering of each object, then they are ordered by
+            the order in which they appear in the object.
+
+        Examples
+        --------
+        Suppose you have two objects `obj1` and `obj2` with parameters `[1, 2, 3]`, `[4, 5, 6, 7]`,
+        respectively.
+
+        >>> x = ParamMask((obj1, [True, False, True]), (obj2, [3, 1]))
+        >>> x.extract_params()
+        np.ndarray([1, 3, 5, 7])
+
+        Note that the order of the indices during initialization has no affect on the ordering of
+        the parameters.
+
+        """
+        return np.hstack([obj.params[sel] for obj, sel in self._masks_object_params.items()])
+
+    def load_params(self, params):
+        """Assign given parameters of the objective to the appropriate objects.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Masked parameters that will need to be updated onto the stored objects.
+
+        """
+        for obj, sel in self._masks_object_params:
+            new_params = obj.params
+            new_params[sel] = params[self._masks_objective_params[obj]]
+            obj.assign_params[new_params]
+
+    def derivative_index(self, obj, index):
+        """Return the index within the objective parameters as the index within the given object.
+
+        Returns
+        -------
+        index : {int, None}
+            Index of the selected parameter within the given object.
+            If the selected parameter is not part of the given object, then `None` is returned.
+
+        """
+        if self._masks_objective_params[obj][index]:
+            # index from the list of active parameters in the object
+            ind_active_object = np.sum(self._masks_objective_params[obj][:index])
+            # ASSUMES: indices in self._masks_object_params[obj] are ordered from smallest to
+            #          largest
+            return self._masks_object_params[obj][ind_active_object]
+        else:
+            return None
 
 @docstring_class(indent_level=1)
 class BaseObjective(abc.ABC):
