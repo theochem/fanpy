@@ -76,14 +76,14 @@ class ParamMask(abc.ABC):
 
     Attributes
     ----------
-    objects : list
-        Objects with parameters.
-    masks_object_params : OrderedDict of instance to np.ndarray of bool
+    _masks_object_params : OrderedDict of instance to np.ndarray of int
         Mask of object parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of the objective belong to which object.
-    masks_objective_params : OrderedDict of instance to np.ndarray of bool
+        Note that the indicing here is done with integers.
+    _masks_objective_params : OrderedDict of instance to np.ndarray of bool
         Mask of objective parameters for each object (wavfunction or Hamiltonian).
         Shows which parameters of each object are active in the optimization.
+        Note that the indicing here is done with booleans.
 
     Methods
     -------
@@ -91,10 +91,15 @@ class ParamMask(abc.ABC):
         Extract out the active parameters from the objects.
     load_params(self, params) : np.ndarray
         Assign given parameters of the objective to the appropriate objects.
-    derivative_index(self, object, index) : np.ndarray
+    derivative_index(self, object, index) : {int, None}
         Return the index within the objective parameters as the index within the given object.
         If the selected objective parameter is not part of the given object, then `None` is
         returned.
+
+    Notes
+    -----
+    Each "object" must contain the attributes `params` for the parameters and `nparams` for the
+    number of parameters and the method `assign_params` for updating hte parameters.
 
     """
     def __init__(self, *object_selection):
@@ -115,11 +120,11 @@ class ParamMask(abc.ABC):
         parameters.
 
         """
-        self.masks_object_params = collections.OrderedDict()
+        self._masks_object_params = collections.OrderedDict()
         for obj, sel in object_selection:
             self.load_mask_object_params(obj, sel)
 
-        self.masks_objective_params = collections.OrderedDict()
+        self._masks_objective_params = collections.OrderedDict()
         self.load_masks_objective_params()
 
     def load_mask_object_params(self, obj, sel):
@@ -142,6 +147,17 @@ class ParamMask(abc.ABC):
             If `sel` does not have a data type of int or bool.
             If `sel` does not have the same number of indices as there are parameters in the object.
 
+        Notes
+        -----
+        The indicing is converted to integers (rather than the boolean) at the very end of this
+        method. It was boolean originally, but the method `derivative_index` requires the specific
+        position of each active parameter within the corresponding object, meaning that some form of
+        sorting/search is needed (e.g. `np.where`). Since this method should be executed quite
+        frequently during the course of the optimization, the indices are converted to integers
+        beforehand. Other use-cases of these indices are not time limiting: both methods
+        `extract_params` and `load_params` are executed seldomly in comparison. Also, the
+        performance of integer and boolean indices should not be too different.
+
         """
         nparams = obj.nparams
         if not isinstance(obj, (ChemicalHamiltonian, BaseWavefunction, str)):
@@ -163,7 +179,8 @@ class ParamMask(abc.ABC):
         if sel.size != nparams:
             raise TypeError('The provided selection must have the same number of indices as '
                             'there are parameters in the provided object.')
-        self.masks_object_params[obj] = sel
+        # convert to integer indicing
+        self._masks_object_params[obj] = np.where(sel)[0]
 
     def load_masks_objective_params(self):
         """Load the masks for objective parameters.
@@ -173,16 +190,16 @@ class ParamMask(abc.ABC):
         fly.
 
         """
-        nparams_objective = sum(np.sum(sel) for sel in self.masks_object_params.values())
+        nparams_objective = sum(np.sum(sel) for sel in self._masks_object_params.values())
         nparams_cumsum = 0
         masks_objective_params = {}
-        for obj, sel in self.masks_object_params.items():
+        for obj, sel in self._masks_object_params.items():
             nparams_sel = np.sum(sel)
             objective_sel = np.zeros(nparams_objective, dtype=bool)
             objective_sel[nparams_cumsum: nparams_cumsum+nparams_sel] = True
             masks_objective_params[obj] = objective_sel
             nparams_cumsum += nparams_sel
-        self.masks_objective_params = masks_objective_params
+        self._masks_objective_params = masks_objective_params
 
 
 @docstring_class(indent_level=1)
