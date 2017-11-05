@@ -1,17 +1,16 @@
 """Parent class of the wavefunctions."""
 from __future__ import absolute_import, division, print_function
 import abc
-import six
 import functools
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
+from wfns.param import ParamContainer
 
 __all__ = []
 
 
 @docstring_class(indent_level=1)
-@six.add_metaclass(abc.ABCMeta)
-class BaseWavefunction:
+class BaseWavefunction(ParamContainer):
     r"""Base wavefunction class.
 
     Attributes
@@ -218,15 +217,16 @@ class BaseWavefunction:
         if params is None:
             params = self.template_params
 
-        # check input
-        if not isinstance(params, np.ndarray):
-            raise TypeError('Parameters must be given as a np.ndarray')
-        elif params.shape != self.params_shape:
-            raise ValueError('Parameters must same shape as the template, {0}'
-                             ''.format(self.params_shape))
-        elif params.dtype not in (float, complex, np.float64, np.complex128):
-            raise TypeError('Data type of the parameters must be one of `float`, `complex`, '
-                            '`np.float64` and `np.complex128`')
+        # check if numpy array and if dtype is one of int, float, or complex
+        super().assign_params(params)
+        params = self.params
+
+        if len(params.shape) == 1:
+            params = params.reshape(self.params_shape)
+        # check shape and dtype
+        if params.shape != self.params_shape:
+            raise ValueError('Parameters must either be flat or have the same shape as the '
+                             'template, {0}.'.format(self.params_shape))
         elif params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
             raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction '
                             'must be `np.complex128`')
