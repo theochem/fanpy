@@ -396,16 +396,16 @@ class BaseObjective(abc.ABC):
 
         """
         if deriv is None:
-            return self.ham.integrate_wfn_sd(self.wfn, sd)
+            return sum(self.ham.integrate_wfn_sd(self.wfn, sd))
 
         # change derivative index
         wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
         ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
         if wfn_deriv is not None:
-            return self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv)
+            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv))
         # b/c the integral cannot be derivatized wrt both wfn and ham
         elif ham_deriv is not None:
-            return self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv)
+            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv))
         else:
             return 0.0
 
@@ -429,14 +429,14 @@ class BaseObjective(abc.ABC):
 
         """
         if deriv is None:
-            return self.ham.integrate_sd_sd(sd1, sd2)
+            return sum(self.ham.integrate_sd_sd(sd1, sd2))
 
         # change derivative index
         deriv = self.param_selection.derivative_index(self.ham, deriv)
         if deriv is None:
             return 0.0
         else:
-            return self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv)
+            return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
 
     def get_energy_one_proj(self, ref, deriv=None):
         """Return the energy of the Schrodinger equation with respect to a reference wavefunction.
