@@ -227,9 +227,12 @@ class ChemicalHamiltonian(ParamContainer):
         .. math::
 
             \braket{\Phi | \hat{H} | \Psi}
+            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
-        :math:`\Phi` is the Slater determinant.
+        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
+        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
+        the :math:`\Phi` and its first and second order excitations for a chemical Hamiltonian.
 
         Parameters
         ----------
@@ -250,8 +253,8 @@ class ChemicalHamiltonian(ParamContainer):
             Coulomb energy.
         exchange : float
             Exchange energy.
+
         """
-        # FIXME: incredibly slow/bad approach
         occ_indices = slater.occ_indices(sd)
         vir_indices = slater.vir_indices(sd, self.nspin)
 
@@ -259,73 +262,22 @@ class ChemicalHamiltonian(ParamContainer):
         coulomb = 0.0
         exchange = 0.0
 
-        # NOTE: regarding signs and transpositions
-        # Assume that the Slater determinant is on the right
-        # Assume that creators are ordered from smallest to largest (left to right) as are the
-        # `occ_indices`
-        # The orbital to be annihilated must be moved towards the Hamiltonian. It must "jump" over
-        # all of the other occupied orbitals that have smaller indices (b/c they are ordered)
-        # The `counter` of the orbital in the `occ_indices` is the number of transpositions.
-        # Then, this orbital can be annihilated and replaced with the appropriate virtual orbital
-        # e.g. h_{73} a^\dagger_7 a_5 a^\dagger_1 a^\dagger_3 a^\dagger_5 (-1)^0
-        #      h_{73} a^\dagger_7 a_5 a^\dagger_1 a^\dagger_5 a^\dagger_3 (-1)^1
-        #      h_{73} a^\dagger_7 a_5 a^\dagger_5 a^\dagger_1 a^\dagger_3 (-1)^2
-        #      h_{73} a^\dagger_7 a^\dagger_1 a^\dagger_3 (-1)^2
-        # To maintain the order within the Slater determinant, the newly created virtual orbital
-        # must move to its appropriate spot.
-        # The number of transpositions a virtual orbital must make to maintain the order is fixed
-        # for a given set of occupied orbitals
-        num_trans_vir = [sum(a > i for i in occ_indices) for a in vir_indices]
-        # However, one orbital was removed and this may influence the number of transpositions if
-        # the created virtual orbital has an index greater than the annihilated occupied orbital
-        # e.g. h_{23} a^\dagger_2 a^\dagger_1 a^\dagger_3 (-1)^2
-        #      h_{23} a^\dagger_1 a^\dagger_2 a^\dagger_3 (-1)^(2+1)
-        # e.g. h_{73} a^\dagger_7 a^\dagger_1 a^\dagger_3 (-1)^2
-        #      h_{73} a^\dagger_1 a^\dagger_7 a^\dagger_3 (-1)^(2+1)
-        #      h_{73} a^\dagger_1 a^\dagger_3 a^\dagger_7 (-1)^(2+2)
-        #      h_{73} a^\dagger_1 a^\dagger_3 a^\dagger_7 (-1)^(2+3-1)
-        # Note that the number of transpositions a^\dagger_7 must make in the original Slater
-        # determinant is 3 and the number of transpositions a^\dagger_2 must make is 1.
-        # Since the annihilated orbital had an index of 3, only creators with index greater than 3
-        # will be affected
-        # NOTE: g_{ijkl} corresponds to operations a_i a_j a^\dagger_l a^\dagger_k
-
-        # sum over zeroth order excitation
-        coeff = wfn.get_overlap(sd, deriv=deriv)
-        for counter_i, i in enumerate(occ_indices):
-            # no signature because the creator and annihilators cancel each other out
-            one_electron += coeff * self.one_int.get_value(i, i, self.orbtype)
-            for counter_j, j in enumerate(occ_indices[counter_i+1:]):
-                coulomb += coeff * self.two_int.get_value(i, j, i, j, self.orbtype)
-                exchange -= coeff * self.two_int.get_value(i, j, j, i, self.orbtype)
-
-        # sum over one electron excitation
+        sd_energy = self.integrate_sd_sd(sd, sd)
+        one_electron += sd_energy[0]
+        coulomb += sd_energy[1]
+        exchange += sd_energy[2]
         for counter_i, i in enumerate(occ_indices):
             for counter_a, a in enumerate(vir_indices):
-                sign = (-1)**(counter_i + num_trans_vir[counter_a] - int(a > i))
-
-                coeff = wfn.get_overlap(slater.excite(sd, i, a), deriv=deriv)
-                one_electron += sign * coeff * self.one_int.get_value(i, a, self.orbtype)
-                for counter_j, j in enumerate(occ_indices[:counter_i]):
-                    coulomb += sign * coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
-                    exchange -= sign * coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
-                for counter_j, j in enumerate(occ_indices[counter_i+1:]):
-                    coulomb += sign * coeff * self.two_int.get_value(i, j, a, j, self.orbtype)
-                    exchange -= sign * coeff * self.two_int.get_value(i, j, j, a, self.orbtype)
-
-        # sum over two electron excitation
-        for counter_i, i in enumerate(occ_indices):
-            for counter_j, j in enumerate(occ_indices[counter_i+1:]):
-                for counter_a, a in enumerate(vir_indices):
-                    for counter_b, b in enumerate(vir_indices[counter_a+1:]):
-                        sign = (-1)**(2*counter_i + counter_j)
-                        sign *= (-1)**(num_trans_vir[counter_a + 1 + counter_b] - int(b > i)
-                                       - int(b > j))
-                        sign *= (-1)**(num_trans_vir[counter_a] - int(a > i) - int(a > j))
-
-                        coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
-                        coulomb += sign * coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
-                        exchange -= sign * coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
+                sd_energy = self.integrate_sd_sd(sd, slater.excite(sd, i, a))
+                one_electron += sd_energy[0]
+                coulomb += sd_energy[1]
+                exchange += sd_energy[2]
+                for j in occ_indices[counter_i+1:]:
+                    for b in enumerate(vir_indices[counter_a+1:]):
+                        sd_energy = self.integrate_sd_sd(sd, slater.excite(sd, i, j, b, a))
+                        one_electron += sd_energy[0]
+                        coulomb += sd_energy[1]
+                        exchange += sd_energy[2]
 
         return one_electron, coulomb, exchange
 
