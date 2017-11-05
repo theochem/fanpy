@@ -25,32 +25,6 @@ class LeastSquaresEquations(SystemEquations):
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
-    Attributes
-    ----------
-    pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
-        States onto which the Schrodinger equation is projected.
-        By default, the largest space is used.
-    ref_state : {tuple/list of int, CIWavefunction, None}
-        State with respect to which the energy and the norm are computed.
-        If a list/tuple of Slater determinants are given, then the reference state is the given
-        wavefunction truncated by the provided Slater determinants.
-        Default is ground state HF.
-    eqn_weights : np.ndarray
-        Weights of each equation.
-        By default, all equations are given weight of 1 except for the normalization constraint,
-        which is weighed by the number of equations.
-    energy_type : {'fixed', 'param', 'compute'}
-        Type of the energy used in the Schrodinger equation.
-        If 'fixed', the energy of the Schrodinger equation is fixed to the given value.
-        If 'param', the energy of the Schrodinger equation is given by a parameter. Specifically,
-        the last parameter will be the energy.
-        If 'compute', the energy of the Schrodinger equation is computed with respect to the
-        reference.
-        By default, the energy is computed with respect to the reference.
-    energy : {float, None}
-        Energy used in the Schrodinger equation.
-        By default, the energy is calculated with respect to the reference.
-
     """
     def objective(self, params):
         r"""Least squares equation that corresponds to the system of equations.
