@@ -66,10 +66,6 @@ class ParamMask(abc.ABC):
         self._masks_objective_params = collections.OrderedDict()
         self.load_masks_objective_params()
 
-    def __iter__(self):
-        """Yield the containers from which the parameters are obtained."""
-        yield from self._masks_container_params.keys()
-
     def load_mask_container_params(self, container, sel):
         """Load the one mask for the active parameters from the container.
 
@@ -77,7 +73,7 @@ class ParamMask(abc.ABC):
         ----------
         container : ParamContainer
             Container with parameters on which the objective depends.
-        sel : {np.ndarray, None}
+        sel : {bool, np.ndarray, None}
             Index array (boolean or indices) that selects the parameters from the given container to
             be used in the objective.
             If `None`, then all parameters of the container will be active.
@@ -109,6 +105,8 @@ class ParamMask(abc.ABC):
 
         if sel is None:
             sel = np.ones(nparams, dtype=bool)
+        elif isinstance(sel, bool):
+            sel = np.array(sel)
         elif not isinstance(sel, np.ndarray):
             raise TypeError('The provided selection must be a numpy array.')
         # check index types
