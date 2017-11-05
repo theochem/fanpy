@@ -6,16 +6,15 @@ The objective is used to optimize the wavefunction and/or Hamiltonian.
 import abc
 import collections
 import numpy as np
+from wfns.params import ParamContainer
 from wfns.wrapper.docstring import docstring_class
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from wfns.wavefunction.composite.base_composite_one import BaseCompositeOneWavefunction
-from wfns.wavefunction.composite.lin_comb import LinearCombinationWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 import wfns.backend.slater as slater
 
 
-# FIXME: names (object/obj/objects)
+# FIXME: move to different location
 @docstring_class(indent_level=1)
 class ParamMask(abc.ABC):
     """Class for handling subset of a collection of different types of parameters.
@@ -23,90 +22,90 @@ class ParamMask(abc.ABC):
     The objective of the Schrodinger equation can depend on more than one type of parameters. For
     example, it can depend on both wavefunction and Hamiltonian parameters. In addition, only some
     of these parameters may be active, because the others were frozen during the optimization.
-    Though each object (wavefunction and Hamiltonian instances) is expressed with respect to its own
+    Though each `ParameterContainer` (e.g. `BaseWavefunction`) is expressed with respect to its own
     parameters, the objective, the objective can be expressed with respect to different combinations
     of these parameters. This class allows different combinations of parameters to be used in the
-    objective by acting as the wrapper between the parameters of each object (wavefunction and
+    objective by acting as the wrapper between the parameters of each container (wavefunction and
     Hamiltonian) and the parameters of the objective.
 
     Attributes
     ----------
-    _masks_object_params : OrderedDict of instance to np.ndarray of int
-        Mask of object parameters for each object (wavfunction or Hamiltonian).
-        Shows which parameters of the objective belong to which object.
+    _masks_container_params : OrderedDict of ParamContainer to np.ndarray of int
+        Mask of contained parameters for each object (wavefunction or Hamiltonian).
+        Shows which parameters of the objective belong to which container.
         Note that the indicing here is done with integers.
-    _masks_objective_params : OrderedDict of instance to np.ndarray of bool
-        Mask of objective parameters for each object (wavfunction or Hamiltonian).
-        Shows which parameters of each object are active in the optimization.
+    _masks_objective_params : OrderedDict of ParamContainer to np.ndarray of bool
+        Mask of objective parameters for each container (wavefunction or Hamiltonian).
+        Shows which parameters of each container are active in the optimization.
         Note that the indicing here is done with booleans.
 
-    Notes
-    -----
-    Each "object" must contain the attributes `params` for the parameters and `nparams` for the
-    number of parameters and the method `assign_params` for updating hte parameters.
-
     """
-    def __init__(self, *object_selection):
+    def __init__(self, *container_selection):
         """Initialize the masks.
 
         Parameters
         ----------
-        object_selection : 2-tuple
-            Object and its parameters that will be used in the objective.
-            First element is the object (wavefunction or Hamiltonian) that contains the parameters.
+        container_selection : 2-tuple
+            Container of parameters and subset that will be used in the objective.
+            First element is a `ParamContainer` instance (e.g. wavefunction or Hamiltonian) that
+            contains the parameters.
             Second element is a numpy index array (boolean or indices) that will select the
-            parameters from the object that will bge used in the objective.
-            If the second element is `None`, then all parameters of the object will be active.
+            parameters from the container that will be used in the objective.
+            If the second element is `None`, then all parameters of the container will be active.
 
         Notes
         -----
-        The order in which `object_selection` is loaded will affect the ordering of the objective
+        The order in which `container_selection` is loaded will affect the ordering of the objective
         parameters.
 
         """
-        self._masks_object_params = collections.OrderedDict()
-        for obj, sel in object_selection:
-            self.load_mask_object_params(obj, sel)
+        self._masks_container_params = collections.OrderedDict()
+        for container, sel in container_selection:
+            self.load_mask_container_params(container, sel)
 
         self._masks_objective_params = collections.OrderedDict()
         self.load_masks_objective_params()
 
-    def load_mask_object_params(self, obj, sel):
-        """Load the one mask for the active object parameters.
+    def __iter__(self):
+        """Yield the containers from which the parameters are obtained."""
+        yield from self._masks_container_params.keys()
+
+    def load_mask_container_params(self, container, sel):
+        """Load the one mask for the active parameters from the container.
 
         Parameters
         ----------
-        obj : {ChemicalHamiltonian, BaseWavefunction, str}
-            Object with parameters that can affect the objective.
+        container : ParamContainer
+            Container with parameters on which the objective depends.
         sel : {np.ndarray, None}
-            Index array (boolean or indices) that selects the parameters from the given object to be
-            used in the objective.
-            If `None`, then all parameters of the object will be active.
+            Index array (boolean or indices) that selects the parameters from the given container to
+            be used in the objective.
+            If `None`, then all parameters of the container will be active.
 
         Raises
         ------
         TypeError
-            If `obj` is not a `ChemicalHamiltonian`,  `BaseWavefunction`, or str.
+            If `container` is not a `ParamContainer` instance.
             If `sel` is not a numpy array.
             If `sel` does not have a data type of int or bool.
-            If `sel` does not have the same number of indices as there are parameters in the object.
+            If `sel` does not have the same number of indices as there are parameters in the
+            container.
 
         Notes
         -----
         The indicing is converted to integers (rather than the boolean) at the very end of this
         method. It was boolean originally, but the method `derivative_index` requires the specific
-        position of each active parameter within the corresponding object, meaning that some form of
-        sorting/search is needed (e.g. `np.where`). Since this method should be executed quite
+        position of each active parameter within the corresponding container, meaning that some form
+        of sorting/search is needed (e.g. `np.where`). Since this method should be executed quite
         frequently during the course of the optimization, the indices are converted to integers
         beforehand. Other use-cases of these indices are not time limiting: both methods
         `extract_params` and `load_params` are executed seldomly in comparison. Also, the
         performance of integer and boolean indices should not be too different.
 
         """
-        nparams = obj.nparams
-        if not isinstance(obj, (ChemicalHamiltonian, BaseWavefunction, str)):
-            raise TypeError('The provided object must be a `ChemicalHamiltonian`,  '
-                            '`BaseWavefunction`, or str.')
+        nparams = container.nparams
+        if not isinstance(container, ParamContainer):
+            raise TypeError('The provided container must be a `ParamContainer` instance.')
 
         if sel is None:
             sel = np.ones(nparams, dtype=bool)
@@ -122,9 +121,9 @@ class ParamMask(abc.ABC):
         # check number of indices
         if sel.size != nparams:
             raise TypeError('The provided selection must have the same number of indices as '
-                            'there are parameters in the provided object.')
+                            'there are parameters in the provided container.')
         # convert to integer indicing
-        self._masks_object_params[obj] = np.where(sel)[0]
+        self._masks_container_params[container] = np.where(sel)[0]
 
     def load_masks_objective_params(self):
         """Load the masks for objective parameters.
@@ -134,33 +133,33 @@ class ParamMask(abc.ABC):
         fly.
 
         """
-        nparams_objective = sum(np.sum(sel) for sel in self._masks_object_params.values())
+        nparams_objective = sum(np.sum(sel) for sel in self._masks_container_params.values())
         nparams_cumsum = 0
         masks_objective_params = {}
-        for obj, sel in self._masks_object_params.items():
+        for container, sel in self._masks_container_params.items():
             nparams_sel = np.sum(sel)
             objective_sel = np.zeros(nparams_objective, dtype=bool)
             objective_sel[nparams_cumsum: nparams_cumsum+nparams_sel] = True
-            masks_objective_params[obj] = objective_sel
+            masks_objective_params[container] = objective_sel
             nparams_cumsum += nparams_sel
         self._masks_objective_params = masks_objective_params
 
     def extract_params(self):
-        """Extract out the active parameters from the objects.
+        """Extract out the active parameters from the containers.
 
         Returns
         -------
         params : np.ndarray
             Parameters that are selected for optimization.
-            Parameters are first ordered by the ordering of each object, then they are ordered by
-            the order in which they appear in the object.
+            Parameters are first ordered by the ordering of each container, then they are ordered by
+            the order in which they appear in the container.
 
         Examples
         --------
-        Suppose you have two objects `obj1` and `obj2` with parameters `[1, 2, 3]`, `[4, 5, 6, 7]`,
-        respectively.
+        Suppose you have two containers `container1` and `container2` with parameters `[1, 2, 3]`,
+        `[4, 5, 6, 7]`, respectively.
 
-        >>> x = ParamMask((obj1, [True, False, True]), (obj2, [3, 1]))
+        >>> x = ParamMask((container1, [True, False, True]), (container2, [3, 1]))
         >>> x.extract_params()
         np.ndarray([1, 3, 5, 7])
 
@@ -168,15 +167,15 @@ class ParamMask(abc.ABC):
         the parameters.
 
         """
-        return np.hstack([obj.params[sel] for obj, sel in self._masks_object_params.items()])
+        return np.hstack([obj.params[sel] for obj, sel in self._masks_container_params.items()])
 
     def load_params(self, params):
-        """Assign given parameters of the objective to the appropriate objects.
+        """Assign given parameters of the objective to the appropriate containers.
 
         Parameters
         ----------
         params : np.ndarray
-            Masked parameters that will need to be updated onto the stored objects.
+            Masked parameters that will need to be updated onto the stored containers.
 
         Raises
         ------
@@ -192,38 +191,39 @@ class ParamMask(abc.ABC):
         if len(params.shape) != 1:
             raise TypeError('Given parameter must be one-dimensional.')
 
-        num_sel = sum(len(sel) for sel in self._masks_object_params.values())
+        num_sel = sum(len(sel) for sel in self._masks_container_params.values())
         if num_sel != params.size:
             raise ValueError('Number of given parameters does not match up with the selection.')
 
-        for obj, sel in self._masks_object_params:
-            new_params = obj.params.flatten()
-            new_params[sel] = params[self._masks_objective_params[obj]]
-            obj.assign_params[new_params]
-            if isinstance(obj, BaseWavefunction):
-                obj.clear_cache()
+        for container, sel in self._masks_container_params:
+            new_params = container.params.flatten()
+            new_params[sel] = params[self._masks_objective_params[container]]
+            container.assign_params[new_params]
+            if isinstance(container, BaseWavefunction):
+                container.clear_cache()
 
-    def derivative_index(self, obj, index):
-        """Return the index within the objective parameters as the index within the given object.
+    def derivative_index(self, container, index):
+        """Return the index within the objective parameters as the index within the given container.
 
         Returns
         -------
+        container : ParamContainer
         index : {int, None}
-            Index of the selected parameter within the given object.
-            If the selected parameter is not part of the given object, then `None` is returned.
+            Index of the selected parameter within the given container.
+            If the selected parameter is not part of the given container, then `None` is returned.
 
         """
         try:
-            is_active = self._masks_objective_params[obj][index]
+            is_active = self._masks_objective_params[container][index]
         except KeyError:
             return None
 
         if is_active:
-            # index from the list of active parameters in the object
-            ind_active_object = np.sum(self._masks_objective_params[obj][:index])
-            # ASSUMES: indices in self._masks_object_params[obj] are ordered from smallest to
-            #          largest
-            return self._masks_object_params[obj][ind_active_object]
+            # index from the list of active parameters in the container
+            ind_active_container = np.sum(self._masks_objective_params[container][:index])
+            # ASSUMES: indices in self._masks_container_params[container] are ordered from smallest
+            #          to largest
+            return self._masks_container_params[container][ind_active_container]
         else:
             return None
 
