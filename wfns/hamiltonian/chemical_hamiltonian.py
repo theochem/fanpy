@@ -221,6 +221,7 @@ class ChemicalHamiltonian(ParamContainer):
         """
         raise NotImplementedError
 
+    # FIXME: need to speed up
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
@@ -281,7 +282,8 @@ class ChemicalHamiltonian(ParamContainer):
 
         return one_electron, coulomb, exchange
 
-    def integrate_sd_sd(self, sd1, sd2):
+    # FIXME: need to speed up
+    def integrate_sd_sd(self, sd1, sd2, sign=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -297,6 +299,12 @@ class ChemicalHamiltonian(ParamContainer):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
+        sign : {1, -1, None}
+            Sign change resulting from cancelling out the orbitals shared between the two Slater
+            determinants.
+            Computes the sign if none is provided.
+            Make sure that the provided sign is correct. It will not be checked to see if its
+            correct.
 
         Returns
         -------
@@ -307,8 +315,12 @@ class ChemicalHamiltonian(ParamContainer):
         exchange : float
             Exchange energy.
 
+        Raises
+        ------
+        ValueError
+            If `sign` is not `1`, `-1` or `None`.
+
         """
-        # FIXME: incredibly slow/bad approach
         one_electron = 0.0
         coulomb = 0.0
         exchange = 0.0
@@ -320,30 +332,38 @@ class ChemicalHamiltonian(ParamContainer):
             return 0.0, 0.0, 0.0
         diff_order = len(diff_sd1)
 
-        # Assume the creators are ordered from smallest to largest (left to rigth) and
+        # Assume the creators are ordered from smallest to largest (left to right) and
         # annihilators are ordered from largest to smallest.
-        # Move all of the creators and annihilators that are not shared between the two Slater
-        # determinants towards the middle
+        # Move all of the creators and annihilators that are shared between the two Slater
+        # determinants towards the middle starting from the smallest index.
         # e.g. Given left Slater determinant a_8 a_6 a_3 a_2 a_1 and
         #      right Slater determinant a^\dagger_1 a^\dagger_2 a^dagger_5 a^\dagger_7 a^\dagger_8,
         #      annihilators and creators of orbitals 1, 2, and 8 must move towards one another for
         #      mutual destruction
         #    0    a_8 a_6 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    1    a_8 a_6 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    2    a_6 a_8 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    3    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_8 a^\dagger_8
-        #    4    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_8 a^\dagger_7
-        #    5    a_6 a_3 a_8 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_8 a^\dagger_5 a^\dagger_7
+        #    1    a_8 a_6 a_3 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    2    a_6 a_8 a_3 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    3    a_6 a_3 a_8 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    4    a_6 a_3 a_1 a_8 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    5    a_6 a_3 a_1 a_2 a_8    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    6    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    7    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_8 a^\dagger_7
+        #    8    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_8 a^\dagger_5 a^\dagger_7
+        #    9    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_8 a^\dagger_1 a^\dagger_5 a^\dagger_7
+        #   10    a_6 a_3 a_1 a_2 a_8    a^\dagger_8 a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_7
+        #   10    a_6 a_3                                                    a^\dagger_5 a^\dagger_7
         # where first column is the number of transpositions, second column is the ordering of the
         # annhilators (left SD) and third column is the ordering of the creators (right SD)
 
         # NOTE: after moving all of the different creators toward the middle, the unshared creators
         # will be ordered from smallest to largest and the shared creators will be ordered from
-        # smallest to largest
-        num_transpositions_0 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd1)
-        num_transpositions_1 = sum(len([j for j in shared_indices if j < i]) for i in diff_sd2)
-        num_transpositions = num_transpositions_0 + num_transpositions_1
-        sign = (-1)**num_transpositions
+        # largest to smallest
+        if sign is None:
+            num_transpositions_1 = sum(slater.find_num_trans_swap(sd1, i, 0) for i in diff_sd1)
+            num_transpositions_2 = sum(slater.find_num_trans_swap(sd2, i, 0) for i in diff_sd2)
+            sign = (-1)**(num_transpositions_1 + num_transpositions_2)
+        elif sign not in [1, -1]:
+            raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
 
         # two sd's are the same
         if diff_order == 0:
