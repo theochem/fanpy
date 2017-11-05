@@ -1,13 +1,14 @@
 r"""Hamiltonian object that interacts with the wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
+from wfns.param import ParamContainer
 from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 from wfns.backend import slater
 from wfns.wrapper.docstring import docstring_class
 
 
 @docstring_class(indent_level=1)
-class ChemicalHamiltonian(object):
+class ChemicalHamiltonian(ParamContainer):
     r"""Hamiltonian used for a typical chemical system.
 
     .. math::
@@ -209,6 +210,16 @@ class ChemicalHamiltonian(object):
 
         self.one_int = one_int
         self.two_int = two_int
+
+    def assign_params(self, params):
+        """Assigns parameters of the Hamiltonian.
+
+        Raises
+        ------
+        NotImplementedError
+
+        """
+        raise NotImplementedError
 
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
