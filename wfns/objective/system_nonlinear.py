@@ -1,5 +1,6 @@
 """Schrodinger equation as a system of equations."""
 import numpy as np
+from wfns.param import ParamContainer
 from wfns.wrapper.docstring import docstring_class
 from wfns.objective.base_objective import BaseObjective
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
@@ -40,17 +41,15 @@ class SystemEquations(BaseObjective):
         Weights of each equation.
         By default, all equations are given weight of 1 except for the normalization constraint,
         which is weighed by the number of equations.
-    energy_type : {'fixed', 'param', 'compute'}
-        Type of the energy used in the Schrodinger equation.
-        If 'fixed', the energy of the Schrodinger equation is fixed to the given value.
-        If 'param', the energy of the Schrodinger equation is given by a parameter. Specifically,
-        the last parameter will be the energy.
-        If 'compute', the energy of the Schrodinger equation is computed with respect to the
-        reference.
-        By default, the energy is computed with respect to the reference.
-    energy : {float, None}
+    energy : ParamContainer
         Energy used in the Schrodinger equation.
-        By default, the energy is calculated with respect to the reference.
+        Used to store/cache the energy.
+    energy_type : {'fixed', 'variable', 'compute'}
+        Type of the energy used in the Schrodinger equation.
+        If 'fixed', the energy of the Schrodinger equation is fixed at the given value.
+        If 'variable', the energy of the Schrodinger equation is optimized as a parameter.
+        If 'compute', the energy of the Schrodinger equation is computed on-the-fly with respect to
+        the reference.
 
     """
     def __init__(self, wfn, ham, pspace=None, ref_state=None, eqn_weights=None,
@@ -71,27 +70,25 @@ class SystemEquations(BaseObjective):
             Weights of each equation.
             By default, all equations are given weight of 1 except for the normalization constraint,
             which is weighed by the number of equations.
-        energy_type : {'fixed', 'param', 'compute'}
-            Type of the energy used in the Schrodinger equation.
-            If 'fixed', the energy of the Schrodinger equation is fixed to the given value.
-            If 'param', the energy of the Schrodinger equation is given by a parameter.
-            Specifically, the last parameter will be the energy.
-            If 'compute', the energy of the Schrodinger equation is computed with respect to the
-            reference.
-            By default, the energy is computed with respect to the reference.
         energy : {float, None}
             Energy of the Schrodinger equation.
-            If provided, the energy within the Schrodinger equation is fixed to the given value.
-            If not provided, the energy within the Schrodinger equation is given as a parameter (if
-            energy is a parameter) or is computed when needd (if energy is not a parameter).
-            By default, `fixed_energy` is not provided.
+            If not provided, energy is computed with respect to the reference.
+            By default, energy is computed with respect to the reference.
+            Note that this parameter is not used at all if `energy_type` is 'compute'.
+        energy_type : {'fixed', 'variable', 'compute'}
+            Type of the energy used in the Schrodinger equation.
+            If 'fixed', the energy of the Schrodinger equation is fixed at the given value.
+            If 'variable', the energy of the Schrodinger equation is optimized as a parameter.
+            If 'compute', the energy of the Schrodinger equation is computed on-the-fly with respect
+            to the reference.
+            By default, the energy is computed on-the-fly.
 
         Raises
         ------
-        ValueError
-            If fixed_energy is a parameter and `energy` is not None.
         TypeError
-            If fixed_energy is not None or float.
+            If `energy` is not float, complex or None.
+        ValueError
+            If `energy_type` is not one of 'fixed', 'variable', or 'compute'.
 
         """
         super().__init__(wfn, ham)
@@ -99,37 +96,20 @@ class SystemEquations(BaseObjective):
         self.assign_ref_state(ref_state)
         self.assign_eqn_weights(eqn_weights)
 
-        if energy_type not in ['fixed', 'param', 'compute']:
-            raise ValueError("`energy_type` must be one of 'fixed', 'param', or 'compute'.")
-        if not (energy is None or isinstance(energy, (float, complex))):
-            raise TypeError('`energy` must be a float or None.')
-
-        if energy_type in ['fixed', 'param'] and energy is None:
+        if energy is None:
             energy = self.get_energy_one_proj(self.ref_state)
-        elif energy_type == 'compute' and energy is not None:
-            raise ValueError("`energy` cannot be given when the `energy_type` is 'compute'.")
+        elif not isinstance(energy, (float, complex)):
+            raise TypeError('Energy must be given as a float or complex.')
+
+        if energy_type not in ['fixed', 'variable', 'compute']:
+            raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
+
+        self.energy = ParamContainer(energy)
         self.energy_type = energy_type
-        self.energy = energy
-
-    @property
-    def params(self):
-        """
-
-        Notes
-        -----
-        The last parameter will be the energy.
-
-        """
-        old_params = super().params
-        if self.energy_type == 'param':
-            return np.hstack((old_params, self.energy))
-        else:
-            return old_params
-
-    def assign_params(self, params):
-        if self.energy_type == 'param':
-            self.energy = params[-1]
-        super().assign_params(params[:-1])
+        if energy_type in ['fixed', 'variable']:
+            self.param_selection.load_mask_container_params((self.energy,
+                                                             energy_type == 'variable'))
+            self.load_masks_objective_params()
 
     def assign_pspace(self, pspace=None):
         """Set the projection space.
@@ -280,12 +260,11 @@ class SystemEquations(BaseObjective):
 
         # reference values
         norm = np.sum(ref_coeffs * get_overlap(ref_sds))
-        if self.energy_type == 'param':
-            energy = params[-1]
-        elif self.energy_type == 'fixed':
-            energy = self.energy
+        if self.energy_type in ['variable', 'fixed']:
+            energy = self.energy.params
         elif self.energy_type == 'compute':
             energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
+            self.energy.assign_params(energy)
 
         # objective
         obj = np.empty(self.nproj + 1)
@@ -369,18 +348,16 @@ class SystemEquations(BaseObjective):
                         axis=0)
 
         # energy
-        if self.energy_type == 'param':
-            energy = params[-1]
-            d_energy = np.zeros(params.size)
-            d_energy[-1] = 1.0
-        elif self.energy_type == 'fixed':
-            energy = self.energy
-            d_energy = np.zeros(params.size)
+        if self.energy_type in ['variable', 'fixed']:
+            energy = self.energy.params
+            d_energy = np.array([self.param_selection.derivative_index(self.energy, i) is not None
+                                 for i in range(params.size)])
         elif self.energy_type == 'compute':
             energy = np.sum(ref_coeffs * ref_ints) / norm
             d_energy = np.sum(d_ref_ints * ref_olps[:, np.newaxis] +
                               ref_ints[:, np.newaxis] * d_ref_olps -
                               d_norm[np.newaxis, :] * energy, axis=0) / norm
+            self.energy.assign_params(energy)
 
         # reshape for broadcasting
         pspace = np.array(self.pspace)[:, np.newaxis]
