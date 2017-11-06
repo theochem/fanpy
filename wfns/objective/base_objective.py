@@ -278,8 +278,8 @@ class BaseObjective(abc.ABC):
             method.
         param_selection : {list, tuple, ParamMask, None}
             Selection of parameters that will be used to construct the objective.
-            Each entry is a 2-tuple of the parameter object and the numpy indexing array for the
-            active parameters.
+            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
+            indexing array for the active parameters. See `ParamMask.__init__` for details.
 
         Raises
         ------
@@ -310,14 +310,7 @@ class BaseObjective(abc.ABC):
             raise TypeError('`tmpfile` must be a string.')
         self.tmpfile = tmpfile
 
-        if param_selection is None:
-            param_selection = ParamMask((wfn, None))
-        elif isinstance(param_selection, (list, tuple)):
-            param_selection = ParamMask(*param_selection)
-        elif not isinstance(param_selection, ParamMask):
-            raise TypeError('Selection of parameters, `param_selection`, must be a list, tuple, or '
-                            'ParamMask instance.')
-        self.param_selection = param_selection
+        self.assign_param_selection(param_selection=param_selection)
 
     @property
     def params(self):
@@ -342,6 +335,26 @@ class BaseObjective(abc.ABC):
         """
         if self.tmpfile != '':
             np.save(self.tmpfile, params)
+
+    def assign_param_selection(self, param_selection=None):
+        """Select parameters that will be active in the objective.
+
+        Parameters
+        ----------
+        param_selection : {list, tuple, ParamMask, None}
+            Selection of parameters that will be used to construct the objective.
+            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
+            indexing array for the active parameters. See `ParamMask.__init__` for details.
+
+        """
+        if param_selection is None:
+            param_selection = ParamMask((self.wfn, None))
+        elif isinstance(param_selection, (list, tuple)):
+            param_selection = ParamMask(*param_selection)
+        elif not isinstance(param_selection, ParamMask):
+            raise TypeError('Selection of parameters, `param_selection`, must be a list, tuple, or '
+                            'ParamMask instance.')
+        self.param_selection = param_selection
 
     def assign_params(self, params):
         """Assign the parameters to the wavefunction and/or hamiltonian.
