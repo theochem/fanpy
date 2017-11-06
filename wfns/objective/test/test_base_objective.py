@@ -76,3 +76,20 @@ def test_load_params():
     assert np.allclose(param1.params, 1)
     assert np.allclose(param2.params, np.array([9, 3]))
     assert np.allclose(param3.params, np.array([10, 5, 6, 11]))
+
+
+def test_derivative_index():
+    """Test ParamMask.derivative_index."""
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    test = ParamMask((param1, False), (param2, np.array(1)),
+                     (param3, np.array([True, False, False, True])))
+    assert_raises(TypeError, test.derivative_index, (1, 0))
+    assert test.derivative_index(ParamContainer(2), 0) is None
+    assert test.derivative_index(param1, 0) is None
+    assert test.derivative_index(param2, 0) == 1
+    assert test.derivative_index(param2, 1) is None
+    assert test.derivative_index(param3, 0) is None
+    assert test.derivative_index(param3, 1) == 0
+    assert test.derivative_index(param3, 2) == 3

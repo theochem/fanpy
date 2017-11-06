@@ -211,14 +211,22 @@ class ParamMask(abc.ABC):
         Returns
         -------
         container : ParamContainer
+            Container with parameters on which the objective depends.
         index : {int, None}
             Index of the selected parameter within the given container.
             If the selected parameter is not part of the given container, then `None` is returned.
 
         """
+        if not isinstance(container, ParamContainer):
+            raise TypeError('Given container must be a ParamContainer instance.')
+
         try:
             is_active = self._masks_objective_params[container][index]
         except KeyError:
+            # NOTE: This will be useful when the given object is not included in the ParamMask
+            #       instead of including it and freezing all of the parameters. For example, if the
+            #       objective is independent of the Hamiltonian, then we can still "derivatize" wrt
+            #       it without including it in the mask
             return None
 
         if is_active:
