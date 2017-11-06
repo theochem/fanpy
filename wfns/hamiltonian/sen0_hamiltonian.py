@@ -1,24 +1,28 @@
-# FIXME: this needs to be checked
 r"""Seniority-zero Hamiltonian object that interacts with the wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.backend import slater
+from wfns.wrapper.docstring import docstring_class
 
 
+@docstring_class(indent_level=1)
 class SeniorityZeroHamiltonian(ChemicalHamiltonian):
-    """Hamiltonian that involvese only the zero-seniority terms.
+    r"""Hamiltonian that involves only the zero-seniority terms.
 
     .. math::
 
-        \hat{H} = \sum_{i} \big( h_{ii} a^\dagger_i a_i
-                                + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}} \big)
-        + \sum_{ij} \big( g_{ijij} a^\dagger_i a^\dagger_j a_i a_j
-                        + g_{i\bar{\j}i\bar{\j}} a^\dagger_i a^\dagger_{\bar{\j}} a_i a_{\bar{\j}}
-                        + g_{\bar{\i}j\bar{\i}j} a^\dagger_{\bar{\i}} a^\dagger_j a_{\bar{\i}} a_j
-                        + g_{\bar{\i}\bar{\i}\bar{\i}\bar{\j}}
-                        a^\dagger_{\bar{\i}} a^\dagger_{\bar{\j}} a_{\bar{\i}} a_{\bar{\j}}
-                        + g_{j\bar{\j}i\bar{\i}} a^\dagger_j a^\dagger_{\bar{\j}} a_i a_{\bar{\i}}
-                    \big)
+        \hat{H} =
+        \sum_{i} \left(
+            h_{ii} a^\dagger_i a_i + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}}
+        \right)
+        + \sum_{i<j} \left(
+            g_{ijij} a^\dagger_i a^\dagger_j a_j a_i
+            + g_{i\bar{\j}i\bar{\j}} a^\dagger_i a^\dagger_{\bar{\j}} a_{\bar{\j}} a_i
+            + g_{\bar{\i}j\bar{\i}j} a^\dagger_{\bar{\i}} a^\dagger_j  a_j a_{\bar{\i}}
+            + g_{\bar{\i}\bar{\j}\bar{\i}\bar{\j}}
+            a^\dagger_{\bar{\i}} a^\dagger_{\bar{\j}} a_{\bar{\j}} a_{\bar{\i}}
+            + g_{i\bar{\j}\bar{\j}i} a^\dagger_i a^\dagger_{\bar{\j}} a_{\bar{\j} a_i}
+        \right)
 
     where :math:`i` and :math:`\bar{\i}` are the indices that correspond to the ith alpha- and beta-
     spin orbtials, :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-
@@ -29,12 +33,6 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     """
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
-
-        Parameters
-        ----------
-        orbtype : {'restricted', 'unrestricted', 'generalized', None}
-            Type of the orbitals used.
-            Default is `'restricted'`.
 
         Raises
         ------
@@ -49,63 +47,78 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
             raise NotImplementedError('Generalized orbitals are not supported in seniority-zero '
                                       'Hamiltonian.')
 
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        r"""Integrates the seniority-zero Hamiltonian with against a wavefunction and Slater
-        determinant.
+    # FIXME: need to speed up
+    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
+        r"""
 
         .. math::
 
-            \braket{\Psi | \hat{H} | \Phi}
+            \braket{\Phi | \hat{H} | \Psi}
+            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
 
-        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the seniority-zero Hamiltonian
-        operator, and :math:`\Phi` is the Slater determinant.
-
-        Parameters
-        ----------
-        wfn : Wavefunction
-            Wavefunction against which the Hamiltonian is integrated.
-        sd : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        deriv : int, None
-            Index of the parameter against which the expectation value is derivatized.
-            Default is no derivatization.
-
-        Returns
-        -------
-        one_electron : float
-            One electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
+        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
+        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
+        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
+        the :math:`\Phi` and its first order orbital-pair excitations for a chemical Hamiltonian.
 
         """
-        # FIXME: incredibly slow/bad approach
+        if wfn_deriv is not None and ham_deriv is not None:
+            raise ValueError('Integral can be derivatized with respect to at most one out of the '
+                             'wavefunction and Hamiltonian parameters.')
+
         nspatial = self.nspin // 2
-        spatial_sd = slater.split_spin(sd, nspatial)[0]
-        occ_spatial_indices = slater.occ_indices(spatial_sd)
-        vir_spatial_indices = slater.vir_indices(spatial_sd, nspatial)
+        sd_alpha, sd_beta = slater.split_spin(sd, nspatial)
+        occ_spatial_indices = slater.occ_indices(sd_alpha)
+        vir_spatial_indices = slater.vir_indices(sd_alpha, nspatial)
 
         one_electron = 0.0
         coulomb = 0.0
         exchange = 0.0
 
-        # sum over zeroth order excitation
-        coeff = wfn.get_overlap(sd, deriv=deriv)
-        for counter, i in enumerate(occ_spatial_indices):
-            one_electron += 2 * coeff * self.one_int.get_value(i, i, self.orbtype)
-            coulomb += coeff * self.two_int.get_value(i, i, i, i, self.orbtype)
-            for j in occ_spatial_indices[counter+1:]:
-                coulomb += 4 * coeff * self.two_int.get_value(i, j, i, j, self.orbtype)
-                exchange -= 2 * coeff * self.two_int.get_value(i, j, j, i, self.orbtype)
+        def update_integrals(sd_m):
+            return self._update_integrals(wfn, sd, sd_m, one_electron, coulomb, exchange, wfn_deriv,
+                                          ham_deriv)
 
-        # sum over pair wise excitation (seniority zero)
+        one_electron, coulomb, exchange = update_integrals(sd)
+
+        # if slater determinant is not seniority zero
+        if sd_alpha != sd_beta:
+            return one_electron, coulomb, exchange
+
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:
-                j = i + nspatial
-                b = a + nspatial
-                coeff = wfn.get_overlap(slater.excite(sd, i, j, a, b), deriv=deriv)
-                coulomb += coeff * self.two_int.get_value(i, j, a, b, self.orbtype)
-                exchange -= coeff * self.two_int.get_value(i, j, b, a, self.orbtype)
+                # FIXME: assumes that the orbitals are organized blockwise (alpha then beta)
+                sd_m = slater.excite(sd, i, i + nspatial, a + nspatial, a)
+                one_electron, coulomb, exchange = update_integrals(sd_m)
 
         return one_electron, coulomb, exchange
+
+    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+        r"""
+
+        .. math::
+
+            H_{\mathbf{m}\mathbf{n}} &= \braket{\mathbf{m} | \hat{H} | \mathbf{n}}\\
+
+        In the first summation involving :math:`h_{ij}`, only the terms where :math:`\mathbf{m}` and
+        :math:`\mathbf{n}` are the same will contribute to the integral. In the second summation
+        involving :math:`g_{ijkl}`, only the terms where :math:`\mathbf{m}` and :math:`\mathbf{n}`
+        are different by at most single pair-wise excitation will contribute to the integral.
+
+        Raises
+        ------
+        ValueError
+            If `sign` is not `1`, `-1` or `None`.
+
+        """
+        nspatial = self.nspin // 2
+        sd1_alpha, sd1_beta = slater.split_spin(sd1, nspatial)
+        sd2_alpha, sd2_beta = slater.split_spin(sd2, nspatial)
+
+        # if either of the two Slater determinants are not seniority zero and they're different
+        if (sd1_alpha != sd1_beta or sd2_alpha != sd2_beta) and sd1 != sd2:
+            return 0.0, 0.0, 0.0
+
+        # FIXME: up to 4 times slower for spatial orbitals (b/c looping over 2K instead of K)
+        # two Slater determinants are the same
+        return super().integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv)

@@ -1,7 +1,10 @@
 """Test wfns.hamiltonian.sen0_hamiltonian."""
 import numpy as np
 from nose.tools import assert_raises
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.hamiltonian.sen0_hamiltonian import SeniorityZeroHamiltonian
+
+# FIXME: need more tests for checking integrate_wfn_sd and integrate_sd_sd
 
 
 def test_assign_orbtype():
@@ -30,12 +33,12 @@ def test_integrate_wfn_sd_2e():
     ham = SeniorityZeroHamiltonian(one_int, two_int, 'restricted')
     test_wfn = TestWavefunction_2e()
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b0101, deriv=None)
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b0101)
     assert one_energy == 1*1 + 1*1
     assert coulomb == 1*5 + 2*8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b1010, deriv=None)
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b1010)
     assert one_energy == 2*4 + 2*4
     assert coulomb == 1*17 + 2*20
     assert exchange == 0
@@ -58,14 +61,17 @@ def test_integrate_wfn_sd_4e():
     one_int = np.arange(1, 10, dtype=float).reshape(3, 3)
     two_int = np.arange(1, 82, dtype=float).reshape(3, 3, 3, 3)
     ham = SeniorityZeroHamiltonian(one_int, two_int, 'restricted')
+    ham_full = ChemicalHamiltonian(one_int, two_int, 'restricted')
     test_wfn = TestWavefunction_4e()
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b011011, deriv=None)
-    assert one_energy == 2*1*1 + 2*1*5
-    assert coulomb == 1*1 + 4*1*11 + 1*41 + 3*9 + 2*45
-    assert exchange == -2*1*13
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b011011)
+    assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b011011),
+                       ham_full.integrate_wfn_sd(test_wfn, 0b011011))
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b110110, deriv=None)
-    assert one_energy == 2*3*5 + 2*3*9
-    assert coulomb == 3*41 + 4*3*51 + 3*81 + 2*37 + 1*73
-    assert exchange == -2*3*53
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b101101)
+    assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b101101),
+                       ham_full.integrate_wfn_sd(test_wfn, 0b101101))
+
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b110110)
+    assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b110110),
+                       ham_full.integrate_wfn_sd(test_wfn, 0b110110))
