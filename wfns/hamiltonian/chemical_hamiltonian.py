@@ -18,8 +18,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
     integral in Physicists' notation.
 
     """
-    def _update_integrals(self, wfn, sd, sd_m, one_electron, coulomb, exchange, wfn_deriv,
-                          ham_deriv):
+    def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
+                          exchange):
         """Update integrals for the given Slater determinant.
 
         Add the term :math:`f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}` to the provided
@@ -33,18 +33,18 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Slater determinant.
         sd_m : int
             Slater determinant.
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
         wfn_deriv : {int, None}
             Index of the wavefunction parameter against which the integral is derivatized.
             `None` results in no derivatization.
         ham_deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             `None` results in no derivatization.
+        one_electron : float
+            One-electron energy.
+        coulomb : float
+            Coulomb energy.
+        exchange : float
+            Exchange energy.
 
         Returns
         -------
@@ -118,8 +118,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
         exchange = 0.0
 
         def update_integrals(sd_m):
-            return self._update_integrals(wfn, sd, sd_m,
-                                          one_electron, coulomb, exchange, wfn_deriv, ham_deriv)
+            return self._update_integrals(wfn, sd, sd_m, wfn_deriv, ham_deriv,
+                                          one_electron, coulomb, exchange)
 
         one_electron, coulomb, exchange = update_integrals(sd)
         for counter_i, i in enumerate(occ_indices):
