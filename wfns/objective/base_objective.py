@@ -98,8 +98,8 @@ class ParamMask(abc.ABC):
         of sorting/search is needed (e.g. `np.where`). Since this method should be executed quite
         frequently during the course of the optimization, the indices are converted to integers
         beforehand. Other use-cases of these indices are not time limiting: both methods
-        `extract_params` and `load_params` are executed seldomly in comparison. Also, the
-        performance of integer and boolean indices should not be too different.
+        `active_params` and `load_params` are executed seldomly in comparison. Also, the performance
+        of integer and boolean indices should not be too different.
 
         """
         if not isinstance(container, ParamContainer):
@@ -147,8 +147,23 @@ class ParamMask(abc.ABC):
             nparams_cumsum += nparams_sel
         self._masks_objective_params = masks_objective_params
 
-    def extract_params(self):
-        """Extract out the active parameters from the containers.
+    @property
+    def all_params(self):
+        """Return all of the parameters associated with the mask, even if they were not selected.
+
+        Returns
+        -------
+        params : np.ndarray
+            All of the parameters associated with the mask.
+            Parameters are first ordered by the ordering of each container, then they are ordered by
+            the order in which they appear in the container.
+
+        """
+        return np.hstack([obj.params for obj in self._masks_container_params.keys()])
+
+    @property
+    def active_params(self):
+        """Return the parameters that are active in the objective.
 
         Returns
         -------
@@ -163,7 +178,7 @@ class ParamMask(abc.ABC):
         `[4, 5, 6, 7]`, respectively.
 
         >>> x = ParamMask((container1, [True, False, True]), (container2, [3, 1]))
-        >>> x.extract_params()
+        >>> x.active_params
         np.ndarray([1, 3, 5, 7])
 
         Note that the order of the indices during initialization has no affect on the ordering of
@@ -322,19 +337,16 @@ class BaseObjective(abc.ABC):
             Parameters of the objective.
 
         """
-        return self.param_selection.extract_params()
+        return self.param_selection.active_params()
 
-    def save_params(self, params):
-        """Save the given parameters in the temporary file.
+    def save_params(self):
+        """Save all of the parameters in the `param_selection` in the temporary file.
 
-        Parameters
-        ----------
-        params : np.ndarray
-            Parameters used by the objective method.
+        All of the parameters are saved, even if it was frozen in the objective.
 
         """
         if self.tmpfile != '':
-            np.save(self.tmpfile, params)
+            np.save(self.tmpfile, self.param_selection.all_params)
 
     def assign_param_selection(self, param_selection=None):
         """Select parameters that will be active in the objective.
