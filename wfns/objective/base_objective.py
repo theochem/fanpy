@@ -10,7 +10,7 @@ from wfns.param import ParamContainer
 from wfns.wrapper.docstring import docstring_class
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
 import wfns.backend.slater as slater
 
 
@@ -310,7 +310,7 @@ class BaseObjective(abc.ABC):
         if not isinstance(wfn, BaseWavefunction):
             raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
                             'child).')
-        if not isinstance(ham, ChemicalHamiltonian):
+        if not isinstance(ham, BaseHamiltonian):
             raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its '
                             'child).')
         if wfn.dtype != ham.dtype:

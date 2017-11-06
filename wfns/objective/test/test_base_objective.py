@@ -3,11 +3,26 @@ from nose.tools import assert_raises
 import collections
 import numpy as np
 from wfns.param import ParamContainer
-from wfns.objective.base_objective import ParamMask
+from wfns.objective.base_objective import ParamMask, BaseObjective
+from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
 
 
 class TestParamMask(ParamMask):
     def __init__(self):
+        pass
+
+
+class TestBaseHamiltonian(BaseHamiltonian):
+    def integrate_wfn_sd(self, wfn, sd, deriv=None):
+        pass
+
+    def integrate_sd_sd(self, sd1, sd2, deriv=None):
+        pass
+
+
+class TestBaseObjective(BaseObjective):
+    def objective(self, params):
         pass
 
 
@@ -100,3 +115,25 @@ def test_derivative_index():
     assert test.derivative_index(param3, 0) is None
     assert test.derivative_index(param3, 1) == 0
     assert test.derivative_index(param3, 2) == 3
+
+
+def test_baseobjective_init():
+    """Test BaseObjective.__init__."""
+    wfn = CIWavefunction(2, 4)
+    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    assert_raises(TypeError, TestBaseObjective, ham, ham)
+    assert_raises(TypeError, TestBaseObjective, wfn, wfn)
+    wfn = CIWavefunction(2, 4, dtype=complex)
+    assert_raises(ValueError, TestBaseObjective, wfn, ham)
+    wfn = CIWavefunction(2, 6)
+    assert_raises(ValueError, TestBaseObjective, wfn, ham)
+    wfn = CIWavefunction(2, 4)
+    assert_raises(TypeError, TestBaseObjective, wfn, ham, tmpfile=2)
+
+    test = TestBaseObjective(wfn, ham, tmpfile='tmpfile.npy')
+    assert test.wfn == wfn
+    assert test.ham == ham
+    assert test.tmpfile == 'tmpfile.npy'
+    assert np.allclose(test.param_selection.all_params, wfn.params)
+    assert np.allclose(test.param_selection.active_params, wfn.params)
