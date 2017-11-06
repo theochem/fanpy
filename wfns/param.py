@@ -23,6 +23,7 @@ class ParamContainer(abc.ABC):
         """
         self.assign_params(params)
 
+    @property
     def nparams(self):
         """Return the number of parameters.
 
@@ -53,7 +54,7 @@ class ParamContainer(abc.ABC):
         if isinstance(params, (int, float, complex, np.float64, np.complex128)):
             params = np.array(params)
 
-        if not isinstance(np.ndarray, params):
+        if not isinstance(params, np.ndarray):
             raise TypeError('Parameters must be given as a numpy array.')
         elif params.dtype not in (int, float, complex, np.float64, np.complex128):
             raise TypeError('Parameters must have data type of `int`, `float`, `complex`, '
