@@ -6,6 +6,7 @@ from wfns.param import ParamContainer
 from wfns.objective.base_objective import ParamMask, BaseObjective
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
+from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
 class TestParamMask(ParamMask):
@@ -190,3 +191,56 @@ def test_baseobjective_assign_params():
     test.assign_params(np.array([99, 98, 97]))
     params[np.array([0, 3, 5])] = [99, 98, 97]
     assert np.allclose(params, wfn.params)
+
+
+def test_baseobjective_wrapped_get_overlap():
+    """Test BaseObjective.wrapped_get_overlap."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+                                                        (ParamContainer(3), True)])
+    assert test.wrapped_get_overlap(0b0101, deriv=None) == wfn.get_overlap(0b0101, deriv=None)
+    assert test.wrapped_get_overlap(0b0101, deriv=0) == wfn.get_overlap(0b0101, deriv=0)
+    assert test.wrapped_get_overlap(0b0101, deriv=1) == wfn.get_overlap(0b0101, deriv=3)
+    assert test.wrapped_get_overlap(0b0101, deriv=2) == wfn.get_overlap(0b0101, deriv=5)
+    assert test.wrapped_get_overlap(0b0101, deriv=3) == 0.0
+
+
+def test_baseobjective_wrapped_integrate_wfn_sd():
+    """Test BaseObjective.wrapped_integrate_wfn_sd."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+                                                        (ParamContainer(3), True)])
+    assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
+    assert test.wrapped_integrate_wfn_sd(0b0101,
+                                         deriv=0) == sum(ham.integrate_wfn_sd(wfn, 0b0101,
+                                                                              wfn_deriv=0))
+    assert test.wrapped_integrate_wfn_sd(0b0101,
+                                         deriv=1) == sum(ham.integrate_wfn_sd(wfn, 0b0101,
+                                                                              wfn_deriv=3))
+    assert test.wrapped_integrate_wfn_sd(0b0101,
+                                         deriv=2) == sum(ham.integrate_wfn_sd(wfn, 0b0101,
+                                                                              wfn_deriv=5))
+    # FIXME: no tests for ham_deriv b/c there are no hamiltonians with parameters
+    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=3) == 0.0
+
+
+def test_baseobjective_wrapped_integrate_sd_sd():
+    """Test BaseObjective.wrapped_integrate_sd_sd."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+                                                        (ParamContainer(3), True)])
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=0) == 0.0
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=1) == 0.0
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=2) == 0.0
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=3) == 0.0
+    # FIXME: no tests for derivatives wrt hamiltonian b/c there are no hamiltonians with parameters
