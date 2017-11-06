@@ -55,11 +55,18 @@ def test_load_mask_objective_params():
     assert np.allclose(test._masks_objective_params[param3], np.array([False, False, True, True]))
 
 
-def test_extract_params():
-    """Test ParamMask.extract_params."""
+def test_all_params():
+    """Test ParamMask.all_params."""
     test = ParamMask((ParamContainer(1), False), (ParamContainer(np.array([2, 3])), np.array(0)),
                      (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])))
-    assert np.allclose(test.extract_params(), np.array([2, 4, 7]))
+    assert np.allclose(test.all_params, np.array([1, 2, 3, 4, 5, 6, 7]))
+
+
+def test_active_params():
+    """Test ParamMask.active_params."""
+    test = ParamMask((ParamContainer(1), False), (ParamContainer(np.array([2, 3])), np.array(0)),
+                     (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])))
+    assert np.allclose(test.active_params, np.array([2, 4, 7]))
 
 
 def test_load_params():
