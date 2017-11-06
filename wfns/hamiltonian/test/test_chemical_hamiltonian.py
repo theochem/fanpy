@@ -1,7 +1,6 @@
 """Test wfns.hamiltonian.chemical_hamiltonian."""
 import numpy as np
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.tools import find_datafile
@@ -27,22 +26,22 @@ def test_integrate_wfn_sd():
     hamiltonian = ChemicalHamiltonian(one_int, two_int, 'restricted')
     test_wfn = TestWavefunction()
 
-    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b0101, deriv=None)
+    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b0101)
     assert one_energy == 1*1 + 1*1
     assert coulomb == 1*5 + 2*8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b1010, deriv=None)
+    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b1010)
     assert one_energy == 2*4 + 2*4
     assert coulomb == 1*17 + 2*20
     assert exchange == 0
 
-    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b0110, deriv=None)
+    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b0110)
     assert one_energy == 1*3 + 2*2
     assert coulomb == 1*13 + 2*12
     assert exchange == 0
 
-    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b1100, deriv=None)
+    one_energy, coulomb, exchange = hamiltonian.integrate_wfn_sd(test_wfn, 0b1100)
     assert one_energy == 1*3 + 3*4
     assert coulomb == 3*10
     assert exchange == -3*11
