@@ -1,5 +1,6 @@
 """Test wfns.objective.base_objective."""
 from nose.tools import assert_raises
+import collections
 import numpy as np
 from wfns.param import ParamContainer
 from wfns.objective.base_objective import ParamMask
@@ -13,7 +14,7 @@ class TestParamMask(ParamMask):
 def test_load_mask_container_params():
     """Test ParamMask.load_mask_container_params."""
     test = TestParamMask()
-    test._masks_container_params = {}
+    test._masks_container_params = collections.OrderedDict()
     assert_raises(TypeError, test.load_mask_container_params, 1, np.array([2]))
     container = ParamContainer(np.arange(10))
     assert_raises(TypeError, test.load_mask_container_params, container, range(10))
@@ -37,3 +38,18 @@ def test_load_mask_container_params():
     sel[np.array([5, 3, 5])] = True
     test.load_mask_container_params(container, sel)
     assert np.allclose(test._masks_container_params[container], np.array([3, 5]))
+
+
+def test_load_mask_objective_params():
+    """Test ParamMask.load_mask_objective_params."""
+    test = TestParamMask()
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    test._masks_container_params = {param1: np.array([0]),
+                                    param2: np.array([1]),
+                                    param3: np.array([2, 3])}
+    test.load_masks_objective_params()
+    assert np.allclose(test._masks_objective_params[param1], np.array([True, False, False, False]))
+    assert np.allclose(test._masks_objective_params[param2], np.array([False, True, False, False]))
+    assert np.allclose(test._masks_objective_params[param3], np.array([False, False, True, True]))

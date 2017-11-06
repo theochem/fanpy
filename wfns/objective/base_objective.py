@@ -136,11 +136,11 @@ class ParamMask(abc.ABC):
         fly.
 
         """
-        nparams_objective = sum(np.sum(sel) for sel in self._masks_container_params.values())
+        nparams_objective = sum(sel.size for sel in self._masks_container_params.values())
         nparams_cumsum = 0
-        masks_objective_params = {}
+        masks_objective_params = collections.OrderedDict()
         for container, sel in self._masks_container_params.items():
-            nparams_sel = np.sum(sel)
+            nparams_sel = sel.size
             objective_sel = np.zeros(nparams_objective, dtype=bool)
             objective_sel[nparams_cumsum: nparams_cumsum+nparams_sel] = True
             masks_objective_params[container] = objective_sel
