@@ -60,3 +60,19 @@ def test_extract_params():
     test = ParamMask((ParamContainer(1), False), (ParamContainer(np.array([2, 3])), np.array(0)),
                      (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])))
     assert np.allclose(test.extract_params(), np.array([2, 4, 7]))
+
+
+def test_load_params():
+    """Test ParamMask.load_params."""
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    test = ParamMask((param1, False), (param2, np.array(0)),
+                     (param3, np.array([True, False, False, True])))
+    assert_raises(TypeError, test.load_params, [9, 10, 11])
+    assert_raises(TypeError, test.load_params, np.array([[9, 10, 11]]))
+    assert_raises(ValueError, test.load_params, np.array([9, 10, 11, 12]))
+    test.load_params(np.array([9, 10, 11]))
+    assert np.allclose(param1.params, 1)
+    assert np.allclose(param2.params, np.array([9, 3]))
+    assert np.allclose(param3.params, np.array([10, 5, 6, 11]))
