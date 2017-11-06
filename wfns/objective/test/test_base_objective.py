@@ -2,6 +2,7 @@
 from nose.tools import assert_raises
 import collections
 import numpy as np
+import itertools as it
 from wfns.param import ParamContainer
 from wfns.objective.base_objective import ParamMask, BaseObjective
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
@@ -244,3 +245,104 @@ def test_baseobjective_wrapped_integrate_sd_sd():
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=2) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=3) == 0.0
     # FIXME: no tests for derivatives wrt hamiltonian b/c there are no hamiltonians with parameters
+
+
+def test_baseobjective_get_energy_one_proj():
+    """Test BaseObjective.get_energy_one_proj."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham)
+
+    # sd
+    for sd in [0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100]:
+        olp = wfn.get_overlap(sd)
+        integral = sum(ham.integrate_wfn_sd(wfn, sd))
+        # <SD | H | Psi> = E <SD | Psi>
+        # E = <SD | H | Psi> / <SD | Psi>
+        assert np.allclose(test.get_energy_one_proj(sd), integral / olp)
+        # dE = d<SD | H | Psi> / <SD | Psi> - d<SD | Psi> <SD | H | Psi> / <SD | Psi>^2
+        for i in range(4):
+            d_olp = wfn.get_overlap(sd, deriv=i)
+            d_integral = sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
+            assert np.allclose(test.get_energy_one_proj(sd, deriv=i),
+                               d_integral / olp - d_olp * integral / olp**2)
+
+    # list of sd
+    for sd1, sd2 in it.combinations([0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100], 2):
+        olp1 = wfn.get_overlap(sd1)
+        olp2 = wfn.get_overlap(sd2)
+        integral1 = sum(ham.integrate_wfn_sd(wfn, sd1))
+        integral2 = sum(ham.integrate_wfn_sd(wfn, sd2))
+        # ( f(SD1) <SD1| + f(SD2) <SD2| ) H |Psi> = E ( f(SD1) <SD1| + f(SD2) <SD2| ) |Psi>
+        # f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi> = E ( f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi> )
+        # E = (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) / (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)
+        # where f(SD) = <SD | Psi>
+        assert np.allclose(test.get_energy_one_proj([sd1, sd2]),
+                           (olp1 * integral1 + olp2 * integral2) / (olp1**2 + olp2**2))
+        # dE
+        # = d(f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) / (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>) -
+        #   d(f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>) (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) /
+        #     (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)**2
+        # = (d(f(SD1) <SD1| H |Psi>) + d(f(SD2) <SD2| H |Psi>)) /
+        #     (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>) -
+        #   (d(f(SD1) <SD1|Psi>) + d(f(SD2) <SD2|Psi>)) *
+        #     (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) /
+        #       (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)**2
+        # = (df(SD1) <SD1| H |Psi> + f(SD1) d<SD1| H |Psi>
+        #     + df(SD2) <SD2| H |Psi> + f(SD2) d<SD2| H |Psi>) /
+        #       (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>) -
+        #   (df(SD1) <SD1|Psi> + f(SD1) d<SD1|Psi> + df(SD2) <SD2|Psi> + f(SD2) d <SD2|Psi>) *
+        #     (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) /
+        #       (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)**2
+        for i in range(4):
+            d_olp1 = wfn.get_overlap(sd1, deriv=i)
+            d_olp2 = wfn.get_overlap(sd2, deriv=i)
+            d_integral1 = sum(ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
+            d_integral2 = sum(ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
+            assert np.allclose(test.get_energy_one_proj([sd1, sd2], deriv=i),
+                               (d_olp1 * integral1 + d_olp2 * integral2
+                                + olp1 * d_integral1 + olp2 * d_integral2) / (olp1**2 + olp2**2) -
+                               (2 * d_olp1 * olp1 + 2 * d_olp2 * olp2) *
+                               (olp1 * integral1 + olp2 * integral2) / (olp1**2 + olp2**2)**2)
+
+    # CI
+    for sd1, sd2 in it.combinations([0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100], 2):
+        ciwfn = CIWavefunction(2, 4, sd_vec=[sd1, sd2])
+        ciwfn.assign_params(np.random.rand(ciwfn.nparams))
+        coeff1 = ciwfn.get_overlap(sd1)
+        coeff2 = ciwfn.get_overlap(sd2)
+        olp1 = wfn.get_overlap(sd1)
+        olp2 = wfn.get_overlap(sd2)
+        integral1 = sum(ham.integrate_wfn_sd(wfn, sd1))
+        integral2 = sum(ham.integrate_wfn_sd(wfn, sd2))
+        # ( c_1 <SD1| + c_2 <SD2| ) H |Psi> = E ( c_1 <SD1| + c_2 <SD2| ) |Psi>
+        # c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi> = E ( c_1 <SD1|Psi> + c_2 <SD2|Psi> )
+        # E = (c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi>) / (c_1 <SD1|Psi> + c_2 <SD2|Psi>)
+        assert np.allclose(test.get_energy_one_proj(ciwfn),
+                           (coeff1*integral1 + coeff2*integral2) / (coeff1*olp1 + coeff2*olp2))
+        # dE = (dc_1 <SD1| H |Psi> + c_1 d<SD1| H |Psi>
+        #        + dc_2 <SD2| H |Psi> + c_2 d<SD2| H |Psi>) /
+        #          (c_1 <SD1|Psi> + c_2 <SD2|Psi>) -
+        #      (dc_1 <SD1|Psi> + c_1 d<SD1|Psi> + dc_2 <SD2|Psi> + c_2 d <SD2|Psi>) *
+        #        (c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi>) /
+        #          (c_1 <SD1|Psi> + c_2 <SD2|Psi>)**2
+        for i in range(4):
+            d_coeff1 = 0.0
+            d_coeff2 = 0.0
+            d_olp1 = wfn.get_overlap(sd1, deriv=i)
+            d_olp2 = wfn.get_overlap(sd2, deriv=i)
+            d_integral1 = sum(ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
+            d_integral2 = sum(ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
+            assert np.allclose(test.get_energy_one_proj(ciwfn, deriv=i),
+                               (d_coeff1 * integral1 + d_coeff2 * integral2
+                                + coeff1 * d_integral1 + coeff2 * d_integral2)
+                               / (coeff1 * olp1 + coeff2 * olp2) -
+                               (d_coeff1 * olp1 + coeff1 * d_olp1 +
+                                d_coeff2 * olp2 + coeff2 * d_olp2) *
+                               (coeff1 * integral1 + coeff2 * integral2)
+                               / (coeff1 * olp1 + coeff2 * olp2)**2)
+
+        # others
+        assert_raises(TypeError, test.get_energy_one_proj, '0b0101')

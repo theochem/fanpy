@@ -508,7 +508,7 @@ class BaseObjective(abc.ABC):
         simplifications, :math:`\Psi` uses too many Slater determinants to be computationally
         tractible. Then, we can truncate the Slater determinants as a subset, :math:`S`, such that
         the most significant Slater determinants are included, while the energy can be tractibly
-        computed. This is equivalent to inserting a projection operator
+        computed. This is equivalent to inserting a projection operator on one side of the integral
 
         ..math:
 
@@ -548,9 +548,16 @@ class BaseObjective(abc.ABC):
             #        given wavefuncion/hamiltonian. It does not support projecting onto one of the
             #        component CI wavefunction of a linear combination of CI wavefunctions.
             if deriv is not None:
-                d_ref_coeffs = 0.0
-        elif (isinstance(ref, (list, tuple)) and
-              all(slater.is_sd_compatible(sd) for sd in ref)):
+                ref_deriv = self.param_selection.derivative_index(ref, deriv)
+                if ref_deriv is None:
+                    d_ref_coeffs = 0.0
+                else:
+                    d_ref_coeffs = np.zeros(ref.nparams, dtype=float)
+                    d_ref_coeffs[ref_deriv] = 1
+        elif slater.is_sd_compatible(ref) or (isinstance(ref, (list, tuple)) and
+                                              all(slater.is_sd_compatible(sd) for sd in ref)):
+            if not isinstance(ref, (list, tuple)):
+                ref = [ref]
             ref_sds = ref
             ref_coeffs = get_overlap(ref)
             if deriv is not None:
