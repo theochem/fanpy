@@ -6,7 +6,7 @@ The objective is used to optimize the wavefunction and/or Hamiltonian.
 import abc
 import collections
 import numpy as np
-from wfns.params import ParamContainer
+from wfns.param import ParamContainer
 from wfns.wrapper.docstring import docstring_class
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
@@ -84,8 +84,11 @@ class ParamMask(abc.ABC):
             If `container` is not a `ParamContainer` instance.
             If `sel` is not a numpy array.
             If `sel` does not have a data type of int or bool.
-            If `sel` does not have the same number of indices as there are parameters in the
-            container.
+        ValueError
+            If `sel` as integer indices have entries that are either less than 0 or greater than the
+            number of parameters.
+            If `sel` as boolean indices does not have the same number of entries as there are
+            parameters.
 
         Notes
         -----
@@ -99,9 +102,9 @@ class ParamMask(abc.ABC):
         performance of integer and boolean indices should not be too different.
 
         """
-        nparams = container.nparams
         if not isinstance(container, ParamContainer):
             raise TypeError('The provided container must be a `ParamContainer` instance.')
+        nparams = container.nparams
 
         if sel is None:
             sel = np.ones(nparams, dtype=bool)
@@ -110,16 +113,18 @@ class ParamMask(abc.ABC):
         elif not isinstance(sel, np.ndarray):
             raise TypeError('The provided selection must be a numpy array.')
         # check index types
+        if sel.dtype not in [int, bool]:
+            raise TypeError('The provided selection must have dtype of bool or int.')
         if sel.dtype == int:
+            if not np.all(np.logical_and(0 <= sel, sel < nparams)):
+                raise ValueError('The integer indices for selecting the parameters must be greater '
+                                 'than or equal to 0 and less than the number of parameters.')
             bool_sel = np.zeros(nparams, dtype=bool)
             bool_sel[sel] = True
             sel = bool_sel
-        elif sel.dtype != bool:
-            raise TypeError('The provided selection must have dtype of bool or int.')
-        # check number of indices
-        if sel.size != nparams:
-            raise TypeError('The provided selection must have the same number of indices as '
-                            'there are parameters in the provided container.')
+        elif sel.size != nparams:
+            raise ValueError('The provided boolean selection must have the same number of entries '
+                             'as there are parameters in the provided container.')
         # convert to integer indicing
         self._masks_container_params[container] = np.where(sel)[0]
 
