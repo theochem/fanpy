@@ -194,14 +194,14 @@ class ParamMask(abc.ABC):
         if len(params.shape) != 1:
             raise TypeError('Given parameter must be one-dimensional.')
 
-        num_sel = sum(len(sel) for sel in self._masks_container_params.values())
+        num_sel = sum(sel.size for sel in self._masks_container_params.values())
         if num_sel != params.size:
             raise ValueError('Number of given parameters does not match up with the selection.')
 
-        for container, sel in self._masks_container_params:
+        for container, sel in self._masks_container_params.items():
             new_params = container.params.flatten()
             new_params[sel] = params[self._masks_objective_params[container]]
-            container.assign_params[new_params]
+            container.assign_params(new_params)
             if isinstance(container, BaseWavefunction):
                 container.clear_cache()
 
