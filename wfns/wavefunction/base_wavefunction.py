@@ -52,6 +52,9 @@ class BaseWavefunction(ParamContainer):
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
+        # create cache
+        self._cache_fns = {}
+
     @property
     def nspatial(self):
         """Return the number of spatial orbitals.
@@ -308,10 +311,6 @@ class BaseWavefunction(ParamContainer):
 
             """
             raise NotImplementedError
-
-        # create cache
-        if not hasattr(self, '_cache_fns'):
-            self._cache_fns = {}
 
         # store the cached function
         self._cache_fns['overlap'] = _olp

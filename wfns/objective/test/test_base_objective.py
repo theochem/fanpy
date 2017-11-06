@@ -137,3 +137,56 @@ def test_baseobjective_init():
     assert test.tmpfile == 'tmpfile.npy'
     assert np.allclose(test.param_selection.all_params, wfn.params)
     assert np.allclose(test.param_selection.active_params, wfn.params)
+
+
+def test_baseobjective_assign_param_selection():
+    """Test BaseObjective.assign_param_selection."""
+    wfn = CIWavefunction(2, 4)
+    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham)
+
+    test.assign_param_selection(None)
+    assert len(test.param_selection._masks_container_params) == 1
+    container, sel = test.param_selection._masks_container_params.popitem()
+    assert container == wfn
+    assert np.allclose(sel, np.arange(wfn.nparams))
+
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    test.assign_param_selection([(param1, False), (param2, np.array(0)),
+                                 (param3, np.array([True, False, False, True]))])
+    assert len(test.param_selection._masks_container_params) == 3
+    container, sel = test.param_selection._masks_container_params.popitem()
+    assert container == param3
+    assert np.allclose(sel, np.array([0, 3]))
+    container, sel = test.param_selection._masks_container_params.popitem()
+    assert container == param2
+    assert np.allclose(sel, np.array([0]))
+    container, sel = test.param_selection._masks_container_params.popitem()
+    assert container == param1
+    assert np.allclose(sel, np.array([]))
+
+
+def test_baseobjective_params():
+    """Test BaseObjective.params."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5]))])
+    assert np.allclose(test.params, wfn.params[np.array([0, 3, 5])])
+
+
+def test_baseobjective_assign_params():
+    """Test BaseObjective.assign_params."""
+    wfn = CIWavefunction(2, 4)
+    params = np.random.rand(wfn.nparams)
+    wfn.assign_params(params)
+    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    test = TestBaseObjective(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5]))])
+    test.assign_params(np.array([99, 98, 97]))
+    params[np.array([0, 3, 5])] = [99, 98, 97]
+    assert np.allclose(params, wfn.params)
