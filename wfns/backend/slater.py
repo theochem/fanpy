@@ -74,6 +74,7 @@ find_num_trans_swap(sd, pos_current, pos_future) : int
 
 """
 import gmpy2
+import numpy as np
 from wfns.wrapper.docstring import docstring
 
 
@@ -110,7 +111,7 @@ def is_sd_compatible(sd):
     False if it is not the right type.
 
     """
-    return is_internal_sd(sd) or isinstance(sd, int)
+    return is_internal_sd(sd) or isinstance(sd, (int, np.int64))
 
 
 @docstring(indent_level=1)
@@ -134,8 +135,8 @@ def internal_sd(identifier):
         If `identifier` not an integer or `gmpy2.mpz` object.
 
     """
-    if isinstance(identifier, int):
-        return gmpy2.mpz(identifier)
+    if isinstance(identifier, (int, np.int64)):
+        return gmpy2.mpz(int(identifier))
     elif is_internal_sd(identifier):
         return identifier
     else:

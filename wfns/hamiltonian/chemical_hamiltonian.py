@@ -110,6 +110,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
             raise ValueError('Integral can be derivatized with respect to at most one out of the '
                              'wavefunction and Hamiltonian parameters.')
 
+        sd = slater.internal_sd(sd)
         occ_indices = slater.occ_indices(sd)
         vir_indices = slater.vir_indices(sd, self.nspin)
 
@@ -190,6 +191,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
         coulomb = 0.0
         exchange = 0.0
 
+        sd1 = slater.internal_sd(sd1)
+        sd2 = slater.internal_sd(sd2)
         shared_indices = slater.shared_orbs(sd1, sd2)
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons

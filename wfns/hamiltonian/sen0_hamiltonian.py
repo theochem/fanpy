@@ -67,6 +67,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
                              'wavefunction and Hamiltonian parameters.')
 
         nspatial = self.nspin // 2
+        sd = slater.internal_sd(sd)
         sd_alpha, sd_beta = slater.split_spin(sd, nspatial)
         occ_spatial_indices = slater.occ_indices(sd_alpha)
         vir_spatial_indices = slater.vir_indices(sd_alpha, nspatial)
@@ -112,6 +113,8 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         """
         nspatial = self.nspin // 2
+        sd1 = slater.internal_sd(sd1)
+        sd2 = slater.internal_sd(sd2)
         sd1_alpha, sd1_beta = slater.split_spin(sd1, nspatial)
         sd2_alpha, sd2_beta = slater.split_spin(sd2, nspatial)
 
