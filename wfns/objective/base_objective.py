@@ -337,10 +337,10 @@ class BaseObjective(abc.ABC):
             Parameters of the objective.
 
         """
-        return self.param_selection.active_params()
+        return self.param_selection.active_params
 
     def save_params(self):
-        """Save all of the parameters in the `param_selection` in the temporary file.
+        """Save all of the parameters in the `param_selection` to the temporary file.
 
         All of the parameters are saved, even if it was frozen in the objective.
 
