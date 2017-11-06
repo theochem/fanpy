@@ -52,7 +52,7 @@ class ParamContainer(abc.ABC):
 
         """
         if isinstance(params, (int, float, complex, np.float64, np.complex128)):
-            params = np.array(params)
+            params = np.array([params])
 
         if not isinstance(params, np.ndarray):
             raise TypeError('Parameters must be given as a numpy array.')

@@ -11,15 +11,15 @@ def test_assign_param():
     test = TestClass()
     # int
     test.assign_params(1)
-    assert np.array_equal(test.params, np.array(1))
+    assert np.array_equal(test.params, np.array([1]))
     assert test.params.dtype == int
     # float
     test.assign_params(1.0)
-    assert np.array_equal(test.params, np.array(1.0))
+    assert np.array_equal(test.params, np.array([1.0]))
     assert test.params.dtype == float
     # complex
     test.assign_params(1.0j)
-    assert np.array_equal(test.params, np.array(1.0j))
+    assert np.array_equal(test.params, np.array([1.0j]))
     assert test.params.dtype == complex
     # numpy array of int
     test.assign_params(np.array([1, 2]))
