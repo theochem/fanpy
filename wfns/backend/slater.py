@@ -844,9 +844,9 @@ def find_num_trans_swap(sd, pos_current, pos_future):
     sd : {int, gmpy2.mpz}
         Integer that describes the occupation of a Slater determinant as a bitstring.
     pos_current : int
-        Position of the orbital that needs to be moved.
+        Index of the orbital that needs to be moved.
     pos_future : int
-        Position to which the orbital is moved.
+        Index to which the orbital is moved.
 
     Returns
     -------
@@ -859,7 +859,6 @@ def find_num_trans_swap(sd, pos_current, pos_future):
         If Slater determinant is None.
         If position is not a positive integer.
         If current orbital position is not occupied.
-        If future orbital position is occupied.
 
     """
     if sd is None:
@@ -870,18 +869,13 @@ def find_num_trans_swap(sd, pos_current, pos_future):
         raise ValueError('The future orbital position must be a positive integer.')
     if not occ(sd, pos_current):
         raise ValueError('Given orbital is not occupied in the given Slater determinant.')
-    if occ(sd, pos_future):
-        raise ValueError('Given future orbital is occupied in the given Slater determinant.')
 
-    if pos_current > pos_future:
-        pos_current, pos_future = pos_future, pos_current
-
-    output = 0
-    pos_last = pos_current
-    while True:
-        pos_last = gmpy2.bit_scan1(sd, pos_last + 1)
-        if pos_last is None or pos_last >= pos_future:
-            break
-        else:
-            output += 1
-    return output
+    sd = gmpy2.mpz(sd)
+    if pos_current < pos_future:
+        # remove everything before pos_current (including pos_current)
+        # remove everything after pos_future (excluding pos_future)
+        return gmpy2.popcount(sd[pos_current+1:pos_future+1])
+    else:
+        # remove everything after pos_current (including pos_current)
+        # remove everything before pos_future (excluding pos_future)
+        return gmpy2.popcount(sd[pos_future:pos_current])
