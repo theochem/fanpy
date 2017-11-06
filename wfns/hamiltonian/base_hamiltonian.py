@@ -213,84 +213,6 @@ class BaseHamiltonian(ParamContainer):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
-
-        .. math::
-
-            \braket{\Phi | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
-
-        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
-        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
-        the :math:`\Phi` and its first and second order excitations for a chemical Hamiltonian.
-
-        Parameters
-        ----------
-        wfn : Wavefunction
-            Wavefunction against which the Hamiltonian is integrated.
-            Needs to have the following in `__dict__`: `get_overlap`.
-        sd : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        deriv : {int, None}
-            Index of the parameter against which the expectation value is derivatized.
-            Default is no derivatization.
-
-        Returns
-        -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
-
-        """
-        pass
-
-    @abc.abstractmethod
-    def integrate_sd_sd(self, sd1, sd2, sign=None):
-        r"""Integrate the Hamiltonian with against two Slater determinants.
-
-        .. math::
-
-            H_{ij} = \braket{\Phi_i | \hat{H} | \Phi_j}
-
-        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
-        Slater determinants.
-
-        Parameters
-        ----------
-        sd1 : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        sd2 : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        sign : {1, -1, None}
-            Sign change resulting from cancelling out the orbitals shared between the two Slater
-            determinants.
-            Computes the sign if none is provided.
-            Make sure that the provided sign is correct. It will not be checked to see if its
-            correct.
-
-        Returns
-        -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
-
-        Raises
-        ------
-        ValueError
-            If `sign` is not `1`, `-1` or `None`.
-
-        """
-        pass
-
     def orb_rotate_jacobi(self, jacobi_indices, theta):
         """Rotate orbitals using Jacobi matrix.
 
@@ -320,3 +242,87 @@ class BaseHamiltonian(ParamContainer):
 
         self.one_int.rotate_matrix(matrix)
         self.two_int.rotate_matrix(matrix)
+
+    @abc.abstractmethod
+    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
+        r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
+
+        .. math::
+
+            \braket{\Phi | \hat{H} | \Psi}
+            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
+
+        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
+        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
+        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
+        the :math:`\Phi` and its first and second order excitations for a chemical Hamiltonian.
+
+        Parameters
+        ----------
+        wfn : Wavefunction
+            Wavefunction against which the Hamiltonian is integrated.
+            Needs to have the following in `__dict__`: `get_overlap`.
+        sd : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        wfn_deriv : {int, None}
+            Index of the wavefunction parameter against which the integral is derivatized.
+            Default is no derivatization.
+        ham_deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+            Default is no derivatization.
+
+        Returns
+        -------
+        one_electron : float
+            One-electron energy.
+        coulomb : float
+            Coulomb energy.
+        exchange : float
+            Exchange energy.
+
+        """
+        pass
+
+    @abc.abstractmethod
+    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+        r"""Integrate the Hamiltonian with against two Slater determinants.
+
+        .. math::
+
+            H_{ij} = \braket{\Phi_i | \hat{H} | \Phi_j}
+
+        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
+        Slater determinants.
+
+        Parameters
+        ----------
+        sd1 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        sd2 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        sign : {1, -1, None}
+            Sign change resulting from cancelling out the orbitals shared between the two Slater
+            determinants.
+            Computes the sign if none is provided.
+            Make sure that the provided sign is correct. It will not be checked to see if its
+            correct.
+        deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+            Default is no derivatization.
+
+        Returns
+        -------
+        one_electron : float
+            One-electron energy.
+        coulomb : float
+            Coulomb energy.
+        exchange : float
+            Exchange energy.
+
+        Raises
+        ------
+        ValueError
+            If `sign` is not `1`, `-1` or `None`.
+
+        """
+        pass

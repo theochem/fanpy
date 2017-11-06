@@ -18,7 +18,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
     integral in Physicists' notation.
 
     """
-    def _update_integrals(self, wfn, sd, sd_m, one_electron, coulomb, exchange, deriv):
+    def _update_integrals(self, wfn, sd, sd_m, one_electron, coulomb, exchange, wfn_deriv,
+                          ham_deriv):
         """Update integrals for the given Slater determinant.
 
         Add the term :math:`f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}` to the provided
@@ -26,6 +27,10 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         Parameters
         ----------
+        wfn : BaseWavefunction
+            Wavefunction.
+        sd : int
+            Slater determinant.
         sd_m : int
             Slater determinant.
         one_electron : float
@@ -34,6 +39,12 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Coulomb energy.
         exchange : float
             Exchange energy.
+        wfn_deriv : {int, None}
+            Index of the wavefunction parameter against which the integral is derivatized.
+            `None` results in no derivatization.
+        ham_deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+            `None` results in no derivatization.
 
         Returns
         -------
@@ -45,15 +56,15 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Updated exchange energy.
 
         """
-        coeff = wfn.get_overlap(sd_m, deriv=deriv)
-        sd_energy = self.integrate_sd_sd(sd, sd_m)
+        coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
+        sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
         one_electron += coeff * sd_energy[0]
         coulomb += coeff * sd_energy[1]
         exchange += coeff * sd_energy[2]
         return one_electron, coulomb, exchange
 
     # FIXME: need to speed up
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
+    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::
@@ -73,8 +84,11 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Needs to have the following in `__dict__`: `get_overlap`.
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : {int, None}
-            Index of the parameter against which the expectation value is derivatized.
+        wfn_deriv : {int, None}
+            Index of the wavefunction parameter against which the integral is derivatized.
+            Default is no derivatization.
+        ham_deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
 
         Returns
@@ -86,7 +100,16 @@ class ChemicalHamiltonian(BaseHamiltonian):
         exchange : float
             Exchange energy.
 
+        Raises
+        ------
+        ValueError
+            If integral is derivatized to both wavefunction and Hamiltonian parameters.
+
         """
+        if wfn_deriv is not None and ham_deriv is not None:
+            raise ValueError('Integral can be derivatized with respect to at most one out of the '
+                             'wavefunction and Hamiltonian parameters.')
+
         occ_indices = slater.occ_indices(sd)
         vir_indices = slater.vir_indices(sd, self.nspin)
 
@@ -95,7 +118,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
         exchange = 0.0
 
         def update_integrals(sd_m):
-            return self._update_integrals(wfn, sd, sd_m, one_electron, coulomb, exchange, deriv)
+            return self._update_integrals(wfn, sd, sd_m,
+                                          one_electron, coulomb, exchange, wfn_deriv, ham_deriv)
 
         one_electron, coulomb, exchange = update_integrals(sd)
         for counter_i, i in enumerate(occ_indices):
@@ -110,7 +134,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         return one_electron, coulomb, exchange
 
     # FIXME: need to speed up
-    def integrate_sd_sd(self, sd1, sd2, sign=None):
+    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -138,6 +162,9 @@ class ChemicalHamiltonian(BaseHamiltonian):
             Computes the sign if none is provided.
             Make sure that the provided sign is correct. It will not be checked to see if its
             correct.
+        deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+            Default is no derivatization.
 
         Returns
         -------
@@ -152,8 +179,13 @@ class ChemicalHamiltonian(BaseHamiltonian):
         ------
         ValueError
             If `sign` is not `1`, `-1` or `None`.
+        NotImplementedError
+            If `deriv` is not `None`.
 
         """
+        if deriv is not None:
+            raise NotImplementedError('Current Hamiltonian does not have any parameters.')
+
         one_electron = 0.0
         coulomb = 0.0
         exchange = 0.0
