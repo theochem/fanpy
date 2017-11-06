@@ -12,12 +12,46 @@ class ChemicalHamiltonian(BaseHamiltonian):
     .. math::
 
         \hat{H} = \sum_{ij} h_{ij} a^\dagger_i a_j
-        + \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_k a_l
+        + \sum_{i<j,k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
 
     where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron
     integral in Physicists' notation.
 
     """
+    def _update_integrals(self, wfn, sd, sd_m, one_electron, coulomb, exchange, deriv):
+        """Update integrals for the given Slater determinant.
+
+        Add the term :math:`f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}` to the provided
+        integrals.
+
+        Parameters
+        ----------
+        sd_m : int
+            Slater determinant.
+        one_electron : float
+            One-electron energy.
+        coulomb : float
+            Coulomb energy.
+        exchange : float
+            Exchange energy.
+
+        Returns
+        -------
+        one_electron : float
+            Updated one-electron energy.
+        coulomb : float
+            Updated coulomb energy.
+        exchange : float
+            Updated exchange energy.
+
+        """
+        coeff = wfn.get_overlap(sd_m, deriv=deriv)
+        sd_energy = self.integrate_sd_sd(sd, sd_m)
+        one_electron += coeff * sd_energy[0]
+        coulomb += coeff * sd_energy[1]
+        exchange += coeff * sd_energy[2]
+        return one_electron, coulomb, exchange
+
     # FIXME: need to speed up
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
@@ -60,22 +94,18 @@ class ChemicalHamiltonian(BaseHamiltonian):
         coulomb = 0.0
         exchange = 0.0
 
-        sd_energy = self.integrate_sd_sd(sd, sd)
-        one_electron += sd_energy[0]
-        coulomb += sd_energy[1]
-        exchange += sd_energy[2]
+        def update_integrals(sd_m):
+            return self._update_integrals(wfn, sd, sd_m, one_electron, coulomb, exchange, deriv)
+
+        one_electron, coulomb, exchange = update_integrals(sd)
         for counter_i, i in enumerate(occ_indices):
             for counter_a, a in enumerate(vir_indices):
-                sd_energy = self.integrate_sd_sd(sd, slater.excite(sd, i, a))
-                one_electron += sd_energy[0]
-                coulomb += sd_energy[1]
-                exchange += sd_energy[2]
+                sd_m = slater.excite(sd, i, a)
+                one_electron, coulomb, exchange = update_integrals(sd_m)
                 for j in occ_indices[counter_i+1:]:
-                    for b in enumerate(vir_indices[counter_a+1:]):
-                        sd_energy = self.integrate_sd_sd(sd, slater.excite(sd, i, j, b, a))
-                        one_electron += sd_energy[0]
-                        coulomb += sd_energy[1]
-                        exchange += sd_energy[2]
+                    for b in vir_indices[counter_a+1:]:
+                        sd_m = slater.excite(sd, i, j, b, a)
+                        one_electron, coulomb, exchange = update_integrals(sd_m)
 
         return one_electron, coulomb, exchange
 
@@ -85,10 +115,16 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         .. math::
 
-            H_{ij} = \braket{\Phi_i | \hat{H} | \Phi_j}
+            H_{\mathbf{m}\mathbf{n}} &= \braket{\mathbf{m} | \hat{H} | \mathbf{n}}\\
+            &= \sum_{ij} h_{ij} \braket{\mathbf{m}| a^\dagger_i a_j | \mathbf{n}}
+            + \sum_{i<j, k<l} g_{ijkl}
+            \braket{\mathbf{m}| a^\dagger_i a^\dagger_j a_l a_k | \mathbf{n}}\\
 
-        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
-        Slater determinants.
+        In the first summation involving :math:`h_{ij}`, only the terms where :math:`\mathbf{m}` and
+        :math:`\mathbf{n}` are different by at most single excitation will contribute to the
+        integral. In the second summation involving :math:`g_{ijkl}`, only the terms where
+        :math:`\mathbf{m}` and :math:`\mathbf{n}` are different by at most double excitation will
+        contribute to the integral.
 
         Parameters
         ----------
