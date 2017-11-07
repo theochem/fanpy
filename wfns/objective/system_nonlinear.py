@@ -32,7 +32,7 @@ class SystemEquations(BaseObjective):
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
-    refstate : {tuple/list of int, CIWavefunction, None}
+    refstate : {tuple/list of int, CIWavefunction}
         State with respect to which the energy and the norm are computed.
         If a list/tuple of Slater determinants are given, then the reference state is the given
         wavefunction truncated by the provided Slater determinants.
@@ -242,16 +242,16 @@ class SystemEquations(BaseObjective):
         # Assign params to wavefunction, hamiltonian, and other involved objects.
         self.assign_params(params)
         # Save params
-        self.save_params(params)
+        self.save_params()
 
         # vectorize functions
         get_overlap = np.vectorize(self.wrapped_get_overlap)
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
         # define reference
-        if isinstance(self.refstate[0], CIWavefunction):
-            ref_sds = self.refstate[0].sd_vec
-            ref_coeffs = self.refstate[0].params
+        if isinstance(self.refstate, CIWavefunction):
+            ref_sds = self.refstate.sd_vec
+            ref_coeffs = self.refstate.params
         else:
             ref_sds = self.refstate
             ref_coeffs = get_overlap(ref_sds)
@@ -267,9 +267,7 @@ class SystemEquations(BaseObjective):
         # objective
         obj = np.empty(self.nproj + 1)
         # <SD|H|Psi> - E<SD|Psi> == 0
-        # FIXME: does not support pspace that is linear combination of sd's
-        obj[:self.nproj] = integrate_wfn_sd(self.pspace)
-        obj[:self.nproj] -= energy * get_overlap(self.pspace)
+        obj[:self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
         # Add constraints
         obj[self.nproj] = norm - 1
         # weigh equations
@@ -322,9 +320,9 @@ class SystemEquations(BaseObjective):
         derivs = derivs[np.newaxis, :]
 
         # define reference
-        if isinstance(self.refstate[0], CIWavefunction):
-            ref_sds = self.refstate[0].sd_vec
-            ref_coeffs = self.refstate[0].params
+        if isinstance(self.refstate, CIWavefunction):
+            ref_sds = self.refstate.sd_vec
+            ref_coeffs = self.refstate.params
             d_ref_coeffs = np.zeros((len(ref_sds), derivs.size))
         else:
             ref_sds = self.refstate

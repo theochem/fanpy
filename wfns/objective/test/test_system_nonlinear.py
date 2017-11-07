@@ -112,3 +112,46 @@ def test_system_assign_eqn_weights():
     assert_raises(TypeError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
 
     assert_raises(ValueError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0], dtype=float))
+
+
+def test_system_objective():
+    """Test SystemEquation.objective."""
+    wfn = CIWavefunction(2, 4)
+    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    weights = np.random.rand(7)
+    test = SystemEquations(wfn, ham, eqn_weights=weights)
+    # check assignment
+    test.objective(np.arange(1, 7, dtype=float))
+    np.allclose(wfn.params, np.arange(1, 7))
+
+    # <SD | H | Psi> - E <SD | Psi>
+    # computed energy
+    objective = test.objective(np.random.rand(6))
+    for eqn, sd, weight in zip(objective[:-1],
+                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+        assert np.allclose(eqn,
+                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                     test.get_energy_one_proj(0b0101) * wfn.get_overlap(sd)))
+    assert np.allclose(objective[-1], weights[-1] * (wfn.get_overlap(0b0101)**2 - 1))
+
+    # variable energy
+    test = SystemEquations(wfn, ham, energy=1.0, energy_type='variable', eqn_weights=weights)
+    guess = np.random.rand(7)
+    objective = test.objective(guess)
+    for eqn, sd, weight in zip(objective[:-1],
+                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+        assert np.allclose(eqn,
+                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                     guess[-1] * wfn.get_overlap(sd)))
+    assert np.allclose(objective[-1], weights[-1] * (wfn.get_overlap(0b0101)**2 - 1))
+
+    # fixed energy
+    test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights)
+    objective = test.objective(np.random.rand(6))
+    for eqn, sd, weight in zip(objective[:-1],
+                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+        assert np.allclose(eqn,
+                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                     1.0 * wfn.get_overlap(sd)))
+    assert np.allclose(objective[-1], weights[-1] * (wfn.get_overlap(0b0101)**2 - 1))
