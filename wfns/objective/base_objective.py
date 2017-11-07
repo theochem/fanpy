@@ -523,7 +523,7 @@ class BaseObjective(abc.ABC):
             the truncated form (according to the given Slater determinants) of the provided
             wavefunction.
         deriv : {int, None}
-            Index with respect to which the energy is derivatized.
+            Index of the selected parameters with respect to which the energy is derivatized.
 
         Returns
         -------
@@ -556,7 +556,7 @@ class BaseObjective(abc.ABC):
                     d_ref_coeffs[ref_deriv] = 1
         elif slater.is_sd_compatible(ref) or (isinstance(ref, (list, tuple)) and
                                               all(slater.is_sd_compatible(sd) for sd in ref)):
-            if not isinstance(ref, (list, tuple)):
+            if slater.is_sd_compatible(ref):
                 ref = [ref]
             ref_sds = ref
             ref_coeffs = get_overlap(ref)
@@ -645,11 +645,22 @@ class BaseObjective(abc.ABC):
             pspace_norm = pspace_l
 
         for pspace in [pspace_l, pspace_r, pspace_norm]:
-            if not (isinstance(pspace, (list, tuple)) and
-                    all(slater.is_sd_compatible(sd) for sd in pspace)):
-                raise TypeError('Projection space must be given as a list/tuple of ints. See '
-                                '`backend.slater` for compatible representations of the Slater '
-                                'determinants.')
+            if not (slater.is_sd_compatible(pspace) or
+                    (isinstance(pspace, (list, tuple)) and
+                     all(slater.is_sd_compatible(sd) for sd in pspace))):
+                raise TypeError('Projection space must be given as a Slater determinant or a '
+                                'list/tuple of Slater determinants. See `backend.slater` for '
+                                'compatible representations of the Slater determinants.')
+
+        if slater.is_sd_compatible(pspace_l):
+            pspace_l = [pspace_l]
+        if slater.is_sd_compatible(pspace_r):
+            pspace_r = [pspace_r]
+        if slater.is_sd_compatible(pspace_norm):
+            pspace_norm = [pspace_norm]
+        pspace_l = np.array(pspace_l)
+        pspace_r = np.array(pspace_r)
+        pspace_norm = np.array(pspace_norm)
 
         # vectorize functions
         get_overlap = np.vectorize(self.wrapped_get_overlap)
@@ -674,7 +685,9 @@ class BaseObjective(abc.ABC):
         else:
             d_norm = 2 * np.sum(overlaps_norm * get_overlap(pspace_norm, deriv))
             d_energy = np.sum(get_overlap(pspace_l, deriv) * ci_matrix * overlaps_r) / norm
-            d_energy += np.sum(overlaps_l*get_overlap(pspace_l, pspace_r, deriv)*overlaps_r) / norm
+            d_energy += np.sum(overlaps_l
+                               * integrate_sd_sd(pspace_l, pspace_r, deriv)
+                               * overlaps_r) / norm
             d_energy += np.sum(overlaps_l * ci_matrix * get_overlap(pspace_r, deriv)) / norm
             d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm**2
             return d_energy
