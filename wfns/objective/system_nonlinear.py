@@ -32,7 +32,7 @@ class SystemEquations(BaseObjective):
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
-    ref_state : {tuple/list of int, CIWavefunction, None}
+    refstate : {tuple/list of int, CIWavefunction, None}
         State with respect to which the energy and the norm are computed.
         If a list/tuple of Slater determinants are given, then the reference state is the given
         wavefunction truncated by the provided Slater determinants.
@@ -52,8 +52,8 @@ class SystemEquations(BaseObjective):
         the reference.
 
     """
-    def __init__(self, wfn, ham, pspace=None, ref_state=None, eqn_weights=None,
-                 energy_type='compute', energy=None):
+    def __init__(self, wfn, ham, tmpfile='', param_selection=None,
+                 pspace=None, refstate=None, eqn_weights=None, energy_type='compute', energy=None):
         """
 
         Parameters
@@ -61,7 +61,7 @@ class SystemEquations(BaseObjective):
         pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
             States onto which the Schrodinger equation is projected.
             By default, the largest space is used.
-        ref_state : {tuple/list of int, CIWavefunction, None}
+        refstate : {tuple/list of int, CIWavefunction, None}
             State with respect to which the energy and the norm are computed.
             If a list/tuple of Slater determinants are given, then the reference state is the given
             wavefunction truncated by the provided Slater determinants.
@@ -91,13 +91,13 @@ class SystemEquations(BaseObjective):
             If `energy_type` is not one of 'fixed', 'variable', or 'compute'.
 
         """
-        super().__init__(wfn, ham)
+        super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
         self.assign_pspace(pspace)
-        self.assign_ref_state(ref_state)
+        self.assign_refstate(refstate)
         self.assign_eqn_weights(eqn_weights)
 
         if energy is None:
-            energy = self.get_energy_one_proj(self.ref_state)
+            energy = self.get_energy_one_proj(self.refstate)
         elif not isinstance(energy, (float, complex)):
             raise TypeError('Energy must be given as a float or complex.')
 
@@ -107,9 +107,20 @@ class SystemEquations(BaseObjective):
         self.energy = ParamContainer(energy)
         self.energy_type = energy_type
         if energy_type in ['fixed', 'variable']:
-            self.param_selection.load_mask_container_params((self.energy,
-                                                             energy_type == 'variable'))
-            self.load_masks_objective_params()
+            self.param_selection.load_mask_container_params(self.energy, energy_type == 'variable')
+            self.param_selection.load_masks_objective_params()
+
+    @property
+    def nproj(self):
+        """Return the number of projected states.
+
+        Returns
+        -------
+        nproj : int
+            Number of equations.
+
+        """
+        return len(self.pspace)
 
     def assign_pspace(self, pspace=None):
         """Set the projection space.
@@ -139,32 +150,31 @@ class SystemEquations(BaseObjective):
                             'See `backend.slater` for compatible Slater determinant formats.')
         self.pspace = pspace
 
-    def assign_ref_state(self, ref_state=None):
+    def assign_refstate(self, refstate=None):
         """Set the reference state.
 
         Parameters
         ----------
-        ref_state : {tuple/list of int, CIWavefunction, None}
+        refstate : {tuple/list of int, CIWavefunction, None}
             State with respect to which the energy and the norm are computed.
             If a list/tuple of Slater determinants are given, then the reference state is the given
             wavefunction truncated by the provided Slater determinants.
             Default is ground state HF.
 
         """
-        if ref_state is None:
-            ref_state = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
-        elif slater.is_sd_compatible(ref_state):
-            ref_state = (ref_state, )
-        elif (isinstance(ref_state, (list, tuple)) and
-              all(slater.is_sd_compatible(sd) for sd in ref_state)):
-            ref_state = tuple(slater.internal_sd(sd) for sd in ref_state)
-        elif isinstance(ref_state, CIWavefunction):
-            ref_state = ref_state
+        if refstate is None:
+            self.refstate = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
+        elif slater.is_sd_compatible(refstate):
+            self.refstate = (refstate, )
+        elif (isinstance(refstate, (list, tuple)) and
+              all(slater.is_sd_compatible(sd) for sd in refstate)):
+            self.refstate = tuple(slater.internal_sd(sd) for sd in refstate)
+        elif isinstance(refstate, CIWavefunction):
+            self.refstate = refstate
         else:
-            raise TypeError('Reference state must be given as a Slater determinant, a CI '
-                            'Wavefunction, or a list/tuple of Slater determinants. See '
-                            '`backend.slater` for compatible representations of the Slater '
-                            'determinants.')
+            raise TypeError('Reference state must be given as a Slater determinant, a list/tuple of'
+                            ' Slater determinants, or a CIWavefunction. See `backend.slater` for '
+                            'compatible representations of the Slater determinants.')
 
     def assign_eqn_weights(self, eqn_weights=None):
         """Set the weights of each equation.
@@ -197,18 +207,6 @@ class SystemEquations(BaseObjective):
             raise ValueError('Weights of the equations must be given as a one-dimensional array of '
                              'shape, {0}.'.format((self.nproj+1, )))
         self.eqn_weights = eqn_weights
-
-    @property
-    def nproj(self):
-        """Return the number of projected states.
-
-        Returns
-        -------
-        nproj : int
-            Number of equations.
-
-        """
-        return len(self.pspace)
 
     def objective(self, params):
         r"""System of equations that corresponds to the Projected Schrodinger equation.
@@ -251,11 +249,11 @@ class SystemEquations(BaseObjective):
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
         # define reference
-        if isinstance(self.ref_state[0], CIWavefunction):
-            ref_sds = self.ref_state[0].sd_vec
-            ref_coeffs = self.ref_state[0].params
+        if isinstance(self.refstate[0], CIWavefunction):
+            ref_sds = self.refstate[0].sd_vec
+            ref_coeffs = self.refstate[0].params
         else:
-            ref_sds = self.ref_state
+            ref_sds = self.refstate
             ref_coeffs = get_overlap(ref_sds)
 
         # reference values
@@ -324,12 +322,12 @@ class SystemEquations(BaseObjective):
         derivs = derivs[np.newaxis, :]
 
         # define reference
-        if isinstance(self.ref_state[0], CIWavefunction):
-            ref_sds = self.ref_state[0].sd_vec
-            ref_coeffs = self.ref_state[0].params
+        if isinstance(self.refstate[0], CIWavefunction):
+            ref_sds = self.refstate[0].sd_vec
+            ref_coeffs = self.refstate[0].params
             d_ref_coeffs = np.zeros((len(ref_sds), derivs.size))
         else:
-            ref_sds = self.ref_state
+            ref_sds = self.refstate
             ref_coeffs = get_overlap(ref_sds)
             d_ref_coeffs = get_overlap(ref_sds[:, np.newaxis], derivs)
 
