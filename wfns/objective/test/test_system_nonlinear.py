@@ -123,125 +123,127 @@ def test_system_objective():
     ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
                               np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
-    test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=[0b0101, 0b1010])
     # check assignment
+    test = SystemEquations(wfn, ham, eqn_weights=weights)
     test.objective(np.arange(1, 7, dtype=float))
     np.allclose(wfn.params, np.arange(1, 7))
 
     # <SD1 | H | Psi> - E <SD | Psi>
-    # computed energy
-    objective = test.objective(np.random.rand(6))
-    for eqn, sd, weight in zip(objective[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        assert np.allclose(eqn,
-                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
-                                     test.get_energy_one_proj([0b0101, 0b1010])
-                                     * wfn.get_overlap(sd)))
-    assert np.allclose(objective[-1],
-                       weights[-1] * (wfn.get_overlap(0b0101)**2 + wfn.get_overlap(0b1010)**2 - 1))
+    ciref = CIWavefunction(2, 4)
+    ciref.assign_params(np.random.rand(6))
+    for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
+        guess = np.random.rand(7)
+        # computed energy
+        test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=refwfn)
+        wfn.assign_params(guess[:6])
+        if refwfn == 0b0101:
+            norm_answer = weights[-1] * (wfn.get_overlap(0b0101)**2 - 1)
+        elif refwfn == [0b0101, 0b1010]:
+            norm_answer = weights[-1] * (wfn.get_overlap(0b0101)**2 +
+                                         wfn.get_overlap(0b1010)**2 - 1)
+        elif refwfn == ciref:
+            norm_answer = weights[-1] * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd)
+                                             for sd in ciref.sd_vec) - 1)
 
-    # variable energy
-    test = SystemEquations(wfn, ham, energy=1.0, energy_type='variable', eqn_weights=weights,
-                           refstate=[0b0101, 0b1010])
-    guess = np.random.rand(7)
-    objective = test.objective(guess)
-    for eqn, sd, weight in zip(objective[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        assert np.allclose(eqn,
-                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
-                                     guess[-1] * wfn.get_overlap(sd)))
-    assert np.allclose(objective[-1],
-                       weights[-1] * (wfn.get_overlap(0b0101)**2 + wfn.get_overlap(0b1010)**2 - 1))
+        objective = test.objective(guess[:6])
+        for eqn, sd, weight in zip(objective[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            assert np.allclose(eqn,
+                               weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                         test.get_energy_one_proj(refwfn)
+                                         * wfn.get_overlap(sd)))
+        assert np.allclose(objective[-1], norm_answer)
 
-    # fixed energy
-    test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
-                           refstate=[0b0101, 0b1010])
-    objective = test.objective(np.random.rand(6))
-    for eqn, sd, weight in zip(objective[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        assert np.allclose(eqn,
-                           weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
-                                     1.0 * wfn.get_overlap(sd)))
-    assert np.allclose(objective[-1],
-                       weights[-1] * (wfn.get_overlap(0b0101)**2 + wfn.get_overlap(0b1010)**2 - 1))
+        # variable energy
+        test = SystemEquations(wfn, ham, energy=1.0, energy_type='variable', eqn_weights=weights,
+                               refstate=refwfn)
+        objective = test.objective(guess)
+        for eqn, sd, weight in zip(objective[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            assert np.allclose(eqn,
+                               weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                         guess[-1] * wfn.get_overlap(sd)))
+        assert np.allclose(objective[-1], norm_answer)
+
+        # fixed energy
+        test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
+                               refstate=refwfn)
+        objective = test.objective(guess[:6])
+        for eqn, sd, weight in zip(objective[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            assert np.allclose(eqn,
+                               weight * (sum(ham.integrate_wfn_sd(wfn, sd)) -
+                                         1.0 * wfn.get_overlap(sd)))
+        assert np.allclose(objective[-1], norm_answer)
 
 
 def test_system_jacobian():
-    """Test SystemEquation.jacobian."""
+    """Test SystemEquation.jacobian with only wavefunction parameters active."""
     wfn = CIWavefunction(2, 4)
     ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
                               np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
-    test = SystemEquations(wfn, ham, eqn_weights=weights)
+
     # check assignment
+    test = SystemEquations(wfn, ham, eqn_weights=weights)
     test.jacobian(np.arange(1, 7, dtype=float))
     np.allclose(wfn.params, np.arange(1, 7))
 
     # df_1/dx_1 = d/dx_1 <SD_1 | H | Psi> - dE/dx_1 <SD_1 | Psi> - E d/dx_1 <SD_1 | Psi>
-    # computed energy
-    test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=[0b0101, 0b1010])
-    jacobian = test.jacobian(np.random.rand(6))
-    for eqn, sd, weight in zip(jacobian[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        for i in range(6):
-            assert np.allclose(eqn[i],
-                               weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
-                                         test.get_energy_one_proj([0b0101, 0b1010], deriv=i)
-                                         * wfn.get_overlap(sd) -
-                                         test.get_energy_one_proj([0b0101, 0b1010])
-                                         * wfn.get_overlap(sd, deriv=i)))
-    assert np.allclose(jacobian[-1],
-                       [weights[-1] * (2 * wfn.get_overlap(0b0101, deriv=i)
-                                       * wfn.get_overlap(0b0101) +
-                                       2 * wfn.get_overlap(0b1010, deriv=i)
-                                       * wfn.get_overlap(0b1010))
-                        for i in range(6)])
+    ciref = CIWavefunction(2, 4)
+    ciref.assign_params(np.random.rand(6))
+    for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
+        guess = np.random.rand(7)
+        # computed energy
+        test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=refwfn)
+        wfn.assign_params(guess[:6])
+        if refwfn == 0b0101:
+            norm_answer = [weights[-1] * (2 * wfn.get_overlap(0b0101) *
+                                          wfn.get_overlap(0b0101, deriv=i)) for i in range(6)]
+        elif refwfn == [0b0101, 0b1010]:
+            norm_answer = [weights[-1] * (2 * wfn.get_overlap(0b0101) *
+                                          wfn.get_overlap(0b0101, deriv=i) +
+                                          2 * wfn.get_overlap(0b1010) *
+                                          wfn.get_overlap(0b1010, deriv=i)) for i in range(6)]
+        elif refwfn == ciref:
+            norm_answer = [weights[-1] * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i)
+                                              for sd in ciref.sd_vec)) for i in range(6)]
 
-    # variable energy
-    test = SystemEquations(wfn, ham, energy=3.0, energy_type='variable', eqn_weights=weights,
-                           refstate=[0b0101, 0b1010])
-    guess = np.random.rand(7)
-    jacobian = test.jacobian(guess)
-    for eqn, sd, weight in zip(jacobian[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        for i in range(7):
-            assert np.allclose(eqn[i],
-                               weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
-                                         int(i == 6) * wfn.get_overlap(sd) -
-                                         guess[-1] * wfn.get_overlap(sd, deriv=i)))
-    assert np.allclose(jacobian[-1],
-                       [weights[-1] * (2 * wfn.get_overlap(0b0101, deriv=i)
-                                       * wfn.get_overlap(0b0101) +
-                                       2 * wfn.get_overlap(0b1010, deriv=i)
-                                       * wfn.get_overlap(0b1010))
-                        for i in range(6)] + [0.0])
+        jacobian = test.jacobian(guess[:6])
+        for eqn, sd, weight in zip(jacobian[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            # print(test.energy.params, test.get_energy_one_proj(refwfn))
+            for i in range(6):
+                assert np.allclose(eqn[i],
+                                   weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
+                                             test.get_energy_one_proj(refwfn, deriv=i)
+                                             * wfn.get_overlap(sd) -
+                                             test.get_energy_one_proj(refwfn)
+                                             * wfn.get_overlap(sd, deriv=i)))
+        assert np.allclose(jacobian[-1], norm_answer)
 
-    # fixed energy
-    test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
-                           refstate=[0b0101, 0b1010])
-    jacobian = test.jacobian(np.random.rand(6))
-    for eqn, sd, weight in zip(jacobian[:-1],
-                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-        for i in range(6):
-            assert np.allclose(eqn[i],
-                               weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
-                                         0.0 * wfn.get_overlap(sd) -
-                                         1 * wfn.get_overlap(sd, deriv=i)))
-    assert np.allclose(jacobian[-1],
-                       [weights[-1] * (2 * wfn.get_overlap(0b0101, deriv=i)
-                                       * wfn.get_overlap(0b0101) +
-                                       2 * wfn.get_overlap(0b1010, deriv=i)
-                                       * wfn.get_overlap(0b1010))
-                        for i in range(6)])
+        # variable energy
+        test = SystemEquations(wfn, ham, energy=3.0, energy_type='variable', eqn_weights=weights,
+                               refstate=refwfn)
+        jacobian = test.jacobian(guess)
+        for eqn, sd, weight in zip(jacobian[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            for i in range(7):
+                assert np.allclose(eqn[i],
+                                   weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
+                                             int(i == 6) * wfn.get_overlap(sd) -
+                                             guess[-1] * wfn.get_overlap(sd, deriv=i)))
+        assert np.allclose(jacobian[-1], norm_answer + [0.0])
 
-    # f_1 = <Phi_1 | H | Psi> - E <Phi_1 | Psi>
-    # df_1/dx_1 = d/dx_1 <Phi_1 | H | Psi> - dE/dx_1 <Phi_1 | Psi> - E d/dx_1 <Phi_1 | Psi>
-    #           = d/dx_1 (\sum_i c_{1i} <SD_{1i} | H | Psi>)
-    #             - dE/dx_1  (\sum_i c_{1i} <SD_{1i} | Psi>)
-    #             - E d/dx_1 (\sum_i c_{1i} <SD_{1i} | Psi>)
-    #           = \sum_i (dc_{1i}/dx_1 <SD_{1i} | H | Psi> + c_{1i} d/dx_1 <SD_{1i} | H | Psi>
-    #                     - dE/dx_1 c_{1i} <SD_{1i} | Psi>
-    #                     - E dc_{1i}/dx_1 <SD_{1i} | Psi> - E c_{1i} d/dx_1 <SD_{1i} | Psi>)
-    #           = \sum_i dc_{1i}/dx_1 (<SD_{1i} | H | Psi> - E <SD_{1i} | Psi>) +
-    #             \sum_i c_{1i} (d/dx_1 <SD_{1i} | H | Psi>
-    #                            - dE/dx_1 <SD_{1i} | Psi> - E d/dx_1 <SD_{1i} | Psi>)
+        # fixed energy
+        test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
+                               refstate=refwfn)
+        jacobian = test.jacobian(guess[:6])
+        for eqn, sd, weight in zip(jacobian[:-1],
+                                   [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+            for i in range(6):
+                assert np.allclose(eqn[i],
+                                   weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
+                                             0.0 * wfn.get_overlap(sd) -
+                                             1 * wfn.get_overlap(sd, deriv=i)))
+        assert np.allclose(jacobian[-1], norm_answer)

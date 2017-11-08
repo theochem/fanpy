@@ -325,12 +325,12 @@ class SystemEquations(BaseObjective):
         # define reference
         if isinstance(self.refstate, CIWavefunction):
             ref_sds = np.array(self.refstate.sd_vec)[:, np.newaxis]
-            ref_coeffs = self.refstate.params
+            ref_coeffs = self.refstate.params[:, np.newaxis]
             d_ref_coeffs = np.zeros((ref_sds.size, params.size))
             try:
                 objective_indices = self.param_selection._masks_objective_params[self.refstate]
                 container_indices = self.param_selection._masks_container_params[self.refstate]
-            except ValueError:
+            except KeyError:
                 pass
             else:
                 d_ref_coeffs[container_indices, objective_indices] = 1.0
