@@ -227,6 +227,9 @@ class SystemEquations(BaseObjective):
 
             E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
 
+        In general, :math:`\Phi_i` can be some linear combination of Slater determinants,
+        :math:`SD_j`.
+
         Parameters
         ----------
         params : np.ndarray(N,)
@@ -308,58 +311,69 @@ class SystemEquations(BaseObjective):
         # Assign params
         self.assign_params(params)
         # Save params
-        self.save_params(params)
+        self.save_params()
 
         # vectorize functions
         get_overlap = np.vectorize(self.wrapped_get_overlap)
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
         # indices with respect to which objective is derivatized
-        derivs = np.arange(self.nproj + 1)
-        # need to reshape to allow for summing over slater determinants
+        derivs = np.arange(params.size)
+        # need to reshape (to a row of a matrix) to allow for summing over slater determinants
         derivs = derivs[np.newaxis, :]
 
         # define reference
         if isinstance(self.refstate, CIWavefunction):
-            ref_sds = self.refstate.sd_vec
+            ref_sds = np.array(self.refstate.sd_vec)[:, np.newaxis]
             ref_coeffs = self.refstate.params
-            d_ref_coeffs = np.zeros((len(ref_sds), derivs.size))
+            d_ref_coeffs = np.zeros((ref_sds.size, params.size))
+            try:
+                objective_indices = self.param_selection._masks_objective_params[self.refstate]
+                container_indices = self.param_selection._masks_container_params[self.refstate]
+            except ValueError:
+                pass
+            else:
+                d_ref_coeffs[container_indices, objective_indices] = 1.0
         else:
-            ref_sds = self.refstate
+            ref_sds = np.array(self.refstate)[:, np.newaxis]
             ref_coeffs = get_overlap(ref_sds)
-            d_ref_coeffs = get_overlap(ref_sds[:, np.newaxis], derivs)
+            d_ref_coeffs = get_overlap(ref_sds, derivs)
 
-        # overlaps and integrals
-        ref_olps = get_overlap(ref_sds)
-        d_ref_olps = get_overlap(ref_sds[:, np.newaxis], derivs)
-        ref_ints = integrate_wfn_sd(ref_sds)
-        d_ref_ints = integrate_wfn_sd(ref_sds[:, np.newaxis], derivs)
-        # NOTE: d_ref_olps and d_ref_ints are two dimensional tensors (axis 0 corresponds to the
-        # reference Slater determinants and 2 to the index of the parameter with respect to which
+        # overlaps of each Slater determinant in reference <SD_i | Psi>
+        ref_sds_olps = get_overlap(ref_sds)
+        d_ref_sds_olps = get_overlap(ref_sds, derivs)
+        # NOTE: d_ref_olps and d_ref_ints are two dimensional matrices (axis 0 corresponds to the
+        # reference Slater determinants and 1 to the index of the parameter with respect to which
         # the value is derivatized).
 
-        # norm
-        norm = np.sum(ref_olps * ref_coeffs)
-        d_norm = np.sum(ref_olps[:, np.newaxis]*d_ref_coeffs + d_ref_olps*ref_coeffs[:, np.newaxis],
-                        axis=0)
+        # norm <ref | Psi>
+        d_norm = np.sum(d_ref_coeffs * ref_sds_olps, axis=0)
+        d_norm += np.sum(ref_coeffs * d_ref_sds_olps, axis=0)
 
         # energy
         if self.energy_type in ['variable', 'fixed']:
             energy = self.energy.params
             d_energy = np.array([self.param_selection.derivative_index(self.energy, i) is not None
-                                 for i in range(params.size)])
+                                 for i in range(params.size)], dtype=float)
         elif self.energy_type == 'compute':
-            energy = np.sum(ref_coeffs * ref_ints) / norm
-            d_energy = np.sum(d_ref_ints * ref_olps[:, np.newaxis] +
-                              ref_ints[:, np.newaxis] * d_ref_olps -
-                              d_norm[np.newaxis, :] * energy, axis=0) / norm
+            # norm
+            norm = np.sum(ref_coeffs * ref_sds_olps)
+            # integral <SD | H | Psi>
+            ref_sds_ints = integrate_wfn_sd(ref_sds)
+            d_ref_sds_ints = integrate_wfn_sd(ref_sds, derivs)
+            # integral <ref | H | Psi>
+            ref_int = np.sum(ref_coeffs * ref_sds_ints)
+            d_ref_int = np.sum(d_ref_coeffs * ref_sds_ints, axis=0)
+            d_ref_int += np.sum(ref_coeffs * d_ref_sds_ints, axis=0)
+
+            energy = ref_int / norm
+            d_energy = (d_ref_int - d_norm * energy) / norm
             self.energy.assign_params(energy)
 
         # reshape for broadcasting
         pspace = np.array(self.pspace)[:, np.newaxis]
 
         # jacobian
-        # FIXME: does not support pspace that is linear combination of sd's
         jac = np.empty((self.nproj+1, params.size))
         jac[:self.nproj, :] = integrate_wfn_sd(pspace, derivs)
         jac[:self.nproj, :] -= energy * get_overlap(pspace, derivs)
