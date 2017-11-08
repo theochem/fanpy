@@ -212,7 +212,6 @@ def test_system_jacobian():
         jacobian = test.jacobian(guess[:6])
         for eqn, sd, weight in zip(jacobian[:-1],
                                    [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
-            # print(test.energy.params, test.get_energy_one_proj(refwfn))
             for i in range(6):
                 assert np.allclose(eqn[i],
                                    weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
@@ -247,3 +246,35 @@ def test_system_jacobian():
                                              0.0 * wfn.get_overlap(sd) -
                                              1 * wfn.get_overlap(sd, deriv=i)))
         assert np.allclose(jacobian[-1], norm_answer)
+
+
+def test_system_jacobian_active_ciref():
+    """Test SystemEquation.jacobian with CIWavefunction reference with active parameters."""
+    wfn = CIWavefunction(2, 4)
+    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    weights = np.random.rand(7)
+
+    ciref = CIWavefunction(2, 4)
+    ciref.assign_params(np.random.rand(6))
+
+    # computed energy
+    test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=ciref,
+                           param_selection=((wfn, np.ones(6, dtype=bool)),
+                                            (ciref, np.ones(6, dtype=bool))))
+
+    jacobian = test.jacobian(np.random.rand(12))
+    for eqn, sd, weight in zip(jacobian[:-1],
+                               [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
+        for i in range(12):
+            assert np.allclose(eqn[i],
+                               weight * (sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i)) -
+                                         test.get_energy_one_proj(ciref, deriv=i)
+                                         * wfn.get_overlap(sd) -
+                                         test.get_energy_one_proj(ciref)
+                                         * wfn.get_overlap(sd, deriv=i)))
+    assert np.allclose(jacobian[-1],
+                       [weights[-1] * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i)
+                                           for sd in ciref.sd_vec)) for i in range(6)] +
+                       [weights[-1] * (sum(ciref.get_overlap(sd, deriv=i) * wfn.get_overlap(sd)
+                                           for sd in ciref.sd_vec)) for i in range(6)])
