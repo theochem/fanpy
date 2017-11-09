@@ -1,8 +1,9 @@
 """Test wfns.objective.system_nonlinear."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.param import ParamContainer
+from wfns.param import ParamContainer, ParamMask
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.objective.constraints.norm import NormConstraint
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
@@ -113,6 +114,37 @@ def test_system_assign_eqn_weights():
     assert_raises(TypeError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
 
     assert_raises(ValueError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0], dtype=float))
+
+
+def test_system_assign_constraints():
+    """Test SystemEquations.assign_constraints."""
+    test = TestSystemEquations()
+    test.wfn = CIWavefunction(2, 4)
+    test.refstate = (0b0101, )
+    test.param_selection = ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
+
+    test.assign_constraints()
+    assert isinstance(test.constraints, list)
+    assert len(test.constraints) == 1
+    assert isinstance(test.constraints[0], NormConstraint)
+    assert test.constraints[0].wfn == test.wfn
+    assert test.constraints[0].refwfn == (0b0101, )
+
+    norm_constraint = NormConstraint(test.wfn, param_selection=test.param_selection)
+    test.assign_constraints(norm_constraint)
+    assert isinstance(test.constraints, list)
+    assert len(test.constraints) == 1
+    assert isinstance(test.constraints[0], NormConstraint)
+    assert test.constraints[0].wfn == test.wfn
+    assert test.constraints[0].refwfn == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
+
+    assert_raises(TypeError, test.assign_constraints, lambda x: None)
+    assert_raises(TypeError, test.assign_constraints, np.array(norm_constraint))
+    assert_raises(TypeError, test.assign_constraints, [norm_constraint, lambda x: None])
+    norm_constraint.assign_param_selection(ParamMask((ParamContainer(test.wfn.params),
+                                                      np.ones(6, dtype=bool))))
+    assert_raises(ValueError, test.assign_constraints, norm_constraint)
+    assert_raises(ValueError, test.assign_constraints, [norm_constraint])
 
 
 def test_num_eqns():

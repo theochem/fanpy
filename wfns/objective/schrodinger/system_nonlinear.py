@@ -2,7 +2,9 @@
 import numpy as np
 from wfns.param import ParamContainer
 from wfns.wrapper.docstring import docstring_class
+from wfns.objective.base_objective import BaseObjective
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
+from wfns.objective.constraints.norm import NormConstraint
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.backend import slater, sd_list
 
@@ -53,7 +55,8 @@ class SystemEquations(BaseSchrodinger):
 
     """
     def __init__(self, wfn, ham, tmpfile='', param_selection=None,
-                 pspace=None, refstate=None, eqn_weights=None, energy_type='compute', energy=None):
+                 pspace=None, refstate=None, eqn_weights=None, energy_type='compute', energy=None,
+                 constraints=None):
         """
 
         Parameters
@@ -82,6 +85,9 @@ class SystemEquations(BaseSchrodinger):
             If 'compute', the energy of the Schrodinger equation is computed on-the-fly with respect
             to the reference.
             By default, the energy is computed on-the-fly.
+        constraints : list/tuple of BaseObjective
+            Constraints that will be imposed on the optimization process.
+            By default, the normalization constraint used.
 
         Raises
         ------
@@ -96,19 +102,20 @@ class SystemEquations(BaseSchrodinger):
         self.assign_refstate(refstate)
         self.assign_eqn_weights(eqn_weights)
 
+        if energy_type not in ['fixed', 'variable', 'compute']:
+            raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
+        self.energy_type = energy_type
+
         if energy is None:
             energy = self.get_energy_one_proj(self.refstate)
         elif not isinstance(energy, (float, complex)):
             raise TypeError('Energy must be given as a float or complex.')
-
-        if energy_type not in ['fixed', 'variable', 'compute']:
-            raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
-
         self.energy = ParamContainer(energy)
-        self.energy_type = energy_type
         if energy_type in ['fixed', 'variable']:
             self.param_selection.load_mask_container_params(self.energy, energy_type == 'variable')
             self.param_selection.load_masks_objective_params()
+
+        self.assign_constraints(constraints)
 
     @property
     def nproj(self):
@@ -207,6 +214,43 @@ class SystemEquations(BaseSchrodinger):
             raise ValueError('Weights of the equations must be given as a one-dimensional array of '
                              'shape, {0}.'.format((self.nproj+1, )))
         self.eqn_weights = eqn_weights
+
+    def assign_constraints(self, constraints=None):
+        """Set the constraints on the objective.
+
+        Parameters
+        ----------
+        constraints : {list/tuple of BaseObjective, BaseObjective, None}
+            Constraints that will be imposed on the optimization process.
+            By default, the normalization constraint used.
+
+        Raises
+        ------
+        TypeError
+            If constraints are not given as a BaseObjective instance or list/tuple of BaseObjective
+            instances.
+            If a constraint is not a BaseObjective or its subclass.
+        ValueError
+            If a constraint does not have the same param_selection as the objective class.
+
+        """
+        if constraints is None:
+            constraints = [NormConstraint(self.wfn, refwfn=self.refstate,
+                                          param_selection=self.param_selection)]
+        elif isinstance(constraints, BaseObjective):
+            constraints = [constraints]
+        elif not isinstance(constraints, (list, tuple)):
+            raise TypeError('Constraints must be given as a BaseObjective instance or list/tuple '
+                            'of BaseObjective instances.')
+
+        for constraint in constraints:
+            if not isinstance(constraint, BaseObjective):
+                raise TypeError('Each constraint must be an instance of BaseObjective or its '
+                                'child.')
+            elif constraint.param_selection != self.param_selection:
+                raise ValueError('The given constraint must have the same parameter selection (in '
+                                 'the form of ParamMask) as the objective.')
+        self.constraints = constraints
 
     @property
     def num_eqns(self):
