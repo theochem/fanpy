@@ -81,7 +81,7 @@ class BaseObjective(abc.ABC):
         if self.tmpfile != '':
             np.save(self.tmpfile, self.param_selection.all_params)
 
-    def assign_param_selection(self, param_selection):
+    def assign_param_selection(self, param_selection=None):
         """Select parameters that will be active in the objective.
 
         Parameters
