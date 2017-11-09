@@ -26,7 +26,7 @@ class TestBaseSchrodinger(BaseSchrodinger):
         pass
 
 
-def test_BaseSchrodinger_init():
+def test_baseschrodinger_init():
     """Test BaseSchrodinger.__init__."""
     wfn = CIWavefunction(2, 4)
     ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
@@ -48,7 +48,7 @@ def test_BaseSchrodinger_init():
     assert np.allclose(test.param_selection.active_params, wfn.params)
 
 
-def test_BaseSchrodinger_wrapped_get_overlap():
+def test_baseschrodinger_wrapped_get_overlap():
     """Test BaseSchrodinger.wrapped_get_overlap."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
@@ -63,7 +63,7 @@ def test_BaseSchrodinger_wrapped_get_overlap():
     assert test.wrapped_get_overlap(0b0101, deriv=3) == 0.0
 
 
-def test_BaseSchrodinger_wrapped_integrate_wfn_sd():
+def test_baseschrodinger_wrapped_integrate_wfn_sd():
     """Test BaseSchrodinger.wrapped_integrate_wfn_sd."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
@@ -85,7 +85,7 @@ def test_BaseSchrodinger_wrapped_integrate_wfn_sd():
     assert test.wrapped_integrate_wfn_sd(0b0101, deriv=3) == 0.0
 
 
-def test_BaseSchrodinger_wrapped_integrate_sd_sd():
+def test_baseschrodinger_wrapped_integrate_sd_sd():
     """Test BaseSchrodinger.wrapped_integrate_sd_sd."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
@@ -101,7 +101,7 @@ def test_BaseSchrodinger_wrapped_integrate_sd_sd():
     # FIXME: no tests for derivatives wrt hamiltonian b/c there are no hamiltonians with parameters
 
 
-def test_BaseSchrodinger_get_energy_one_proj():
+def test_baseschrodinger_get_energy_one_proj():
     """Test BaseSchrodinger.get_energy_one_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
@@ -109,8 +109,9 @@ def test_BaseSchrodinger_get_energy_one_proj():
                               np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham)
 
+    sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
     # sd
-    for sd in [0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100]:
+    for sd in sds:
         olp = wfn.get_overlap(sd)
         integral = sum(ham.integrate_wfn_sd(wfn, sd))
         # <SD | H | Psi> = E <SD | Psi>
@@ -124,7 +125,7 @@ def test_BaseSchrodinger_get_energy_one_proj():
                                d_integral / olp - d_olp * integral / olp**2)
 
     # list of sd
-    for sd1, sd2 in it.combinations([0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100], 2):
+    for sd1, sd2 in it.combinations(sds, 2):
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
         integral1 = sum(ham.integrate_wfn_sd(wfn, sd1))
@@ -162,7 +163,7 @@ def test_BaseSchrodinger_get_energy_one_proj():
                                (olp1 * integral1 + olp2 * integral2) / (olp1**2 + olp2**2)**2)
 
     # CI
-    for sd1, sd2 in it.combinations([0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100], 2):
+    for sd1, sd2 in it.combinations(sds, 2):
         ciwfn = CIWavefunction(2, 4, sd_vec=[sd1, sd2])
         ciwfn.assign_params(np.random.rand(ciwfn.nparams))
         coeff1 = ciwfn.get_overlap(sd1)
@@ -202,7 +203,7 @@ def test_BaseSchrodinger_get_energy_one_proj():
         assert_raises(TypeError, test.get_energy_one_proj, '0b0101')
 
 
-def test_BaseSchrodinger_get_energy_two_proj():
+def test_baseschrodinger_get_energy_two_proj():
     """Test BaseSchrodinger.get_energy_two_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
@@ -210,8 +211,9 @@ def test_BaseSchrodinger_get_energy_two_proj():
                               np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham)
 
+    sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
     # sd
-    for sd_l, sd_r, sd_n in it.permutations([0b0101, 0b0110, 0b1001, 0b0110, 0b1010, 0b1100], 3):
+    for sd_l, sd_r, sd_n in it.permutations(sds, 3):
         olp_l = wfn.get_overlap(sd_l)
         olp_r = wfn.get_overlap(sd_r)
         olp_n = wfn.get_overlap(sd_n)
@@ -238,8 +240,7 @@ def test_BaseSchrodinger_get_energy_two_proj():
                                 2 * d_olp_n * olp_l * integral * olp_r / olp_n**3))
 
     # list of sd
-    for sds_l, sds_r, sds_n in it.permutations(it.permutations([0b0101, 0b0110, 0b1001,
-                                                                0b0110, 0b1010, 0b1100], 2), 3):
+    for sds_l, sds_r, sds_n in it.permutations(it.permutations(sds, 2), 3):
         # randomly skip 9/10 of the tests
         if np.random.random() < 0.9:
             continue
