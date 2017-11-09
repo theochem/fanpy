@@ -94,7 +94,13 @@ class OneSidedEnergy(BaseSchrodinger):
         if refwfn is None:
             self.refwfn = tuple(sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial,
                                                 spin=self.wfn.spin, seniority=self.wfn.seniority))
-        elif isinstance(refwfn, (list, tuple)):
+            # break out of function
+            return
+
+        if slater.is_sd_compatible(refwfn):
+            refwfn = [refwfn]
+
+        if isinstance(refwfn, (list, tuple)):
             for sd in refwfn:
                 if slater.is_sd_compatible(sd):
                     occs = slater.occ_indices(sd)
