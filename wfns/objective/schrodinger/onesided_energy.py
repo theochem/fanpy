@@ -1,13 +1,13 @@
 """Energy of the Schrodinger equation integrated against a reference wavefunction."""
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
-from wfns.objective.base_objective import BaseObjective
+from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.backend import slater, sd_list
 
 
 @docstring_class(indent_level=1)
-class OneSidedEnergy(BaseObjective):
+class OneSidedEnergy(BaseSchrodinger):
     r"""Energy of the Schrodinger equation integrated against a referene wavefunction.
 
     .. math::

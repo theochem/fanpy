@@ -1,7 +1,7 @@
 """Schrodinger equation as a least-squares problem."""
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 
 
 @docstring_class(indent_level=1)

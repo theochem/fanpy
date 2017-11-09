@@ -2,13 +2,13 @@
 import numpy as np
 from wfns.param import ParamContainer
 from wfns.wrapper.docstring import docstring_class
-from wfns.objective.base_objective import BaseObjective
+from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.backend import slater, sd_list
 
 
 @docstring_class(indent_level=1)
-class SystemEquations(BaseObjective):
+class SystemEquations(BaseSchrodinger):
     r"""Schrodinger equation as a system of equations.
 
     .. math::

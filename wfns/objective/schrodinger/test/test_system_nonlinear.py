@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.param import ParamContainer
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
