@@ -1,14 +1,13 @@
-"""Schrodinger equation rearranged for energy."""
+"""Energy of the Schrodinger equation integrated against projected forms of the wavefunction."""
 import numpy as np
 from wfns.wrapper.docstring import docstring_class
 from wfns.objective.base_objective import BaseObjective
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.backend import slater, sd_list
 
 
 @docstring_class(indent_level=1)
 class TwoSidedEnergy(BaseObjective):
-    r"""Energy of the Schrodinger equations.
+    r"""Energy of the Schrodinger equations integrated against projected forms of the wavefuntion.
 
     .. math::
 
@@ -37,36 +36,45 @@ class TwoSidedEnergy(BaseObjective):
           \ket{\Psi}
         }
 
+    where :math:`S_{left}` and  :math:`S_{right}` are the projection spaces for the left and right
+    side of the integral :math:`\braket{\Psi | \hat{H} | \Psi}`, respectively, and :math:`S_{norm}`
+    is the projection space for the norm, :math:`\braket{\Psi | \Psi}`.
 
     Attributes
     ----------
-    _pspace_l : {tuple/list of int, tuple/list of CIWavefunction, None}
-        States onto which the Schrodinger equation is projected on the left.
+    pspace_l : {tuple of int, None}
+        States in the projection space of the left side of the integral
+        :math:`\braket{\Psi | \hat{H} | \Psi}`.
         By default, the largest space is used.
-    _pspace_r : {tuple/list of int, tuple/list of CIWavefunction, None}
-        States onto which the Schrodinger equation is projected on the right.
-    _pspace_n : {tuple/list of int, tuple/list of CIWavefunction, None}
-        States onto which the Schrodinger equation is projected on the right.
+    pspace_r : {tuple of int, None}
+        States in the projection space of the right side of the integral
+        :math:`\braket{\Psi | \hat{H} | \Psi}`.
+        By default, the same space as `pspace_l` is used.
+    pspace_n : {tuple of int, None}
+        States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+        By default, the same space as `pspace_l` is used.
 
     """
-    def __init__(self, wfn, ham, tmpfile='', param_types=None, pspace_l=None, pspace_r=None,
+    def __init__(self, wfn, ham, tmpfile='', param_selection=None, pspace_l=None, pspace_r=None,
                  pspace_n=None):
         """
 
         Parameters
         ----------
-        pspace_l : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the left.
+        pspace_l : {tuple/list of int, None}
+            States in the projection space of the left side of the integral
+            :math:`\braket{\Psi | \hat{H} | \Psi}`.
             By default, the largest space is used.
-        pspace_r : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the right.
-            By default, `pspace_l` is used.
-        pspace_n : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected in the norm.
-            By default, `pspace_l` is used.
+        pspace_r : {tuple/list of int, None}
+            States in the projection space of the right side of the integral
+            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            By default, the same space as `pspace_l` is used.
+        pspace_n : {tuple/list of int, None}
+            States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+            By default, the same space as `pspace_l` is used.
 
         """
-        super().__init__(wfn, ham, tmpfile=tmpfile, param_types=param_types)
+        super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
         self.assign_pspaces(pspace_l, pspace_r, pspace_n)
 
     def assign_pspaces(self, pspace_l=None, pspace_r=None, pspace_n=None):
@@ -74,18 +82,17 @@ class TwoSidedEnergy(BaseObjective):
 
         Parameters
         ----------
-        pspace_l : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the left.
-            By default, `None` is stored but the largest space is yielded in the property
-            `pspace_l`.
-        pspace_r : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the right.
-            By default, `None` is stored but the property `pspace_l` is yielded in the property
-            `pspace_r`.
-        pspace_n : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected in the norm.
-            By default, `None` is stored but the property `pspace_n` is yielded in the property
-            `pspace_r`.
+        pspace_l : {tuple/list of int, None}
+            States in the projection space of the left side of the integral
+            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            By default, the largest space is used.
+        pspace_r : {tuple/list of int, None}
+            States in the projection space of the right side of the integral
+            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            By default, the same space as `pspace_l` is used.
+        pspace_n : {tuple/list of int, None}
+            States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+            By default, the same space as `pspace_l` is used.
 
         Raises
         ------
@@ -99,6 +106,10 @@ class TwoSidedEnergy(BaseObjective):
             wavefunction.
 
         """
+        if pspace_l is None:
+            pspace_l = sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin,
+                                       seniority=self.wfn.seniority)
+
         for pspace in [pspace_l, pspace_r, pspace_n]:
             if pspace is None:
                 continue
@@ -116,70 +127,9 @@ class TwoSidedEnergy(BaseObjective):
                 else:
                     raise TypeError('Projection space must only contain Slater determinants.')
 
-        self._pspace_l = pspace_l
-        self._pspace_r = pspace_r
-        self._pspace_n = pspace_n
-
-    @property
-    def pspace_l(self):
-        """Yield the projection space on the left side of the :math:`\braket{\Psi | H | \Psi}`.
-
-        Yields
-        ------
-        pspace_l : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the left.
-            By default, the largest space is used.
-
-        Notes
-        -----
-        The projection space is generated instead of storing it to improve memory usage.
-
-        """
-        if self._pspace_l is None:
-            yield from sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin,
-                                       seniority=self.wfn.seniority)
-        else:
-            yield from self._pspace_l
-
-    @property
-    def pspace_r(self):
-        """Yield the projection space on the right side of the :math:`\braket{\Psi | H | \Psi}`.
-
-        Yields
-        ------
-        pspace_r : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected on the right.
-
-        Notes
-        -----
-        The projection space is generated instead of storing it to improve memory usage, especially
-        when `_pspace_r` is None.
-
-        """
-        if self._pspace_r is None:
-            yield from self.pspace_l
-        else:
-            yield from self._pspace_r
-
-    @property
-    def pspace_n(self):
-        """Yield the projection space on norm, :math:`\braket{\Psi | \Psi}`.
-
-        Yields
-        ------
-        pspace_n : {tuple/list of int, tuple/list of CIWavefunction, None}
-            States onto which the wavefunction is projected in the norm.
-
-        Notes
-        -----
-        The projection space is generated instead of storing it to improve memory usage, especially
-        when `_pspace_n` is None.
-
-        """
-        if self._pspace_n is None:
-            yield from self.pspace_l
-        else:
-            yield from self._pspace_n
+        self.pspace_l = tuple(pspace_l)
+        self.pspace_r = tuple(pspace_r) if pspace_r is not None else pspace_r
+        self.pspace_n = tuple(pspace_n) if pspace_n is not None else pspace_n
 
     def objective(self, params):
         params = np.array(params)
