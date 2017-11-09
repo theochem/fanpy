@@ -4,7 +4,13 @@ import numpy as np
 
 
 class ParamContainer(abc.ABC):
-    """Parameters that will something.
+    """Container for parameters.
+
+    This class is used to provide the basic functionality that would be available when updating the
+    parameters in a given object. This was essential in constructing a generalized objective class,
+    which can take in any ParamContainer instance, select specific parameters that will be used
+    to evaluate the objective, and update these selected parameters in the course of the
+    optimization.
 
     Attributes
     ----------
@@ -60,3 +66,12 @@ class ParamContainer(abc.ABC):
             raise TypeError('Parameters must have data type of `int`, `float`, `complex`, '
                             '`np.float64` and `np.complex128`.')
         self.params = params
+
+    def clear_cache(self):
+        """Placeholder function that would clear the cache.
+
+        This function doesn't actually do anything, but exists as a placeholder so that all if the
+        cache exists, it can be cleared when updating the parameters in the optimization process.
+
+        """
+        pass
