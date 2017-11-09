@@ -102,12 +102,20 @@ def test_system_assign_eqn_weights():
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
     test.assign_pspace()
+    test.assign_refstate()
+    test.assign_param_selection()
+    test.assign_constraints()
 
     test.assign_eqn_weights()
-    assert np.allclose(test.eqn_weights, np.array([1, 1, 1, 1, 1, 1, 7]))
+    assert np.allclose(test.eqn_weights, np.array([1, 1, 1, 1, 1, 1, 6]))
 
     test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0], dtype=float))
     assert np.allclose(test.eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
+
+    test.param_selection = ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
+    norm_constraint = NormConstraint(test.wfn, param_selection=test.param_selection)
+    test.assign_constraints([norm_constraint, norm_constraint])
+    test.assign_eqn_weights(np.zeros(8))
 
     assert_raises(TypeError, test.assign_eqn_weights, [1, 1, 1, 1, 1, 1, 1])
 

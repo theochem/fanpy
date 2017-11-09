@@ -100,7 +100,6 @@ class SystemEquations(BaseSchrodinger):
         super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
         self.assign_pspace(pspace)
         self.assign_refstate(refstate)
-        self.assign_eqn_weights(eqn_weights)
 
         if energy_type not in ['fixed', 'variable', 'compute']:
             raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
@@ -116,6 +115,7 @@ class SystemEquations(BaseSchrodinger):
             self.param_selection.load_masks_objective_params()
 
         self.assign_constraints(constraints)
+        self.assign_eqn_weights(eqn_weights)
 
     @property
     def nproj(self):
@@ -183,38 +183,6 @@ class SystemEquations(BaseSchrodinger):
                             ' Slater determinants, or a CIWavefunction. See `backend.slater` for '
                             'compatible representations of the Slater determinants.')
 
-    def assign_eqn_weights(self, eqn_weights=None):
-        """Set the weights of each equation.
-
-        Parameters
-        ----------
-        eqn_weights : {np.ndarray, None}
-            Weights of each equation.
-            By default, all equations are given weight of 1 except for the normalization constraint,
-            which is weighed by the number of equations.
-
-        Raises
-        ------
-        Type Error
-            If eqn_weights is not a numpy array.
-            If eqn_weights do not have the same data type as wavefunction and Hamiltonian.
-        ValueError
-            If eqn_weights do not have the correct shape.
-
-        """
-        if eqn_weights is None:
-            eqn_weights = np.ones(self.nproj + 1)
-            eqn_weights[-1] *= self.nproj + 1
-        elif not isinstance(eqn_weights, np.ndarray):
-            raise TypeError('Weights of the equations must be given as a numpy array.')
-        elif eqn_weights.dtype != self.wfn.dtype:
-            raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
-                            'and Hamiltonian.')
-        elif eqn_weights.shape != (self.nproj+1, ):
-            raise ValueError('Weights of the equations must be given as a one-dimensional array of '
-                             'shape, {0}.'.format((self.nproj+1, )))
-        self.eqn_weights = eqn_weights
-
     def assign_constraints(self, constraints=None):
         """Set the constraints on the objective.
 
@@ -251,6 +219,39 @@ class SystemEquations(BaseSchrodinger):
                 raise ValueError('The given constraint must have the same parameter selection (in '
                                  'the form of ParamMask) as the objective.')
         self.constraints = constraints
+
+    def assign_eqn_weights(self, eqn_weights=None):
+        """Set the weights of each equation.
+
+        Parameters
+        ----------
+        eqn_weights : {np.ndarray, None}
+            Weights of each equation.
+            By default, all equations are given weight of 1 except for the normalization constraint,
+            which is weighed by the number of equations.
+
+        Raises
+        ------
+        Type Error
+            If eqn_weights is not a numpy array.
+            If eqn_weights do not have the same data type as wavefunction and Hamiltonian.
+        ValueError
+            If eqn_weights do not have the correct shape.
+
+        """
+        num_constraints = sum(cons.num_eqns for cons in self.constraints)
+        if eqn_weights is None:
+            eqn_weights = np.ones(self.nproj + num_constraints)
+            eqn_weights[self.nproj:] *= self.nproj
+        elif not isinstance(eqn_weights, np.ndarray):
+            raise TypeError('Weights of the equations must be given as a numpy array.')
+        elif eqn_weights.dtype != self.wfn.dtype:
+            raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
+                            'and Hamiltonian.')
+        elif eqn_weights.shape != (self.nproj + num_constraints, ):
+            raise ValueError('Weights of the equations must be given as a one-dimensional array of '
+                             'shape, {0}.'.format((self.nproj + num_constraints, )))
+        self.eqn_weights = eqn_weights
 
     @property
     def num_eqns(self):
@@ -299,28 +300,33 @@ class SystemEquations(BaseSchrodinger):
         get_overlap = np.vectorize(self.wrapped_get_overlap)
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
-        # define reference
-        if isinstance(self.refstate, CIWavefunction):
-            ref_sds = self.refstate.sd_vec
-            ref_coeffs = self.refstate.params
-        else:
-            ref_sds = self.refstate
-            ref_coeffs = get_overlap(ref_sds)
-
         # reference values
-        norm = np.sum(ref_coeffs * get_overlap(ref_sds))
         if self.energy_type in ['variable', 'fixed']:
             energy = self.energy.params
         elif self.energy_type == 'compute':
+            # define reference
+            if isinstance(self.refstate, CIWavefunction):
+                ref_sds = self.refstate.sd_vec
+                ref_coeffs = self.refstate.params
+            else:
+                ref_sds = self.refstate
+                ref_coeffs = get_overlap(ref_sds)
+
+            norm = np.sum(ref_coeffs * get_overlap(ref_sds))
+            energy = self.get_energy_one_proj(self.refstate)
             energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
+            # can be replaced with
+            energy = self.get_energy_one_proj(self.refstate)
             self.energy.assign_params(energy)
 
+        # number of equations in the constraints
+        num_constraints = sum(cons.num_eqns for cons in self.constraints)
         # objective
-        obj = np.empty(self.nproj + 1)
+        obj = np.empty(self.nproj + num_constraints)
         # <SD|H|Psi> - E<SD|Psi> == 0
         obj[:self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
         # Add constraints
-        obj[self.nproj] = norm - 1
+        obj[self.nproj:] = np.hstack([cons.objective(params) for cons in self.constraints])
         # weigh equations
         obj *= self.eqn_weights
 
@@ -421,13 +427,15 @@ class SystemEquations(BaseSchrodinger):
         # reshape for broadcasting
         pspace = np.array(self.pspace)[:, np.newaxis]
 
+        # number of equations in the constraints
+        num_constraints = sum(cons.num_eqns for cons in self.constraints)
         # jacobian
-        jac = np.empty((self.nproj+1, params.size))
+        jac = np.empty((self.nproj + num_constraints, params.size))
         jac[:self.nproj, :] = integrate_wfn_sd(pspace, derivs)
         jac[:self.nproj, :] -= energy * get_overlap(pspace, derivs)
         jac[:self.nproj, :] -= d_energy[np.newaxis, :] * get_overlap(pspace)
-        # Add normalization constraint
-        jac[self.nproj, :] = d_norm
+        # Add constraints
+        jac[self.nproj:] = np.vstack([cons.gradient(params) for cons in self.constraints])
         # weigh equations
         jac *= self.eqn_weights[:, np.newaxis]
 
