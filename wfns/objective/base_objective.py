@@ -94,7 +94,7 @@ class BaseObjective(abc.ABC):
         """
         if param_selection is None:
             param_selection = ()
-        elif isinstance(param_selection, (list, tuple)):
+        if isinstance(param_selection, (list, tuple)):
             param_selection = ParamMask(*param_selection)
         elif not isinstance(param_selection, ParamMask):
             raise TypeError('Selection of parameters, `param_selection`, must be a list, tuple, or '

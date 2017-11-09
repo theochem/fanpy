@@ -25,6 +25,9 @@ def test_baseobjective_assign_param_selection():
     """Test BaseObjective.assign_param_selection."""
     test = TestBaseObjective()
 
+    test.assign_param_selection(())
+    assert isinstance(test.param_selection, ParamContainer)
+
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
