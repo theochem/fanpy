@@ -1,7 +1,7 @@
 """Test wfns.objective.twosided_energy."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.objective.twosided_energy import TwoSidedEnergy
+from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
