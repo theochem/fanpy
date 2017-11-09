@@ -147,3 +147,23 @@ def test_parammask_derivative_index():
     assert test.derivative_index(param3, 0) is None
     assert test.derivative_index(param3, 1) == 0
     assert test.derivative_index(param3, 2) == 3
+
+
+def test_parammask_eq():
+    """Test ParamMask.__eq__."""
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    test = ParamMask((param1, False), (param2, np.array(1)),
+                     (param3, np.array([True, False, False, True])))
+    assert test == test
+    assert test == ParamMask((param1, False), (param2, np.array(1)),
+                             (param3, np.array([True, False, False, True])))
+
+    test2 = ParamMask((ParamContainer(1), False),
+                      (ParamContainer(np.array([2, 3])), np.array(1)),
+                      (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True]))
+                     )
+    assert test != test2
+
+    assert_raises(TypeError, test.__eq__, 2)

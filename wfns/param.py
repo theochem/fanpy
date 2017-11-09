@@ -133,6 +133,32 @@ class ParamMask(abc.ABC):
         self._masks_objective_params = collections.OrderedDict()
         self.load_masks_objective_params()
 
+    def __eq__(self, other):
+        """Checks if the given ParamMask is equal to itself.
+
+        Parameters
+        ----------
+        other : ParamMask
+            Other ParamMask.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a ParamMask
+        """
+        if not isinstance(other, ParamMask):
+            raise TypeError('Cannot compare ParamMask instance with something that is not '
+                            'ParamMask.')
+
+        if list(self._masks_container_params.keys()) == list(other._masks_container_params.keys()):
+            return all(np.array_equal(self._masks_container_params[container],
+                                      other._masks_container_params[container]) and
+                       np.array_equal(self._masks_objective_params[container],
+                                      other._masks_objective_params[container])
+                       for container in self._masks_container_params.keys())
+        else:
+            return False
+
     def load_mask_container_params(self, container, sel):
         """Load the one mask for the active parameters from the container.
 
