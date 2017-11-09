@@ -6,6 +6,15 @@ from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
 
 
+def test_num_eqns():
+    """Test LeastSquaresEquation.num_eqns."""
+    wfn = CIWavefunction(2, 4)
+    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    test = LeastSquaresEquations(wfn, ham)
+    assert test.num_eqns == 1
+
+
 def test_leastsquares_objective():
     """Test LeastSquaresEquations.objective."""
     wfn = CIWavefunction(2, 4)

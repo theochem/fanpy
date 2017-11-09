@@ -692,6 +692,18 @@ class BaseObjective(abc.ABC):
             d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm**2
             return d_energy
 
+    @abc.abstractproperty
+    def num_eqns(self):
+        """Return the number of equations in the objective.
+
+        Returns
+        -------
+        num_eqns : int
+            Number of equations in the objective.
+
+        """
+        pass
+
     @abc.abstractmethod
     def objective(self, params):
         """Return the value of the objective for the given parameters.

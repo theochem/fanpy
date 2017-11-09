@@ -26,6 +26,10 @@ class LeastSquaresEquations(SystemEquations):
     Additionally, the normalization constraint is added with respect to the reference state.
 
     """
+    @property
+    def num_eqns(self):
+        return 1
+
     def objective(self, params):
         r"""Least squares equation that corresponds to the system of equations.
 

@@ -35,6 +35,15 @@ def test_onesided_energy_assign_refwfn():
     assert_raises(TypeError, test.assign_refwfn, refwfn=['0101'])
 
 
+def test_num_eqns():
+    """Test OneSidedEnergy.num_eqns."""
+    wfn = CIWavefunction(2, 4)
+    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    test = OneSidedEnergy(wfn, ham)
+    assert test.num_eqns == 1
+
+
 def test_onesided_energy_objective():
     """Test OneSidedEnergy.objective.
 

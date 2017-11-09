@@ -119,6 +119,10 @@ class OneSidedEnergy(BaseObjective):
         else:
             raise TypeError('Projection space must be given as a list or a tuple.')
 
+    @property
+    def num_eqns(self):
+        return 1
+
     def objective(self, params):
         params = np.array(params)
         # Assign params
