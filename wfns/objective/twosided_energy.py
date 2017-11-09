@@ -113,16 +113,8 @@ class TwoSidedEnergy(BaseObjective):
                     elif any(i >= self.wfn.nspin for i in occs):
                         raise ValueError('Given state does not have the same number of spin '
                                          'orbitals as the given wavefunction.')
-                elif isinstance(state, CIWavefunction):
-                    if state.nelec != self.wfn.nelec:
-                        raise ValueError('Given state does not have the same number of electrons as'
-                                         ' the given wavefunction.')
-                    elif state.nspin != self.wfn.nspin:
-                        raise ValueError('Given state does not have the same number of spin '
-                                         'orbitals as the given wavefunction.')
                 else:
-                    raise TypeError('Projection space must only contain Slater determinants or '
-                                    'CIWavefunctions.')
+                    raise TypeError('Projection space must only contain Slater determinants.')
 
         self._pspace_l = pspace_l
         self._pspace_r = pspace_r
