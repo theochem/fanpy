@@ -24,6 +24,10 @@ class TestBaseHamiltonian(BaseHamiltonian):
 
 
 class TestBaseObjective(BaseObjective):
+    @property
+    def num_eqns(self):
+        pass
+
     def objective(self, params):
         pass
 

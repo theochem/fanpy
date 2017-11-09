@@ -87,15 +87,13 @@ def test_system_assign_refstate():
     test.assign_refstate([0b0101, 0b0110])
     assert test.refstate == (0b0101, 0b0110)
 
-    test.assign_refstate(np.array([0b0101, 0b0110]))
-    assert test.refstate == (0b0101, 0b0110)
-
     ciwfn = CIWavefunction(2, 4)
     test.assign_refstate(ciwfn)
     assert test.refstate == ciwfn
 
     assert_raises(TypeError, test.assign_refstate, [ciwfn, ciwfn])
     assert_raises(TypeError, test.assign_refstate, '0101')
+    assert_raises(TypeError, test.assign_refstate, np.array([0b0101, 0b0110]))
 
 
 def test_system_assign_eqn_weights():
@@ -115,6 +113,13 @@ def test_system_assign_eqn_weights():
     assert_raises(TypeError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
 
     assert_raises(ValueError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0], dtype=float))
+
+
+def test_num_eqns():
+    """Test SystemEquation.num_eqns."""
+    test = TestSystemEquations()
+    test.pspace = (0b0101, 0b1010)
+    assert test.num_eqns == 3
 
 
 def test_system_objective():

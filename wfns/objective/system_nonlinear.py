@@ -208,6 +208,10 @@ class SystemEquations(BaseObjective):
                              'shape, {0}.'.format((self.nproj+1, )))
         self.eqn_weights = eqn_weights
 
+    @property
+    def num_eqns(self):
+        return len(self.pspace) + 1
+
     def objective(self, params):
         r"""System of equations that corresponds to the Projected Schrodinger equation.
 

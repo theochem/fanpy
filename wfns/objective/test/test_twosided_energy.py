@@ -35,6 +35,15 @@ def test_twosided_energy_assign_pspacess():
     assert_raises(TypeError, test.assign_pspaces, pspace_n=CIWavefunction(2, 4))
     assert_raises(ValueError, test.assign_pspaces, pspace_r=[0b1101])
     assert_raises(ValueError, test.assign_pspaces, pspace_r=[0b10001])
+
+
+def test_num_eqns():
+    """Test TwoSidedEnergy.num_eqns."""
+    wfn = CIWavefunction(2, 4)
+    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    test = TwoSidedEnergy(wfn, ham)
+    assert test.num_eqns == 1
     assert_raises(TypeError, test.assign_pspaces, pspace_n=['0101'])
 
 

@@ -131,6 +131,10 @@ class TwoSidedEnergy(BaseObjective):
         self.pspace_r = tuple(pspace_r) if pspace_r is not None else pspace_r
         self.pspace_n = tuple(pspace_n) if pspace_n is not None else pspace_n
 
+    @property
+    def num_eqns(self):
+        return 1
+
     def objective(self, params):
         params = np.array(params)
         # Assign params
