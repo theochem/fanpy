@@ -19,6 +19,8 @@ def test_onesided_energy_assign_refwfn():
     test.assign_refwfn(refwfn=None)
     assert list(test.refwfn) == [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
 
+    test.assign_refwfn(refwfn=0b0101)
+    assert test.refwfn == (0b0101, )
     test.assign_refwfn(refwfn=[0b0101])
     assert test.refwfn == (0b0101, )
     test.assign_refwfn(refwfn=(0b0101, ))
