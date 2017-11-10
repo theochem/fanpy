@@ -19,27 +19,27 @@ class TestChemicalHamiltonian(ChemicalHamiltonian):
             return [8]
 
 
-def test_solve_eigh():
-    """Test wfn.solver.ci_solve with the eigh algorithm."""
+def test_brute():
+    """Test wfn.solver.ci_solver.brute."""
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
     # check type
-    assert_raises(TypeError, ci_solver.eigen_solve, None, test_ham, 0)
-    assert_raises(TypeError, ci_solver.eigen_solve, test_wfn, None, 0)
+    assert_raises(TypeError, ci_solver.brute, None, test_ham, 0)
+    assert_raises(TypeError, ci_solver.brute, test_wfn, None, 0)
 
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=complex),
                                        np.ones((2, 2, 2, 2), dtype=complex))
-    assert_raises(ValueError, ci_solver.eigen_solve, test_wfn, test_ham, 0)
+    assert_raises(ValueError, ci_solver.brute, test_wfn, test_ham, 0)
     test_ham = TestChemicalHamiltonian(np.ones((3, 3), dtype=complex),
                                        np.ones((3, 3, 3, 3), dtype=complex))
-    assert_raises(ValueError, ci_solver.eigen_solve, test_wfn, test_ham, 0)
+    assert_raises(ValueError, ci_solver.brute, test_wfn, test_ham, 0)
 
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
-    assert_raises(TypeError, ci_solver.eigen_solve, test_wfn, test_ham, None)
-    assert_raises(TypeError, ci_solver.eigen_solve, test_wfn, test_ham, -1)
+    assert_raises(TypeError, ci_solver.brute, test_wfn, test_ham, None)
+    assert_raises(TypeError, ci_solver.brute, test_wfn, test_ham, -1)
 
     # 0 = det [[1, 3]
     #          [3, 8]]
@@ -49,12 +49,10 @@ def test_solve_eigh():
     #        = (9 \pm \sqrt{85}) / 2
     # [[1-lambda,        3], [[v1],   [[0],
     #  [3       , 8-lambda]]  [v2]] =  [0]]
-    energy = ci_solver.eigen_solve(test_wfn, test_ham, 0)
-    assert np.allclose(energy, (9 - 85**0.5)/2)
-    matrix = np.array([[1-energy, 3], [3, 8-energy]])
-    assert np.allclose(matrix.dot(test_wfn.params[:, np.newaxis]), np.zeros(2))
-
-    energy = ci_solver.eigen_solve(test_wfn, test_ham, 1)
-    assert np.allclose(energy, (9 + 85**0.5)/2)
-    matrix = np.array([[1-energy, 3], [3, 8-energy]])
-    assert np.allclose(matrix.dot(test_wfn.params[:, np.newaxis]), np.zeros(2))
+    energies, coeffs = ci_solver.brute(test_wfn, test_ham)
+    assert np.allclose(energies[0], (9 - 85**0.5)/2)
+    matrix = np.array([[1-energies[0], 3], [3, 8-energies[0]]])
+    assert np.allclose(matrix.dot(coeffs[:, 0]), np.zeros(2))
+    assert np.allclose(energies[1], (9 + 85**0.5)/2)
+    matrix = np.array([[1-energies[1], 3], [3, 8-energies[1]]])
+    assert np.allclose(matrix.dot(coeffs[:, 1]), np.zeros(2))
