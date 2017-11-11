@@ -57,7 +57,7 @@ def least_squares(objective, save_file='', **kwargs):
         kwargs = {'xtol': 1.0e-15, 'ftol': 1.0e-15, 'gtol': 1.0e-15,
                   'max_nfev': 1000*objective.params.size, 'jac': objective.jacobian}
 
-    output = wrap_scipy(least_squares)(objective, **kwargs)
+    output = wrap_scipy(least_squares)(objective, save_file=save_file, **kwargs)
     output['energy'] = objective.energy.params
     output['residuals'] = output['internal'].fun
     output['cost'] = output['internal'].cost
@@ -96,7 +96,7 @@ def root(objective, save_file='', **kwargs):
     message : str
         Message returned by the optimizer.
     internal : OptimizeResults
-        Returned value of the `scipy.optimize.least_squares`.
+        Returned value of the `scipy.optimize.root`.
 
     Raises
     ------
@@ -115,6 +115,6 @@ def root(objective, save_file='', **kwargs):
     if kwargs == {}:
         kwargs = {'method': 'hybr', 'jac': objective.jacobian, 'options': {'xtol': 1.0e-9}}
 
-    output = wrap_scipy(root)(objective, **kwargs)
+    output = wrap_scipy(root)(objective, save_file=save_file, **kwargs)
     output['energy'] = objective.energy.params
     return output
