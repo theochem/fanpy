@@ -16,14 +16,6 @@ class TestWavefunction(BaseWavefunction):
         pass
 
     @property
-    def spin(self):
-        return None
-
-    @property
-    def seniority(self):
-        return None
-
-    @property
     def template_params(self):
         return np.identity(10)
 

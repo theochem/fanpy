@@ -36,14 +36,6 @@ class TestBaseWavefunction(BaseWavefunction):
             return 0
 
     @property
-    def seniority(self):
-        return None
-
-    @property
-    def spin(self):
-        return None
-
-    @property
     def template_params(self):
         return 10*(np.random.rand(2) - 0.5)
 
