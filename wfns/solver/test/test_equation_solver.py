@@ -49,7 +49,7 @@ class TestBaseWavefunction(BaseWavefunction):
         return 10*(np.random.rand(2) - 0.5)
 
 
-def test_cma_energy():
+def test_cma():
     """Test wnfs.solver.equation_solver.cma."""
     wfn = TestBaseWavefunction()
     wfn._cache_fns = {}
@@ -74,3 +74,28 @@ def test_cma_energy():
 
     assert_raises(TypeError, equation_solver.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
     assert_raises(ValueError, equation_solver.cma, SystemEquations(wfn, ham, refstate=0b0011))
+
+
+def test_minimize():
+    """Test wnfs.solver.equation_solver.minimize."""
+    wfn = TestBaseWavefunction()
+    wfn._cache_fns = {}
+    wfn.assign_nelec(2)
+    wfn.assign_nspin(4)
+    wfn.assign_dtype(float)
+    wfn.assign_params()
+    ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+
+    results = equation_solver.minimize(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
+    assert results['success']
+    assert np.allclose(results['energy'], 2)
+    assert np.allclose(results['function'], 2)
+
+    results = equation_solver.minimize(LeastSquaresEquations(wfn, ham, refstate=0b0011,
+                                                             pspace=[0b0011, 0b1100]))
+    assert results['success']
+    assert np.allclose(results['energy'], 2)
+    assert np.allclose(results['function'], 0, atol=1e-7)
+
+    assert_raises(TypeError, equation_solver.minimize, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
+    assert_raises(ValueError, equation_solver.minimize, SystemEquations(wfn, ham, refstate=0b0011))
