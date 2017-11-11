@@ -65,7 +65,21 @@ class LeastSquaresEquations(SystemEquations):
             Output of the function that will be optimized.
 
         """
+        # FIXME: monkey patched property
+        # The property num_eqns need to be that of SystemEquations rather than the
+        # LeastSquaresEquations for SystemEquations.objective to function properly. This occurs
+        # because the number of equations goes to 1 in LeastSquaresEquations. We can add more
+        # structure to differentiate between inherited and changed values, but this would require a
+        # rewrite of the other parts of code. Since this problem occurs only in this module, we will
+        # just patch in the fix here.
+        orig_num_eqns = LeastSquaresEquations.num_eqns
+        LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
+
         system_eqns = super().objective(params)
+
+        # patch back
+        LeastSquaresEquations.num_eqns = orig_num_eqns
+
         return np.sum(system_eqns**2)
 
     def gradient(self, params):
@@ -103,9 +117,24 @@ class LeastSquaresEquations(SystemEquations):
             Value of the gradient at the given parameter values.
 
         """
+        # FIXME: monkey patched property
+        # The property num_eqns need to be that of SystemEquations rather than the
+        # LeastSquaresEquations for SystemEquations.objective to function properly. This occurs
+        # because the number of equations goes to 1 in LeastSquaresEquations. We can add more
+        # structure to differentiate between inherited and changed values, but this would require a
+        # rewrite of the other parts of code. Since this problem occurs only in this module, we will
+        # just patch in the fix here.
+        temp = LeastSquaresEquations.num_eqns
+        LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
+
+        system_eqns = super().objective(params)
         # FIXME: There is probably a better way to implement this. In jacobian method, all of the
         # integrals needed to create the system_eqns is already available. This implementation would
         # repeat certain operations (but might not be that bad with caching?)
         system_eqns = super().objective(params)[:, np.newaxis]
         system_eqns_jac = super().jacobian(params)
+
+        # patch back
+        LeastSquaresEquations.num_eqns = temp
+
         return 2 * np.sum(system_eqns * system_eqns_jac, axis=0)
