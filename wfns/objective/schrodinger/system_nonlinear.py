@@ -34,7 +34,7 @@ class SystemEquations(BaseSchrodinger):
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
-    refstate : {tuple/list of int, CIWavefunction}
+    refwfn : {tuple/list of int, CIWavefunction}
         State with respect to which the energy and the norm are computed.
         If a list/tuple of Slater determinants are given, then the reference state is the given
         wavefunction truncated by the provided Slater determinants.
@@ -55,7 +55,7 @@ class SystemEquations(BaseSchrodinger):
 
     """
     def __init__(self, wfn, ham, tmpfile='', param_selection=None,
-                 pspace=None, refstate=None, eqn_weights=None, energy_type='compute', energy=None,
+                 pspace=None, refwfn=None, eqn_weights=None, energy_type='compute', energy=None,
                  constraints=None):
         """
 
@@ -64,7 +64,7 @@ class SystemEquations(BaseSchrodinger):
         pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
             States onto which the Schrodinger equation is projected.
             By default, the largest space is used.
-        refstate : {tuple/list of int, CIWavefunction, None}
+        refwfn : {tuple/list of int, CIWavefunction, None}
             State with respect to which the energy and the norm are computed.
             If a list/tuple of Slater determinants are given, then the reference state is the given
             wavefunction truncated by the provided Slater determinants.
@@ -99,14 +99,14 @@ class SystemEquations(BaseSchrodinger):
         """
         super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
         self.assign_pspace(pspace)
-        self.assign_refstate(refstate)
+        self.assign_refwfn(refwfn)
 
         if energy_type not in ['fixed', 'variable', 'compute']:
             raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
         self.energy_type = energy_type
 
         if energy is None:
-            energy = self.get_energy_one_proj(self.refstate)
+            energy = self.get_energy_one_proj(self.refwfn)
         elif not isinstance(energy, (float, complex)):
             raise TypeError('Energy must be given as a float or complex.')
         self.energy = ParamContainer(energy)
@@ -157,27 +157,27 @@ class SystemEquations(BaseSchrodinger):
                             'See `backend.slater` for compatible Slater determinant formats.')
         self.pspace = pspace
 
-    def assign_refstate(self, refstate=None):
+    def assign_refwfn(self, refwfn=None):
         """Set the reference state.
 
         Parameters
         ----------
-        refstate : {tuple/list of int, CIWavefunction, None}
+        refwfn : {tuple/list of int, CIWavefunction, None}
             State with respect to which the energy and the norm are computed.
             If a list/tuple of Slater determinants are given, then the reference state is the given
             wavefunction truncated by the provided Slater determinants.
             Default is ground state HF.
 
         """
-        if refstate is None:
-            self.refstate = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
-        elif slater.is_sd_compatible(refstate):
-            self.refstate = (refstate, )
-        elif (isinstance(refstate, (list, tuple)) and
-              all(slater.is_sd_compatible(sd) for sd in refstate)):
-            self.refstate = tuple(slater.internal_sd(sd) for sd in refstate)
-        elif isinstance(refstate, CIWavefunction):
-            self.refstate = refstate
+        if refwfn is None:
+            self.refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
+        elif slater.is_sd_compatible(refwfn):
+            self.refwfn = (refwfn, )
+        elif (isinstance(refwfn, (list, tuple)) and
+              all(slater.is_sd_compatible(sd) for sd in refwfn)):
+            self.refwfn = tuple(slater.internal_sd(sd) for sd in refwfn)
+        elif isinstance(refwfn, CIWavefunction):
+            self.refwfn = refwfn
         else:
             raise TypeError('Reference state must be given as a Slater determinant, a list/tuple of'
                             ' Slater determinants, or a CIWavefunction. See `backend.slater` for '
@@ -203,7 +203,7 @@ class SystemEquations(BaseSchrodinger):
 
         """
         if constraints is None:
-            constraints = [NormConstraint(self.wfn, refwfn=self.refstate,
+            constraints = [NormConstraint(self.wfn, refwfn=self.refwfn,
                                           param_selection=self.param_selection)]
         elif isinstance(constraints, BaseObjective):
             constraints = [constraints]
@@ -305,18 +305,18 @@ class SystemEquations(BaseSchrodinger):
             energy = self.energy.params
         elif self.energy_type == 'compute':
             # define reference
-            if isinstance(self.refstate, CIWavefunction):
-                ref_sds = self.refstate.sd_vec
-                ref_coeffs = self.refstate.params
+            if isinstance(self.refwfn, CIWavefunction):
+                ref_sds = self.refwfn.sd_vec
+                ref_coeffs = self.refwfn.params
             else:
-                ref_sds = self.refstate
+                ref_sds = self.refwfn
                 ref_coeffs = get_overlap(ref_sds)
 
             norm = np.sum(ref_coeffs * get_overlap(ref_sds))
-            energy = self.get_energy_one_proj(self.refstate)
+            energy = self.get_energy_one_proj(self.refwfn)
             energy = np.sum(ref_coeffs * integrate_wfn_sd(ref_sds)) / norm
             # can be replaced with
-            energy = self.get_energy_one_proj(self.refstate)
+            energy = self.get_energy_one_proj(self.refwfn)
             self.energy.assign_params(energy)
 
         # objective
@@ -376,19 +376,19 @@ class SystemEquations(BaseSchrodinger):
         derivs = derivs[np.newaxis, :]
 
         # define reference
-        if isinstance(self.refstate, CIWavefunction):
-            ref_sds = np.array(self.refstate.sd_vec)[:, np.newaxis]
-            ref_coeffs = self.refstate.params[:, np.newaxis]
+        if isinstance(self.refwfn, CIWavefunction):
+            ref_sds = np.array(self.refwfn.sd_vec)[:, np.newaxis]
+            ref_coeffs = self.refwfn.params[:, np.newaxis]
             d_ref_coeffs = np.zeros((ref_sds.size, params.size))
             try:
-                objective_indices = self.param_selection._masks_objective_params[self.refstate]
-                container_indices = self.param_selection._masks_container_params[self.refstate]
+                objective_indices = self.param_selection._masks_objective_params[self.refwfn]
+                container_indices = self.param_selection._masks_container_params[self.refwfn]
             except KeyError:
                 pass
             else:
                 d_ref_coeffs[container_indices, objective_indices] = 1.0
         else:
-            ref_sds = np.array(self.refstate)[:, np.newaxis]
+            ref_sds = np.array(self.refwfn)[:, np.newaxis]
             ref_coeffs = get_overlap(ref_sds)
             d_ref_coeffs = get_overlap(ref_sds, derivs)
 
