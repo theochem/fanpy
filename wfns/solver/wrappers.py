@@ -38,6 +38,33 @@ def wrap_scipy(func):
     """
     @wraps(func)
     def new_func(objective, save_file='', **kwargs):
+        """Solve the objective using the given function.
+
+        This function wraps around `func`.
+
+        Parameters
+        ----------
+        objective : BaseObjective
+            Objective.
+        save_file : str
+            File to which the results of the optimization is saved.
+            By default, the results are not saved.
+        kwargs : dict
+            Keyword arguments to the solver. See its documentation for details.
+
+        Returns
+        -------
+        Dictionary with the following keys and values:
+        success : bool
+            True if optimization succeeded.
+        params : np.ndarray
+            Parameters at the end of the optimization.
+        message : str
+            Message returned by the optimizer.
+        internal : OptimizeResults
+            Returned value of the `scipy.optimize.root`.
+
+        """
         results = func(objective.objective, objective.params, **kwargs)
 
         output = {}
