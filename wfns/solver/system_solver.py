@@ -58,6 +58,7 @@ def least_squares(objective, save_file='', **kwargs):
                   'max_nfev': 1000*objective.params.size, 'jac': objective.jacobian}
 
     output = wrap_scipy(least_squares)(objective, **kwargs)
+    output['energy'] = objective.energy.params
     output['residuals'] = output['internal'].fun
     output['cost'] = output['internal'].cost
     return output
@@ -114,4 +115,6 @@ def root(objective, save_file='', **kwargs):
     if kwargs == {}:
         kwargs = {'method': 'hybr', 'jac': objective.jacobian, 'options': {'xtol': 1.0e-9}}
 
-    return wrap_scipy(root)(objective, **kwargs)
+    output = wrap_scipy(root)(objective, **kwargs)
+    output['energy'] = objective.energy.params
+    return output

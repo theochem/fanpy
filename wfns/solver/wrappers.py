@@ -43,7 +43,6 @@ def wrap_scipy(func):
         output = {}
         output['success'] = results.success
         output['params'] = results.x
-        output['energy'] = objective.energy.params
         output['message'] = results.message
         output['internal'] = results
 
