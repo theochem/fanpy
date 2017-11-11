@@ -255,7 +255,7 @@ class SystemEquations(BaseSchrodinger):
 
     @property
     def num_eqns(self):
-        return len(self.pspace) + 1
+        return len(self.pspace) + sum(cons.num_eqns for cons in self.constraints)
 
     def objective(self, params):
         r"""System of equations that corresponds to the Projected Schrodinger equation.
@@ -319,14 +319,13 @@ class SystemEquations(BaseSchrodinger):
             energy = self.get_energy_one_proj(self.refstate)
             self.energy.assign_params(energy)
 
-        # number of equations in the constraints
-        num_constraints = sum(cons.num_eqns for cons in self.constraints)
         # objective
-        obj = np.empty(self.nproj + num_constraints)
+        obj = np.empty(self.num_eqns)
         # <SD|H|Psi> - E<SD|Psi> == 0
         obj[:self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
         # Add constraints
-        obj[self.nproj:] = np.hstack([cons.objective(params) for cons in self.constraints])
+        if self.nproj < self.num_eqns:
+            obj[self.nproj:] = np.hstack([cons.objective(params) for cons in self.constraints])
         # weigh equations
         obj *= self.eqn_weights
 
@@ -427,15 +426,14 @@ class SystemEquations(BaseSchrodinger):
         # reshape for broadcasting
         pspace = np.array(self.pspace)[:, np.newaxis]
 
-        # number of equations in the constraints
-        num_constraints = sum(cons.num_eqns for cons in self.constraints)
         # jacobian
-        jac = np.empty((self.nproj + num_constraints, params.size))
+        jac = np.empty((self.num_eqns, params.size))
         jac[:self.nproj, :] = integrate_wfn_sd(pspace, derivs)
         jac[:self.nproj, :] -= energy * get_overlap(pspace, derivs)
         jac[:self.nproj, :] -= d_energy[np.newaxis, :] * get_overlap(pspace)
         # Add constraints
-        jac[self.nproj:] = np.vstack([cons.gradient(params) for cons in self.constraints])
+        if self.nproj < self.num_eqns:
+            jac[self.nproj:] = np.vstack([cons.gradient(params) for cons in self.constraints])
         # weigh equations
         jac *= self.eqn_weights[:, np.newaxis]
 
