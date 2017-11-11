@@ -67,8 +67,8 @@ get_spin(sd, nspatial) : float
     Return the spin of the given Slater determinant.
 get_seniority(sd, nspatial) : int
     Return the seniority of the given Slater determinant.
-find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True) : int
-    Find the number of transpositions needed to order a set of annihilators in increasing order.
+sign_perm(jumbled_set, ordered_set=None, is_decreasing=True) : int
+    Return the signature of the permutation that sorts a set of annihilators to increasing order.
 find_num_trans_swap(sd, pos_current, pos_future) : int
     Find the number of swaps needed to move an orbital from one position to another.
 
@@ -788,15 +788,15 @@ def get_seniority(sd, nspatial):
 
 
 @docstring(indent_level=1)
-def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True):
-    """Find the number of transpositions needed to order a set of annihilators in increasing order.
+def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
+    """Return the signature of the permutation that sorts a set of annihilators to increasing order.
 
     Parameters
     ----------
     jumbled_set : {tuple, list}
         Set of indices of the annihilators.
     ordered_set : {tuple, list}
-        Set of indices ordered in increasing order.
+        Set of indices ordered in strictly increasing order.
         If not provided, then the given indices are ordered.
     is_decreasing : bool
         If True, then the number of transpositions required to get strictly decreasing list is
@@ -805,8 +805,8 @@ def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True):
 
     Returns
     -------
-    num_trans : int
-        Number of hops needed to sort the `jumbled_set`.
+    sign : int
+        Signature of the permutation.
 
     Raises
     ------
@@ -823,17 +823,17 @@ def find_num_trans(jumbled_set, ordered_set=None, is_decreasing=True):
     elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
         raise ValueError('ordered_set must be strictly increasing.')
 
-    num_trans = 0
+    sign = 1
     # for each ordered number
     for i in ordered_set:
         for j in jumbled_set:
             # count the number of numbers that are greater than it
             if j > i:
-                num_trans += 1
+                sign *= -1
             # skip over numbers to the right
             elif j == i:
                 break
-    return num_trans
+    return sign
 
 
 @docstring(indent_level=1)

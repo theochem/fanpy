@@ -9,7 +9,7 @@ generate_biclique_pmatch(indices_one, indices_two)
     and `indices_two`.
 
 """
-from wfns.backend.slater import find_num_trans
+from wfns.backend.slater import sign_perm
 from wfns.wrapper.docstring import docstring
 
 
@@ -92,7 +92,7 @@ def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
     """
     # assume indices_one and indices_two are sorted
     sign = 1
-    orig_sign = (-1)**find_num_trans(indices_one + indices_two, is_decreasing=is_decreasing)
+    orig_sign = sign_perm(indices_one + indices_two, is_decreasing=is_decreasing)
     # orig_sign is the signature of the transpositions requires to sort indices_one + indices_two
     # from smallest to largest
     orig_sign *= (-1)**((len(indices_one)//2) % 2)

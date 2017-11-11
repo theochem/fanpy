@@ -414,109 +414,109 @@ def test_get_seniority():
     assert slater.get_seniority(0b1111, 2) == 0
 
 
-def test_find_num_trans():
-    """Test slater.find_num_trans."""
-    assert slater.find_num_trans([1, 3, 4, 6], is_decreasing=False) == 0
-    assert slater.find_num_trans([1, 3, 6, 4], is_decreasing=False) == 1
-    assert slater.find_num_trans([1, 4, 3, 6], is_decreasing=False) == 1
-    assert slater.find_num_trans([1, 4, 6, 3], is_decreasing=False) == 2
-    assert slater.find_num_trans([1, 6, 3, 4], is_decreasing=False) == 2
-    assert slater.find_num_trans([1, 6, 4, 3], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 1, 4, 6], is_decreasing=False) == 1
-    assert slater.find_num_trans([3, 1, 6, 4], is_decreasing=False) == 2
-    assert slater.find_num_trans([3, 4, 1, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([3, 4, 6, 1], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 6, 1, 4], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 6, 4, 1], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 1, 3, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([4, 1, 6, 3], is_decreasing=False) == 3
-    assert slater.find_num_trans([4, 3, 1, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([4, 3, 6, 1], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 6, 1, 3], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 6, 3, 1], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 1, 3, 4], is_decreasing=False) == 3
-    assert slater.find_num_trans([6, 1, 4, 3], is_decreasing=False) == 4
-    assert slater.find_num_trans([6, 3, 1, 4], is_decreasing=False) == 4
-    assert slater.find_num_trans([6, 3, 4, 1], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 4, 1, 3], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 4, 3, 1], is_decreasing=False) == 6
+def test_sign_perm():
+    """Test slater.sign_perm."""
+    assert slater.sign_perm([1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 3, 6, 4], is_decreasing=False) == -1
+    assert slater.sign_perm([1, 4, 3, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([1, 4, 6, 3], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 6, 3, 4], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 6, 4, 3], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 1, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 1, 6, 4], is_decreasing=False) == 1
+    assert slater.sign_perm([3, 4, 1, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([3, 4, 6, 1], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 6, 1, 4], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 6, 4, 1], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 1, 3, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 1, 6, 3], is_decreasing=False) == -1
+    assert slater.sign_perm([4, 3, 1, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([4, 3, 6, 1], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 6, 1, 3], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 6, 3, 1], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 1, 3, 4], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 1, 4, 3], is_decreasing=False) == 1
+    assert slater.sign_perm([6, 3, 1, 4], is_decreasing=False) == 1
+    assert slater.sign_perm([6, 3, 4, 1], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 4, 1, 3], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 4, 3, 1], is_decreasing=False) == 1
 
-    assert slater.find_num_trans([1, 3, 4, 6], [1, 3, 4, 6], is_decreasing=False) == 0
-    assert slater.find_num_trans([1, 3, 6, 4], [1, 3, 4, 6], is_decreasing=False) == 1
-    assert slater.find_num_trans([1, 4, 3, 6], [1, 3, 4, 6], is_decreasing=False) == 1
-    assert slater.find_num_trans([1, 4, 6, 3], [1, 3, 4, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([1, 6, 3, 4], [1, 3, 4, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([1, 6, 4, 3], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 1, 4, 6], [1, 3, 4, 6], is_decreasing=False) == 1
-    assert slater.find_num_trans([3, 1, 6, 4], [1, 3, 4, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([3, 4, 1, 6], [1, 3, 4, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([3, 4, 6, 1], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 6, 1, 4], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([3, 6, 4, 1], [1, 3, 4, 6], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 1, 3, 6], [1, 3, 4, 6], is_decreasing=False) == 2
-    assert slater.find_num_trans([4, 1, 6, 3], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([4, 3, 1, 6], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([4, 3, 6, 1], [1, 3, 4, 6], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 6, 1, 3], [1, 3, 4, 6], is_decreasing=False) == 4
-    assert slater.find_num_trans([4, 6, 3, 1], [1, 3, 4, 6], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 1, 3, 4], [1, 3, 4, 6], is_decreasing=False) == 3
-    assert slater.find_num_trans([6, 1, 4, 3], [1, 3, 4, 6], is_decreasing=False) == 4
-    assert slater.find_num_trans([6, 3, 1, 4], [1, 3, 4, 6], is_decreasing=False) == 4
-    assert slater.find_num_trans([6, 3, 4, 1], [1, 3, 4, 6], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 4, 1, 3], [1, 3, 4, 6], is_decreasing=False) == 5
-    assert slater.find_num_trans([6, 4, 3, 1], [1, 3, 4, 6], is_decreasing=False) == 6
+    assert slater.sign_perm([1, 3, 4, 6], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 3, 6, 4], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([1, 4, 3, 6], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([1, 4, 6, 3], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 6, 3, 4], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([1, 6, 4, 3], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 1, 4, 6], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 1, 6, 4], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([3, 4, 1, 6], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([3, 4, 6, 1], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 6, 1, 4], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([3, 6, 4, 1], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 1, 3, 6], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 1, 6, 3], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([4, 3, 1, 6], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([4, 3, 6, 1], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 6, 1, 3], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([4, 6, 3, 1], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 1, 3, 4], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 1, 4, 3], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([6, 3, 1, 4], [1, 3, 4, 6], is_decreasing=False) == 1
+    assert slater.sign_perm([6, 3, 4, 1], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 4, 1, 3], [1, 3, 4, 6], is_decreasing=False) == -1
+    assert slater.sign_perm([6, 4, 3, 1], [1, 3, 4, 6], is_decreasing=False) == 1
 
-    assert slater.find_num_trans([1, 3, 4, 6], is_decreasing=True) == 6
-    assert slater.find_num_trans([1, 3, 6, 4], is_decreasing=True) == 5
-    assert slater.find_num_trans([1, 4, 3, 6], is_decreasing=True) == 5
-    assert slater.find_num_trans([1, 4, 6, 3], is_decreasing=True) == 4
-    assert slater.find_num_trans([1, 6, 3, 4], is_decreasing=True) == 4
-    assert slater.find_num_trans([1, 6, 4, 3], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 1, 4, 6], is_decreasing=True) == 5
-    assert slater.find_num_trans([3, 1, 6, 4], is_decreasing=True) == 4
-    assert slater.find_num_trans([3, 4, 1, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([3, 4, 6, 1], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 6, 1, 4], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 6, 4, 1], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 1, 3, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([4, 1, 6, 3], is_decreasing=True) == 3
-    assert slater.find_num_trans([4, 3, 1, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([4, 3, 6, 1], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 6, 1, 3], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 6, 3, 1], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 1, 3, 4], is_decreasing=True) == 3
-    assert slater.find_num_trans([6, 1, 4, 3], is_decreasing=True) == 2
-    assert slater.find_num_trans([6, 3, 1, 4], is_decreasing=True) == 2
-    assert slater.find_num_trans([6, 3, 4, 1], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 4, 1, 3], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 4, 3, 1], is_decreasing=True) == 0
+    assert slater.sign_perm([1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([1, 3, 6, 4], is_decreasing=True) == -1
+    assert slater.sign_perm([1, 4, 3, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([1, 4, 6, 3], is_decreasing=True) == 1
+    assert slater.sign_perm([1, 6, 3, 4], is_decreasing=True) == 1
+    assert slater.sign_perm([1, 6, 4, 3], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 1, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 1, 6, 4], is_decreasing=True) == 1
+    assert slater.sign_perm([3, 4, 1, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([3, 4, 6, 1], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 6, 1, 4], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 6, 4, 1], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 1, 3, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 1, 6, 3], is_decreasing=True) == -1
+    assert slater.sign_perm([4, 3, 1, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([4, 3, 6, 1], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 6, 1, 3], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 6, 3, 1], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 1, 3, 4], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 1, 4, 3], is_decreasing=True) == 1
+    assert slater.sign_perm([6, 3, 1, 4], is_decreasing=True) == 1
+    assert slater.sign_perm([6, 3, 4, 1], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 4, 1, 3], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 4, 3, 1], is_decreasing=True) == 1
 
-    assert slater.find_num_trans([1, 3, 6, 4], [1, 3, 4, 6], is_decreasing=True) == 5
-    assert slater.find_num_trans([1, 4, 3, 6], [1, 3, 4, 6], is_decreasing=True) == 5
-    assert slater.find_num_trans([1, 4, 6, 3], [1, 3, 4, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([1, 6, 3, 4], [1, 3, 4, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([1, 6, 4, 3], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 1, 4, 6], [1, 3, 4, 6], is_decreasing=True) == 5
-    assert slater.find_num_trans([3, 1, 6, 4], [1, 3, 4, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([3, 4, 1, 6], [1, 3, 4, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([3, 4, 6, 1], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 6, 1, 4], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([3, 6, 4, 1], [1, 3, 4, 6], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 1, 3, 6], [1, 3, 4, 6], is_decreasing=True) == 4
-    assert slater.find_num_trans([4, 1, 6, 3], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([4, 3, 1, 6], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([4, 3, 6, 1], [1, 3, 4, 6], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 6, 1, 3], [1, 3, 4, 6], is_decreasing=True) == 2
-    assert slater.find_num_trans([4, 6, 3, 1], [1, 3, 4, 6], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 1, 3, 4], [1, 3, 4, 6], is_decreasing=True) == 3
-    assert slater.find_num_trans([6, 1, 4, 3], [1, 3, 4, 6], is_decreasing=True) == 2
-    assert slater.find_num_trans([6, 3, 1, 4], [1, 3, 4, 6], is_decreasing=True) == 2
-    assert slater.find_num_trans([6, 3, 4, 1], [1, 3, 4, 6], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 4, 1, 3], [1, 3, 4, 6], is_decreasing=True) == 1
-    assert slater.find_num_trans([6, 4, 3, 1], [1, 3, 4, 6], is_decreasing=True) == 0
+    assert slater.sign_perm([1, 3, 6, 4], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([1, 4, 3, 6], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([1, 4, 6, 3], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([1, 6, 3, 4], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([1, 6, 4, 3], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 1, 4, 6], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 1, 6, 4], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([3, 4, 1, 6], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([3, 4, 6, 1], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 6, 1, 4], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([3, 6, 4, 1], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 1, 3, 6], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 1, 6, 3], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([4, 3, 1, 6], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([4, 3, 6, 1], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 6, 1, 3], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([4, 6, 3, 1], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 1, 3, 4], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 1, 4, 3], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([6, 3, 1, 4], [1, 3, 4, 6], is_decreasing=True) == 1
+    assert slater.sign_perm([6, 3, 4, 1], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 4, 1, 3], [1, 3, 4, 6], is_decreasing=True) == -1
+    assert slater.sign_perm([6, 4, 3, 1], [1, 3, 4, 6], is_decreasing=True) == 1
 
-    assert_raises(ValueError, slater.find_num_trans, [1, 3, 6, 4], [1, 3, 6, 4], False)
-    assert_raises(ValueError, slater.find_num_trans, [1, 3, 6, 4], [1, 3, 6, 4], True)
+    assert_raises(ValueError, slater.sign_perm, [1, 3, 6, 4], [1, 3, 6, 4], False)
+    assert_raises(ValueError, slater.sign_perm, [1, 3, 6, 4], [1, 3, 6, 4], True)
 
 
 def test_find_num_trans_swap():

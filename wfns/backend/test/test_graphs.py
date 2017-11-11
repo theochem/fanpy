@@ -1,6 +1,6 @@
 """Tests fors wfn.graphs."""
 from wfns.backend.graphs import generate_complete_pmatch, generate_biclique_pmatch
-from wfns.backend.slater import find_num_trans
+from wfns.backend.slater import sign_perm
 
 
 def test_generate_complete_pmatch():
@@ -41,11 +41,11 @@ def test_generate_complete_pmatch():
     occ_indices = [0, 1, 3, 4, 6, 7, 9, 10]
     for pairing_scheme, sign in generate_complete_pmatch(occ_indices):
         jumbled_indices = [j for i in pairing_scheme for j in i]
-        assert sign == (-1)**(find_num_trans(jumbled_indices, occ_indices, is_decreasing=False))
+        assert sign == sign_perm(jumbled_indices, occ_indices, is_decreasing=False)
     occ_indices = [0, 1, 3, 4, 6, 7]
     for pairing_scheme, sign in generate_complete_pmatch(occ_indices):
         jumbled_indices = [j for i in pairing_scheme for j in i]
-        assert sign == (-1)**(find_num_trans(jumbled_indices, occ_indices, is_decreasing=False))
+        assert sign == sign_perm(jumbled_indices, occ_indices, is_decreasing=False)
 
 
 def test_generate_biclique_pmatch():
@@ -64,7 +64,7 @@ def test_generate_biclique_pmatch():
     ordered_indices = sorted(indices_one + indices_two)
     for pairing_scheme, sign in generate_biclique_pmatch(indices_one, indices_two):
         jumbled_indices = [j for i in pairing_scheme for j in i]
-        assert sign == (-1)**(find_num_trans(jumbled_indices, ordered_indices, is_decreasing=False))
+        assert sign == sign_perm(jumbled_indices, ordered_indices, is_decreasing=False)
 
     # 6 vertices
     indices_one = [0, 1, 3]
@@ -79,7 +79,7 @@ def test_generate_biclique_pmatch():
     ordered_indices = sorted(indices_one + indices_two)
     for pairing_scheme, sign in generate_biclique_pmatch(indices_one, indices_two):
         jumbled_indices = [j for i in pairing_scheme for j in i]
-        assert sign == (-1)**(find_num_trans(jumbled_indices, ordered_indices, is_decreasing=False))
+        assert sign == sign_perm(jumbled_indices, ordered_indices, is_decreasing=False)
 
     # 8 vertices
     indices_one = [0, 1, 3, 5]
@@ -112,4 +112,4 @@ def test_generate_biclique_pmatch():
     ordered_indices = sorted(indices_one + indices_two)
     for pairing_scheme, sign in generate_biclique_pmatch(indices_one, indices_two):
         jumbled_indices = [j for i in pairing_scheme for j in i]
-        assert sign == (-1)**(find_num_trans(jumbled_indices, ordered_indices, is_decreasing=False))
+        assert sign == sign_perm(jumbled_indices, ordered_indices, is_decreasing=False)
