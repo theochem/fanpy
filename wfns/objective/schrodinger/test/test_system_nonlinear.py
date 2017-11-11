@@ -158,6 +158,10 @@ def test_system_assign_constraints():
 def test_num_eqns():
     """Test SystemEquation.num_eqns."""
     test = TestSystemEquations()
+    test.wfn = CIWavefunction(2, 4)
+    test.assign_refstate()
+    test.assign_param_selection()
+    test.assign_constraints()
     test.pspace = (0b0101, 0b1010)
     assert test.num_eqns == 3
 
