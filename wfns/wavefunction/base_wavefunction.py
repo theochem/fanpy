@@ -91,6 +91,45 @@ class BaseWavefunction(ParamContainer):
         """
         return self.template_params.shape
 
+    @property
+    def spin(self):
+        r"""Return the spin of the wavefunction.
+
+        .. math::
+
+            \frac{1}{2}(N_\alpha - N_\beta)
+
+        Returns
+        -------
+        spin : float
+            Spin of the wavefunction.
+
+        Notes
+        -----
+        `None` means that all possible spins are allowed.
+
+        """
+        return None
+
+    @property
+    def seniority(self):
+        """Return the seniority of the wavefunction.
+
+        Seniority of a Slater determinant is its number of unpaired electrons. The seniority of the
+        wavefunction is the expected number of unpaired electrons.
+
+        Returns
+        -------
+        seniority : int
+            Seniority of the wavefunction.
+
+        Notes
+        -----
+        `None` means that all possible seniority are allowed.
+
+        """
+        return None
+
     def assign_nelec(self, nelec):
         """Set the number of electrons.
 
@@ -344,45 +383,6 @@ class BaseWavefunction(ParamContainer):
         except AttributeError as error:
             raise AttributeError('Given cached function does not have decorator '
                                  '`functools.lru_cache`') from error
-
-    @abc.abstractproperty
-    def spin(self):
-        r"""Return the spin of the wavefunction.
-
-        .. math::
-
-            \frac{1}{2}(N_\alpha - N_\beta)
-
-        Returns
-        -------
-        spin : float
-            Spin of the wavefunction.
-
-        Notes
-        -----
-        `None` means that all possible spins are allowed.
-
-        """
-        pass
-
-    @abc.abstractproperty
-    def seniority(self):
-        """Return the seniority of the wavefunction.
-
-        Seniority of a Slater determinant is its number of unpaired electrons. The seniority of the
-        wavefunction is the expected number of unpaired electrons.
-
-        Returns
-        -------
-        seniority : int
-            Seniority of the wavefunction.
-
-        Notes
-        -----
-        `None` means that all possible seniority are allowed.
-
-        """
-        pass
 
     @abc.abstractproperty
     def template_params(self):
