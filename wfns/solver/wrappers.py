@@ -21,7 +21,7 @@ def wrap_scipy(func):
     ----------
     func(objective, x0, **kwargs) : function
         Scipy function that will be used to optimize the objective.
-        Output is OptimizeResults instance.
+        Output is OptimizeResult instance.
         Second argument must be the initial guess (rather than boundary or ranges).
 
     Returns
@@ -33,7 +33,7 @@ def wrap_scipy(func):
 
     Examples
     --------
-    >>> least_squares = wrap_scipy(least_squares)
+    >>> least_squares = wrap_scipy(scipy.optimize.least_squares)
 
     """
     @wraps(func)
@@ -66,6 +66,77 @@ def wrap_scipy(func):
 
         """
         results = func(objective.objective, objective.params, **kwargs)
+
+        output = {}
+        output['success'] = results.success
+        output['params'] = results.x
+        output['message'] = results.message
+        output['internal'] = results
+
+        if save_file != '':
+            np.save(save_file, objective.all_params)
+
+        return output
+    return new_func
+
+
+def wrap_skopt(func):
+    """Convert solvers from `skopt` to a consistent format.
+
+    Following methods are supported: `dummy_minimize`, `forest_minimize`, `gbrt_minimize`, and
+    `gp_minimize`.
+
+    Parameters
+    ----------
+    func(objective, dimensions, **kwargs) : function
+        Scikit-optimize function that will be used to optimize the objective.
+        Output is OptimizeResult instance.
+        Second argument must be the initial guess (rather than boundary or ranges).
+
+    Returns
+    -------
+    new_func(objective, save_file='', **kwargs) : function
+        Wrapped scikit-optimize function.
+        Output is a dictionary that is consistent with other solvers.
+        'save_file' is the name of the file that will be saved.
+
+    Examples
+    --------
+    >>> forst_minimize = wrap_scipy(skopt.optimizer.forest_minimize)
+
+    """
+    @wraps(func)
+    def new_func(objective, save_file='', **kwargs):
+        """Solve the objective using the given function.
+
+        This function wraps around `func`.
+
+        Parameters
+        ----------
+        objective : BaseObjective
+            Objective.
+        save_file : str
+            File to which the results of the optimization is saved.
+            By default, the results are not saved.
+        kwargs : dict
+            Keyword arguments to the solver. See its documentation for details.
+
+        Returns
+        -------
+        Dictionary with the following keys and values:
+        success : bool
+            True if optimization succeeded.
+        params : np.ndarray
+            Parameters at the end of the optimization.
+        message : str
+            Message returned by the optimizer.
+        internal : OptimizeResults
+            Returned value of the `scipy.optimize.root`.
+
+        """
+        if 'dimensions' not in kwargs:
+            kwargs['dimensions'] = [(i-0.5, i+0.5) for i in objective.params]
+        results = func(objective.objective, **kwargs)
 
         output = {}
         output['success'] = results.success
