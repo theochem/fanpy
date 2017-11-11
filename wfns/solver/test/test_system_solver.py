@@ -57,7 +57,7 @@ def test_least_squares():
     wfn.assign_dtype(float)
     wfn.assign_params()
     ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
-    objective = SystemEquations(wfn, ham, refstate=0b0011, pspace=[0b0011, 0b1100])
+    objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100])
 
     results = system_solver.least_squares(objective)
     assert results['success']
@@ -77,7 +77,7 @@ def test_root():
     wfn.assign_dtype(float)
     wfn.assign_params()
     ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
-    objective = SystemEquations(wfn, ham, refstate=0b0011, pspace=[0b0011, 0b1100], constraints=[])
+    objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
 
     results = system_solver.root(objective)
     assert results['success']
@@ -85,5 +85,5 @@ def test_root():
     assert np.allclose(objective.objective(wfn.params), 0)
 
     assert_raises(TypeError, system_solver.root, OneSidedEnergy(wfn, ham))
-    assert_raises(ValueError, system_solver.root, SystemEquations(wfn, ham, refstate=0b0011,
+    assert_raises(ValueError, system_solver.root, SystemEquations(wfn, ham, refwfn=0b0011,
                                                                   pspace=[0b0011, 0b1100]))

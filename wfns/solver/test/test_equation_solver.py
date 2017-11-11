@@ -65,7 +65,7 @@ def test_cma():
     assert np.allclose(results['function'], 2)
     assert results['message'] == 'Following termination conditions are satisfied: tolfun: 1e-11.'
 
-    results = equation_solver.cma(LeastSquaresEquations(wfn, ham, refstate=0b0011,
+    results = equation_solver.cma(LeastSquaresEquations(wfn, ham, refwfn=0b0011,
                                                         pspace=[0b0011, 0b1100]))
     assert results['success']
     assert np.allclose(results['energy'], 2)
@@ -73,7 +73,7 @@ def test_cma():
     assert results['message'] == 'Following termination conditions are satisfied: ftarget: 1e-07.'
 
     assert_raises(TypeError, equation_solver.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
-    assert_raises(ValueError, equation_solver.cma, SystemEquations(wfn, ham, refstate=0b0011))
+    assert_raises(ValueError, equation_solver.cma, SystemEquations(wfn, ham, refwfn=0b0011))
 
 
 def test_minimize():
@@ -91,11 +91,11 @@ def test_minimize():
     assert np.allclose(results['energy'], 2)
     assert np.allclose(results['function'], 2)
 
-    results = equation_solver.minimize(LeastSquaresEquations(wfn, ham, refstate=0b0011,
+    results = equation_solver.minimize(LeastSquaresEquations(wfn, ham, refwfn=0b0011,
                                                              pspace=[0b0011, 0b1100]))
     assert results['success']
     assert np.allclose(results['energy'], 2)
     assert np.allclose(results['function'], 0, atol=1e-7)
 
     assert_raises(TypeError, equation_solver.minimize, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
-    assert_raises(ValueError, equation_solver.minimize, SystemEquations(wfn, ham, refstate=0b0011))
+    assert_raises(ValueError, equation_solver.minimize, SystemEquations(wfn, ham, refwfn=0b0011))

@@ -74,27 +74,27 @@ def test_system_assign_pspace():
     assert_raises(TypeError, test.assign_pspace, '0101')
 
 
-def test_system_assign_refstate():
-    """Test SystemEquations.assign_refstate."""
+def test_system_assign_refwfn():
+    """Test SystemEquations.assign_refwfn."""
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
 
-    test.assign_refstate()
-    assert test.refstate == (0b0101, )
+    test.assign_refwfn()
+    assert test.refwfn == (0b0101, )
 
-    test.assign_refstate(0b0110)
-    assert test.refstate == (0b0110, )
+    test.assign_refwfn(0b0110)
+    assert test.refwfn == (0b0110, )
 
-    test.assign_refstate([0b0101, 0b0110])
-    assert test.refstate == (0b0101, 0b0110)
+    test.assign_refwfn([0b0101, 0b0110])
+    assert test.refwfn == (0b0101, 0b0110)
 
     ciwfn = CIWavefunction(2, 4)
-    test.assign_refstate(ciwfn)
-    assert test.refstate == ciwfn
+    test.assign_refwfn(ciwfn)
+    assert test.refwfn == ciwfn
 
-    assert_raises(TypeError, test.assign_refstate, [ciwfn, ciwfn])
-    assert_raises(TypeError, test.assign_refstate, '0101')
-    assert_raises(TypeError, test.assign_refstate, np.array([0b0101, 0b0110]))
+    assert_raises(TypeError, test.assign_refwfn, [ciwfn, ciwfn])
+    assert_raises(TypeError, test.assign_refwfn, '0101')
+    assert_raises(TypeError, test.assign_refwfn, np.array([0b0101, 0b0110]))
 
 
 def test_system_assign_eqn_weights():
@@ -102,7 +102,7 @@ def test_system_assign_eqn_weights():
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
     test.assign_pspace()
-    test.assign_refstate()
+    test.assign_refwfn()
     test.assign_param_selection()
     test.assign_constraints()
 
@@ -128,7 +128,7 @@ def test_system_assign_constraints():
     """Test SystemEquations.assign_constraints."""
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
-    test.refstate = (0b0101, )
+    test.refwfn = (0b0101, )
     test.param_selection = ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
 
     test.assign_constraints()
@@ -159,7 +159,7 @@ def test_num_eqns():
     """Test SystemEquation.num_eqns."""
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
-    test.assign_refstate()
+    test.assign_refwfn()
     test.assign_param_selection()
     test.assign_constraints()
     test.pspace = (0b0101, 0b1010)
@@ -183,7 +183,7 @@ def test_system_objective():
     for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
         guess = np.random.rand(7)
         # computed energy
-        test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=refwfn)
+        test = SystemEquations(wfn, ham, eqn_weights=weights, refwfn=refwfn)
         wfn.assign_params(guess[:6])
         if refwfn == 0b0101:
             norm_answer = weights[-1] * (wfn.get_overlap(0b0101)**2 - 1)
@@ -205,7 +205,7 @@ def test_system_objective():
 
         # variable energy
         test = SystemEquations(wfn, ham, energy=1.0, energy_type='variable', eqn_weights=weights,
-                               refstate=refwfn)
+                               refwfn=refwfn)
         objective = test.objective(guess)
         for eqn, sd, weight in zip(objective[:-1],
                                    [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
@@ -216,7 +216,7 @@ def test_system_objective():
 
         # fixed energy
         test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
-                               refstate=refwfn)
+                               refwfn=refwfn)
         objective = test.objective(guess[:6])
         for eqn, sd, weight in zip(objective[:-1],
                                    [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
@@ -244,7 +244,7 @@ def test_system_jacobian():
     for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
         guess = np.random.rand(7)
         # computed energy
-        test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=refwfn)
+        test = SystemEquations(wfn, ham, eqn_weights=weights, refwfn=refwfn)
         wfn.assign_params(guess[:6])
         if refwfn == 0b0101:
             norm_answer = [weights[-1] * (2 * wfn.get_overlap(0b0101) *
@@ -272,7 +272,7 @@ def test_system_jacobian():
 
         # variable energy
         test = SystemEquations(wfn, ham, energy=3.0, energy_type='variable', eqn_weights=weights,
-                               refstate=refwfn)
+                               refwfn=refwfn)
         jacobian = test.jacobian(guess)
         for eqn, sd, weight in zip(jacobian[:-1],
                                    [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
@@ -285,7 +285,7 @@ def test_system_jacobian():
 
         # fixed energy
         test = SystemEquations(wfn, ham, energy=1.0, energy_type='fixed', eqn_weights=weights,
-                               refstate=refwfn)
+                               refwfn=refwfn)
         jacobian = test.jacobian(guess[:6])
         for eqn, sd, weight in zip(jacobian[:-1],
                                    [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]):
@@ -308,7 +308,7 @@ def test_system_jacobian_active_ciref():
     ciref.assign_params(np.random.rand(6))
 
     # computed energy
-    test = SystemEquations(wfn, ham, eqn_weights=weights, refstate=ciref,
+    test = SystemEquations(wfn, ham, eqn_weights=weights, refwfn=ciref,
                            param_selection=((wfn, np.ones(6, dtype=bool)),
                                             (ciref, np.ones(6, dtype=bool))))
 
