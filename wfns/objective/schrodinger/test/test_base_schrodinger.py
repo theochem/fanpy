@@ -4,7 +4,7 @@ import numpy as np
 import itertools as it
 from wfns.param import ParamContainer
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 from wfns.ham.chemical import ChemicalHamiltonian
 

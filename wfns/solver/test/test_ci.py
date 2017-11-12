@@ -1,7 +1,7 @@
 """Test wfn.solver.ci."""
 import numpy as np
 from nose.tools import assert_raises
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.solver import ci
 

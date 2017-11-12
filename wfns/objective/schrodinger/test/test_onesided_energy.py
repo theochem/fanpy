@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
 
 
