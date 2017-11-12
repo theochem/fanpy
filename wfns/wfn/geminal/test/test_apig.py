@@ -5,7 +5,7 @@ import scipy
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 from wfns.tools import find_datafile
-from wfns.wfn.geminals.apig import APIG
+from wfns.wfn.geminal.apig import APIG
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns import solver
 

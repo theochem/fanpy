@@ -5,8 +5,8 @@ import types
 import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
 from wfns.tools import find_datafile
-from wfns.wfn.geminals.apg import APG
-from wfns.wfn.geminals.apig import APIG
+from wfns.wfn.geminal.apg import APG
+from wfns.wfn.geminal.apig import APIG
 from wfns.ham.chemical import ChemicalHamiltonian
 from wfns import solver
 

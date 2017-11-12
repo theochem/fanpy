@@ -1,7 +1,7 @@
 """Antisymmetric Product of Rank-2 (APr2G) Geminals wavefunction."""
 from __future__ import absolute_import, division, print_function
-from wfns.wfn.geminals.rank2_approx import RankTwoApprox
-from wfns.wfn.geminals.apig import APIG
+from wfns.wfn.geminal.rank2_approx import RankTwoApprox
+from wfns.wfn.geminal.apig import APIG
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []

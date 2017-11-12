@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.backend.slater import sign_perm
-from wfns.wfn.geminals.base_geminal import BaseGeminal
+from wfns.wfn.geminal.base_geminal import BaseGeminal
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []

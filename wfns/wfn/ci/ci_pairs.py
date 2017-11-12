@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.wfn.ci.doci import DOCI
-from wfns.wfn.geminals.ap1rog import AP1roG
+from wfns.wfn.geminal.ap1rog import AP1roG
 from wfns.backend.sd_list import sd_list
 from wfns.backend import slater
 from wfns.wrapper.docstring import docstring_class
