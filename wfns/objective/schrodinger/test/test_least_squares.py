@@ -3,7 +3,7 @@ import numpy as np
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 
 
 def test_num_eqns():

@@ -6,7 +6,7 @@ from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 from wfns.tools import find_datafile
 from wfns.wavefunction.geminals.apig import APIG
-from wfns.hamiltonian.sen0_hamiltonian import SeniorityZeroHamiltonian
+from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns import solver
 
 

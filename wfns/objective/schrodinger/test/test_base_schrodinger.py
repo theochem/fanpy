@@ -5,8 +5,8 @@ import itertools as it
 from wfns.param import ParamContainer
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.base import BaseHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestBaseHamiltonian(BaseHamiltonian):

@@ -2,7 +2,7 @@
 import numpy as np
 from nose.tools import assert_raises
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.solver import ci_solver
 
 
