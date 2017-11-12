@@ -226,11 +226,11 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                     return self.wfn.get_overlap(sd)
                 elif slater.occ(sd, p) and not slater.occ(sd, q):
                     # get signature for the excited Slater determinant
-                    sign = (-1) ** slater.sign_swap(sd, p, q)
+                    sign = slater.sign_swap(sd, p, q)
                     return (cos * self.wfn.get_overlap(sd)
                             + sign * sin * self.wfn.get_overlap(slater.excite(sd, p, q)))
                 elif not slater.occ(sd, p) and slater.occ(sd, q):
-                    sign = (-1) ** slater.sign_swap(sd, q, p)
+                    sign = slater.sign_swap(sd, q, p)
                     return (cos * self.wfn.get_overlap(sd)
                             - sign * sin * self.wfn.get_overlap(slater.excite(sd, q, p)))
             else:
@@ -243,27 +243,27 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains p and not q
                 elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    sign = slater.sign_swap(beta_sd, p, q)
                     return (cos * self.wfn.get_overlap(sd)
                             + sin * sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
                 # beta block contains q and not p
                 elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    sign = slater.sign_swap(beta_sd, q, p)
                     return (cos * self.wfn.get_overlap(sd)
                             - sign * sin * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
                 # alpha block contains p and not q
                 # beta block contains both p and q or neither p and q
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
+                    sign = slater.sign_swap(alpha_sd, p, q)
                     return (cos * self.wfn.get_overlap(sd)
                             + sign * sin * self.wfn.get_overlap(slater.excite(sd, p, q)))
                 # beta block contains p and not q
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    alpha_sign = slater.sign_swap(alpha_sd, p, q)
+                    beta_sign = slater.sign_swap(beta_sd, p, q)
                     return (cos**2 * self.wfn.get_overlap(sd) +
                             (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
                              + beta_sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
@@ -273,8 +273,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains q and not p
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    alpha_sign = slater.sign_swap(alpha_sd, p, q)
+                    beta_sign = slater.sign_swap(beta_sd, q, p)
                     return (cos**2 * self.wfn.get_overlap(sd) +
                             (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
                              - beta_sign * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
@@ -285,14 +285,14 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains both p and q or neither p and q
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
+                    sign = slater.sign_swap(alpha_sd, q, p)
                     return (cos * self.wfn.get_overlap(sd)
                             - sign * sin * self.wfn.get_overlap(slater.excite(sd, q, p)))
                 # beta block contains p and not q
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    alpha_sign = slater.sign_swap(alpha_sd, q, p)
+                    beta_sign = slater.sign_swap(beta_sd, p, q)
                     return (cos**2 * self.wfn.get_overlap(sd)
                             + (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p)) +
                                beta_sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
@@ -302,8 +302,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains q and not p
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    alpha_sign = slater.sign_swap(alpha_sd, q, p)
+                    beta_sign = slater.sign_swap(beta_sd, q, p)
                     return (cos**2 * self.wfn.get_overlap(sd) +
                             (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p))
                              - beta_sign * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
@@ -327,11 +327,11 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                     return 0.0
                 elif slater.occ(sd, p) and not slater.occ(sd, q):
                     # get signature for the excited Slater determinant
-                    sign = (-1) ** slater.sign_swap(sd, p, q)
+                    sign = slater.sign_swap(sd, p, q)
                     return (-sin * self.wfn.get_overlap(sd)
                             + sign * cos * self.wfn.get_overlap(slater.excite(sd, p, q)))
                 elif not slater.occ(sd, p) and slater.occ(sd, q):
-                    sign = (-1) ** slater.sign_swap(sd, q, p)
+                    sign = slater.sign_swap(sd, q, p)
                     return (-sin * self.wfn.get_overlap(sd)
                             - sign * cos * self.wfn.get_overlap(slater.excite(sd, q, p)))
             else:
@@ -344,27 +344,27 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains p and not q
                 elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    sign = slater.sign_swap(beta_sd, p, q)
                     return (-sin * self.wfn.get_overlap(sd)
                             + cos * sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
                 # beta block contains q and not p
                 elif (slater.occ(alpha_sd, p) == slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    sign = slater.sign_swap(beta_sd, q, p)
                     return (-sin * self.wfn.get_overlap(sd)
                             - sign * cos * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
                 # alpha block contains p and not q
                 # beta block contains both p and q or neither p and q
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
+                    sign = slater.sign_swap(alpha_sd, p, q)
                     return (-sin * self.wfn.get_overlap(sd)
                             + sign * cos * self.wfn.get_overlap(slater.excite(sd, p, q)))
                 # beta block contains p and not q
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    alpha_sign = slater.sign_swap(alpha_sd, p, q)
+                    beta_sign = slater.sign_swap(beta_sd, p, q)
                     return (-2*cos*sin * self.wfn.get_overlap(sd) +
                             (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
                              + beta_sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
@@ -374,8 +374,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains q and not p
                 elif (slater.occ(alpha_sd, p) and not slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, p, q)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    alpha_sign = slater.sign_swap(alpha_sd, p, q)
+                    beta_sign = slater.sign_swap(beta_sd, q, p)
                     return (-2*cos*sin * self.wfn.get_overlap(sd) +
                             (alpha_sign * self.wfn.get_overlap(slater.excite(sd, p, q))
                              - beta_sign * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
@@ -386,14 +386,14 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains both p and q or neither p and q
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) == slater.occ(beta_sd, q)):
-                    sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
+                    sign = slater.sign_swap(alpha_sd, q, p)
                     return (-sin * self.wfn.get_overlap(sd)
                             - sign * cos * self.wfn.get_overlap(slater.excite(sd, q, p)))
                 # beta block contains p and not q
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         slater.occ(beta_sd, p) and not slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, p, q)
+                    alpha_sign = slater.sign_swap(alpha_sd, q, p)
+                    beta_sign = slater.sign_swap(beta_sd, p, q)
                     return (-2*cos*sin * self.wfn.get_overlap(sd) +
                             (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p)) +
                              beta_sign * self.wfn.get_overlap(slater.excite(sd, p + ns, q + ns)))
@@ -403,8 +403,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 # beta block contains q and not p
                 elif (not slater.occ(alpha_sd, p) and slater.occ(alpha_sd, q) and
                         not slater.occ(beta_sd, p) and slater.occ(beta_sd, q)):
-                    alpha_sign = (-1) ** slater.sign_swap(alpha_sd, q, p)
-                    beta_sign = (-1) ** slater.sign_swap(beta_sd, q, p)
+                    alpha_sign = slater.sign_swap(alpha_sd, q, p)
+                    beta_sign = slater.sign_swap(beta_sd, q, p)
                     return (-2*cos*sin * self.wfn.get_overlap(sd) +
                             (-alpha_sign * self.wfn.get_overlap(slater.excite(sd, q, p))
                              - beta_sign * self.wfn.get_overlap(slater.excite(sd, q + ns, p + ns)))
