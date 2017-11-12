@@ -4,7 +4,7 @@ import functools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.geminals.apig import APIG
+from wfns.wfn.geminal.apig import APIG
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []

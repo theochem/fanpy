@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 from nose.plugins.attrib import attr
 import numpy as np
 from wfns.tools import find_datafile
-from wfns.wfn.geminals.apr2g import APr2G
+from wfns.wfn.geminal.apr2g import APr2G
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns import solver
 
