@@ -4,7 +4,7 @@ from wfns.wrapper.docstring import docstring_class
 from wfns.param import ParamMask
 from wfns.objective.base_objective import BaseObjective
 from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 import wfns.backend.slater as slater
 

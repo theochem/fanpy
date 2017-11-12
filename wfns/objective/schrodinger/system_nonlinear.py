@@ -5,7 +5,7 @@ from wfns.wrapper.docstring import docstring_class
 from wfns.objective.base_objective import BaseObjective
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
 from wfns.objective.constraints.norm import NormConstraint
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend import slater, sd_list
 
 

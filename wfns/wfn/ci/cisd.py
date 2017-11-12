@@ -1,6 +1,6 @@
 """CI Singles and Doubles Wavefunction."""
 from __future__ import absolute_import, division, print_function
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend.sd_list import sd_list
 
 __all__ = []

@@ -3,7 +3,7 @@ import itertools as it
 from nose.tools import assert_raises
 import numpy as np
 from wfns.objective.constraints.norm import NormConstraint
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.param import ParamContainer
 
 

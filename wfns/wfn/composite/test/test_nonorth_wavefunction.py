@@ -6,7 +6,7 @@ from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.nonorth_wavefunction import NonorthWavefunction
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
 
 
