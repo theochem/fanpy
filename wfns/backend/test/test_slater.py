@@ -27,9 +27,8 @@ def test_is_alpha():
     assert not slater.is_alpha(6, 4)
     assert not slater.is_alpha(7, 4)
 
-    # NOTE: erratic behaviour
-    assert slater.is_alpha(-1, 4)
-    assert not slater.is_alpha(99, 4)
+    assert_raises(ValueError, slater.is_alpha, -1, 4)
+    assert_raises(ValueError, slater.is_alpha, 99, 4)
 
 
 def test_spatial_index():
@@ -46,9 +45,8 @@ def test_spatial_index():
     assert slater.spatial_index(6, 4) == 2
     assert slater.spatial_index(7, 4) == 3
 
-    #NOTE: erratic behaviour
-    assert slater.spatial_index(-1, 4) == -1
-    assert slater.spatial_index(99, 4) == 95
+    assert_raises(ValueError, slater.is_alpha, -1, 4)
+    assert_raises(ValueError, slater.is_alpha, 99, 4)
 
 
 def test_total_occ():
