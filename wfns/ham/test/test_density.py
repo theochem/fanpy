@@ -5,7 +5,7 @@ import numpy as np
 from scipy.linalg import eigh
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
-from wfns.hamiltonian.density import add_one_density, add_two_density, density_matrix
+from wfns.ham.density import add_one_density, add_two_density, density_matrix
 from wfns.tools import find_datafile
 
 

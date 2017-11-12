@@ -1,7 +1,7 @@
-"""Test wfns.hamiltonian.base_hamiltonian."""
+"""Test wfns.ham.base_hamiltonian."""
 import numpy as np
 from nose.tools import assert_raises
-from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
+from wfns.ham.base_hamiltonian import BaseHamiltonian
 
 
 class Empty:
