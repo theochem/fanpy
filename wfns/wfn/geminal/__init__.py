@@ -1,5 +1,5 @@
 """Module for creating Geminal wavefunction."""
-from wfns.wfn.geminal import base_geminal
+from wfns.wfn.geminal import base
 from wfns.wfn.geminal import rank2_approx
 from wfns.wfn.geminal import ap1rog
 from wfns.wfn.geminal import apr2g
