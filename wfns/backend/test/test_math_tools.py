@@ -1,5 +1,4 @@
-""" Tests for wfns.math_tools
-"""
+"""Test for wfns.backend.math_tools."""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
@@ -8,8 +7,7 @@ from wfns.backend.math_tools import (binomial, adjugate, permanent_combinatoric,
 
 
 def test_binomial():
-    """ Tests binomial
-    """
+    """Test binomial."""
     assert binomial(4, 0) == 1
     assert binomial(4, -1) == 0
     assert binomial(-1, -1) == 0
@@ -22,8 +20,7 @@ def test_binomial():
 
 
 def test_adjugate():
-    """ Tests adjugate
-    """
+    """Test adjugate."""
     # 0 by 1
     assert_raises(np.linalg.LinAlgError, lambda: adjugate(np.ndarray(shape=(0, 0))))
     assert_raises(np.linalg.LinAlgError, lambda: adjugate(np.ndarray(shape=(0, 1))))
@@ -55,8 +52,7 @@ def test_adjugate():
 
 
 def test_permanent_combinatoric():
-    """ Tests permanent_combinatoric
-    """
+    """Test permanent_combinatoric."""
     assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0, 0))))
     assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(1, 0))))
     assert_raises(ValueError, lambda: permanent_combinatoric(np.ndarray(shape=(0, 1))))
@@ -66,8 +62,7 @@ def test_permanent_combinatoric():
 
 
 def test_permanent_ryser():
-    """ Tests permanent_ryser
-    """
+    """Test permanent_ryser."""
     assert_raises(ValueError, lambda: permanent_ryser(np.ndarray(shape=(0, 0))))
     assert_raises(ValueError, lambda: permanent_ryser(np.ndarray(shape=(1, 0))))
     assert_raises(ValueError, lambda: permanent_ryser(np.ndarray(shape=(0, 1))))
@@ -81,8 +76,7 @@ def test_permanent_ryser():
 
 
 def test_permanent_borchardt_square():
-    """ Tests permanent_borchardt on square matrices
-    """
+    """Test permanent_borchardt on square matrices."""
     p = 6
     lambdas = np.random.rand(p)
     epsilons = np.random.rand(p)
@@ -108,8 +102,7 @@ def test_permanent_borchardt_square():
 
 
 def test_permanent_borchardt_rect():
-    """ Tests permanent_borchardt on rectangular matrices
-    """
+    """Test permanent_borchardt on rectangular matrices."""
     p = 5
     k = 8
     # let nrows < ncol
