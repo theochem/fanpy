@@ -58,11 +58,16 @@ def adjugate(matrix):
 
     Raises
     ------
+    ValueError
+        If matrix has a size of zero.
     LinAlgError
         If matrix is singular (determinant of zero).
         If matrix is not two dimensional.
 
     """
+    if matrix.size == 0:
+        raise ValueError('Given matrix has nothing inside.')
+
     det = np.linalg.det(matrix)
     if abs(det) <= 1e-12:
         raise np.linalg.LinAlgError('Matrix is singular')
