@@ -1,9 +1,9 @@
-"""Test wfn.solver.ci_solver."""
+"""Test wfn.solver.ci."""
 import numpy as np
 from nose.tools import assert_raises
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver import ci
 
 
 class TestChemicalHamiltonian(ChemicalHamiltonian):
@@ -20,26 +20,26 @@ class TestChemicalHamiltonian(ChemicalHamiltonian):
 
 
 def test_brute():
-    """Test wfn.solver.ci_solver.brute."""
+    """Test wfn.solver.ci.brute."""
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
     # check type
-    assert_raises(TypeError, ci_solver.brute, None, test_ham, 0)
-    assert_raises(TypeError, ci_solver.brute, test_wfn, None, 0)
+    assert_raises(TypeError, ci.brute, None, test_ham, 0)
+    assert_raises(TypeError, ci.brute, test_wfn, None, 0)
 
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=complex),
                                        np.ones((2, 2, 2, 2), dtype=complex))
-    assert_raises(ValueError, ci_solver.brute, test_wfn, test_ham, 0)
+    assert_raises(ValueError, ci.brute, test_wfn, test_ham, 0)
     test_ham = TestChemicalHamiltonian(np.ones((3, 3), dtype=complex),
                                        np.ones((3, 3, 3, 3), dtype=complex))
-    assert_raises(ValueError, ci_solver.brute, test_wfn, test_ham, 0)
+    assert_raises(ValueError, ci.brute, test_wfn, test_ham, 0)
 
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
     test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
-    assert_raises(TypeError, ci_solver.brute, test_wfn, test_ham, None)
-    assert_raises(TypeError, ci_solver.brute, test_wfn, test_ham, -1)
+    assert_raises(TypeError, ci.brute, test_wfn, test_ham, None)
+    assert_raises(TypeError, ci.brute, test_wfn, test_ham, -1)
 
     # 0 = det [[1, 3]
     #          [3, 8]]
@@ -49,7 +49,7 @@ def test_brute():
     #        = (9 \pm \sqrt{85}) / 2
     # [[1-lambda,        3], [[v1],   [[0],
     #  [3       , 8-lambda]]  [v2]] =  [0]]
-    energies, coeffs = ci_solver.brute(test_wfn, test_ham)
+    energies, coeffs = ci.brute(test_wfn, test_ham)
     assert np.allclose(energies[0], (9 - 85**0.5)/2)
     matrix = np.array([[1-energies[0], 3], [3, 8-energies[0]]])
     assert np.allclose(matrix.dot(coeffs[:, 0]), np.zeros(2))
