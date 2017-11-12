@@ -1,14 +1,14 @@
-"""Test wfns.ham.sen0_hamiltonian."""
+"""Test wfns.ham.senzero."""
 import numpy as np
 from nose.tools import assert_raises
-from wfns.ham.chemical_hamiltonian import ChemicalHamiltonian
-from wfns.ham.sen0_hamiltonian import SeniorityZeroHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.senzero import SeniorityZeroHamiltonian
 
 # FIXME: need more tests for checking integrate_wfn_sd and integrate_sd_sd
 
 
 def test_assign_orbtype():
-    """Test wfns.ham.sen0_hamiltonian.assign_orbtype."""
+    """Test wfns.ham.senzero.assign_orbtype."""
     # sneak around calling initializer
     test = SeniorityZeroHamiltonian.__new__(SeniorityZeroHamiltonian)
     assert_raises(NotImplementedError, SeniorityZeroHamiltonian.assign_orbtype, test, 'generalized')
