@@ -1,5 +1,5 @@
 """Base class for composite wavefunctions that modifies one wavefunction."""
-from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.base import BaseWavefunction
 
 
 class BaseCompositeOneWavefunction(BaseWavefunction):
