@@ -6,7 +6,7 @@ import itertools as it
 from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 from wfns.wfn.composite.jacobi import JacobiWavefunction
-from wfns.wfn.composite.nonorth_wavefunction import NonorthWavefunction
+from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.chemical import ChemicalHamiltonian

@@ -1,9 +1,9 @@
-"""Test wfns.wavefunction.composite.lin_comb."""
+"""Test wfns.wavefunction.composite.lincomb."""
 from nose.tools import assert_raises
 import numpy as np
 import types
 from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.composite.lin_comb import LinearCombinationWavefunction
+from wfns.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 class Container:
