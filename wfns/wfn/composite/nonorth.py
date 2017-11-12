@@ -4,7 +4,7 @@ import itertools as it
 import functools
 import numpy as np
 from wfns.backend import slater
-from wfns.wfn.composite.base_composite_one import BaseCompositeOneWavefunction
+from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []

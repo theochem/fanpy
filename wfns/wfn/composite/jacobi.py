@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from wfns.backend import slater
-from wfns.wfn.composite.base_composite_one import BaseCompositeOneWavefunction
-from wfns.wfn.composite.nonorth_wavefunction import NonorthWavefunction
+from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
+from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
