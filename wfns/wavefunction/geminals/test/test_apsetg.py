@@ -5,7 +5,7 @@ import types
 from wfns.backend import graphs
 from wfns.tools import find_datafile
 from wfns.wavefunction.geminals.apsetg import APsetG
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns import solver
 
 

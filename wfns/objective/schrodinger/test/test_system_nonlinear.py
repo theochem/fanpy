@@ -5,7 +5,7 @@ from wfns.param import ParamContainer, ParamMask
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestSystemEquations(SystemEquations):

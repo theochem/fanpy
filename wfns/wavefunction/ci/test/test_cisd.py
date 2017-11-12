@@ -5,7 +5,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wavefunction.ci.cisd import CISD
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.solver import ci_solver
 
 

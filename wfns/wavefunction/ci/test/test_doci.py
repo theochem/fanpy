@@ -5,7 +5,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wavefunction.ci.doci import DOCI
-from wfns.hamiltonian.sen0_hamiltonian import SeniorityZeroHamiltonian
+from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.solver import ci_solver
 
 

@@ -7,7 +7,7 @@ from wfns.backend.graphs import generate_complete_pmatch
 from wfns.tools import find_datafile
 from wfns.wavefunction.geminals.apg import APG
 from wfns.wavefunction.geminals.apig import APIG
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns import solver
 
 

@@ -6,7 +6,7 @@ import numpy as np
 from nose.plugins.attrib import attr
 from wfns.tools import find_datafile
 from wfns.wavefunction.ci.fci import FCI
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.solver import ci_solver
 
 

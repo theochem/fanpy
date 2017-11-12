@@ -9,7 +9,7 @@ from wfns.wavefunction.composite.jacobi import JacobiWavefunction
 from wfns.wavefunction.composite.nonorth_wavefunction import NonorthWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.wavefunction.ci.doci import DOCI
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.solver import ci_solver
 
 

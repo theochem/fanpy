@@ -5,7 +5,7 @@ from wfns.param import ParamMask
 from wfns.objective.base_objective import BaseObjective
 from wfns.wavefunction.base_wavefunction import BaseWavefunction
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.base_hamiltonian import BaseHamiltonian
+from wfns.ham.base import BaseHamiltonian
 import wfns.backend.slater as slater
 
 

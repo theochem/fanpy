@@ -3,7 +3,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
-from wfns.hamiltonian.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestTwoSidedEnergy(TwoSidedEnergy):
