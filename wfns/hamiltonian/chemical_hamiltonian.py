@@ -227,9 +227,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         # will be ordered from smallest to largest and the shared creators will be ordered from
         # largest to smallest
         if sign is None:
-            num_transpositions_1 = sum(slater.find_num_trans_swap(sd1, i, 0) for i in diff_sd1)
-            num_transpositions_2 = sum(slater.find_num_trans_swap(sd2, i, 0) for i in diff_sd2)
-            sign = (-1)**(num_transpositions_1 + num_transpositions_2)
+            sign = slater.sign_excite(sd1, diff_sd1, diff_sd2)
         elif sign not in [1, -1]:
             raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
 
