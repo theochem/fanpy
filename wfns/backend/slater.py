@@ -69,8 +69,8 @@ get_seniority(sd, nspatial) : int
     Return the seniority of the given Slater determinant.
 sign_perm(jumbled_set, ordered_set=None, is_decreasing=True) : int
     Return the signature of the permutation that sorts a set of annihilators to increasing order.
-find_num_trans_swap(sd, pos_current, pos_future) : int
-    Find the number of swaps needed to move an orbital from one position to another.
+sign_swap(sd, pos_current, pos_future) : int
+    Return the signature of moving a creation operator to a specific position.
 
 """
 import gmpy2
@@ -805,7 +805,7 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
 
     Returns
     -------
-    sign : int
+    sign : {1, -1}
         Signature of the permutation.
 
     Raises
@@ -837,8 +837,8 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
 
 
 @docstring(indent_level=1)
-def find_num_trans_swap(sd, pos_current, pos_future):
-    """Find the number of swaps needed to move an orbital from one position to another.
+def sign_swap(sd, pos_current, pos_future):
+    """Return the signature of moving a creation operator to a specific position.
 
     Parameters
     ----------
@@ -851,8 +851,8 @@ def find_num_trans_swap(sd, pos_current, pos_future):
 
     Returns
     -------
-    num_trans : int
-        Number of hops needed to move the orbital.
+    sign : {1, -1}
+        Signature of the permutation.
 
     Raises
     ------
@@ -875,8 +875,13 @@ def find_num_trans_swap(sd, pos_current, pos_future):
     if pos_current < pos_future:
         # remove everything before pos_current (including pos_current)
         # remove everything after pos_future (excluding pos_future)
-        return gmpy2.popcount(sd[pos_current+1:pos_future+1])
+        num_trans = gmpy2.popcount(sd[pos_current+1:pos_future+1])
     else:
         # remove everything after pos_current (including pos_current)
         # remove everything before pos_future (excluding pos_future)
-        return gmpy2.popcount(sd[pos_future:pos_current])
+        num_trans = gmpy2.popcount(sd[pos_future:pos_current])
+
+    if num_trans % 2 == 0:
+        return 1
+    else:
+        return -1
