@@ -2,7 +2,7 @@
 import numpy as np
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
 
 

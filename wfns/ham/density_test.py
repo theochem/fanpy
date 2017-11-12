@@ -1,6 +1,6 @@
 from wfns.backend import slater, sd_list
-from wfns.wavefunction.base_wavefunction import BaseWavefunction
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 
 
 # FIXME: create base operator class, make hamiltonian child of this class, make this module child of

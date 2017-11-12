@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.linalg
-from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 from wfns.wrapper.docstring import docstring
 

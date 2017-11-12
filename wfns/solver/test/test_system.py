@@ -1,7 +1,7 @@
 """Test wfns.solver.system."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.wavefunction.base_wavefunction import BaseWavefunction
+from wfns.wfn.base_wavefunction import BaseWavefunction
 from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
