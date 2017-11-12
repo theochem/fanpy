@@ -4,7 +4,7 @@ from wfns.objective.base_objective import BaseObjective
 from wfns.wfn.base import BaseWavefunction
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 import wfns.backend.slater as slater
 
 

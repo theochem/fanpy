@@ -1,8 +1,8 @@
-"""Test wfns.wavefunction.ci_wavefunction"""
+"""Test wfns.wavefunction.base"""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 
 
 class TestCIWavefunction(CIWavefunction):

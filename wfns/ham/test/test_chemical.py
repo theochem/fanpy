@@ -2,7 +2,7 @@
 import numpy as np
 from nose.plugins.attrib import attr
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 

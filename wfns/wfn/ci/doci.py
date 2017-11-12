@@ -1,6 +1,6 @@
 """DOCI wavefunction."""
 from __future__ import absolute_import, division, print_function
-from wfns.wfn.ci.ci_wavefunction import CIWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 from wfns.wrapper.docstring import docstring_class
 
 __all__ = []
