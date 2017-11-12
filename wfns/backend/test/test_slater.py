@@ -547,3 +547,32 @@ def test_sign_swap():
     assert slater.sign_swap(0b000011, 1, 0) == -1
     assert slater.sign_swap(0b000101, 2, 0) == -1
     assert slater.sign_swap(0b000111, 2, 0) == 1
+
+
+def test_sign_excite():
+    """Test slater.sign_excite."""
+    assert slater.sign_excite(0b000001, [0], [1]) == 1
+    assert slater.sign_excite(0b000001, [0], [2]) == 1
+    assert slater.sign_excite(0b000011, [0], [2]) == -1
+    assert slater.sign_excite(0b000001, [0], [3]) == 1
+    assert slater.sign_excite(0b000011, [0], [3]) == -1
+    assert slater.sign_excite(0b000101, [0], [3]) == -1
+    assert slater.sign_excite(0b000111, [0], [3]) == 1
+    assert slater.sign_excite(0b000010, [1], [0]) == 1
+    assert slater.sign_excite(0b000100, [2], [0]) == 1
+    assert slater.sign_excite(0b000110, [2], [0]) == -1
+    assert slater.sign_excite(0b001000, [3], [0]) == 1
+    assert slater.sign_excite(0b001010, [3], [0]) == -1
+    assert slater.sign_excite(0b001100, [3], [0]) == -1
+    assert slater.sign_excite(0b001110, [3], [0]) == 1
+
+    assert slater.sign_excite(0b0011, [0], [2, 3]) == -1
+    assert slater.sign_excite(0b0011, [0], [3, 2]) == 1
+    assert slater.sign_excite(0b0011, [0, 1], [2]) == 1
+    assert slater.sign_excite(0b0011, [1, 0], [2]) == -1
+    assert slater.sign_excite(0b0011, [0, 1], [1, 2]) == -1
+    assert slater.sign_excite(0b0011, [0, 1], [2, 1]) == 1
+    assert slater.sign_excite(0b0011, [0, 1, 1], [2, 3]) is None
+    assert slater.sign_excite(0b0011, [0, 1], [2, 2, 3]) is None
+    assert slater.sign_excite(0b0011, [0, 2], [3]) is None
+    assert slater.sign_excite(0b0011, [0], [1]) is None

@@ -885,3 +885,58 @@ def sign_swap(sd, pos_current, pos_future):
         return 1
     else:
         return -1
+
+
+@docstring(indent_level=1)
+def sign_excite(sd, annihilators, creators):
+    """Return the signature of applying annihilators then creators to the Slater determinant.
+
+    .. math::
+
+        a^\dagger_{j_N} \dots a^\dagger_{j_1} a_{i_M} \dots a_{i_1} \ket{\Phi}
+        = sign \hat{E}_{i_1 \dots i_M}^{j_N \dots j_1} \ket{\Phi}
+
+    where the set of annihilators, :math:`\{a_{i_1} \dots a_{i_M}\}`, are 'annihilators', the set of
+    annihilators, :math:`\{a^\dagger_{j_1} \dots a^\dagger_{j_M}\}`, are 'creators', and `sign` is
+    the signature resulting from these operations.
+
+    Parameters
+    ----------
+    sd : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    annihilators : list/tuple of int
+        Indices of the orbitals that will be annihilated, in order.
+    creators : list/tuple of int
+        Indices of the orbitals that will be created, in order, after annihilating the selected
+        orbitals.
+
+    Returns
+    -------
+    sign : {1, -1}
+        Sign of the Slater determinant after excitation.
+
+    Raises
+    ------
+    ValueError
+        If Slater determinant is None.
+        If position is not a positive integer.
+        If current orbital position is not occupied.
+
+    """
+    sign = 1
+    for i in annihilators:
+        if occ(sd, i):
+            # FIXME: check that the creators in the Slater determinant are ordered from smallest to
+            #        largest
+            sign *= sign_swap(sd, i, 0)
+            sd = annihilate(sd, i)
+        else:
+            return None
+
+    for i in creators:
+        sd = create(sd, i)
+        if sd is None:
+            return None
+        sign *= sign_swap(sd, i, 0)
+
+    return sign
