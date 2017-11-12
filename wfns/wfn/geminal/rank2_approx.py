@@ -1,7 +1,7 @@
 """Rank-2 approximation to geminal wavefunction."""
 from __future__ import absolute_import, division, print_function
 import numpy as np
-from wfns.wfn.geminal.base_geminal import BaseGeminal
+from wfns.wfn.geminal.base import BaseGeminal
 from wfns.backend import math_tools, slater
 from wfns.wrapper.docstring import docstring_class
 
