@@ -1,7 +1,7 @@
 r"""Hamiltonian used to describe a chemical system."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 from wfns.backend import slater
-from wfns.ham.base_hamiltonian import BaseHamiltonian
+from wfns.ham.base import BaseHamiltonian
 from wfns.wrapper.docstring import docstring_class
 
 

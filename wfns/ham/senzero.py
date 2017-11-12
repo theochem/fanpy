@@ -1,6 +1,6 @@
 r"""Seniority-zero Hamiltonian object that interacts with the wavefunction."""
 from __future__ import absolute_import, division, print_function, unicode_literals
-from wfns.ham.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.backend import slater
 from wfns.wrapper.docstring import docstring_class
 

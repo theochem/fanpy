@@ -1,7 +1,7 @@
-"""Test wfns.ham.chemical_hamiltonian."""
+"""Test wfns.ham.chemical."""
 import numpy as np
 from nose.plugins.attrib import attr
-from wfns.ham.chemical_hamiltonian import ChemicalHamiltonian
+from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.wavefunction.ci.ci_wavefunction import CIWavefunction
 from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
