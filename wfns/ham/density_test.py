@@ -1,5 +1,5 @@
 from wfns.backend import slater, sd_list
-from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.ci_wavefunction import CIWavefunction
 
 

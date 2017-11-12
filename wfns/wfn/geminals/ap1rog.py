@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from wfns.backend import slater
-from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.geminals.apig import APIG
 from wfns.wrapper.docstring import docstring_class
 

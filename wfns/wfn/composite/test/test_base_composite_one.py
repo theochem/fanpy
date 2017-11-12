@@ -1,7 +1,7 @@
 """Test wfn.wavefunction.composite.base_composite_one."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.base_composite_one import BaseCompositeOneWavefunction
 
 

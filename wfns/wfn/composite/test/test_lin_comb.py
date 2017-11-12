@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 import types
-from wfns.wfn.base_wavefunction import BaseWavefunction
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.lin_comb import LinearCombinationWavefunction
 
 
