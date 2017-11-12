@@ -1,5 +1,7 @@
 r"""Hamiltonian used to describe a chemical system."""
 from __future__ import absolute_import, division, print_function, unicode_literals
+from functools import reduce
+import operator
 from wfns.backend import slater
 from wfns.ham.base import BaseHamiltonian
 from wfns.wrapper.docstring import docstring_class
@@ -199,35 +201,55 @@ class ChemicalHamiltonian(BaseHamiltonian):
         if len(diff_sd1) != len(diff_sd2):
             return 0.0, 0.0, 0.0
         diff_order = len(diff_sd1)
+        if diff_order > 2:
+            return 0.0, 0.0, 0.0
 
-        # Assume the creators are ordered from smallest to largest (left to right) and
-        # annihilators are ordered from largest to smallest.
-        # Move all of the creators and annihilators that are shared between the two Slater
-        # determinants towards the middle starting from the smallest index.
+        # By convention `see backend.slater`, the Slater determinant on the left (annihilators) will
+        # be ordered from largest to smallest (left to right) and the Slater determinant on the
+        # right (creators) will be ordered from smallest to largest (left to right)
+        # The orbitals that are shared between the two Slater determinants can be brought towards
+        # one another to cancel out and the signs will be different depending on the positions of
+        # these orbitals within their Slater determinants.
+        # However, we will assume that the number of shared orbitals will be greater than the number
+        # of orbitals that are different (since Hamiltonians have lower orders of operators than the
+        # wavefunction).
+        # Then, it will be more practical to move the different orbitals to one another.
+        # We will ASSUME that the number of different orbitals will be the same in each Slater
+        # determinant, which means that the number of unshared operator gathered in the middle will
+        # be even.
+        # Then, the shared orbitals can skip over the even number of orbitals to cancel each other
+        # out.
         # e.g. Given left Slater determinant a_8 a_6 a_3 a_2 a_1 and
         #      right Slater determinant a^\dagger_1 a^\dagger_2 a^dagger_5 a^\dagger_7 a^\dagger_8,
-        #      annihilators and creators of orbitals 1, 2, and 8 must move towards one another for
-        #      mutual destruction
+        #      we move the different orbitals 3 and 6 (on the left) and 5 and 7 (on the right)
+        #      toward the center, starting from the smallest.
         #    0    a_8 a_6 a_3 a_2 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    1    a_8 a_6 a_3 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    2    a_6 a_8 a_3 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    3    a_6 a_3 a_8 a_1 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    4    a_6 a_3 a_1 a_8 a_2    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    5    a_6 a_3 a_1 a_2 a_8    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    6    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_7 a^\dagger_8
-        #    7    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_8 a^\dagger_7
-        #    8    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_1 a^\dagger_8 a^\dagger_5 a^\dagger_7
-        #    9    a_6 a_3 a_1 a_2 a_8    a^\dagger_2 a^\dagger_8 a^\dagger_1 a^\dagger_5 a^\dagger_7
-        #   10    a_6 a_3 a_1 a_2 a_8    a^\dagger_8 a^\dagger_2 a^\dagger_1 a^\dagger_5 a^\dagger_7
-        #   10    a_6 a_3                                                    a^\dagger_5 a^\dagger_7
+        #    1    a_8 a_6 a_2 a_3 a_1    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    2    a_8 a_6 a_2 a_1 a_3    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    3    a_8 a_2 a_6 a_1 a_3    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    4    a_8 a_2 a_1 a_6 a_3    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    5    a_8 a_2 a_1 a_3 a_6    a^\dagger_1 a^\dagger_2 a^\dagger_5 a^\dagger_7 a^\dagger_8
+        #    6    a_8 a_2 a_1 a_3 a_6    a^\dagger_1 a^\dagger_5 a^\dagger_2 a^\dagger_7 a^\dagger_8
+        #    7    a_8 a_2 a_1 a_3 a_6    a^\dagger_5 a^\dagger_1 a^\dagger_2 a^\dagger_7 a^\dagger_8
+        #    8    a_8 a_2 a_1 a_3 a_6    a^\dagger_5 a^\dagger_1 a^\dagger_7 a^\dagger_2 a^\dagger_8
+        #    9    a_8 a_2 a_1 a_3 a_6    a^\dagger_5 a^\dagger_7 a^\dagger_1 a^\dagger_2 a^\dagger_8
+        #   10    a_8 a_2 a_1 a_3 a_6    a^\dagger_7 a^\dagger_5 a^\dagger_1 a^\dagger_2 a^\dagger_8
+        #   10                a_3 a_6    a^\dagger_7 a^\dagger_5
         # where first column is the number of transpositions, second column is the ordering of the
-        # annhilators (left SD) and third column is the ordering of the creators (right SD)
+        # annhilators (left SD) and third column is the ordering of the creators (right SD).
 
-        # NOTE: after moving all of the different creators toward the middle, the unshared creators
-        # will be ordered from smallest to largest and the shared creators will be ordered from
-        # largest to smallest
+        # Since the smallest indices are moved first (due to limitations in `slater.sign_swap`), the
+        # resulting Slater determinants will be opposite in order.
+        # They can be reversed with (n-1) + (n-2) + ... + 1 = n * (n-1) / 2 transpositions (move
+        # largest index back first, then second largest, ...)
+        # The signature of these transpositions is equivalent to checking if quotient after
+        # dividing by 2 is odd or even. (i.e. n //2 % 2)
+        # However, the number of transpositions is equal for both Slater determinants, meaning that
+        # the overall signature will not change when they both are reordered to the convention.
         if sign is None:
-            sign = slater.sign_excite(sd1, diff_sd1, diff_sd2)
+            sign1 = reduce(operator.mul, (slater.sign_swap(sd1, i, 0) for i in diff_sd1), 1)
+            sign2 = reduce(operator.mul, (slater.sign_swap(sd2, i, 0) for i in diff_sd2), 1)
+            sign = sign1 * sign2
         elif sign not in [1, -1]:
             raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
 
