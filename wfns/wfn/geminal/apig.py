@@ -123,30 +123,3 @@ class APIG(BaseGeminal):
             yield [], 1
         else:
             yield tuple(orbpairs), sign
-
-    # TODO: refactor when APG is set up
-    def to_apg(self):
-        """Convert APIG wavefunction to APG wavefunction.
-
-        Returns
-        -------
-        apg : APG
-            APG wavefunction that corresponds to the given APIG wavefunction.
-
-        """
-        # import APG (because nasty cyclic import business)
-        from .apg import APG
-
-        # make apig coefficients
-        apig_coeffs = self.params[:-1].reshape(self.template_coeffs.shape)
-        # make apg coefficients
-        apg = APG(self.nelec, self.one_int, self.two_int, dtype=self.dtype, nuc_nuc=self.nuc_nuc,
-                  orbtype=self.orbtype, ref_sds=self.ref_sds, ngem=self.ngem)
-        apg_coeffs = apg.params[:-1].reshape(apg.template_coeffs.shape)
-        # assign apg coefficients
-        for orbpair, ind in self.dict_orbpair_ind.items():
-            apg_coeffs[:, apg.dict_orbpair_ind[orbpair]] = apig_coeffs[:, ind]
-        apg.assign_params(np.hstack((apg_coeffs.flat, self.get_energy())))
-
-        # make wavefunction
-        return apg
