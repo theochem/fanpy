@@ -59,7 +59,7 @@ def cma(objective, save_file='', **kwargs):
         raise ValueError('Objective must contain only one equation.')
 
     if kwargs == {}:
-        kwargs = {'sigma0': 0.01, 'gradf': objective.gradient, 'options': {'ftarget': 1e-7}}
+        kwargs = {'sigma0': 0.01}
 
     results = cma.fmin(objective.objective, objective.params, **kwargs)
 
