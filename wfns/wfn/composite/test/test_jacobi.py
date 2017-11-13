@@ -10,7 +10,7 @@ from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver.ci import brute
 
 
 class TestJacobiWavefunction(JacobiWavefunction):
@@ -697,7 +697,8 @@ def test_jacobi_energy():
         ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
                                   np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
                                   orbtype='restricted')
-        ci_solver.eigen_solve(doci, ham, exc_lvl=0)
+        energies, coeffs = brute(doci, ham)
+        doci.assign_params(coeffs[:, 0].flatten())
         jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
                                     wfn=doci, orbtype='restricted', jacobi_indices=orbpair,
                                     params=np.array(theta))
