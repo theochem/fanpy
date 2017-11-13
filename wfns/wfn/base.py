@@ -263,15 +263,20 @@ class BaseWavefunction(ParamContainer):
         super().assign_params(params)
         params = self.params
 
-        if len(params.shape) == 1:
-            params = params.reshape(self.params_shape)
         # check shape and dtype
-        if params.shape != self.params_shape:
-            raise ValueError('Parameters must either be flat or have the same shape as the '
-                             'template, {0}.'.format(self.params_shape))
+        if params.size != self.nparams:
+            raise ValueError('There must be {0} parameters.'.format(self.nparams))
         elif params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
             raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction '
                             'must be `np.complex128`')
+        elif params.dtype not in [float, np.float64, complex, np.complex128]:
+            raise TypeError('If the parameters are neither float or complex.')
+
+        if len(params.shape) == 1:
+            params = params.reshape(self.params_shape)
+        elif params.shape != self.params_shape:
+            raise ValueError('Parameters must either be flat or have the same shape as the '
+                             'template, {0}.'.format(self.params_shape))
 
         self.params = params.astype(self.dtype)
 

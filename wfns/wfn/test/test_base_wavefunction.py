@@ -102,7 +102,7 @@ def test_assign_params():
     # check errors
     test = TestWavefunction()
     test.assign_dtype(float)
-    assert_raises(TypeError, test.assign_params, 2)
+    assert_raises(ValueError, test.assign_params, 2)
     assert_raises(TypeError, test.assign_params, [2, 3])
     assert_raises(ValueError, test.assign_params, np.random.rand(10, 11))
     assert_raises(TypeError, test.assign_params, np.arange(100, dtype=int).reshape(10, 10))
@@ -129,6 +129,7 @@ def test_load_cache():
     test = TestWavefunction()
     test.memory = 1000
     test.params = np.array([1, 2, 3])
+    test._cache_fns = {}
     test.load_cache()
     assert hasattr(test, '_cache_fns')
     assert_raises(NotImplementedError, test._cache_fns['overlap'], 0)
