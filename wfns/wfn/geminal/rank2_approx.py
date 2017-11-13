@@ -46,6 +46,7 @@ class RankTwoApprox:
         """
         template = super().template_params
         template += 0.0001*np.random.rand(*template.shape)
+        # FIXME: fails a lot
         return full_to_rank2(template, rmsd=0.01)
 
     @property

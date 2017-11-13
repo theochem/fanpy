@@ -4,7 +4,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
 from wfns.wfn.geminal.apig import APIG
-from wfns.wfn.geminal.rank2_geminal import RankTwoApprox, full_to_rank2
+from wfns.wfn.geminal.rank2_approx import RankTwoApprox, full_to_rank2
 
 
 class TestRankTwoGeminal(RankTwoApprox, BaseGeminal):
@@ -34,7 +34,9 @@ def test_rank2_geminal_params_from_full():
 
 def test_rank2_geminal_template_params():
     """Test RankTwoGeminal.template_params."""
-    # FIXME: doesn't always pass
+    # FIXME: doesn't always pass (so random number generator needs to be seeded)
+    np.random.seed(42)
+
     test = TestRankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(10)
