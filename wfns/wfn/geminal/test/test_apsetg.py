@@ -6,7 +6,11 @@ from wfns.backend import graphs
 from wfns.tools import find_datafile
 from wfns.wfn.geminal.apsetg import APsetG
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns import solver
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.solver.system import least_squares
+from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+# from wfns.solver.equation import minimize
+from wfns.solver.equation import minimize, cma
 
 
 class TestAPsetG(APsetG):
@@ -37,15 +41,13 @@ def answer_apsetg_h2_sto6g():
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
-
-    nelec = 2
-    nspin = 4
+    apsetg = APsetG(2, 4)
     full_sds = (0b0101, 0b1001, 0b0110, 0b1010)
 
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham, ref_sds=full_sds)
+    objective = OneSidedEnergy(apsetg, ham, refwfn=full_sds)
+    results = minimize(objective)
     print(results)
-    return apsetg.params
+    print(apsetg.params)
 
 
 def test_apsetg_h2_sto6g():
@@ -57,6 +59,7 @@ def test_apsetg_h2_sto6g():
     APsetG Energy : -1.859089844148893
     APsetG Coeffs : [0.00000000e+00, 9.99041662e-01, 4.39588902e-16, 4.39588902e-16,
                      -1.13626930e-01, 0.00000000e+00])
+
     """
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
@@ -67,78 +70,13 @@ def test_apsetg_h2_sto6g():
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
-
-    nelec = 2
-    nspin = 4
+    apsetg = APsetG(2, 4)
     full_sds = (0b0101, 0b1001, 0b0110, 0b1010)
 
-    # Least squares system solver.
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=full_sds,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    # FIXME: energy is a little off
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=None,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-5
-    # FIXME: optimization with jacobian requires a good guess
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=full_sds)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=None)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=full_sds,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=None,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    # FIXME: optimization with jacobian requires a good guess
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=full_sds)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=None)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-
-    # Quasi Newton equation solver
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=None,
-                                                              ref_sds=full_sds,
-                                                              solver_kwargs={'jac': None},
-                                                              norm_constrained=False)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=full_sds[:10],
-                                                              ref_sds=full_sds,
-                                                              solver_kwargs={'jac': None},
-                                                              norm_constrained=False)
-    # FIXME: energy is a bit off
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-4
-    # FIXME: optimization with jacobian requires a good guess
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=None,
-                                                              ref_sds=full_sds,
-                                                              norm_constrained=False)
-    assert abs(results['energy'] - (-1.8590898441488932)) < 1e-7
+    # Solve system of equations
+    objective = SystemEquations(apsetg, ham, refwfn=full_sds)
+    results = least_squares(objective)
+    assert np.allclose(results['energy'], -1.8590898441488932)
 
 
 def answer_apsetg_h2_631gdp():
@@ -147,6 +85,7 @@ def answer_apsetg_h2_631gdp():
     HF Value :       -1.84444667247
     Old Code Value : -1.86968284431
     FCI Value :      -1.87832550029
+
     """
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
@@ -157,15 +96,14 @@ def answer_apsetg_h2_631gdp():
     two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
-
-    nelec = 2
-    nspin = 20
+    apsetg = APsetG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(10) for j in range(10, 20)]
 
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham, ref_sds=full_sds)
+    objective = OneSidedEnergy(apsetg, ham, refwfn=full_sds)
+    results = cma(objective, sigma0=0.01, gradf=None)
+    results = minimize(objective)
     print(results)
-    return apsetg.params
+    print(apsetg.params)
 
 
 @attr('slow')
@@ -175,6 +113,7 @@ def test_apsetg_lih_sto6g():
     HF Value :       -8.9472891719
     Old Code Value : -8.96353105152
     FCI Value :      -8.96741814557
+
     """
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
@@ -185,76 +124,11 @@ def test_apsetg_lih_sto6g():
     two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
     nuc_nuc = 0.995317634356
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
-
-    nelec = 4
-    nspin = 12
+    apsetg = APsetG(4, 12)
     full_sds = [1 << i | 1 << j | 1 << k | 1 << l for i in range(6) for j in range(i+1, 6)
                 for k in range(6, 12) for l in range(k+1, 12)]
 
-    # FIXME: no answer b/cc it took too long to calculate
-    energy_answer = None
-
-    # Least squares system solver.
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=full_sds,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=None,
-                                                       solver_kwargs={'jac': None})
-    # FIXME: energy is a little off
-    assert abs(results['energy'] - (-energy_answer)) < 1e-5
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=full_sds)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=False,
-                                                       ref_sds=None)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=full_sds,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=None,
-                                                       solver_kwargs={'jac': None})
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=full_sds)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.system_solver.optimize_wfn_system(apsetg, ham, energy_is_param=True,
-                                                       ref_sds=None)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-
-    # Quasi Newton equation solver
-    apsetg = APsetG(nelec, nspin)
-    apg.assign_params(add_noise=True)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=None,
-                                                              ref_sds=full_sds,
-                                                              solver_kwargs={'jac': None},
-                                                              norm_constrained=False)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=full_sds[:5],
-                                                              ref_sds=full_sds,
-                                                              solver_kwargs={'jac': None},
-                                                              norm_constrained=False)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
-    apsetg = APsetG(nelec, nspin)
-    results = solver.equation_solver.optimize_wfn_variational(apsetg, ham,
-                                                              left_pspace=full_sds,
-                                                              right_pspace=None,
-                                                              ref_sds=full_sds,
-                                                              norm_constrained=False)
-    assert abs(results['energy'] - (-energy_answer)) < 1e-7
+    # Solve system of equations
+    objective = SystemEquations(apsetg, ham, refwfn=full_sds)
+    results = least_squares(objective)
+    assert np.allclose(results['energy'], 0.0)
