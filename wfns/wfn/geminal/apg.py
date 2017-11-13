@@ -29,4 +29,4 @@ class APG(BaseGeminal):
         with the given set of vertices (occupied orbitals).
 
         """
-        yield from generate_complete_pmatch(occ_indices, is_decreasing=False)
+        yield from generate_complete_pmatch(occ_indices)
