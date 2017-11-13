@@ -6,7 +6,7 @@ import numpy as np
 from wfns.tools import find_datafile
 from wfns.wfn.ci.cisd import CISD
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver.ci import brute
 
 
 class TestCISD(CISD):
@@ -56,9 +56,9 @@ def test_cisd_h2_631gdp():
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(cisd, ham, exc_lvl=0)
+    energies, coeffs = brute(cisd, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-1.1651486697)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-1.1651486697)) < 1e-7
 
 
 def test_cisd_lih_631g():
@@ -88,6 +88,6 @@ def test_cisd_lih_631g():
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(cisd, ham, exc_lvl=0)
+    energies, coeffs = brute(cisd, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-7.99826182)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-7.99826182)) < 1e-7

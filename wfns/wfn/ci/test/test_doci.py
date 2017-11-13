@@ -6,7 +6,7 @@ import numpy as np
 from wfns.tools import find_datafile
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver.ci import brute
 
 
 class TestDOCI(DOCI):
@@ -90,9 +90,9 @@ def test_doci_h4_hf_sto6g():
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(doci, ham, exc_lvl=0)
+    energies, coeffs = brute(doci, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-1.884948574812363)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-1.884948574812363)) < 1e-7
 
 
 # FIXME: NEED EITHER ORBITAL OPTIMIZATION OR REORDERING OF PETER'S ORBITALS

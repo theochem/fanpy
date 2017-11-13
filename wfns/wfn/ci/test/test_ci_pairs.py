@@ -1,12 +1,11 @@
-""" Tests wfns.wavefunction.ci_pairs
-"""
+"""Test wfns.wavefunction.ci_pairs."""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wfn.ci.ci_pairs import CIPairs
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver.ci import brute
 
 
 class TestCIPairs(CIPairs):
@@ -59,12 +58,8 @@ def test_to_ap1rog_h2_sto6g_ground():
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    # ground state
-    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
-    raise NotImplementedError
-    # excited state
-    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=1)
-    raise NotImplementedError
+    energies, coeffs = brute(cipairs, ham)
+    raise AssertionError('No reference for the CIPairs tests.')
 
 
 def test_to_ap1rog_lih_sto6g():
@@ -83,9 +78,8 @@ def test_to_ap1rog_lih_sto6g():
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    # ground state
-    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
-    raise NotImplementedError
+    energies, coeffs = brute(cipairs, ham)
+    raise AssertionError('No reference for the CIPairs tests.')
 
 
 def test_to_ap1rog_h4_sto6g():
@@ -104,5 +98,5 @@ def test_to_ap1rog_h4_sto6g():
     nuc_nuc = 2.70710678119
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
-    energy = ci_solver.eigen_solve(cipairs, ham, exc_lvl=0)
-    raise NotImplementedError
+    energies, coeffs = brute(cipairs, ham)
+    raise AssertionError('No reference for the CIPairs tests.')

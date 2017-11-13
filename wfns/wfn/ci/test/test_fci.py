@@ -7,7 +7,7 @@ from nose.plugins.attrib import attr
 from wfns.tools import find_datafile
 from wfns.wfn.ci.fci import FCI
 from wfns.ham.chemical import ChemicalHamiltonian
-from wfns.solver import ci_solver
+from wfns.solver.ci import brute
 
 
 class TestFCI(FCI):
@@ -55,9 +55,9 @@ def test_fci_h2_631gdp():
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(fci, ham, exc_lvl=0)
+    energies, coeffs = brute(fci, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-1.1651486697)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-1.1651486697)) < 1e-7
 
 
 def test_fci_lih_sto6g():
@@ -81,9 +81,9 @@ def test_fci_lih_sto6g():
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(fci, ham, exc_lvl=0)
+    energies, coeffs = brute(fci, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-7.9723355823)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-7.9723355823)) < 1e-7
 
 
 @attr('slow')
@@ -108,6 +108,6 @@ def test_fci_lih_631g():
     ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energy = ci_solver.eigen_solve(fci, ham, exc_lvl=0)
+    energies, coeffs = brute(fci, ham)
     # compare with number from Gaussian
-    assert abs(energy + nuc_nuc - (-7.9982761)) < 1e-7
+    assert abs(energies[0] + nuc_nuc - (-7.9982761)) < 1e-7
