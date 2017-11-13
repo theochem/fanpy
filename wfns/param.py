@@ -252,7 +252,7 @@ class ParamMask(abc.ABC):
             the order in which they appear in the container.
 
         """
-        return np.hstack([obj.params for obj in self._masks_container_params.keys()])
+        return np.hstack([obj.params.ravel() for obj in self._masks_container_params.keys()])
 
     @property
     def active_params(self):
@@ -278,7 +278,8 @@ class ParamMask(abc.ABC):
         the parameters.
 
         """
-        return np.hstack([obj.params[sel] for obj, sel in self._masks_container_params.items()])
+        return np.hstack([obj.params.ravel()[sel]
+                          for obj, sel in self._masks_container_params.items()])
 
     def load_params(self, params):
         """Assign given parameters of the objective to the appropriate containers.
@@ -307,7 +308,7 @@ class ParamMask(abc.ABC):
             raise ValueError('Number of given parameters does not match up with the selection.')
 
         for container, sel in self._masks_container_params.items():
-            new_params = container.params.flatten()
+            new_params = container.params.ravel()
             new_params[sel] = params[self._masks_objective_params[container]]
             container.assign_params(new_params)
             container.clear_cache()
