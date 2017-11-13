@@ -12,7 +12,7 @@ class TestBaseGeminal(BaseGeminal):
 
     def generate_possible_orbpairs(self, occ_indices):
         if occ_indices == (0, 1, 2, 3):
-            yield ((0, 1), (2, 3))
+            yield ((0, 1), (2, 3)), 1
         else:
             raise NotImplementedError('Unsupported occupied indices')
 
@@ -206,7 +206,7 @@ def test_gem_compute_permanent():
 
 
 def test_gem_compute_permanent_deriv():
-    """Test derivatives ofBaseGeminal.compute_permanent using finite difference."""
+    """Test derivatives of BaseGeminal.compute_permanent using finite difference."""
     test = TestBaseGeminal()
     test.assign_dtype(float)
     test.assign_nelec(6)
@@ -246,6 +246,7 @@ def test_gem_get_overlap():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
+    test.load_cache()
     assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
     # check derivatives
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
