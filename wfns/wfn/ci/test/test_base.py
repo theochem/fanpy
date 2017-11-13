@@ -1,4 +1,4 @@
-"""Test wfns.wavefunction.base"""
+"""Test wfns.wavefunction.base."""
 from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
@@ -12,7 +12,7 @@ class TestCIWavefunction(CIWavefunction):
 
 
 def test_assign_spin():
-    """Test CIWavefunction.assign_spin"""
+    """Test CIWavefunction.assign_spin."""
     test = TestCIWavefunction()
     # check error
     assert_raises(TypeError, test.assign_spin, '1')
@@ -60,8 +60,7 @@ def test_seniority():
 
 
 def test_assign_sd_vec():
-    """Tests CIWavefunction.assign_sd_vec
-    """
+    """Test CIWavefunction.assign_sd_vec."""
     test = TestCIWavefunction()
     test.assign_nelec(2)
     test.assign_nspin(6)
