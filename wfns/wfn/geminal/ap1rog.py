@@ -267,7 +267,7 @@ class AP1roG(APIG):
 
             return self._cache_fns['overlap'](sd)
         # if derivatization
-        elif isinstance(deriv, int):
+        elif isinstance(deriv, (int, np.int64)):
             if deriv >= self.nparams:
                 return 0.0
             if inds_annihilated.size == inds_created.size == 0:

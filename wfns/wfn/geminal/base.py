@@ -439,7 +439,7 @@ class BaseGeminal(BaseWavefunction):
         if deriv is None:
             return self._cache_fns['overlap'](sd)
         # if derivatization
-        elif isinstance(deriv, int):
+        elif isinstance(deriv, (int, np.int64)):
             if deriv >= self.nparams:
                 return 0.0
             # convert parameter index to row and col index
