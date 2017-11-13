@@ -2,7 +2,6 @@
 """
 from __future__ import absolute_import, division, print_function
 import numpy as np
-from scipy.linalg import eigh
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 from wfns.ham.density import add_one_density, add_two_density, density_matrix
@@ -445,8 +444,8 @@ def test_density_matrix_restricted_h2_631gdp():
     ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
     civec = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
     civec = [int(i) for i in civec]
-    sd_coeffs = eigh(ci_matrix)[1][:, 0]
-    energy = eigh(ci_matrix)[0][0]
+    sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
+    energy = np.linalg.eigh(ci_matrix)[0][0]
 
     one_density, two_density = density_matrix(sd_coeffs, civec, one_int.shape[0],
                                               is_chemist_notation=False, val_threshold=0,
@@ -488,8 +487,8 @@ def test_density_matrix_restricted_lih_sto6g():
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
-    sd_coeffs = eigh(ci_matrix)[1][:, 0]
-    energy = eigh(ci_matrix)[0][0]
+    sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
+    energy = np.linalg.eigh(ci_matrix)[0][0]
 
     one_density, two_density = density_matrix(sd_coeffs, civec, one_int.shape[0],
                                               is_chemist_notation=False, val_threshold=0,
@@ -532,8 +531,8 @@ def test_density_matrix_restricted_lih_631g():
     ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
     civec = [int(i) for i in civec]
-    sd_coeffs = eigh(ci_matrix)[1][:, 0]
-    energy = eigh(ci_matrix)[0][0]
+    sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
+    energy = np.linalg.eigh(ci_matrix)[0][0]
 
     one_density, two_density = density_matrix(sd_coeffs, civec, one_int.shape[0],
                                               is_chemist_notation=False, val_threshold=0,
@@ -575,8 +574,8 @@ def test_density_matrix_unrestricted_lih_sto6g():
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
-    sd_coeffs = eigh(ci_matrix)[1][:, 0]
-    energy = eigh(ci_matrix)[0][0]
+    sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
+    energy = np.linalg.eigh(ci_matrix)[0][0]
 
     one_density, two_density = density_matrix(sd_coeffs, civec, one_int.shape[0],
                                               is_chemist_notation=False, val_threshold=0,
@@ -626,8 +625,8 @@ def test_density_matrix_generalized_lih_sto6g():
     ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
     civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
-    sd_coeffs = eigh(ci_matrix)[1][:, 0]
-    energy = eigh(ci_matrix)[0][0]
+    sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
+    energy = np.linalg.eigh(ci_matrix)[0][0]
 
     one_density, two_density = density_matrix(sd_coeffs, civec, 6,
                                               is_chemist_notation=False, val_threshold=0,
