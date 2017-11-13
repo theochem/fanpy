@@ -35,5 +35,5 @@ class APsetG(BaseGeminal):
                 alpha_occ_indices.append(i)
             else:
                 beta_occ_indices.append(i)
-        yield from graphs.generate_biclique_pmatch(alpha_occ_indices, beta_occ_indices,
+        yield from graphs.generate_biclique_pmatch(alpha_occ_indices, beta_occ_indices, occ_indices,
                                                    is_decreasing=False)
