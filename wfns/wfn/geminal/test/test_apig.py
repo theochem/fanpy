@@ -2,7 +2,6 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy
-from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 from wfns.tools import find_datafile
 from wfns.wfn.geminal.apig import APIG
@@ -71,10 +70,7 @@ def answer_apig_h2_sto6g():
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
-
-    nelec = 2
-    nspin = 4
-    apig = APIG(nelec, nspin)
+    apig = APIG(2, 4)
 
     # FIXME: need normalize
     # plot all possible values (within normalization constraint)
@@ -264,7 +260,6 @@ def answer_apig_lih_sto6g():
     return apig.params
 
 
-@attr('slow')
 def test_apig_lih_sto6g():
     """Test APIG wavefunction using LiH with HF/STO-6G orbital.
 
