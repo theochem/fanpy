@@ -181,7 +181,7 @@ class AP1roG(APIG):
             # NOTE: Need to recreate spatial_ref_sd, inds_annihilated and inds_created
             spatial_sd, _ = slater.split_spin(sd, self.nspatial)
             spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
-            orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+            orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
             inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
                                          for i in orbs_annihilated])
             inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
@@ -209,7 +209,7 @@ class AP1roG(APIG):
             """
             spatial_sd, _ = slater.split_spin(sd, self.nspatial)
             spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
-            orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+            orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
             inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
                                          for i in orbs_annihilated])
             inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
@@ -243,7 +243,7 @@ class AP1roG(APIG):
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
         spatial_sd, _ = slater.split_spin(sd, self.nspatial)
         # get indices of the occupied orbitals
-        orbs_annihilated, orbs_created = slater.diff(spatial_ref_sd, spatial_sd)
+        orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
 
         # if different number of electrons
         if len(orbs_annihilated) != len(orbs_created):
