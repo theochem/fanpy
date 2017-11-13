@@ -64,7 +64,7 @@ def generate_complete_pmatch(indices, sign=1):
 
 
 @docstring(indent_level=1)
-def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
+def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decreasing=False):
     """Generate all of the perfect matches of a complete bipartite (sub)graph.
 
     Parameters
@@ -75,6 +75,9 @@ def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
     indices_two : list of int
         List of indices of the vertices used to create the second half of the complete bipartite
         graph.
+    ordered_set : {tuple, list}
+        Set of indices ordered in strictly increasing order.
+        If not provided, then the given indices are ordered.
     is_decreasing : bool
         If True, indices are ordered so that they are decreasing. (Sometimes creators are ordered
         from greatest to smallest).
@@ -92,14 +95,8 @@ def generate_biclique_pmatch(indices_one, indices_two, is_decreasing=False):
     """
     # assume indices_one and indices_two are sorted
     sign = 1
-    orig_sign = sign_perm(indices_one + indices_two, is_decreasing=is_decreasing)
-    # orig_sign is the signature of the transpositions requires to sort indices_one + indices_two
-    # from smallest to largest
-    orig_sign *= (-1)**((len(indices_one)//2) % 2)
-    # When indices are zipped, first element will take (n-1) swaps, second (n-2), etc to a total of
-    # (n-1)+(n-2)+...+1 = n(n-1)/2. If n is even then n-1 is odd, and vice versa. If n is even and
-    # n/2 is odd, then n(n-1)/2 is odd; same result when n-1 is even and (n-1)/2 is odd. i.e.
-    # if n//2 is odd, then odd number of transpositions is required.
+    orig_sign = sign_perm([i for pair in zip(indices_one, indices_two) for i in pair],
+                          ordered_set=ordered_set, is_decreasing=is_decreasing)
 
     if len(indices_one) == 0 or len(indices_one) == 0:
         yield tuple(), sign
