@@ -3,15 +3,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
 from wfns.backend import math_tools, slater
-from wfns.wrapper.docstring import docstring_class
-
-__all__ = []
 
 
 # FIXME: parent was removed to allow easier multiple inheritance. Maybe multiple inheritance should
 #        be replaced with a wrapper instead? especially since ordering is necessary w/o splitting
 #        the BaseGeminal in two.
-@docstring_class(indent_level=1)
 class RankTwoApprox:
     r"""Rank-2 approximation to the geminal wavefunction.
 
@@ -27,6 +23,28 @@ class RankTwoApprox:
 
         |C|^+ = \frac{|C \circ C|^-}{|C|^-}
 
+    Properties
+    ----------
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+    lambdas : np.ndarray(ngem)
+        The :math:`lambda` part of the parameters.
+    epsilons : np.ndarray(nspatial)
+        The :math:`epsilon` part of the parameters.
+    zetas : np.ndarray(nspatial)
+        The :math:`zeta` part of the parameters.
+    fullrank_params : np.ndarray(ngem, nspatial)
+        Geminal coefficient matrix.
+
+    Methods
+    -------
+    assign_params(self, params=None)
+        Assign the parameters of the geminal wavefunction.
+    compute_permanent(self, col_inds, deriv=None) : float
+        Compute the permanent of the matrix that corresponds to the given orbital pairs.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
+
     """
     # FIXME: add constraints to parameters
     #        zetas should be less than 1
@@ -34,10 +52,15 @@ class RankTwoApprox:
     #        lambda should be around 1 (epsilons should be less than 0)
     @property
     def template_params(self):
-        """
+        """Return the template of the parameters of the given wavefunction.
 
         Parameters are ordered as follows: lambda_1, ..., lambda_p, epsilon_1, ..., epsilon_k,
         zeta_1, ..., zeta_k.
+
+        Returns
+        -------
+        template_params : np.ndarray(ngem, norbpair)
+            Default parameters of the geminal wavefunction.
 
         Notes
         -----
@@ -51,7 +74,7 @@ class RankTwoApprox:
 
     @property
     def lambdas(self):
-        r"""Return the :math:`lambda` part of the parameters.
+        """Return the :math:`\lambda` part of the parameters.
 
         Returns
         -------
@@ -63,7 +86,7 @@ class RankTwoApprox:
 
     @property
     def epsilons(self):
-        r"""Return the :math:`epsilons` part of the parameters.
+        """Return the :math:`\epsilons` part of the parameters.
 
         Returns
         -------
@@ -75,7 +98,7 @@ class RankTwoApprox:
 
     @property
     def zetas(self):
-        r"""Return the :math:`zetas` part of the parameters.
+        """Return the :math:`\zetas` part of the parameters.
 
         Returns
         -------
@@ -98,7 +121,14 @@ class RankTwoApprox:
         return self.zetas / (self.lambdas[:, np.newaxis] - self.epsilons)
 
     def assign_params(self, params=None):
-        """
+        """Assign the parameters of the geminal wavefunction.
+
+        Parameters
+        ----------
+        params : {np.ndarray, BaseGeminal, None}
+            Parameters of the geminal wavefunction.
+            If BaseGeminal instance is given, then the parameters of this instance are used.
+            Default uses the template parameters.
 
         Raises
         ------
@@ -123,7 +153,7 @@ class RankTwoApprox:
             raise ValueError('Corresponding geminal coefficient matrix has a division by zero')
 
     def compute_permanent(self, col_inds, deriv=None):
-        """
+        """Compute the permanent of the matrix that corresponds to the given orbital pairs.
 
         Parameters
         ----------
@@ -205,6 +235,30 @@ class RankTwoApprox:
             raise ValueError('Invalid derivatization index.')
 
     def get_overlap(self, sd, deriv=None):
+        r"""Return the overlap of the wavefunction with a Slater determinant.
+
+        .. math::
+            \ket{\Psi}
+            &= \prod_{p=1}^{N_{gem}} \sum_{ij} C_{pij} a^\dagger_i a^\dagger_j \ket{\theta}\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
+            \ket{\mathbf{m}}
+
+        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
+
+        Parameters
+        ----------
+        sd : {int, mpz}
+            Slater Determinant against which the overlap is taken.
+        deriv : int
+            Index of the parameter to derivatize.
+            Default does not derivatize.
+
+        Returns
+        -------
+        overlap : float
+            Overlap of the wavefunction.
+
+        """
         sd = slater.internal_sd(sd)
 
         if deriv is None:
