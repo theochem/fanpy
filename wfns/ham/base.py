@@ -4,15 +4,16 @@ import abc
 import numpy as np
 from wfns.param import ParamContainer
 from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
-from wfns.wrapper.docstring import docstring_class
 
 
-@docstring_class(indent_level=1)
+# FIXME: Add integrals, Remove orbtypes (create separate hamiltonian for each orbtype)
 class BaseHamiltonian(ParamContainer):
     r"""Hamiltonian for a Schrodinger equation.
 
     Attributes
     ----------
+    params : np.ndarray
+        Parameters of the Hamitonian.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used.
     energy_nuc_nuc : float
@@ -27,6 +28,41 @@ class BaseHamiltonian(ParamContainer):
         1-tuple for spatial (restricted) and generalized orbitals.
         3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
         beta-beta-beta-beta components).
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspin : int
+        Number of spin orbitals.
+    dtype : {'restricted', 'unrestricted', 'generalized'}
+        Number of spin orbitals.
+
+    Methods
+    -------
+    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+        Initialize the Hamiltonian
+    clear_cache(self)
+        Placeholder function that would clear the cache.
+    assign_orbtype(self, orbtype=None)
+        Assign the orbital type.
+    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion.
+    assign_integrals(self, one_int, two_int)
+        Assign the one- and two-electron integrals.
+    assign_params(self, params)
+        Assign parameters of the Hamiltonian.
+    orb_rotate_jacobi(self, jacobi_indices, theta)
+        Rotate orbitals using Jacobi matrix.
+    orb_rotate_matrix(self, matrix)
+        Rotate orbitals using a transformation matrix.
+
+    Abstract Methods
+    ----------------
+    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+        Integrate the Hamiltonian with against a wavefunction and Slater determinant.
+    integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
+        Integrate the Hamiltonian with against two Slater determinants.
 
     """
 
@@ -52,6 +88,7 @@ class BaseHamiltonian(ParamContainer):
             Default is `0.0`.
 
         """
+        # FIXME: NEED TO SET params
         self.assign_orbtype(orbtype)
         self.assign_energy_nuc_nuc(energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
