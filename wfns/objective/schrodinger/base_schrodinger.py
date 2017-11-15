@@ -1,6 +1,5 @@
 """Base class for objectives related to solving the Schrodinger equation."""
 import numpy as np
-from wfns.wrapper.docstring import docstring_class
 from wfns.param import ParamMask
 from wfns.objective.base_objective import BaseObjective
 from wfns.wfn.base import BaseWavefunction
@@ -9,7 +8,6 @@ from wfns.ham.base import BaseHamiltonian
 import wfns.backend.slater as slater
 
 
-@docstring_class(indent_level=1)
 class BaseSchrodinger(BaseObjective):
     """Base class for objectives related to solving the Schrodinger equation.
 
@@ -17,7 +15,7 @@ class BaseSchrodinger(BaseObjective):
     ----------
     wfn : BaseWavefunction
         Wavefunction that defines the state of the system (number of electrons and excited state).
-    ham : ChemicalHamiltonian
+    ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
@@ -30,16 +28,51 @@ class BaseSchrodinger(BaseObjective):
         Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
         selected.
 
+    Properties
+    ----------
+    params : {np.ndarray(K, )}
+        Parameters of the objective at the current state.
+
+    Abstract Properties
+    -------------------
+    num_eqns : int
+        Number of equations in the objective.
+
+    Methods
+    -------
+    __init__(self, param_selection=None, tmpfile='')
+        Initialize the objective.
+    assign_param_selection(self, param_selection=None)
+        Select parameters that will be active in the objective.
+    assign_params(self, params)
+        Assign the parameters to the wavefunction and/or hamiltonian.
+    save_params(self)
+        Save all of the parameters in the `param_selection` to the temporary file.
+    wrapped_get_overlap(self, sd, deriv=None)
+        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=None)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
+        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=None)
+        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
+        Return the energy of the Schrodinger equation after projecting out both sides.
+
+    Abstract Methods
+    ----------------
+    objective(self, params) : float
+        Return the value of the objective for the given parameters.
+
     """
     def __init__(self, wfn, ham, tmpfile='', param_selection=None):
-        """Initialize the objective.
+        """Initialize the objective instance.
 
         Parameters
         ----------
         wfn : BaseWavefunction
-            Wavefunction that defines the state of the system (number of electrons and excited
-            state).
-        ham : ChemicalHamiltonian
+            Wavefunction.
+        ham : BaseHamiltonian
             Hamiltonian that defines the system under study.
         tmpfile : str
             Name of the file that will store the parameters used by the objective method.
@@ -55,7 +88,7 @@ class BaseSchrodinger(BaseObjective):
         ------
         TypeError
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
-            If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+            If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If save_file is not a string.
         ValueError
             If wavefunction and Hamiltonian do not have the same data type.
@@ -82,11 +115,11 @@ class BaseSchrodinger(BaseObjective):
         super().__init__(param_selection, tmpfile=tmpfile)
 
     def wrapped_get_overlap(self, sd, deriv=None):
-        """Wrap 'get_overlap' to be derivatized with respect to the parameters of the objective.
+        """Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : {int, np.int64, mpz}
             Slater Determinant against which the overlap is taken.
         deriv : {int, None}
             Index of the objective parameters with respect to which the overlap is derivatized.
@@ -109,11 +142,11 @@ class BaseSchrodinger(BaseObjective):
             return self.wfn.get_overlap(sd, deriv)
 
     def wrapped_integrate_wfn_sd(self, sd, deriv=None):
-        """Wrap 'integrate_wfn_sd' to be derivatized wrt the parameters of the objective.
+        """Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : {int, np.int64, mpz}
             Slater Determinant against which the overlap is taken.
         deriv : {int, None}
             Index of the objective parameters with respect to which the overlap is derivatized.
@@ -126,7 +159,7 @@ class BaseSchrodinger(BaseObjective):
 
         Notes
         -----
-        Since `integrate_wfn_sd` depends on both the hamiltonian and the wavefunction, it can be
+        Since `integrate_wfn_sd` depends on both the Hamiltonian and the wavefunction, it can be
         derivatized with respect to the paramters of the hamiltonian and of the wavefunction.
 
         """
@@ -145,14 +178,14 @@ class BaseSchrodinger(BaseObjective):
             return 0.0
 
     def wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None):
-        """Wrap 'integrate_sd_sd' to be derivatized wrt the parameters of the objective.
+        """Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
 
         Parameters
         ----------
         sd1 : int
-            Slater Determinant against which the Hamiltonian is integrated.
+            Slater determinant against which the Hamiltonian is integrated.
         sd2 : int
-            Slater Determinant against which the Hamiltonian is integrated.
+            Slater determinant against which the Hamiltonian is integrated.
         deriv : {int, None}
             Index of the objective parameters with respect to which the overlap is derivatized.
             Default is no derivatization.
@@ -173,7 +206,7 @@ class BaseSchrodinger(BaseObjective):
         else:
             return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
 
-    def get_energy_one_proj(self, ref, deriv=None):
+    def get_energy_one_proj(self, refwfn, deriv=None):
         """Return the energy of the Schrodinger equation with respect to a reference wavefunction.
 
         ..math::
@@ -197,8 +230,7 @@ class BaseSchrodinger(BaseObjective):
 
         ..math::
 
-            \braket{\Phi_{ref} | \Psi}
-            &=
+            \braket{\Phi_{ref} | \Psi} &=
             \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \bra{\mathbf{m}} \ket{\Psi}\\
 
         Ideally, we want to use the actual wavefunction as the reference, but, without further
@@ -209,12 +241,12 @@ class BaseSchrodinger(BaseObjective):
 
         ..math:
 
-            \braket{\Psi | \sum_{\mathbf{m} \in S} \ket{\mathbf{m}} \bra{\mathbf{m}} \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S} f^*(\mathbf{m}) \bra{\mathbf{m}} \hat{H} \ket{\Psi}\\
+            \bra{\Psi} \sum_{\mathbf{m} \in S} \ket{\mathbf{m}} \braket{\mathbf{m} | \hat{H} | \Psi}
+            &= \sum_{\mathbf{m} \in S} f^*(\mathbf{m}) \braket{\mathbf{m} | \hat{H} | \Psi}\\
 
         Parameters
         ----------
-        ref : {CIWavefunction, list/tuple of int}
+        refwfn : {CIWavefunction, list/tuple of int}
             Reference wavefunction used to calculate the energy.
             If list/tuple of Slater determinants are given, then the reference wavefunction will be
             the truncated form (according to the given Slater determinants) of the provided
@@ -230,7 +262,7 @@ class BaseSchrodinger(BaseObjective):
         Raises
         ------
         TypeError
-            If `ref` is not a CIWavefunction, int, or list/tuple of int.
+            If `refwfn` is not a CIWavefunction, int, or list/tuple of int.
 
         """
         # vectorize functions
@@ -238,27 +270,24 @@ class BaseSchrodinger(BaseObjective):
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
         # define reference
-        if isinstance(ref, CIWavefunction):
-            ref_sds = ref.sd_vec
-            ref_coeffs = ref.params
-            # FIXME: assumes that the CI wavefunction will always be completely separate from the
-            #        given wavefuncion/hamiltonian. It does not support projecting onto one of the
-            #        component CI wavefunction of a linear combination of CI wavefunctions.
+        if isinstance(refwfn, CIWavefunction):
+            ref_sds = refwfn.sd_vec
+            ref_coeffs = refwfn.params
             if deriv is not None:
-                ref_deriv = self.param_selection.derivative_index(ref, deriv)
+                ref_deriv = self.param_selection.derivative_index(refwfn, deriv)
                 if ref_deriv is None:
                     d_ref_coeffs = 0.0
                 else:
-                    d_ref_coeffs = np.zeros(ref.nparams, dtype=float)
+                    d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
                     d_ref_coeffs[ref_deriv] = 1
-        elif slater.is_sd_compatible(ref) or (isinstance(ref, (list, tuple)) and
-                                              all(slater.is_sd_compatible(sd) for sd in ref)):
-            if slater.is_sd_compatible(ref):
-                ref = [ref]
-            ref_sds = ref
-            ref_coeffs = get_overlap(ref)
+        elif slater.is_sd_compatible(refwfn) or (isinstance(refwfn, (list, tuple)) and
+                                                 all(slater.is_sd_compatible(sd) for sd in refwfn)):
+            if slater.is_sd_compatible(refwfn):
+                refwfn = [refwfn]
+            ref_sds = refwfn
+            ref_coeffs = get_overlap(refwfn)
             if deriv is not None:
-                d_ref_coeffs = get_overlap(ref, deriv)
+                d_ref_coeffs = get_overlap(refwfn, deriv)
         else:
             raise TypeError('Reference state must be given as a Slater determinant, a CI '
                             'Wavefunction, or a list/tuple of Slater determinants. See '

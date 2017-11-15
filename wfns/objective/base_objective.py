@@ -1,17 +1,11 @@
-"""Parent class of the objective equations.
-
-The objective is used to optimize the wavefunction and/or Hamiltonian.
-
-"""
+"""Parent class of the objective equations."""
 import abc
 import numpy as np
 from wfns.param import ParamMask
-from wfns.wrapper.docstring import docstring_class
 
 
-@docstring_class(indent_level=1)
 class BaseObjective(abc.ABC):
-    """Base objective function.
+    """Base class for setting up the objective function.
 
     Attributes
     ----------
@@ -25,6 +19,32 @@ class BaseObjective(abc.ABC):
         Default selects the wavefunction parameters.
         Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
         selected.
+
+    Properties
+    ----------
+    params : {np.ndarray(K, )}
+        Parameters of the objective at the current state.
+
+    Methods
+    -------
+    __init__(self, param_selection=None, tmpfile='')
+        Initialize the objective.
+    assign_param_selection(self, param_selection=None)
+        Select parameters that will be active in the objective.
+    assign_params(self, params)
+        Assign the parameters to the wavefunction and/or hamiltonian.
+    save_params(self)
+        Save all of the parameters in the `param_selection` to the temporary file.
+
+    Abstract Properties
+    -------------------
+    num_eqns : int
+        Number of equations in the objective.
+
+    Abstract Methods
+    ----------------
+    objective(self, params) : float
+        Return the value of the objective for the given parameters.
 
     """
     def __init__(self, param_selection=None, tmpfile=''):
@@ -47,7 +67,7 @@ class BaseObjective(abc.ABC):
         ------
         TypeError
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
-            If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+            If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If save_file is not a string.
         ValueError
             If wavefunction and Hamiltonian do not have the same data type.
@@ -106,7 +126,7 @@ class BaseObjective(abc.ABC):
 
         Parameters
         ----------
-        params : np.ndarray(K, )
+        params : {np.ndarray(K, )}
             Parameters used by the objective method.
 
         Raises
@@ -136,7 +156,7 @@ class BaseObjective(abc.ABC):
         Parameters
         ----------
         params : np.ndarray
-            Parameter that changes the objective.
+            Parameter thatof the objective.
 
         Returns
         -------
