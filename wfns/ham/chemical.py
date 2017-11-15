@@ -4,10 +4,8 @@ from functools import reduce
 import operator
 from wfns.backend import slater
 from wfns.ham.base import BaseHamiltonian
-from wfns.wrapper.docstring import docstring_class
 
 
-@docstring_class(indent_level=1)
 class ChemicalHamiltonian(BaseHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system.
 
@@ -18,6 +16,60 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
     where :math:`h_{ik}` is the one-electron integral and :math:`g_{ijkl}` is the two-electron
     integral in Physicists' notation.
+
+    Attributes
+    ----------
+    params : np.ndarray
+        Parameters of the Hamitonian.
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
+        Type of the orbital used.
+    energy_nuc_nuc : float
+        Nuclear-nuclear repulsion energy.
+    one_int : {1- or 2-tuple np.ndarray(K, K)}
+        One electron integrals for restricted, unrestricted, or generalized orbitals.
+        1-tuple for spatial (restricted) and generalized orbitals.
+        2-tuple for unrestricted orbitals (alpha-alpha and beta-beta components).
+    two_int : {1- or 3-tuple np.ndarray(K, K)}
+        Two electron integrals for restricted, unrestricted, or generalized orbitals.
+        Uses the physicist's notation.
+        1-tuple for spatial (restricted) and generalized orbitals.
+        3-tuple for unrestricted orbitals (alpha-alpha-alpha-alpha, alpha-beta-alpha-beta, and
+        beta-beta-beta-beta components).
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspin : int
+        Number of spin orbitals.
+    dtype : {'restricted', 'unrestricted', 'generalized'}
+        Number of spin orbitals.
+
+    Methods
+    -------
+    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+        Initialize the Hamiltonian
+    clear_cache(self)
+        Placeholder function that would clear the cache.
+    assign_orbtype(self, orbtype=None)
+        Assign the orbital type.
+    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
+        Assigns the nuclear nuclear repulsion.
+    assign_integrals(self, one_int, two_int)
+        Assign the one- and two-electron integrals.
+    assign_params(self, params)
+        Assign parameters of the Hamiltonian.
+    orb_rotate_jacobi(self, jacobi_indices, theta)
+        Rotate orbitals using Jacobi matrix.
+    orb_rotate_matrix(self, matrix)
+        Rotate orbitals using a transformation matrix.
+    _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb, exchange)
+        Update integrals for the given Slater determinant.
+        Used to simplify `integrate_wfn_sd`.
+    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+        Integrate the Hamiltonian with against a wavefunction and Slater determinant.
+    integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
+        Integrate the Hamiltonian with against two Slater determinants.
 
     """
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,

@@ -12,12 +12,10 @@ density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_thresh
 """
 import numpy as np
 from wfns.backend import slater
-from wfns.wrapper.docstring import docstring
 
 __all__ = ['density_matrix']
 
 
-@docstring(indent_level=1)
 # FIXME: incredibly slow/bad approach
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
     r"""Add some value to the appropriate density matrix element.
@@ -93,7 +91,6 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         raise ValueError('Unsupported orbital type')
 
 
-@docstring(indent_level=1)
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     r"""Add some value to the appropriate one electron density matrix element.
 
@@ -189,7 +186,6 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 
 # FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
 # TODO: generalize to arbitrary order density matrix
-@docstring(indent_level=1)
 def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
                    orbtype='restricted'):
     r"""Return the first and second order density matrices.
