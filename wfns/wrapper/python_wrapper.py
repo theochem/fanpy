@@ -14,12 +14,10 @@ module can act as a temporary hack to access these modules.
 import os
 from subprocess import call
 import numpy as np
-from wfns.wrapper.docstring import docstring
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
 
-@docstring(indent_level=1)
 def generate_hartreefock_results(python_name, calctype, energies_name='energies.npy',
                                  oneint_name='oneint.npy', twoint_name='twoint.npy',
                                  remove_npyfiles=False, **kwargs):
@@ -87,7 +85,6 @@ def generate_hartreefock_results(python_name, calctype, energies_name='energies.
     return el_energy, nuc_nuc_energy, oneint, twoint
 
 
-@docstring(indent_level=1)
 def generate_fci_results(python_name, cimatrix_name='cimatrix.npy', sds_name='sds.npy',
                          remove_npyfiles=False, **kwargs):
     """Generate results of FCI calculation (from PySCF).
