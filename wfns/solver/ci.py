@@ -1,5 +1,4 @@
 """Solver for CI wavefunctions."""
-from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.linalg
 from wfns.wfn.ci.base import CIWavefunction

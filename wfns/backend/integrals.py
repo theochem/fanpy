@@ -1,5 +1,4 @@
-r"""Classes for storing integrals."""
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Classes for storing integrals."""
 import numpy as np
 from wfns.backend import slater
 
@@ -8,7 +7,7 @@ from wfns.backend import slater
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
 # FIXME: move to Hamiltonian class
 class BaseIntegrals:
-    r"""Base class for storing integrals.
+    """Base class for storing integrals.
 
     Attributes
     ----------
@@ -333,7 +332,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated code
     def rotate_matrix(self, transforms):
-        r"""Rotate the integrals with a transformation matrix.
+        """Rotate the integrals with a transformation matrix.
 
         Parameters
         ----------
@@ -371,7 +370,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
 
 class TwoElectronIntegrals(BaseIntegrals):
-    r"""Class for storing two-electron integrals.
+    """Class for storing two-electron integrals.
 
     Attributes
     ----------
@@ -557,7 +556,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
     def rotate_jacobi(self, jacobi_indices, theta):
-        r"""Rotate integrals with a Jacobi matrix (of the selected indices).
+        """Rotate integrals with a Jacobi matrix (of the selected indices).
 
         Parameters
         ----------
@@ -662,7 +661,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated code
     def rotate_matrix(self, transforms):
-        r"""Rotate the integrals with a transformation matrix.
+        """Rotate the integrals with a transformation matrix.
 
         Parameters
         ----------

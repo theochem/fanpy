@@ -1,5 +1,4 @@
 """Parent class of CI wavefunctions."""
-from __future__ import absolute_import, division, print_function
 import itertools
 import numpy as np
 from wfns.wfn.base import BaseWavefunction

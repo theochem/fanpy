@@ -1,6 +1,4 @@
-""" Tests wfns.wavefunction.fci
-"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.wavefunction.fci."""
 from nose.tools import assert_raises
 import numpy as np
 from nose.plugins.attrib import attr

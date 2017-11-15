@@ -6,7 +6,6 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
     Runs HF in HORTON.
 
 """
-from __future__ import absolute_import, division, print_function
 import sys
 import numpy as np
 from horton import (IOData, get_gobasis,

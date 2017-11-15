@@ -1,5 +1,4 @@
 r"""Wavefunction with orbitals rotated by Jacobi matrix."""
-from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 from wfns.backend import slater

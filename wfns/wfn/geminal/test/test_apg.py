@@ -1,5 +1,4 @@
 """Test wfns.wavefunction.geminals.apg."""
-from __future__ import absolute_import, division, print_function
 from nose.plugins.attrib import attr
 import types
 import numpy as np

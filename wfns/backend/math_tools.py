@@ -14,7 +14,6 @@ permanent_borchardt(matrix)
     Computes the permanent of rank-2 Cauchy matrix
 
 """
-from __future__ import absolute_import, division, print_function
 from itertools import permutations, combinations
 import numpy as np
 from scipy.misc import comb

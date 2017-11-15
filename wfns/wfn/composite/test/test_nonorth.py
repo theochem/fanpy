@@ -1,5 +1,4 @@
-"""Test wfns.wavefunction.composite.nonorth"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.wavefunction.composite.nonorth."""
 from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile

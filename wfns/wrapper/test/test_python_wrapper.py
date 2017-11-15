@@ -1,6 +1,4 @@
-""" Tests wfns.wrapper.horton
-"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.wrapper.horton."""
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wrapper.python_wrapper import generate_hartreefock_results, generate_fci_results
@@ -166,7 +164,7 @@ def test_generate_fci_cimatrix_h2_631gd():
 
 
 def test_generate_fci_cimatrix_lih_sto6g():
-    """ Tests generate_fci_cimatrix with LiH STO-6G
+    """Test generate_fci_cimatrix with LiH STO-6G
 
     HF energy: -7.95197153880
     FCI energy: -7.9723355823

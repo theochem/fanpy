@@ -1,5 +1,4 @@
 """Test wfns.wavefunction.composite.jacobi"""
-from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 import itertools as it

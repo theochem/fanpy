@@ -1,6 +1,4 @@
-""" Tests wfns.ci.density
-"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.ci.density."""
 import numpy as np
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
@@ -9,8 +7,7 @@ from wfns.tools import find_datafile
 
 
 def test_add_one_density():
-    """ Tests density.add_one_density
-    """
+    """Test density.add_one_density."""
     # check error
     #  tuple of numpy array
     assert_raises(TypeError, lambda: add_one_density((np.zeros((2, 2)),), 1, 1, 0.5, 'restricted'))
@@ -91,8 +88,7 @@ def test_add_one_density():
 
 
 def test_add_two_density():
-    """ Tests density.add_two_density
-    """
+    """Test density.add_two_density."""
     # check error
     #  tuple of numpy array
     assert_raises(TypeError, lambda: add_two_density((np.zeros((2, 2, 2, 2)),), 1, 1, 1, 1, 0.5,
@@ -274,8 +270,7 @@ def test_add_two_density():
 
 
 def test_density_matrix():
-    """ Tests density.density_matrix
-    """
+    """Test density.density_matrix."""
     # check type
     assert_raises(TypeError, lambda: density_matrix(np.arange(1, 5),
                                                     [0b0101, 0b1001, 0b0110, 0b1010], 2,
@@ -382,7 +377,7 @@ def test_density_matrix():
 
 # Tests using examples
 def test_density_matrix_restricted_h2_fci_sto6g():
-    """ Tests density.density_matrix using H2 FCI/STO-6G
+    """Test density.density_matrix using H2 FCI/STO-6G.
 
     Uses numbers obtained from Gaussian and PySCF
         Gaussian's one electron density matrix is used to compare
@@ -391,6 +386,7 @@ def test_density_matrix_restricted_h2_fci_sto6g():
 
     Coefficients for the Slater determinants (from PySCF) are [0.993594152, 0.0, 0.0, -0.113007352]
     FCI Electronic energy is -1.85908985 Hartree
+
     """
     sd_coeffs = np.array([0.993594152, 0.0, 0.0, -0.113007352])
     one_density, two_density = density_matrix(sd_coeffs, [0b0101, 0b1001, 0b0110, 0b1010], 2,
@@ -422,13 +418,14 @@ def test_density_matrix_restricted_h2_fci_sto6g():
 
 
 def test_density_matrix_restricted_h2_631gdp():
-    """ Tests density.density_matrix using H2 system (FCI/6-31G**)
+    """Test density.density_matrix using H2 system (FCI/6-31G**).
 
     Uses numbers obtained from PySCF
         PySCF's SD coefficient is used to construct density matrix
         Electronic energy of FCI
 
     FCI Electronic energy is -1.87832559 Hartree
+
     """
     nelec = 2
 
@@ -467,11 +464,12 @@ def test_density_matrix_restricted_h2_631gdp():
 
 
 def test_density_matrix_restricted_lih_sto6g():
-    """ Tests density.density_matrix using LiH system (FCI/STO6G) with restricted orbitals
+    """Test density.density_matrix using LiH system (FCI/STO6G) with restricted orbitals.
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
+
     """
     nelec = 4
 
@@ -511,11 +509,12 @@ def test_density_matrix_restricted_lih_sto6g():
 
 @attr('slow')
 def test_density_matrix_restricted_lih_631g():
-    """ Tests density.density_matrix using LiH system (FCI/6-31G) with restricted orbitals
+    """Test density.density_matrix using LiH system (FCI/6-31G) with restricted orbitals.
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
+
     """
     nelec = 4
 
@@ -554,11 +553,12 @@ def test_density_matrix_restricted_lih_631g():
 
 
 def test_density_matrix_unrestricted_lih_sto6g():
-    """ Tests density.density_matrix using LiH system (FCI/STO6G) with unrestricted orbitals
+    """Test density.density_matrix using LiH system (FCI/STO6G) with unrestricted orbitals.
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
+
     """
     nelec = 4
 
@@ -605,11 +605,12 @@ def test_density_matrix_unrestricted_lih_sto6g():
 
 
 def test_density_matrix_generalized_lih_sto6g():
-    """ Tests density.density_matrix using LiH system (FCI/STO6G) with generalized orbitals
+    """Test density.density_matrix using LiH system (FCI/STO6G) with generalized orbitals.
 
     Uses numbers obtained from PySCF
         SD coefficient is used to construct density matrix
         Electronic energy of FCI
+
     """
     nelec = 4
 
