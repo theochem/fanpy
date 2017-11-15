@@ -6,12 +6,8 @@ import functools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wfn.base import BaseWavefunction
-from wfns.wrapper.docstring import docstring_class
-
-__all__ = []
 
 
-@docstring_class(indent_level=1)
 class BaseGeminal(BaseWavefunction):
     r"""Base Geminal Wavefunction.
 
@@ -47,6 +43,16 @@ class BaseGeminal(BaseWavefunction):
 
     Attributes
     ----------
+    nelec : int
+        Number of electrons.
+    nspin : int
+        Number of spin orbitals (alpha and beta).
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
+    params : np.ndarray
+        Parameters of the wavefunction.
+    memory : float
+        Memory available for the wavefunction.
     dict_orbpair_ind : dict of 2-tuple of int to int
         Dictionary of orbital pair (i, j) where i and j are spin orbital indices and i < j to the
         column index of the geminal coefficient matrix.
@@ -54,13 +60,74 @@ class BaseGeminal(BaseWavefunction):
         Dictionary of column index of the geminal coefficient matrix to the orbital pair (i, j)
         where i and j are spin orbital indices and i < j.
 
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction.
+    seniority : int
+        Seniority of the wavefunction.
+    npair : int
+        Number of electron pairs.
+    norbpair : int
+        Number of orbital pairs used to construct the geminals.
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None)
+        Assign memory available for the wavefunction.
+    assign_ngem(self, ngem=None)
+        Assign the number of geminals.
+    assign_orbpairs(self, orbpairs=None)
+        Assign the orbital pairs that will be used to construct the geminals.
+    assign_params(self, params=None, add_noise=False)
+        Assign the parameters of the geminal wavefunction.
+    compute_permanent(self, col_inds, row_inds=None, deriv=None)
+        Compute the permanent of the matrix that corresponds to the given orbital pairs.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
+
+    Abstract Methods
+    ----------------
+    generate_possible_orbpairs(self, occ_indices)
+        Yield the possible orbital pairs that can construct the given Slater determinant.
+
     """
     def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None,
                  params=None):
-        """
+        """Initialize the wavefunction.
 
         Parameters
         ----------
+        nelec : int
+            Number of electrons.
+        nspin : int
+            Number of spin orbitals.
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type.
+            Default is `np.float64`.
+        memory : {float, int, str, None}
+            Memory available for the wavefunction.
+            Default does not limit memory usage (i.e. infinite).
         ngem : {int, None}
             Number of geminals.
         orbpairs : iterable of 2-tuple of ints
@@ -129,7 +196,7 @@ class BaseGeminal(BaseWavefunction):
 
     @property
     def template_params(self):
-        """
+        """Return the template of the parameters of the given wavefunction.
 
         Uses the spatial orbitals (alpha-beta spin orbital pairs) of HF ground state as reference.
 
@@ -141,6 +208,7 @@ class BaseGeminal(BaseWavefunction):
         Notes
         -----
         Need `nelec`, `norbpair` (i.e. `dict_ind_orbpair`), and `dtype`
+
         """
         params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
         for i in range(self.ngem):
@@ -154,10 +222,17 @@ class BaseGeminal(BaseWavefunction):
         return params
 
     def assign_nelec(self, nelec):
-        """
+        """Assign the number of electrons.
+
+        Parameters
+        ----------
+        nelec : int
+            Number of electrons.
 
         Raises
         ------
+        TypeError
+            If number of electrons is not an integer.
         ValueError
             If number of electrons is not a positive number.
             If number of electrons is odd.
@@ -168,7 +243,7 @@ class BaseGeminal(BaseWavefunction):
             raise ValueError('Odd number of electrons is not supported')
 
     def assign_ngem(self, ngem=None):
-        """Set the number of geminals.
+        """Assign the number of geminals.
 
         Parameters
         ----------
@@ -197,7 +272,7 @@ class BaseGeminal(BaseWavefunction):
         self.ngem = ngem
 
     def assign_orbpairs(self, orbpairs=None):
-        """Set the orbital pairs that will be used to construct the geminals.
+        """Assign the orbital pairs that will be used to construct the geminals.
 
         Parameters
         ----------
@@ -346,6 +421,29 @@ class BaseGeminal(BaseWavefunction):
                 return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
     def load_cache(self):
+        """Load the functions whose values will be cached.
+
+        To minimize the cache size, the input is made as small as possible. Therefore, the cached
+        function is not a method of an instance (because the instance is an input) and the smallest
+        representation of the Slater determinant (an integer) is used as the only input. However,
+        the functions must access other properties/methods of the instance, so they are defined
+        within this method so that the instance is available within the namespace w/o use of
+        `global` or `local`.
+
+        Since the bitstring is used to represent the Slater determinant, they need to be processed,
+        which may result in repeated processing depending on when the cached function is accessed.
+
+        It is assumed that the cached functions will not be used to calculate redundant results. All
+        simplifications that can be made is assumed to have already been made. For example, it is
+        assumed that the overlap derivatized with respect to a parameter that is not associated with
+        the given Slater determinant will never need to be evaluated because these conditions are
+        caught before calling the cached functions.
+
+        Notes
+        -----
+        Needs to access `memory` and `params`.
+
+        """
         # assign memory allocated to cache
         if self.memory == np.inf:
             memory = None
@@ -418,7 +516,7 @@ class BaseGeminal(BaseWavefunction):
         self._cache_fns['overlap derivative'] = _olp_deriv
 
     def get_overlap(self, sd, deriv=None):
-        r"""
+        r"""Return the overlap of the wavefunction with a Slater determinant.
 
         .. math::
             \ket{\Psi}
@@ -427,6 +525,19 @@ class BaseGeminal(BaseWavefunction):
             \ket{\mathbf{m}}
 
         where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
+
+        Parameters
+        ----------
+        sd : {int, mpz}
+            Slater Determinant against which the overlap is taken.
+        deriv : int
+            Index of the parameter to derivatize.
+            Default does not derivatize.
+
+        Returns
+        -------
+        overlap : float
+            Overlap of the wavefunction.
 
         Notes
         -----
@@ -455,7 +566,7 @@ class BaseGeminal(BaseWavefunction):
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):
-        """Yields the possible orbital pairs that can construct the given Slater determinant.
+        """Yield the possible orbital pairs that can construct the given Slater determinant.
 
         Parameters
         ----------

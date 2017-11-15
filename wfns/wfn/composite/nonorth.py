@@ -5,13 +5,9 @@ import functools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
-from wfns.wrapper.docstring import docstring_class
-
-__all__ = []
 
 
 # FIXME: needs refactoring
-@docstring_class(indent_level=1)
 class NonorthWavefunction(BaseCompositeOneWavefunction):
     r"""Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
@@ -40,6 +36,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
     Attributes
     ----------
+    nelec : int
+        Number of electrons.
+    nspin : int
+        Number of spin orbitals (alpha and beta).
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
+    memory : float
+        Memory available for the wavefunction.
     params : tuple of np.ndarray
         Orbital transformation matrices.
         If one transformation matrix is given, then the transformation coresponds to those of
@@ -49,11 +53,52 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         unrestricted orbitals, where the spatial orbitals are transformed.
     wfn : BaseWavefunction
         Wavefunction whose orbitals are rotated.
+    jacobi_indices : 2-tuple of ints
+        Orbitals that are rotated.
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction.
+    seniority : int
+        Seniority of the wavefunction.
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+    orbtype : {'restricted', 'unrestricted', 'generalized'}
+        Orbital type.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
+             jacobi_indices=None):
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None):
+        Assign memory available for the wavefunction.
+    assign_params(self, params)
+        Assign the orbital transformation matrix.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
 
     """
     @property
     def spin(self):
-        """
+        """Return the spin of the wavefunction.
 
         If the orbitals are restricted or unrestricted, the spin should be same as the original.
         Otherwise, the orbitals may mix regardless of the spin, the spin of the wavefunction is hard
@@ -63,7 +108,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         -------
         spin : float
             Spin of the (composite) wavefunction if the orbitals are restricted or unrestricted.
-            None if the orbital is generalized.
+            None if all spins are allowed.
 
         """
         if self.orbtype in ['restricted', 'unrestricted']:
@@ -73,7 +118,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
     @property
     def seniority(self):
-        """
+        """Return the seniority of the wavefunction.
 
         If the orbitals are restricted or unrestricted, the seniority should be same as the
         original. Otherwise, the orbitals may mix regardless of the seniority, the seniority of the
@@ -84,7 +129,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         seniority : int
             Seniority of the (composite) wavefunction if the orbitals are restricted or
             unrestricted.
-            None if the orbital is generalized.
+            None if all seniority are allowed.
 
         """
         if self.orbtype in ['restricted', 'unrestricted']:
@@ -94,9 +139,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
     @property
     def template_params(self):
-        """
+        """Return the template of the parameters of the given wavefunction.
 
         The orbital transformation matrix is the parameter of this (composite) wavefunction.
+
+        Returns
+        -------
+        template_params : np.ndarray
+            Rotation matrix.
 
         """
         return (np.eye(self.nspatial, self.wfn.nspatial, dtype=self.dtype), )
@@ -109,16 +159,17 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         -------
         nparams : tuple of int
             Number of elements in each transformation matrix.
+
         """
         return tuple(i.size for i in self.params)
 
     @property
-    def params_shape(self):
+    def param_shape(self):
         """Return the shape of the wavefunction parameters.
 
         Returns
         -------
-        params_shape : tuple of 2-tuple of ints
+        param_shape : tuple of 2-tuple of ints
             Shape of each transformation matrix.
 
         """
@@ -215,6 +266,29 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         self.params = params
 
     def load_cache(self):
+        """Load the functions whose values will be cached.
+
+        To minimize the cache size, the input is made as small as possible. Therefore, the cached
+        function is not a method of an instance (because the instance is an input) and the smallest
+        representation of the Slater determinant (an integer) is used as the only input. However,
+        the functions must access other properties/methods of the instance, so they are defined
+        within this method so that the instance is available within the namespace w/o use of
+        `global` or `local`.
+
+        Since the bitstring is used to represent the Slater determinant, they need to be processed,
+        which may result in repeated processing depending on when the cached function is accessed.
+
+        It is assumed that the cached functions will not be used to calculate redundant results. All
+        simplifications that can be made is assumed to have already been made. For example, it is
+        assumed that the overlap derivatized with respect to a parameter that is not associated with
+        the given Slater determinant will never need to be evaluated because these conditions are
+        caught before calling the cached functions.
+
+        Notes
+        -----
+        Needs to access `memory` and `params`.
+
+        """
         # assign memory allocated to cache
         if self.memory == np.inf:
             memory = None
@@ -266,8 +340,8 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         def _olp_deriv(sd, deriv):
             # lots of repetition b/c slight variations with different orbital types
             transform_ind = deriv // self.nparams[0]
-            row_removed = ((deriv % self.nparams[0]) // self.params_shape[transform_ind][1])
-            col_removed = ((deriv % self.nparams[0]) % self.params_shape[transform_ind][1])
+            row_removed = ((deriv % self.nparams[0]) // self.param_shape[transform_ind][1])
+            col_removed = ((deriv % self.nparams[0]) % self.param_shape[transform_ind][1])
 
             output = 0.0
             if self.orbtype == 'generalized':
@@ -444,7 +518,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             # get index of the transformation (if unrestricted)
             transform_ind = deriv // self.nparams[0]
             # convert parameter index to row and col index
-            row_removed = (deriv % self.nparams[0]) // self.params_shape[transform_ind][1]
+            row_removed = (deriv % self.nparams[0]) // self.param_shape[transform_ind][1]
 
             # if either of these orbitals are not present in the Slater determinant, skip
             # FIXME: change i+nspatial to slater.to_beta

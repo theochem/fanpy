@@ -1,19 +1,12 @@
-"""Parent class of CI wavefunctions.
-
-This module includes wavefunctions that are expressed as linear combination of Slater determinants.
-"""
+"""Parent class of CI wavefunctions."""
 from __future__ import absolute_import, division, print_function
 import itertools
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
 from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
-from wfns.wrapper.docstring import docstring_class
-
-__all__ = []
 
 
-@docstring_class(indent_level=1)
 class CIWavefunction(BaseWavefunction):
     r"""Wavefunction that can be expressed as a linear combination of Slater determinants.
 
@@ -28,6 +21,16 @@ class CIWavefunction(BaseWavefunction):
 
     Attributes
     ----------
+    nelec : int
+        Number of electrons.
+    nspin : int
+        Number of spin orbitals (alpha and beta).
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
+    params : np.ndarray
+        Parameters of the wavefunction.
+    memory : float
+        Memory available for the wavefunction.
     _spin : float
         Total spin of each Slater determinant.
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`.
@@ -39,6 +42,49 @@ class CIWavefunction(BaseWavefunction):
     dict_sd_index : dictionary of int to int
         Dictionary from Slater determinant to its index in sd_vec.
 
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction
+    seniority : int
+        Seniority of the wavefunction
+    template_params : np.ndarray
+        Default parameters of the CI wavefunction.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
+             seniority=None):
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None):
+        Assign memory available for the wavefunction.
+    assign_params(self, params)
+        Assign parameters of the wavefunction.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+    assign_spin(self, spin=None)
+        Assign the spin of the wavefunction.
+    assign_seniority(self, seniority=None)
+        Assign the seniority of the wavefunction.
+    assign_sd_vec(self, sd_vec=None)
+        Assign the list of Slater determinants from which the CI wavefunction is constructed.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the CI wavefunction with a Slater determinant.
+
     """
 
     def __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
@@ -47,6 +93,16 @@ class CIWavefunction(BaseWavefunction):
 
         Parameters
         ----------
+        nelec : int
+            Number of electrons.
+        nspin : int
+            Number of spin orbitals.
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type.
+            Default is `np.float64`.
+        memory : {float, int, str, None}
+            Memory available for the wavefunction.
+            Default does not limit memory usage (i.e. infinite).
         params : np.ndarray
             Coefficients of the Slater determinants of a CI wavefunction.
         sd_vec : iterable of int
@@ -92,22 +148,45 @@ class CIWavefunction(BaseWavefunction):
 
     @property
     def spin(self):
-        return self._spin
+        r"""Return the spin of the wavefunction.
 
-    @property
-    def nsd(self):
-        """Return the number of Slater determinants.
+        .. math::
+
+            \frac{1}{2}(N_\alpha - N_\beta)
 
         Returns
         -------
-        nsd : int
-            Number of Slater determinants.
+        spin : float
+            Spin of the wavefunction.
+
+        Notes
+        -----
+        `None` means that all possible spins are allowed.
 
         """
-        return len(self.sd_vec)
+        return self._spin
+
+    @property
+    def seniority(self):
+        """Return the seniority of the wavefunction.
+
+        Seniority of a Slater determinant is its number of unpaired electrons. The seniority of the
+        wavefunction is the expected number of unpaired electrons.
+
+        Returns
+        -------
+        seniority : int
+            Seniority of the wavefunction.
+
+        Notes
+        -----
+        `None` means that all possible seniority are allowed.
+
+        """
+        return self._seniority
 
     def assign_spin(self, spin=None):
-        r"""Set the spin of each Slater determinant.
+        r"""Assign the spin of the wavefunction.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
@@ -134,12 +213,8 @@ class CIWavefunction(BaseWavefunction):
         else:
             raise TypeError('Spin should be provided as an integer, float or `None`.')
 
-    @property
-    def seniority(self):
-        return self._seniority
-
     def assign_seniority(self, seniority=None):
-        r"""Set the seniority of each Slater determinant.
+        r"""Assign the seniority of the wavefunction.
 
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`
 
@@ -164,7 +239,7 @@ class CIWavefunction(BaseWavefunction):
         self._seniority = seniority
 
     def assign_sd_vec(self, sd_vec=None):
-        """Set the list of Slater determinants from which the CI wavefunction is constructed.
+        """Assign the list of Slater determinants from which the CI wavefunction is constructed.
 
         Parameters
         ----------

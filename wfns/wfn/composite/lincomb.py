@@ -8,18 +8,76 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
     Attributes
     ----------
+    nelec : int
+        Number of electrons.
+    nspin : int
+        Number of spin orbitals (alpha and beta).
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
+    params : np.ndarray
+        Parameters of the wavefunction.
+    memory : float
+        Memory available for the wavefunction.
     wfns : tuple of BaseWavefunction
         Wavefunctions that will be linearly combined.
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction.
+    seniority : int
+        Seniority of the wavefunction.
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, wfns, dtype=None, memory=None, params=None)
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None):
+        Assign memory available for the wavefunction.
+    assign_params(self, params)
+        Assign parameters of the wavefunction.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+    assign_wfns(self, wfns)
+        Assign the wavefunctions that will be linearly combined.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
 
     """
 
     def __init__(self, nelec, nspin, wfns, dtype=None, memory=None, params=None):
-        """
+        """Initialize the wavefunction.
 
         Parameters
         ----------
+        nelec : int
+            Number of electrons.
+        nspin : int
+            Number of spin orbitals.
         wfns : tuple of BaseWavefunction
             Wavefunctions that will be linearly combined.
+        dtype : {float, complex, np.float64, np.complex128, None}
+            Numpy data type.
+            Default is `np.float64`.
+        memory : {float, int, str, None}
+            Memory available for the wavefunction.
+            Default does not limit memory usage (i.e. infinite).
 
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
@@ -119,7 +177,31 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         self.wfns = tuple(wfns)
 
-    # FIXME: add caching
     def get_overlap(self, sd, deriv=None):
+        r"""Return the overlap of the wavefunction with a Slater determinant.
+
+        .. math::
+
+            \braket{\mathbf{m} | \Psi}
+
+        Parameters
+        ----------
+        sd : {int, mpz}
+            Slater Determinant against which the overlap is taken.
+        deriv : int
+            Index of the parameter to derivatize.
+            Default does not derivatize.
+
+        Returns
+        -------
+        overlap : float
+            Overlap of the wavefunction.
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not compatible with the format used internally.
+
+        """
         wfn_contrib = np.array([wfn.get_overlap(sd, deriv=deriv) for wfn in self.wfns])
         return np.sum(self.params * wfn_contrib)

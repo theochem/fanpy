@@ -1,4 +1,3 @@
-# FIXME: Need consistent notaiton for orbital rotation
 r"""Wavefunction with orbitals rotated by Jacobi matrix."""
 from __future__ import absolute_import, division, print_function
 import functools
@@ -6,13 +5,9 @@ import numpy as np
 from wfns.backend import slater
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 from wfns.wfn.composite.nonorth import NonorthWavefunction
-from wfns.wrapper.docstring import docstring_class
-
-__all__ = []
 
 
 # FIXME: needs refactoring
-@docstring_class(indent_level=1)
 class JacobiWavefunction(BaseCompositeOneWavefunction):
     r"""Wavefunction with jacobi rotated orbitals expressed with respect to orthonormal orbitals.
 
@@ -45,10 +40,68 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     Attributes
     ----------
+    nelec : int
+        Number of electrons.
+    nspin : int
+        Number of spin orbitals (alpha and beta).
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
+    params : np.ndarray
+        Parameters of the wavefunction.
+    memory : float
+        Memory available for the wavefunction.
     wfn : BaseWavefunction
         Wavefunction whose orbitals are rotated.
     jacobi_indices : 2-tuple of ints
         Orbitals that are rotated.
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction.
+    seniority : int
+        Seniority of the wavefunction.
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+    jacobi_rotation : tuple of np.ndarray
+        Rotation matrix that corresponds to the given parameter.
+        If the orbitals are restricted, then the rotation matrix for the spatial orbitals is
+        returned.
+        If the orbitals are unrestricted, then the rotation matrices for alpha and beta orbitals are
+        returned.
+        If the orbitals are generalized, then the rotation matrices for spin orbitals are returned.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
+             jacobi_indices=None):
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None):
+        Assign memory available for the wavefunction.
+    assign_params(self, params)
+        Assign parameters of the wavefunction.
+    assign_orbtype(self, orbtype=None)
+        Assign the orbital type of the orbital rotation.
+    assign_jacobi_indices(self, jacobi_indices)
+        Assign the indices of the orbitals that will be rotated.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
 
     """
     def __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
@@ -73,20 +126,47 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
     # FIXME: copied from NonorthWavefunction
     @property
     def spin(self):
+        """Return the spin of the wavefunction.
+
+        If the orbitals are restricted or unrestricted, the spin should be same as the original.
+        Otherwise, the orbitals may mix regardless of the spin, the spin of the wavefunction is hard
+        to determine.
+
+        Returns
+        -------
+        spin : float
+            Spin of the (composite) wavefunction if the orbitals are restricted or unrestricted.
+            None if all spins are allowed.
+
+        """
         return NonorthWavefunction.spin.__get__(self)
 
     # FIXME: copied from NonorthWavefunction
     @property
     def seniority(self):
+        """Return the seniority of the wavefunction.
+
+        If the orbitals are restricted or unrestricted, the seniority should be same as the
+        original. Otherwise, the orbitals may mix regardless of the seniority, the seniority of the
+        wavefunction is hard to determine.
+
+        Returns
+        -------
+        seniority : int
+            Seniority of the (composite) wavefunction if the orbitals are restricted or
+            unrestricted.
+            None if all seniority are allowed.
+
+        """
         return NonorthWavefunction.seniority.__get__(self)
 
     @property
     def template_params(self):
-        """
+        """Return the template of the parameters of the given wavefunction.
 
         Returns
         -------
-        params : np.ndarray(1)
+        template_params : np.ndarray(1)
             Angle with which the orbitals are rotated.
 
         """
@@ -99,6 +179,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Returns
         -------
         jacobi_rotation : tuple of np.ndarray
+            Rotation matrix that corresponds to the given parameter.
             If the orbitals are restricted, then the rotation matrix for the spatial orbitals is
             returned.
             If the orbitals are unrestricted, then the rotation matrices for alpha and beta orbitals
@@ -131,6 +212,30 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             return (np.identity(self.nspatial, dtype=self.dtype), jacobi_rotation)
 
     def assign_params(self, params=None):
+        """Assign the parameters of the wavefunction.
+
+        Parameters
+        ----------
+        params : {np.ndarray, None}
+            Parameters of the wavefunction.
+        add_noise : bool
+            Flag to add noise to the given parameters.
+
+        Raises
+        ------
+        TypeError
+            If `params` is not a numpy array.
+            If `params` does not have data type of `float`, `complex`, `np.float64` and
+            `np.complex128`.
+            If `params` has complex data type and wavefunction has float data type.
+        ValueError
+            If `params` does not have the same shape as the template_params.
+
+        Notes
+        -----
+        Depends on dtype, template_params, and nparams.
+
+        """
         if isinstance(params, (int, float)):
             params = np.array(params)
         super().assign_params(params=params)
@@ -208,6 +313,29 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
     # FIXME: there probably is a more elegant way of handling restricted orbital case.
     # FIXME: use function in slater that converts spatial index into spin index
     def load_cache(self):
+        """Load the functions whose values will be cached.
+
+        To minimize the cache size, the input is made as small as possible. Therefore, the cached
+        function is not a method of an instance (because the instance is an input) and the smallest
+        representation of the Slater determinant (an integer) is used as the only input. However,
+        the functions must access other properties/methods of the instance, so they are defined
+        within this method so that the instance is available within the namespace w/o use of
+        `global` or `local`.
+
+        Since the bitstring is used to represent the Slater determinant, they need to be processed,
+        which may result in repeated processing depending on when the cached function is accessed.
+
+        It is assumed that the cached functions will not be used to calculate redundant results. All
+        simplifications that can be made is assumed to have already been made. For example, it is
+        assumed that the overlap derivatized with respect to a parameter that is not associated with
+        the given Slater determinant will never need to be evaluated because these conditions are
+        caught before calling the cached functions.
+
+        Notes
+        -----
+        Needs to access `memory` and `params`.
+
+        """
         # assign memory allocated to cache
         if self.memory == np.inf:
             memory = None
@@ -421,6 +549,31 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         self._cache_fns['overlap derivative'] = _olp_deriv
 
     def get_overlap(self, sd, deriv=None):
+        r"""Return the overlap of the wavefunction with a Slater determinant.
+
+        .. math::
+
+            \braket{\mathbf{m} | \Psi}
+
+        Parameters
+        ----------
+        sd : {int, mpz}
+            Slater Determinant against which the overlap is taken.
+        deriv : int
+            Index of the parameter to derivatize.
+            Default does not derivatize.
+
+        Returns
+        -------
+        overlap : float
+            Overlap of the wavefunction.
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not compatible with the format used internally.
+
+        """
         if deriv is None:
             return self._cache_fns['overlap'](sd)
         # if derivatization

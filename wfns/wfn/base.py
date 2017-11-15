@@ -3,13 +3,9 @@ from __future__ import absolute_import, division, print_function
 import abc
 import functools
 import numpy as np
-from wfns.wrapper.docstring import docstring_class
 from wfns.param import ParamContainer
 
-__all__ = []
 
-
-@docstring_class(indent_level=1)
 class BaseWavefunction(ParamContainer):
     r"""Base wavefunction class.
 
@@ -25,6 +21,48 @@ class BaseWavefunction(ParamContainer):
         Parameters of the wavefunction.
     memory : float
         Memory available for the wavefunction.
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+    nspatial : int
+        Number of spatial orbitals
+    param_shape : tuple of int
+        Shape of the parameters.
+    spin : int
+        Spin of the wavefunction.
+    seniority : int
+        Seniority of the wavefunction.
+
+    Methods
+    -------
+    __init__(self, nelec, nspin, dtype=None, memory=None)
+        Initialize the wavefunction.
+    assign_nelec(self, nelec)
+        Assign the number of electrons.
+    assign_nspin(self, nspin)
+        Assign the number of spin orbitals.
+    assign_dtype(self, dtype)
+        Assign the data type of the parameters.
+    assign_memory(self, memory=None)
+        Assign memory available for the wavefunction.
+    assign_params(self, params)
+        Assign parameters of the wavefunction.
+    load_cache(self)
+        Load the functions whose values will be cached.
+    clear_cache(self)
+        Clear the cache.
+
+    Abstract Properties
+    -------------------
+    template_params : np.ndarray
+        Default parameters of the wavefunction.
+
+    Abstract Methods
+    ----------------
+    get_overlap(self, sd, deriv=None) : float
+        Return the overlap of the wavefunction with a Slater determinant.
 
     """
 
@@ -131,7 +169,7 @@ class BaseWavefunction(ParamContainer):
         return None
 
     def assign_nelec(self, nelec):
-        """Set the number of electrons.
+        """Assign the number of electrons.
 
         Parameters
         ----------
@@ -153,7 +191,7 @@ class BaseWavefunction(ParamContainer):
         self.nelec = nelec
 
     def assign_nspin(self, nspin):
-        """Set the number of spin orbitals.
+        """Assign the number of spin orbitals.
 
         Parameters
         ----------
@@ -178,8 +216,9 @@ class BaseWavefunction(ParamContainer):
             raise NotImplementedError('Odd number of spin orbitals is not supported.')
         self.nspin = nspin
 
+    # FIXME: remove? just use params.dtype?
     def assign_dtype(self, dtype):
-        """Set the data type of the parameters.
+        """Assign the data type of the parameters.
 
         Parameters
         ----------
@@ -201,7 +240,7 @@ class BaseWavefunction(ParamContainer):
             raise TypeError("dtype must be float or complex")
 
     def assign_memory(self, memory=None):
-        """Assign memory associated with the wavefunction.
+        """Assign memory available for the wavefunction.
 
         Parameters
         ----------
@@ -290,7 +329,7 @@ class BaseWavefunction(ParamContainer):
                                                 - 0.5)
 
     def load_cache(self):
-        """Load the functions that will be cached.
+        """Load the functions whose values will be cached.
 
         To minimize the cache size, the input is made as small as possible. Therefore, the cached
         function is not a method of an instance (because the instance is an input) and the smallest
@@ -361,7 +400,7 @@ class BaseWavefunction(ParamContainer):
         self._cache_fns['overlap derivative'] = _olp_deriv
 
     def clear_cache(self, key=None):
-        """Clear the cache associated with the wavefunction.
+        """Clear the cache.
 
         Parameters
         ----------
@@ -411,7 +450,7 @@ class BaseWavefunction(ParamContainer):
 
         .. math::
 
-            \braket{\Phi_i | \Psi}
+            \braket{\mathbf{m} | \Psi}
 
         Parameters
         ----------
