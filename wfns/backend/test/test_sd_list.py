@@ -1,13 +1,11 @@
-""" Tests wfns.sd_list
-"""
+"""Tests wfns.sd_list."""
 from nose.tools import assert_raises
 import gmpy2
 from wfns.backend import sd_list
 
 
 def test_satisfies_conditions():
-    """ Tests sd_list.satisfies_conditions
-    """
+    """Test sd_list.satisfies_conditions."""
     assert sd_list.satisfies_conditions(0b1111, 2, None, None)
 
     assert not sd_list.satisfies_conditions(0b0001, 2, -1, None)
@@ -32,8 +30,7 @@ def test_satisfies_conditions():
 
 
 def test_ci_sd_list():
-    """ Tests sd_list.sd_list
-    """
+    """Test sd_list.sd_list."""
     assert_raises(TypeError, lambda: sd_list.sd_list(4.0, 3))
     assert_raises(TypeError, lambda: sd_list.sd_list(None, 3))
     assert_raises(TypeError, lambda: sd_list.sd_list('4', 3))
@@ -104,8 +101,7 @@ def test_ci_sd_list():
 
 
 def test_doci_sd_list():
-    """ Tests sd_list.doci_sd_list
-    """
+    """Test sd_list.doci_sd_list."""
     assert sd_list.sd_list(4, 4, num_limit=0, seniority=0) == []
     assert sd_list.sd_list(4, 4, num_limit=1, seniority=0) == [gmpy2.mpz(0b00110011)]
     assert sd_list.sd_list(4, 4, num_limit=2, seniority=0) == [gmpy2.mpz(0b00110011),

@@ -1,4 +1,4 @@
-""" Functions used to generate Slater determinants
+r""" Functions used to generate Slater determinants
 
 Functions
 ---------
@@ -11,7 +11,6 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 """
 from itertools import combinations, product
 from wfns.backend import slater
-from wfns.wrapper.docstring import docstring
 
 __all__ = ['sd_list']
 
@@ -40,14 +39,13 @@ def satisfies_conditions(sd, nspatial, spin, seniority):
         True if Slater determinant has the desired spin and seniority.
         False if Slater determinant does not have the desired spin and seniority.
 
-    """
+        """
     return (spin in [None, slater.get_spin(sd, nspatial)]
             and (seniority is None or seniority >= slater.get_seniority(sd, nspatial)))
 
 
-@docstring(indent_level=1)
 def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniority=None):
-    """Return a list of Slater determinants.
+    r"""Return a list of Slater determinants.
 
     Parameters
     ----------

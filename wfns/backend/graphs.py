@@ -1,4 +1,4 @@
-"""Functions for constructing perfect matchings of a given graph.
+r"""Functions for constructing perfect matchings of a given graph.
 
 Functions
 ---------
@@ -10,12 +10,10 @@ generate_biclique_pmatch(indices_one, indices_two)
 
 """
 from wfns.backend.slater import sign_perm
-from wfns.wrapper.docstring import docstring
 
 
-@docstring(indent_level=1)
 def generate_complete_pmatch(indices, sign=1):
-    """Generate all of the perfect matches of a complete (sub)graph.
+    r"""Generate all of the perfect matches of a complete (sub)graph.
 
     Generated perfect matches correspond to a pairing scheme in geminal wavefunctions and the
     signature is needed to find the sign of the Slater determinant after "unpacking" the pairing
@@ -30,7 +28,7 @@ def generate_complete_pmatch(indices, sign=1):
     ------
     pairing_scheme : tuple of tuple of 2 ints
         Contains the edges needed to make a perfect match.
-    sign : int
+    sign : {1, -1}
         Signature of the transpositions required to shuffle the `pairing_scheme` back into the
         original order in `indices`.
 
@@ -63,9 +61,8 @@ def generate_complete_pmatch(indices, sign=1):
                        scheme[i+1:]), inner_sign
 
 
-@docstring(indent_level=1)
 def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decreasing=False):
-    """Generate all of the perfect matches of a complete bipartite (sub)graph.
+    r"""Generate all of the perfect matches of a complete bipartite (sub)graph.
 
     Parameters
     ----------
@@ -87,6 +84,9 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
     ------
     pairing_scheme : tuple of tuple of 2 ints
         Contains the edges needed to make a perfect match.
+    sign : {1, -1}
+        Signature of the transpositions required to shuffle the `pairing_scheme` back into the
+        original order in `indices`.
 
     Notes
     -----

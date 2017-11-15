@@ -1,29 +1,42 @@
-"""Classes for storing integrals."""
+r"""Classes for storing integrals."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 from wfns.backend import slater
-from wfns.wrapper.docstring import docstring_class
+
+
 # TODO: store fraction of integrals
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
-
-
-@docstring_class(indent_level=1)
+# FIXME: move to Hamiltonian class
 class BaseIntegrals:
-    """Base class for storing integrals.
+    r"""Base class for storing integrals.
 
     Attributes
     ----------
     integrals : tuple of np.ndarray
-        Values of the integrals corresponding to some basis set.
+        Integrals that correspond to some basis set.
+
+    Properties
+    ----------
+    dtype : {np.float64, np.complex128}
+        Data type of the integrals.
+    num_orbs : int
+        Number of orbitals.
+        Number of spatial orbitals if orbitals are restricted or unrestricted.
+        Number of spin orbitals if orbitals are generalized.
+
+    Methods
+    -------
+    __init__(self, integrals) : None
+        Initialize.
 
     """
     def __init__(self, integrals):
-        """Initialize Integrals.
+        """Initialize.
 
         Parameters
         ----------
         integrals : {np.ndarray, tuple of np.ndarray}
-            Values of the integrals corresponding to some basis set.
+            Integrals corresponding to some basis set.
 
         Raises
         ------
@@ -52,7 +65,7 @@ class BaseIntegrals:
 
     @property
     def num_orbs(self):
-        """Number of orbitals.
+        """Return the number of orbitals.
 
         Assumes that the integrals have the same dimensionality in all axis.
 
@@ -60,6 +73,9 @@ class BaseIntegrals:
         -------
         num_orbs : int
             Number of orbitals.
+            Number of spatial orbitals if orbitals are restricted or unrestricted.
+            Number of spin orbitals if orbitals are generalized.
+
         """
         return self.integrals[0].shape[0]
 
@@ -71,7 +87,7 @@ class BaseIntegrals:
 
         Returns
         -------
-        dtype : {int, float, complex}
+        dtype : {np.float64, np.complex128}
             Data type of the integrals.
 
         """
@@ -79,7 +95,6 @@ class BaseIntegrals:
 
 
 # FIXME: substitute \hat{h} with real eqn
-@docstring_class(indent_level=1)
 class OneElectronIntegrals(BaseIntegrals):
     r"""Class for storing one-electron integrals.
 
@@ -92,10 +107,32 @@ class OneElectronIntegrals(BaseIntegrals):
     integrals : tuple of np.ndarray
         Values of the one-electron integrals corresponding to some basis set.
 
+    Properties
+    ----------
+    dtype : {np.float64, np.complex128}
+        Data type of the integrals.
+    num_orbs : int
+        Number of orbitals.
+        Number of spatial orbitals if orbitals are restricted or unrestricted.
+        Number of spin orbitals if orbitals are generalized.
+    possible_orbtypes : tuple of str
+        Return possible orbital types from the given orbitals.
+
+    Methods
+    -------
+    __init__(self, integrals)
+        Initialize.
+    get_value(self, i, k, orbtype) : float
+        Get value of the one-electron hamiltonian integral with orbitals `i` and `k`.
+    rotate_jacobi(self, jacobi_indices, theta) : None
+        Rotate integrals with a Jacobi matrix (of the selected indices).
+    rotate_matrix(self, transforms) : None
+        Rotate the integrals with a transformation matrix.
+
     """
 
     def __init__(self, integrals):
-        """
+        """Initialize.
 
         Parameters
         ----------
@@ -131,7 +168,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     @property
     def possible_orbtypes(self):
-        """Possible orbital types from the given orbitals.
+        """Return possible orbital types from the given orbitals.
 
         Returns
         -------
@@ -217,7 +254,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
     def rotate_jacobi(self, jacobi_indices, theta):
-        r"""Apply Jacobi rotation to the integrals (orbitals).
+        r"""Rotate integrals with a Jacobi matrix (of the selected indices).
 
         .. math::
 
@@ -296,7 +333,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated code
     def rotate_matrix(self, transforms):
-        """Apply transformation matrix to the integrals.
+        r"""Rotate the integrals with a transformation matrix.
 
         Parameters
         ----------
@@ -310,7 +347,10 @@ class OneElectronIntegrals(BaseIntegrals):
         TypeError
             If the transformation matrix is not a list/tuple of numpy arrays.
         ValueError
-            If the number of transformation matrix does not match the number of integral blocks.
+            If the orbitals are restricted/generalized and the number of transformation matrices is
+            not exactly 1.
+            If the orbitals are unrestricted and the number of transformation matrices is not
+            exactly 2.
             If the number of orbitals does not match up with the transformation matrix.
 
         """
@@ -330,19 +370,40 @@ class OneElectronIntegrals(BaseIntegrals):
         self.integrals = tuple(new_integrals)
 
 
-@docstring_class(indent_level=1)
 class TwoElectronIntegrals(BaseIntegrals):
-    """Class for storing two-electron integrals.
+    r"""Class for storing two-electron integrals.
 
     Attributes
     ----------
     integrals : tuple of np.ndarray
         Values of the two-electron integrals corresponding to some basis set
 
+    Properties
+    ----------
+    dtype : {np.float64, np.complex128}
+        Data type of the integrals.
+    num_orbs : int
+        Number of orbitals.
+        Number of spatial orbitals if orbitals are restricted or unrestricted.
+        Number of spin orbitals if orbitals are generalized.
+    possible_orbtypes : tuple of str
+        Return possible orbital types from the given orbitals.
+
+    Methods
+    -------
+    __init__(self, integrals, notation='physicist')
+        Initialize.
+    get_value(self, i, j, k, l, orbtype, notation='physicist') : float
+        Get value of the two-electron hamiltonian integral with orbitals `i`, `j`, `k`, and `l`.
+    rotate_jacobi(self, jacobi_indices, theta)
+        Rotate integrals with a Jacobi matrix (of the selected indices).
+    rotate_matrix(self, transforms)
+        Rotate the integrals with a transformation matrix.
+
     """
 
     def __init__(self, integrals, notation='physicist'):
-        """
+        """Initialize.
 
         Parameters
         ----------
@@ -387,7 +448,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     @property
     def possible_orbtypes(self):
-        """Possible orbital types from the given orbitals.
+        """Return possible orbital types from the given orbitals.
 
         Returns
         -------
@@ -496,7 +557,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated parts. probably can move this into the base class BaseIntegrals
     def rotate_jacobi(self, jacobi_indices, theta):
-        """Apply Jacobi rotation to the integrals (orbitals).
+        r"""Rotate integrals with a Jacobi matrix (of the selected indices).
 
         Parameters
         ----------
@@ -515,6 +576,7 @@ class TwoElectronIntegrals(BaseIntegrals):
         ValueError
             If the indices are negative.
             If the two indices are the same.
+
         """
         # FIXME: this part is duplicated
         if not isinstance(jacobi_indices, (tuple, list)):
@@ -600,7 +662,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
     # FIXME: duplicated code
     def rotate_matrix(self, transforms):
-        """Apply transformation matrix to the integrals.
+        r"""Rotate the integrals with a transformation matrix.
 
         Parameters
         ----------
