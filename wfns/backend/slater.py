@@ -1,4 +1,4 @@
-"""Collection of functions used to construct and manipulate Slater determinants.
+r"""Collection of functions used to construct and manipulate Slater determinants.
 
 Slater determinants are represented with a bitstring that describes their occupation. The `0` would
  correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. For
@@ -75,12 +75,10 @@ sign_swap(sd, pos_current, pos_future) : int
 """
 import gmpy2
 import numpy as np
-from wfns.wrapper.docstring import docstring
 
 
-@docstring(indent_level=1)
 def is_internal_sd(sd):
-    """Check if given Slater determinant is a `gmpy2.mpz` object.
+    r"""Check if given Slater determinant is a `gmpy2.mpz` object.
 
     Parameters
     ----------
@@ -96,9 +94,8 @@ def is_internal_sd(sd):
     return isinstance(sd, type(gmpy2.mpz()))
 
 
-@docstring(indent_level=1)
 def is_sd_compatible(sd):
-    """Check if given Slater determinant is compatible.
+    r"""Check if given Slater determinant is compatible.
 
     Parameters
     ----------
@@ -114,9 +111,8 @@ def is_sd_compatible(sd):
     return is_internal_sd(sd) or isinstance(sd, (int, np.int64))
 
 
-@docstring(indent_level=1)
 def internal_sd(identifier):
-    """Create a Slater detrminant as a `gmpy2.mpz` object.
+    r"""Create a Slater detrminant as a `gmpy2.mpz` object.
 
     Parameters
     ----------
@@ -143,9 +139,8 @@ def internal_sd(identifier):
         raise TypeError('Unsupported Slater determinant form, {0}'.format(type(identifier)))
 
 
-@docstring(indent_level=1)
 def occ(sd, i):
-    """Check if a given Slater determinant has orbital `i` occupied.
+    r"""Check if a given Slater determinant has orbital `i` occupied.
 
     Parameters
     ----------
@@ -164,9 +159,8 @@ def occ(sd, i):
     return sd is not None and gmpy2.bit_test(sd, i)
 
 
-@docstring(indent_level=1)
 def occ_indices(sd):
-    """Return indices of the occupied orbitals.
+    r"""Return indices of the occupied orbitals.
 
     Parameters
     ----------
@@ -187,9 +181,8 @@ def occ_indices(sd):
     return tuple(output[:-1])
 
 
-@docstring(indent_level=1)
 def vir_indices(sd, norbs):
-    """Return the indices of all of the virtual orbitals.
+    r"""Return the indices of all of the virtual orbitals.
 
     Parameters
     ----------
@@ -213,9 +206,8 @@ def vir_indices(sd, norbs):
     return tuple(output[:-1])
 
 
-@docstring(indent_level=1)
 def total_occ(sd):
-    """Return the total number of occupied orbitals in a Slater determinant.
+    r"""Return the total number of occupied orbitals in a Slater determinant.
 
     Parameters
     ----------
@@ -234,9 +226,8 @@ def total_occ(sd):
         return gmpy2.popcount(sd)
 
 
-@docstring(indent_level=1)
 def is_alpha(i, nspatial):
-    """Check if index `i` is an alpha spin orbital.
+    r"""Check if index `i` is an alpha spin orbital.
 
     Parameters
     ----------
@@ -264,9 +255,8 @@ def is_alpha(i, nspatial):
     return i < nspatial
 
 
-@docstring(indent_level=1)
 def spatial_index(i, nspatial):
-    """Return the spatial orbital index that corresponds to the spin orbital `i`.
+    r"""Return the spatial orbital index that corresponds to the spin orbital `i`.
 
     Parameters
     ----------
@@ -297,9 +287,8 @@ def spatial_index(i, nspatial):
         return i - nspatial
 
 
-@docstring(indent_level=1)
 def annihilate(sd, *indices):
-    """Annihilate the occupied orbital `i` from a Slater determinant.
+    r"""Annihilate the occupied orbital `i` from a Slater determinant.
 
     Parameters
     ----------
@@ -324,9 +313,8 @@ def annihilate(sd, *indices):
     return sd
 
 
-@docstring(indent_level=1)
 def create(sd, *indices):
-    """Create electrons in the orbitals that correspond to the given indices.
+    r"""Create electrons in the orbitals that correspond to the given indices.
 
     Parameters
     ----------
@@ -350,9 +338,8 @@ def create(sd, *indices):
     return sd
 
 
-@docstring(indent_level=1)
 def excite(sd, *indices):
-    """Excite electrons from occupied orbitals to virtual orbitals.
+    r"""Excite electrons from occupied orbitals to virtual orbitals.
 
     Parameters
     ----------
@@ -382,9 +369,8 @@ def excite(sd, *indices):
     return sd
 
 
-@docstring(indent_level=1)
 def ground(nocc, norbs):
-    """Create a ground state Slater determinant.
+    r"""Create a ground state Slater determinant.
 
     If the number of electrons is odd, then the last electron is put into an alpha orbital.
 
@@ -422,9 +408,8 @@ def ground(nocc, norbs):
     return alpha_bits | beta_bits
 
 
-@docstring(indent_level=1)
 def shared_orbs(sd1, sd2):
-    """Return indices of orbitals shared between two Slater determinants.
+    r"""Return indices of orbitals shared between two Slater determinants.
 
     Parameters
     ----------
@@ -442,9 +427,8 @@ def shared_orbs(sd1, sd2):
     return occ_indices(sd1 & sd2)
 
 
-@docstring(indent_level=1)
 def diff_orbs(sd1, sd2):
-    """Return indices of the orbitals that are not shared between two Slater determinants.
+    r"""Return indices of the orbitals that are not shared between two Slater determinants.
 
     Parameters
     ----------
@@ -466,9 +450,8 @@ def diff_orbs(sd1, sd2):
     return (occ_indices(sd1_diff), occ_indices(sd2_diff))
 
 
-@docstring(indent_level=1)
 def combine_spin(alpha_bits, beta_bits, nspatial):
-    """Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
+    r"""Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
 
     Parameters
     ----------
@@ -503,9 +486,8 @@ def combine_spin(alpha_bits, beta_bits, nspatial):
     return alpha_bits | (beta_bits << nspatial)
 
 
-@docstring(indent_level=1)
 def split_spin(block_sd, nspatial):
-    """Split a Slater determinant into the alpha and beta parts.
+    r"""Split a Slater determinant into the alpha and beta parts.
 
     Parameters
     ----------
@@ -542,9 +524,8 @@ def split_spin(block_sd, nspatial):
     return (alpha_bits, beta_bits)
 
 
-@docstring(indent_level=1)
 def interleave_index(i, nspatial):
-    """Convert orbital index in block-sd notation to that of interleaved-sd notation.
+    r"""Convert orbital index in block-sd notation to that of interleaved-sd notation.
 
     Parameters
     ----------
@@ -575,9 +556,8 @@ def interleave_index(i, nspatial):
         return 2*(i - nspatial) + 1
 
 
-@docstring(indent_level=1)
 def deinterleave_index(i, nspatial):
-    """Convert an orbital index in interleaved-sd notation to that of block-sd notation.
+    r"""Convert an orbital index in interleaved-sd notation to that of block-sd notation.
 
     Parameters
     ----------
@@ -608,9 +588,8 @@ def deinterleave_index(i, nspatial):
         return i//2 + nspatial
 
 
-@docstring(indent_level=1)
 def interleave(block_sd, nspatial):
-    """Convert block-sd to the interleaved-sd form.
+    r"""Convert block-sd to the interleaved-sd form.
 
     Block form: alpha1, alpha2, ..., beta1, beta2, ...
 
@@ -671,9 +650,8 @@ def interleave(block_sd, nspatial):
     # return shuffled_sd
 
 
-@docstring(indent_level=1)
 def deinterleave(shuffled_sd, nspatial):
-    """Turn sd from shuffled form to the block form.
+    r"""Turn sd from shuffled form to the block form.
 
     Block form: alpha1, alpha2, ..., beta1, beta2, ...
 
@@ -735,9 +713,8 @@ def deinterleave(shuffled_sd, nspatial):
     # return shuffled_sd
 
 
-@docstring(indent_level=1)
 def get_spin(sd, nspatial):
-    """Return the spin of the given Slater determinant.
+    r"""Return the spin of the given Slater determinant.
 
     Parameters
     ----------
@@ -761,9 +738,8 @@ def get_spin(sd, nspatial):
     return (0.5)*(total_occ(alpha_bits) - total_occ(beta_bits))
 
 
-@docstring(indent_level=1)
 def get_seniority(sd, nspatial):
-    """Return the seniority of the given Slater determinant.
+    r"""Return the seniority of the given Slater determinant.
 
     Parameters
     ----------
@@ -787,9 +763,8 @@ def get_seniority(sd, nspatial):
     return total_occ(alpha_bits ^ beta_bits)
 
 
-@docstring(indent_level=1)
 def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
-    """Return the signature of the permutation that sorts a set of annihilators to increasing order.
+    r"""Return the signature of the permutation that sorts a set of annihilators to increasing order.
 
     Parameters
     ----------
@@ -836,9 +811,8 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
     return sign
 
 
-@docstring(indent_level=1)
 def sign_swap(sd, pos_current, pos_future):
-    """Return the signature of moving a creation operator to a specific position.
+    r"""Return the signature of moving a creation operator to a specific position.
 
     Parameters
     ----------
@@ -887,9 +861,8 @@ def sign_swap(sd, pos_current, pos_future):
         return -1
 
 
-@docstring(indent_level=1)
 def sign_excite(sd, annihilators, creators):
-    """Return the signature of applying annihilators then creators to the Slater determinant.
+    r"""Return the signature of applying annihilators then creators to the Slater determinant.
 
     .. math::
 

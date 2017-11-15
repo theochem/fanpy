@@ -1,5 +1,4 @@
-"""Test wfns.backend.integrals
-"""
+"""Test wfns.backend.integrals."""
 from nose.tools import assert_raises
 import itertools as it
 import numpy as np

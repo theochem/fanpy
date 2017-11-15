@@ -86,7 +86,7 @@ def test_annihilate():
 
 
 def test_create():
-    """Test slater.create()."""
+    """Test slater.create."""
     # Add orbitals that are not occupied
     assert slater.create(0b00110, 0) == 0b111
     assert slater.create(0b00110, 3) == 0b1110
@@ -114,7 +114,7 @@ def test_create():
 
 
 def test_excite():
-    """Test excite()."""
+    """Test slater.excite."""
     # Check error
     assert_raises(ValueError, lambda: slater.excite(0b1111, 1, 2, 5))
 
@@ -246,7 +246,7 @@ def test_split_spin():
 
 
 def test_interleave_index():
-    """Test slater.interleave_index()."""
+    """Test slater.interleave_index."""
     # Check error
     assert_raises(ValueError, lambda: slater.interleave_index(-1, 4))
     assert_raises(ValueError, lambda: slater.interleave_index(8, 4))
@@ -269,7 +269,7 @@ def test_interleave_index():
 
 
 def test_deinterleave_index():
-    """Test slater.deinterleave_index()."""
+    """Test slater.deinterleave_index."""
     # Check error
     assert_raises(ValueError, lambda: slater.deinterleave_index(-1, 4))
     assert_raises(ValueError, lambda: slater.deinterleave_index(8, 4))

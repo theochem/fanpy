@@ -1,4 +1,4 @@
-"""Functions for doing some math.
+r"""Functions for doing some math.
 
 Functions
 ---------
@@ -18,12 +18,14 @@ from __future__ import absolute_import, division, print_function
 from itertools import permutations, combinations
 import numpy as np
 from scipy.misc import comb
-from wfns.wrapper.docstring import docstring
 
 
-@docstring(indent_level=1)
 def binomial(n, k):
-    """Return the binomial coefficient of integers ``n`` and ``k``, or "``n`` choose ``k``".
+    r"""Return the binomial coefficient :math:`\binom{n}{k}`.
+
+    .. math::
+
+        \binom{n}{k} = \frac{n!}{k! (n-k)!}
 
     Parameters
     ----------
@@ -41,7 +43,6 @@ def binomial(n, k):
     return comb(n, k, exact=True)
 
 
-@docstring(indent_level=1)
 def adjugate(matrix):
     r"""Return the adjugate of a matrix.
 
@@ -74,7 +75,6 @@ def adjugate(matrix):
     return det * np.linalg.inv(matrix)
 
 
-@docstring(indent_level=1)
 def permanent_combinatoric(matrix):
     r"""Calculate the permanent of a matrix naively using combinatorics (brute force).
 
@@ -88,7 +88,7 @@ def permanent_combinatoric(matrix):
 
     Parameters
     ----------
-    matrix : np.ndarray(nrow, ncol)
+    matrix : {np.ndarray(nrow, ncol)}
         Matrix whose permanent will be evaluated.
 
     Returns
@@ -124,32 +124,43 @@ def permanent_combinatoric(matrix):
     return permanent
 
 
-@docstring(indent_level=1)
 def permanent_ryser(matrix):
-    r"""Calculate the permanent of a matrix using the Ryser algorithm.
+    r"""Calculate the permanent of a square or rectangular matrix using the Borchardt theorem.
 
-    Cost of evaluation is :math:`\mathcal{O}(2^n n)`.
+    Borchardt theorem is as follows iIf a matrix is rank two (Cauchy) matrix of the form
+
+    .. math::
+
+        A_{ij} = \frac{1}{\epsilon_j - \lambda_i}
+
+    Then
+
+    .. math::
+
+        perm(A) = det(A \circ A) det(A^{-1})
 
     Parameters
     ----------
-    matrix : np.ndarray(nrow, ncol)
-        Matrix whose permanent is evaluated.
+    lambdas : {np.ndarray(M, )}
+        Flattened row matrix of the form :math:`\lambda_i`.
+    epsilons : {np.ndarray(N, )}
+        Flattened column matrix of the form :math:`\epsilon_j`.
+    zetas : {np.ndarray(N, )}
+        Flattened column matrix of the form :math:`\zeta_j`.
+    etas : {None, np.ndarray(M, )}
+        Flattened row matrix of the form :math:`\eta_i`.
+        By default, all of the etas are set to 1.
 
     Returns
     -------
-    permanent : float
-        Permanent of the matrix.
+    result : float
+        permanent of the rank-2 matrix built from the given parameter list.
 
     Raises
     ------
     ValueError
-        If matrix is not two dimensional.
-        If matrix has no numbers.
-
-    References
-    ----------
-    Bjorklund et al., "Evaluation of permanents in rings and semirings", Information Processing
-    Letters, vol. 110, pp. 867-870.
+        If the number of zetas and epsilons (number of columns) are not equal.
+        If the number of etas and lambdas (number of rows) are not equal.
 
     """
 
@@ -214,7 +225,6 @@ def permanent_ryser(matrix):
     return permanent * factor
 
 
-@docstring(indent_level=1)
 def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     r"""Calculate the permanent of a square or rectangular matrix using the Borchardt theorem.
 
@@ -232,13 +242,13 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
 
     Parameters
     ----------
-    lambdas : np.ndarray(M,)
+    lambdas : {np.ndarray(M, )}
         Flattened row matrix of the form :math:`\lambda_i`.
-    epsilons : np.ndarray(N,)
+    epsilons : {np.ndarray(N, )}
         Flattened column matrix of the form :math:`\epsilon_j`.
-    zetas : np.ndarray(N,)
+    zetas : {np.ndarray(N, )}
         Flattened column matrix of the form :math:`\zeta_j`.
-    etas : None, np.ndarray(M,)
+    etas : {None, np.ndarray(M, )}
         Flattened row matrix of the form :math:`\eta_i`.
         By default, all of the etas are set to 1.
 
