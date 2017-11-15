@@ -6,10 +6,8 @@ from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.solver.wrappers import wrap_scipy
-from wfns.wrapper.docstring import docstring
 
 
-@docstring(indent_level=1)
 def cma(objective, save_file='', **kwargs):
     """Solve an equation using Covariance Matrix Adaptation Evolution Strategy.
 
@@ -89,7 +87,6 @@ def cma(objective, save_file='', **kwargs):
     return output
 
 
-@docstring(indent_level=1)
 def minimize(objective, save_file='', **kwargs):
     """Solve an equation using `scipy.optimize.minimize`.
 

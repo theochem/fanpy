@@ -1,10 +1,8 @@
 """Solvers for system of Schrodinger equations."""
 from wfns.objective.schrodinger.least_squares import SystemEquations
 from wfns.solver.wrappers import wrap_scipy
-from wfns.wrapper.docstring import docstring
 
 
-@docstring(indent_level=1)
 def least_squares(objective, save_file='', **kwargs):
     """Solve the system of Schrodinger equations as a least squares problem.
 
