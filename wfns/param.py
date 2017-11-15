@@ -1,24 +1,35 @@
-"""Parent class for any objects with parameters."""
+"""Class for handling the parameters."""
 import abc
 import collections
 import numpy as np
-from wfns.wrapper.docstring import docstring_class
 
 
-@docstring_class(indent_level=1)
 class ParamContainer(abc.ABC):
     """Container for parameters.
 
     This class is used to provide the basic functionality that would be available when updating the
     parameters in a given object. This was essential in constructing a generalized objective class,
-    which can take in any ParamContainer instance, select specific parameters that will be used
-    to evaluate the objective, and update these selected parameters in the course of the
-    optimization.
+    which can take in any ParamContainer instance, select specific parameters that will be used to
+    evaluate the objective, and update these selected parameters in the course of the optimization.
 
     Attributes
     ----------
     params : np.ndarray
         Parameters.
+
+    Properties
+    ----------
+    nparams : int
+        Number of parameters.
+
+    Methods
+    -------
+    __init__(self, params)
+        Initialize.
+    assign_params(self, params)
+        Assign parameters.
+    clear_cache(self)
+        Placeholder function that would clear the cache.
 
     """
     def __init__(self, params):
@@ -45,7 +56,7 @@ class ParamContainer(abc.ABC):
         return self.params.size
 
     def assign_params(self, params):
-        """Assign parameters.
+        r"""Assign parameters.
 
         Parameters
         ----------
@@ -74,15 +85,14 @@ class ParamContainer(abc.ABC):
         """Placeholder function that would clear the cache.
 
         This function doesn't actually do anything, but exists as a placeholder so that all if the
-        cache exists, it can be cleared when updating the parameters in the optimization process.
-        So it is essential that if a child of ParamContainer has a method for clearing its cache,
-        then it must be called clear_cache.
+        cache exists, it can be cleared when updating the parameters in the optimization process. So
+        it is essential that if a child of ParamContainer has a method for clearing its cache, then
+        it must be called clear_cache.
 
         """
         pass
 
 
-@docstring_class(indent_level=1)
 class ParamMask(abc.ABC):
     """Class for handling subset of a collection of different types of parameters.
 
@@ -97,14 +107,41 @@ class ParamMask(abc.ABC):
 
     Attributes
     ----------
-    _masks_container_params : OrderedDict of ParamContainer to np.ndarray of int
-        Mask of contained parameters for each object (wavefunction or Hamiltonian).
-        Shows which parameters of the objective belong to which container.
-        Note that the indicing here is done with integers.
-    _masks_objective_params : OrderedDict of ParamContainer to np.ndarray of bool
-        Mask of objective parameters for each container (wavefunction or Hamiltonian).
-        Shows which parameters of each container are active in the optimization.
-        Note that the indicing here is done with booleans.
+    _masks_container_params : OrderedDict
+        Mask for the parameters in the container.
+        Shows which parameters of each container are used in the objective.
+        Keys are the ParamContainer instances.
+        Values are the integer indices of the parameters in the container that will be used in the
+        objective.
+    _masks_objective_params : OrderedDict
+        Mask for the parameters in the objective.
+        Shows which parameters of the objective belong to a given container.
+        Keys are the ParamContainer instances.
+        Values are the boolean indices of the parameters in the objective that belong to the given
+        container.
+
+    Properties
+    ----------
+    active_params : np.ndarray
+        Parameters that will be used for the objective.
+    all_params : np.ndarray
+        All of the parameters associated with the masks, even if they were not selected.
+
+    Methods
+    -------
+    __init__(self, *container_selection)
+        Initialize the masks.
+    __eq__(self, other)
+        Checks if the given ParamMask is equal to itself.
+    load_mask_container_params(self, container, sel)
+        Load the one mask for the active parameters from the container.
+    load_masks_objective_params(self)
+        Load the masks for objective parameters.
+    load_params(self, params)
+        Assign given parameters of the objective to the appropriate containers.
+    derivative_index(self, container, index) : {int, None}
+        Convert the index of the objective parameters to the index of the given container.
+        `None` is returned if the selected parameter is considered constant (frozen).
 
     """
     def __init__(self, *container_selection):
@@ -134,7 +171,7 @@ class ParamMask(abc.ABC):
         self.load_masks_objective_params()
 
     def __eq__(self, other):
-        """Checks if the given ParamMask is equal to itself.
+        """Check if the given ParamMask is equal to itself.
 
         Parameters
         ----------
@@ -145,6 +182,7 @@ class ParamMask(abc.ABC):
         ------
         TypeError
             If `other` is not a ParamMask
+
         """
         if not isinstance(other, ParamMask):
             raise TypeError('Cannot compare ParamMask instance with something that is not '
@@ -160,7 +198,7 @@ class ParamMask(abc.ABC):
             return False
 
     def load_mask_container_params(self, container, sel):
-        """Load the one mask for the active parameters from the container.
+        """Load one mask for the active parameters from the container.
 
         Parameters
         ----------
@@ -287,7 +325,7 @@ class ParamMask(abc.ABC):
         Parameters
         ----------
         params : np.ndarray
-            Masked parameters that will need to be updated onto the stored containers.
+            Parameters of the objective that will need to be updated onto the stored containers.
 
         Raises
         ------
@@ -314,12 +352,17 @@ class ParamMask(abc.ABC):
             container.clear_cache()
 
     def derivative_index(self, container, index):
-        """Return the index within the objective parameters as the index within the given container.
+        """Convert the index of the objective parameters to the index of the given container.
+
+        Parameters
+        ----------
+        container : ParamContainer
+            Container with parameters on which the objective depends.
+        index : {int, None}
+            Index of the objective parameter.
 
         Returns
         -------
-        container : ParamContainer
-            Container with parameters on which the objective depends.
         index : {int, None}
             Index of the selected parameter within the given container.
             If the selected parameter is not part of the given container, then `None` is returned.
