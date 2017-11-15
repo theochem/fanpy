@@ -27,29 +27,55 @@ class NormConstraint(BaseObjective):
 
     Attributes
     ----------
+    tmpfile : str
+        Name of the file that will store the parameters used by the objective method.
+        By default, the parameter values are not stored.
+        If a file name is provided, then parameters are stored upon execution of the objective
+        method.
+    param_selection : ParamMask
+        Selection of parameters that will be used in the objective.
+        Default selects the wavefunction parameters.
+        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
+        selected.
     wfn : BaseWavefunction
         Wavefunction that defines the state of the system (number of electrons and excited state).
-    refwfn : {tuple of int, tuple of CIWavefunction, None}
+    refwfn : {tuple of int, CIWavefunction}
         Wavefunction against which the Schrodinger equation is integrated.
         Tuple of Slater determinants will be interpreted as a projection space, and the reference
         wavefunction will be the given wavefunction truncated to the given projection space.
 
+    Properties
+    ----------
+    params : {np.ndarray(K, )}
+        Parameters of the objective at the current state.
+
     """
     def __init__(self, wfn, refwfn=None, param_selection=None, tmpfile=''):
-        """Initialize the norm constraint.
+        r"""Initialize the norm constraint.
 
         Parameters
         ----------
         wfn : BaseWavefunction
             Wavefunction that defines the state of the system (number of electrons and excited
             state).
-        refwfn : {tuple/list of int, tuple/list of CIWavefunction, None}
+        refwfn : {tuple/list of int, CIWavefunction, None}
             Wavefunction against which the norm is integrated.
             Tuple of Slater determinants will be interpreted as a projection space, and the
             reference wavefunction will be the given wavefunction truncated to the given projection
             space.
             By default, the given wavefunction is used as the reference by using a complete
             projection space.
+        param_selection : {list, tuple, ParamMask, None}
+            Selection of parameters that will be used to construct the objective.
+            For use as a constraint, the same `param_selection` should be provided as the objective
+            instance that will be constrained.
+            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
+            indexing array for the active parameters. See `ParamMask.__init__` for details.
+        tmpfile : str
+            Name of the file that will store the parameters used by the objective method.
+            By default, the parameter values are not stored.
+            If a file name is provided, then parameters are stored upon execution of the objective
+            method.
 
         """
         if not isinstance(wfn, BaseWavefunction):
@@ -67,11 +93,19 @@ class NormConstraint(BaseObjective):
 
     @property
     def num_eqns(self):
+        """Return the number of equations in the objective.
+
+        Returns
+        -------
+        num_eqns : int
+            Number of equations in the objective.
+
+        """
         return 1
 
     # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
     def objective(self, params):
-        """Normalization constraint of the wavefunction.
+        r"""Normalization constraint of the wavefunction.
 
         .. math:
 
@@ -81,6 +115,16 @@ class NormConstraint(BaseObjective):
         where :math:`S` is a set of Slater determinants that are used to build :math:`\Phi`. Then,
         the vector of Slate determinants :math:`[\mathbf{m}]`, is denoted with `ref_sds` and the
         vector :math:`[f^*(\mathbf{m})]` is denoted by `ref_coeffs`.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Parameter of the objective.
+
+        Returns
+        -------
+        objective_value : float
+            Value of the objective for the given parameters.
 
         """
         params = np.array(params)
@@ -104,18 +148,28 @@ class NormConstraint(BaseObjective):
 
     # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
     def gradient(self, params):
-        """Gradient of the normalization constraint of the wavefunction.
+        r"""Gradient of the normalization constraint of the wavefunction.
 
         .. math:
 
             \frac{d}{dx} (\braket{\Phi | \Psi} - 1)
-            &= \frac{d}{dx} \braket{\Phi | \Psi}\\
+            &= \frac{d}{dx} \braket{\Phi | \Psi}\
             &= \sum_{\mathbf{m} \in S} \frac{d}{dx} f^*(\mathbf{m}) \braket{\mathbf{m} | \Psi} +
             f^*(\mathbf{m}) \frac{d}{dx} \braket{\mathbf{m} | \Psi}
 
         where :math:`S` is a set of Slater determinants that are used to build :math:`\Phi`. Then,
         the vector of Slate determinants :math:`[\mathbf{m}]`, is denoted with `ref_sds` and the
         vector :math:`[f^*(\mathbf{m})]` is denoted by `ref_coeffs`.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Parameter of the objective.
+
+        Returns
+        -------
+        gradient : np.array(N,)
+            Derivative of the objective with respect to each of the parameters.
 
         """
         params = np.array(params)

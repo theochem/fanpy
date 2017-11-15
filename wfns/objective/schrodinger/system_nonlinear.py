@@ -1,7 +1,6 @@
 """Schrodinger equation as a system of equations."""
 import numpy as np
 from wfns.param import ParamContainer
-from wfns.wrapper.docstring import docstring_class
 from wfns.objective.base_objective import BaseObjective
 from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
 from wfns.objective.constraints.norm import NormConstraint
@@ -9,7 +8,6 @@ from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend import slater, sd_list
 
 
-@docstring_class(indent_level=1)
 class SystemEquations(BaseSchrodinger):
     r"""Schrodinger equation as a system of equations.
 
@@ -31,6 +29,20 @@ class SystemEquations(BaseSchrodinger):
 
     Attributes
     ----------
+    wfn : BaseWavefunction
+        Wavefunction that defines the state of the system (number of electrons and excited state).
+    ham : BaseHamiltonian
+        Hamiltonian that defines the system under study.
+    tmpfile : str
+        Name of the file that will store the parameters used by the objective method.
+        By default, the parameter values are not stored.
+        If a file name is provided, then parameters are stored upon execution of the objective
+        method.
+    param_selection : ParamMask
+        Selection of parameters that will be used in the objective.
+        Default selects the wavefunction parameters.
+        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
+        selected.
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
@@ -53,14 +65,69 @@ class SystemEquations(BaseSchrodinger):
         If 'compute', the energy of the Schrodinger equation is computed on-the-fly with respect to
         the reference.
 
+    Properties
+    ----------
+    params : {np.ndarray(K, )}
+        Parameters of the objective at the current state.
+    nproj : int
+        Number of states onto which the Schrodinger equation is projected.
+    num_eqns : int
+        Number of equations in the objective.
+
+    Methods
+    -------
+    __init__(self, param_selection=None, tmpfile='')
+        Initialize the objective.
+    assign_param_selection(self, param_selection=None)
+        Select parameters that will be active in the objective.
+    assign_params(self, params)
+        Assign the parameters to the wavefunction and/or hamiltonian.
+    save_params(self)
+        Save all of the parameters in the `param_selection` to the temporary file.
+    wrapped_get_overlap(self, sd, deriv=None)
+        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=None)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
+        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=None)
+        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
+        Return the energy of the Schrodinger equation after projecting out both sides.
+    assign_pspace(self, pspace=None)
+        Assign the projection space.
+    assign_refwfn(self, refwfn=None)
+        Assign the reference wavefunction.
+    assign_constraints(self, constraints=None)
+        Assign the constraints on the objective.
+    assign_eqn_weights(self, eqn_weights=None)
+        Assign the weights of each equation.
+    objective(self, params) : np.ndarray(self.num_eqns, )
+        Return the values of the system of equations.
+    jacobian(self, params) : np.ndarray(self.num_eqns, self.nparams.size)
+        Return the Jacobian of the objective function.
+
     """
     def __init__(self, wfn, ham, tmpfile='', param_selection=None,
                  pspace=None, refwfn=None, eqn_weights=None, energy_type='compute', energy=None,
                  constraints=None):
-        """
+        """Initialize the objective instance.
 
         Parameters
         ----------
+        wfn : BaseWavefunction
+            Wavefunction.
+        ham : BaseHamiltonian
+            Hamiltonian that defines the system under study.
+        tmpfile : str
+            Name of the file that will store the parameters used by the objective method.
+            By default, the parameter values are not stored.
+            If a file name is provided, then parameters are stored upon execution of the objective
+            method.
+        param_selection : {list, tuple, ParamMask, None}
+            Selection of parameters that will be used to construct the objective.
+            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
+            indexing array for the active parameters. See `ParamMask.__init__` for details.
         pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
             States onto which the Schrodinger equation is projected.
             By default, the largest space is used.
@@ -73,11 +140,6 @@ class SystemEquations(BaseSchrodinger):
             Weights of each equation.
             By default, all equations are given weight of 1 except for the normalization constraint,
             which is weighed by the number of equations.
-        energy : {float, None}
-            Energy of the Schrodinger equation.
-            If not provided, energy is computed with respect to the reference.
-            By default, energy is computed with respect to the reference.
-            Note that this parameter is not used at all if `energy_type` is 'compute'.
         energy_type : {'fixed', 'variable', 'compute'}
             Type of the energy used in the Schrodinger equation.
             If 'fixed', the energy of the Schrodinger equation is fixed at the given value.
@@ -85,6 +147,11 @@ class SystemEquations(BaseSchrodinger):
             If 'compute', the energy of the Schrodinger equation is computed on-the-fly with respect
             to the reference.
             By default, the energy is computed on-the-fly.
+        energy : {float, None}
+            Energy of the Schrodinger equation.
+            If not provided, energy is computed with respect to the reference.
+            By default, energy is computed with respect to the reference.
+            Note that this parameter is not used at all if `energy_type` is 'compute'.
         constraints : list/tuple of BaseObjective
             Constraints that will be imposed on the optimization process.
             By default, the normalization constraint used.
@@ -92,8 +159,13 @@ class SystemEquations(BaseSchrodinger):
         Raises
         ------
         TypeError
+            If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
+            If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
+            If save_file is not a string.
             If `energy` is not float, complex or None.
         ValueError
+            If wavefunction and Hamiltonian do not have the same data type.
+            If wavefunction and Hamiltonian do not have the same number of spin orbitals.
             If `energy_type` is not one of 'fixed', 'variable', or 'compute'.
 
         """
@@ -124,13 +196,25 @@ class SystemEquations(BaseSchrodinger):
         Returns
         -------
         nproj : int
-            Number of equations.
+            Number of states onto which the Schrodinger equation is projected.
 
         """
         return len(self.pspace)
 
+    @property
+    def num_eqns(self):
+        """Return the number of equations in the objective.
+
+        Returns
+        -------
+        num_eqns : int
+            Number of equations in the objective.
+
+        """
+        return self.nproj + sum(cons.num_eqns for cons in self.constraints)
+
     def assign_pspace(self, pspace=None):
-        """Set the projection space.
+        """Assign the projection space.
 
         Parameters
         ----------
@@ -158,7 +242,7 @@ class SystemEquations(BaseSchrodinger):
         self.pspace = pspace
 
     def assign_refwfn(self, refwfn=None):
-        """Set the reference state.
+        """Assign the reference wavefunction.
 
         Parameters
         ----------
@@ -184,7 +268,7 @@ class SystemEquations(BaseSchrodinger):
                             'compatible representations of the Slater determinants.')
 
     def assign_constraints(self, constraints=None):
-        """Set the constraints on the objective.
+        """Assign the constraints on the objective.
 
         Parameters
         ----------
@@ -221,7 +305,7 @@ class SystemEquations(BaseSchrodinger):
         self.constraints = constraints
 
     def assign_eqn_weights(self, eqn_weights=None):
-        """Set the weights of each equation.
+        """Assign the weights of each equation.
 
         Parameters
         ----------
@@ -253,12 +337,8 @@ class SystemEquations(BaseSchrodinger):
                              'shape, {0}.'.format((self.nproj + num_constraints, )))
         self.eqn_weights = eqn_weights
 
-    @property
-    def num_eqns(self):
-        return len(self.pspace) + sum(cons.num_eqns for cons in self.constraints)
-
     def objective(self, params):
-        r"""System of equations that corresponds to the Projected Schrodinger equation.
+        r"""Return the values of the system of equations.
 
         .. math::
 
@@ -332,7 +412,7 @@ class SystemEquations(BaseSchrodinger):
         return obj
 
     def jacobian(self, params):
-        r"""Jacobian of the objective function.
+        r"""Return the Jacobian of the objective function.
 
         If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
 
