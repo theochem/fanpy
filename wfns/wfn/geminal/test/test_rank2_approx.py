@@ -1,5 +1,4 @@
 """Test wfns.wavefunction.geminals.rank2_geminal.RankTwoGeminal."""
-from __future__ import absolute_import, division, print_function
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
@@ -75,7 +74,7 @@ def test_rank2_geminal_template_params():
 
 
 def test_rank2_geminal_assign_params():
-    """Tests RankTwoGeminal.assign_params."""
+    """Test RankTwoGeminal.assign_params."""
     test = TestRankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)

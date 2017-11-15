@@ -6,7 +6,6 @@ generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
     Generate the FCI Hamiltonian CI matrix.
 
 """
-from __future__ import absolute_import, division, print_function
 import sys
 import ctypes
 import numpy as np

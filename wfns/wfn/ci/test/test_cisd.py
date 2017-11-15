@@ -1,6 +1,4 @@
-""" Tests wfns.wavefunction.cisd
-"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.wavefunction.cisd."""
 from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile

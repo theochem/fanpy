@@ -1,5 +1,4 @@
 """Solvers for single equations."""
-from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.objective.base_objective import BaseObjective
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy

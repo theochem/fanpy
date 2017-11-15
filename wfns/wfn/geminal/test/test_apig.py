@@ -1,5 +1,4 @@
 """Test wfns.wavefunction.geminals.apig."""
-from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy
 from nose.tools import assert_raises

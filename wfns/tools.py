@@ -1,5 +1,4 @@
 """Handy tools for lazy people."""
-
 import os
 import glob
 

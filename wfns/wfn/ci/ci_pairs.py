@@ -1,5 +1,4 @@
 """CI Pairs Wavefunction."""
-from __future__ import absolute_import, division, print_function
 import numpy as np
 from wfns.wfn.ci.doci import DOCI
 from wfns.wfn.geminal.ap1rog import AP1roG

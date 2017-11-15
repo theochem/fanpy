@@ -6,7 +6,6 @@ gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
     Extract appropriate information from a Gaussian FCHK file.
 
 """
-from __future__ import absolute_import, division, print_function
 import sys
 import numpy as np
 from horton import IOData, compute_nucnuc

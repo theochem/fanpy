@@ -1,6 +1,4 @@
-""" Tests wfns.wavefunction.doci
-"""
-from __future__ import absolute_import, division, print_function
+"""Test wfns.wavefunction.doci."""
 from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
@@ -16,7 +14,7 @@ class TestDOCI(DOCI):
 
 
 def test_assign_nelec():
-    """Tests DOCI.assign_nelec."""
+    """Test DOCI.assign_nelec."""
     test = TestDOCI()
     # int
     test.assign_nelec(2)
@@ -97,7 +95,7 @@ def test_doci_h4_hf_sto6g():
 
 # FIXME: NEED EITHER ORBITAL OPTIMIZATION OR REORDERING OF PETER'S ORBITALS
 # def test_doci_h2_hf_631gdp():
-#     """ Tests DOCI wavefunction for H2 (STO-6G) against Peter's orbital optimized DOCI
+#     """Test DOCI wavefunction for H2 (STO-6G) against Peter's orbital optimized DOCI
 
 #     NOTE
 #     ----

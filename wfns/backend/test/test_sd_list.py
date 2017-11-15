@@ -1,4 +1,4 @@
-"""Tests wfns.sd_list."""
+"""Test wfns.sd_list."""
 from nose.tools import assert_raises
 import gmpy2
 from wfns.backend import sd_list

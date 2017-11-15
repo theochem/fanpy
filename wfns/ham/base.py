@@ -1,5 +1,4 @@
 r"""Hamiltonian that will be used to make the Schrodinger equtaion."""
-from __future__ import absolute_import, division, print_function, unicode_literals
 import abc
 import numpy as np
 from wfns.param import ParamContainer
