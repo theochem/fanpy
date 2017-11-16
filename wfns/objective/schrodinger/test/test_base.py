@@ -1,9 +1,9 @@
-"""Test wfns.objective.schrodinger.base_schrodinger."""
+"""Test wfns.objective.schrodinger.base."""
 from nose.tools import assert_raises
 import numpy as np
 import itertools as it
 from wfns.param import ParamContainer
-from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
+from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 from wfns.ham.chemical import ChemicalHamiltonian
