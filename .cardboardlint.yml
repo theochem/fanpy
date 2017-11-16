@@ -1,0 +1,13 @@
+linters:
+- import:
+- namespace:
+    filefilter: ['- horton_*.py', '- pyscf_*.py']
+- whitespace:
+    filefilter: ['- *.npy']
+- flake8:
+- pylint:
+    # pylintrc: tools/pylintrc
+    filefilter: ['- test_*.py', '+ *.py']
+- pylint:
+    # pylintrc: tools/pylintrc_tests
+    filefilter: ['+ test_*.py']
