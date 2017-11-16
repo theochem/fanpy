@@ -55,7 +55,7 @@ def test_baseschrodinger_wrapped_get_overlap():
     ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                               np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
-                                                        (ParamContainer(3), True)])
+                                                          (ParamContainer(3), True)])
     assert test.wrapped_get_overlap(0b0101, deriv=None) == wfn.get_overlap(0b0101, deriv=None)
     assert test.wrapped_get_overlap(0b0101, deriv=0) == wfn.get_overlap(0b0101, deriv=0)
     assert test.wrapped_get_overlap(0b0101, deriv=1) == wfn.get_overlap(0b0101, deriv=3)
@@ -70,7 +70,7 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                               np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
-                                                        (ParamContainer(3), True)])
+                                                          (ParamContainer(3), True)])
     assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
     assert test.wrapped_integrate_wfn_sd(0b0101,
                                          deriv=0) == sum(ham.integrate_wfn_sd(wfn, 0b0101,
@@ -92,7 +92,7 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                               np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
-                                                        (ParamContainer(3), True)])
+                                                          (ParamContainer(3), True)])
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=0) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=1) == 0.0

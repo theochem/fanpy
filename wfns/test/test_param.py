@@ -162,8 +162,8 @@ def test_parammask_eq():
 
     test2 = ParamMask((ParamContainer(1), False),
                       (ParamContainer(np.array([2, 3])), np.array(1)),
-                      (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True]))
-                     )
+                      (ParamContainer(np.array([4, 5, 6, 7])),
+                       np.array([True, False, False, True])))
     assert test != test2
 
     assert_raises(TypeError, test.__eq__, 2)

@@ -78,4 +78,4 @@ def test_root():
 
     assert_raises(TypeError, system.root, OneSidedEnergy(wfn, ham))
     assert_raises(ValueError, system.root, SystemEquations(wfn, ham, refwfn=0b0011,
-                                                                  pspace=[0b0011, 0b1100]))
+                                                           pspace=[0b0011, 0b1100]))

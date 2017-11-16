@@ -449,8 +449,8 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
     def get_energy(wfn_type, expectation_type):
         doci = CIWavefunction(nelec, nspin, seniority=0)
         # optimized parameters for the transformed hamiltonian
-        doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01, -4.22775180e-02,
-                                     2.01842251e-01, 8.50414717e-04]))
+        doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01,
+                                     -4.22775180e-02, 2.01842251e-01, 8.50414717e-04]))
 
         ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
                                   np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
