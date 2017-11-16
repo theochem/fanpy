@@ -1,8 +1,8 @@
-"""Test wfns.objective.base_objective."""
+"""Test wfns.objective.base."""
 from nose.tools import assert_raises
 import numpy as np
 from wfns.param import ParamContainer, ParamMask
-from wfns.objective.base_objective import BaseObjective
+from wfns.objective.base import BaseObjective
 
 
 class TestBaseObjective(BaseObjective):

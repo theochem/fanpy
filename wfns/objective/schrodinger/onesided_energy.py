@@ -1,6 +1,6 @@
 """Energy of the Schrodinger equation integrated against a reference wavefunction."""
 import numpy as np
-from wfns.objective.schrodinger.base_schrodinger import BaseSchrodinger
+from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend import slater, sd_list
 
