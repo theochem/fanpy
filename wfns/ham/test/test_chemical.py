@@ -52,19 +52,17 @@ def test_integrate_sd_sd_h2_631gdp():
 
     Compare CI matrix with the PySCF result
     """
-    ''' integrals are geenrated using horton wrapper
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    '''
+    # integrals are geenrated using horton wrapper
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
     one_int = (np.load(find_datafile('test/h2_hf_631gdp_oneint.npy')), )
     two_int = (np.load(find_datafile('test/h2_hf_631gdp_twoint.npy')), )
     ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
 
-    ''' CI matrix is generated using PYSCF wrapper
-    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
-                                                      is_chemist_notation=False)
-    '''
+    # CI matrix is generated using PYSCF wrapper
+    # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
+    #                                                   is_chemist_notation=False)
     ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
     ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
 
@@ -80,19 +78,17 @@ def test_integrate_wfn_sd_h2_631gdp():
     Compare projected energy with the transformed CI matrix from PySCF
     Compare projected energy with the transformed integrate_sd_sd
     """
-    ''' integrals are geenrated using horton wrapper
-    hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    '''
+    # integrals are geenrated using horton wrapper
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
     one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
     ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
 
-    ''' CI matrix is generated using PYSCF wrapper
-    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
-                                                      is_chemist_notation=False)
-    '''
+    # CI matrix is generated using PYSCF wrapper
+    # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
+    #                                                   is_chemist_notation=False)
     ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
     ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy')).tolist()
 
@@ -135,19 +131,17 @@ def test_integrate_wfn_sd_h4_sto6g():
 @attr('slow')
 def test_integrate_sd_sd_lih_631g():
     """Test ChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals."""
-    ''' integrals are geenrated using horton wrapper
-    hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
-    one_int = hf_dict["one_int"]
-    two_int = hf_dict["two_int"]
-    '''
+    # integrals are geenrated using horton wrapper
+    # hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
+    # one_int = hf_dict["one_int"]
+    # two_int = hf_dict["two_int"]
     one_int = (np.load(find_datafile('test/lih_hf_631g_oneint.npy')), )
     two_int = (np.load(find_datafile('test/lih_hf_631g_twoint.npy')), )
     ham = ChemicalHamiltonian(one_int, two_int, 'restricted')
 
-    ''' CI matrix is generated using PYSCF wrapper
-    ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
-                                                      is_chemist_notation=False)
-    '''
+    # CI matrix is generated using PYSCF wrapper
+    # ref_ci_matrix, ref_pspace = generate_fci_cimatrix(one_int[0], two_int[0], 2,
+    #                                                   is_chemist_notation=False)
     ref_ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
     ref_pspace = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
 
