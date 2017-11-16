@@ -58,7 +58,8 @@ def brute(wfn, ham, savefile=''):
             ci_matrix[i, i+j] += sum(ham.integrate_sd_sd(sd1, sd2))
     # ci_matrix += ci_matrix.T - np.diag(np.diag(ci_matrix))
 
-    eigval, eigvec = scipy.linalg.eigh(ci_matrix, lower=False, overwrite_a=True, turbo=False, type=1)
+    eigval, eigvec = scipy.linalg.eigh(ci_matrix, lower=False, overwrite_a=True, turbo=False,
+                                       type=1)
     del ci_matrix
 
     if savefile != '':

@@ -12,21 +12,22 @@ def test_add_one_density():
     #  tuple of numpy array
     assert_raises(TypeError, lambda: add_one_density((np.zeros((2, 2)),), 1, 1, 0.5, 'restricted'))
     #  list of nonnumpy array
-    assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 2)).tolist(),], 1, 1, 0.5,
+    assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 2)).tolist(), ], 1, 1, 0.5,
                                                      'restricted'))
     #  bad matrix shape
     assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 2, 2))], 1, 1, 0.5,
                                                      'restricted'))
     assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 3))], 1, 1, 0.5, 'generalized'))
     #  bad orbital type
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)),], 1, 1, 0.5, 'dsfsdfdsf'))
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)),], 1, 1, 0.5, 'Restricted'))
+    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5, 'dsfsdfdsf'))
+    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5,
+                                                      'Restricted'))
     #  mismatching orbital type and matrices
     assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5,
                                                       'restricted'))
     assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5,
                                                       'generalized'))
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)),], 1, 1, 0.5,
+    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5,
                                                       'unrestricted'))
 
     # restricted (3 spatial orbitals, 6 spin orbitals)
@@ -94,21 +95,21 @@ def test_add_two_density():
     assert_raises(TypeError, lambda: add_two_density((np.zeros((2, 2, 2, 2)),), 1, 1, 1, 1, 0.5,
                                                      'restricted'))
     #  list of nonnumpy array
-    assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2, 2)).tolist(),], 1, 1, 1, 1,
-                                                     0.5, 'restricted'))
+    assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2, 2)).tolist(), ], 1, 1, 1,
+                                                     1, 0.5, 'restricted'))
     #  bad matrix shape
     assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2))], 1, 1, 1, 1, 0.5,
                                                      'restricted'))
     assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2, 3))], 1, 1, 1, 1, 0.5,
                                                      'unrestricted'))
     #  bad orbital type
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)),], 1, 1, 1, 1, 0.5,
+    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5,
                                                       'dsfsdfdsf'))
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)),], 1, 1, 1, 1, 0.5,
+    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5,
                                                       'Restricted'))
     #  mismatching orbital type and matrices
     assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5,
-                                                     'restricted'))
+                                                      'restricted'))
     assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5,
                                                       'generalized'))
     assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))], 1, 1, 1, 1, 0.5,
@@ -164,6 +165,7 @@ def test_add_two_density():
     answer_alpha = np.zeros((4, 4, 4, 4))
     answer_alpha_beta = np.zeros((4, 4, 4, 4))
     answer_beta = np.zeros((4, 4, 4, 4))
+
     def check_answer_unrestricted(matrices, answer_alpha, answer_alpha_beta, answer_beta):
         """ Checks unrestricted answers"""
         assert np.allclose(matrices[0], answer_alpha)
