@@ -3,11 +3,11 @@ linters:
 - namespace:
     filefilter: ['- horton_*.py', '- pyscf_*.py']
 - whitespace:
-    filefilter: ['- *.npy']
+    filefilter: ['- *.npy', '- *.fchk']
 - flake8:
 - pylint:
-    # pylintrc: tools/pylintrc
+    config: tools/pylintrc
     filefilter: ['- test_*.py', '+ *.py']
 - pylint:
-    # pylintrc: tools/pylintrc_tests
+    config: tools/pylintrc_tests
     filefilter: ['+ test_*.py']
