@@ -4,8 +4,6 @@ import scipy.linalg
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 
-__all__ = []
-
 
 def brute(wfn, ham, savefile=''):
     """Solve the wavefunction by eigenvalue decomposition of the CI matrix.

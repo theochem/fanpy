@@ -14,8 +14,6 @@ from horton import (IOData, get_gobasis,
                     compute_nucnuc, guess_core_hamiltonian, transform_integrals,
                     AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
 
-__all__ = []
-
 
 def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,
                 horton_internal=False, **kwargs):
@@ -122,8 +120,6 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
     }
 
     if horton_internal:
-        raise NotImplementedError('horton_internal storage is unsupported until it become Python '
-                                  '3.6 compatible.')
         output["horton_internal"] = {
             "lf": lf,
             "occ_model": occ_model,
@@ -132,6 +128,8 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
             "orb": [orb, ],
             "olp": olp,
         }
+        raise NotImplementedError('horton_internal storage is unsupported until it become Python '
+                                  '3.6 compatible.')
 
     return output
 

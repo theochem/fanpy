@@ -12,8 +12,6 @@ import numpy as np
 from pyscf import gto, scf, ao2mo
 from pyscf.lib import load_library
 
-__all__ = []
-
 LIBFCI = load_library('libfci')
 
 

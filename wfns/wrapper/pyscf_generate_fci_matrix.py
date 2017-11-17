@@ -12,8 +12,6 @@ import numpy as np
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
 
-__all__ = []
-
 LIBFCI = load_library('libfci')
 
 
