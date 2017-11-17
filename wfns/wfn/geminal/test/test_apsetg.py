@@ -9,7 +9,6 @@ from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-# from wfns.solver.equation import minimize
 from wfns.solver.equation import minimize, cma
 
 
@@ -100,7 +99,8 @@ def answer_apsetg_h2_631gdp():
     full_sds = [1 << i | 1 << j for i in range(10) for j in range(10, 20)]
 
     objective = OneSidedEnergy(apsetg, ham, refwfn=full_sds)
-    results = cma(objective, sigma0=0.01, gradf=None)
+    results = cma(objective, sigma0=0.01, gradf=None, options={'tolfun': 1e-6, 'verb_log': 0})
+    print(results)
     results = minimize(objective)
     print(results)
     print(apsetg.params)
