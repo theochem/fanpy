@@ -61,7 +61,7 @@ def test_cma():
     assert results['success']
     assert np.allclose(results['energy'], 2)
     assert np.allclose(results['function'], 0, atol=1e-7)
-    assert results['message'] == 'Following termination conditions are satisfied: ftarget: 1e-07.'
+    assert results['message'] == 'Following termination conditions are satisfied: tolfun: 1e-11.'
 
     assert_raises(TypeError, equation.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
     assert_raises(ValueError, equation.cma, SystemEquations(wfn, ham, refwfn=0b0011))

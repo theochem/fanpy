@@ -184,6 +184,18 @@ class CIWavefunction(BaseWavefunction):
         """
         return self._seniority
 
+    @property
+    def nsd(self):
+        """Return number of Slater determinants.
+
+        Returns
+        -------
+        nsd : int
+            Number of Slater determinants.
+
+        """
+        return len(self.sd_vec)
+
     def assign_spin(self, spin=None):
         r"""Assign the spin of the wavefunction.
 
