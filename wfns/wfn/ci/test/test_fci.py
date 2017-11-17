@@ -1,7 +1,7 @@
 """Test wfns.wavefunction.fci."""
-from nose.tools import assert_raises
 import numpy as np
 from nose.plugins.attrib import attr
+from nose.tools import assert_raises
 from wfns.tools import find_datafile
 from wfns.wfn.ci.fci import FCI
 from wfns.ham.chemical import ChemicalHamiltonian
