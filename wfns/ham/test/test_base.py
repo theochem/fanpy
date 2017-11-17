@@ -5,14 +5,18 @@ from wfns.ham.base import BaseHamiltonian
 
 
 class Empty:
+    """Empty container class."""
     pass
 
 
 class TestBaseHamiltonian(BaseHamiltonian):
+    """BaseHamiltonian class that bypasses the abstract methods."""
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
+        """Abstract method."""
         pass
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
+        """Abstract method."""
         pass
 
 

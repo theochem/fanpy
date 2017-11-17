@@ -6,11 +6,14 @@ from wfns.objective.base import BaseObjective
 
 
 class TestBaseObjective(BaseObjective):
+    """BaseObjective with abstract property and method defined."""
     @property
     def num_eqns(self):
+        """Abstract property."""
         pass
 
     def objective(self, params):
+        """Abstract method."""
         pass
 
 

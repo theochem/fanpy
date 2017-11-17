@@ -7,12 +7,13 @@ from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestTwoSidedEnergy(TwoSidedEnergy):
+    """TwoSidedEnergy that skips initialization."""
     def __init__(self):
         pass
 
 
-def test_twosided_energy_assign_pspacess():
-    """Test TwoSidedEnergy.assign_pspacess."""
+def test_twosided_energy_assign_pspaces():
+    """Test TwoSidedEnergy.assign_pspaces."""
     test = TestTwoSidedEnergy()
     test.wfn = CIWavefunction(2, 4)
     # default pspace_l

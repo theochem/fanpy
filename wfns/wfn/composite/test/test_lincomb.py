@@ -7,6 +7,7 @@ from wfns.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 class Container:
+    """Just some container class to represent the wavefunction."""
     pass
 
 
@@ -98,12 +99,14 @@ def test_get_overlap():
     test_wfn_2.params = np.array([0.1])
 
     def olp_one(self, sd, deriv=None):
+        """Overlap of wavefunction 1."""
         if sd == 0b0101:
             return self.params[0]
         else:
             return 0.0
 
     def olp_two(self, sd, deriv=None):
+        """Overlap of wavefunction 2."""
         if sd == 0b1010:
             return self.params[0]
         else:

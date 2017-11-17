@@ -6,6 +6,7 @@ from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 
 
 class Container:
+    """Just some container class for wavefunction."""
     pass
 
 

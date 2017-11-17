@@ -88,7 +88,7 @@ def test_doci_h4_hf_sto6g():
     ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, coeffs = brute(doci, ham)
+    energies, _ = brute(doci, ham)
     # compare with number from Gaussian
     assert abs(energies[0] + nuc_nuc - (-1.884948574812363)) < 1e-7
 

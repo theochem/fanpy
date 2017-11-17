@@ -141,6 +141,7 @@ def test_clear_cache():
 
     @functools.lru_cache(2)
     def olp(sd):
+        """Overlap of wavefunction."""
         return 0.0
 
     test._cache_fns = {}
@@ -149,6 +150,7 @@ def test_clear_cache():
 
     @functools.lru_cache(2)
     def olp_deriv(sd, deriv):
+        """Derivative of the overlap of wavefunction."""
         return 0.0
 
     test._cache_fns['overlap derivative'] = olp_deriv
