@@ -447,6 +447,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
     #       are stored by reference and using the same hamiltonian while transforming it will cause
     #       some headach
     def get_energy(wfn_type, expectation_type):
+        """Get energy of the tranformed wavefunction."""
         doci = CIWavefunction(nelec, nspin, seniority=0)
         # optimized parameters for the transformed hamiltonian
         doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01,

@@ -10,6 +10,7 @@ from wfns.backend.sd_list import sd_list
 class TestWavefunction(object):
     """Mock wavefunction for testing."""
     def get_overlap(self, sd, deriv=None):
+        """Get overlap of wavefunction with Slater determinant."""
         if sd == 0b0101:
             return 1
         elif sd == 0b1010:

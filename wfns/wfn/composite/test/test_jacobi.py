@@ -692,11 +692,12 @@ def test_jacobi_energy():
     #       are stored by reference and using the same hamiltonian while transforming it will cause
     #       some headache
     def get_energy(theta, orbpair, wfn_type, expectation_type):
+        """Get energy that correspond to the rotation of the given orbitals."""
         doci = DOCI(nelec, nspin)
         ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
                                   np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
                                   orbtype='restricted')
-        energies, coeffs = brute(doci, ham)
+        _, coeffs = brute(doci, ham)
         doci.assign_params(coeffs[:, 0].flatten())
         jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
                                     wfn=doci, orbtype='restricted', jacobi_indices=orbpair,

@@ -17,6 +17,7 @@ def test_assign_orbtype():
 class TestWavefunction_2e(object):
     """Mock 2-electron wavefunction for testing."""
     def get_overlap(self, sd, deriv=None):
+        """Get overlap of wavefunction with Slater determinant."""
         if sd == 0b0101:
             return 1
         elif sd == 0b1010:
@@ -47,6 +48,7 @@ def test_integrate_wfn_sd_2e():
 class TestWavefunction_4e(object):
     """Mock 4-electron wavefunction for testing."""
     def get_overlap(self, sd, deriv=None):
+        """Get overlap of wavefunction with Slater determinant."""
         if sd == 0b011011:
             return 1
         elif sd == 0b101101:
@@ -64,14 +66,11 @@ def test_integrate_wfn_sd_4e():
     ham_full = ChemicalHamiltonian(one_int, two_int, 'restricted')
     test_wfn = TestWavefunction_4e()
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b011011)
     assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b011011),
                        ham_full.integrate_wfn_sd(test_wfn, 0b011011))
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b101101)
     assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b101101),
                        ham_full.integrate_wfn_sd(test_wfn, 0b101101))
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b110110)
     assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b110110),
                        ham_full.integrate_wfn_sd(test_wfn, 0b110110))

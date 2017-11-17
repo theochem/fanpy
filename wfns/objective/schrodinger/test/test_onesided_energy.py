@@ -7,6 +7,7 @@ from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestOneSidedEnergy(OneSidedEnergy):
+    """OneSidedEnergy that skips initialization."""
     def __init__(self):
         pass
 

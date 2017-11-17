@@ -10,19 +10,25 @@ from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestBaseHamiltonian(BaseHamiltonian):
+    """BaseHamiltonian with abstract methods defined."""
     def integrate_wfn_sd(self, wfn, sd, deriv=None):
+        """Abstract method."""
         pass
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
+        """Abstract method."""
         pass
 
 
 class TestBaseSchrodinger(BaseSchrodinger):
+    """BaseSchrodinger with abstract property and method defined."""
     @property
     def num_eqns(self):
+        """Abstract property."""
         pass
 
     def objective(self, params):
+        """Abstract method."""
         pass
 
 

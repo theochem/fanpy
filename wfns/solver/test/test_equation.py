@@ -15,22 +15,23 @@ class TestBaseWavefunction(BaseWavefunction):
         pass
 
     def get_overlap(self, sd, deriv=None):
+        """Get overlap between wavefunction and Slater determinant."""
         if sd == 0b0011:
             if deriv is None:
                 return (self.params[0]-3)*(self.params[1]-2)
             elif deriv == 0:
-                return (self.params[1]-2)
+                return self.params[1] - 2
             elif deriv == 1:
-                return (self.params[0]-3)
+                return self.params[0] - 3
             else:
                 return 0
         elif sd == 0b1100:
             if deriv is None:
                 return self.params[0]**3 + self.params[1]**2
             elif deriv == 0:
-                return 3*self.params[0]**2
+                return 3 * self.params[0]**2
             elif deriv == 1:
-                return 2*self.params[1]
+                return 2 * self.params[1]
             else:
                 return 0
         else:

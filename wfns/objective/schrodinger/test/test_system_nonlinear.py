@@ -9,6 +9,7 @@ from wfns.ham.chemical import ChemicalHamiltonian
 
 
 class TestSystemEquations(SystemEquations):
+    """SystemEquations that skips initialization."""
     def __init__(self):
         pass
 
@@ -51,9 +52,9 @@ def test_system_init_energy():
 def test_system_nproj():
     """Test SystemEquation.nproj"""
     test = TestSystemEquations()
-    test.pspace = [0b0101, 0b1010]
+    test.assign_pspace([0b0101, 0b1010])
     assert test.nproj == 2
-    test.pspace = [0b0101, 0b1010, 0b0110]
+    test.assign_pspace([0b0101, 0b1010, 0b0110])
     assert test.nproj == 3
 
 
@@ -112,7 +113,8 @@ def test_system_assign_eqn_weights():
     test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0], dtype=float))
     assert np.allclose(test.eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
 
-    test.param_selection = ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
+    test.assign_param_selection(
+        ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool))))
     norm_constraint = NormConstraint(test.wfn, param_selection=test.param_selection)
     test.assign_constraints([norm_constraint, norm_constraint])
     test.assign_eqn_weights(np.zeros(8))
@@ -128,8 +130,9 @@ def test_system_assign_constraints():
     """Test SystemEquations.assign_constraints."""
     test = TestSystemEquations()
     test.wfn = CIWavefunction(2, 4)
-    test.refwfn = (0b0101, )
-    test.param_selection = ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
+    test.assign_refwfn(0b0101)
+    test.assign_param_selection(
+        ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool))))
 
     test.assign_constraints()
     assert isinstance(test.constraints, list)
@@ -162,7 +165,7 @@ def test_num_eqns():
     test.assign_refwfn()
     test.assign_param_selection()
     test.assign_constraints()
-    test.pspace = (0b0101, 0b1010)
+    test.assign_pspace((0b0101, 0b1010))
     assert test.num_eqns == 3
 
 

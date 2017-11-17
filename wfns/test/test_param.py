@@ -6,11 +6,13 @@ from wfns.param import ParamContainer, ParamMask
 
 
 class TestParamContainer(ParamContainer):
+    """ParamContainer that skips initialization."""
     def __init__(self):
         pass
 
 
 class TestParamMask(ParamMask):
+    """ParamMask that skips initialization."""
     def __init__(self):
         pass
 
