@@ -21,8 +21,18 @@ def cma(objective, save_file='', **kwargs):
         By default, the results are not saved.
     kwargs : dict
         Keyword arguments to `cma.fmin`. See its documentation for details.
-        By default, 'sigma0' is set to 0.01, 'gradf' to the gradient of the objective, and 'options'
-        to `{'ftarget': 1e-7}`.
+        By default, 'sigma0' is set to 0.01 and 'options' to `{'ftarget': None, 'timeout': np.inf,
+        'tolfun': 1e-11, 'verb_filenameprefix': 'outcmaes', 'verb_log': 0}`.
+        The 'sigma0' is the initial standard deviation. The optimum is expected to be within
+        `3*sigma0` of the initial guess.
+        The 'ftarget' is the termination condition for the function value upper limit.
+        The 'timeout' is the termination condition for the time. It is provided in seconds and must
+        be provided as a string.
+        The 'tolfun' is the termination condition for the change in function value.
+        The 'verb_filenameprefix' is the prefix of the logger files that will be written to disk.
+        The 'verb_log' is the verbosity of the logger files that will be written to disk. `0` means
+        that no logs will be saved.
+        See `cma.evolution_strategy.cma_default_options` for more options.
 
     Returns
     -------
@@ -56,7 +66,8 @@ def cma(objective, save_file='', **kwargs):
         raise ValueError('Objective must contain only one equation.')
 
     if kwargs == {}:
-        kwargs = {'sigma0': 0.01}
+        kwargs = {'sigma0': 0.01, 'options': {'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
+                                              'verb_filenameprefix': 'outcmaes', 'verb_log': 0}}
 
     results = cma.fmin(objective.objective, objective.params, **kwargs)
 
