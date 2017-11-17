@@ -73,7 +73,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
     """
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
                           exchange):
-        """Update integrals for the given Slater determinant.
+        r"""Update integrals for the given Slater determinant.
 
         Add the term :math:`f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}` to the provided
         integrals.
@@ -172,6 +172,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         exchange = 0.0
 
         def update_integrals(sd_m):
+            """Wrapped function for updating the integral values."""
             return self._update_integrals(wfn, sd, sd_m, wfn_deriv, ham_deriv,
                                           one_electron, coulomb, exchange)
 

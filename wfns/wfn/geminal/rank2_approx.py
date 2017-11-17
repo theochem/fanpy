@@ -73,7 +73,7 @@ class RankTwoApprox:
 
     @property
     def lambdas(self):
-        """Return the :math:`\lambda` part of the parameters.
+        r"""Return the :math:`\lambda` part of the parameters.
 
         Returns
         -------
@@ -85,7 +85,7 @@ class RankTwoApprox:
 
     @property
     def epsilons(self):
-        """Return the :math:`\epsilons` part of the parameters.
+        r"""Return the :math:`\epsilons` part of the parameters.
 
         Returns
         -------
@@ -97,7 +97,7 @@ class RankTwoApprox:
 
     @property
     def zetas(self):
-        """Return the :math:`\zetas` part of the parameters.
+        r"""Return the :math:`\zetas` part of the parameters.
 
         Returns
         -------
@@ -422,7 +422,7 @@ def full_to_rank2(params, rmsd=0.1, method='least squares'):
         rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
     # solve by SVD
     elif method == 'svd':
-        u, s, vT = np.linalg.svd(matrix, full_matrices=False)
+        _, s, vT = np.linalg.svd(matrix, full_matrices=False)
         # find null vectors
         indices = np.abs(s) < 1
         # guess solution

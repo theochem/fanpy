@@ -1,3 +1,4 @@
+"""Setup script for installing the package."""
 from distutils.core import setup
 
 

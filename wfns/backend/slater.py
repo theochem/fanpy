@@ -1,4 +1,4 @@
-r"""Collection of functions used to construct and manipulate Slater determinants.
+"""Collection of functions used to construct and manipulate Slater determinants.
 
 Slater determinants are represented with a bitstring that describes their occupation. The `0` would
  correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. For
@@ -78,7 +78,7 @@ import numpy as np
 
 
 def is_internal_sd(sd):
-    r"""Check if given Slater determinant is a `gmpy2.mpz` object.
+    """Check if given Slater determinant is a `gmpy2.mpz` object.
 
     Parameters
     ----------
@@ -95,7 +95,7 @@ def is_internal_sd(sd):
 
 
 def is_sd_compatible(sd):
-    r"""Check if given Slater determinant is compatible.
+    """Check if given Slater determinant is compatible.
 
     Parameters
     ----------
@@ -112,7 +112,7 @@ def is_sd_compatible(sd):
 
 
 def internal_sd(identifier):
-    r"""Create a Slater detrminant as a `gmpy2.mpz` object.
+    """Create a Slater detrminant as a `gmpy2.mpz` object.
 
     Parameters
     ----------
@@ -140,7 +140,7 @@ def internal_sd(identifier):
 
 
 def occ(sd, i):
-    r"""Check if a given Slater determinant has orbital `i` occupied.
+    """Check if a given Slater determinant has orbital `i` occupied.
 
     Parameters
     ----------
@@ -160,7 +160,7 @@ def occ(sd, i):
 
 
 def occ_indices(sd):
-    r"""Return indices of the occupied orbitals.
+    """Return indices of the occupied orbitals.
 
     Parameters
     ----------
@@ -182,7 +182,7 @@ def occ_indices(sd):
 
 
 def vir_indices(sd, norbs):
-    r"""Return the indices of all of the virtual orbitals.
+    """Return the indices of all of the virtual orbitals.
 
     Parameters
     ----------
@@ -207,7 +207,7 @@ def vir_indices(sd, norbs):
 
 
 def total_occ(sd):
-    r"""Return the total number of occupied orbitals in a Slater determinant.
+    """Return the total number of occupied orbitals in a Slater determinant.
 
     Parameters
     ----------
@@ -227,7 +227,7 @@ def total_occ(sd):
 
 
 def is_alpha(i, nspatial):
-    r"""Check if index `i` is an alpha spin orbital.
+    """Check if index `i` is an alpha spin orbital.
 
     Parameters
     ----------
@@ -256,7 +256,7 @@ def is_alpha(i, nspatial):
 
 
 def spatial_index(i, nspatial):
-    r"""Return the spatial orbital index that corresponds to the spin orbital `i`.
+    """Return the spatial orbital index that corresponds to the spin orbital `i`.
 
     Parameters
     ----------
@@ -288,7 +288,7 @@ def spatial_index(i, nspatial):
 
 
 def annihilate(sd, *indices):
-    r"""Annihilate the occupied orbital `i` from a Slater determinant.
+    """Annihilate the occupied orbital `i` from a Slater determinant.
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ def annihilate(sd, *indices):
 
 
 def create(sd, *indices):
-    r"""Create electrons in the orbitals that correspond to the given indices.
+    """Create electrons in the orbitals that correspond to the given indices.
 
     Parameters
     ----------
@@ -339,7 +339,7 @@ def create(sd, *indices):
 
 
 def excite(sd, *indices):
-    r"""Excite electrons from occupied orbitals to virtual orbitals.
+    """Excite electrons from occupied orbitals to virtual orbitals.
 
     Parameters
     ----------
@@ -370,7 +370,7 @@ def excite(sd, *indices):
 
 
 def ground(nocc, norbs):
-    r"""Create a ground state Slater determinant.
+    """Create a ground state Slater determinant.
 
     If the number of electrons is odd, then the last electron is put into an alpha orbital.
 
@@ -409,7 +409,7 @@ def ground(nocc, norbs):
 
 
 def shared_orbs(sd1, sd2):
-    r"""Return indices of orbitals shared between two Slater determinants.
+    """Return indices of orbitals shared between two Slater determinants.
 
     Parameters
     ----------
@@ -428,7 +428,7 @@ def shared_orbs(sd1, sd2):
 
 
 def diff_orbs(sd1, sd2):
-    r"""Return indices of the orbitals that are not shared between two Slater determinants.
+    """Return indices of the orbitals that are not shared between two Slater determinants.
 
     Parameters
     ----------
@@ -451,7 +451,7 @@ def diff_orbs(sd1, sd2):
 
 
 def combine_spin(alpha_bits, beta_bits, nspatial):
-    r"""Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
+    """Construct a Slater determinant from the occupation of alpha and beta spin-orbitals.
 
     Parameters
     ----------
@@ -487,7 +487,7 @@ def combine_spin(alpha_bits, beta_bits, nspatial):
 
 
 def split_spin(block_sd, nspatial):
-    r"""Split a Slater determinant into the alpha and beta parts.
+    """Split a Slater determinant into the alpha and beta parts.
 
     Parameters
     ----------
@@ -525,7 +525,7 @@ def split_spin(block_sd, nspatial):
 
 
 def interleave_index(i, nspatial):
-    r"""Convert orbital index in block-sd notation to that of interleaved-sd notation.
+    """Convert orbital index in block-sd notation to that of interleaved-sd notation.
 
     Parameters
     ----------
@@ -550,6 +550,7 @@ def interleave_index(i, nspatial):
         raise ValueError('Index must be greater than or equal to zero.')
     elif i >= 2*nspatial:
         raise ValueError('Index must be less than the number of spin orbitals.')
+
     if i < nspatial:
         return 2*i
     else:
@@ -557,7 +558,7 @@ def interleave_index(i, nspatial):
 
 
 def deinterleave_index(i, nspatial):
-    r"""Convert an orbital index in interleaved-sd notation to that of block-sd notation.
+    """Convert an orbital index in interleaved-sd notation to that of block-sd notation.
 
     Parameters
     ----------
@@ -582,6 +583,7 @@ def deinterleave_index(i, nspatial):
         raise ValueError('Index must be greater than or equal to zero.')
     elif i >= 2*nspatial:
         raise ValueError('Index must be less than the number of spin orbitals.')
+
     if i % 2 == 0:
         return i//2
     else:
@@ -589,7 +591,7 @@ def deinterleave_index(i, nspatial):
 
 
 def interleave(block_sd, nspatial):
-    r"""Convert block-sd to the interleaved-sd form.
+    """Convert block-sd to the interleaved-sd form.
 
     Block form: alpha1, alpha2, ..., beta1, beta2, ...
 
@@ -651,7 +653,7 @@ def interleave(block_sd, nspatial):
 
 
 def deinterleave(shuffled_sd, nspatial):
-    r"""Turn sd from shuffled form to the block form.
+    """Turn sd from shuffled form to the block form.
 
     Block form: alpha1, alpha2, ..., beta1, beta2, ...
 
@@ -714,7 +716,7 @@ def deinterleave(shuffled_sd, nspatial):
 
 
 def get_spin(sd, nspatial):
-    r"""Return the spin of the given Slater determinant.
+    """Return the spin of the given Slater determinant.
 
     Parameters
     ----------
@@ -739,7 +741,7 @@ def get_spin(sd, nspatial):
 
 
 def get_seniority(sd, nspatial):
-    r"""Return the seniority of the given Slater determinant.
+    """Return the seniority of the given Slater determinant.
 
     Parameters
     ----------
@@ -764,7 +766,7 @@ def get_seniority(sd, nspatial):
 
 
 def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
-    r"""Return the signature of the permutation that sorts a set of annihilators to increasing order.
+    """Return the signature of the permutation that sorts a set of annihilators to increasing order.
 
     Parameters
     ----------
@@ -812,7 +814,7 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
 
 
 def sign_swap(sd, pos_current, pos_future):
-    r"""Return the signature of moving a creation operator to a specific position.
+    """Return the signature of moving a creation operator to a specific position.
 
     Parameters
     ----------
@@ -838,9 +840,9 @@ def sign_swap(sd, pos_current, pos_future):
     """
     if sd is None:
         raise ValueError('Bad Slater determinant is given.')
-    if not (isinstance(pos_current, int) and 0 <= pos_current):
+    if not (isinstance(pos_current, int) and pos_current >= 0):
         raise ValueError('The current orbital position must be a positive integer.')
-    if not (isinstance(pos_future, int) and 0 <= pos_future):
+    if not (isinstance(pos_future, int) and pos_future >= 0):
         raise ValueError('The future orbital position must be a positive integer.')
     if not occ(sd, pos_current):
         raise ValueError('Given orbital is not occupied in the given Slater determinant.')

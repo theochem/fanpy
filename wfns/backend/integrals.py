@@ -291,7 +291,7 @@ class OneElectronIntegrals(BaseIntegrals):
             raise TypeError('Indices `jacobi_indices` must be have two elements.')
         elif not all(isinstance(i, int) for i in jacobi_indices):
             raise TypeError('Indices `jacobi_indices` must only contain integers.')
-        if not all(0 <= i for i in jacobi_indices):
+        if not all(i >= 0 for i in jacobi_indices):
             raise ValueError('Indices cannot be negative.')
         if jacobi_indices[0] == jacobi_indices[1]:
             raise ValueError('Two indices are the same.')
@@ -434,11 +434,11 @@ class TwoElectronIntegrals(BaseIntegrals):
         for matrix in self.integrals:
             if len(matrix.shape) != 4:
                 raise TypeError('Two-electron integral matrices must be four dimensional.')
-            elif not(matrix.shape[0] == matrix.shape[1] == matrix.shape[2] == matrix.shape[3]):
+            elif not matrix.shape[0] == matrix.shape[1] == matrix.shape[2] == matrix.shape[3]:
                 raise TypeError('Two-electron integral matrices must be square (for integration '
                                 'within one basis set).')
         if (len(self.integrals) == 3 and
-                not(self.integrals[0].shape == self.integrals[1].shape == self.integrals[2].shape)):
+                not self.integrals[0].shape == self.integrals[1].shape == self.integrals[2].shape):
             raise TypeError('Number of alpha and beta orbitals must be the same.')
 
         if notation not in ('physicist', 'chemist'):
@@ -584,7 +584,7 @@ class TwoElectronIntegrals(BaseIntegrals):
             raise TypeError('Indices `jacobi_indices` must be have two elements.')
         elif not all(isinstance(i, int) for i in jacobi_indices):
             raise TypeError('Indices `jacobi_indices` must only contain integers.')
-        if not all(0 <= i for i in jacobi_indices):
+        if not all(i >= 0 for i in jacobi_indices):
             raise ValueError('Indices cannot be negative.')
         if jacobi_indices[0] == jacobi_indices[1]:
             raise ValueError('Two indices are the same.')
