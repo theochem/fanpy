@@ -99,7 +99,7 @@ class TwoSidedEnergy(BaseSchrodinger):
     """
     def __init__(self, wfn, ham, tmpfile='', param_selection=None, pspace_l=None, pspace_r=None,
                  pspace_n=None):
-        """Initialize the objective instance.
+        r"""Initialize the objective instance.
 
         Parameters
         ----------
@@ -143,7 +143,7 @@ class TwoSidedEnergy(BaseSchrodinger):
         self.assign_pspaces(pspace_l, pspace_r, pspace_n)
 
     def assign_pspaces(self, pspace_l=None, pspace_r=None, pspace_n=None):
-        """Assign the projection space.
+        r"""Assign the projection space.
 
         Parameters
         ----------

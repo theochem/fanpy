@@ -247,7 +247,7 @@ class ParamMask(abc.ABC):
         if sel.dtype not in [int, bool]:
             raise TypeError('The provided selection must have dtype of bool or int.')
         if sel.dtype == int:
-            if not np.all(np.logical_and(0 <= sel, sel < nparams)):
+            if not np.all(np.logical_and(sel >= 0, sel < nparams)):
                 raise ValueError('The integer indices for selecting the parameters must be greater '
                                  'than or equal to 0 and less than the number of parameters.')
             bool_sel = np.zeros(nparams, dtype=bool)

@@ -247,8 +247,8 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                                 'wavefunction.')
 
             if (len(params) == 1 and
-                not ((i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial) or
-                     (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin))):
+                    not ((i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial) or
+                         (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin))):
                 raise ValueError('Given the type of transformation, the numpy matrix has the '
                                  'wrong shape. If only one numpy array is given, the '
                                  'orbitals are transformed either from orthonormal spatial '
@@ -297,6 +297,19 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp(sd):
+            """Calculate the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+
+            Returns
+            -------
+            olp : float
+                Overlap of the wavefunction with the Slater determinant.
+
+            """
             output = 0.0
             if self.orbtype == 'generalized':
                 row_inds = slater.occ_indices(sd)
@@ -337,6 +350,21 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp_deriv(sd, deriv):
+            """Calculate the derivative of the overlap with the Slater determinant.
+
+            Parameters
+            ----------
+            sd : gmpy2.mpz
+                Occupation vector of a Slater determinant given as a bitstring.
+            deriv : int
+                Index of the parameter with respect to which the overlap is derivatized.
+
+            Returns
+            -------
+            olp_deriv : float
+                Derivative of the overlap of the wavefunction with the Slater determinant.
+
+            """
             # lots of repetition b/c slight variations with different orbital types
             transform_ind = deriv // self.nparams[0]
             row_removed = ((deriv % self.nparams[0]) // self.param_shape[transform_ind][1])

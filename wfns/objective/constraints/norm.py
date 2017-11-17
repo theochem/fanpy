@@ -9,7 +9,7 @@ import wfns.backend.slater as slater
 
 
 class NormConstraint(BaseObjective):
-    """Normalization constraint on the wavefunction.
+    r"""Normalization constraint on the wavefunction.
 
     .. math::
 

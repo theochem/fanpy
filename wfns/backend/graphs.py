@@ -98,12 +98,12 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
     orig_sign = sign_perm([i for pair in zip(indices_one, indices_two) for i in pair],
                           ordered_set=ordered_set, is_decreasing=is_decreasing)
 
-    if len(indices_one) == 0 or len(indices_one) == 0:
+    if len(indices_one) == 0 or len(indices_two) == 0:
         yield tuple(), sign
     elif len(indices_one) != len(indices_two):
         yield tuple(), sign
     elif (len(set(indices_one).symmetric_difference(set(indices_two)))
-            < len(indices_one + indices_two)):
+          < len(indices_one + indices_two)):
         yield tuple(), sign
     else:
         # for new_indices in it.permutations(indices_two):

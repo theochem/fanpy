@@ -1,3 +1,4 @@
+"""Functions for obtaining the density matrices."""
 from wfns.backend import slater, sd_list
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
@@ -178,5 +179,3 @@ def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicis
     if orbtype not in ['restricted', 'unrestricted', 'generalized']:
         raise ValueError("The orbital type must be one of 'restricted', 'unrestricted', and "
                          "'generalized'.")
-
-    pass

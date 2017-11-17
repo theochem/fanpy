@@ -142,7 +142,7 @@ class BaseSchrodinger(BaseObjective):
             return self.wfn.get_overlap(sd, deriv)
 
     def wrapped_integrate_wfn_sd(self, sd, deriv=None):
-        """Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
+        r"""Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
 
         Parameters
         ----------
@@ -178,7 +178,7 @@ class BaseSchrodinger(BaseObjective):
             return 0.0
 
     def wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None):
-        """Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
+        r"""Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
 
         Parameters
         ----------
@@ -207,7 +207,7 @@ class BaseSchrodinger(BaseObjective):
             return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
 
     def get_energy_one_proj(self, refwfn, deriv=None):
-        """Return the energy of the Schrodinger equation with respect to a reference wavefunction.
+        r"""Return the energy of the Schrodinger equation with respect to a reference wavefunction.
 
         ..math::
 
@@ -315,7 +315,7 @@ class BaseSchrodinger(BaseObjective):
             return d_energy
 
     def get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None):
-        """Return the energy of the Schrodinger equation after projecting out both sides.
+        r"""Return the energy of the Schrodinger equation after projecting out both sides.
 
         ..math::
 

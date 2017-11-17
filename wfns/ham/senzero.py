@@ -128,6 +128,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         exchange = 0.0
 
         def update_integrals(sd_m):
+            """Wrapped function for updating the integral values."""
             return self._update_integrals(wfn, sd, sd_m, wfn_deriv, ham_deriv,
                                           one_electron, coulomb, exchange)
 
