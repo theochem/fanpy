@@ -12,8 +12,6 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 from itertools import combinations, product
 from wfns.backend import slater
 
-__all__ = ['sd_list']
-
 
 def satisfies_conditions(sd, nspatial, spin, seniority):
     r"""Check to see if Slater determinant has the desired spin and seniority.
