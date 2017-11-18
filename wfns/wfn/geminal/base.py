@@ -7,6 +7,9 @@ from wfns.backend import math_tools
 from wfns.wfn.base import BaseWavefunction
 
 
+# FIXME: define some function to get the column indices of the parameters from the orbital pairs
+#        so that it can be overwritten with something faster than dictionary lookup (the default can
+#        be dictionary lookup)
 class BaseGeminal(BaseWavefunction):
     r"""Base Geminal Wavefunction.
 
@@ -140,34 +143,6 @@ class BaseGeminal(BaseWavefunction):
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
         self.load_cache()
-
-    @property
-    def spin(self):
-        """Spin of geminal wavefunction.
-
-        In general, a geminal wavefunction does not have a particular spin.
-
-        Returns
-        -------
-        spin : None
-            Spin of the geminal geminal wavefunction.
-
-        """
-        return None
-
-    @property
-    def seniority(self):
-        """Seniority of geminal wavefunction.
-
-        In general, a geminal wavefunction does not have a particular seniority.
-
-        Returns
-        -------
-        seniority : None
-            Seniority of the geminal geminal wavefunction.
-
-        """
-        return None
 
     @property
     def npair(self):
