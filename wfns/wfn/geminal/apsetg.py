@@ -3,6 +3,7 @@ from wfns.backend import graphs
 from wfns.wfn.geminal.base import BaseGeminal
 
 
+# FIXME: do not use all orbital pairs in APsetG wavefunction (i.e. define assign_orbpairs)
 class APsetG(BaseGeminal):
     r"""Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction.
 
