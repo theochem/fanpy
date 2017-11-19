@@ -1,5 +1,6 @@
 linters:
 - import:
+    packages: ['wfns']
 - namespace:
     filefilter: ['- horton_*.py', '- pyscf_*.py']
 - whitespace:
