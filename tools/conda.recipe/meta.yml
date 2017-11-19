@@ -1,0 +1,29 @@
+package:
+  version: "{{ PROJECT_VERSION }}"
+  name: 'pyfanci'
+
+source:
+  path: ../../
+
+build:
+  number: 0
+  script: python setup.py install
+
+requirements:
+  build:
+    - python
+    - numpy
+    - scipy
+    - gmpy2
+    - setuptools
+    - nose
+  run:
+    - python
+    - numpy
+    - scipy
+    - gmpy2
+    - nose
+
+about:
+  home: https://github.com/quantumelephant/olsens
+  license: GNU Version 3

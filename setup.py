@@ -7,7 +7,7 @@ setup(
     version='0.0',
     description='Generalized wavefunction package.',
     url='',
-    license='MIT',
+    license='GNU3',
     author='Ayers Group',
     author_email='',
     package_dir={'wfns': 'wfns'},
