@@ -1,6 +1,6 @@
 package:
   version: "{{ PROJECT_VERSION }}"
-  name: 'pyfanci'
+  name: 'wfns'
 
 source:
   path: ../../
