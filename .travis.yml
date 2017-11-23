@@ -156,7 +156,7 @@ script:
 - nosetests ${PROJECT_NAME}
   -v --detailed-errors --with-coverage --cover-package=${PROJECT_NAME}
   --cover-tests --cover-inclusive --cover-branches -a '!slow'
-- coverage xml -i
+- coverage xml -i --omit=horton_*.py,pyscf_*.py
 # - conda uninstall ${CONDA_PKG_NAME_PY}
 
 # Make CPP and PY source package for github deployment
