@@ -6,6 +6,7 @@ linters:
 - whitespace:
     filefilter: ['- *.npy', '- *.fchk']
 - flake8:
+    config: '--max-line-length=100'
 - pylint:
     config: tools/pylintrc
     filefilter: ['- test_*.py', '+ *.py']
