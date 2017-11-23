@@ -1,5 +1,9 @@
 """Test wfns.wrapper.horton."""
 import numpy as np
+from nose.tools import assert_raises
+import os
+import sys
+from subprocess import call
 from wfns.tools import find_datafile
 from wfns.wrapper.python_wrapper import generate_hartreefock_results, generate_fci_results
 
@@ -65,9 +69,52 @@ def check_data_lih_rhf_sto6g(*data):
     assert np.all(np.array(two_int.shape) == one_int[0].shape[0])
 
 
+def check_dependency(dependency):
+    """Check if the dependency is available.
+
+    Parameters
+    ----------
+    dependency : {'horton', 'pyscf'}
+        Dependency for the functions `generate_hartreefock_results` and `generate_fci_results`
+
+    Returns
+    -------
+    is_avail : bool
+        If given dependency is available.
+
+    """
+    dependency = dependency.lower()
+    if dependency == 'horton':
+        try:
+            python_name = os.environ['HORTONPYTHON']
+        except KeyError:
+            python_name = sys.executable
+    elif dependency == 'pyscf':
+        try:
+            python_name = os.environ['PYSCFPYTHON']
+        except KeyError:
+            python_name = sys.executable
+    else:
+        pass
+
+    exit_code = call([python_name, '-c', "'import {0}'".format(dependency)])
+    return exit_code == 0
+
+
+def test_generate_hartreefock_results_error():
+    """Test python_wrapper.generate_hartreefock_results.
+
+    Check if it raises correct error.
+
+    """
+    assert_raises(ValueError, generate_hartreefock_results, 'sdf')
+
+
+@np.testing.dec.skipif(not check_dependency('horton'),
+                       'HORTON is not available or HORTONPATH is not set.')
 def test_horton_hartreefock_h2_rhf_sto6g():
     """Test HORTON's hartreefock against H2 HF STO-6G data from Gaussian."""
-    hf_data = generate_hartreefock_results('/usr/bin/python2', 'horton_hartreefock.py',
+    hf_data = generate_hartreefock_results('horton_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
@@ -76,9 +123,11 @@ def test_horton_hartreefock_h2_rhf_sto6g():
     check_data_h2_rhf_sto6g(*hf_data)
 
 
+@np.testing.dec.skipif(not check_dependency('horton'),
+                       'HORTON is not available or HORTONPATH is not set.')
 def test_horton_gaussian_fchk_h2_rhf_sto6g():
     """Test HORTON's gaussian_fchk against H2 HF STO-6G data from Gaussian."""
-    fchk_data = generate_hartreefock_results('/usr/bin/python2', 'horton_gaussian_fchk.py',
+    fchk_data = generate_hartreefock_results('horton_gaussian_fchk.py',
                                              energies_name='energies.npy',
                                              oneint_name='oneint.npy',
                                              twoint_name='twoint.npy',
@@ -88,9 +137,11 @@ def test_horton_gaussian_fchk_h2_rhf_sto6g():
     check_data_h2_rhf_sto6g(*fchk_data)
 
 
+@np.testing.dec.skipif(not check_dependency('horton'),
+                       'HORTON is not available or HORTONPATH is not set.')
 def test_gaussian_fchk_h2_uhf_sto6g():
     """Test HORTON's gaussian_fchk against H2 UHF STO-6G data from Gaussian"""
-    fchk_data = generate_hartreefock_results('/usr/bin/python2', 'horton_gaussian_fchk.py',
+    fchk_data = generate_hartreefock_results('horton_gaussian_fchk.py',
                                              energies_name='energies.npy',
                                              oneint_name='oneint.npy',
                                              twoint_name='twoint.npy',
@@ -100,9 +151,11 @@ def test_gaussian_fchk_h2_uhf_sto6g():
     check_data_h2_uhf_sto6g(*fchk_data)
 
 
+@np.testing.dec.skipif(not check_dependency('pyscf'),
+                       'PYSCF is not available or PYSCFPATH is not set.')
 def test_pyscf_hartreefock_h2_rhf_sto6g():
     """Test PySCF HF against H2 RHF STO-6G data from Gaussian"""
-    hf_data = generate_hartreefock_results('/usr/bin/python2', 'pyscf_hartreefock.py',
+    hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
@@ -111,10 +164,12 @@ def test_pyscf_hartreefock_h2_rhf_sto6g():
     check_data_h2_rhf_sto6g(*hf_data)
 
 
+@np.testing.dec.skipif(not check_dependency('pyscf'),
+                       'PYSCF is not available or PYSCFPATH is not set.')
 def test_pyscf_hartreefock_lih_rhf_sto6g():
     """Test PySCF HF against LiH RHF STO6G data from Gaussian."""
     # file location specified
-    hf_data = generate_hartreefock_results('/usr/bin/python2', 'pyscf_hartreefock.py',
+    hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
@@ -123,12 +178,14 @@ def test_pyscf_hartreefock_lih_rhf_sto6g():
     check_data_lih_rhf_sto6g(*hf_data)
 
 
+@np.testing.dec.skipif(not check_dependency('pyscf'),
+                       'PYSCF is not available or PYSCFPATH is not set.')
 def test_generate_fci_cimatrix_h2_631gd():
     """Test PySCF's FCI calculation against H2 FCI 6-31G* data from Gaussian.
     HF energy: -1.13126983927
     FCI energy: -1.1651487496
     """
-    hf_data = generate_hartreefock_results('/usr/bin/python2', 'pyscf_hartreefock.py',
+    hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
@@ -139,8 +196,7 @@ def test_generate_fci_cimatrix_h2_631gd():
     el_energy, nuc_nuc, one_int, two_int = hf_data
 
     # physicist notation
-    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
-                                             cimatrix_name='cimatrix.npy',
+    ci_matrix, pspace = generate_fci_results(cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
                                              h1e=one_int,
@@ -151,8 +207,7 @@ def test_generate_fci_cimatrix_h2_631gd():
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
     # chemist notation
-    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
-                                             cimatrix_name='cimatrix.npy',
+    ci_matrix, pspace = generate_fci_results(cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
                                              h1e=one_int,
@@ -163,13 +218,15 @@ def test_generate_fci_cimatrix_h2_631gd():
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
 
+@np.testing.dec.skipif(not check_dependency('pyscf'),
+                       'PYSCF is not available or PYSCFPATH is not set.')
 def test_generate_fci_cimatrix_lih_sto6g():
     """Test generate_fci_cimatrix with LiH STO-6G
 
     HF energy: -7.95197153880
     FCI energy: -7.9723355823
     """
-    hf_data = generate_hartreefock_results('/usr/bin/python2', 'pyscf_hartreefock.py',
+    hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
@@ -180,8 +237,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
     el_energy, nuc_nuc, one_int, two_int = hf_data
 
     # physicist notation
-    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
-                                             cimatrix_name='cimatrix.npy',
+    ci_matrix, pspace = generate_fci_results(cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
                                              h1e=one_int,
@@ -191,8 +247,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
     ground_energy = np.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
     assert abs(ground_energy - (-7.9723355823)) < 1e-7
     # chemist notation
-    ci_matrix, pspace = generate_fci_results('/usr/bin/python2',
-                                             cimatrix_name='cimatrix.npy',
+    ci_matrix, pspace = generate_fci_results(cimatrix_name='cimatrix.npy',
                                              sds_name='sds.npy',
                                              remove_npyfiles=True,
                                              h1e=one_int,

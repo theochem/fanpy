@@ -12,21 +12,19 @@ module can act as a temporary hack to access these modules.
 
 """
 import os
+import sys
 from subprocess import call
 import numpy as np
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
 
-def generate_hartreefock_results(python_name, calctype, energies_name='energies.npy',
-                                 oneint_name='oneint.npy', twoint_name='twoint.npy',
-                                 remove_npyfiles=False, **kwargs):
+def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_name='oneint.npy',
+                                 twoint_name='twoint.npy', remove_npyfiles=False, **kwargs):
     """Extract results from a Hartree Fock calculation.
 
     Parameters
     ----------
-    python_name : str
-        Name of the python to be used in the shell.
     calctype : {'horton_hartreefock.py', 'horton_gaussian_fchk.py', 'pyscf_hartreefock.py'}
         Name of the python script to be used.
     energies_name : {str, 'energies.npy}
@@ -63,7 +61,25 @@ def generate_hartreefock_results(python_name, calctype, energies_name='energies.
         If numpy array, then orbitals are restricted.
         If tuple of numpy arrays, then orbitals are unrestricted.
 
+    Raises
+    ------
+    ValueError
+        If calctype is not one of 'horton_hartreefock.py', 'horton_gaussian_fchk.py', or
+        'pyscf_hartreefock.py'.
+
     """
+    # get python interpreter
+    try:
+        if calctype in ['horton_hartreefock.py', 'horton_gaussian_fchk.py']:
+            python_name = os.environ['HORTONPYTHON']
+        elif calctype == 'pyscf_hartreefock.py':
+            python_name = os.environ['PYSCFPYTHON']
+        else:
+            raise ValueError("The calctype must be one of 'horton_hartreefock.py', "
+                             "'horton_gaussian_fchk.py', and 'pyscf_hartreefock.py'.")
+    except KeyError:
+        python_name = sys.executable
+
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
@@ -85,14 +101,12 @@ def generate_hartreefock_results(python_name, calctype, energies_name='energies.
     return el_energy, nuc_nuc_energy, oneint, twoint
 
 
-def generate_fci_results(python_name, cimatrix_name='cimatrix.npy', sds_name='sds.npy',
-                         remove_npyfiles=False, **kwargs):
+def generate_fci_results(cimatrix_name='cimatrix.npy', sds_name='sds.npy', remove_npyfiles=False,
+                         **kwargs):
     """Generate results of FCI calculation (from PySCF).
 
     Parameters
     ----------
-    python_name : str
-        Name of the python to be used in the shell.
     cimatrix_name : {str, 'cimatrix.npy}
         Name of the file to be generated that contains the ci matrix coefficients.
     sds_name : {str, 'sds.npy'}
@@ -116,6 +130,12 @@ def generate_fci_results(python_name, cimatrix_name='cimatrix.npy', sds_name='sd
         List of binary Slater determinant values.
 
     """
+    # get python interpreter
+    try:
+        python_name = os.environ['PYSCFPYTHON']
+    except KeyError:
+        python_name = sys.executable
+
     # convert integrals
     if isinstance(kwargs['h1e'], np.ndarray):
         np.save('temp_h1e.npy', kwargs['h1e'])
