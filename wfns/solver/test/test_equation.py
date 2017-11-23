@@ -42,6 +42,17 @@ class TestBaseWavefunction(BaseWavefunction):
         return 10*(np.random.rand(2) - 0.5)
 
 
+def check_cma():
+    """Check if cma module is available."""
+    try:
+        import cma
+    except ModuleNotFoundError:
+        return False
+    else:
+        return True
+
+
+@np.testing.dec.skipif(not check_cma(), 'The module `cma` is unavailable.')
 def test_cma():
     """Test wnfs.solver.equation.cma."""
     wfn = TestBaseWavefunction()
