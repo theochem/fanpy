@@ -83,8 +83,9 @@ def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    call([python_name, os.path.join(dirname, calctype), energies_name, oneint_name, twoint_name,
-          *kwargs])
+    # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
+    call([python_name, os.path.join(dirname, '..', '..', 'scripts', calctype),
+          energies_name, oneint_name, twoint_name, *kwargs])
     el_energy, nuc_nuc_energy = np.load(energies_name)
     oneint = np.load(oneint_name)
     if oneint.ndim == 3:
@@ -146,8 +147,9 @@ def generate_fci_results(cimatrix_name='cimatrix.npy', sds_name='sds.npy', remov
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    call([python_name, os.path.join(dirname, 'pyscf_generate_fci_matrix.py'), cimatrix_name,
-          sds_name, *kwargs])
+    # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
+    call([python_name, os.path.join(dirname, '..', '..', 'scripts', 'pyscf_generate_fci_matrix.py'),
+          cimatrix_name, sds_name, *kwargs])
 
     cimatrix = np.load(cimatrix_name)
     sds = np.load(sds_name).tolist()

@@ -84,18 +84,13 @@ def check_dependency(dependency):
 
     """
     dependency = dependency.lower()
-    if dependency == 'horton':
-        try:
+    try:
+        if dependency == 'horton':
             python_name = os.environ['HORTONPYTHON']
-        except KeyError:
-            python_name = sys.executable
-    elif dependency == 'pyscf':
-        try:
+        elif dependency == 'pyscf':
             python_name = os.environ['PYSCFPYTHON']
-        except KeyError:
-            python_name = sys.executable
-    else:
-        pass
+    except KeyError:
+        python_name = sys.executable
 
     exit_code = call([python_name, '-c', "'import {0}'".format(dependency)])
     return exit_code == 0
