@@ -107,7 +107,7 @@ install:
 - conda install -c conda conda-build
 - conda install -c theochem horton
 - conda install -c pyqc libxc
-- conda install -c pyscf pyscf
+- if [ "${TRAVIS_OS_NAME}" = "linux" ]; then conda install -c pyscf pyscf; fi;
 
 # install packages in python 3
 - source $HOME/miniconda3/bin/activate
