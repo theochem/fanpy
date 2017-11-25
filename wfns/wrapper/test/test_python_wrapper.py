@@ -92,7 +92,7 @@ def check_dependency(dependency):
     except KeyError:
         python_name = sys.executable
 
-    exit_code = call([python_name, '-c', "'import {0}'".format(dependency)])
+    exit_code = call([python_name, '-c', "import {0}".format(dependency)])
     return exit_code == 0
 
 
