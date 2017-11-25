@@ -155,6 +155,8 @@ def generate_fci_results(cimatrix_name='cimatrix.npy', sds_name='sds.npy', remov
     sds = np.load(sds_name).tolist()
 
     if remove_npyfiles:
+        os.remove('temp_h1e.npy')
+        os.remove('temp_eri.npy')
         os.remove(cimatrix_name)
         os.remove(sds_name)
 
