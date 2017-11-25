@@ -66,6 +66,7 @@ class RankTwoApprox:
         Requires calculation. May be slow.
 
         """
+        # FIXME: this super causes problems (probably uses the wrong class)
         template = super().template_params
         template += 0.0001*np.random.rand(*template.shape)
         # FIXME: fails a lot
