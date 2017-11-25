@@ -61,14 +61,14 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     else:
         raise ValueError('Unsupported electron number, {0}'.format(nelec))
     # integrals
-    h1e = np.ascontiguousarray(h1e)
-    eri = np.ascontiguousarray(eri)
+    h1e = np.asarray(h1e, order='C')
+    eri = np.asarray(eri, order='C')
     # Construct some sort of lookup table to link different bit string occupations
     # to one another. i.e. From one bit string, and several indices that describes
     # certain excitation, we can get the other bit string
     # NOTE: PySCF treats alpha and the beta bits separately
-    occslista = np.asarray(cistring.gen_strings4orblist(range(norb), neleca))
-    occslistb = np.asarray(cistring.gen_strings4orblist(range(norb), nelecb))
+    occslista = np.asarray(cistring._gen_occslst(range(norb), neleca))
+    occslistb = np.asarray(cistring._gen_occslst(range(norb), nelecb))
     # number of Slater determinants
     na = len(occslista)  # number of "alpha" Slater determinants
     nb = len(occslistb)  # number of "beta" Slater determinants
@@ -94,7 +94,6 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
                              ctypes.c_int(neleca), ctypes.c_int(nelecb),
                              occslista.ctypes.data_as(ctypes.c_void_p),
                              occslistb.ctypes.data_as(ctypes.c_void_p))
-    hdiag = np.asarray(hdiag)
 
     # adapted/copied from pyscf.fci.direct_spin1.pspace
     # PySCF has a fancy indicing of Slater determinants (bitstrings to consecutive integers)
@@ -102,8 +101,8 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # again, separate the alpha and the beta parts
     addra, addrb = divmod(addr, nb)
     # bit strings for the alpha and beta parts
-    stra = np.array([cistring.addr2str(norb, neleca, ia) for ia in addra], dtype=np.uint64)
-    strb = np.array([cistring.addr2str(norb, nelecb, ib) for ib in addrb], dtype=np.uint64)
+    stra = cistring.addrs2str(norb, neleca, addra)
+    strb = cistring.addrs2str(norb, nelecb, addrb)
     # number of slater determinants
     ci_matrix = np.zeros((num_sd, num_sd))
     # More Fucking Magic

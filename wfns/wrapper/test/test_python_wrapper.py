@@ -175,17 +175,19 @@ def test_pyscf_hartreefock_lih_rhf_sto6g():
 
 @np.testing.dec.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
-def test_generate_fci_cimatrix_h2_631gd():
-    """Test PySCF's FCI calculation against H2 FCI 6-31G* data from Gaussian.
+def test_generate_fci_cimatrix_h2_631gdp():
+    """Test PySCF's FCI calculation against H2 FCI 6-31G** data from Gaussian.
+
     HF energy: -1.13126983927
     FCI energy: -1.1651487496
+
     """
     hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           xyz_file=find_datafile('test/h2.xyz'), basis="6-31gs")
+                                           xyz_file=find_datafile('test/h2.xyz'), basis="6-31gss")
 
     nelec = 2
     el_energy, nuc_nuc, one_int, two_int = hf_data
@@ -199,6 +201,7 @@ def test_generate_fci_cimatrix_h2_631gd():
                                              nelec=nelec,
                                              is_chemist_notation=False)
     ground_energy = np.linalg.eigh(ci_matrix)[0][0] + nuc_nuc
+    print(ground_energy, -1.1651486697)
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
     # chemist notation
@@ -216,10 +219,11 @@ def test_generate_fci_cimatrix_h2_631gd():
 @np.testing.dec.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
 def test_generate_fci_cimatrix_lih_sto6g():
-    """Test generate_fci_cimatrix with LiH STO-6G
+    """Test python_wrapper.generate_fci_cimatrix with LiH STO-6G.
 
     HF energy: -7.95197153880
-    FCI energy: -7.9723355823
+    FCI energy: -7.9723355823.
+
     """
     hf_data = generate_hartreefock_results('pyscf_hartreefock.py',
                                            energies_name='energies.npy',
