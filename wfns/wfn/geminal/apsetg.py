@@ -3,7 +3,6 @@ from wfns.backend import graphs
 from wfns.wfn.geminal.base import BaseGeminal
 
 
-# FIXME: do not use all orbital pairs in APsetG wavefunction (i.e. define assign_orbpairs)
 class APsetG(BaseGeminal):
     r"""Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction.
 
@@ -82,6 +81,95 @@ class APsetG(BaseGeminal):
         Yield the possible orbital pairs that can construct the given Slater determinant.
 
     """
+    def assign_orbpairs(self, orbpairs=None):
+        """Assign all possible orbital pairs for the basic APsetG wavefunction.
+
+        It is not possible to configure the orbital pair ordering.
+
+        Parameters
+        ----------
+        orbpairs : None
+            Indices of the orbital pairs that will be used to construct each geminal.
+            Default is all possible orbital pairs.
+
+        Raises
+        ------
+        TypeError
+            If `orbpairs` is not an iterable.
+            If an orbital pair is not given as a list or a tuple.
+            If an orbital pair does not contain exactly two elements.
+            If an orbital index is not an integer.
+        ValueError
+            If an orbital pair has the same integer.
+            If an orbital pair occurs more than once.
+            If orbital pairs are given.
+
+        Notes
+        -----
+        Must have `nspin` defined for the default option.
+
+        """
+        if orbpairs is not None:
+            raise ValueError('Cannot specify the orbital pairs for the APsetG wavefunction. Only '
+                             'the default configuration will be used.')
+        orbpairs = [(i, j) for i in range(self.nspatial) for j in range(self.nspatial, self.nspin)]
+        self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
+        self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
+
+    def get_col_ind(self, orbpair):
+        """Get the column index that corresponds to the given orbital pair.
+
+        Parameters
+        ----------
+        orbpair : 2-tuple of int
+            Indices of the orbital pairs that will be used to construct each geminal.
+            Default is all possible orbital pairs.
+
+        Returns
+        -------
+        col_ind : int
+            Column index that corresponds to the given orbital pair.
+
+        Raises
+        ------
+        ValueError
+            If given orbital pair is not valid.
+
+        """
+        i, j = orbpair
+        # ASSUMES: specific structure for alpha and beta orbitals (first alpha then beta)
+        if not 0 <= i < self.nspatial <= j < self.nspin:
+            raise ValueError('Given orbital pair, {0}, is not included in the '
+                             'wavefunction.'.format(orbpair))
+        return int(self.nspatial * i + j - self.nspatial)
+
+    def get_orbpair(self, col_ind):
+        """Get the orbital pair that corresponds to the given column index.
+
+        Parameters
+        ----------
+        col_ind : int
+            Column index that corresponds to the given orbital pair.
+
+        Returns
+        -------
+        orbpair : 2-tuple of int
+            Indices of the orbital pairs that will be used to construct each geminal.
+            Default is all possible orbital pairs.
+
+        Raises
+        ------
+        ValueError
+            If given orbital pair is not valid.
+
+        """
+        if not 0 <= col_ind < self.nspatial**2:
+            raise ValueError('Given column index, {0}, is not used in the '
+                             'wavefunction'.format(col_ind))
+        i = int(col_ind // self.nspatial)
+        j = int(col_ind - i * self.nspatial + self.nspatial)
+        return (i, j)
+
     def generate_possible_orbpairs(self, occ_indices):
         """Yield the possible orbital pairs that can construct the given Slater determinant.
 
