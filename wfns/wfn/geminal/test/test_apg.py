@@ -1,4 +1,5 @@
 """Test wfns.wavefunction.geminals.apg."""
+from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 import types
 import numpy as np
@@ -16,6 +17,52 @@ class TestAPG(APG):
     """APG that skips initialization."""
     def __init__(self):
         pass
+
+
+def test_apg_assign_orbpairs():
+    """Test APG.assign_orbpairs."""
+    test = TestAPG()
+    test.nspin = 10
+    assert_raises(ValueError, test.assign_orbpairs, (0, 1))
+    assert_raises(ValueError, test.assign_orbpairs, [(0, 1)])
+    test.assign_orbpairs(None)
+    dict_orbpair_ind = {}
+    dict_ind_orbpair = {}
+    counter = 0
+    for i in range(10):
+        for j in range(i+1, 10):
+            dict_orbpair_ind[(i, j)] = counter
+            dict_ind_orbpair[counter] = (i, j)
+            counter += 1
+
+
+def test_apg_get_col_ind():
+    """Test APG.get_col_ind."""
+    test = TestAPG()
+    test.nspin = 10
+
+    orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
+
+    for i, orbpair in enumerate(orbpairs):
+        assert test.get_col_ind(orbpair) == i
+
+    assert_raises(ValueError, test.get_col_ind, (0, 10))
+    assert_raises(ValueError, test.get_col_ind, (0, 0))
+    assert_raises(ValueError, test.get_col_ind, (9, 10))
+
+
+def test_apg_get_orbpair():
+    """Test APG.get_orbpair."""
+    test = TestAPG()
+    test.nspin = 10
+
+    orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
+
+    for i, orbpair in enumerate(orbpairs):
+        assert test.get_orbpair(i) == orbpair
+
+    assert_raises(ValueError, test.get_orbpair, -1)
+    assert_raises(ValueError, test.get_orbpair, len(orbpairs))
 
 
 def test_assign_pmatch_generator():
