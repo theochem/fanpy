@@ -1,7 +1,8 @@
 r"""Hamiltonian used to describe a chemical system."""
 from functools import reduce
 import operator
-from wfns.backend import slater
+import numpy as np
+from wfns.backend import slater, math_tools
 from wfns.ham.base import BaseHamiltonian
 
 
@@ -71,6 +72,89 @@ class ChemicalHamiltonian(BaseHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    def __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None):
+        """Initialize the Hamiltonian.
+
+        Parameters
+        ----------
+        one_int : {np.ndarray(K, K), 1- or 2-tuple np.ndarray(K, K)}
+            One-electron integrals.
+            If orbitals are spatial or generalized, then integrals are given as np.ndarray or
+            1-tuple of np.ndarray.
+            If orbitals are unretricted, then integrals are 2-tuple of np.ndarray.
+        two_int : {np.ndarray(K, K, K, K), 1- or 3-tuple np.ndarray(K, K, K, K)}
+            If orbitals are spatial or generalized, then integrals are given as np.ndarray or
+            1-tuple of np.ndarray.
+            If orbitals are unretricted, then integrals are 3-tuple of np.ndarray.
+        orbtype : {'restricted', 'unrestricted', 'generalized', None}
+            Type of the orbitals used.
+            Default is `'restricted'`.
+        energy_nuc_nuc : {float, None}
+            Nuclear nuclear repulsion energy.
+            Default is `0.0`.
+
+        """
+        super().__init__(one_int, two_int, orbtype=orbtype, energy_nuc_nuc=energy_nuc_nuc)
+        # attributes used in the orbital rotation (will be overwritten by only assign_params)
+        self.params = None
+        self._old_transform = None
+
+    @property
+    def nspatial(self):
+        """Return the number of spatial orbitals.
+
+        Returns
+        -------
+        nspatial : int
+            Number of spatial orbitals.
+
+        Raises
+        ------
+        ValueError
+            If orbital type is not restricted or unrestricted.
+
+        """
+        if self.orbtype in ('restricted', 'unrestricted'):
+            return self.one_int.num_orbs
+        else:
+            raise ValueError('Spatial orbital does not exist when the orbital type is {0}'
+                             ''.format(self.orbtype))
+
+    def assign_params(self, params):
+        """Transform the integrals with a unitary matrix that corresponds to the given parameters.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Significant elements of the anti-Hermitian matrix. Integrals will be transformed with
+            the Unitary matrix that corresponds to the anti-Hermitian matrix.
+
+        Raises
+        ------
+        TypeError
+            If orbital type is not restricted.
+        ValueError
+            If parameters do not contain the correct number of elements.
+
+        """
+        if self.orbtype != 'restricted':
+            raise TypeError('Orbital rotation is only available with restricted orbitals.')
+        if not(isinstance(params, np.ndarray) and params.ndim == 1
+               and params.size == self.nspatial * (self.nspatial - 1) / 2):
+            raise ValueError('Parameters for orbital rotation must be a one-dimension numpy array '
+                             'with K*(K-1)/2 elements, where K is the number of spatial orbitals.')
+        # assign parameters (for reference)
+        self.params = params
+        # rotate integrals back to original form
+        if self._old_transform is not None:
+            self.orb_rotate_matrix(self._old_transform.T)
+        # convert antihermitian part to unitary matrix.
+        unitary = math_tools.unitary_matrix(params)
+        # apply new transformation
+        self.orb_rotate_matrix(unitary)
+        # save new transformation (so next transformation applies on the original integrals)
+        self._old_transform = unitary
+
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
                           exchange):
         r"""Update integrals for the given Slater determinant.
