@@ -3,7 +3,7 @@ from wfns.backend import graphs
 from wfns.wfn.geminal.base import BaseGeminal
 
 
-class APsetG(BaseGeminal):
+class BasicAPsetG(BaseGeminal):
     r"""Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction.
 
     .. math::
@@ -12,6 +12,9 @@ class APsetG(BaseGeminal):
 
     where :math:`S_A` and :math:`S_B` are two sets of orbitals that are mutually exclusive (no
     shared orbitals) and exhaustive (form the complete basis set as a whole).
+
+    For simplicity, :math:`S_A` will be assumed to be a set of alpha orbitals, and :math:`S_B` will
+    be assumed to be a set of beta orbitals.
 
     Attributes
     ----------
