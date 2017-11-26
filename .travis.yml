@@ -145,9 +145,9 @@ install:
 - pip install --upgrade git+https://github.com/kimt33/cardboardlint.git@master#egg=cardboardlint
 
 script:
-# Static linting
-# --------------
-- cardboardlinter --refspec $TRAVIS_BRANCH -f static
+# Linting
+# -------
+- cardboardlinter --refspec $TRAVIS_BRANCH
 
 # Unit tests and dynamic linting
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
