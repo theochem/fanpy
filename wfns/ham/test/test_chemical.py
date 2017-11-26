@@ -1,6 +1,7 @@
 """Test wfns.ham.chemical."""
 import numpy as np
 from nose.plugins.attrib import attr
+from nose.tools import assert_raises
 from wfns.ham.chemical import ChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.tools import find_datafile
@@ -18,6 +19,55 @@ class TestWavefunction(object):
         elif sd == 0b1100:
             return 3
         return 0
+
+
+def test_init():
+    """Test ChemicalHamiltonian.__init__"""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert test.params is None
+    assert test._old_transform is None
+
+
+def test_nspatial():
+    """Test ChemicalHamiltonian.nspatial."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert test.nspatial == 2
+    test = ChemicalHamiltonian(one_int, two_int, 'generalized')
+    assert_raises(ValueError, lambda: test.nspatial)
+
+
+def test_assign_params():
+    """Test ChemicalHamiltonian.assign_params."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+
+    test = ChemicalHamiltonian(one_int, two_int, 'generalized')
+    assert_raises(TypeError, test.assign_params, np.array([0]))
+
+    test = ChemicalHamiltonian(one_int, two_int, 'restricted')
+    assert_raises(ValueError, test.assign_params, [0])
+    assert_raises(ValueError, test.assign_params, np.array(0))
+    assert_raises(ValueError, test.assign_params, np.array([0, 0]))
+    test.assign_params(np.array([0]))
+    assert np.allclose(test.params, np.zeros(1))
+    assert np.allclose(test._old_transform, np.identity(2))
+    test.assign_params(np.array([10]))
+    assert np.allclose(test.params, 10)
+    assert np.allclose(test._old_transform, np.array([[-0.83907153, -0.54402111],
+                                                      [0.54402111, -0.83907153]]))
+    test.assign_params(np.array([5]))
+    assert np.allclose(test.params, 5)
+    assert np.allclose(test._old_transform, np.array([[0.28366219, -0.95892427],
+                                                      [0.95892427, 0.28366219]]))
+    # make sure that transformation is independent of the transformations taht came before it
+    test.assign_params(np.array([10]))
+    assert np.allclose(test.params, 10)
+    assert np.allclose(test._old_transform, np.array([[-0.83907153, -0.54402111],
+                                                      [0.54402111, -0.83907153]]))
 
 
 def test_integrate_wfn_sd():
