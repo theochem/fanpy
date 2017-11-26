@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.backend.math_tools import (binomial, adjugate, permanent_combinatoric, permanent_ryser,
-                                     permanent_borchardt)
+                                     permanent_borchardt, unitary_matrix)
 
 
 def test_binomial():
@@ -147,3 +147,35 @@ def test_permanent_borchardt_rect():
     perm_rys = permanent_ryser(gem_coeffs)
     assert np.allclose(perm_comb, perm_borch)
     assert np.allclose(perm_rys, perm_borch)
+
+
+def test_unitary_matrix():
+    """Test math_tools.unitary_matrix."""
+    assert_raises(TypeError, unitary_matrix, [1, 2, 3])
+    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [3]]))
+    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [0, 3]]))
+    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [-2, 3]]))
+    assert_raises(ValueError, unitary_matrix, np.array([1, 2, 3, 4]))
+    assert_raises(ValueError, unitary_matrix, np.array([1, 2, 3, 4, 5]))
+
+    assert np.allclose(unitary_matrix(np.zeros(1)), np.identity(2))
+    assert np.allclose(unitary_matrix(np.zeros(3)), np.identity(3))
+    assert np.allclose(unitary_matrix(np.zeros(6)), np.identity(4))
+
+    antiherm_elements = np.random.rand(1)
+    matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
+    assert np.allclose(matrix.dot(matrix.T), np.identity(2))
+    assert np.allclose(matrix.T.dot(matrix), np.identity(2))
+
+    antiherm_elements = np.random.rand(6)
+    matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
+    assert np.allclose(matrix.dot(matrix.T), np.identity(4))
+    assert np.allclose(matrix.T.dot(matrix), np.identity(4))
+
+    antiherm_elements = np.random.rand(6) * 10
+    matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
+    assert np.allclose(matrix.dot(matrix.T), np.identity(4))
+    assert np.allclose(matrix.T.dot(matrix), np.identity(4))
+
+    antiherm_elements = np.random.rand(6) * 14
+    assert_raises(ValueError, unitary_matrix, antiherm_elements)
