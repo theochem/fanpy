@@ -176,6 +176,16 @@ def test_gem_assign_params():
                                        [0, 0, 0, 4, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0]]))
 
 
+def test_gem_get_col_ind():
+    """Test BaseGeminal.get_col_ind."""
+    test = TestBaseGeminal()
+    test.dict_orbpair_ind = {(0, 1): 0, (1, 5): 6}
+    assert test.get_col_ind((0, 1)) == 0
+    assert test.get_col_ind((1, 5)) == 6
+    assert_raises(ValueError, test.get_col_ind, [0, 1])
+    assert_raises(ValueError, test.get_col_ind, (0, 2))
+
+
 def test_gem_compute_permanent():
     """Test BaseGeminal.compute_permanent."""
     test = TestBaseGeminal()
