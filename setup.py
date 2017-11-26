@@ -1,11 +1,11 @@
 """Setup script for installing the package."""
-from setuptools import setup
-from codecs import open
+import codecs
 from os import path
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with codecs.open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='wfns',
