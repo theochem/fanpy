@@ -2,18 +2,18 @@ linters:
 - import:
     packages: ['wfns']
 - namespace:
-    filefilter: ['- horton_*.py', '- pyscf_*.py']
+    filefilter: ['- scripts/*.py']
 - whitespace:
     filefilter: ['- *.npy', '- *.fchk']
 - flake8:
-    filefilter: ['- test_*.py', '+ *.py']
+    filefilter: ['- test_*.py', '- scripts/*.py', '+ *.py']
     config: tools/flake8
 - flake8:
     filefilter: ['+ test_*.py']
     config: tools/flake8_tests
 - pylint:
     config: tools/pylintrc
-    filefilter: ['- test_*.py', '+ *.py']
+    filefilter: ['- test_*.py', '- scripts/*.py', '+ *.py']
 - pylint:
     config: tools/pylintrc_tests
-    filefilter: ['+ test_*.py']
+    filefilter: ['+ test_*.py', ]
