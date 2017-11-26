@@ -86,6 +86,10 @@ class APIG(BaseGeminal):
         Assign the orbital pairs that will be used to construct the geminals.
     assign_params(self, params=None, add_noise=False)
         Assign the parameters of the geminal wavefunction.
+    get_col_ind(self, orbpair)
+        Get the column index that corresponds to the given orbital pair.
+    get_orbpair(self, col_ind)
+        Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
     load_cache(self)
