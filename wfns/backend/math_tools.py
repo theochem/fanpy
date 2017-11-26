@@ -289,3 +289,67 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
     perm_etas = np.prod(etas)
 
     return perm_cauchy * perm_etas
+
+
+def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
+    r"""Convert the components of the antihermitian matrix to a unitary matrix.
+
+    ..math::
+
+        U &= \exp(X)\\
+          &= \sum_{n=0}^\infty \frac{1}{n!} X^n
+          &= I + X + \frac{1}{2}X^2 + \frac{1}{3!}X^3 + \frac{1}{4!}X^4 + \frac{1}{5!}X^5 + \dots
+
+    Parameters
+    ----------
+    antiherm_elements : np.ndarray(K*(K-1)/2,)
+        The upper triangle matrix of the antihermitian matrix.
+        The matrix has been flattened as a one dimensional matrix.
+        If the matrix has the dimension K by K, then the `antihermitian` must have
+        :math:`\frac{K(K-1)}{2}` elements.
+    threshold : float
+        Threshold for the Frobenius norm of the terms in the series. Terms with norm smaller than
+        this threshold will be omitted.
+
+    Returns
+    -------
+    unitary_matrix : np.ndarray(K, K)
+        Unitary matrix.
+
+    Raises
+    ------
+    TypeError
+        If the `antiherm_elements` is not a one-dimensional numpy array of integers, floats, or
+        complex numbers.
+        If the number of elements in `antihermitian` does not match the number of elements in the
+        upper triangular component of a square matrix.
+
+    """
+    if not (isinstance(antiherm_elements, np.ndarray) and
+            antiherm_elements.dtype in [int, float, complex] and antiherm_elements.ndim == 1):
+        raise TypeError('Antihermitian elements must be given as a one-dimensional numpy array of '
+                        'integers, floats, or complex numbers.')
+
+    dim = (1 + np.sqrt(1 + 8 * antiherm_elements.size)) / 2
+    if not dim.is_integer():
+        raise ValueError('Number of elements is not compatible with the upper triangular part of '
+                         'any square matrix.')
+    dim = int(dim)
+
+    antiherm = np.zeros((dim, dim))
+    antiherm[np.triu_indices(dim, k=1)] = antiherm_elements
+    antiherm -= np.triu(antiherm).T
+
+    unitary = np.identity(dim)
+    n = 1
+    cache = antiherm
+    norm = np.linalg.norm(cache, ord='fro')
+    while norm > norm_threshold and n < num_threshold:
+        unitary += cache
+        n += 1
+        cache = cache.dot(antiherm) / n
+        norm = np.linalg.norm(cache, ord='fro')
+        if norm > 1e6:
+            raise ValueError('The norm of the matrix got too big (greater than 1e6).')
+
+    return unitary
