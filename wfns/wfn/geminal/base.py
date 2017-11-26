@@ -99,6 +99,8 @@ class BaseGeminal(BaseWavefunction):
         Assign the orbital pairs that will be used to construct the geminals.
     assign_params(self, params=None, add_noise=False)
         Assign the parameters of the geminal wavefunction.
+    get_col_ind(self, orbpair)
+        Get the column index that corresponds to the given orbital pair.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
     load_cache(self)
@@ -187,7 +189,7 @@ class BaseGeminal(BaseWavefunction):
         params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
         for i in range(self.ngem):
             try:
-                col_ind = self.dict_orbpair_ind[(i, i+self.nspatial)]
+                col_ind = self.get_col_ind((i, i+self.nspatial))
             except KeyError as error:
                 raise ValueError('Given orbital pairs do not contain the default orbitals pairs '
                                  'used in the template. Please give a different set of orbital '
@@ -337,13 +339,39 @@ class BaseGeminal(BaseWavefunction):
                                  'same.')
             params = np.zeros(self.params_shape, dtype=self.dtype)
             for ind, orbpair in other.dict_ind_orbpair.items():
-                if orbpair in self.dict_orbpair_ind:
-                    params[:, self.dict_orbpair_ind[orbpair]] = other.params[:, ind]
-                else:
+                try:
+                    params[:, self.get_col_ind(orbpair)] = other.params[:, ind]
+                except ValueError:
                     print('The orbital pair of the given wavefunction, {0}, is not possible in the '
                           'current wavefunction. Parameters corresponding to this orbital pair will'
                           ' be ignored.')
         super().assign_params(params=params, add_noise=add_noise)
+
+    def get_col_ind(self, orbpair):
+        """Get the column index that corresponds to the given orbital pair.
+
+        Parameters
+        ----------
+        orbpair : 2-tuple of int
+            Indices of the orbital pairs that will be used to construct each geminal.
+            Default is all possible orbital pairs.
+
+        Returns
+        -------
+        col_ind : int
+            Column index that corresponds to the given orbital pair.
+
+        Raises
+        ------
+        ValueError
+            If given orbital pair is not valid.
+
+        """
+        try:
+            return self.dict_orbpair_ind[orbpair]
+        except (KeyError, TypeError):
+            raise ValueError('Given orbital pair, {0}, is not included in the '
+                             'wavefunction.'.format(orbpair))
 
     def compute_permanent(self, col_inds, row_inds=None, deriv=None):
         """Compute the permanent of the matrix that corresponds to the given orbital pairs.
@@ -448,7 +476,7 @@ class BaseGeminal(BaseWavefunction):
                 if len(orbpairs) == 0:
                     continue
 
-                col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs])
                 val += sign * self.compute_permanent(col_inds)
             return val
 
@@ -477,7 +505,7 @@ class BaseGeminal(BaseWavefunction):
                 # ASSUMES: permanent evaluation is much more expensive than the lookup
                 if len(orbpairs) == 0:
                     continue
-                col_inds = np.array([self.dict_orbpair_ind[orbp] for orbp in orbpairs])
+                col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs])
                 val += sign * self.compute_permanent(col_inds, deriv=deriv)
             return val
 
