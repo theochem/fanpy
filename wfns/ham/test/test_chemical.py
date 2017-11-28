@@ -27,7 +27,8 @@ def test_init():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test = ChemicalHamiltonian(one_int, two_int, 'restricted')
     assert test.params is None
-    assert test._old_transform is None
+    assert np.allclose(test._old_integrals[0], one_int)
+    assert np.allclose(test._old_integrals[1], two_int)
 
 
 def test_nspatial():
@@ -52,22 +53,27 @@ def test_assign_params():
     assert_raises(ValueError, test.assign_params, [0])
     assert_raises(ValueError, test.assign_params, np.array(0))
     assert_raises(ValueError, test.assign_params, np.array([0, 0]))
+
     test.assign_params(np.array([0]))
     assert np.allclose(test.params, np.zeros(1))
-    assert np.allclose(test._old_transform, np.identity(2))
+    assert np.allclose(test._old_integrals[0], one_int)
+    assert np.allclose(test._old_integrals[1], two_int)
+
     test.assign_params(np.array([10]))
     assert np.allclose(test.params, 10)
-    assert np.allclose(test._old_transform, np.array([[-0.83907153, -0.54402111],
-                                                      [0.54402111, -0.83907153]]))
+    assert np.allclose(test._old_integrals[0], one_int)
+    assert np.allclose(test._old_integrals[1], two_int)
+
     test.assign_params(np.array([5]))
     assert np.allclose(test.params, 5)
-    assert np.allclose(test._old_transform, np.array([[0.28366219, -0.95892427],
-                                                      [0.95892427, 0.28366219]]))
+    assert np.allclose(test._old_integrals[0], one_int)
+    assert np.allclose(test._old_integrals[1], two_int)
+
     # make sure that transformation is independent of the transformations taht came before it
     test.assign_params(np.array([10]))
     assert np.allclose(test.params, 10)
-    assert np.allclose(test._old_transform, np.array([[-0.83907153, -0.54402111],
-                                                      [0.54402111, -0.83907153]]))
+    assert np.allclose(test._old_integrals[0], one_int)
+    assert np.allclose(test._old_integrals[1], two_int)
 
 
 def test_integrate_wfn_sd():

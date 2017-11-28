@@ -74,7 +74,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
-    def __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None):
+    def __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None, params=None):
         """Initialize the Hamiltonian.
 
         Parameters
@@ -98,8 +98,12 @@ class ChemicalHamiltonian(BaseHamiltonian):
         """
         super().__init__(one_int, two_int, orbtype=orbtype, energy_nuc_nuc=energy_nuc_nuc)
         # attributes used in the orbital rotation (will be overwritten by only assign_params)
-        self.params = None
-        self._old_transform = None
+        self._old_integrals = (tuple(np.copy(i) for i in self.one_int.integrals),
+                               tuple(np.copy(i) for i in self.two_int.integrals))
+        if params is None:
+            self.params = None
+        else:
+            self.assign_params(params)
 
     @property
     def nspatial(self):
@@ -141,21 +145,20 @@ class ChemicalHamiltonian(BaseHamiltonian):
         """
         if self.orbtype != 'restricted':
             raise TypeError('Orbital rotation is only available with restricted orbitals.')
-        if not(isinstance(params, np.ndarray) and params.ndim == 1
-               and params.size == self.nspatial * (self.nspatial - 1) / 2):
+        num_params = self.nspatial * (self.nspatial - 1) / 2
+        if not(isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
             raise ValueError('Parameters for orbital rotation must be a one-dimension numpy array '
-                             'with K*(K-1)/2 elements, where K is the number of spatial orbitals.')
+                             'with {0}=K*(K-1)/2 elements, where K is the number of spatial '
+                             'orbitals.'.format(num_params))
         # assign parameters (for reference)
         self.params = params
-        # rotate integrals back to original form
-        if self._old_transform is not None:
-            self.orb_rotate_matrix(self._old_transform.T)
+        # revert integrals back to original
+        self.assign_integrals(tuple(np.copy(i) for i in self._old_integrals[0]),
+                              tuple(np.copy(i) for i in self._old_integrals[1]))
         # convert antihermitian part to unitary matrix.
         unitary = math_tools.unitary_matrix(params)
         # apply new transformation
         self.orb_rotate_matrix(unitary)
-        # save new transformation (so next transformation applies on the original integrals)
-        self._old_transform = unitary
 
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
                           exchange):
