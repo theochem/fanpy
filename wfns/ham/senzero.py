@@ -30,7 +30,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     Attributes
     ----------
     params : np.ndarray
-        Parameters of the Hamitonian.
+        Significant elements of the anti-Hermitian matrix.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used.
     energy_nuc_nuc : float
@@ -52,6 +52,8 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         Number of parameters.
     nspin : int
         Number of spin orbitals.
+    nspatial : int
+        Number of spatial orbitals.
     dtype : {'restricted', 'unrestricted', 'generalized'}
         Number of spin orbitals.
 
@@ -68,7 +70,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
     assign_params(self, params)
-        Assign parameters of the Hamiltonian.
+        Transform the integrals with a unitary matrix that corresponds to the given parameters.
     orb_rotate_jacobi(self, jacobi_indices, theta)
         Rotate orbitals using Jacobi matrix.
     orb_rotate_matrix(self, matrix)
