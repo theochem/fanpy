@@ -30,7 +30,7 @@ sphinx_gallery_conf = {
     # path where to save the generated examples
     'gallery_dirs': 'auto_examples',
     # path to the default thumb pics
-    'default_thumb_file': './_static/wfns_white_bg_logo.png',
+    # 'default_thumb_file': './_static/wfns_white_bg_logo.png',
     # set the plot file pattern
     'filename_pattern': '/(plot_.*|.*_plot.py$)',
 }
@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'wfns'
-copyright = u'2016, Ayers\' Group @ McMaster University'
+copyright = u'2017, Ayers\' Group @ McMaster University'
 author = u'Ayers\' Group @ McMaster University'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -56,7 +56,7 @@ author = u'Ayers\' Group @ McMaster University'
 # built documents.
 #
 # The short X.Y version.
-version = u'0.9.0'
+version = u'0.0.0'
 # The full version, including alpha/beta/rc tags.
 release = u'0.0'
 
@@ -129,7 +129,7 @@ html_show_sourcelink = False
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/wfns_logo.png'
+# html_logo = '_static/wfns_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
