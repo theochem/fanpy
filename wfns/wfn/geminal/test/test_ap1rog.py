@@ -243,7 +243,7 @@ def test_ap1rog_h2_631gdp():
 
     Answers obtained from answer_ap1rog_h2_631gdp
 
-    HF (Electronic) Energy : -1.838434256
+    HF (Electronic) Energy : -1.84444667247
     AP1roG Energy : -1.8696828608304892
     AP1roG Coeffs : [-0.05949796, -0.05454253, -0.03709503, -0.02899231, -0.02899231, -0.01317386,
                      -0.00852702, -0.00852702, -0.00517996]
