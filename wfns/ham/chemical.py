@@ -101,7 +101,11 @@ class ChemicalHamiltonian(BaseHamiltonian):
         self._old_integrals = (tuple(np.copy(i) for i in self.one_int.integrals),
                                tuple(np.copy(i) for i in self.two_int.integrals))
         if params is None:
-            self.params = None
+            # FIXME: remove restricted/unrestricted/generalized mess
+            if self.orbtype in ('restricted', 'unrestricted'):
+                self.params = np.zeros(self.nspatial * (self.nspatial - 1) // 2)
+            else:
+                self.params = None
         else:
             self.assign_params(params)
 
@@ -120,6 +124,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
             If orbital type is not restricted or unrestricted.
 
         """
+        # FIXME: remove restricted/unrestricted/generalized mess
         if self.orbtype in ('restricted', 'unrestricted'):
             return self.one_int.num_orbs
         else:

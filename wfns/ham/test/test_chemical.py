@@ -26,7 +26,7 @@ def test_init():
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test = ChemicalHamiltonian(one_int, two_int, 'restricted')
-    assert test.params is None
+    assert np.allclose(test.params, np.zeros(6))
     assert np.allclose(test._old_integrals[0], one_int)
     assert np.allclose(test._old_integrals[1], two_int)
 
