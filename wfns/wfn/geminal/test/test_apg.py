@@ -201,7 +201,7 @@ def answer_apg_lih_sto6g():
 def test_apg_lih_sto6g():
     """Test APG wavefunction using H2 with LiH/STO-6G orbital.
 
-    Answers obtained from answer_apg_h2_631gdp
+    Answers obtained from answer_apg_lih_sto6g
 
     HF (Electronic) Energy : -8.9472891719
     APG Energy :
