@@ -21,7 +21,7 @@ class LeastSquaresEquations(SystemEquations):
 
     .. math::
 
-        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
+        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -140,7 +140,7 @@ class LeastSquaresEquations(SystemEquations):
 
         .. math::
 
-            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
+            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
 
         Parameters
         ----------
