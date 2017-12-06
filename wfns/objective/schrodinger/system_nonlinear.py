@@ -23,7 +23,7 @@ class SystemEquations(BaseSchrodinger):
 
     .. math::
 
-        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
+        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -354,7 +354,7 @@ class SystemEquations(BaseSchrodinger):
 
         .. math::
 
-            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}{\braket{\Phi_{ref} | \Psi}}
+            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
 
         In general, :math:`\Phi_i` can be some linear combination of Slater determinants,
         :math:`SD_j`.
@@ -414,7 +414,7 @@ class SystemEquations(BaseSchrodinger):
     def jacobian(self, params):
         r"""Return the Jacobian of the objective function.
 
-        If :math:`\(f_1(\vec{x}), f_2(\vec{x}), \dots\)` is the objective function, the Jacobian is
+        If :math:`(f_1(\vec{x}), f_2(\vec{x}), \dots)` is the objective function, the Jacobian is
 
         .. math::
 

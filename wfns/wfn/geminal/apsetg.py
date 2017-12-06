@@ -179,7 +179,7 @@ class BasicAPsetG(BaseGeminal):
         Generates all possible orbital pairing schemes where one orbital is selected from one set
         and the other orbital is selected from the other. This is equivalent to finding all the
         perfect matchings (pairing schemes) within a bipartite graph with the given two sets
-        (:math:`S_A` and :mat:`S_B`) of vertices (occupied orbitals).
+        (:math:`S_A` and :math:`S_B`) of vertices (occupied orbitals).
 
         Parameters
         ----------

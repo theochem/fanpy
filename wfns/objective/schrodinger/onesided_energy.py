@@ -18,7 +18,7 @@ class OneSidedEnergy(BaseSchrodinger):
 
     .. math::
 
-        E &= \frac{\braket{\Phi | \hat{H} | \Psi}}{\braket{\Phi | \Psi}}\\
+        E = \frac{\braket{\Phi | \hat{H} | \Psi}}{\braket{\Phi | \Psi}}
 
     where :math:`\Phi` is some reference wavefunction that can be a CI wavefunction
 

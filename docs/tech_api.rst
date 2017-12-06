@@ -9,43 +9,65 @@ API Documentation
 Hamiltonians
 ============
 
-* :class:`Chemical Hamiltonian <hamiltonian.chemical_hamiltonian.ChemicalHamiltonian>`
-* :class:`Seniority Zero Hamiltonian <hamiltonian.sen0_hamiltonian.SeniorityZeroHamiltonian>`
+* :class:`Base Hamiltonian <ham.base.BaseHamiltonian>`
+* :class:`Chemical Hamiltonian <ham.chemical.ChemicalHamiltonian>`
+* :class:`Seniority Zero Hamiltonian <ham.senzero.SeniorityZeroHamiltonian>`
+
+Objectives
+==========
+
+* :class:`Base Objective <objective.base.BaseObjective>`
+* Constraints
+    * :class:`Normalization Constraint <objective.constraints.norm.NormConstraint>`
+* Schrodinger Equation
+    * :class:`Base Schrodinger Equation <objective.schrodinger.base.BaseSchrodinger>`
+    * :class:`System of Equations <objective.schrodinger.system_nonlinear.SystemEquations>`
+    * :class:`Least Squared Sum of Equations <objective.schrodinger.least_squares.LeastSquaresEquations>`
+    * :class:`One Sided Energy <objective.schrodinger.onesided_energy.OneSidedEnergy>`
+    * :class:`Two Sided Energy <objective.schrodinger.twosided_energy.TwoSidedEnergy>`
 
 Solvers
 =======
 
-* :func:`CI Solver <solver.ci_solver.eigen_solve>`
-* :func:`System of Nonlinear Equations Solver <solver.system_solver.optimize_wfn_system>`
-* :func:`Projected Variational Solver <solver.equation_solver.optimize_wfn_variational>`
-* :func:`Orbital Rotated Wavefunction Solver <solver.orb_solver.optimize_wfn_orbitals_jacobi>`
-* :func:`Orbital Rotated Hamiltonian Solver <solver.orb_solver.optimize_ham_orbitals_jacobi>`
+* :func:`Brute CI Solver <solver.ci.brute>`
+* Single Equation Solver
+    * :func:`CMA-ES Solver <solver.equation.cma>`
+    * :func:`scipy.optimize.minimize Solver <solver.equation.minimize>`
+* System of Equations Solver
+    * :func:`Least Squares Solver <solver.system.least_squares>`
+    * :func:`Root Solver <solver.system.root>`
+* Wrapper for External Solver
+    * :func:`Scipy Solver Wrapper <solver.wrapper.wrap_scipy>`
+    * :func:`skopt Solver Wrapper <solver.wrapper.wrap_skopt>`
 
 Wavefunctions
 =============
 
-* :class:`Base Wavefunction <wavefunction.base_wavefunction.BaseWavefunction>`
+* :class:`Base Wavefunction <wfn.base.BaseWavefunction>`
 * CI Wavefunction
 
-  * :class:`Base CI Wavefunction <wavefunction.ci.ci_wavefunction.CIWavefunction>`
-  * :class:`FCI Wavefunction <wavefunction.ci.fci.FCI>`
-  * :class:`DOCI Wavefunction <wavefunction.ci.doci.DOCI>`
-  * :class:`CISD Wavefunction <wavefunction.ci.cisd.CISD>`
-  * :class:`CI-Pair Wavefunction <wavefunction.ci.ci_pairs.CIPairs>`
+  * :class:`Base CI Wavefunction <wfn.ci.base.CIWavefunction>`
+  * :class:`FCI Wavefunction <wfn.ci.fci.FCI>`
+  * :class:`DOCI Wavefunction <wfn.ci.doci.DOCI>`
+  * :class:`CISD Wavefunction <wfn.ci.cisd.CISD>`
+  * :class:`CI-Pair Wavefunction <wfn.ci.ci_pairs.CIPairs>`
 
 * Geminal Wavefunction
 
-  * :class:`Base Geminal Wavefunction <wavefunction.geminals.base_geminal.BaseGeminal>`
-  * :class:`APG Wavefunction <wavefunction.geminals.apg.APG>`
-  * :class:`APsetG Wavefunction <wavefunction.geminals.apsetg.APsetG>`
-  * :class:`APIG Wavefunction <wavefunction.geminals.apig.APIG>`
-  * :class:`AP1roG Wavefunction <wavefunction.geminals.ap1rog.AP1roG>`
-  * :class:`APr2g Wavefunction <wavefunction.geminals.apr2g.APr2G>`
+  * :class:`Base Geminal Wavefunction <wfn.geminals.base.BaseGeminal>`
+  * :class:`APG Wavefunction <wfn.geminals.apg.APG>`
+  * :class:`APsetG Wavefunction <wfn.geminals.apsetg.BasicAPsetG>`
+  * :class:`APIG Wavefunction <wfn.geminals.apig.APIG>`
+  * :class:`AP1roG Wavefunction <wfn.geminals.ap1rog.AP1roG>`
+  * :class:`APr2g Wavefunction <wfn.geminals.apr2g.APr2G>`
 
-* Orbital Rotated Wavefunction
+* Composite Wavefunction
 
-  * :class:`Nonorthonormal Orbital Wavefunction <wavefunction.nonorth.nonorth_wavefunction.NonorthWavefunction>`
-  * :class:`Jacobi Rotated Orbital Wavefunction <wavefunction.nonorth.jacobi.JacobiWavefunction>`
+  * Composite of One Wavefunction
+      * :class:`Base Composite of One Wavefunction <wfn.composite.base_one.BaseCompositeOneWavefunction>`
+      * :class:`Wavefunction with Nonorthogonal Orbitals <wfn.composite.nonorth.NonorthWavefunction>`
+      * :class:`Wavefunction with Jacobi Rotated Orbitals <wfn.composite.jacobi.JacobiWavefunction>`
+  * :class:`Linear Combination of Wavefunctions <wfn.composite.lincomb.LinearCombinationWavefunction>`
 
 Backend
 =======
@@ -101,29 +123,42 @@ Backend
     .. autosummary::
       :toctree: modules/generated
 
-      hamiltonian.chemical_hamiltonian.ChemicalHamiltonian
-      hamiltonian.sen0_hamiltonian.SeniorityZeroHamiltonian
+      ham.base.BaseHamiltonian
+      ham.chemical.ChemicalHamiltonian
+      ham.senzero.SeniorityZeroHamiltonian
 
-      solver.ci_solver.eigen_solve
-      solver.system_solver.optimize_wfn_system
-      solver.equation_solver.optimize_wfn_variational
-      solver.orb_solver.optimize_wfn_orbitals_jacobi
-      solver.orb_solver.optimize_ham_orbitals_jacobi
+      solver.ci.brute
+      solver.equation.cma
+      solver.equation.minimize
+      solver.system.least_squares
+      solver.system.root
+      solver.wrappers.wrap_scipy
+      solver.wrappers.wrap_skopt
 
-      wavefunction.base_wavefunction.BaseWavefunction
-      wavefunction.ci.ci_wavefunction.CIWavefunction
-      wavefunction.ci.fci.FCI
-      wavefunction.ci.doci.DOCI
-      wavefunction.ci.cisd.CISD
-      wavefunction.ci.ci_pairs.CIPairs
-      wavefunction.geminals.base_geminal.BaseGeminal
-      wavefunction.geminals.apg.APG
-      wavefunction.geminals.apsetg.APsetG
-      wavefunction.geminals.apig.APIG
-      wavefunction.geminals.ap1rog.AP1roG
-      wavefunction.geminals.apr2g.APr2G
-      wavefunction.nonorth.nonorth_wavefunction.NonorthWavefunction
-      wavefunction.nonorth.jacobi.JacobiWavefunction
+      objective.base.BaseObjective
+      objective.constraints.norm.NormConstraint
+      objective.schrodinger.base.BaseSchrodinger
+      objective.schrodinger.system_nonlinear.SystemEquations
+      objective.schrodinger.least_squares.LeastSquaresEquations
+      objective.schrodinger.onesided_energy.OneSidedEnergy
+      objective.schrodinger.twosided_energy.TwoSidedEnergy
+
+      wfn.base.BaseWavefunction
+      wfn.ci.base.CIWavefunction
+      wfn.ci.fci.FCI
+      wfn.ci.doci.DOCI
+      wfn.ci.cisd.CISD
+      wfn.ci.ci_pairs.CIPairs
+      wfn.geminal.base.BaseGeminal
+      wfn.geminal.apg.APG
+      wfn.geminal.apsetg.BasicAPsetG
+      wfn.geminal.apig.APIG
+      wfn.geminal.ap1rog.AP1roG
+      wfn.geminal.apr2g.APr2G
+      wfn.composite.base_one.BaseCompositeOneWavefunction
+      wfn.composite.nonorth.NonorthWavefunction
+      wfn.composite.jacobi.JacobiWavefunction
+      wfn.composite.lincomb.LinearCombinationWavefunction
 
       backend.integrals.BaseIntegrals
       backend.integrals.OneElectronIntegrals
@@ -134,21 +169,23 @@ Backend
       backend.math_tools.permanent_combinatoric
       backend.math_tools.permanent_ryser
       backend.math_tools.permanent_borchardt
+      backend.math_tools.unitary_matrix
 
+      backend.slater.is_internal_sd
+      backend.slater.is_sd_compatible
+      backend.slater.internal_sd
       backend.slater.occ
+      backend.slater.occ_indices
+      backend.slater.vir_indices
+      backend.slater.total_occ
       backend.slater.is_alpha
       backend.slater.spatial_index
-      backend.slater.total_occ
       backend.slater.annihilate
       backend.slater.create
       backend.slater.excite
       backend.slater.ground
-      backend.slater.is_internal_sd
-      backend.slater.internal_sd
-      backend.slater.occ_indices
-      backend.slater.vir_indices
-      backend.slater.shared
-      backend.slater.diff
+      backend.slater.shared_orbs
+      backend.slater.diff_orbs
       backend.slater.combine_spin
       backend.slater.split_spin
       backend.slater.interleave_index
@@ -157,8 +194,9 @@ Backend
       backend.slater.deinterleave
       backend.slater.get_spin
       backend.slater.get_seniority
-      backend.slater.find_num_trans
-      backend.slater.find_num_trans
+      backend.slater.sign_perm
+      backend.slater.sign_swap
+
       backend.sd_list.sd_list
 
       backend.graphs.generate_complete_pmatch
