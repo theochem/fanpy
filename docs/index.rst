@@ -68,6 +68,7 @@ the electronic structure problem. (FIXME) To do so, we make the following design
   :maxdepth: 2
 
   installation
+  overview
   hamiltonian
   wavefunction
   objective
