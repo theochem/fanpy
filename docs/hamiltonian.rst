@@ -60,12 +60,12 @@ the sum truncates at the second order:
          \bra{\phi_k \phi_l}\\
     &= \sum_{ij} a^\dagger_i \bra{} a_i \hat{H} a^\dagger_j \ket{} a_j
        + \sum_{i<j} \sum_{k<l} a^\dagger_i a^\dagger_j
-       \bra{} a_j a_i \hat{H} a^\dagger_k \phi_l \ket{} a_l a_k\\
+       \bra{} a_j a_i \hat{H} a^\dagger_k a^\dagger_l \ket{} a_l a_k\\
     &= \sum_{ij} h_{ij} a^\dagger_i a_j
        + \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
 
 where :math:`h_{ij} = \bra{} a_i \hat{H} a^\dagger_j \ket{}` and
-:math:`g_{ijkl} = \bra{} a_j a_i \hat{H} a^\dagger_k \phi_l \ket{}`.
+:math:`g_{ijkl} = \bra{} a_j a_i \hat{H} a^\dagger_k a^\dagger_l \ket{}`.
 
 Therefore, all Hamiltonians can be expressed within the one-electron basis set in a similar manner
 and we can construct a framework from which all possible Hamiltonian can be built. All Hamiltonians
