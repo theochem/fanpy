@@ -19,7 +19,7 @@ Objectives
 * :class:`Base Objective <objective.base.BaseObjective>`
 * Constraints
     * :class:`Normalization Constraint <objective.constraints.norm.NormConstraint>`
-* Schrodinger Equation
+* Schrödinger Equation
     * :class:`Base Schrodinger Equation <objective.schrodinger.base.BaseSchrodinger>`
     * :class:`System of Equations <objective.schrodinger.system_nonlinear.SystemEquations>`
     * :class:`Least Squared Sum of Equations <objective.schrodinger.least_squares.LeastSquaresEquations>`

@@ -70,7 +70,7 @@ where :math:`h_{ij} = \bra{} a_i \hat{H} a^\dagger_j \ket{}` and
 Therefore, all Hamiltonians can be expressed within the one-electron basis set in a similar manner
 and we can construct a framework from which all possible Hamiltonian can be built. All Hamiltonians
 only need to contain the integrals and the method by which these integrals are applied to the
-wavefunction. In the FANCI module, the objectives represent the Schrodinger equation with
+wavefunction. In the FANCI module, the objectives represent the Schrödinger equation with
 :math:`\bra{\Phi} \hat{H} \ket{\Psi}` and :math:`\bra{\Phi} \hat{H} \ket{\Phi}`, where
 :math:`\Phi` is a Slater determinant and :math:`\Psi` is the wavefunction. This framework is
 established in the abstract base class, :ref:`BaseHamiltonian <wfns.ham.base.BaseHamiltonian>`.

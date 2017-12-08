@@ -36,7 +36,7 @@ Optional Dependencies
 =====================
 
 The FANCI module supports different solvers from modules `cma` (CMA-ES solver) and `skopt`
-(FIXME). These modules can be used to help solve the Schrodinger equation when the solvers from
+(FIXME). These modules can be used to help solve the Schrödinger equation when the solvers from
 `scipy` have difficulty converging.
 
 * cma >= 2.3.1:

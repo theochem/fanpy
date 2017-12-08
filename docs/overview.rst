@@ -4,7 +4,7 @@ Overview
 .. module:: wfns
 
 We seek to find the wavefunction, :math:`\Psi`, and the energy, :math:`E`, that satisfies the
-Schr\:{o}dinger equation,
+Schrödinger equation,
 
 .. math::
 
@@ -19,7 +19,7 @@ Then, the Hamiltonian, which operates on the wavefunction, can also be expressed
 Slater determinants. We represent Slater determinants and transformations between them using Second
 Quantization. All operations involving Slater determinants are handled by the module `slater`.
 
-Within a finite one-electron basis set and the Second Quantization framework, the Schr\:{o}dinger
+Within a finite one-electron basis set and the Second Quantization framework, the Schrödinger
 equation can be decomposed into four components:
 
   * :ref:`Hamiltonian <hamiltonian>`
@@ -33,7 +33,7 @@ equation can be decomposed into four components:
   * :ref:`Objective <objective>`
 
     * The objective is a function whose optimization corresponds to (approximately) solving the
-      Schrodinger equation.
+      Schrödinger equation.
 
   * :ref:`Solver <solver>`
 
