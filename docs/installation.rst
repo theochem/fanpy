@@ -62,6 +62,15 @@ virtual environment to isolate the two versions of Python.
      conda install -n integrals -c pyscf pyscf
      source activate integrals
 
+The Python interpreters for both HORTON and PySCF must be specified in the environment variables
+`HORTONPYTHON` and `PYSCFPYTHON`, respectively. To find the location of the Python interpreter,
+either use `which python` in the terminal or `import sys; print(sys.executable)`
+
+  .. code-block:: bash
+
+     export HORTONPYTHON=/abspath/to/hortonpython
+     export PYSCFPYTHON=/abspath/to/pyscfpython
+
 Documentation Building
 ======================
 * sphinx
