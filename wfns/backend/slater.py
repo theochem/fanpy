@@ -1,20 +1,23 @@
 """Collection of functions used to construct and manipulate Slater determinants.
 
-Slater determinants are represented with a bitstring that describes their occupation. The `0` would
- correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. For
-example, `0b00110011` will have the occupied orbitals with indices 0, 1, 4, and 5.
+Slater determinants are represented with bitstrings that describe their occupation. The `0` would
+correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. To ensure
+that the lower order excitations are smaller in value, the orbital indices are counted from the
+right to the left. For example, `0b00110011` will have the occupied orbitals with indices 0, 1, 4,
+and 5.
 
 For most of the time, the orbitals are spin orbitals, and their spin is designated by splitting the
-orbitals into two blocks. If there are :math:`K` spatial orbitals, then the first :math:`K` spin
-orbitals are the alpha orbitals, and the second :math:`K` spin orbitals are the beta orbitals. The
-spin orbitals can be equivalently described with alternating alpha and beta spin orbitals, but in
-the current module, the Slater determinant will be assumed to be organized in the "block" format.
+orbitals into two blocks. If there are :math:`K` spatial orbitals, then the first block of :math:`K`
+spin orbitals are the alpha orbitals, and the second block of :math:`K` spin orbitals are the beta
+orbitals. The spin orbitals can be equivalently described with alternating alpha and beta spin
+orbitals, but in the current module, the Slater determinant will be assumed to be organized in the
+"block" format.
 
 Though Python integers (in the binary format) can be used as a representation of the occupation
 vector, the `gmpy2.mpz` object is used by default. The `gmpy2` is a module that efficiently handles
 the bitwise operation of arbitrary length bitstrings. Note that all of these methods can work with
 both integers and `gmpy2.mpz` objects. However, the two objects, e.g. `2` and `gmpy2.mpz(2)` are
-different objects and may cause conflict when storing and finding them from a list/dictionary/set.
+different objects and will cause conflict when storing and finding them from a list/dictionary/set.
 
 All references/changes to a Slater determinant should be made using this module, such that if we
 decide to change the format of the Slater determinant, only this module needs to be changed.
