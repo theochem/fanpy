@@ -1,5 +1,7 @@
 :orphan:
 
+.. _{{fullname}}:
+
 {{ fullname }}
 {{ underline }}
 

@@ -1,6 +1,8 @@
 :orphan:
 :noindex:
 
+.. _{{fullname}}:
+
 {{ fullname }}
 {{ underline }}
 
