@@ -4,9 +4,10 @@ Wavefunction
 ============
 The wavefunction is the approximation to the eigenfunction of the Hamiltonian. Just like the
 Hamiltonian, the wavefunction is often written with respect to the one-electron basis set. Some
-build wavefunctions from the vaccuum using creation operators and while build from a reference state
-using excitation operators. Regardless of the form of the wavefunction, all wavefunction can be
-re-expressed as a linear combination of Slater determinants using the resolution of identity:
+build wavefunctions from the vaccuum using creation operators and while others build from a
+reference state using excitation operators. Regardless of the form of the wavefunction, all
+wavefunction can be re-expressed as a linear combination of Slater determinants using the resolution
+of identity:
 
 .. math::
 
