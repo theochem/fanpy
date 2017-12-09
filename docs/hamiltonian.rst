@@ -49,8 +49,8 @@ of the basis set using a projection operator:
 
 Fortunately, most Hamiltonians only contain terms with a small number of bodies (i.e. electrons)
 resulting in truncation in the summation. For example, a
-:ref:`molecular Hamiltonian <wfns.ham.chemical.ChemicalHamiltonian>` only contains up to bodies, so
-the sum truncates at the second order:
+:class:`ChemicalHamiltonian <wfns.ham.chemical.ChemicalHamiltonian>` only contains up to bodies,
+so the sum truncates at the second order:
 
 .. math::
 
@@ -73,4 +73,4 @@ only need to contain the integrals and the method by which these integrals are a
 wavefunction. In the FANCI module, the objectives represent the Schrödinger equation with
 :math:`\bra{\Phi} \hat{H} \ket{\Psi}` and :math:`\bra{\Phi} \hat{H} \ket{\Phi}`, where
 :math:`\Phi` is a Slater determinant and :math:`\Psi` is the wavefunction. This framework is
-established in the abstract base class, :ref:`BaseHamiltonian <wfns.ham.base.BaseHamiltonian>`.
+established in the abstract base class, :class:`BaseHamiltonian <wfns.ham.base.BaseHamiltonian>`.
