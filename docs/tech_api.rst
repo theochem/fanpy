@@ -13,33 +13,6 @@ Hamiltonians
 * :class:`Chemical Hamiltonian <ham.chemical.ChemicalHamiltonian>`
 * :class:`Seniority Zero Hamiltonian <ham.senzero.SeniorityZeroHamiltonian>`
 
-Objectives
-==========
-
-* :class:`Base Objective <objective.base.BaseObjective>`
-* Constraints
-    * :class:`Normalization Constraint <objective.constraints.norm.NormConstraint>`
-* Schrödinger Equation
-    * :class:`Base Schrodinger Equation <objective.schrodinger.base.BaseSchrodinger>`
-    * :class:`System of Equations <objective.schrodinger.system_nonlinear.SystemEquations>`
-    * :class:`Least Squared Sum of Equations <objective.schrodinger.least_squares.LeastSquaresEquations>`
-    * :class:`One Sided Energy <objective.schrodinger.onesided_energy.OneSidedEnergy>`
-    * :class:`Two Sided Energy <objective.schrodinger.twosided_energy.TwoSidedEnergy>`
-
-Solvers
-=======
-
-* :func:`Brute CI Solver <solver.ci.brute>`
-* Single Equation Solver
-    * :func:`CMA-ES Solver <solver.equation.cma>`
-    * :func:`scipy.optimize.minimize Solver <solver.equation.minimize>`
-* System of Equations Solver
-    * :func:`Least Squares Solver <solver.system.least_squares>`
-    * :func:`Root Solver <solver.system.root>`
-* Wrapper for External Solver
-    * :func:`Scipy Solver Wrapper <solver.wrapper.wrap_scipy>`
-    * :func:`skopt Solver Wrapper <solver.wrapper.wrap_skopt>`
-
 Wavefunctions
 =============
 
@@ -68,6 +41,33 @@ Wavefunctions
       * :class:`Wavefunction with Nonorthogonal Orbitals <wfn.composite.nonorth.NonorthWavefunction>`
       * :class:`Wavefunction with Jacobi Rotated Orbitals <wfn.composite.jacobi.JacobiWavefunction>`
   * :class:`Linear Combination of Wavefunctions <wfn.composite.lincomb.LinearCombinationWavefunction>`
+
+Objectives
+==========
+
+* :class:`Base Objective <objective.base.BaseObjective>`
+* Constraints
+    * :class:`Normalization Constraint <objective.constraints.norm.NormConstraint>`
+* Schrödinger Equation
+    * :class:`Base Schrodinger Equation <objective.schrodinger.base.BaseSchrodinger>`
+    * :class:`System of Equations <objective.schrodinger.system_nonlinear.SystemEquations>`
+    * :class:`Least Squared Sum of Equations <objective.schrodinger.least_squares.LeastSquaresEquations>`
+    * :class:`One Sided Energy <objective.schrodinger.onesided_energy.OneSidedEnergy>`
+    * :class:`Two Sided Energy <objective.schrodinger.twosided_energy.TwoSidedEnergy>`
+
+Solvers
+=======
+
+* :func:`Brute CI Solver <solver.ci.brute>`
+* Single Equation Solver
+    * :func:`CMA-ES Solver <solver.equation.cma>`
+    * :func:`scipy.optimize.minimize Solver <solver.equation.minimize>`
+* System of Equations Solver
+    * :func:`Least Squares Solver <solver.system.least_squares>`
+    * :func:`Root Solver <solver.system.root>`
+* Wrapper for External Solver
+    * :func:`Scipy Solver Wrapper <solver.wrapper.wrap_scipy>`
+    * :func:`skopt Solver Wrapper <solver.wrapper.wrap_skopt>`
 
 Backend
 =======
