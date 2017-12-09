@@ -39,7 +39,7 @@ number of terms in the integration can be limited by (1) integrating the Schröd
 some reference wavefunction or (2) using subsets of the Slater determinants to project out less
 important components of the wavefunction.
 
-.. integrateref_
+.. _integrateref:
 Integrating With A Reference Wavefunction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When integrating the Schrödinger equation, we can use a reference wavefunction, :math:`\Phi`,
@@ -172,7 +172,7 @@ removed with a projection operator. In the FANCI module, the projection space ca
 
 * Slater determinants
 * CI wavefunctions, which is equivalent to linearly combining the equations that correspond to the
-Slater determinants in the CI wavefunction:
+  Slater determinants in the CI wavefunction:
 
 .. math::
 
@@ -195,7 +195,7 @@ be
 * a variable - it will be optimizied like all the other parameters in the Schrödinger equation.
 
 * computed by integrating the Schrödinger equation with respect to a reference wavefunction - see
-:ref:`Integrating With A Reference Wavefunction <_integrateref>` for details.
+  :ref:`Integrating With A Reference Wavefunction <integrateref>` for details.
 
 Constraints
 ~~~~~~~~~~~

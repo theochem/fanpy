@@ -1,8 +1,6 @@
 Overview
 ========
 
-.. module:: wfns
-
 We seek to find the wavefunction, :math:`\Psi`, and the energy, :math:`E`, that satisfies the
 Schrödinger equation,
 

@@ -44,7 +44,7 @@ of the basis set using a projection operator:
        + \dots\\
     &= \sum_{n=1}^\infty \sum_{i_1 < i_2 < \dots < i_n} \sum_{j_1 < j_2 < \dots < j_n}
        \ket{\phi_{i_1} \dots \phi_{i_n}}
-       \bra{\phi_{ \phi_{i_1} \dots \phi_{i_n}}} \hat{H} \ket{\phi_{j_1} \dots \phi_{j_n}}
+       \bra{\phi_{i_1} \dots \phi_{i_n}} \hat{H} \ket{\phi_{j_1} \dots \phi_{j_n}}
        \bra{\phi_{j_1} \dots \phi_{j_n}}
 
 Fortunately, most Hamiltonians only contain terms with a small number of bodies (i.e. electrons)
