@@ -140,6 +140,7 @@ Backend
       wfns.solver.equation.minimize
       wfns.solver.system.least_squares
       wfns.solver.system.root
+      wfns.solver.wrappers
       wfns.solver.wrappers.wrap_scipy
       wfns.solver.wrappers.wrap_skopt
 
