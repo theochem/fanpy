@@ -93,7 +93,7 @@ Backend
   * :func:`Permanent Using Ryser Algorithm <wfns.backend.math_tools.permanent_ryser>`
   * :func:`Permanent Using Borchardt Theorem <wfns.backend.math_tools.permanent_borchardt>`
 
-* :mod:`Slater Determinant <wfns.wfns.backend.slater>`
+* :mod:`Slater Determinant <wfns.backend.slater>`
 
   * :func:`Check if occupied <wfns.backend.slater.occ>`
   * :func:`Check if alpha <wfns.backend.slater.is_alpha>`
@@ -107,8 +107,8 @@ Backend
   * :func:`Convert to internal Slater determinant <wfns.backend.slater.internal_sd>`
   * :func:`Get occupied orbital indices <wfns.backend.slater.occ_indices>`
   * :func:`Get virtual orbital indices <wfns.backend.slater.vir_indices>`
-  * :func:`Get orbitals shared between Slater determinants <wfns.backend.slater.shared>`
-  * :func:`Get orbitals different between Slater determinants <wfns.backend.slater.diff>`
+  * :func:`Get orbitals shared between Slater determinants <wfns.backend.slater.shared_orbs>`
+  * :func:`Get orbitals different between Slater determinants <wfns.backend.slater.diff_orbs>`
   * :func:`Combine alpha and beta parts <wfns.backend.slater.combine_spin>`
   * :func:`Split a Slater determinant into alpha and beta parts <wfns.backend.slater.split_spin>`
   * :func:`Get index after interleaving <wfns.backend.slater.interleave_index>`
@@ -117,8 +117,8 @@ Backend
   * :func:`Deinterleave Slater determinant <wfns.backend.slater.deinterleave>`
   * :func:`Get spin of Slater determinant <wfns.backend.slater.get_spin>`
   * :func:`Get seniority of Slater determinant <wfns.backend.slater.get_seniority>`
-  * :func:`Get number of transpositions from one ordering to another <wfns.backend.slater.find_num_trans>`
-  * :func:`Get number of transpositions from one ordering to move an operator <wfns.backend.slater.find_num_trans>`
+  * :func:`Get signature of the permutation that sorts a set of annihilators. <wfns.backend.slater.sign_perm>`
+  * :func:`Get signature of moving a creation operator to a specific position. <wfns.backend.slater.sign_swap>`
   * :func:`Generate Slater determinants <wfns.backend.sd_list.sd_list>`
 
 * Perfect Matching Generator
