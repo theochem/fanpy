@@ -169,8 +169,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
                           exchange):
         r"""Update integrals for the given Slater determinant.
 
-        Add the term :math:`f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}` to the provided
-        integrals.
+        Add the term :math:`f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>`
+        to the provided integrals.
 
         Parameters
         ----------
@@ -216,13 +216,15 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         .. math::
 
-            \braket{\Phi | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
+            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S_\Phi}
+              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
         :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
-        the :math:`\Phi` and its first and second order excitations for a chemical Hamiltonian.
+        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
+        not zero, which are the :math:`\Phi` and its first and second order excitations for a
+        chemical Hamiltonian.
 
         Parameters
         ----------
@@ -288,10 +290,12 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         .. math::
 
-            H_{\mathbf{m}\mathbf{n}} &= \braket{\mathbf{m} | \hat{H} | \mathbf{n}}\\
-            &= \sum_{ij} h_{ij} \braket{\mathbf{m}| a^\dagger_i a_j | \mathbf{n}}
+            H_{\mathbf{m}\mathbf{n}} &=
+            \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>\\
+            &= \sum_{ij}
+               h_{ij} \left< \mathbf{m} \middle| a^\dagger_i a_j \middle| \mathbf{n} \right>
             + \sum_{i<j, k<l} g_{ijkl}
-            \braket{\mathbf{m}| a^\dagger_i a^\dagger_j a_l a_k | \mathbf{n}}\\
+            \left< \mathbf{m} \middle| a^\dagger_i a^\dagger_j a_l a_k \middle| \mathbf{n} \right>\\
 
         In the first summation involving :math:`h_{ij}`, only the terms where :math:`\mathbf{m}` and
         :math:`\mathbf{n}` are different by at most single excitation will contribute to the

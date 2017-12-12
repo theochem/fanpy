@@ -13,20 +13,21 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
     A wavefunction constructed from nonorthonormal orbitals can be written as
 
     .. math::
-        \ket{\Psi}
-        &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
-        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+        \left| \Psi \right>
+        = \sum_{\mathbf{n}} \sum_{\mathbf{m}}
+        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \left| \mathbf{m} \right>
 
-    where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed
-    from orthonormal and nonorthonormal orbitals. The :math:`C(\mathbf{n}, \mathbf{m})` is a
-    submatrix of the transformation matrix :math:`C` where rows are selected according to
-    :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
+    where :math:`\left| \mathbf{m} \right>` and :math:`\left| \mathbf{n} \right>` are Slater
+    determinants constructed from orthonormal and nonorthonormal orbitals. The
+    :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of the transformation matrix :math:`C` where
+    rows are selected according to :math:`\left| \mathbf{n} \right>` and columns to
+    :math:`\left| \mathbf{m} \right>`.
 
     If the orbitals are transformed with a Jacobi rotation, then many of the determinants are
     simplified.
 
     .. math::
-        \braket{\mathbf{m} | J^\dagger_{pq} | \Psi}
+        \left< \mathbf{m} \middle| J^\dagger_{pq} \middle| \Psi \right>
         &= f(\mathbf{m}) \mbox{ if $p \not\in \mathbf{m}$ and $q \not\in \mathbf{m}$}\\
         &= f(\mathbf{m}) \mbox{ if $p \in \mathbf{m}$ and $q \in \mathbf{m}$}\\
         &= f(\mathbf{m}) (\cos\theta + \sin\theta)
@@ -578,7 +579,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         .. math::
 
-            \braket{\mathbf{m} | \Psi}
+            \left< \mathbf{m} \middle| \Psi \right>
 
         Parameters
         ----------

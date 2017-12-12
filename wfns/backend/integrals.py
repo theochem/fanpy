@@ -99,7 +99,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
     .. math::
 
-        h_{ik} = \braket{\phi_i | \hat{h} | \phi_k}
+        h_{ik} = \left< \phi_i \middle| \hat{h} \middle| \phi_k \right>
 
     Attributes
     ----------
@@ -191,7 +191,7 @@ class OneElectronIntegrals(BaseIntegrals):
 
         .. math::
 
-            h_{ik} = \braket{\phi_i | \hat{h} | \phi_k}
+            h_{ik} = \left< \phi_i \middle| \hat{h} \middle| \phi_k \right>
 
         Parameters
         ----------
@@ -470,8 +470,7 @@ class TwoElectronIntegrals(BaseIntegrals):
 
         .. math::
 
-            \braket{\theta | \hat{g} a_i a_j a^\dagger_k a^\dagger_l | \theta} =
-            \braket{\phi_i \phi_j | \hat{g} | \phi_k \phi_l}
+            g_{ijkl} = \left< \phi_i \phi_j \middle| \hat{g} \middle| \phi_k \phi_l \right>
 
         Parameters
         ----------

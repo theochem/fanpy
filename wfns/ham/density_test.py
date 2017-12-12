@@ -12,8 +12,9 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
     .. math::
 
         \Gamma_{i_1 \dots i_K j_1 \dots j_K}
-        &= \braket{\Phi | \hat{\Gamma}_{i_1 \dots i_K}^{j_1 \dots j_K} | \Psi}\\
-        &= \braket{\Phi | a^\dagger_{i_1} \dots a^\dagger_{i_K} a_{j_K} \dots a_{j_1}| \Psi}
+        &= \left< \Phi \middle| \hat{\Gamma}_{i_1 \dots i_K}^{j_1 \dots j_K} \middle| \Psi \right>\\
+        &= \left< \Phi \middle|
+           a^\dagger_{i_1} \dots a^\dagger_{i_K} a_{j_K} \dots a_{j_1} \middle| \Psi \right>
 
     where :math:`\Psi` is the wavefunction, :math:`\hat{\Gamma}` is the density matrix operator,
     and :math:`\Phi` is the Slater determinant.
@@ -75,8 +76,9 @@ def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicis
     .. math::
 
         \Gamma_{i_1 \dots i_K j_1 \dots j_K}
-        &= \braket{\Phi | \hat{\Gamma}_{i_1 \dots i_K}^{j_1 \dots j_K} | \Psi}\\
-        &= \braket{\Phi | a^\dagger_{i_1} \dots a^\dagger_{i_K} a_{j_K} \dots a_{j_1}| \Psi}
+        &= \left< \Phi \middle| \hat{\Gamma}_{i_1 \dots i_K}^{j_1 \dots j_K} \middle| \Psi \right>\\
+        &= \left< \Phi \middle|
+           a^\dagger_{i_1} \dots a^\dagger_{i_K} a_{j_K} \dots a_{j_1} \middle| \Psi \right>
 
     where :math:`\Psi` is the wavefunction, :math:`\hat{\Gamma}` is the density matrix operator,
     and :math:`\Phi` is a reference wavefunction. The reference wavefuntion can be a Slater
@@ -84,13 +86,14 @@ def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicis
 
     .. math::
 
-        \ket{\Phi} = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \ket{\mathbf{m}}
+        \left| \Phi \right> = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>
 
     or a projected form of wavefunction :math:`\Psi`
 
     .. math::
 
-        \ket{\Phi} = \sum_{\mathbf{m} \in S} \braket{\Psi | \mathbf{m}} \ket{\mathbf{m}}
+        \left| \Phi \right> = \sum_{\mathbf{m} \in S} \left< \Psi \middle| \mathbf{m} \right>
+                              \left| \mathbf{m} \right>
 
     where :math:`S` is the projection space.
 

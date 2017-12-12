@@ -11,8 +11,8 @@ class CIWavefunction(BaseWavefunction):
 
     .. math::
 
-        \ket{\Psi} &= \sum_i c_i \ket{\Phi_i}\\
-        &= \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \ket{\mathbf{m}}\\
+        \left| \Psi \right> &= \sum_i c_i \left| \Phi_i \right>\\
+        &= \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>\\
 
     where :math:`\Phi_i` is Slater determinants. The :math:`\mathbf{m}` is the occupation vector of
     a Slater determinant (and therefore can be used interchangeably with the Slater determinant) and
@@ -310,13 +310,13 @@ class CIWavefunction(BaseWavefunction):
 
         .. math::
 
-            \braket{\Phi_i | \Psi} = c_i
+            \left< \Phi_i \middle| \Psi \right> = c_i
 
         where
 
         .. math::
 
-            \ket{\Psi} = \sum_i c_i \ket{\Phi_i}
+            \left| \Psi \right> = \sum_i c_i \left| \Phi_i \right>
 
         Returns
         -------

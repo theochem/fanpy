@@ -7,7 +7,7 @@ parameters such that the Schrödinger equation is satisfied:
 
 .. math::
 
-    \hat{H} \ket{\Psi} = E \ket{\Psi}
+    \hat{H} \left| \Psi \right> = E \left| \Psi \right>
 
 We can convert this equation into other objectives such that the solutions to the objectives
 correspond to the solutions to the Schrödinger equation.
@@ -20,17 +20,18 @@ equation with the wavefunction and rearranging for the energy:
 
 .. math::
 
-    \bra{\Psi} \hat{H} \ket{\Psi} &= E \left< \Psi \middle| \Psi \right>\\
+    \left< \Psi \middle| \hat{H} \middle| \Psi \right> &= E \left< \Psi \middle| \Psi \right>\\
 
 .. math::
 
-    E &= \frac{\bra{\Psi} \hat{H} \ket{\Psi}}{\left< \Psi \middle| \Psi \right>}\\
+    E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}{\left< \Psi \middle| \Psi \right>}
 
 The variational method involves minimizing this energy, where the wavefunction that results in the
 minimum energy corresponds to the best approximation for the ground state. However, except for some
-special cases, :math:`\bra{\Psi} \hat{H} \ket{\Psi}` is too expensive to compute. In fact, computing
-even :math:`\left< \Psi \middle| \Psi \right>` may not be practical. Unless there is some
-specialized structure that simplifies :math:`\bra{\Psi} \hat{H} \ket{\Psi}` and
+special cases, :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>` is too expensive to
+compute. In fact, computing even :math:`\left< \Psi \middle| \Psi \right>` may not be practical.
+Unless there is some specialized structure that simplifies
+:math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>` and
 :math:`\left< \Psi \middle| \Psi \right>` to something tractible, these terms must be expanded out
 in terms of Slater determinants, which would result in intractibly large number of evaluations for a
 complete description. At the expense of full accuracy, the cost for evaluation (and optimization)
@@ -47,34 +48,37 @@ instead of the original, :math:`\Psi`.
 
 .. math::
 
-    E = \frac{\bra{\Phi} \hat{H} \ket{\Psi}}{\left< \Phi \middle| \Psi \right>}
+    E = \frac{\left< \Phi \middle| \hat{H} \middle| \Psi \right>}{\left< \Phi \middle| \Psi \right>}
 
 In the FANCI module, only the following reference wavefunctions are supported:
 
-* Slater determinant: :math:`\ket{\Phi} = \ket{\mathbf{m}}`
+* Slater determinant: :math:`\left| \Phi \right> = \left| \mathbf{m} \right>`
 
 .. math::
 
-    E = \frac{\bra{\mathbf{m}} \hat{H} \ket{\Psi}}{\left< \mathbf{m} \middle| \Psi \right>}
+    E = \frac{\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>}
+             {\left< \mathbf{m} \middle| \Psi \right>}
 
 * Truncation of the original wavefunction:
-  :math:`\ket{\Phi} = \sum_{\mathbf{m} \in S_{trunc}} f(\mathbf{m}) \ket{\mathbf{m}}`
+  :math:`\left| \Phi \right> = \sum_{\mathbf{m} \in S_{trunc}} f(\mathbf{m}) \left| \mathbf{m} \right>`
 
 .. math::
 
-    E &= \frac{
-       \sum_{\mathbf{m} \in S_{trunc}} f^*(\mathbf{m}) \bra{\mathbf{m}} \hat{H} \ket{\Psi}
+    E = \frac{
+       \sum_{\mathbf{m} \in S_{trunc}}
+       f^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
     }{
        \sum_{\mathbf{m} \in S_{trunc}} f^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right>
     }
 
 * CI wavefunction:
-  :math:`\ket{\Phi} = \sum_{\mathbf{m} \in S_{ci}} c_{\mathbf{m}} \ket{\mathbf{m}}`
+  :math:`\left| \Phi \right> = \sum_{\mathbf{m} \in S_{ci}} c_{\mathbf{m}} \left| \mathbf{m} \right>`
 
 .. math::
 
-    E &= \frac{
-       \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}} \bra{\mathbf{m}} \hat{H} \ket{\Psi}
+    E = \frac{
+       \sum_{\mathbf{m} \in S_{ci}}
+       c^*_{\mathbf{m}} \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
     }{
        \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}} \left< \mathbf{m} \middle| \Psi \right>
     }
@@ -89,26 +93,26 @@ the wavefunction :math:`\Psi`.
 
 .. math::
 
-    E &= \frac{\bra{\Psi} \hat{H} \ket{\Psi}}{\left< \Psi \middle| \Psi \right>}\\
+    E &= \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}{\left< \Psi \middle| \Psi \right>}\\
     &= \frac{
         \left< \Psi \right|
-        \bigg( \sum_{\mathbf{m}}  \left| \mathbf{m} \right> \left< \mathbf{m} \right| \bigg)
+        \bigg( \sum_{\mathbf{m}}  \left| \mathbf{m} \middle> \middle< \mathbf{m} \right| \bigg)
         \hat{H}
-        \bigg( \sum_{\mathbf{n}} \left| \mathbf{n} \right> \left< \mathbf{n} \right|  \bigg)
+        \bigg( \sum_{\mathbf{n}} \left| \mathbf{n} \middle> \middle< \mathbf{n} \right|  \bigg)
         \left| \Psi \right>
     }{
         \left< \Psi \right|
-        \bigg( \sum_{\mathbf{p}}  \left| \mathbf{p} \right> \left< \mathbf{p} \right| \bigg)
+        \bigg( \sum_{\mathbf{p}}  \left| \mathbf{p} \middle> \middle< \mathbf{p} \right| \bigg)
         \left| \Psi \right>
     }\\
     &= \frac{
         \sum_{\mathbf{m}} \sum_{\mathbf{n}}
-        \left< \Psi \middle| \mathbf{m} \right>
-        \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
-        \left< \mathbf{n} \middle| \Psi \right>
+        \left< \Psi \middle| \mathbf{m} \middle>
+        \middle< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \middle>
+        \middle< \mathbf{n} \middle| \Psi \right>
     }{
         \sum_{\mathbf{p}}
-        \left< \Psi \middle| \mathbf{p} \right> \left< \mathbf{p} \middle| \Psi \right>
+        \left< \Psi \middle| \mathbf{p} \middle> \middle< \mathbf{p} \middle| \Psi \right>
     }
 
 We can sum over a subset of the Slater determinants to reduce the number of evaluations:
@@ -136,15 +140,15 @@ it into smaller components, which can be projected out if they are insignificant
 
 .. math::
 
-    \hat{H} \ket{\Psi} &= E \ket{\Psi}\\
-    \sum_{\mathbf{m}} \ket{\mathbf{m}} \bra{\mathbf{m}} \hat{H} \ket{\Psi}
-    &= E \sum_{\mathbf{m}} \ket{\mathbf{m}} \left< \mathbf{m} \middle| \Psi \right>\\
+    \hat{H} \left| \Psi \right> &= E \left| \Psi \right>\\
+    \sum_{\mathbf{m}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
+    &= E \sum_{\mathbf{m}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \Psi \right>\\
 
 .. math::
 
-    \sum_{\mathbf{m}} \ket{\mathbf{m}}
+    \sum_{\mathbf{m}} \left| \mathbf{m} \right>
     \left(
-        \bra{\mathbf{m}} \hat{H} \ket{\Psi} -
+        \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> -
         E \left< \mathbf{m} \middle| \Psi \right>
     \right) = 0
 
@@ -153,14 +157,14 @@ Schrödinger equation into a system of equations - one equation for each Slater 
 
 .. math::
 
-    \bra{\mathbf{m}} \hat{H} \ket{\Psi} - E \left< \mathbf{m} \middle| \Psi \right> = 0
+    \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right> = 0
     \; \forall \; \mathbf{m}
 
 If all equation in the system of equations are satisfied, then the Schrödinger equation is
 satisfied. Then, we can ignore Slater determinants where both
-:math:`\bra{\mathbf{m}} \hat{H} \ket{\Psi} \approx 0` and
+:math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> \approx 0` and
 :math:`\left< \mathbf{m} \middle| \Psi \right> \approx 0`, because
-:math:`\bra{\mathbf{m}} \hat{H} \ket{\Psi} - E \left< \mathbf{m} \middle| \Psi \right> \approx 0`.
+:math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right> \approx 0`.
 
 The objective for the projected Schrödinger equation is implemented in class
 :class:`SystemEquations <wfns.objective.schrodinger.system_nonlinear.SystemEquations>`.
@@ -176,12 +180,12 @@ removed with a projection operator. In the FANCI module, the projection space ca
 
 .. math::
 
-    \bra{\Phi} \hat{H} \ket{\Psi} - E \left< \Phi \middle| \Psi \right> &= 0\\
-    \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}} \bra{\mathbf{m}} \hat{H} \ket{\Psi}
+    \left< \Phi \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi \middle| \Psi \right> &= 0\\
+    \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}} \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
     - E \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}} \left< \mathbf{m} \middle| \Psi \right> &= 0\\
     \sum_{\mathbf{m} \in S_{ci}} c^*_{\mathbf{m}}
     \left(
-        \bra{\mathbf{m}} \hat{H} \ket{\Psi} - E \left< \mathbf{m} \middle| \Psi \right>
+        \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right>
     \right)
     &= 0
 

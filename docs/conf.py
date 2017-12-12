@@ -11,7 +11,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx.ext.napoleon',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
@@ -206,7 +206,7 @@ htmlhelp_basename = 'wfnsdoc'
 
 # -- imgmath for equation generation --------------------------------------
 
-imgmath_latex_preamble = r'''\usepackage{physics}'''
+# imgmath_latex_preamble = r'''\usepackage{physics}'''
 
 # -- Options for LaTeX output ---------------------------------------------
 

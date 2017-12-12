@@ -871,8 +871,8 @@ def sign_excite(sd, annihilators, creators):
 
     .. math::
 
-        a^\dagger_{j_N} \dots a^\dagger_{j_1} a_{i_M} \dots a_{i_1} \ket{\Phi}
-        = sign \hat{E}_{i_1 \dots i_M}^{j_N \dots j_1} \ket{\Phi}
+        a^\dagger_{j_N} \dots a^\dagger_{j_1} a_{i_M} \dots a_{i_1} \left| \Phi \right>
+        = sign \hat{E}_{i_1 \dots i_M}^{j_N \dots j_1} \left| \Phi \right>
 
     where the set of annihilators, :math:`\{a_{i_1} \dots a_{i_M}\}`, are 'annihilators', the set of
     annihilators, :math:`\{a^\dagger_{j_1} \dots a^\dagger_{j_M}\}`, are 'creators', and `sign` is

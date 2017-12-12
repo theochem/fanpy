@@ -34,18 +34,21 @@ of the basis set using a projection operator:
 .. math::
 
     \hat{H}
-    &= \sum_{ij} \ket{\phi_i} \bra{\phi_i} \hat{H} \ket{\phi_j} \bra{\phi_j}\\
+    &= \sum_{ij} \left| \phi_i \middle> \middle< \phi_i \right| \hat{H}
+       \left| \phi_j \middle> \middle< \phi_j \right|\\
     &\hspace{2em}
-       + \sum_{i<j} \sum_{k<l} \ket{\phi_i \phi_j} \bra{\phi_i \phi_j} \hat{H} \ket{\phi_k \phi_l}
-         \bra{\phi_k \phi_l}\\
+       + \sum_{i<j} \sum_{k<l} \left| \phi_i \phi_j \middle> \middle< \phi_i \phi_j \right| \hat{H}
+         \left| \phi_k \phi_l \middle> \middle< \phi_k \phi_l \right|\\
     &\hspace{2em}
-       + \sum_{i<j<k} \sum_{l<m<n} \ket{\phi_i \phi_j \phi_k}
-         \bra{\phi_i \phi_j \phi_k} \hat{H} \ket{\phi_l \phi_m \phi_n} \bra{\phi_l \phi_m \phi_n}
+       + \sum_{i<j<k} \sum_{l<m<n}
+         \left| \phi_i \phi_j \phi_k \middle> \middle< \phi_i \phi_j \phi_k \right| \hat{H}
+         \left| \phi_l \phi_m \phi_n \middle> \middle< \phi_l \phi_m \phi_n \right|\\
+    &\hspace{2em}
        + \dots\\
     &= \sum_{n=1}^\infty \sum_{i_1 < i_2 < \dots < i_n} \sum_{j_1 < j_2 < \dots < j_n}
-       \ket{\phi_{i_1} \dots \phi_{i_n}}
-       \bra{\phi_{i_1} \dots \phi_{i_n}} \hat{H} \ket{\phi_{j_1} \dots \phi_{j_n}}
-       \bra{\phi_{j_1} \dots \phi_{j_n}}
+       \left| \phi_{i_1} \dots \phi_{i_n} \middle> \middle< \phi_{i_1} \dots \phi_{i_n} \right|
+       \hat{H}
+       \left| \phi_{j_1} \dots \phi_{j_n} \middle> \middle< \phi_{j_1} \dots \phi_{j_n} \right|
 
 Fortunately, most Hamiltonians only contain terms with a small number of bodies (i.e. electrons)
 resulting in truncation in the summation. For example, a
@@ -55,22 +58,26 @@ so the sum truncates at the second order:
 .. math::
 
     \hat{H}
-    &= \sum_{ij} \ket{\phi_i} \bra{\phi_i} \hat{H} \ket{\phi_j} \bra{\phi_j}
-       + \sum_{i<j} \sum_{k<l} \ket{\phi_i \phi_j} \bra{\phi_i \phi_j} \hat{H} \ket{\phi_k \phi_l}
-         \bra{\phi_k \phi_l}\\
-    &= \sum_{ij} a^\dagger_i \bra{} a_i \hat{H} a^\dagger_j \ket{} a_j
+    &= \sum_{ij}
+       \left| \phi_i \middle> \middle< \phi_i \right| \hat{H}
+       \left| \phi_j \middle> \middle< \phi_j \right|
+       + \sum_{i<j}
+         \sum_{k<l} \left| \phi_i \phi_j \middle> \middle< \phi_i \phi_j \right| \hat{H}
+         \left| \phi_k \phi_l \middle> \middle< \phi_k \phi_l \right|\\
+    &= \sum_{ij} a^\dagger_i \left< \right| a_i \hat{H} a^\dagger_j \left| \right> a_j
        + \sum_{i<j} \sum_{k<l} a^\dagger_i a^\dagger_j
-       \bra{} a_j a_i \hat{H} a^\dagger_k a^\dagger_l \ket{} a_l a_k\\
+         \left< \right| a_j a_i \hat{H} a^\dagger_k a^\dagger_l \left| \right> a_l a_k\\
     &= \sum_{ij} h_{ij} a^\dagger_i a_j
        + \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
 
-where :math:`h_{ij} = \bra{} a_i \hat{H} a^\dagger_j \ket{}` and
-:math:`g_{ijkl} = \bra{} a_j a_i \hat{H} a^\dagger_k a^\dagger_l \ket{}`.
+where :math:`h_{ij} = \left< \right| a_i \hat{H} a^\dagger_j \left| \right>` and
+:math:`g_{ijkl} = \left< \right| a_j a_i \hat{H} a^\dagger_k a^\dagger_l \left| \right>`.
 
 Therefore, all Hamiltonians can be expressed within the one-electron basis set in a similar manner
 and we can construct a framework from which all possible Hamiltonian can be built. All Hamiltonians
 only need to contain the integrals and the method by which these integrals are applied to the
 wavefunction. In the FANCI module, the objectives represent the Schrödinger equation with
-:math:`\bra{\Phi} \hat{H} \ket{\Psi}` and :math:`\bra{\Phi} \hat{H} \ket{\Phi}`, where
+:math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` and
+:math:`\left< \Phi \middle| \hat{H} \middle| \Phi \right>`, where
 :math:`\Phi` is a Slater determinant and :math:`\Psi` is the wavefunction. This framework is
 established in the abstract base class, :class:`BaseHamiltonian <wfns.ham.base.BaseHamiltonian>`.

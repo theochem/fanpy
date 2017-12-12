@@ -155,7 +155,7 @@ class BaseSchrodinger(BaseObjective):
         Returns
         -------
         integral : float
-            Value of the integral :math:`\braket{\Phi | \hat{H} | \Psi}`.
+            Value of the integral :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>`.
 
         Notes
         -----
@@ -193,7 +193,7 @@ class BaseSchrodinger(BaseObjective):
         Returns
         -------
         integral : float
-            Value of the integral :math:`\braket{\Phi_i | \hat{H} | \Phi_j}`.
+            Value of the integral :math:`\left< \Phi_i \middle| \hat{H} \middle| \Phi_j \right>`.
 
         """
         if deriv is None:
@@ -209,29 +209,32 @@ class BaseSchrodinger(BaseObjective):
     def get_energy_one_proj(self, refwfn, deriv=None):
         r"""Return the energy of the Schrodinger equation with respect to a reference wavefunction.
 
-        ..math::
+        .. math::
 
-            E \approx \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
+            E \approx \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                           {\left< \Phi_{ref} \middle| \Psi \right>}
 
         where :math:`\Phi_{ref}` is some reference wavefunction. Let
 
-        ..math::
+        .. math::
 
-            \ket{\Phi_{ref}} = \sum_{\mathbf{m} \in S} g(\mathbf{m}) \ket{\mathbf{m}}
+            \left| \Phi_{ref} \right> = \sum_{\mathbf{m} \in S}
+                                        g(\mathbf{m}) \left| \mathbf{m} \right>
 
         Then,
 
-        ..math:
+        .. math::
 
-            \braket{\Phi_{ref} | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \bra{\mathbf{m}} \hat{H} \ket{\Psi}\\
+            \left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S}
+              g^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
 
         and
 
-        ..math::
+        .. math::
 
-            \braket{\Phi_{ref} | \Psi} &=
-            \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \bra{\mathbf{m}} \ket{\Psi}\\
+            \left< \Phi_{ref} \middle| \Psi \right> =
+            \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right>
 
         Ideally, we want to use the actual wavefunction as the reference, but, without further
         simplifications, :math:`\Psi` uses too many Slater determinants to be computationally
@@ -239,10 +242,12 @@ class BaseSchrodinger(BaseObjective):
         the most significant Slater determinants are included, while the energy can be tractibly
         computed. This is equivalent to inserting a projection operator on one side of the integral
 
-        ..math:
+        .. math::
 
-            \bra{\Psi} \sum_{\mathbf{m} \in S} \ket{\mathbf{m}} \braket{\mathbf{m} | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S} f^*(\mathbf{m}) \braket{\mathbf{m} | \hat{H} | \Psi}\\
+            \left< \Psi \right| \sum_{\mathbf{m} \in S}
+            \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S}
+              f^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
 
         Parameters
         ----------
@@ -317,29 +322,33 @@ class BaseSchrodinger(BaseObjective):
     def get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None):
         r"""Return the energy of the Schrodinger equation after projecting out both sides.
 
-        ..math::
+        .. math::
 
-            E = \frac{\braket{\Psi | \hat{H} | \Psi}}{\braket{\Psi | \Psi}}
+            E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
+                     {\left< \Psi \middle| \Psi \right>}
 
         Then, the numerator can be approximated by inserting projection operators:
 
-        ..math:
+        .. math::
 
-            \braket{\Psi | \hat{H} | \Psi} &\approx \bra{\Psi}
-            \sum_{\mathbf{m} \in S_l} \ket{\mathbf{m}} \bra{\mathbf{m}}
+            \left< \Psi \middle| \hat{H} \middle| \Psi \right> &\approx \left< \Psi \right|
+            \sum_{\mathbf{m} \in S_l} \left| \mathbf{m} \middle> \middle< \mathbf{m} \right|
             \hat{H}
-            \sum_{\mathbf{n} \in S_r} \ket{\mathbf{n}} \braket{\mathbf{n} | \Psi_\mathbf{n}}\\
-            &\approx \sum_{\mathbf{m} \in S_l} \sum_{\mathbf{n} \in S_r} \braket{\Psi | \mathbf{m}}
-            \braket{\mathbf{m} | \hat{H} | \mathbf{n}} \braket{\mathbf{n} | \Psi}\\
+            \sum_{\mathbf{n} \in S_r}
+            \left| \mathbf{n} \middle> \middle< \mathbf{n} \middle| \Psi_\mathbf{n} \right>\\
+            &\approx \sum_{\mathbf{m} \in S_l} \sum_{\mathbf{n} \in S_r}
+            \left< \Psi \middle| \mathbf{m} \right>
+            \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
+            \left< \mathbf{n} \middle| \Psi \right>\\
 
         Likewise, the denominator can be approximated by inserting a projection operator:
 
-        ..math::
+        .. math::
 
-            \braket{\Psi | \Psi} &\approx \bra{\Psi}
-            \sum_{\mathbf{m} \in S_{norm}} \ket{\mathbf{m}} \bra{\mathbf{m}}
-            \ket{\Psi}\\
-            &\approx \sum_{\mathbf{m} \in S_{norm}} \braket{\Psi | \mathbf{m}}^2
+            \left< \Psi \middle| \Psi \right> &\approx \left< \Psi \right|
+            \sum_{\mathbf{m} \in S_{norm}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle|
+            \middle| \Psi \right>\\
+            &\approx \sum_{\mathbf{m} \in S_{norm}} \left< \Psi \middle| \mathbf{m} \right>^2
 
         Parameters
         ----------

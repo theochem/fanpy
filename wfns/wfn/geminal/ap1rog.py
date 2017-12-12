@@ -15,13 +15,13 @@ class AP1roG(APIG):
     Coupled Cluster wavefunctions.
 
     .. math::
-        \ket{\Psi_{\mathrm{AP1roG}}}
-        &= \prod_{q=1}^P T_q^\dagger \ket{\Phi_{\mathrm{ref}}}\\
+        \left| \Psi_{\mathrm{AP1roG}} \right>
+        &= \prod_{q=1}^P T_q^\dagger \left| \Phi_{\mathrm{ref}} \right>\\
         &= \prod_{q=1}^P \left( a_i^\dagger a_{\bar{i}}^\dagger +
            \sum_{i=P+1}^B c_{q;i}^{(\mathrm{AP1roG})} a_i^\dagger a_{\bar{i}}^\dagger \right)
-           \ket{\Phi_{\mathrm{ref}}}\\
+           \left| \Phi_{\mathrm{ref}} \right>\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
-           | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \ket{\mathbf{m}}
+           | C(\mathbf{m})_{\mathrm{AP1roG}} |^+ \left| \mathbf{m} \right>
 
     where :math:`P` is the number of electron pairs and :math:`\mathbf{m}` is a seniority-zero
     Slater determinant.

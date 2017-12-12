@@ -6,7 +6,7 @@ Schrödinger equation,
 
 .. math::
 
-    \hat{H} \ket{\Psi} = E \ket{\Psi}
+    \hat{H} \left| \Psi \right> = E \left| \Psi \right>
 
 for the given electronic Hamiltonian, :math:`\hat{H}`. Since finding the exact solution in the full
 Hilbert space (function space) is not practical, we use a finite set of one-electron basis functions

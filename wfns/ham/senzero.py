@@ -8,6 +8,8 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
     .. math::
 
+        \def\i{\imath}
+        \def\j{\jmath}
         \hat{H} =
         \sum_{i} \left(
             h_{ii} a^\dagger_i a_i + h_{\bar{\i}\bar{\i}} a^\dagger_{\bar{\i}} a_{\bar{\i}}
@@ -106,13 +108,15 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         .. math::
 
-            \braket{\Phi | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
+            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S_\Phi}
+              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
         :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
-        the :math:`\Phi` and its first order orbital-pair excitations for a chemical Hamiltonian.
+        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
+        not zero, which are the :math:`\Phi` and its first order orbital-pair excitations for a
+        chemical Hamiltonian.
 
         """
         if wfn_deriv is not None and ham_deriv is not None:
@@ -153,7 +157,8 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         .. math::
 
-            H_{\mathbf{m}\mathbf{n}} &= \braket{\mathbf{m} | \hat{H} | \mathbf{n}}\\
+            H_{\mathbf{m}\mathbf{n}} =
+            \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
 
         In the first summation involving :math:`h_{ij}`, only the terms where :math:`\mathbf{m}` and
         :math:`\mathbf{n}` are the same will contribute to the integral. In the second summation

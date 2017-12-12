@@ -10,18 +10,28 @@ class LeastSquaresEquations(SystemEquations):
 
     .. math::
 
-        (\braket{\Phi_1 | \hat{H} | \Psi} - E \braket{\Phi_1 | \Psi})^2 +
-        (\braket{\Phi_2 | \hat{H} | \Psi} - E \braket{\Phi_2 | \Psi})^2 +
+        \left(
+            \left< \Phi_1 \middle| \hat{H} \middle| \Psi \middle>
+             - E \middle< \Phi_1 \middle| \Psi \right>
+        \right)^2 +
+        \left(
+            \left< \Phi_2 \middle| \hat{H} \middle| \Psi \middle>
+             - E \middle< \Phi_2 \middle| \Psi \right>
+        \right)^2 +
         \dots
-        (\braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi})^2 +
-        (f_{constraint}(\Psi, \hat{H}))^2 = 0
+        \left(
+            \left< \Phi_K \middle| \hat{H} \middle| \Psi \middle>
+             - E \middle< \Phi_K \middle| \Psi \right>
+        \right)^2 +
+        \left( f_{constraint}(\Psi, \hat{H}) \right)^2 = 0
 
     Energy can be a constant, a parameter that gets optimized, or a function of the wavefunction and
     hamiltonian parameters.
 
     .. math::
 
-        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
+        E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                 {\left< \Phi_{ref} \middle| \Psi \right>}
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -124,11 +134,20 @@ class LeastSquaresEquations(SystemEquations):
         .. math::
 
             f(\vec{x}) &=
-            (\braket{\Phi_1 | \hat{H} | \Psi} - E \braket{\Phi_1 | \Psi})^2 +
-            (\braket{\Phi_2 | \hat{H} | \Psi} - E \braket{\Phi_2 | \Psi})^2 +
+            \left(
+                \left< \Phi_1 \middle| \hat{H} \middle| \Psi \middle>
+                - E \middle< \Phi_1 \middle| \Psi \right>
+            \right)^2 +
+            \left(
+                \left< \Phi_2 \middle| \hat{H} \middle| \Psi \middle>
+                - E \middle< \Phi_2 \middle| \Psi \right>
+            \right)^2 +
             \dots
-            (\braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi})^2 +
-            (f_{constraint}(\vec{x})^2\\
+            \left(
+                \left< \Phi_K \middle| \hat{H} \middle| \Psi \middle>
+                - E \middle< \Phi_K \middle| \Psi \right>
+            \right)^2 +
+            \left( f_{constraint}(\Psi, \hat{H}) \right)^2\\
             &= f_1^2(\vec{x}) + f_2^2(\vec{x}) + \dots + f_K^2(\vec{x}) +
             f_{constraint}(\vec{x})^2\\
 
@@ -140,7 +159,8 @@ class LeastSquaresEquations(SystemEquations):
 
         .. math::
 
-            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
+            E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                     {\left< \Phi_{ref} \middle| \Psi \right>}
 
         Parameters
         ----------
