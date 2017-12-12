@@ -12,8 +12,8 @@ class FCI(CIWavefunction):
 
     .. math::
 
-        \ket{\Psi_{\mathrm{FCI}}} =
-        \sum_{\mathbf{m} \in S_{\mathrm{FCI}}} c_{\mathbf{m}} \ket{\mathbf{m}}
+        \left| \Psi_{\mathrm{FCI}} \right> =
+        \sum_{\mathbf{m} \in S_{\mathrm{FCI}}} c_{\mathbf{m}} \left| \mathbf{m} \right>
 
     Attributes
     ----------

@@ -13,25 +13,26 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
     A parameterized multideterminantal wavefunction can be written as
 
     .. math::
-        \ket{\Psi} = \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
+        \left| \Psi \right> = \sum_{\mathbf{m}} f(\mathbf{m}) \left| \mathbf{m} \right>
 
-    where :math:`\ket{\mathbf{m}}` is a Slater determinant. If the Slater determinants are
+    where :math:`\left| \mathbf{m} \right>` is a Slater determinant. If the Slater determinants are
     constructed from nonorthonormal orbitals, then each Slater determinant can be expressed as a
     linear combination of Slater determinants constructed from orthonormal orbitals.
 
     .. math::
-        \ket{\Psi}
-        &= \sum_{\mathbf{n}} f(\mathbf{n}) \ket{\mathbf{n}}\\
+        \left| \Psi \right>
+        &= \sum_{\mathbf{n}} f(\mathbf{n}) \left| \mathbf{n} \right>\\
         &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}}
-        |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}\\
+        |C(\mathbf{n}, \mathbf{m})|^- \left| \mathbf{m} \right>\\
         &= \sum_{\mathbf{n}} \sum_{\mathbf{m}}
-        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \ket{\mathbf{m}}
+        f(\mathbf{n}) |C(\mathbf{n}, \mathbf{m})|^- \left| \mathbf{m} \right>
 
-    where :math:`\ket{\mathbf{m}}` and :math:`\ket{\mathbf{n}}` are Slater determinants constructed
-    from orthonormal and nonorthonormal orbitals. The nonorthonormal orbitals are constructed by
-    linearly transforming the orbitals of :math:`\ket{\mathbf{m}}` with :math:`C`. The
-    :math:`C(\mathbf{n}, \mathbf{m})` is a submatrix of :math:`C` where rows are selected according
-    to :math:`\ket{\mathbf{n}}` and columns to :math:`\ket{\mathbf{m}}`.
+    where :math:`\left| \mathbf{m} \right>` and :math:`\left| \mathbf{n} \right>` are Slater
+    determinants constructed from orthonormal and nonorthonormal orbitals. The nonorthonormal
+    orbitals are constructed by linearly transforming the orbitals of
+    :math:`\left| \mathbf{m} \right>` with :math:`C`. The :math:`C(\mathbf{n}, \mathbf{m})` is a
+    submatrix of :math:`C` where rows are selected according to :math:`\left| \mathbf{n} \right>`
+    and columns to :math:`\left| \mathbf{m} \right>`.
 
     Attributes
     ----------
@@ -518,17 +519,17 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         expressed with respect to orthonormal Slater determinants, :math:`\mathbf{m}`:
 
         .. math::
-            \ket{\Psi}
+            \left| \Psi \right>
             &= \sum_{\mathbf{n}} f(\mathbf{n}) \sum_{\mathbf{m}} |U(\mathbf{m}, \mathbf{n})|^+
-            \ket{\mathbf{m}}\\
+            \left| \mathbf{m} \right>\\
             &= \sum_{\mathbf{m}} \sum_{\mathbf{n}} f(\mathbf{n}) |U(\mathbf{m}, \mathbf{n})|^+
-            \ket{\mathbf{m}}
+            \left| \mathbf{m} \right>
 
         Then, the overlap with an orthonormal Slater determinant is
 
         .. math::
-            \braket{\Phi_i | \Psi}
-            &= \sum_{\mathbf{n}} f(\mathbf{n}) |U(\Phi_i, \mathbf{n})|^+
+            \left< \Phi_i \middle| \Psi \right>
+            = \sum_{\mathbf{n}} f(\mathbf{n}) |U(\Phi_i, \mathbf{n})|^+
 
         where :math:`U(\Phi_i, \mathbf{n})` is the transformation matrix with rows and columns that
         correspond to the Slater determinants :math:`\Phi_i` and :math:`\mathbf{n}`, respectively.

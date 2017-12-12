@@ -11,8 +11,9 @@ of identity:
 
 .. math::
 
-    \ket{\Psi} &= \sum_{\mathbf{m}} \ket{\mathbf{m}} \left<\mathbf{m} \middle| \Psi \right>\\
-    &= \sum_{\mathbf{m}} f(\mathbf{m}) \ket{\mathbf{m}}
+    \left| \Psi \right>
+    &= \sum_{\mathbf{m}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \Psi \right>\\
+    &= \sum_{\mathbf{m}} f(\mathbf{m}) \left| \mathbf{m} \right>
 
 where :math:`f(\mathbf{m}) = \left<\mathbf{m} \middle| \Psi \right>` and :math:`\mathbf{m}` is a
 Slater determinant. The wavefunction can be entirely described with this function. The :math:`f`

@@ -238,10 +238,11 @@ class RankTwoApprox:
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
         .. math::
-            \ket{\Psi}
-            &= \prod_{p=1}^{N_{gem}} \sum_{ij} C_{pij} a^\dagger_i a^\dagger_j \ket{\theta}\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}} |C(\mathbf{m})|^+
-            \ket{\mathbf{m}}
+            \left| \Psi \right>
+            &= \prod_{p=1}^{N_{gem}} \sum_{ij}
+               C_{pij} a^\dagger_i a^\dagger_j \left| \theta \right>\\
+            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
+               |C(\mathbf{m})|^+ \left| \mathbf{m} \right>
 
         where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
 

@@ -21,10 +21,10 @@ class APIG(BaseGeminal):
     reduces down to a single permanent.
 
     .. math::
-        \ket{\Psi_{\mathrm{APIG}}}
-        &= \prod_{p=1}^P G^\dagger_p \ket{\theta}\\
+        \left| \Psi_{\mathrm{APIG}} \right>
+        &= \prod_{p=1}^P G^\dagger_p \left| \theta \right>\\
         &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
-        |C(\mathbf{m})|^+ \ket{\mathbf{m}}
+        |C(\mathbf{m})|^+ \left| \mathbf{m} \right>
 
     By default, the spin orbitals that belong to the same spatial orbital, i.e. the alpha and beta
     spin orbitals, will be paired up. Then, the resulting wavefunction will only contain seniority

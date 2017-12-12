@@ -10,7 +10,8 @@ class OneSidedEnergy(BaseSchrodinger):
 
     .. math::
 
-        E = \frac{\braket{\Psi | \hat{H} | \Psi}}{\braket{\Psi | \Psi}}
+        E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
+                 {\left< \Psi \middle| \Psi \right>}
 
     Since this equation may be expensive (wavefunction will probably require too many Slater
     determinants for a complete description), we use a reference wavefunction on one side of the
@@ -18,19 +19,21 @@ class OneSidedEnergy(BaseSchrodinger):
 
     .. math::
 
-        E = \frac{\braket{\Phi | \hat{H} | \Psi}}{\braket{\Phi | \Psi}}
+        E = \frac{\left< \Phi \middle| \hat{H} \middle| \Psi \right>}
+                 {\left< \Phi \middle| \Psi \right>}
 
     where :math:`\Phi` is some reference wavefunction that can be a CI wavefunction
 
     .. math::
 
-        \ket{\Phi} = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \ket{\mathbf{m}}
+        \left| \Phi \right> = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>
 
     or a projected form of wavefunction :math:`\Psi`
 
     .. math::
 
-        \ket{\Phi} = \sum_{\mathbf{m} \in S} \braket{\Psi | \mathbf{m}} \ket{\mathbf{m}}
+        \left| \Phi \right> = \sum_{\mathbf{m} \in S}
+                              \left< \Psi \middle| \mathbf{m} \middle> \middle| \mathbf{m} \right>
 
     where :math:`S` is the projection space.
 

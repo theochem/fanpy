@@ -13,17 +13,22 @@ class SystemEquations(BaseSchrodinger):
 
     .. math::
 
-        \braket{\Phi_1 | \hat{H} | \Psi} - E \braket{\Phi_1 | \Psi} &= 0\\
-        \braket{\Phi_2 | \hat{H} | \Psi} - E \braket{\Phi_2 | \Psi} &= 0\\
+        \left< \Phi_1 \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_1 \middle| \Psi \right>
+        &= 0\\
+        \left< \Phi_2 \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_2 \middle| \Psi \right>
+        &= 0\\
         &\vdots\\
-        \braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi} &= 0\\
+        \left< \Phi_K \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_K \middle| \Psi \right>
+        &= 0\\
+        f_{constraint}(\Psi, \hat{H}) &= 0
 
     Energy can be a constant, a parameter that gets optimized, or a function of the wavefunction and
     hamiltonian parameters.
 
     .. math::
 
-        E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
+        E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                 {\left< \Phi_{ref} \middle| \Psi \right>}
 
     Additionally, the normalization constraint is added with respect to the reference state.
 
@@ -342,10 +347,12 @@ class SystemEquations(BaseSchrodinger):
 
         .. math::
 
-            f_1(x) &= \braket{\Phi_1 | \hat{H} | \Psi} - E \braket{\Phi_1 | \Psi}\\
+            f_1(x) &= \left< \Phi_1 \middle| \hat{H} \middle| \Psi \right>
+                      - E \left< \Phi_1 \middle| \Psi \right>\\
             &\vdots\\
-            f_K(x) &= \braket{\Phi_K | \hat{H} | \Psi} - E \braket{\Phi_K | \Psi}\\
-            f_{K+1}(x) &= \braket{\Phi_{ref} | \Psi} - 1\\
+            f_K(x) &= \left< \Phi_K \middle| \hat{H} \middle| \Psi \right>
+                      - E \left< \Phi_K \middle| \Psi \right>\\
+            f_{K+1}(x) &= \left< \Phi_{ref} \middle| \Psi \right> - 1\\
 
         where :math:`K` is the number of Slater determinant onto which the wavefunction is
         projected. The :math:`K+1`th equation is the normalization constraint. The norm is computed
@@ -354,7 +361,8 @@ class SystemEquations(BaseSchrodinger):
 
         .. math::
 
-            E = \frac{\braket{\Phi_{ref} | \hat{H} | \Psi}}{\braket{\Phi_{ref} | \Psi}}
+            E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                     {\left< \Phi_{ref} \middle| \Psi \right>}
 
         In general, :math:`\Phi_i` can be some linear combination of Slater determinants,
         :math:`SD_j`.

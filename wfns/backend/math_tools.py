@@ -294,7 +294,7 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
 def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
     r"""Convert the components of the antihermitian matrix to a unitary matrix.
 
-    ..math::
+    .. math::
 
         U &= \exp(X)\\
           &= \sum_{n=0}^\infty \frac{1}{n!} X^n

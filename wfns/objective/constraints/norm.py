@@ -13,7 +13,7 @@ class NormConstraint(BaseObjective):
 
     .. math::
 
-        \braket{\Psi | \Psi} - 1 = 0
+        \left< \Psi \middle| \Psi \right> - 1 = 0
 
     However, this may be difficult to evaluate because :math:`\Psi` contains too many Slater
     determinants. Normalization with respect to a reference wavefunction (intermediate
@@ -21,7 +21,7 @@ class NormConstraint(BaseObjective):
 
     .. math::
 
-        \braket{\Phi | \Psi} - 1 = 0
+        \left<\Phi \middle| \Psi\right> - 1 = 0
 
     where :math:`\Phi` is some reference wavefunction.
 
@@ -107,10 +107,10 @@ class NormConstraint(BaseObjective):
     def objective(self, params):
         r"""Normalization constraint of the wavefunction.
 
-        .. math:
+        .. math::
 
-            \braket{\Phi | \Psi} - 1
-            &= \sum_{\mathbf{m} \in S} f^*(\mathbf{m}) \braket{\mathbf{m} | \Psi} - 1
+            \left< \Phi \middle| \Psi \right> - 1
+            = \sum_{\mathbf{m} \in S} f^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right> - 1
 
         where :math:`S` is a set of Slater determinants that are used to build :math:`\Phi`. Then,
         the vector of Slate determinants :math:`[\mathbf{m}]`, is denoted with `ref_sds` and the
@@ -150,12 +150,13 @@ class NormConstraint(BaseObjective):
     def gradient(self, params):
         r"""Gradient of the normalization constraint of the wavefunction.
 
-        .. math:
+        .. math::
 
-            \frac{d}{dx} (\braket{\Phi | \Psi} - 1)
-            &= \frac{d}{dx} \braket{\Phi | \Psi}\
-            &= \sum_{\mathbf{m} \in S} \frac{d}{dx} f^*(\mathbf{m}) \braket{\mathbf{m} | \Psi} +
-            f^*(\mathbf{m}) \frac{d}{dx} \braket{\mathbf{m} | \Psi}
+            \frac{d}{dx} (\left< \Phi \middle| \Psi \right> - 1)
+            &= \frac{d}{dx} \left< \Phi \middle| \Psi \right>\\
+            &= \sum_{\mathbf{m} \in S}
+               \frac{d}{dx} f^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right> +
+               f^*(\mathbf{m}) \frac{d}{dx} \left< \mathbf{m} \middle| \Psi \right>\\
 
         where :math:`S` is a set of Slater determinants that are used to build :math:`\Phi`. Then,
         the vector of Slate determinants :math:`[\mathbf{m}]`, is denoted with `ref_sds` and the

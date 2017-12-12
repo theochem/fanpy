@@ -285,13 +285,15 @@ class BaseHamiltonian(ParamContainer):
 
         .. math::
 
-            \braket{\Phi | \hat{H} | \Psi}
-            &= \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m}) \braket{\Phi | \hat{H} | \mathbf{m}}
+            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m})
+              \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
         :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\braket{\Phi | \hat{H} | \mathbf{m}}` is not zero, which are
-        the :math:`\Phi` and its first and second order excitations for a chemical Hamiltonian.
+        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
+        not zero, which are the :math:`\Phi` and its first and second order excitations for a
+        chemical Hamiltonian.
 
         Parameters
         ----------
@@ -325,7 +327,7 @@ class BaseHamiltonian(ParamContainer):
 
         .. math::
 
-            H_{ij} = \braket{\Phi_i | \hat{H} | \Phi_j}
+            H_{ij} = \left< \Phi_i \middle| \hat{H} \middle| \Phi_j \right>
 
         where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
         Slater determinants.

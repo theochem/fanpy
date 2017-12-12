@@ -20,7 +20,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
 
     .. math::
 
-        \braket{\Phi_1 | a_i a_j^\dagger | \Phi_2}
+        \left< \Phi_1 \middle| a_i a_j^\dagger \middle| \Phi_2 \right>
 
     Parameters
     ----------
@@ -94,7 +94,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 
     .. math::
 
-        \braket{\Phi_1 | a_i a_j a_k^\dagger a_l^\dagger | \Phi_2}
+        \left< \Phi_1 \middle| a_i a_j a_k^\dagger a_l^\dagger \middle| \Phi_2 \right>
 
     Parameters
     ----------
@@ -192,13 +192,13 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
 
     .. math::
 
-        \Gamma_{ijkl} = \braket{\Psi | a_i^\dagger a_k^\dagger a_l a_j | \Psi}
+        \Gamma_{ijkl} = \left< \Psi \middle| a_i^\dagger a_k^\dagger a_l a_j \middle| \Psi \right>
 
     Chemist's notation is also implemented
 
     .. math::
 
-        \Gamma_{ijkl} = \braket{\Psi | a_i^\dagger a_j^\dagger a_k a_l | \Psi}
+        \Gamma_{ijkl} = \left< \Psi \middle| a_i^\dagger a_j^\dagger a_k a_l \middle| \Psi \right>
 
     Parameters
     ----------

@@ -9,7 +9,8 @@ class TwoSidedEnergy(BaseSchrodinger):
 
     .. math::
 
-        E = \frac{\braket{\Psi | \hat{H} | \Psi}}{\braket{\Psi | \Psi}}
+        E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
+                 {\left< \Psi \middle| \Psi \right>}
 
     Since this equation may be expensive (wavefunction may require many Slater determinants), we can
     insert projection operators onto the wavefunction.
@@ -17,26 +18,30 @@ class TwoSidedEnergy(BaseSchrodinger):
     .. math::
 
         E = \frac{
-          \bra{\Psi}
+          \left< \Psi \right|
           \left(
-            \sum_{\mathbf{m}_1 \in S_{left}} \ket{\mathbf{m}_1} \bra{\mathbf{m}_1}
+            \sum_{\mathbf{m}_1 \in S_{left}}
+            \left| \mathbf{m}_1 \middle> \middle< \mathbf{m}_1 \right|
           \right)
           \hat{H}
           \left(
-            \sum_{\mathbf{m}_2 \in S_{right}} \ket{\mathbf{m}_2} \bra{\mathbf{m}_2}
+            \sum_{\mathbf{m}_2 \in S_{right}}
+            \left| \mathbf{m}_2 \middle> \middle< \mathbf{m}_2 \right|
           \right)
-          \ket{\Psi}
+          \left| \Psi \right>
         }{
-          \bra{\Psi}
+          \left< \Psi \right|
           \left(
-            \sum_{\mathbf{m}_3 \in S_{norm}} \ket{\mathbf{m}_3} \bra{\mathbf{m}_3}
+            \sum_{\mathbf{m}_3 \in S_{norm}}
+            \left| \mathbf{m}_3 \middle> \middle< \mathbf{m}_3 \right|
           \right)
-          \ket{\Psi}
+          \left| \Psi \right>
         }
 
     where :math:`S_{left}` and  :math:`S_{right}` are the projection spaces for the left and right
-    side of the integral :math:`\braket{\Psi | \hat{H} | \Psi}`, respectively, and :math:`S_{norm}`
-    is the projection space for the norm, :math:`\braket{\Psi | \Psi}`.
+    side of the integral :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`, respectively,
+    and :math:`S_{norm}` is the projection space for the norm,
+    :math:`\left< \Psi \middle| \Psi \right>`.
 
     Attributes
     ----------
@@ -56,14 +61,14 @@ class TwoSidedEnergy(BaseSchrodinger):
         selected.
     pspace_l : {tuple of int, None}
         States in the projection space of the left side of the integral
-        :math:`\braket{\Psi | \hat{H} | \Psi}`.
+        :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
         By default, the largest space is used.
     pspace_r : {tuple of int, None}
         States in the projection space of the right side of the integral
-        :math:`\braket{\Psi | \hat{H} | \Psi}`.
+        :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
         By default, the same space as `pspace_l` is used.
     pspace_n : {tuple of int, None}
-        States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+        States in the projection space of the norm :math:`\left< \Psi \middle| \Psi \right>`.
         By default, the same space as `pspace_l` is used.
 
     Properties
@@ -118,14 +123,14 @@ class TwoSidedEnergy(BaseSchrodinger):
             indexing array for the active parameters. See `ParamMask.__init__` for details.
         pspace_l : {tuple/list of int, None}
             States in the projection space of the left side of the integral
-            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
             By default, the largest space is used.
         pspace_r : {tuple/list of int, None}
             States in the projection space of the right side of the integral
-            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
             By default, the same space as `pspace_l` is used.
         pspace_n : {tuple/list of int, None}
-            States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+            States in the projection space of the norm :math:`\left< \Psi \middle| \Psi \right>`.
             By default, the same space as `pspace_l` is used.
 
         Raises
@@ -149,14 +154,14 @@ class TwoSidedEnergy(BaseSchrodinger):
         ----------
         pspace_l : {tuple/list of int, None}
             States in the projection space of the left side of the integral
-            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
             By default, the largest space is used.
         pspace_r : {tuple/list of int, None}
             States in the projection space of the right side of the integral
-            :math:`\braket{\Psi | \hat{H} | \Psi}`.
+            :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
             By default, the same space as `pspace_l` is used.
         pspace_n : {tuple/list of int, None}
-            States in the projection space of the norm :math:`\braket{\Psi | \Psi}`.
+            States in the projection space of the norm :math:`\left< \Psi \middle| \Psi \right>`.
             By default, the same space as `pspace_l` is used.
 
         Raises

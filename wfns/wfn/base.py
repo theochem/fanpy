@@ -449,7 +449,7 @@ class BaseWavefunction(ParamContainer):
 
         .. math::
 
-            \braket{\mathbf{m} | \Psi}
+            \left< \mathbf{m} \middle| \Psi \right>
 
         Parameters
         ----------
