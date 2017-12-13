@@ -29,7 +29,7 @@ Hamiltonian
 
 The Hamiltonian describes the system and the interactions within the system. Within a finite
 one-electron basis set, :math:`\{\phi_i\}`, we can represent the Hamiltonian explicitly in terms
-of the basis set using a projection operator:
+of the Slater determinants using a projection operator:
 
 .. math::
 
@@ -50,28 +50,66 @@ of the basis set using a projection operator:
        \hat{H}
        \left| \phi_{j_1} \dots \phi_{j_n} \middle> \middle< \phi_{j_1} \dots \phi_{j_n} \right|
 
-Fortunately, most Hamiltonians only contain terms with a small number of bodies (i.e. electrons)
-resulting in truncation in the summation. For example, a
-:class:`ChemicalHamiltonian <wfns.ham.chemical.ChemicalHamiltonian>` only contains up to bodies,
-so the sum truncates at the second order:
+Though this form of the Hamiltonian is infeasible (it requires a sum over all Fock space), it
+demonstrates that the Hamiltonian operator can be described as the integrals of the operator
+against different Slater determinants:
+:math:`\left< \phi_{i_1} \dots \phi_{i_n} \middle| \hat{H} \middle| \phi_{j_1} \dots \phi_{j_n} \right>`.
+With an orthonormal one-electron basis set, the corresponding Slater determinants are orthonormal to
+one another. (FIXME) Then, by the Slater-Condon rule, the Hamiltonian only needs to consider as many
+orbitals as the number of electrons that are involved in it. For example, a one-electron operator
+will only need to consider one-electron components of the Slater determinants. When the Hamiltonian
+involves operators of different numbers of electrons, the Hamiltonian can be separated into
+different components. In the :class:`ChemicalHamiltonian <wfns.ham.chemical.ChemicalHamiltonian>`,
+the Hamiltonian can be decomposoed into the one and two-electron operators:
+
+.. math::
+
+    \hat{H}_{one}
+    &= \left(
+           \sum_{i} a^\dagger_i \left< \phi_i \right|
+       \right) \hat{H}_{one} \left(
+           \sum_{j} \left| \phi_j \right> a_j
+       \right)\\
+    &= \sum_{ij} a^\dagger_i \left< \phi_i \middle| \hat{H}_{one} \middle| \phi_j \right> a_j\\
+    &= \sum_{ij} h_{ij} a^\dagger_i a_j
+
+.. math::
+
+    \hat{H}_{two}
+    &= \left(
+           \sum_{i<j} a^\dagger_i a^\dagger_j \left< \phi_i \phi_j \right|
+       \right) \hat{H}_{two} \left(
+           \sum_{k<l} \left| \phi_k \phi_l \right> a_l a_k
+       \right)\\
+    &= \sum_{i<j} \sum_{k<l} a^\dagger_i a^\dagger_j
+       \left< \phi_i \phi_j \middle| \hat{H}_{two} \middle| \phi_k \phi_l \right> a_l a_k\\
+    &= \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
 
 .. math::
 
     \hat{H}
-    &= \sum_{ij}
-       \left| \phi_i \middle> \middle< \phi_i \right| \hat{H}
-       \left| \phi_j \middle> \middle< \phi_j \right|
-       + \sum_{i<j}
-         \sum_{k<l} \left| \phi_i \phi_j \middle> \middle< \phi_i \phi_j \right| \hat{H}
-         \left| \phi_k \phi_l \middle> \middle< \phi_k \phi_l \right|\\
-    &= \sum_{ij} a^\dagger_i \left< \right| a_i \hat{H} a^\dagger_j \left| \right> a_j
-       + \sum_{i<j} \sum_{k<l} a^\dagger_i a^\dagger_j
-         \left< \right| a_j a_i \hat{H} a^\dagger_k a^\dagger_l \left| \right> a_l a_k\\
+    &= \hat{H}_{one} + \hat{H}_{two}\\
     &= \sum_{ij} h_{ij} a^\dagger_i a_j
        + \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
 
-where :math:`h_{ij} = \left< \right| a_i \hat{H} a^\dagger_j \left| \right>` and
-:math:`g_{ijkl} = \left< \right| a_j a_i \hat{H} a^\dagger_k a^\dagger_l \left| \right>`.
+where :math:`h_{ij} = \left< \phi_i \right| \hat{H}_{one} \left| \phi_j \right>` and
+:math:`g_{ijkl} = \left< \phi_i \phi_j \right| \hat{H}_{two} \left| \phi_k \phi_l \right>`. Note
+that the projection operators in the first Equation, i.e.
+
+.. math::
+
+    \sum_{i_1 < i_2 < \dots < i_n}
+    \left| \phi_{i_1} \dots \phi_{i_n} \middle> \middle< \phi_{i_1} \dots \phi_{i_n} \right|
+
+and
+
+.. math::
+
+    \sum_{j_1 < j_2 < \dots < j_n}
+    \left| \phi_{j_1} \dots \phi_{j_n} \middle> \middle< \phi_{j_1} \dots \phi_{j_n} \right|
+
+can be removed, because they can be interpreted as resolution of identity within the given
+one-electron basis set.
 
 Therefore, all Hamiltonians can be expressed within the one-electron basis set in a similar manner
 and we can construct a framework from which all possible Hamiltonian can be built. All Hamiltonians
