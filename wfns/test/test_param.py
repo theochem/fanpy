@@ -95,9 +95,10 @@ def test_parammask_load_mask_objective_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test._masks_container_params = {param1: np.array([0]),
-                                    param2: np.array([1]),
-                                    param3: np.array([2, 3])}
+    test._masks_container_params = collections.OrderedDict([(param1, np.array([0])),
+                                                            (param2, np.array([1])),
+                                                            (param3, np.array([2, 3]))])
+
     test.load_masks_objective_params()
     assert np.allclose(test._masks_objective_params[param1], np.array([True, False, False, False]))
     assert np.allclose(test._masks_objective_params[param2], np.array([False, True, False, False]))
