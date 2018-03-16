@@ -6,6 +6,7 @@ from wfns.backend import slater
 class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     r"""Hamiltonian that involves only the zero-seniority terms.
 
+    # FIXME: fix up eqns
     .. math::
 
         \def\i{\imath}
@@ -33,6 +34,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     ----------
     params : np.ndarray
         Significant elements of the anti-Hermitian matrix.
+    # FIXME: remove
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Type of the orbital used.
     energy_nuc_nuc : float
@@ -86,6 +88,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    # FIXME: remove orbtype
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
 
@@ -147,6 +150,7 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:
                 # FIXME: assumes that the orbitals are organized blockwise (alpha then beta)
+                # FIXME: use appropriate function from slater (need to add one)
                 sd_m = slater.excite(sd, i, i + nspatial, a + nspatial, a)
                 one_electron, coulomb, exchange = update_integrals(sd_m)
 

@@ -3,7 +3,7 @@ import numpy as np
 from wfns.backend import slater
 
 
-# TODO: store fraction of integrals
+# TODO: store fraction of integrals (using symmetry)
 # TODO: check that two electron integrals are in physicist's notation (check symmetry)
 # FIXME: move to Hamiltonian class
 class BaseIntegrals:
