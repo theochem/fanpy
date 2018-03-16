@@ -15,6 +15,7 @@ from wfns.backend import slater
 
 
 # FIXME: incredibly slow/bad approach
+# TODO: add density_wfn_wfn, density_wfn_sd, density_sd_sd?
 def add_one_density(matrices, spin_i, spin_j, val, orbtype):
     r"""Add some value to the appropriate density matrix element.
 
@@ -284,6 +285,7 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
             if len(right_diff) != len(left_diff):
                 continue
 
+            # FIXME: use symmetry instead
             # if they're the same
             elif len(left_diff) == 0:
                 for ind, i in enumerate(shared_indices):

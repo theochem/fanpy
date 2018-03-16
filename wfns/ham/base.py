@@ -5,7 +5,8 @@ from wfns.param import ParamContainer
 from wfns.backend.integrals import OneElectronIntegrals, TwoElectronIntegrals
 
 
-# FIXME: Add integrals, Remove orbtypes (create separate hamiltonian for each orbtype)
+# FIXME: Add integrals
+# FIXME: Remove orbtypes (create separate hamiltonian for each orbtype)
 class BaseHamiltonian(ParamContainer):
     r"""Hamiltonian for a Schrodinger equation.
 
@@ -87,11 +88,12 @@ class BaseHamiltonian(ParamContainer):
             Default is `0.0`.
 
         """
-        # FIXME: NEED TO SET params
+        # FIXME: add assign_params
         self.assign_orbtype(orbtype)
         self.assign_energy_nuc_nuc(energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
 
+    # FIXME: remove orbtype
     @property
     def nspin(self):
         """Return the number of spin orbitals.
@@ -109,6 +111,7 @@ class BaseHamiltonian(ParamContainer):
         else:
             raise NotImplementedError('Unsupported orbital type.')
 
+    # FIXME: remove integral
     @property
     def dtype(self):
         """Return the data type of the integrals.
@@ -122,6 +125,7 @@ class BaseHamiltonian(ParamContainer):
         return self.one_int.dtype
 
     # FIXME: getter/setter is not used b/c assign_integrals is a little complicated.
+    # FIXME: remove orbtype
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type.
 
@@ -219,6 +223,8 @@ class BaseHamiltonian(ParamContainer):
         np.ndarray and `two_int` can be a np.ndarray or a 1-tuple of np.ndarray.
 
         """
+        # FIXME: move integral checks here
+        # FIXME: explicitly test types
         one_int = OneElectronIntegrals(one_int)
         two_int = TwoElectronIntegrals(two_int)
         if one_int.num_orbs != two_int.num_orbs:
@@ -239,6 +245,7 @@ class BaseHamiltonian(ParamContainer):
         self.one_int = one_int
         self.two_int = two_int
 
+    # FIXME: add default behaviour (deviation from which results in error)
     def assign_params(self, params):
         """Assigns parameters of the Hamiltonian.
 
@@ -258,7 +265,9 @@ class BaseHamiltonian(ParamContainer):
             2-tuple/list of indices of the orbitals that will be rotated
         theta : float
             Angle with which the orbitals are rotated
+        # FIXME: space
         """
+        # FIXME: move rotate_jacobi method here
         self.one_int.rotate_jacobi(jacobi_indices, theta)
         self.two_int.rotate_jacobi(jacobi_indices, theta)
 
@@ -276,6 +285,7 @@ class BaseHamiltonian(ParamContainer):
         if len(matrix) == 1 and self.orbtype == 'unrestricted':
             matrix *= 2
 
+        # FIXME: move rotate_matrix method here
         self.one_int.rotate_matrix(matrix)
         self.two_int.rotate_matrix(matrix)
 

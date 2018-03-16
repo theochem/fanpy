@@ -97,9 +97,11 @@ class ChemicalHamiltonian(BaseHamiltonian):
 
         """
         super().__init__(one_int, two_int, orbtype=orbtype, energy_nuc_nuc=energy_nuc_nuc)
+        # FIXME: add cache?
         # attributes used in the orbital rotation (will be overwritten by only assign_params)
         self._old_integrals = (tuple(np.copy(i) for i in self.one_int.integrals),
                                tuple(np.copy(i) for i in self.two_int.integrals))
+        # FIXME: replace with better assign_params
         if params is None:
             # FIXME: remove restricted/unrestricted/generalized mess
             if self.orbtype in ('restricted', 'unrestricted'):
@@ -148,6 +150,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
             If parameters do not contain the correct number of elements.
 
         """
+        # FIXME: remove orbtype
         if self.orbtype != 'restricted':
             raise TypeError('Orbital rotation is only available with restricted orbitals.')
         num_params = self.nspatial * (self.nspatial - 1) / 2
@@ -165,6 +168,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
         # apply new transformation
         self.orb_rotate_matrix(unitary)
 
+    # FIXME: not needed if einsum used instead
+    # FIXME: not sure if three flotas need to be returned
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
                           exchange):
         r"""Update integrals for the given Slater determinant.
@@ -285,6 +290,8 @@ class ChemicalHamiltonian(BaseHamiltonian):
         return one_electron, coulomb, exchange
 
     # FIXME: need to speed up
+    # FIXME: rewrite using einsum (rather than stupid for loop)
+    # FIXME: make sure creators and annihilators follow convention
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
@@ -396,6 +403,7 @@ class ChemicalHamiltonian(BaseHamiltonian):
         # dividing by 2 is odd or even. (i.e. n //2 % 2)
         # However, the number of transpositions is equal for both Slater determinants, meaning that
         # the overall signature will not change when they both are reordered to the convention.
+        # FIXME: replace with appropriate method from slater (slater.sign_excite?)
         if sign is None:
             sign1 = reduce(operator.mul, (slater.sign_swap(sd1, i, 0) for i in diff_sd1), 1)
             sign2 = reduce(operator.mul, (slater.sign_swap(sd2, i, 0) for i in diff_sd2), 1)
