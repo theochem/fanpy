@@ -48,16 +48,16 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
         Parameters
         ----------
-        one_int : np.ndarray(K, K)
+        one_int : 2-tuple of np.ndarray(K, K)
             One electron integrals.
-        two_int : np.ndarray(K, K, K, K)
+        two_int : 3-tuple of np.ndarray(K, K, K, K)
             Two electron integrals.
         energy_nuc_nuc : {float, None}
             Nuclear nuclear repulsion energy.
             Default is `0.0`.
 
         """
-        BaseHamiltonian.__init__(self, energy_nuc_nuc=energy_nuc_nuc)
+        super().__init__(energy_nuc_nuc=energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
 
     @property

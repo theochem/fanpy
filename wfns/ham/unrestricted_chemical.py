@@ -5,7 +5,7 @@ from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 
-class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian, GeneralizedChemicalHamiltonian):
+class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system expressed wrt unrestricted orbitals.
 
     .. math::
@@ -61,21 +61,25 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian, GeneralizedCh
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    # inherit from GeneralizedChemicalHamiltonian
+    _update_integrals = GeneralizedChemicalHamiltonian._update_integrals
+    integrate_wfn_sd = GeneralizedChemicalHamiltonian.integrate_wfn_sd
+
     def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
         """Initialize the Hamiltonian.
 
         Parameters
         ----------
-        one_int : np.ndarray(K, K)
+        one_int : 2-tuple of np.ndarray(K, K)
             One electron integrals.
-        two_int : np.ndarray(K, K, K, K)
+        two_int : 3-tuple of np.ndarray(K, K, K, K)
             Two electron integrals.
         energy_nuc_nuc : {float, None}
             Nuclear nuclear repulsion energy.
             Default is `0.0`.
 
         """
-        BaseUnrestrictedHamiltonian.__init__(self, one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
+        super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
         self.assign_params(params=params)
 
