@@ -57,7 +57,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             Default is `0.0`.
 
         """
-        super().__init__(energy_nuc_nuc=energy_nuc_nuc)
+        BaseHamiltonian.__init__(self, energy_nuc_nuc=energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
 
     @property
