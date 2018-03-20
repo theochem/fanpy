@@ -204,6 +204,13 @@ def test_vir_indices():
     assert slater.vir_indices(0b10000, 1) == (0,)
 
 
+def test_shared_sd():
+    """Test slater.shared_sd."""
+    assert slater.shared_sd(0b001, 0b000) == 0
+    assert slater.shared_sd(0b111, 0b001) == 0b001
+    assert slater.shared_sd(0b111, 0b101) == 0b101
+
+
 def test_shared_orbs():
     """Test slater.shared_orbs."""
     assert slater.shared_orbs(0b001, 0b000) == ()
@@ -524,7 +531,8 @@ def test_sign_excite():
     assert slater.sign_excite(0b0011, [1, 0], [2]) == -1
     assert slater.sign_excite(0b0011, [0, 1], [1, 2]) == -1
     assert slater.sign_excite(0b0011, [0, 1], [2, 1]) == 1
-    assert slater.sign_excite(0b0011, [0, 1, 1], [2, 3]) is None
-    assert slater.sign_excite(0b0011, [0, 1], [2, 2, 3]) is None
-    assert slater.sign_excite(0b0011, [0, 2], [3]) is None
-    assert slater.sign_excite(0b0011, [0], [1]) is None
+
+    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 1, 1], [2, 3])
+    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 1], [2, 2, 3])
+    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 2], [3])
+    assert_raises(ValueError, slater.sign_excite, 0b0011, [0], [1])
