@@ -74,7 +74,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Default is `0.0`.
 
         """
-        BaseGeneralizedHamiltonian.__init__(self, one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
+        super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
         self.assign_params(params=params)
 

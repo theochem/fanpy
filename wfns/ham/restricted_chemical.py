@@ -5,7 +5,7 @@ from wfns.ham.restricted_base import BaseRestrictedHamiltonian
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 
-class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian, BaseRestrictedHamiltonian):
+class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system expressed wrt restricted orbitals.
 
     .. math::
@@ -63,6 +63,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian, BaseRestrict
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    # inherit from BaseRestrictedHamiltonian
+    nspin = BaseRestrictedHamiltonian.nspin
+
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
