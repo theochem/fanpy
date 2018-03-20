@@ -6,6 +6,9 @@ that the lower order excitations are smaller in value, the orbital indices are c
 right to the left. For example, `0b00110011` will have the occupied orbitals with indices 0, 1, 4,
 and 5.
 
+It will be **assumed** that the creators within a Slater determinant are ordered from smallest to
+largest from left to right. i.e. :math:`\ket{1, 3, 5} = a^\dagger_1 a^\dagger_3 a^\dagger_5 \ket{}`
+
 For most of the time, the orbitals are spin orbitals, and their spin is designated by splitting the
 orbitals into two blocks. If there are :math:`K` spatial orbitals, then the first block of :math:`K`
 spin orbitals are the alpha orbitals, and the second block of :math:`K` spin orbitals are the beta
@@ -50,6 +53,8 @@ excite(sd, *indices) : {gmpy2.mpz, None}
     Excite electrons from occupied orbitals to virtual orbitals.
 ground(nocc, norbs) : {gmpy2.mpz}
     Create a ground state Slater determinant.
+shared_sd(sd1, sd2) : gmpy2.mpz
+    Return indices of orbitals shared between two Slater determinants.
 shared_orbs(sd1, sd2) : tuple of ints
     Return indices of orbitals shared between two Slater determinants
 diff_orbs(sd1, sd2) : 2-tuple of tuple of ints
@@ -409,6 +414,25 @@ def ground(nocc, norbs):
     alpha_bits = gmpy2.bit_mask(nocc // 2 + nocc % 2)
     beta_bits = gmpy2.bit_mask(nocc // 2) << (norbs // 2)
     return alpha_bits | beta_bits
+
+
+def shared_sd(sd1, sd2):
+    """Return indices of orbitals shared between two Slater determinants.
+
+    Parameters
+    ----------
+    sd1 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+    sd2 : {int, gmpy2.mpz}
+        Integer that describes the occupation of a Slater determinant as a bitstring.
+
+    Returns
+    -------
+    shared_sd : {int, gmpy2.mpz}
+        Orbitals shared by the two Slater determinants
+
+    """
+    return sd1 & sd2
 
 
 def shared_orbs(sd1, sd2):
@@ -874,9 +898,9 @@ def sign_excite(sd, annihilators, creators):
         a^\dagger_{j_N} \dots a^\dagger_{j_1} a_{i_M} \dots a_{i_1} \left| \Phi \right>
         = sign \hat{E}_{i_1 \dots i_M}^{j_N \dots j_1} \left| \Phi \right>
 
-    where the set of annihilators, :math:`\{a_{i_1} \dots a_{i_M}\}`, are 'annihilators', the set of
-    annihilators, :math:`\{a^\dagger_{j_1} \dots a^\dagger_{j_M}\}`, are 'creators', and `sign` is
-    the signature resulting from these operations.
+    where :math:`\{a_{i_1} \dots a_{i_M}\}` is the set of annihilators,
+    :math:`\{a^\dagger_{j_1} \dots a^\dagger_{j_M}\}` is the set of creators and `sign` is the
+    signature resulting from these operations.
 
     Parameters
     ----------
@@ -903,18 +927,19 @@ def sign_excite(sd, annihilators, creators):
     """
     sign = 1
     for i in annihilators:
-        if occ(sd, i):
-            # FIXME: check that the creators in the Slater determinant are ordered from smallest to
-            #        largest
-            sign *= sign_swap(sd, i, 0)
-            sd = annihilate(sd, i)
-        else:
-            return None
+        if not occ(sd, i):
+            raise ValueError('Given Slater determinant cannot be excited using the given creators '
+                             'and annihilators.')
+        # move creator i in the Slater determinant to the front (cancelling out the annihilator)
+        sign *= sign_swap(sd, i, 0)
+        sd = annihilate(sd, i)
 
     for i in creators:
         sd = create(sd, i)
         if sd is None:
-            return None
+            raise ValueError('Given Slater determinant cannot be excited using the given creators '
+                             'and annihilators.')
+        # move creator i from the first poisition to its position
         sign *= sign_swap(sd, i, 0)
 
     return sign
