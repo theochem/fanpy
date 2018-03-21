@@ -295,6 +295,44 @@ def spatial_index(i, nspatial):
         return i - nspatial
 
 
+def spin_index(i, nspatial, spin='beta'):
+    """Return the spin orbital index that corresponds to the spatial orbital `i`.
+
+    Parameters
+    ----------
+    i : int
+        Spatial orbital index in the Slater determinant.
+    nspatial : int
+        Number of spatial orbitals.
+    spin : {'alpha', 'beta'}
+        Spin of the spin orbital.
+
+    Returns
+    -------
+    ind_spatial : int
+        Spatial orbital index that corresponds to the spin orbital `i`.
+
+    Raises
+    ------
+    ValueError
+        If `nspatial <= 0`.
+        If `spin` is not 'alpha' or 'beta'.
+
+    """
+    if not nspatial > 0:
+        raise ValueError('Number of spatial orbitals must be greater than zero.')
+    elif not 0 <= i < nspatial:
+        raise ValueError('Spatial orbital index must be greater than or equal to 0 and less than '
+                         'the number of spatial orbitals.')
+
+    if spin == 'alpha':
+        return i
+    elif spin == 'beta':
+        return i + nspatial
+    else:
+        raise ValueError('Spin of the orbital must be either alpha or beta.')
+
+
 def annihilate(sd, *indices):
     """Annihilate the occupied orbital `i` from a Slater determinant.
 

@@ -45,8 +45,27 @@ def test_spatial_index():
     assert slater.spatial_index(6, 4) == 2
     assert slater.spatial_index(7, 4) == 3
 
-    assert_raises(ValueError, slater.is_alpha, -1, 4)
-    assert_raises(ValueError, slater.is_alpha, 99, 4)
+    assert_raises(ValueError, slater.spatial_index, -1, 4)
+    assert_raises(ValueError, slater.spatial_index, 99, 4)
+
+
+def test_spin_index():
+    """Test slater.spin_index."""
+    assert slater.spin_index(0, 1, spin='alpha') == 0
+    assert slater.spin_index(0, 1, spin='beta') == 1
+
+    assert slater.spin_index(0, 4, spin='alpha') == 0
+    assert slater.spin_index(1, 4, spin='alpha') == 1
+    assert slater.spin_index(2, 4, spin='alpha') == 2
+    assert slater.spin_index(3, 4, spin='alpha') == 3
+    assert slater.spin_index(0, 4, spin='beta') == 4
+    assert slater.spin_index(1, 4, spin='beta') == 5
+    assert slater.spin_index(2, 4, spin='beta') == 6
+    assert slater.spin_index(3, 4, spin='beta') == 7
+
+    assert_raises(ValueError, slater.spin_index, -1, 4, 'alpha')
+    assert_raises(ValueError, slater.spin_index, 99, 4, 'alpha')
+    assert_raises(ValueError, slater.spin_index, 1, 4, 'generalized')
 
 
 def test_total_occ():
