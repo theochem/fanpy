@@ -1,9 +1,10 @@
-r"""Seniority-zero Hamiltonian object that interacts with the wavefunction."""
-from wfns.ham.chemical import ChemicalHamiltonian
+"""Seniority-zero Hamiltonian object that interacts with the wavefunction."""
+import numpy as np
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.backend import slater
 
 
-class SeniorityZeroHamiltonian(ChemicalHamiltonian):
+class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
     r"""Hamiltonian that involves only the zero-seniority terms.
 
     # FIXME: fix up eqns
@@ -34,9 +35,6 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
     ----------
     params : np.ndarray
         Significant elements of the anti-Hermitian matrix.
-    # FIXME: remove
-    orbtype : {'restricted', 'unrestricted', 'generalized'}
-        Type of the orbital used.
     energy_nuc_nuc : float
         Nuclear-nuclear repulsion energy.
     one_int : {1- or 2-tuple np.ndarray(K, K)}
@@ -88,24 +86,6 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
-    # FIXME: remove orbtype
-    def assign_orbtype(self, orbtype=None):
-        """Assign the orbital type.
-
-        Raises
-        ------
-        ValueError
-            If orbtype is not one of 'restricted' or 'unrestricted'.
-        NotImplementedError
-            If orbtype is 'generalized'
-
-        """
-        super().assign_orbtype(orbtype)
-        if orbtype == 'generalized':
-            raise NotImplementedError('Generalized orbitals are not supported in seniority-zero '
-                                      'Hamiltonian.')
-
-    # FIXME: need to speed up
     def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
@@ -128,9 +108,12 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         nspatial = self.nspin // 2
         sd = slater.internal_sd(sd)
-        sd_alpha, sd_beta = slater.split_spin(sd, nspatial)
-        occ_spatial_indices = slater.occ_indices(sd_alpha)
-        vir_spatial_indices = slater.vir_indices(sd_alpha, nspatial)
+        if slater.get_seniority(sd, nspatial) != 0:
+            return 0.0, 0.0, 0.0
+
+        sd_spatial = slater.split_spin(sd, nspatial)[0]
+        occ_spatial_indices = slater.occ_indices(sd_spatial)
+        vir_spatial_indices = slater.vir_indices(sd_spatial, nspatial)
 
         one_electron = 0.0
         coulomb = 0.0
@@ -143,15 +126,13 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
 
         one_electron, coulomb, exchange = update_integrals(sd)
 
-        # if slater determinant is not seniority zero
-        if sd_alpha != sd_beta:
-            return one_electron, coulomb, exchange
-
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:
-                # FIXME: assumes that the orbitals are organized blockwise (alpha then beta)
-                # FIXME: use appropriate function from slater (need to add one)
-                sd_m = slater.excite(sd, i, i + nspatial, a + nspatial, a)
+                sd_m = slater.excite(sd,
+                                     slater.spin_index(i, nspatial, 'alpha'),
+                                     slater.spin_index(i, nspatial, 'beta'),
+                                     slater.spin_index(a, nspatial, 'beta'),
+                                     slater.spin_index(a, nspatial, 'alpha'))
                 one_electron, coulomb, exchange = update_integrals(sd_m)
 
         return one_electron, coulomb, exchange
@@ -169,22 +150,89 @@ class SeniorityZeroHamiltonian(ChemicalHamiltonian):
         involving :math:`g_{ijkl}`, only the terms where :math:`\mathbf{m}` and :math:`\mathbf{n}`
         are different by at most single pair-wise excitation will contribute to the integral.
 
+        Parameters
+        ----------
+        sd1 : int
+            Seniority-zero Slater Determinant.
+        sd2 : int
+            Seniority-zero Slater Determinant.
+        sign : {1, -1, None}
+            Sign change resulting from cancelling out the orbitals shared between the two Slater
+            determinants.
+            Computes the sign if none is provided.
+            Make sure that the provided sign is correct. It will not be checked to see if its
+            correct.
+        deriv : {int, None}
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+            Default is no derivatization.
+
+        Returns
+        -------
+        one_electron : float
+            One-electron energy.
+        coulomb : float
+            Coulomb energy.
+        exchange : float
+            Exchange energy.
+
         Raises
         ------
         ValueError
             If `sign` is not `1`, `-1` or `None`.
+        NotImplementedError
+            If `deriv` is not `None`.
 
         """
-        nspatial = self.nspin // 2
+        if deriv is not None:
+            raise NotImplementedError('Orbital rotation is not implemented properly: you cannot '
+                                      'take the derivative of CI matrix elements with respect to '
+                                      'orbital rotation coefficients.')
+
+        nspatial = self.one_int[0].shape[0]
+
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
-        sd1_alpha, sd1_beta = slater.split_spin(sd1, nspatial)
-        sd2_alpha, sd2_beta = slater.split_spin(sd2, nspatial)
 
-        # if either of the two Slater determinants are not seniority zero and they're different
-        if (sd1_alpha != sd1_beta or sd2_alpha != sd2_beta) and sd1 != sd2:
+        # if the Slater determinants are not seniority zero
+        if not (slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0):
             return 0.0, 0.0, 0.0
 
-        # FIXME: up to 4 times slower for spatial orbitals (b/c looping over 2K instead of K)
-        # two Slater determinants are the same
-        return super().integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv)
+        sd1_spatial = slater.split_spin(sd1, nspatial)[0]
+        sd2_spatial = slater.split_spin(sd2, nspatial)[0]
+        shared_indices = slater.shared_orbs(sd1_spatial, sd2_spatial)
+        diff_sd1, diff_sd2 = slater.diff_orbs(sd1_spatial, sd2_spatial)
+
+        # if two Slater determinants do not have the same number of electrons
+        if len(diff_sd1) != len(diff_sd2):
+            return 0.0, 0.0, 0.0
+
+        diff_order = len(diff_sd1)
+        # if two Slater determinants are greater than double (spatial orbital) excitation away
+        if diff_order > 1:
+            return 0.0, 0.0, 0.0
+
+        if sign is None:
+            sign = 1
+        elif sign not in [1, -1]:
+            raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
+
+        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
+        # two sd's are the same
+        if diff_order == 0:
+            one_electron = 2 * np.sum(self.one_int[shared_indices, shared_indices])
+            coulomb = 2 * np.sum(np.triu(self.two_int[shared_indices, :, shared_indices, :]
+                                                     [:, shared_indices, shared_indices], k=1))
+            coulomb += np.sum(self.two_int[shared_indices, :, shared_indices, :]
+                                          [:, shared_indices, shared_indices])
+            exchange = -2 * np.sum(np.triu(self.two_int[shared_indices, :, :, shared_indices]
+                                                       [:, shared_indices, shared_indices], k=1))
+        # two sd's are different by double excitation
+        else:
+            a, = diff_sd1
+            b, = diff_sd2
+            spatial_a = slater.spatial_index(a, nspatial)
+            spatial_b = slater.spatial_index(b, nspatial)
+
+            coulomb = self.two_int[spatial_a, spatial_a, spatial_b, spatial_b]
+
+        return sign * one_electron, sign * coulomb, sign * exchange
