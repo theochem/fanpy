@@ -89,6 +89,19 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         self._ref_two_int = [np.copy(self.two_int[0]),
                              np.copy(self.two_int[1]), np.copy(self.two_int[2])]
 
+        # store away tensor contractions
+        indices = np.arange(self.one_int[0].shape[0])
+        self._ref_two_int_0_ijij = self.two_int[0][indices[:, None], indices,
+                                                   indices[:, None], indices]
+        self._ref_two_int_1_ijij = self.two_int[1][indices[:, None], indices,
+                                                   indices[:, None], indices]
+        self._ref_two_int_2_ijij = self.two_int[2][indices[:, None], indices,
+                                                   indices[:, None], indices]
+        self._ref_two_int_0_ijji = self.two_int[0][indices[:, None], indices,
+                                                   indices, indices[:, None]]
+        self._ref_two_int_2_ijji = self.two_int[2][indices[:, None], indices,
+                                                   indices, indices[:, None]]
+
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
 
@@ -194,8 +207,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
         shared_alpha_sd, shared_beta_sd = slater.split_spin(slater.shared_sd(sd1, sd2), nspatial)
-        shared_alpha = slater.occ_indices(shared_alpha_sd)
-        shared_beta = slater.occ_indices(shared_beta_sd)
+        shared_alpha = np.array(slater.occ_indices(shared_alpha_sd))
+        shared_beta = np.array(slater.occ_indices(shared_beta_sd))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
 
         # if two Slater determinants do not have the same number of electrons
@@ -214,18 +227,20 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         # two sd's are the same
         if diff_order == 0:
-            one_electron = sign * np.sum(self.one_int[0][shared_alpha, shared_alpha])
-            one_electron += sign * np.sum(self.one_int[1][shared_beta, shared_beta])
-            coulomb = np.sum(np.triu(self.two_int[0][shared_alpha, :, shared_alpha, :]
-                                                    [:, shared_alpha, shared_alpha], k=1))
-            coulomb += np.sum(np.triu(self.two_int[2][shared_beta, :, shared_beta, :]
-                                                     [:, shared_beta, shared_beta], k=1))
-            coulomb += np.sum(self.two_int[1][shared_alpha, :, shared_alpha, :]
-                                             [:, shared_beta, shared_beta])
-            exchange = -np.sum(np.triu(self.two_int[0][shared_alpha, :, :, shared_alpha]
-                                                      [:, shared_alpha, shared_alpha], k=1))
-            exchange += -np.sum(np.triu(self.two_int[1][shared_beta, :, :, shared_beta]
-                                                       [:, shared_beta, shared_beta], k=1))
+            if shared_alpha.size != 0:
+                one_electron += sign * np.sum(self.one_int[0][shared_alpha, shared_alpha])
+                coulomb += np.sum(np.triu(self._ref_two_int_0_ijij[shared_alpha[:, None],
+                                                                   shared_alpha], k=1))
+                exchange += -np.sum(np.triu(self._ref_two_int_0_ijji[shared_alpha[:, None],
+                                                                     shared_alpha], k=1))
+            if shared_beta.size != 0:
+                one_electron += sign * np.sum(self.one_int[1][shared_beta, shared_beta])
+                coulomb += np.sum(np.triu(self._ref_two_int_2_ijij[shared_beta[:, None],
+                                                                   shared_beta], k=1))
+                exchange += -np.sum(np.triu(self._ref_two_int_2_ijji[shared_beta[:, None],
+                                                                     shared_beta], k=1))
+            if shared_alpha.size != 0 and shared_beta.size != 0:
+                coulomb += np.sum(self._ref_two_int_1_ijij[shared_alpha[:, None], shared_beta])
 
         # two sd's are different by single excitation
         elif diff_order == 1:
@@ -238,16 +253,25 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 return 0.0, 0.0, 0.0
 
             if slater.is_alpha(a, nspatial):
-                one_electron = self.one_int[0][spatial_a, spatial_b]
-                coulomb = np.sum(self.two_int[0][shared_alpha, spatial_a, shared_alpha, spatial_b])
-                coulomb += np.sum(self.two_int[1][spatial_a, shared_beta, spatial_b, shared_beta])
-                exchange = -np.sum(self.two_int[0]
-                                               [shared_alpha, spatial_a, spatial_b, shared_alpha])
+                one_electron += self.one_int[0][spatial_a, spatial_b]
+                if shared_alpha.size != 0:
+                    coulomb += np.sum(self.two_int[0][shared_alpha, spatial_a,
+                                                      shared_alpha, spatial_b])
+                    exchange += -np.sum(self.two_int[0][shared_alpha, spatial_a,
+                                                        spatial_b, shared_alpha])
+                if shared_beta.size != 0:
+                    coulomb += np.sum(self.two_int[1][spatial_a, shared_beta,
+                                                      spatial_b, shared_beta])
             else:
-                one_electron = self.one_int[1][spatial_a, spatial_b]
-                coulomb = np.sum(self.two_int[1][shared_alpha, spatial_a, shared_alpha, spatial_b])
-                coulomb += np.sum(self.two_int[2][shared_beta, spatial_a, shared_beta, spatial_b])
-                exchange = -np.sum(self.two_int[2][shared_beta, spatial_a, spatial_b, shared_beta])
+                one_electron += self.one_int[1][spatial_a, spatial_b]
+                if shared_alpha.size != 0:
+                    coulomb += np.sum(self.two_int[1][shared_alpha, spatial_a,
+                                                      shared_alpha, spatial_b])
+                if shared_beta.size != 0:
+                    coulomb += np.sum(self.two_int[2][shared_beta, spatial_a,
+                                                      shared_beta, spatial_b])
+                    exchange += -np.sum(self.two_int[2][shared_beta, spatial_a,
+                                                        spatial_b, shared_beta])
 
         # two sd's are different by double excitation
         else:
