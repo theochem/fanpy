@@ -83,6 +83,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         self._ref_one_int = np.copy(self.one_int)
         self._ref_two_int = np.copy(self.two_int)
 
+        # store away tensor contractions
+        indices = np.arange(self.one_int.shape[0])
+        self._ref_two_int_ijij = self.two_int[indices[:, None], indices, indices[:, None], indices]
+        self._ref_two_int_ijji = self.two_int[indices[:, None], indices, indices, indices[:, None]]
+
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
 
@@ -300,7 +305,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
-        shared_indices = slater.shared_orbs(sd1, sd2)
+        shared_indices = np.array(slater.shared_orbs(sd1, sd2))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
@@ -319,10 +324,12 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # two sd's are the same
         if diff_order == 0:
             one_electron = np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = np.sum(np.triu(self.two_int[shared_indices, :, shared_indices, :]
-                                                 [:, shared_indices, shared_indices], k=1))
-            exchange = -np.sum(np.triu(self.two_int[shared_indices, :, :, shared_indices]
-                                                   [:, shared_indices, shared_indices], k=1))
+            coulomb = np.sum(np.triu(self._ref_two_int_ijij[shared_indices[:, None],
+                                                            shared_indices],
+                                     k=1))
+            exchange = -np.sum(np.triu(self._ref_two_int_ijji[shared_indices[:, None],
+                                                              shared_indices],
+                                       k=1))
 
         # two sd's are different by single excitation
         elif diff_order == 1:

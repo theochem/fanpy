@@ -116,6 +116,14 @@ def test_integrate_sd_sd_lih_631g_case():
     sd1 = 0b0000000001100000000111
     sd2 = 0b0000000001100100001001
     assert (0, two_int[1, 2, 3, 8], -two_int[1, 2, 8, 3]) == ham.integrate_sd_sd(sd1, sd2)
+    sd1 = 0b0000000000000000000011
+    sd2 = 0b0000000000000000000101
+    assert (one_int[1, 2],
+            two_int[0, 1, 0, 2], -two_int[0, 1, 2, 0]) == ham.integrate_sd_sd(sd1, sd2)
+    sd1 = 0b0000000001100000000000
+    sd2 = 0b0000000010100000000000
+    assert (one_int[1, 2],
+            two_int[0, 1, 0, 2], -two_int[0, 1, 2, 0]) == ham.integrate_sd_sd(sd1, sd2)
 
 
 @attr('slow')

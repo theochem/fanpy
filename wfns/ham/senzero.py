@@ -199,7 +199,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         sd1_spatial = slater.split_spin(sd1, nspatial)[0]
         sd2_spatial = slater.split_spin(sd2, nspatial)[0]
-        shared_indices = slater.shared_orbs(sd1_spatial, sd2_spatial)
+        shared_indices = np.array(slater.shared_orbs(sd1_spatial, sd2_spatial))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1_spatial, sd2_spatial)
 
         # if two Slater determinants do not have the same number of electrons
@@ -220,12 +220,11 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         # two sd's are the same
         if diff_order == 0:
             one_electron = 2 * np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = 2 * np.sum(np.triu(self.two_int[shared_indices, :, shared_indices, :]
-                                                     [:, shared_indices, shared_indices], k=1))
-            coulomb += np.sum(self.two_int[shared_indices, :, shared_indices, :]
-                                          [:, shared_indices, shared_indices])
-            exchange = -2 * np.sum(np.triu(self.two_int[shared_indices, :, :, shared_indices]
-                                                       [:, shared_indices, shared_indices], k=1))
+            coulomb = 2 * np.sum(np.triu(self._ref_two_int_ijij[shared_indices[:, None],
+                                                                shared_indices], k=1))
+            coulomb += np.sum(self._ref_two_int_ijij[shared_indices[:, None], shared_indices])
+            exchange = -2 * np.sum(np.triu(self._ref_two_int_ijji[shared_indices[:, None],
+                                                                  shared_indices], k=1))
         # two sd's are different by double excitation
         else:
             a, = diff_sd1
