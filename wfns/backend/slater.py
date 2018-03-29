@@ -205,6 +205,8 @@ def vir_indices(sd, norbs):
         Tuple of virtual orbital indices.
 
     """
+    # FIXME: there will almost always be more virtuals than occupieds (it will be faster to exclude
+    #        occupied from total number of orbitals)
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if sd is None or norbs <= 0:
         return ()
