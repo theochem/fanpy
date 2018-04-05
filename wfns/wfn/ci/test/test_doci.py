@@ -92,6 +92,9 @@ def test_doci_h4_hf_sto6g():
 
     obj = OneSidedEnergy(doci, ham, param_selection=[(doci, np.ones(doci.nparams, dtype=bool)),
                                                      (ham, np.ones(ham.nparams, dtype=bool))])
+
+    # FIXME: random number generator in cma must be seeded to ensure that the same energy is found
+    #        from the optimization (but this is system dependent)
     results = cma(obj, sigma0=0.01, options={'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
                                              'verb_filenameprefix': 'outcmaes', 'verb_log': 0})
     energy = results['function']

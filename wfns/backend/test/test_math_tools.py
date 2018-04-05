@@ -162,23 +162,24 @@ def test_unitary_matrix():
     assert np.allclose(unitary_matrix(np.zeros(3)), np.identity(3))
     assert np.allclose(unitary_matrix(np.zeros(6)), np.identity(4))
 
-    # FIXME: tests fail for some random numbers
-    np.random.seed(424242)
-
-    antiherm_elements = np.random.rand(1)
+    # test with "randomly" generated numbers
+    antiherm_elements = np.array([0.49683116])
     matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
     assert np.allclose(matrix.dot(matrix.T), np.identity(2))
     assert np.allclose(matrix.T.dot(matrix), np.identity(2))
 
-    antiherm_elements = np.random.rand(6)
+    antiherm_elements = np.array([0.49683116, 0.74836718, 0.32115768,
+                                  0.42125731, 0.75843053, 0.15089059])
     matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
     assert np.allclose(matrix.dot(matrix.T), np.identity(4))
     assert np.allclose(matrix.T.dot(matrix), np.identity(4))
 
-    antiherm_elements = np.random.rand(6) * 10
+    antiherm_elements = np.array([0.49683116, 0.74836718, 0.32115768,
+                                  0.42125731, 0.75843053, 0.15089059]) * 10
     matrix = unitary_matrix(antiherm_elements, norm_threshold=1e-8)
     assert np.allclose(matrix.dot(matrix.T), np.identity(4))
     assert np.allclose(matrix.T.dot(matrix), np.identity(4))
 
-    antiherm_elements = np.random.rand(6) * 14
+    antiherm_elements = np.array([0.49683116, 0.74836718, 0.32115768,
+                                  0.42125731, 0.75843053, 0.15089059]) * 14
     assert_raises(ValueError, unitary_matrix, antiherm_elements)
