@@ -6,7 +6,7 @@ from wfns.backend.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 class TestNonorthWavefunction(NonorthWavefunction):
@@ -453,14 +453,14 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
         doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01,
                                      -4.22775180e-02, 2.01842251e-01, 8.50414717e-04]))
 
-        ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
-                                  orbtype='restricted')
+        ham = RestrictedChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                                            np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')))
 
         # rotating hamiltonian using orb_rotate_matrix
         if wfn_type == 'doci':
             wfn = doci
             ham.orb_rotate_matrix(transform)
+            ham.cache_two_ints()
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == 'nonorth':
             wfn = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory,

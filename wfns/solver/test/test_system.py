@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 import wfns.solver.system as system
@@ -49,7 +49,7 @@ def test_least_squares():
     wfn.assign_nspin(4)
     wfn.assign_dtype(float)
     wfn.assign_params()
-    ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100])
 
     results = system.least_squares(objective)
@@ -69,7 +69,7 @@ def test_root():
     wfn.assign_nspin(4)
     wfn.assign_dtype(float)
     wfn.assign_params()
-    ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
 
     results = system.root(objective)

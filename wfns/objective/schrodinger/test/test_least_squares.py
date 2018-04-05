@@ -3,14 +3,14 @@ import numpy as np
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 def test_num_eqns():
     """Test LeastSquaresEquation.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     test = LeastSquaresEquations(wfn, ham)
     assert test.num_eqns == 1
 
@@ -18,8 +18,8 @@ def test_num_eqns():
 def test_leastsquares_objective():
     """Test LeastSquaresEquations.objective."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
     # check assignment
     test = LeastSquaresEquations(wfn, ham, eqn_weights=weights)
@@ -36,8 +36,8 @@ def test_leastsquares_objective():
 def test_leastsquares_gradient():
     """Test LeastSquaresEquations.gradient."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
     # check assignment
     test = LeastSquaresEquations(wfn, ham, eqn_weights=weights)

@@ -5,7 +5,7 @@ from wfns.param import ParamContainer, ParamMask
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 class TestSystemEquations(SystemEquations):
@@ -17,8 +17,8 @@ class TestSystemEquations(SystemEquations):
 def test_system_init_energy():
     """Test energy initialization in SystemEquations.__init__."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
 
     test = SystemEquations(wfn, ham, energy=None, energy_type='compute')
     assert isinstance(test.energy, ParamContainer)
@@ -172,8 +172,8 @@ def test_num_eqns():
 def test_system_objective():
     """Test SystemEquation.objective."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
     # check assignment
     test = SystemEquations(wfn, ham, eqn_weights=weights)
@@ -232,8 +232,8 @@ def test_system_objective():
 def test_system_jacobian():
     """Test SystemEquation.jacobian with only wavefunction parameters active."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
 
     # check assignment
@@ -303,8 +303,8 @@ def test_system_jacobian():
 def test_system_jacobian_active_ciref():
     """Test SystemEquation.jacobian with CIWavefunction reference with active parameters."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     weights = np.random.rand(7)
 
     ciref = CIWavefunction(2, 4)
