@@ -3,7 +3,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.tools import find_datafile
 from wfns.wfn.ci.cisd import CISD
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
 
 
@@ -51,7 +51,7 @@ def test_cisd_h2_631gdp():
     one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
     energies, _ = brute(cisd, ham)
@@ -83,7 +83,7 @@ def test_cisd_lih_631g():
     one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
     two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
     nuc_nuc = 0.995317634356
-    ham = ChemicalHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
     energies, _ = brute(cisd, ham)

@@ -3,7 +3,7 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 class TestTwoSidedEnergy(TwoSidedEnergy):
@@ -41,8 +41,8 @@ def test_twosided_energy_assign_pspaces():
 def test_num_eqns():
     """Test TwoSidedEnergy.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                              np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
+                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     test = TwoSidedEnergy(wfn, ham)
     assert test.num_eqns == 1
     assert_raises(TypeError, test.assign_pspaces, pspace_n=['0101'])
@@ -56,8 +56,8 @@ def test_twosided_energy_objective():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TwoSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
@@ -73,8 +73,8 @@ def test_twosided_energy_gradient():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TwoSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)

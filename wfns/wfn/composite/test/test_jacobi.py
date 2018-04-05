@@ -8,7 +8,7 @@ from wfns.wfn.composite.jacobi import JacobiWavefunction
 from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.ci.doci import DOCI
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
 
 
@@ -694,9 +694,10 @@ def test_jacobi_energy():
     def get_energy(theta, orbpair, wfn_type, expectation_type):
         """Get energy that correspond to the rotation of the given orbitals."""
         doci = DOCI(nelec, nspin)
-        ham = ChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')),
-                                  orbtype='restricted')
+        ham = RestrictedChemicalHamiltonian(
+                  np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
+                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+              )
         _, coeffs = brute(doci, ham)
         doci.assign_params(coeffs[:, 0].flatten())
         jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
@@ -712,10 +713,12 @@ def test_jacobi_energy():
         if wfn_type == 'doci':
             wfn = doci
             ham.orb_rotate_jacobi(orbpair, theta)
+            ham.cache_two_ints()
         # rotating hamiltonian using orb_rotate_matrix
         elif wfn_type == 'doci_full':
             wfn = doci
             ham.orb_rotate_matrix(jacobi.jacobi_rotation[0])
+            ham.cache_two_ints()
         # rotating wavefunction as a JacobiWavefunction
         elif wfn_type == 'jacobi':
             wfn = jacobi

@@ -5,19 +5,7 @@ import itertools as it
 from wfns.param import ParamContainer
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.base import BaseHamiltonian
-from wfns.ham.chemical import ChemicalHamiltonian
-
-
-class TestBaseHamiltonian(BaseHamiltonian):
-    """BaseHamiltonian with abstract methods defined."""
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        """Abstract method."""
-        pass
-
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
-        """Abstract method."""
-        pass
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 class TestBaseSchrodinger(BaseSchrodinger):
@@ -35,8 +23,8 @@ class TestBaseSchrodinger(BaseSchrodinger):
 def test_baseschrodinger_init():
     """Test BaseSchrodinger.__init__."""
     wfn = CIWavefunction(2, 4)
-    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     assert_raises(TypeError, TestBaseSchrodinger, ham, ham)
     assert_raises(TypeError, TestBaseSchrodinger, wfn, wfn)
     wfn = CIWavefunction(2, 4, dtype=complex)
@@ -58,8 +46,8 @@ def test_baseschrodinger_wrapped_get_overlap():
     """Test BaseSchrodinger.wrapped_get_overlap."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = TestBaseHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_get_overlap(0b0101, deriv=None) == wfn.get_overlap(0b0101, deriv=None)
@@ -73,8 +61,8 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     """Test BaseSchrodinger.wrapped_integrate_wfn_sd."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
@@ -95,8 +83,8 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     """Test BaseSchrodinger.wrapped_integrate_sd_sd."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
@@ -111,8 +99,8 @@ def test_baseschrodinger_get_energy_one_proj():
     """Test BaseSchrodinger.get_energy_one_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham)
 
     sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
@@ -213,8 +201,8 @@ def test_baseschrodinger_get_energy_two_proj():
     """Test BaseSchrodinger.get_energy_two_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = ChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                              np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
+                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
     test = TestBaseSchrodinger(wfn, ham)
 
     sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]

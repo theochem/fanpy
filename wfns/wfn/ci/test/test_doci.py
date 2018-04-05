@@ -85,8 +85,9 @@ def test_doci_h4_hf_sto6g():
     # two_int = np.einsum('abkl,kc->abcl', two_int, orb_rot)
     # two_int = np.einsum('abcl,ld->abcd', two_int, orb_rot)
 
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc,
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc,
                                    params=np.random.rand(6))
+
     obj = OneSidedEnergy(doci, ham, param_selection=[(doci, np.ones(doci.nparams, dtype=bool)),
                                                      (ham, np.ones(ham.nparams, dtype=bool))])
     results = cma(obj, sigma0=0.01, options={'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
@@ -149,7 +150,7 @@ def test_doci_h2_hf_631gdp():
     # two_int = np.einsum('abkl,kc->abcl', two_int, orb_rot)
     # two_int = np.einsum('abcl,ld->abcd', two_int, orb_rot)
 
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc,
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc,
                                    params=np.random.rand(45))
     obj = OneSidedEnergy(doci, ham, param_selection=[(doci, np.ones(doci.nparams, dtype=bool)),
                                                      (ham, np.ones(ham.nparams, dtype=bool))])

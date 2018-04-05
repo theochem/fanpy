@@ -2,7 +2,7 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
@@ -61,7 +61,7 @@ def test_cma():
     wfn.assign_nspin(4)
     wfn.assign_dtype(float)
     wfn.assign_params()
-    ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
     results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results['success']
@@ -87,7 +87,7 @@ def test_minimize():
     wfn.assign_nspin(4)
     wfn.assign_dtype(float)
     wfn.assign_params()
-    ham = ChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
     results = equation.minimize(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results['success']

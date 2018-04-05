@@ -68,7 +68,7 @@ def answer_apig_h2_sto6g():
     one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
 
     # FIXME: need normalize
@@ -97,9 +97,9 @@ def answer_apig_h2_sto6g():
     ax = fig.add_subplot(111)
     ax.scatter(ys, energies)
     print(sorted(zip(xs, ys, energies), key=lambda x: x[2])[:10])
-    ax2 = fig.add_subplot(1, 1, 1, projection='3d')
-    ax2.scatter(xs, ys, energies)
-    plt.show()
+    # ax2 = fig.add_subplot(1, 1, 1, projection='3d')
+    # ax2.scatter(xs, ys, energies)
+    # plt.show()
 
     # print out results
     # print(sorted(zip(xs, ys, energies), key=lambda x: x[2])[0])
@@ -150,7 +150,7 @@ def test_apig_h2_sto6g_ground():
     one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
 
     # Solve system of equations
@@ -176,7 +176,7 @@ def test_apig_h2_sto6g_excited():
     one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4, params=np.array([0.0, 1.0]))
 
     # Solve system of equations
@@ -196,7 +196,7 @@ def answer_apig_h2_631gdp():
     one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=float))
 
     objective = OneSidedEnergy(apig, ham)
@@ -225,7 +225,7 @@ def test_apig_h2_631gdp():
     one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20)
     full_sds = (0b00000000010000000001, 0b00000000100000000010, 0b00000001000000000100,
                 0b00000010000000001000, 0b00000100000000010000, 0b00001000000000100000,
@@ -249,7 +249,7 @@ def answer_apig_lih_sto6g():
     one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)
 
     objective = OneSidedEnergy(apig, ham)
@@ -279,7 +279,7 @@ def test_apig_lih_sto6g():
     one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)
     full_sds = [0b000011000011, 0b000101000101, 0b001001001001, 0b010001010001, 0b100001100001,
                 0b000110000110, 0b001010001010, 0b010010010010, 0b100010100010, 0b001100001100,

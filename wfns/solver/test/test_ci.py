@@ -2,11 +2,11 @@
 import numpy as np
 from nose.tools import assert_raises
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.chemical import ChemicalHamiltonian
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver import ci
 
 
-class TestChemicalHamiltonian(ChemicalHamiltonian):
+class TestChemicalHamiltonian(RestrictedChemicalHamiltonian):
     """Class that overwrite integrate_sd_sd for simplicity."""
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
         if sd1 > sd2:
