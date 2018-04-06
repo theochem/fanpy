@@ -197,7 +197,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
                                       np.sin(theta)*p_slice + np.cos(theta)*q_slice)
 
     def orb_rotate_matrix(self, matrix):
-        """Rotate orbitals with a transformation matrix.
+        r"""Rotate orbitals with a transformation matrix.
 
         .. math::
 
@@ -219,9 +219,9 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         """
         if not isinstance(matrix, np.ndarray):
             raise TypeError('Transformation matrix must be given as a numpy array.')
-        elif not (matrix.ndim == 2):
+        elif matrix.ndim != 2:
             raise ValueError('Transformation matrix must be two-dimensional.')
-        elif not (matrix.shape[0] == self.one_int.shape[0]):
+        elif matrix.shape[0] != self.one_int.shape[0]:
             raise ValueError('Shape of the transformation matrix must match with the shape of the '
                              'integrals.')
         # NOTE: don't need to check that matrix matches up with two_int b/c one_int and two_int have

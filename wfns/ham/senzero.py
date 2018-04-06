@@ -194,7 +194,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         sd2 = slater.internal_sd(sd2)
 
         # if the Slater determinants are not seniority zero
-        if not (slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0):
+        if not slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0:
             return 0.0, 0.0, 0.0
 
         sd1_spatial = slater.split_spin(sd1, nspatial)[0]

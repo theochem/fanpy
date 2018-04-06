@@ -331,11 +331,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # two sd's are the same
         if diff_order == 0:
-            one_electron = np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
-                                                               shared_indices],
-                                     k=1))
-            exchange = -np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
+            one_electron += np.sum(self.one_int[shared_indices, shared_indices])
+            coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
+                                                                shared_indices],
+                                      k=1))
+            exchange -= np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
                                                                  shared_indices],
                                        k=1))
 
@@ -343,15 +343,15 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         elif diff_order == 1:
             a, = diff_sd1
             b, = diff_sd2
-            one_electron = self.one_int[a, b]
-            coulomb = np.sum(self.two_int[shared_indices, a, shared_indices, b])
-            exchange = -np.sum(self.two_int[shared_indices, a, b, shared_indices])
+            one_electron += self.one_int[a, b]
+            coulomb += np.sum(self.two_int[shared_indices, a, shared_indices, b])
+            exchange -= np.sum(self.two_int[shared_indices, a, b, shared_indices])
 
         # two sd's are different by double excitation
         else:
             a, b = diff_sd1
             c, d = diff_sd2
-            coulomb = self.two_int[a, b, c, d]
-            exchange = -self.two_int[a, b, d, c]
+            coulomb += self.two_int[a, b, c, d]
+            exchange -= self.two_int[a, b, d, c]
 
         return sign * one_electron, sign * coulomb, sign * exchange
