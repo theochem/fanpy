@@ -151,15 +151,15 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 one_electron += np.sum(self.one_int[shared_alpha, shared_alpha])
                 coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_alpha[:, None],
                                                                     shared_alpha], k=1))
-                exchange += -np.sum(np.triu(self._cached_two_int_ijji[shared_alpha[:, None],
-                                                                      shared_alpha], k=1))
+                exchange -= np.sum(np.triu(self._cached_two_int_ijji[shared_alpha[:, None],
+                                                                     shared_alpha], k=1))
             if shared_beta.size != 0:
                 one_electron += np.sum(self.one_int[shared_beta, shared_beta])
                 coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_beta[:, None],
                                                                     shared_beta],
                                           k=1))
-                exchange += -np.sum(np.triu(self._cached_two_int_ijji[shared_beta[:, None],
-                                                                      shared_beta], k=1))
+                exchange -= np.sum(np.triu(self._cached_two_int_ijji[shared_beta[:, None],
+                                                                     shared_beta], k=1))
             if shared_alpha.size != 0 and shared_beta.size != 0:
                 coulomb += np.sum(self._cached_two_int_ijij[shared_alpha[:, None], shared_beta])
 
@@ -174,16 +174,16 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             if slater.is_alpha(a, nspatial) != slater.is_alpha(b, nspatial):
                 return 0.0, 0.0, 0.0
 
-            one_electron = self.one_int[spatial_a, spatial_b]
+            one_electron += self.one_int[spatial_a, spatial_b]
             if shared_alpha.size != 0:
                 coulomb += np.sum(self.two_int[shared_alpha, spatial_a, shared_alpha, spatial_b])
                 if slater.is_alpha(a, nspatial):
-                    exchange += -np.sum(self.two_int[shared_alpha, spatial_a,
-                                                     spatial_b, shared_alpha])
+                    exchange -= np.sum(self.two_int[shared_alpha, spatial_a,
+                                                    spatial_b, shared_alpha])
             if shared_beta.size != 0:
                 coulomb += np.sum(self.two_int[shared_beta, spatial_a, shared_beta, spatial_b])
                 if not slater.is_alpha(a, nspatial):
-                    exchange = -np.sum(self.two_int[shared_beta, spatial_a, spatial_b, shared_beta])
+                    exchange -= np.sum(self.two_int[shared_beta, spatial_a, spatial_b, shared_beta])
 
         # two sd's are different by double excitation
         else:
@@ -197,9 +197,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
             if (slater.is_alpha(b, nspatial) == slater.is_alpha(d, nspatial) and
                     slater.is_alpha(a, nspatial) == slater.is_alpha(c, nspatial)):
-                coulomb = self.two_int[spatial_a, spatial_b, spatial_c, spatial_d]
+                coulomb += self.two_int[spatial_a, spatial_b, spatial_c, spatial_d]
             if (slater.is_alpha(b, nspatial) == slater.is_alpha(c, nspatial) and
                     slater.is_alpha(a, nspatial) == slater.is_alpha(d, nspatial)):
-                exchange = -self.two_int[spatial_a, spatial_b, spatial_d, spatial_c]
+                exchange -= self.two_int[spatial_a, spatial_b, spatial_d, spatial_c]
 
         return sign*one_electron, sign*coulomb, sign*exchange

@@ -245,7 +245,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                                              np.sin(theta)*p_slice + np.cos(theta)*q_slice)
 
     def orb_rotate_matrix(self, matrix):
-        """Rotate orbitals with a transformation matrix.
+        r"""Rotate orbitals with a transformation matrix.
 
         .. math::
 
@@ -258,7 +258,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             Transformation matrix.
             If two transformation matrices are given, the first transforms the alpha orbitals, and
             the second transforms the beta orbitals.
-            If only one transformation matrix is given, then the same transformation is applied tools
+            If only one transformation matrix is given, then the same transformation is applied to
             both the alpha and beta orbitals.
 
         Raises
