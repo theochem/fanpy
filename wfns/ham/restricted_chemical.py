@@ -149,18 +149,19 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         if diff_order == 0:
             if shared_alpha.size != 0:
                 one_electron += np.sum(self.one_int[shared_alpha, shared_alpha])
-                coulomb += np.sum(np.triu(self._ref_two_int_ijij[shared_alpha[:, None],
-                                                                 shared_alpha], k=1))
-                exchange += -np.sum(np.triu(self._ref_two_int_ijji[shared_alpha[:, None],
-                                                                   shared_alpha], k=1))
+                coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_alpha[:, None],
+                                                                    shared_alpha], k=1))
+                exchange += -np.sum(np.triu(self._cached_two_int_ijji[shared_alpha[:, None],
+                                                                      shared_alpha], k=1))
             if shared_beta.size != 0:
                 one_electron += np.sum(self.one_int[shared_beta, shared_beta])
-                coulomb += np.sum(np.triu(self._ref_two_int_ijij[shared_beta[:, None], shared_beta],
+                coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_beta[:, None],
+                                                                    shared_beta],
                                           k=1))
-                exchange += -np.sum(np.triu(self._ref_two_int_ijji[shared_beta[:, None],
-                                                                   shared_beta], k=1))
+                exchange += -np.sum(np.triu(self._cached_two_int_ijji[shared_beta[:, None],
+                                                                      shared_beta], k=1))
             if shared_alpha.size != 0 and shared_beta.size != 0:
-                coulomb += np.sum(self._ref_two_int_ijij[shared_alpha[:, None], shared_beta])
+                coulomb += np.sum(self._cached_two_int_ijij[shared_alpha[:, None], shared_beta])
 
         # two sd's are different by single excitation
         elif diff_order == 1:
