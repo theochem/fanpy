@@ -50,6 +50,28 @@ def test_set_ref_ints():
     assert np.allclose(test._ref_two_int, new_two_int)
 
 
+def test_cache_two_ints():
+    """Test GeneralizedChemicalHamiltonian.cache_two_ints."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    two_int_ijij = np.array([[5, 10], [15, 20]])
+    two_int_ijji = np.array([[5, 11], [14, 20]])
+
+    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    assert np.allclose(test._cached_two_int_ijij, two_int_ijij)
+    assert np.allclose(test._cached_two_int_ijji, two_int_ijji)
+
+    test.two_int = np.arange(21, 37).reshape(2, 2, 2, 2)
+    new_two_int_ijij = np.array([[21, 26], [31, 36]])
+    new_two_int_ijji = np.array([[21, 27], [30, 36]])
+    assert np.allclose(test._cached_two_int_ijij, two_int_ijij)
+    assert np.allclose(test._cached_two_int_ijji, two_int_ijji)
+
+    test.cache_two_ints()
+    assert np.allclose(test._cached_two_int_ijij, new_two_int_ijij)
+    assert np.allclose(test._cached_two_int_ijji, new_two_int_ijji)
+
+
 def test_assign_params():
     """Test GeneralizedChemicalHamiltonian.assign_params."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)

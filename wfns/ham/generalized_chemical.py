@@ -76,6 +76,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         """
         super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
+        self.cache_two_ints()
         self.assign_params(params=params)
 
     def set_ref_ints(self):
@@ -83,10 +84,14 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         self._ref_one_int = np.copy(self.one_int)
         self._ref_two_int = np.copy(self.two_int)
 
+    def cache_two_ints(self):
+        """Cache away contractions of the two electron integrals."""
         # store away tensor contractions
         indices = np.arange(self.one_int.shape[0])
-        self._ref_two_int_ijij = self.two_int[indices[:, None], indices, indices[:, None], indices]
-        self._ref_two_int_ijji = self.two_int[indices[:, None], indices, indices, indices[:, None]]
+        self._cached_two_int_ijij = self.two_int[indices[:, None], indices,
+                                                 indices[:, None], indices]
+        self._cached_two_int_ijji = self.two_int[indices[:, None], indices,
+                                                 indices, indices[:, None]]
 
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
@@ -126,6 +131,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # transform integrals
         self.orb_rotate_matrix(unitary)
+
+        # cache two electron integrals
+        self.cache_two_ints()
 
     def _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb,
                           exchange):
@@ -324,11 +332,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # two sd's are the same
         if diff_order == 0:
             one_electron = np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = np.sum(np.triu(self._ref_two_int_ijij[shared_indices[:, None],
-                                                            shared_indices],
+            coulomb = np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
+                                                               shared_indices],
                                      k=1))
-            exchange = -np.sum(np.triu(self._ref_two_int_ijji[shared_indices[:, None],
-                                                              shared_indices],
+            exchange = -np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
+                                                                 shared_indices],
                                        k=1))
 
         # two sd's are different by single excitation

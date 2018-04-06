@@ -220,11 +220,11 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         # two sd's are the same
         if diff_order == 0:
             one_electron = 2 * np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = 2 * np.sum(np.triu(self._ref_two_int_ijij[shared_indices[:, None],
-                                                                shared_indices], k=1))
-            coulomb += np.sum(self._ref_two_int_ijij[shared_indices[:, None], shared_indices])
-            exchange = -2 * np.sum(np.triu(self._ref_two_int_ijji[shared_indices[:, None],
-                                                                  shared_indices], k=1))
+            coulomb = 2 * np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
+                                                                   shared_indices], k=1))
+            coulomb += np.sum(self._cached_two_int_ijij[shared_indices[:, None], shared_indices])
+            exchange = -2 * np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
+                                                                     shared_indices], k=1))
         # two sd's are different by double excitation
         else:
             a, = diff_sd1

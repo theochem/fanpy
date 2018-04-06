@@ -89,18 +89,20 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         self._ref_two_int = [np.copy(self.two_int[0]),
                              np.copy(self.two_int[1]), np.copy(self.two_int[2])]
 
+    def cache_two_ints(self):
+        """Cache away contractions of the two electron integrals."""
         # store away tensor contractions
         indices = np.arange(self.one_int[0].shape[0])
-        self._ref_two_int_0_ijij = self.two_int[0][indices[:, None], indices,
-                                                   indices[:, None], indices]
-        self._ref_two_int_1_ijij = self.two_int[1][indices[:, None], indices,
-                                                   indices[:, None], indices]
-        self._ref_two_int_2_ijij = self.two_int[2][indices[:, None], indices,
-                                                   indices[:, None], indices]
-        self._ref_two_int_0_ijji = self.two_int[0][indices[:, None], indices,
-                                                   indices, indices[:, None]]
-        self._ref_two_int_2_ijji = self.two_int[2][indices[:, None], indices,
-                                                   indices, indices[:, None]]
+        self._cached_two_int_0_ijij = self.two_int[0][indices[:, None], indices,
+                                                      indices[:, None], indices]
+        self._cached_two_int_1_ijij = self.two_int[1][indices[:, None], indices,
+                                                      indices[:, None], indices]
+        self._cached_two_int_2_ijij = self.two_int[2][indices[:, None], indices,
+                                                      indices[:, None], indices]
+        self._cached_two_int_0_ijji = self.two_int[0][indices[:, None], indices,
+                                                      indices, indices[:, None]]
+        self._cached_two_int_2_ijji = self.two_int[2][indices[:, None], indices,
+                                                      indices, indices[:, None]]
 
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
@@ -145,6 +147,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         # transform integrals
         self.orb_rotate_matrix([unitary_alpha, unitary_beta])
+
+        # cache two electron integrals
+        self.cache_two_ints()
 
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
@@ -229,18 +234,18 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if diff_order == 0:
             if shared_alpha.size != 0:
                 one_electron += sign * np.sum(self.one_int[0][shared_alpha, shared_alpha])
-                coulomb += np.sum(np.triu(self._ref_two_int_0_ijij[shared_alpha[:, None],
-                                                                   shared_alpha], k=1))
-                exchange += -np.sum(np.triu(self._ref_two_int_0_ijji[shared_alpha[:, None],
-                                                                     shared_alpha], k=1))
+                coulomb += np.sum(np.triu(self._cached_two_int_0_ijij[shared_alpha[:, None],
+                                                                      shared_alpha], k=1))
+                exchange += -np.sum(np.triu(self._cached_two_int_0_ijji[shared_alpha[:, None],
+                                                                        shared_alpha], k=1))
             if shared_beta.size != 0:
                 one_electron += sign * np.sum(self.one_int[1][shared_beta, shared_beta])
-                coulomb += np.sum(np.triu(self._ref_two_int_2_ijij[shared_beta[:, None],
-                                                                   shared_beta], k=1))
-                exchange += -np.sum(np.triu(self._ref_two_int_2_ijji[shared_beta[:, None],
-                                                                     shared_beta], k=1))
+                coulomb += np.sum(np.triu(self._cached_two_int_2_ijij[shared_beta[:, None],
+                                                                      shared_beta], k=1))
+                exchange += -np.sum(np.triu(self._cached_two_int_2_ijji[shared_beta[:, None],
+                                                                        shared_beta], k=1))
             if shared_alpha.size != 0 and shared_beta.size != 0:
-                coulomb += np.sum(self._ref_two_int_1_ijij[shared_alpha[:, None], shared_beta])
+                coulomb += np.sum(self._cached_two_int_1_ijij[shared_alpha[:, None], shared_beta])
 
         # two sd's are different by single excitation
         elif diff_order == 1:
