@@ -261,20 +261,30 @@ class DeterminantRatio(BaseWavefunction):
 
         Notes
         -----
-        Depends on attribute `dimension`.
+        Depends on attribute `numerator_mask`.
 
         """
-        # get ground slater determinant
-        ground_sd = slater.ground(*self.matrix_shape)
-
-        # make matrices
-        matrix = np.zeros(self.matrix_shape, dtype=self.dtype)
         # NOTE: assume that same columns are selected for all matrices
         # NOTE: all of the rows are assumed to be selected when the columns are selected.
-        matrix[np.arange(self.matrix_shape[0]), self.get_columns(ground_sd, 0)] = 1
+
+        # get ground slater determinant
+        ground_sd = slater.ground(*self.matrix_shape)
+        columns = self.get_columns(ground_sd, 0)
+
+        # make matrix
+        matrix = np.zeros(self.matrix_shape, dtype=self.dtype)
+        matrix[np.arange(self.matrix_shape[0]), columns] = 1
+
+        # make denominator
+        denominator = np.copy(matrix)
+        indices = [i for i in range(self.matrix_shape[1]) if i not in columns]
+        denominator[:, indices] = np.random.rand(self.matrix_shape[0], len(indices))
+        denominator /= np.linalg.norm(denominator, axis=0)
 
         # flatten and join together
-        return np.hstack([matrix.flatten()] * self.num_matrices)
+        matrices = np.array([matrix] * self.num_matrices)
+        matrices[np.logical_not(self.numerator_mask)] = denominator
+        return matrices.flatten()
 
     # TODO: each matrix is assumed to have the same shape (nelec, nspin). It may need to be made
     #       more flexible (let them have different shape or let each matrix have different shapes

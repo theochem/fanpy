@@ -91,7 +91,17 @@ def test_template_params():
     test.nelec = 2
     test.nspin = 4
     test.numerator_mask = np.array([True, False, False])
-    assert np.allclose(test.template_params, np.array([1, 0, 0, 0, 0, 0, 1, 0] * 3))
+
+    matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
+    indices = np.array([True, False, True, False])
+    assert np.allclose(test.template_params[:8], matrix.flat)
+
+    template_params = test.template_params
+    template_matrix = template_params[8: 16].reshape(2, 4)
+    assert np.allclose(template_matrix[:, indices], matrix[:, indices])
+    assert np.allclose(np.linalg.norm(template_matrix[:, np.logical_not(indices)], axis=0), 1)
+
+    assert np.allclose(template_params[8: 16], template_params[16:])
 
 
 def test_assign_params():
@@ -102,7 +112,15 @@ def test_assign_params():
     test.nspin = 4
     test.numerator_mask = np.array([True, False, False])
     test.assign_params(params=None, add_noise=False)
-    assert np.allclose(test.params, np.array([1, 0, 0, 0, 0, 0, 1, 0] * 3))
+
+    # check if template is correct (cannot check directly because template changes with every call)
+    matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
+    indices = np.array([True, False, True, False])
+    assert np.allclose(test.params[:8], matrix.flat)
+    template_matrix = test.params[8: 16].reshape(2, 4)
+    assert np.allclose(template_matrix[:, indices], matrix[:, indices])
+    assert np.allclose(np.linalg.norm(template_matrix[:, np.logical_not(indices)], axis=0), 1)
+    assert np.allclose(test.params[16:], test.params[8: 16])
 
     params = np.array([1, 2, 3, 4, 5, 6, 7, 8] * 3, dtype=float)
     test.assign_params(params=params, add_noise=False)
