@@ -12,7 +12,7 @@ env:
     # PYPI_PASSWD
     # - secure: NOT_SUPPORTED
     - PROJECT_NAME=wfns
-    - GITHUB_REPO_NAME=quantumelephant/olsens
+    - GITHUB_REPO_NAME=quantumelephant/fanpy
     - CONDA_PKG_NAME_PY=wfns
     # paths for using horton and pyscf
     - HORTONPYTHON=$HOME/miniconda2/bin/python
