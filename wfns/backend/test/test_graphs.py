@@ -1,5 +1,6 @@
 """Test fors wfn.graphs."""
-from wfns.backend.graphs import generate_complete_pmatch, generate_biclique_pmatch
+from wfns.backend.graphs import (generate_complete_pmatch, generate_biclique_pmatch,
+                                 generate_unordered_partition)
 from wfns.backend.slater import sign_perm
 
 
@@ -113,3 +114,99 @@ def test_generate_biclique_pmatch():
     for pairing_scheme, sign in generate_biclique_pmatch(indices_one, indices_two):
         jumbled_indices = [j for i in pairing_scheme for j in i]
         assert sign == sign_perm(jumbled_indices, ordered_indices, is_decreasing=False)
+
+
+def test_unorderd_partition():
+    """Test wfn.backend.graphs.generate_unordered_partition."""
+    assert list(generate_unordered_partition([1], [(1, 1)])) == [[[1]]]
+
+    assert list(generate_unordered_partition([1, 2], [(2, 1)])) == [[[1, 2]]]
+    assert list(generate_unordered_partition([1, 2], [(1, 2)])) == [[[1], [2]]]
+
+    assert list(generate_unordered_partition([1, 2, 3], [(3, 1)])) == [[[1, 2, 3]]]
+    assert list(generate_unordered_partition([1, 2, 3], [(2, 1), (1, 1)])) == [[[1, 2], [3]],
+                                                                               [[1, 3], [2]],
+                                                                               [[2, 3], [1]]]
+    assert list(generate_unordered_partition([1, 2, 3], [(1, 3)])) == [[[1], [2], [3]]]
+
+    assert list(generate_unordered_partition([1, 2, 3, 4], [(4, 1)])) == [[[1, 2, 3, 4]]]
+    assert list(generate_unordered_partition([1, 2, 3, 4], [(3, 1), (1, 1)])) == [[[1, 2, 3], [4]],
+                                                                                  [[1, 2, 4], [3]],
+                                                                                  [[1, 3, 4], [2]],
+                                                                                  [[2, 3, 4], [1]]]
+    assert list(generate_unordered_partition([1, 2, 3, 4], [(2, 2)])) == [[[1, 2], [3, 4]],
+                                                                          [[1, 3], [2, 4]],
+                                                                          [[1, 4], [2, 3]]]
+    assert list(generate_unordered_partition([1, 2, 3, 4], [(1, 4)])) == [[[1], [2], [3], [4]]]
+
+    assert list(generate_unordered_partition([1], [(2, 1), (1, 2)])) == [[[1], [], []],
+                                                                         [[], [1], []]]
+    assert list(generate_unordered_partition([1], [(1, 2), (2, 1)])) == [[[1], [], []],
+                                                                         [[], [], [1]]]
+
+    assert list(generate_unordered_partition([1, 2], [(2, 1), (1, 2)])) == [[[1, 2], [], []],
+                                                                            [[1], [2], []],
+                                                                            [[2], [1], []],
+                                                                            [[], [1], [2]]]
+    assert list(generate_unordered_partition([1, 2], [(1, 2), (2, 1)])) == [[[1], [2], []],
+                                                                            [[1], [], [2]],
+                                                                            [[2], [], [1]],
+                                                                            [[], [], [1, 2]]]
+
+    assert list(generate_unordered_partition([1, 2, 3], [(2, 1), (1, 2)])) == [[[1, 2], [3], []],
+                                                                               [[1, 3], [2], []],
+                                                                               [[1], [2], [3]],
+                                                                               [[2, 3], [1], []],
+                                                                               [[2], [1], [3]],
+                                                                               [[3], [1], [2]]]
+    assert list(generate_unordered_partition([1, 2, 3], [(1, 2), (2, 1)])) == [[[1], [2], [3]],
+                                                                               [[1], [3], [2]],
+                                                                               [[1], [], [2, 3]],
+                                                                               [[2], [3], [1]],
+                                                                               [[2], [], [1, 3]],
+                                                                               [[3], [], [1, 2]]]
+
+    assert list(generate_unordered_partition([1, 2, 3, 4],
+                                             [(2, 1), (1, 2)])) == [[[1, 2], [3], [4]],
+                                                                    [[1, 3], [2], [4]],
+                                                                    [[1, 4], [2], [3]],
+                                                                    [[2, 3], [1], [4]],
+                                                                    [[2, 4], [1], [3]],
+                                                                    [[3, 4], [1], [2]]]
+    assert list(generate_unordered_partition([1, 2, 3, 4],
+                                             [(1, 2), (2, 1)])) == [[[1], [2], [3, 4]],
+                                                                    [[1], [3], [2, 4]],
+                                                                    [[1], [4], [2, 3]],
+                                                                    [[2], [3], [1, 4]],
+                                                                    [[2], [4], [1, 3]],
+                                                                    [[3], [4], [1, 2]]]
+
+
+def test_unorderd_partition_perfect_matching():
+    """Test wfn.backend.graphs.generate_unordered_partition for perfect matching."""
+    # 4 vertices
+    occ_indices = [0, 1, 3, 4]
+    answer = [[[0, 1], [3, 4]],
+              [[0, 3], [1, 4]],
+              [[0, 4], [1, 3]]]
+    assert answer == list(generate_unordered_partition(occ_indices, [(2, 2)]))
+
+    # 6 vertices
+    occ_indices = [0, 1, 3, 4, 6, 7]
+    answer = [[[0, 1], [3, 4], [6, 7]],
+              [[0, 1], [3, 6], [4, 7]],
+              [[0, 1], [3, 7], [4, 6]],
+              [[0, 3], [1, 4], [6, 7]],
+              [[0, 3], [1, 6], [4, 7]],
+              [[0, 3], [1, 7], [4, 6]],
+              [[0, 4], [1, 3], [6, 7]],
+              [[0, 6], [1, 3], [4, 7]],
+              [[0, 7], [1, 3], [4, 6]],
+              [[0, 4], [1, 6], [3, 7]],
+              [[0, 4], [1, 7], [3, 6]],
+              [[0, 6], [1, 4], [3, 7]],
+              [[0, 7], [1, 4], [3, 6]],
+              [[0, 6], [1, 7], [3, 4]],
+              [[0, 7], [1, 6], [3, 4]]]
+
+    assert answer == list(generate_unordered_partition(occ_indices, [(2, 3)]))
