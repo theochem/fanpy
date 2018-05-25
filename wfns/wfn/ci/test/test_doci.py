@@ -85,14 +85,15 @@ def test_doci_h4_hf_sto6g():
     # two_int = np.einsum('abkl,kc->abcl', two_int, orb_rot)
     # two_int = np.einsum('abcl,ld->abcd', two_int, orb_rot)
 
+    # NOTE: This works with random guess for the parameters most of the times but not always.
+    #       So a "good" initial guess is used to converge to a consistent result
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc,
-                                   params=np.random.rand(6))
+                                   params=np.array([0.5, 0.0, 0.0, 0.0, 0.0, 0.5]))
 
     obj = OneSidedEnergy(doci, ham, param_selection=[(doci, np.ones(doci.nparams, dtype=bool)),
                                                      (ham, np.ones(ham.nparams, dtype=bool))])
     results = cma(obj, sigma0=0.01, options={'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
-                                             'verb_filenameprefix': 'outcmaes', 'verb_log': 0,
-                                             'seed': 42})
+                                             'verb_filenameprefix': 'outcmaes', 'verb_log': 0})
     energy = results['function']
 
     # compare with number from Gaussian
