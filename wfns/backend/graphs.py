@@ -8,6 +8,8 @@ generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decreasi
     Generate all of the perfect matches of a complete bipartite (sub)graph.
 generate_complete_partitions_dumb(indices, dimensions)
     Generate all partitions with the given dimensions of a complete (sub)graph.
+int_partition_recursive(coins, num_coin_types, total)
+    Generates the combination of coins that results in the given total.
 
 """
 from wfns.backend.slater import sign_perm
@@ -231,3 +233,54 @@ def generate_unordered_partition(collection, bin_size_num):
 
             # add the last element to the selected bin
             yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin+1:]
+
+
+# FIXME: make this dynamic or store/cache some of the results on file
+def int_partition_recursive(coins, num_coin_types, total):
+    """Generates the combination of coins that results in the given total.
+
+    Known as the coin problem, we can find different ways of dividing up a given number (e.g. number
+    of electrons) as a sum of smaller numbers from a set (e.g. quasiparticles).
+
+    Parameters
+    ----------
+    coins : int
+        Values of the different coins that will be used to produce the total.
+        Should not have repetitions.
+        Should be ordered from smallest to largest.
+    num_coin_types : int
+        Number of different coins that can be used to produce the total.
+        If the number of different coins is less than the total number of coins, only the first
+        `num_coin_types` will be used.
+    total : int
+        Total sum of the coin values.
+
+    Yields
+
+    partition : list of int
+        List of coins that sum up to the total.
+
+    References
+    ----------
+    https://www.geeksforgeeks.org/dynamic-programming-set-7-coin-change/
+
+    """
+    # if total is zero
+    if total == 0:
+        yield []
+
+    # if total is less than zero
+    if total <= 0:
+        return
+
+    # if no coins can be used
+    if num_coin_types <= 0:
+        return
+
+    # include last coin
+    for partition in int_partition_recursive(coins,
+                                             num_coin_types,
+                                             total - coins[num_coin_types-1]):
+        yield [coins[num_coin_types-1]] + partition
+    # exclude last coin
+    yield from int_partition_recursive(coins, num_coin_types - 1, total)
