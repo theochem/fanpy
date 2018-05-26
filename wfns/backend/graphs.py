@@ -2,11 +2,14 @@ r"""Functions for constructing perfect matchings of a given graph.
 
 Functions
 ---------
-generate_complete_pmatch(indices)
-    Yields a perfect matching of a complete graph with given vertices, `indices`.
-generate_biclique_pmatch(indices_one, indices_two)
-    Yields a perfect matching of a complete bipartite graph with given the partitions, `indices_one`
-    and `indices_two`.
+generate_complete_pmatch(indices, sign=1)
+    Generate all of the perfect matches of a complete (sub)graph.
+generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decreasing=False)
+    Generate all of the perfect matches of a complete bipartite (sub)graph.
+generate_complete_partitions_dumb(indices, dimensions)
+    Generate all partitions with the given dimensions of a complete (sub)graph.
+int_partition_recursive(coins, num_coin_types, total)
+    Generates the combination of coins that results in the given total.
 
 """
 from wfns.backend.slater import sign_perm
@@ -144,3 +147,140 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
                     break
             else:
                 return
+
+
+# TODO: add sign for reordering the partitions back into original ordering?
+def generate_unordered_partition(collection, bin_size_num):
+    """Generate unordered partitions of the given collection into subsets of the given sizes.
+
+    We can think of the partition as distributing the given elements into bins. Each bin has a fixed
+    size and is full at the end of the distribution. In an unordered partition, the bins of the same
+    size are not distinguishable. Additionally, there is no ordering within each bin.
+
+    In order to avoid repeating the same partitions, we follow some conventions such that the
+    repeated partitions resulting from reordering are not possible.
+
+        1. Elements within a bin are ordered. For example, bin `[1, 2, 3]` has ordered elements
+           where as `[1, 3, 2]` does not.
+        2. First elements of bins of equal sizes are ordered. For example, the bins `[1, 4]` and
+           `[2, 3]` are ordered if `[[1, 4], [2, 3]]` but are unordered if `[[2, 4], [1, 4]]`.
+
+    Parameters
+    ----------
+    collection : list
+        List of elements that will be partitioned.
+    bin_size_num : list of 2-tuple of int
+        List of tuples that describe the size and the number of the bins.
+        First element of the tuple is the size of the bin.
+        Second element of the tuple is the number of bins of the given size.
+
+    Examples
+    --------
+    >>> unordered_partition([1, 2, 3], [(2, 1), (1, 1)])
+    [[[1, 2], [3]], [[1, 3], [2]], [[2, 3], [1]]]
+
+    """
+    if len(collection) == 0:
+        yield [[] for _, bin_size in bin_size_num for i in range(bin_size)]
+        return
+
+    last = collection[-1]
+    # loop over all of the partitions with N-1 items (last item omitted)
+    for prev_partition in generate_unordered_partition(collection[:-1], bin_size_num):
+        ind_bin = -1  # index of the bin with respect to the all of the bins
+        ind_size = 0  # index of the size of the bin
+        ind_bin_size = -1  # index of the bin with respect to the bin of this size
+        while ind_size < len(bin_size_num):
+            ind_bin += 1
+            ind_bin_size += 1
+            # if we run out of bins of the given size
+            if ind_bin_size == bin_size_num[ind_size][1]:
+                # continue to the next size
+                ind_size += 1
+                # reset ind_bin_size
+                ind_bin_size = 0
+                # break out of while loop if there are no more bins
+                if ind_size == len(bin_size_num):
+                    break
+
+            # select the bin
+            subset = prev_partition[ind_bin]
+
+            # ensure that the first elements from each subset is ordered
+            if len(subset) == 0:
+                # element can go into the empty subset/bin
+                yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin+1:]
+                # if there are more than empty bins of the same size
+                if bin_size_num[ind_size][1] > 1:
+                    # NOTE: If the subset/bin is empty, all subsequent subsets/bins of the same size
+                    #       must also be empty (because the bins are always filled from left to
+                    #       right)
+                    #       We can skip filling the bins of the same size because the bins of the
+                    #       same sizes are not distinguishable, i.e. unordered partition
+                    # skip to the next bin that has a different size
+                    ind_bin += bin_size_num[ind_size][1] - ind_bin_size - 1
+                    ind_size += 1
+                    ind_bin_size = -1
+                continue
+
+            # ensure that elements in each bin are ordered
+            if not subset[-1] < last:
+                continue
+
+            # ensure that the number of elements in each bin does not exceed limit
+            if not len(subset) < bin_size_num[ind_size][0]:
+                continue
+
+            # add the last element to the selected bin
+            yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin+1:]
+
+
+# FIXME: make this dynamic or store/cache some of the results on file
+def int_partition_recursive(coins, num_coin_types, total):
+    """Generates the combination of coins that results in the given total.
+
+    Known as the coin problem, we can find different ways of dividing up a given number (e.g. number
+    of electrons) as a sum of smaller numbers from a set (e.g. quasiparticles).
+
+    Parameters
+    ----------
+    coins : int
+        Values of the different coins that will be used to produce the total.
+        Should not have repetitions.
+        Should be ordered from smallest to largest.
+    num_coin_types : int
+        Number of different coins that can be used to produce the total.
+        If the number of different coins is less than the total number of coins, only the first
+        `num_coin_types` will be used.
+    total : int
+        Total sum of the coin values.
+
+    Yields
+
+    partition : list of int
+        List of coins that sum up to the total.
+
+    References
+    ----------
+    https://www.geeksforgeeks.org/dynamic-programming-set-7-coin-change/
+
+    """
+    # if total is zero
+    if total == 0:
+        yield []
+
+    # if total is less than zero
+    if total <= 0:
+        return
+
+    # if no coins can be used
+    if num_coin_types <= 0:
+        return
+
+    # include last coin
+    for partition in int_partition_recursive(coins,
+                                             num_coin_types,
+                                             total - coins[num_coin_types-1]):
+        yield [coins[num_coin_types-1]] + partition
+    # exclude last coin
+    yield from int_partition_recursive(coins, num_coin_types - 1, total)
