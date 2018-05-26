@@ -1,6 +1,6 @@
 """Test fors wfn.graphs."""
 from wfns.backend.graphs import (generate_complete_pmatch, generate_biclique_pmatch,
-                                 generate_unordered_partition)
+                                 generate_unordered_partition, int_partition_recursive)
 from wfns.backend.slater import sign_perm
 
 
@@ -210,3 +210,47 @@ def test_unorderd_partition_perfect_matching():
               [[0, 7], [1, 6], [3, 4]]]
 
     assert answer == list(generate_unordered_partition(occ_indices, [(2, 3)]))
+
+
+def test_int_partition_recursive():
+    """Test wfn.backend.graphs.int_partition_recursive."""
+    assert list(int_partition_recursive([1], 0, 1)) == []
+    assert list(int_partition_recursive([1], -1, 1)) == []
+
+    assert list(int_partition_recursive([1], 1, 0)) == [[]]
+    assert list(int_partition_recursive([1], 0, 0)) == [[]]
+    assert list(int_partition_recursive([1], -1, 0)) == [[]]
+
+    assert list(int_partition_recursive([1], 1, 1)) == [[1]]
+    assert list(int_partition_recursive([1], 1, 2)) == [[1, 1]]
+
+    assert list(int_partition_recursive([1, 2], 2, 2)) == [[2], [1, 1]]
+    assert list(int_partition_recursive([1, 2], 1, 2)) == [[1, 1]]
+    assert list(int_partition_recursive([1, 2], 0, 2)) == []
+
+    assert list(int_partition_recursive([1, 2, 3], 3, 3)) == [[3], [2, 1], [1, 1, 1]]
+    assert list(int_partition_recursive([2, 3], 2, 3)) == [[3]]
+    assert list(int_partition_recursive([1, 3], 2, 3)) == [[3], [1, 1, 1]]
+    assert list(int_partition_recursive([1, 2], 2, 3)) == [[2, 1], [1, 1, 1]]
+
+    assert list(int_partition_recursive([1, 2, 3, 4], 4, 4)) == [[4],
+                                                                 [3, 1],
+                                                                 [2, 2],
+                                                                 [2, 1, 1],
+                                                                 [1, 1, 1, 1]]
+    assert list(int_partition_recursive([1, 3, 4], 3, 4)) == [[4],
+                                                              [3, 1],
+                                                              [1, 1, 1, 1]]
+
+    # messing with the order of the coins results in different ordering
+    assert list(int_partition_recursive([3, 2, 1], 3, 3)) == [[1, 1, 1], [1, 2], [3]]
+    assert list(int_partition_recursive([4, 1, 2, 3], 4, 4)) == [[3, 1],
+                                                                 [2, 2],
+                                                                 [2, 1, 1],
+                                                                 [1, 1, 1, 1],
+                                                                 [4]]
+    assert list(int_partition_recursive([4, 3, 2, 1], 4, 4)) == [[1, 1, 1, 1],
+                                                                 [1, 1, 2],
+                                                                 [1, 3],
+                                                                 [2, 2],
+                                                                 [4]]
