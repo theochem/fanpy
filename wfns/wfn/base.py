@@ -116,19 +116,7 @@ class BaseWavefunction(ParamContainer):
             Number of parameters.
 
         """
-        return self.template_params.size
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return self.template_params.shape
+        return np.prod(self.params_shape)
 
     @property
     def spin(self):
@@ -357,7 +345,7 @@ class BaseWavefunction(ParamContainer):
         if self.memory == np.inf:
             memory = None
         else:
-            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+            memory = int((self.memory - 5 * 8 * self.nparams) / (self.nparams + 1))
 
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
@@ -454,6 +442,18 @@ class BaseWavefunction(ParamContainer):
                                  '`functools.lru_cache`') from error
 
     @abc.abstractproperty
+    def params_shape(self):
+        """Return the shape of the wavefunction parameters.
+
+        Returns
+        -------
+        params_shape : tuple of int
+            Shape of the parameters.
+
+        """
+        pass
+
+    @abc.abstractproperty
     def template_params(self):
         """Return the template of the parameters of the given wavefunction.
 
@@ -464,7 +464,7 @@ class BaseWavefunction(ParamContainer):
 
         Notes
         -----
-        May depend on other attributes or properties.
+        May depend on params_shape and other attributes/properties.
 
         """
         pass
