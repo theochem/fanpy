@@ -126,6 +126,22 @@ class CIWavefunction(BaseWavefunction):
         self.assign_params(params=params)
 
     @property
+    def params_shape(self):
+        """Return the shape of the wavefunction parameters.
+
+        Returns
+        -------
+        params_shape : tuple of int
+            Shape of the parameters.
+
+        Notes
+        -----
+        `CIWavefunction` instance must contain `sd_vec` to access this property.
+
+        """
+        return (len(self.sd_vec), )
+
+    @property
     def template_params(self):
         """Return the template of the parameters of the CI wavefunction.
 
@@ -141,7 +157,7 @@ class CIWavefunction(BaseWavefunction):
         `CIWavefunction` instance must contain `sd_vec` to access this property.
 
         """
-        params = np.zeros(len(self.sd_vec), dtype=self.dtype)
+        params = np.zeros(self.params_shape, dtype=self.dtype)
         params[0] = 1
         return params
 

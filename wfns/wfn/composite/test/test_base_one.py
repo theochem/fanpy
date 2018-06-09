@@ -26,6 +26,11 @@ class TestWavefunction(BaseWavefunction):
     def seniority(self):
         return self._seniority
 
+
+    @property
+    def params_shape(self):
+        return (10, 10)
+
     @property
     def template_params(self):
         return np.identity(10)

@@ -9,7 +9,7 @@ from wfns.wfn.geminal.rank2_approx import RankTwoApprox, full_to_rank2
 class TestRankTwoGeminal(RankTwoApprox, BaseGeminal):
     """RankTwoGeminal that skips initialization."""
     def __init__(self):
-        pass
+        self._cache_fns = {}
 
     def generate_possible_orbpairs(self, occ_indices):
         yield from APIG.generate_possible_orbpairs(self, occ_indices)

@@ -46,6 +46,7 @@ def test_apg_get_col_ind():
     for i, orbpair in enumerate(orbpairs):
         assert test.get_col_ind(orbpair) == i
 
+    assert test.get_col_ind((1, 0)) == 0
     assert_raises(ValueError, test.get_col_ind, (0, 10))
     assert_raises(ValueError, test.get_col_ind, (0, 0))
     assert_raises(ValueError, test.get_col_ind, (9, 10))
