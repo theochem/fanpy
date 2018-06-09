@@ -14,6 +14,10 @@ class TestWavefunction(BaseWavefunction):
         pass
 
     @property
+    def params_shape(self):
+        return (10, 10)
+
+    @property
     def template_params(self):
         return np.identity(10)
 
@@ -124,9 +128,20 @@ def test_assign_params():
     assert not np.allclose(np.real(test.params), np.identity(10))
     assert not np.allclose(np.imag(test.params), np.zeros((10, 10)))
 
-    # FIXME: hard to test because property of a class/instance cannot be overwritten easily
-    # test.template_params = np.array([[0.0]])
-    # test.assign_params(2)
+    # for testing one line of code
+    class TempTestWavefunction(TestWavefunction):
+        @property
+        def params_shape(self):
+            return (1, 1, 1)
+
+        @property
+        def template_params(self):
+            return np.array([[[0.0]]])
+
+    test = TempTestWavefunction()
+    test.assign_dtype(complex)
+    test.assign_params(2.0)
+    assert test.params.shape == (1, 1, 1)
 
 
 def test_init():
@@ -213,12 +228,6 @@ def test_nparams():
     """Test BaseWavefunction.nparams."""
     test = TestWavefunction()
     assert test.nparams == 100
-
-
-def test_params_shape():
-    """Test BaseWavefunction.params_shape."""
-    test = TestWavefunction()
-    assert test.params_shape == (10, 10)
 
 
 def test_spin():
