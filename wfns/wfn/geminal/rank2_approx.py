@@ -45,6 +45,18 @@ class RankTwoApprox:
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
+    @property
+    def params_shape(self):
+        """Return the shape of the wavefunction parameters.
+
+        Returns
+        -------
+        params_shape : tuple of int
+            Shape of the parameters.
+
+        """
+        return self.ngem + 2 * self.norbpair
+
     # FIXME: add constraints to parameters
     #        zetas should be less than 1
     #        lambda - epsilon should be greater than 1

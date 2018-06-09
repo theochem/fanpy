@@ -148,3 +148,4 @@ def test_get_overlap():
                 assert test.get_overlap(sd, deriv=i) == 1
             else:
                 assert test.get_overlap(sd, deriv=i) == 0
+    assert test.get_overlap(0b111111, deriv=None) == 0

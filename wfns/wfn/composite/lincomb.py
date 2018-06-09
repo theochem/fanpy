@@ -121,6 +121,18 @@ class LinearCombinationWavefunction(BaseWavefunction):
             return None
 
     @property
+    def params_shape(self):
+        """Return the shape of the wavefunction parameters.
+
+        Returns
+        -------
+        params_shape : tuple of int
+            Shape of the parameters.
+
+        """
+        return (len(self.wfns), )
+
+    @property
     def template_params(self):
         """Return the template parameters of the wavefunction.
 
@@ -137,7 +149,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Must have `wfns` defined.
 
         """
-        params = np.zeros(len(self.wfns), dtype=self.dtype)
+        params = np.zeros(self.params_shape, dtype=self.dtype)
         params[0] = 1.0
         return params
 

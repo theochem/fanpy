@@ -35,6 +35,10 @@ class TestWavefunction(BaseWavefunction):
         return self._seniority
 
     @property
+    def params_shape(self):
+        return (10, 10)
+
+    @property
     def template_params(self):
         return np.identity(10)
 
@@ -182,13 +186,13 @@ def test_nonorth_nparams():
 
     # restricted
     test.assign_params(np.random.rand(5, 6))
-    assert test.nparams == (30, )
+    assert test.nparams == 30
     # unrestricted
     test.assign_params([np.random.rand(5, 6), np.random.rand(5, 6)])
-    assert test.nparams == (30, 30)
+    assert test.nparams == 60
     # generalized
     test.assign_params(np.random.rand(10, 12))
-    assert test.nparams == (120, )
+    assert test.nparams == 120
 
 
 def test_nonorth_param_shape():
@@ -246,8 +250,137 @@ def test_nonorth_orbtype():
     assert_raises(NotImplementedError, lambda: test.orbtype)
 
 
-def test_nonorth_get_overlap():
-    """Test NonorthWavefunction.get_overap."""
+def test_nonorth_olp_generalized():
+    """Test NonorthWavefunction._olp for generalized orbitals."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
+    test.params = [np.arange(1, 17).reshape(4, 4)]
+    test.load_cache()
+    # 0b0101 uses [[1, 2, 3, 4],
+    #              [9, 10, 11, 12]]
+    assert np.isclose(test._olp(0b0101), ((1*10 - 2*9) * wfn_sd_coeff[0b0011] +
+                                          (1*11 - 3*9) * wfn_sd_coeff[0b0101] +
+                                          (1*12 - 4*9) * wfn_sd_coeff[0b1001] +
+                                          (2*11 - 3*10) * wfn_sd_coeff[0b0110] +
+                                          (2*12 - 4*10) * wfn_sd_coeff[0b1010] +
+                                          (3*12 - 4*11) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b0110 uses [[5, 6, 7, 8],
+    #              [9, 10, 11, 12]]
+    assert np.isclose(test._olp(0b0110), ((5*10 - 6*9) * wfn_sd_coeff[0b0011] +
+                                          (5*11 - 7*9) * wfn_sd_coeff[0b0101] +
+                                          (5*12 - 8*9) * wfn_sd_coeff[0b1001] +
+                                          (6*11 - 7*10) * wfn_sd_coeff[0b0110] +
+                                          (6*12 - 8*10) * wfn_sd_coeff[0b1010] +
+                                          (7*12 - 8*11) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b1100 uses [[9, 10, 11, 12],
+    #              [13, 14, 15, 16]]
+    assert np.isclose(test._olp(0b1100), ((9*14 - 10*13) * wfn_sd_coeff[0b0011] +
+                                          (9*15 - 11*13) * wfn_sd_coeff[0b0101] +
+                                          (9*16 - 12*13) * wfn_sd_coeff[0b1001] +
+                                          (10*15 - 11*14) * wfn_sd_coeff[0b0110] +
+                                          (10*16 - 12*14) * wfn_sd_coeff[0b1010] +
+                                          (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+
+
+def test_nonorth_olp_unrestricted():
+    """Test NonorthWavefunction._olp for unrestricted orbitals."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
+    test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
+    test.load_cache()
+    # 0b0101 uses [[1, 2, 0, 0],
+    #              [0, 0, 11, 12]]
+    assert np.isclose(test._olp(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
+                                          (1*11 - 0*0) * wfn_sd_coeff[0b0101] +
+                                          (1*12 - 0*0) * wfn_sd_coeff[0b1001] +
+                                          (2*11 - 0*0) * wfn_sd_coeff[0b0110] +
+                                          (2*12 - 0*0) * wfn_sd_coeff[0b1010] +
+                                          (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b0110 uses [[5, 6, 0, 0],
+    #              [0, 0, 11, 12]]
+    assert np.isclose(test._olp(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
+                                          (5*11 - 0*0) * wfn_sd_coeff[0b0101] +
+                                          (5*12 - 0*0) * wfn_sd_coeff[0b1001] +
+                                          (6*11 - 0*0) * wfn_sd_coeff[0b0110] +
+                                          (6*12 - 0*0) * wfn_sd_coeff[0b1010] +
+                                          (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b1100 uses [[0, 0, 11, 12],
+    #              [0, 0, 15, 16]]
+    assert np.isclose(test._olp(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
+                                          (0*15 - 11*0) * wfn_sd_coeff[0b0101] +
+                                          (0*16 - 12*0) * wfn_sd_coeff[0b1001] +
+                                          (0*15 - 11*0) * wfn_sd_coeff[0b0110] +
+                                          (0*16 - 12*0) * wfn_sd_coeff[0b1010] +
+                                          (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+
+
+def test_nonorth_olp_restricted():
+    """Test NonorthWavefunction._olp for restricted orbitals."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
+    test.params = [np.array([[1, 2], [5, 6]])]
+    test.load_cache()
+    # 0b0101 uses [[1, 2, 0, 0],
+    #              [0, 0, 1, 2]]
+    assert np.isclose(test._olp(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
+                                          (1*1 - 0*0) * wfn_sd_coeff[0b0101] +
+                                          (1*2 - 0*0) * wfn_sd_coeff[0b1001] +
+                                          (2*1 - 0*0) * wfn_sd_coeff[0b0110] +
+                                          (2*2 - 0*0) * wfn_sd_coeff[0b1010] +
+                                          (0*2 - 0*1) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b0110 uses [[5, 6, 0, 0],
+    #              [0, 0, 1, 2]]
+    assert np.isclose(test._olp(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
+                                          (5*1 - 0*0) * wfn_sd_coeff[0b0101] +
+                                          (5*2 - 0*0) * wfn_sd_coeff[0b1001] +
+                                          (6*1 - 0*0) * wfn_sd_coeff[0b0110] +
+                                          (6*2 - 0*0) * wfn_sd_coeff[0b1010] +
+                                          (0*1 - 0*2) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    # 0b1100 uses [[0, 0, 1, 2],
+    #              [0, 0, 5, 6]]
+    assert np.isclose(test._olp(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
+                                          (0*1 - 0*5) * wfn_sd_coeff[0b0101] +
+                                          (0*2 - 0*6) * wfn_sd_coeff[0b1001] +
+                                          (0*1 - 0*5) * wfn_sd_coeff[0b0110] +
+                                          (0*2 - 0*6) * wfn_sd_coeff[0b1010] +
+                                          (1*6 - 5*2) * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+
+
+def test_nonorth_olp_deriv_generalized():
+    """Test NonorthWavefunction._olp_deriv for generalized orbitals."""
     test = TestNonorthWavefunction()
     test.nelec = 2
     test.nspin = 4
@@ -263,65 +396,108 @@ def test_nonorth_get_overlap():
     test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0101), ((1*10 - 2*9) * wfn_sd_coeff[0b0011] +
-                                                 (1*11 - 3*9) * wfn_sd_coeff[0b0101] +
-                                                 (1*12 - 4*9) * wfn_sd_coeff[0b1001] +
-                                                 (2*11 - 3*10) * wfn_sd_coeff[0b0110] +
-                                                 (2*12 - 4*10) * wfn_sd_coeff[0b1010] +
-                                                 (3*12 - 4*11) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test._olp_deriv(0b0101, 0), (10 * wfn_sd_coeff[0b0011] +
+                                                   11 * wfn_sd_coeff[0b0101] +
+                                                   12 * wfn_sd_coeff[0b1001]),
                       rtol=0, atol=1e-12)
-    # 0b0110 uses [[5, 6, 7, 8],
-    #              [9, 10, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0110), ((5*10 - 6*9) * wfn_sd_coeff[0b0011] +
-                                                 (5*11 - 7*9) * wfn_sd_coeff[0b0101] +
-                                                 (5*12 - 8*9) * wfn_sd_coeff[0b1001] +
-                                                 (6*11 - 7*10) * wfn_sd_coeff[0b0110] +
-                                                 (6*12 - 8*10) * wfn_sd_coeff[0b1010] +
-                                                 (7*12 - 8*11) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
-    # 0b1100 uses [[9, 10, 11, 12],
-    #              [13, 14, 15, 16]]
-    assert np.isclose(test.get_overlap(0b1100), ((9*14 - 10*13) * wfn_sd_coeff[0b0011] +
-                                                 (9*15 - 11*13) * wfn_sd_coeff[0b0101] +
-                                                 (9*16 - 12*13) * wfn_sd_coeff[0b1001] +
-                                                 (10*15 - 11*14) * wfn_sd_coeff[0b0110] +
-                                                 (10*16 - 12*14) * wfn_sd_coeff[0b1010] +
-                                                 (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test._olp_deriv(0b0101, 6), 0, rtol=0, atol=1e-12)
+    assert np.isclose(test._olp_deriv(0b0101, 8),  (-2 * wfn_sd_coeff[0b0011] +
+                                                    -3 * wfn_sd_coeff[0b0101] +
+                                                    -4 * wfn_sd_coeff[0b1001]),
                       rtol=0, atol=1e-12)
 
-    # unrestricted
-    test.clear_cache()
+
+def test_nonorth_olp_deriv_unrestricted():
+    """Test NonorthWavefunction._olp_deriv for unrestricted orbitals."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
-                                                 (1*11 - 0*0) * wfn_sd_coeff[0b0101] +
-                                                 (1*12 - 0*0) * wfn_sd_coeff[0b1001] +
-                                                 (2*11 - 0*0) * wfn_sd_coeff[0b0110] +
-                                                 (2*12 - 0*0) * wfn_sd_coeff[0b1010] +
-                                                 (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test._olp_deriv(0b0101, 0), (0 * wfn_sd_coeff[0b0011] +
+                                                   11 * wfn_sd_coeff[0b0101] +
+                                                   12 * wfn_sd_coeff[0b1001]),
                       rtol=0, atol=1e-12)
-    # 0b0110 uses [[5, 6, 0, 0],
-    #              [0, 0, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
-                                                 (5*11 - 0*0) * wfn_sd_coeff[0b0101] +
-                                                 (5*12 - 0*0) * wfn_sd_coeff[0b1001] +
-                                                 (6*11 - 0*0) * wfn_sd_coeff[0b0110] +
-                                                 (6*12 - 0*0) * wfn_sd_coeff[0b1010] +
-                                                 (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test._olp_deriv(0b0101, 5), (1 * wfn_sd_coeff[0b1001] +
+                                                   2 * wfn_sd_coeff[0b1010] +
+                                                   0 * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+    assert np.isclose(test._olp_deriv(0b0101, 6), 0, rtol=0, atol=1e-12)
+    assert np.isclose(test._olp_deriv(0b0101, 5), (1 * wfn_sd_coeff[0b1001] +
+                                                   2 * wfn_sd_coeff[0b1010] +
+                                                   0 * wfn_sd_coeff[0b1100]),
                       rtol=0, atol=1e-12)
     # 0b1100 uses [[0, 0, 11, 12],
     #              [0, 0, 15, 16]]
-    assert np.isclose(test.get_overlap(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
-                                                 (0*15 - 11*0) * wfn_sd_coeff[0b0101] +
-                                                 (0*16 - 12*0) * wfn_sd_coeff[0b1001] +
-                                                 (0*15 - 11*0) * wfn_sd_coeff[0b0110] +
-                                                 (0*16 - 12*0) * wfn_sd_coeff[0b1010] +
-                                                 (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test._olp_deriv(0b1100, 6), -12 * wfn_sd_coeff[0b1100],
                       rtol=0, atol=1e-12)
-    # restricted
+
+    # check trivial
+    assert test._olp_deriv(0b1100, 0) == 0
+
+
+def test_nonorth_olp_deriv_restricted():
+    """Test NonorthWavefunction._olp_deriv for restricted orbitals."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
+    # restricted (one block)
     test.clear_cache()
+    test.params = [np.array([[1, 2], [5, 6]])]
+    test.load_cache()
+    # 0b0110 uses [[5, 6, 0, 0],
+    #              [0, 0, 1, 2]]
+    assert np.isclose(test._olp_deriv(0b0110, 0), (5 * wfn_sd_coeff[0b0101] +
+                                                   6 * wfn_sd_coeff[0b0110] +
+                                                   0 * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+
+    # restricted (two block)
+    # 0b0101 uses [[1, 2, 0, 0],
+    #              [0, 0, 1, 2]]
+    assert np.isclose(test._olp_deriv(0b0101, 0), (0 * wfn_sd_coeff[0b0011] +
+                                                   2*1 * wfn_sd_coeff[0b0101] +
+                                                   2 * wfn_sd_coeff[0b1001] +
+                                                   2 * wfn_sd_coeff[0b0110] +
+                                                   0 * wfn_sd_coeff[0b1100]),
+                      rtol=0, atol=1e-12)
+
+    # check trivial
+    assert test._olp_deriv(0b1010, 0) == 0
+    assert test._olp_deriv(0b1111, 0) == 0
+    print('x'*99)
+    assert test._olp_deriv(0b1111, 2) == 0
+
+
+def test_nonorth_get_overlap():
+    """Test NonorthWavefunction.get_overap."""
+    test = TestNonorthWavefunction()
+    test.nelec = 2
+    test.nspin = 4
+    test.dtype = np.float64
+    test.memory = 10
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test._cache_fns = {}
+    test.wfn.params = np.arange(1, 7)
+    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
+
+    # restricted
     test.params = [np.array([[1, 2], [5, 6]])]
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
@@ -335,95 +511,28 @@ def test_nonorth_get_overlap():
                       rtol=0, atol=1e-12)
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test.get_overlap(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
-                                                 (5*1 - 0*0) * wfn_sd_coeff[0b0101] +
-                                                 (5*2 - 0*0) * wfn_sd_coeff[0b1001] +
-                                                 (6*1 - 0*0) * wfn_sd_coeff[0b0110] +
-                                                 (6*2 - 0*0) * wfn_sd_coeff[0b1010] +
-                                                 (0*1 - 0*2) * wfn_sd_coeff[0b1100]),
+    assert np.isclose(test.get_overlap(0b0110, 0), (5 * wfn_sd_coeff[0b0101] +
+                                                    6 * wfn_sd_coeff[0b0110] +
+                                                    0 * wfn_sd_coeff[0b1100]),
                       rtol=0, atol=1e-12)
-    # 0b1100 uses [[0, 0, 1, 2],
-    #              [0, 0, 5, 6]]
-    assert np.isclose(test.get_overlap(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
-                                                 (0*1 - 0*5) * wfn_sd_coeff[0b0101] +
-                                                 (0*2 - 0*6) * wfn_sd_coeff[0b1001] +
-                                                 (0*1 - 0*5) * wfn_sd_coeff[0b0110] +
-                                                 (0*2 - 0*6) * wfn_sd_coeff[0b1010] +
-                                                 (1*6 - 5*2) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
-
-
-def test_nonorth_get_overlap_deriv():
-    """Test NonorthWavefunction.get_overap with derivatization option."""
-    test = TestNonorthWavefunction()
-    test.nelec = 2
-    test.nspin = 4
-    test.dtype = np.float64
-    test.memory = 10
-    test.assign_wfn(CIWavefunction(2, 4, memory=10))
-    test._cache_fns = {}
-    test.wfn.params = np.arange(1, 7)
-    wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
-
-    # generalized
-    test.params = [np.arange(1, 17).reshape(4, 4)]
-    test.load_cache()
-    # 0b0101 uses [[1, 2, 3, 4],
-    #              [9, 10, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (10 * wfn_sd_coeff[0b0011] +
-                                                          11 * wfn_sd_coeff[0b0101] +
-                                                          12 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
-    assert np.isclose(test.get_overlap(0b0101, deriv=6), 0, rtol=0, atol=1e-12)
-    assert np.isclose(test.get_overlap(0b0101, deriv=8),  (-2 * wfn_sd_coeff[0b0011] +
-                                                           -3 * wfn_sd_coeff[0b0101] +
-                                                           -4 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
+    assert test.get_overlap(0b0101, 8) == 0
+    assert test.get_overlap(0b0101, 2) == 0
 
     # unrestricted
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
     test.load_cache()
-    # 0b0101 uses [[1, 2, 0, 0],
-    #              [0, 0, 11, 12]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (0 * wfn_sd_coeff[0b0011] +
-                                                          11 * wfn_sd_coeff[0b0101] +
-                                                          12 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
-    assert np.isclose(test.get_overlap(0b0101, deriv=5), (1 * wfn_sd_coeff[0b1001] +
-                                                          2 * wfn_sd_coeff[0b1010] +
-                                                          0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
-    assert np.isclose(test.get_overlap(0b0101, deriv=6), 0, rtol=0, atol=1e-12)
-    assert np.isclose(test.get_overlap(0b0101, deriv=5), (1 * wfn_sd_coeff[0b1001] +
-                                                          2 * wfn_sd_coeff[0b1010] +
-                                                          0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
-    # 0b1100 uses [[0, 0, 11, 12],
-    #              [0, 0, 15, 16]]
-    assert np.isclose(test.get_overlap(0b1100, deriv=6), -12 * wfn_sd_coeff[0b1100],
-                      rtol=0, atol=1e-12)
+    assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
 
-    # restricted (one block)
+    # generalized
     test.clear_cache()
-    test.params = [np.array([[1, 2], [5, 6]])]
+    test.params = [np.arange(1, 17).reshape(4, 4)]
     test.load_cache()
-    # 0b0110 uses [[5, 6, 0, 0],
-    #              [0, 0, 1, 2]]
-    assert np.isclose(test.get_overlap(0b0110, deriv=0), (5 * wfn_sd_coeff[0b0101] +
-                                                          6 * wfn_sd_coeff[0b0110] +
-                                                          0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
 
-    # restricted (two block)
-    # 0b0101 uses [[1, 2, 0, 0],
-    #              [0, 0, 1, 2]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (0 * wfn_sd_coeff[0b0011] +
-                                                          2*1 * wfn_sd_coeff[0b0101] +
-                                                          2 * wfn_sd_coeff[0b1001] +
-                                                          2 * wfn_sd_coeff[0b0110] +
-                                                          0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    # trivial cases
+    assert_raises(ValueError, test.get_overlap, 0b0101, '1')
+    assert_raises(ValueError, test.get_overlap, 0b0101, -1)
 
 
 def test_nonorth_energy_unitary_transform_hamiltonian():

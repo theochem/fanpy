@@ -89,6 +89,7 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0010100101) == 3.0
     assert test.get_overlap(0b0000001111) == 0.0
     assert test.get_overlap(0b0110001100) == 0*4 + 1*3
+    assert test.get_overlap(0b1010001100) == 0
     # check derivatives
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
     assert test.get_overlap(0b0001100011, deriv=0) == 0
@@ -105,6 +106,7 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0110001100, deriv=3) == 1
     assert test.get_overlap(0b0110001100, deriv=4) == 0
     assert test.get_overlap(0b0110001100, deriv=99) == 0
+    assert_raises(TypeError, test.get_overlap, 0b0001100011, '0')
 
 
 def answer_ap1rog_h2_sto6g():

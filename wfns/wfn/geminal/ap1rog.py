@@ -1,5 +1,4 @@
 """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals wavefunction."""
-import functools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -140,6 +139,7 @@ class AP1roG(APIG):
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
+        self._cache_fns = {}
         self.load_cache()
 
     @property
@@ -262,100 +262,59 @@ class AP1roG(APIG):
         self.dict_reforbpair_ind = dict_reforbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
-    def load_cache(self):
-        """Load the functions whose values will be cached.
+    def _olp(self, sd):
+        """Calculate the overlap with the Slater determinant.
 
-        To minimize the cache size, the input is made as small as possible. Therefore, the cached
-        function is not a method of an instance (because the instance is an input) and the smallest
-        representation of the Slater determinant (an integer) is used as the only input. However,
-        the functions must access other properties/methods of the instance, so they are defined
-        within this method so that the instance is available within the namespace w/o use of
-        `global` or `local`.
+        Parameters
+        ----------
+        sd : gmpy2.mpz
+            Occupation vector of a Slater determinant given as a bitstring.
 
-        Since the bitstring is used to represent the Slater determinant, they need to be processed,
-        which may result in repeated processing depending on when the cached function is accessed.
-
-        It is assumed that the cached functions will not be used to calculate redundant results. All
-        simplifications that can be made is assumed to have already been made. For example, it is
-        assumed that the overlap derivatized with respect to a parameter that is not associated with
-        the given Slater determinant will never need to be evaluated because these conditions are
-        caught before calling the cached functions.
-
-        Notes
-        -----
-        Needs to access `memory` and `params`.
+        Returns
+        -------
+        olp : {float, complex}
+            Overlap of the current instance with the given Slater determinant.
 
         """
-        # assign memory allocated to cache
-        if self.memory == np.inf:
-            memory = None
-        else:
-            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+        # NOTE: Need to recreate spatial_ref_sd, inds_annihilated and inds_created
+        spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+        spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
+        orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
+        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
+                                     for i in orbs_annihilated])
+        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
+                                 for i in orbs_created])
 
-        # create function that will be cached
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp(sd):
-            """Calculate the overlap with the Slater determinant.
+        # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
+        return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
 
-            Parameters
-            ----------
-            sd : gmpy2.mpz
-                Occupation vector of a Slater determinant given as a bitstring.
+    def _olp_deriv(self, sd, deriv):
+        """Calculate the derivative of the overlap with the Slater determinant.
 
-            Returns
-            -------
-            olp : {float, complex}
-                Overlap of the current instance with the given Slater determinant.
+        Parameters
+        ----------
+        sd : gmpy2.mpz
+            Occupation vector of a Slater determinant given as a bitstring.
+        deriv : int
+            Index of the parameter with respect to which the overlap is derivatized.
 
-            """
-            # NOTE: Need to recreate spatial_ref_sd, inds_annihilated and inds_created
-            spatial_sd, _ = slater.split_spin(sd, self.nspatial)
-            spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
-            orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
-            inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                         for i in orbs_annihilated])
-            inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_created])
+        Returns
+        -------
+        olp : {float, complex}
+            Derivative of the overlap with respect to the given parameter.
 
-            # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
-            return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
+        """
+        spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+        spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
+        orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
+        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
+                                     for i in orbs_annihilated])
+        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
+                                 for i in orbs_created])
 
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp_deriv(sd, deriv):
-            """Calculate the derivative of the overlap with the Slater determinant.
-
-            Parameters
-            ----------
-            sd : gmpy2.mpz
-                Occupation vector of a Slater determinant given as a bitstring.
-            deriv : int
-                Index of the parameter with respect to which the overlap is derivatized.
-
-            Returns
-            -------
-            olp : {float, complex}
-                Derivative of the overlap with respect to the given parameter.
-
-            """
-            spatial_sd, _ = slater.split_spin(sd, self.nspatial)
-            spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
-            orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
-            inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                         for i in orbs_annihilated])
-            inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_created])
-
-            # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
-            return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
-                                          deriv=deriv)
-
-        # create cache
-        if not hasattr(self, '_cache_fns'):
-            self._cache_fns = {}
-
-        # store the cached function
-        self._cache_fns['overlap'] = _olp
-        self._cache_fns['overlap derivative'] = _olp_deriv
+        # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
+        return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
+                                      deriv=deriv)
 
     # FIXME: allow other pairing schemes.
     def get_overlap(self, sd, deriv=None):
@@ -410,10 +369,12 @@ class AP1roG(APIG):
 
             return self._cache_fns['overlap'](sd)
         # if derivatization
-        elif isinstance(deriv, (int, np.int64)):
-            if deriv >= self.nparams:
-                return 0.0
-            if inds_annihilated.size == inds_created.size == 0:
-                return 0.0
+        elif not isinstance(deriv, (int, np.int64)):
+            raise TypeError('Index for derivatization must be provided as an integer.')
 
-            return self._cache_fns['overlap derivative'](sd, deriv)
+        if deriv >= self.nparams:
+            return 0.0
+        if inds_annihilated.size == inds_created.size == 0:
+            return 0.0
+
+        return self._cache_fns['overlap derivative'](sd, deriv)

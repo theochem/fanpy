@@ -13,7 +13,7 @@ class TestBaseGeminal(BaseGeminal):
         if occ_indices == (0, 1, 2, 3):
             yield ((0, 1), (2, 3)), 1
         else:
-            raise NotImplementedError('Unsupported occupied indices')
+            yield (), 1
 
 
 def test_gem_assign_nelec():
@@ -135,8 +135,6 @@ def test_gem_template_params():
     np.allclose(test.template_params, np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                                 [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
                                                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
-    test.assign_ngem(4)
-    assert_raises(ValueError, lambda: test.template_params)
 
 
 def test_gem_assign_params():
@@ -174,6 +172,15 @@ def test_gem_assign_params():
     np.allclose(test.params, np.array([[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 4, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0]]))
+
+    test.assign_orbpairs({(0, 1): 0, (0, 2): 1, (0, 3): 2, (0, 4): 3, (0, 5): 4, (1, 2): 5,
+                          (1, 4): 6, (1, 5): 7, (2, 3): 8, (2, 4): 9, (2, 5): 10,
+                          (3, 4): 11, (3, 5): 12, (4, 5): 13})
+    test.assign_params()
+    test.assign_params(test2)
+    np.allclose(test.params, np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                       [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                       [0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
 
 
 def test_gem_get_col_ind():
@@ -267,6 +274,7 @@ def test_gem_get_overlap():
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     test.load_cache()
     assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
+    assert test.get_overlap(0b000111) == 0
     # check derivatives
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert test.get_overlap(0b001111, deriv=0) == 24*1 + 39*1
@@ -274,3 +282,7 @@ def test_gem_get_overlap():
     assert test.get_overlap(0b001111, deriv=9) == 15*1 + 30*1
     assert test.get_overlap(0b001111, deriv=15) == 9*1 + 39*1
     assert test.get_overlap(0b001111, deriv=39) == 0*1 + 15*1
+    assert test.get_overlap(0b000111, deriv=0) == 0
+    assert test.get_overlap(0b001111, deriv=45) == 0
+    assert test.get_overlap(0b001111, deriv=3) == 0
+    assert_raises(TypeError, test.get_overlap, 0b001111, '1')
