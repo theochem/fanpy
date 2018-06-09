@@ -80,6 +80,8 @@ def test_assign_memory():
     assert test.memory == 1e6 * 10
     test.assign_memory('20.1gb')
     assert test.memory == 1e9 * 20.1
+    assert_raises(TypeError, test.assign_memory, [])
+    assert_raises(ValueError, test.assign_memory, '20.1kb')
 
 
 def test_assign_params():
@@ -105,6 +107,7 @@ def test_assign_params():
     assert_raises(ValueError, test.assign_params, np.random.rand(10, 11))
     assert_raises(TypeError, test.assign_params, np.arange(100, dtype=int).reshape(10, 10))
     assert_raises(TypeError, test.assign_params, np.arange(100, dtype=complex).reshape(10, 10))
+    assert_raises(ValueError, test.assign_params, np.arange(100, dtype=float).reshape(2, 5, 2, 5))
 
     # check noise
     test = TestWavefunction()
@@ -121,6 +124,32 @@ def test_assign_params():
     assert not np.allclose(np.real(test.params), np.identity(10))
     assert not np.allclose(np.imag(test.params), np.zeros((10, 10)))
 
+    # FIXME: hard to test because property of a class/instance cannot be overwritten easily
+    # test.template_params = np.array([[0.0]])
+    # test.assign_params(2)
+
+
+def test_init():
+    """Test BaseWavefunction.__init__."""
+    test = TestWavefunction()
+    BaseWavefunction.__init__(test, 2, 10, dtype=float, memory=20)
+    assert test.nelec == 2
+    assert test.nspin == 10
+    assert test.dtype == np.float64
+    assert test.memory == 20
+
+
+def test_olp():
+    """Test BaseWavefunction._olp."""
+    test = TestWavefunction()
+    assert_raises(NotImplementedError, test._olp, 0b0101)
+
+
+def test_olp_deriv():
+    """Test BaseWavefunction._olp_deriv."""
+    test = TestWavefunction()
+    assert_raises(NotImplementedError, test._olp_deriv, 0b0101, 0)
+
 
 def test_load_cache():
     """Test BaseWavefunction.load_cache."""
@@ -132,6 +161,10 @@ def test_load_cache():
     assert hasattr(test, '_cache_fns')
     assert_raises(NotImplementedError, test._cache_fns['overlap'], 0)
     assert_raises(NotImplementedError, test._cache_fns['overlap derivative'], 0, 1)
+
+    test.memory = np.inf
+    test.load_cache()
+    assert test._cache_fns['overlap'].cache_info().maxsize is None
 
 
 def test_clear_cache():
@@ -186,3 +219,15 @@ def test_params_shape():
     """Test BaseWavefunction.params_shape."""
     test = TestWavefunction()
     assert test.params_shape == (10, 10)
+
+
+def test_spin():
+    """Test BaseWavefunction.spin"""
+    test = TestWavefunction()
+    assert test.spin is None
+
+
+def test_seniority():
+    """Test BaseWavefunction.seniority"""
+    test = TestWavefunction()
+    assert test.seniority is None

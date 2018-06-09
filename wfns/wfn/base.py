@@ -89,8 +89,10 @@ class BaseWavefunction(ParamContainer):
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
-        # create cache
-        self._cache_fns = {}
+        # _cache_fns and load_cache are not included because not every wavefunction will be caching
+        # the overlaps
+        # self._cache_fns = {}
+        # self.load_cache()
 
     @property
     def nspatial(self):
@@ -360,43 +362,67 @@ class BaseWavefunction(ParamContainer):
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp(sd):
-            """Calculate the overlap with the Slater determinant.
-
-            Parameters
-            ----------
-            sd : gmpy2.mpz
-                Occupation vector of a Slater determinant given as a bitstring.
-
-            Raises
-            ------
-            NotImplementedError
-                If called.
-
-            """
-            raise NotImplementedError
+            """cached _olp method without caching the instance."""
+            return self._olp(sd)
 
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp_deriv(sd, deriv):
-            """Calculate the derivative of the overlap with the Slater determinant.
-
-            Parameters
-            ----------
-            sd : gmpy2.mpz
-                Occupation vector of a Slater determinant given as a bitstring.
-            deriv : int
-                Index of the parameter with respect to which the overlap is derivatized.
-
-            Raises
-            ------
-            NotImplementedError
-                If called.
-
-            """
-            raise NotImplementedError
+            """cached _olp_deriv method without caching the instance."""
+            return self._olp_deriv(sd, deriv)
 
         # store the cached function
         self._cache_fns['overlap'] = _olp
         self._cache_fns['overlap derivative'] = _olp_deriv
+
+    def _olp(self, sd):
+        """Calculate the nontrivial overlap with the Slater determinant.
+
+        Parameters
+        ----------
+        sd : gmpy2.mpz
+            Occupation vector of a Slater determinant given as a bitstring.
+            Assumed to have the same number of electrons as the wavefunction.
+
+        Returns
+        -------
+        olp : {float, complex}
+            Overlap of the current instance with the given Slater determinant.
+
+        Notes
+        -----
+        Nontrivial overlap would be an overlap whose value must be computed rather than trivially
+        obtained by some set of rules (for example, a seniority zero wavefunction will have a zero
+        overlap with a nonseniority zero Slater determinant).
+
+        """
+        raise NotImplementedError
+
+    def _olp_deriv(self, sd, deriv):
+        """Calculate the nontrivial derivative of the overlap with the Slater determinant.
+
+        Parameters
+        ----------
+        sd : gmpy2.mpz
+            Occupation vector of a Slater determinant given as a bitstring.
+            Assumed to have the same number of electrons as the wavefunction.
+        deriv : int
+            Index of the parameter with respect to which the overlap is derivatized.
+            Assumed to correspond to the matrix elements that correspond to the given Slater
+            determinant.
+
+        Returns
+        -------
+        olp : {float, complex}
+            Derivative of the overlap with respect to the given parameter.
+
+        Notes
+        -----
+        Nontrivial derivative of the overlap would be a derivative that must be computed rather than
+        obtained by some set of rules (for example, derivative of the overlap with respect to a
+        parameter that is not involved in the overlap would be zero).
+
+        """
+        raise NotImplementedError
 
     def clear_cache(self, key=None):
         """Clear the cache.
@@ -468,6 +494,13 @@ class BaseWavefunction(ParamContainer):
         ------
         TypeError
             If given Slater determinant is not compatible with the format used internally.
+
+        Notes
+        -----
+        This method is different from `_olp` and `_olp_deriv` because it would do the necessary
+        checks to ensure that only the nontrivial arguments get passed to the `_olp` and
+        `_olp_deriv`. Since the outputs of `_olp` and `_olp_deriv` is cached, we can minimize the
+        number of values cached this way.
 
         """
         pass

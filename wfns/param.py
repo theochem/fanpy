@@ -349,7 +349,8 @@ class ParamMask(abc.ABC):
             new_params = container.params.ravel()
             new_params[sel] = params[self._masks_objective_params[container]]
             container.assign_params(new_params)
-            container.clear_cache()
+            if hasattr(container, '_cache_fns'):
+                container.clear_cache()
 
     def derivative_index(self, container, index):
         """Convert the index of the objective parameters to the index of the given container.
