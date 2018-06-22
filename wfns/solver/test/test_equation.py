@@ -1,4 +1,5 @@
 """Test wfns.solver.equation."""
+import os
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
@@ -83,6 +84,11 @@ def test_cma():
 
     assert_raises(TypeError, equation.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
     assert_raises(ValueError, equation.cma, SystemEquations(wfn, ham, refwfn=0b0011))
+
+    results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file='temp.npy')
+    test = np.load('temp.npy')
+    assert np.allclose(results['params'], test)
+    os.remove('temp.npy')
 
 
 def test_minimize():

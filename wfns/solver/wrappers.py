@@ -74,7 +74,7 @@ def wrap_scipy(func):
         output['internal'] = results
 
         if save_file != '':
-            np.save(save_file, objective.all_params)
+            np.save(save_file, output['params'])
 
         return output
     return new_func
@@ -145,7 +145,7 @@ def wrap_skopt(func):
         output['internal'] = results
 
         if save_file != '':
-            np.save(save_file, objective.all_params)
+            np.save(save_file, output['params'])
 
         return output
     return new_func
