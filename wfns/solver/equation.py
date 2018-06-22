@@ -92,7 +92,7 @@ def cma(objective, save_file='', **kwargs):
     output['internal'] = results
 
     if save_file != '':
-        np.save(save_file, objective.all_params)
+        np.save(save_file, output['params'])
 
     return output
 
