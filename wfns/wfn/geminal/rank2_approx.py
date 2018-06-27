@@ -78,8 +78,13 @@ class RankTwoApprox:
         Requires calculation. May be slow.
 
         """
-        # FIXME: this super causes problems (probably uses the wrong class)
-        template = super().template_params
+        # copied from BaseGeminal.template_params
+        # super().template_params is not called b/c BaseGeminal.template_params calls
+        # self.params_shape, which comes from RankTwoApprox
+        template = np.zeros(super().params_shape, dtype=self.dtype)
+        for i in range(self.ngem):
+            col_ind = self.get_col_ind((i, i+self.nspatial))
+            template[i, col_ind] += 1
         template += 0.0001*np.random.rand(*template.shape)
         # FIXME: fails a lot
         return full_to_rank2(template, rmsd=0.01)

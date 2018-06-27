@@ -37,6 +37,10 @@ class TestBaseWavefunction(BaseWavefunction):
             return 0
 
     @property
+    def params_shape(self):
+        return (2,)
+
+    @property
     def template_params(self):
         return np.array([0.0, 0.0])
 

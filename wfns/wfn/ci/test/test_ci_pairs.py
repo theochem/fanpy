@@ -56,7 +56,7 @@ def test_to_ap1rog_h2_sto6g_ground():
     one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     energies, coeffs = brute(cipairs, ham)
 
@@ -76,7 +76,7 @@ def test_to_ap1rog_lih_sto6g():
     one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
     two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
     nuc_nuc = 0.995317634356
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     energies, coeffs = brute(cipairs, ham)
     raise AssertionError('No reference for the CIPairs tests.')
@@ -97,7 +97,7 @@ def test_to_ap1rog_h4_sto6g():
     one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
     two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
     nuc_nuc = 2.70710678119
-    ham = SeniorityZeroHamiltonian(one_int, two_int, orbtype='restricted', energy_nuc_nuc=nuc_nuc)
+    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     energies, coeffs = brute(cipairs, ham)
     raise AssertionError('No reference for the CIPairs tests.')

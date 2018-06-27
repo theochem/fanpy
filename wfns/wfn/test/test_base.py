@@ -130,6 +130,7 @@ def test_assign_params():
 
     # for testing one line of code
     class TempTestWavefunction(TestWavefunction):
+        """Class for testing param_shape."""
         @property
         def params_shape(self):
             return (1, 1, 1)
