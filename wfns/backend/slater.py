@@ -1,4 +1,4 @@
-"""Collection of functions used to construct and manipulate Slater determinants.
+r"""Collection of functions used to construct and manipulate Slater determinants.
 
 Slater determinants are represented with bitstrings that describe their occupation. The `0` would
 correspond to an unoccupied orbital and the `1` would correspond to the occupied orbital. To ensure
