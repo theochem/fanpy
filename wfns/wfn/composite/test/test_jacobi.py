@@ -732,7 +732,8 @@ def test_jacobi_energy():
                   np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
                   np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
               )
-        _, coeffs = brute(doci, ham)
+        results = brute(doci, ham)
+        coeffs = results['eigvec']
         doci.assign_params(coeffs[:, 0].flatten())
         jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
                                     wfn=doci, orbtype='restricted', jacobi_indices=orbpair,

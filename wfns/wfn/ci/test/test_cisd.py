@@ -54,9 +54,10 @@ def test_cisd_h2_631gdp():
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, _ = brute(cisd, ham)
+    results = brute(cisd, ham)
+    energy = results['energy']
     # compare with number from Gaussian
-    assert abs(energies[0] + nuc_nuc - (-1.1651486697)) < 1e-7
+    assert abs(energy + nuc_nuc - (-1.1651486697)) < 1e-7
 
 
 def test_cisd_lih_631g():
@@ -86,6 +87,7 @@ def test_cisd_lih_631g():
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, _ = brute(cisd, ham)
+    results = brute(cisd, ham)
+    energy = results['energy']
     # compare with number from Gaussian
-    assert abs(energies[0] + nuc_nuc - (-7.99826182)) < 1e-7
+    assert abs(energy + nuc_nuc - (-7.99826182)) < 1e-7

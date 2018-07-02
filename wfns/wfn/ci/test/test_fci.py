@@ -53,9 +53,10 @@ def test_fci_h2_631gdp():
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, _ = brute(fci, ham)
+    results = brute(fci, ham)
+    energy = results['energy']
     # compare with number from Gaussian
-    assert abs(energies[0] + nuc_nuc - (-1.1651486697)) < 1e-7
+    assert abs(energy + nuc_nuc - (-1.1651486697)) < 1e-7
 
 
 def test_fci_lih_sto6g():
@@ -79,9 +80,10 @@ def test_fci_lih_sto6g():
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, _ = brute(fci, ham)
+    results = brute(fci, ham)
+    energy = results['energy']
     # compare with number from Gaussian
-    assert abs(energies[0] + nuc_nuc - (-7.9723355823)) < 1e-7
+    assert abs(energy + nuc_nuc - (-7.9723355823)) < 1e-7
 
 
 @attr('slow')
@@ -106,6 +108,7 @@ def test_fci_lih_631g():
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
-    energies, _ = brute(fci, ham)
+    results = brute(fci, ham)
+    energy = results['energy']
     # compare with number from Gaussian
-    assert abs(energies[0] + nuc_nuc - (-7.9982761)) < 1e-7
+    assert abs(energy + nuc_nuc - (-7.9982761)) < 1e-7

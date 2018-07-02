@@ -49,7 +49,9 @@ def test_brute():
     #        = (9 \pm \sqrt{85}) / 2
     # [[1-lambda,        3], [[v1],   [[0],
     #  [3       , 8-lambda]]  [v2]] =  [0]]
-    energies, coeffs = ci.brute(test_wfn, test_ham)
+    results = ci.brute(test_wfn, test_ham)
+    energies = results['eigval']
+    coeffs = results['eigvec']
     assert np.allclose(energies[0], (9 - 85**0.5)/2)
     matrix = np.array([[1-energies[0], 3], [3, 8-energies[0]]])
     assert np.allclose(matrix.dot(coeffs[:, 0]), np.zeros(2))
