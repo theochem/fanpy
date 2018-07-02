@@ -58,7 +58,8 @@ def test_to_ap1rog_h2_sto6g_ground():
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    energies, coeffs = brute(cipairs, ham)
+    results = brute(cipairs, ham)
+    energy = results['energy']
 
 
 @np.testing.dec.skipif(True, 'Cannot find reference for comparison.')
@@ -78,7 +79,8 @@ def test_to_ap1rog_lih_sto6g():
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    energies, coeffs = brute(cipairs, ham)
+    results = brute(cipairs, ham)
+    energy = results['energy']
     raise AssertionError('No reference for the CIPairs tests.')
 
 
@@ -99,5 +101,6 @@ def test_to_ap1rog_h4_sto6g():
     nuc_nuc = 2.70710678119
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    energies, coeffs = brute(cipairs, ham)
+    results = brute(cipairs, ham)
+    energy = results['energy']
     raise AssertionError('No reference for the CIPairs tests.')

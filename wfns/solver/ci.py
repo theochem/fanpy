@@ -5,7 +5,7 @@ from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 
 
-def brute(wfn, ham, savefile=''):
+def brute(wfn, ham, save_file=''):
     """Solve the wavefunction by eigenvalue decomposition of the CI matrix.
 
     Parameters
@@ -14,13 +14,22 @@ def brute(wfn, ham, savefile=''):
         CI wavefunction.
     ham : BaseHamiltonian
         Hamiltonian.
-    savefile : str
+    save_file : str
         File to which the eigenvectors and the eigenvalue will be saved.
         File is saved as a numpy array where the first row corresponds to the energies and the
         subsequent rows correspond to the coefficients for these energies.
 
     Returns
     -------
+    Dictionary with the following keys and values:
+    success : bool
+        True if optimization succeeded.
+    params : np.ndarray
+        Parameters at the end of the optimization.
+    energy : float
+        Energy after optimization.
+        Only available for objectives that are OneSidedEnergy, TwoSidedEnergy, and
+        LeastSquaresEquations instances.
     eigval : np.ndarray(K,)
         Energy of each excited state.
     eigvec : np.ndarray(K, K)
@@ -47,7 +56,7 @@ def brute(wfn, ham, savefile=''):
     elif wfn.nspin != ham.nspin:
         raise ValueError('Wavefunction and Hamiltonian do not have the same number of spin '
                          'orbitals')
-    elif not isinstance(savefile, str):
+    elif not isinstance(save_file, str):
         raise TypeError('The save file must be given as a string.')
 
     ci_matrix = np.zeros((wfn.nsd, wfn.nsd), dtype=wfn.dtype)
@@ -60,7 +69,9 @@ def brute(wfn, ham, savefile=''):
                                        type=1)
     del ci_matrix
 
-    if savefile != '':
-        np.save(savefile, np.vstack(eigval, eigvec))
+    if save_file != '':
+        np.save(save_file, np.vstack(eigval, eigvec))
 
-    return eigval, eigvec
+    output = {'success': True, 'params': eigvec[:, 0], 'energy': eigval[0],
+              'eigval': eigval, 'eigvec': eigvec}
+    return output
