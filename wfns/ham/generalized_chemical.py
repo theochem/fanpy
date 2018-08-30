@@ -109,6 +109,10 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             the number of orbitals.
 
         """
+        # NOTE: nspin is not used here because RestrictedChemicalHamiltonian inherits this method
+        # and it would need to use the number of spatial orbitals instead of the spin orbitals
+        # FIXME: this is too hacky. should the dimension of the antihermitian matrix be stored
+        # somewhere?
         num_orbs = self.one_int.shape[0]
         num_params = num_orbs * (num_orbs - 1) // 2
 
@@ -228,7 +232,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         """
         if wfn_deriv is not None and ham_deriv is not None:
             raise ValueError('Integral can be derivatized with respect to at most one out of the '
-                             'wavefunction and Hamiltonian parameters.')
+                             'wavefunction and Hamiltonian parameters, i.e. derivatization with '
+                             'respect to a parameter that belongs to both the wavefunction and '
+                             'Hamiltonian is not supported.')
 
         sd = slater.internal_sd(sd)
         occ_indices = slater.occ_indices(sd)
@@ -255,6 +261,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         return one_electron, coulomb, exchange
 
+    # FIXME: remove sign?
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
@@ -302,14 +309,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         ------
         ValueError
             If `sign` is not `1`, `-1` or `None`.
-        NotImplementedError
-            If `deriv` is not `None`.
 
         """
         if deriv is not None:
-            raise NotImplementedError('Orbital rotation is not implemented properly: you cannot '
-                                      'take the derivative of CI matrix elements with respect to '
-                                      'orbital rotation coefficients.')
+            sign = 1 if sign is None else sign
+            return sign * self._integrate_sd_sd_deriv(sd1, sd2, deriv)
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
@@ -330,7 +334,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
         # two sd's are the same
-        if diff_order == 0:
+        if diff_order == 0 and shared_indices.size > 0:
             one_electron += np.sum(self.one_int[shared_indices, shared_indices])
             coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
                                                                 shared_indices],
@@ -344,8 +348,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             a, = diff_sd1
             b, = diff_sd2
             one_electron += self.one_int[a, b]
-            coulomb += np.sum(self.two_int[shared_indices, a, shared_indices, b])
-            exchange -= np.sum(self.two_int[shared_indices, a, b, shared_indices])
+            if shared_indices.size > 0:
+                coulomb += np.sum(self.two_int[shared_indices, a, shared_indices, b])
+                exchange -= np.sum(self.two_int[shared_indices, a, b, shared_indices])
 
         # two sd's are different by double excitation
         else:
@@ -353,5 +358,219 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             c, d = diff_sd2
             coulomb += self.two_int[a, b, c, d]
             exchange -= self.two_int[a, b, d, c]
+
+        return sign * one_electron, sign * coulomb, sign * exchange
+
+    def param_ind_to_rowcol_ind(self, param_ind):
+        r"""Return the row and column indices of the antihermitian matrix from the parameter index.
+
+        Let :math:`n` be the number of columns and rows in the antihermitian matrix and :math:`x`
+        and :math:`y` be the row and column indices of the antihermitian matrix, respectively.
+        First, we want to convert the index of the parameter, :math:`i`, to the index of the
+        flattened antihermitian matrix, :math:`j`:
+
+        .. math::
+
+            j &= i + 1 + 2 + \dots + (x+1)\\
+            &= i + \sum_{k=1}^{x+1} k\\
+            &= i + \frac{(x+1)(x+2)}{2}\\
+
+        We can find :math:`x` by finding the smallest :math:`x` such that
+
+        .. math::
+
+            ind - (n-1) - (n-2) - \dots - (n-x-1) &< 0\\
+            ind - \sum_{k=1}^{x+1} (n-k) &< 0\\
+            ind - n(x+1) + \sum_{k=1}^{x+1} k &< 0\\
+            ind - n(x+1) + \frac{(x+1)(x+2)}{2} &< 0\\
+
+        Once we find :math:`x`, we can find :math:`j` and then :math:`y`
+
+        .. math::
+
+            y = j \mod n
+
+        Parameters
+        ----------
+        param_ind : int
+            Index of the parameter.
+
+        Returns
+        -------
+        matrix_indices : 2-tuple of int
+            Indices of row and column of the antihermitian matrix that corresponds to the given
+            parameter index.
+
+        Raises
+        ------
+        ValueError
+
+        """
+        # ind = i
+        n = self.nspin
+        for k in range(n+1):  # pragma: no cover
+            x = k
+            if param_ind - n*(x+1) + (x+1)*(x+2)/2 < 0:
+                break
+        # ind_flat = j
+        ind_flat = param_ind + (x+1)*(x+2)/2
+        y = ind_flat % n
+
+        return int(x), int(y)
+
+    # TODO: Much of the following function can be shortened by using impure functions (function with
+    # a side effect) instead
+    def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):
+        r"""Derivative of the CI matrix element with respect to the antihermitian elements.
+
+        Parameters
+        ----------
+        sd1 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        sd2 : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        deriv : int
+            Index of the Hamiltonian parameter against which the integral is derivatized.
+
+        Returns
+        -------
+        one_electron : float
+            One-electron energy derivatized with respect to the given index.
+        coulomb : float
+            Coulomb energy derivatized with respect to the given index.
+        exchange : float
+            Exchange energy derivatized with respect to the given index.
+
+        Raises
+        ------
+        ValueError
+            If the given `deriv` is not an integer greater than or equal to 0 and less than the
+            number of parameters.
+
+        Notes
+        -----
+        Integrals are not assumed to be real. The performance benefit (at the moment) for assuming
+        real orbitals is not much.
+
+        """
+        sd1 = slater.internal_sd(sd1)
+        sd2 = slater.internal_sd(sd2)
+        # NOTE: shared_indices contains spatial orbital indices
+        shared_indices = np.array(slater.shared_orbs(sd1, sd2))
+        diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
+
+        # if two Slater determinants do not have the same number of electrons
+        if len(diff_sd1) != len(diff_sd2):
+            return 0.0, 0.0, 0.0
+        diff_order = len(diff_sd1)
+        if diff_order > 2:
+            return 0.0, 0.0, 0.0
+
+        # get sign
+        sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
+
+        # check deriv
+        if not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
+            raise ValueError('Given derivative index must be an integer greater than or equal to '
+                             'zero and less than the number of parameters, '
+                             'nspatial * (nspatial-1)/2')
+
+        # turn deriv into indices of the matrix, (x, y), where x < y
+        x, y = self.param_ind_to_rowcol_ind(deriv)
+
+        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
+
+        # two sd's are the same
+        if diff_order == 0:
+            # remove orbitals x and y from the shared indices
+            shared_indices_no_x = shared_indices[shared_indices != x]
+            shared_indices_no_y = shared_indices[shared_indices != y]
+
+            if x in shared_indices:
+                one_electron -= 2 * np.real(self.one_int[x, y])
+                if shared_indices_no_x.size != 0:
+                    coulomb -= 2 * np.sum(np.real(self.two_int[x, shared_indices_no_x,
+                                                               y, shared_indices_no_x]))
+                    exchange += 2 * np.sum(np.real(self.two_int[x, shared_indices_no_x,
+                                                                shared_indices_no_x, y]))
+
+            if y in shared_indices:
+                one_electron += 2 * np.real(self.one_int[x, y])
+                if shared_indices_no_y.size != 0:
+                    coulomb += 2 * np.sum(np.real(self.two_int[x, shared_indices_no_y,
+                                                               y, shared_indices_no_y]))
+                    exchange -= 2 * np.sum(np.real(self.two_int[x, shared_indices_no_y,
+                                                                shared_indices_no_y, y]))
+        # two sd's are different by single excitation
+        elif diff_order == 1:
+            a, = diff_sd1
+            b, = diff_sd2
+
+            if x == a:
+                one_electron -= self.one_int[y, b]
+                if shared_indices.size != 0:
+                    coulomb -= np.sum(self.two_int[y, shared_indices, b, shared_indices])
+                    exchange += np.sum(self.two_int[y, shared_indices, shared_indices, b])
+            elif x == b:
+                one_electron -= self.one_int[a, y]
+                if shared_indices.size != 0:
+                    coulomb -= np.sum(self.two_int[a, shared_indices, y, shared_indices])
+                    exchange += np.sum(self.two_int[a, shared_indices, shared_indices, y])
+            elif x in shared_indices:
+                # NOTE: we can use the following if we assume that the orbitals are real
+                # coulomb -= 2 * self.two_int[x, a, y, b]
+                coulomb -= self.two_int[y, a, x, b]
+                coulomb -= self.two_int[x, a, y, b]
+                exchange += self.two_int[y, a, b, x]
+                exchange += self.two_int[x, a, b, y]
+
+            if y == a:
+                one_electron += self.one_int[x, b]
+                if shared_indices.size != 0:
+                    coulomb += np.sum(self.two_int[x, shared_indices, b, shared_indices])
+                    exchange -= np.sum(self.two_int[x, shared_indices, shared_indices, b])
+            elif y == b:
+                one_electron += self.one_int[a, x]
+                if shared_indices.size != 0:
+                    coulomb += np.sum(self.two_int[a, shared_indices, x, shared_indices])
+                    exchange -= np.sum(self.two_int[a, shared_indices, shared_indices, x])
+            elif y in shared_indices:
+                # NOTE: we can use the following if we assume that the orbitals are real
+                # coulomb += 2 * self.two_int[x, a, y, b]
+                coulomb += self.two_int[x, a, y, b]
+                coulomb += self.two_int[y, a, x, b]
+                exchange -= self.two_int[x, a, b, y]
+                exchange -= self.two_int[y, a, b, x]
+
+        # two sd's are different by double excitation
+        else:
+            a, b = diff_sd1
+            c, d = diff_sd2
+
+            if x == a:
+                coulomb -= self.two_int[y, b, c, d]
+                exchange += self.two_int[y, b, d, c]
+            elif x == b:
+                coulomb -= self.two_int[a, y, c, d]
+                exchange += self.two_int[a, y, d, c]
+            elif x == c:
+                coulomb -= self.two_int[a, b, y, d]
+                exchange += self.two_int[a, b, d, y]
+            elif x == d:
+                coulomb -= self.two_int[a, b, c, y]
+                exchange += self.two_int[a, b, y, c]
+
+            if y == a:
+                coulomb += self.two_int[x, b, c, d]
+                exchange -= self.two_int[x, b, d, c]
+            elif y == b:
+                coulomb += self.two_int[a, x, c, d]
+                exchange -= self.two_int[a, x, d, c]
+            elif y == c:
+                coulomb += self.two_int[a, b, x, d]
+                exchange -= self.two_int[a, b, d, x]
+            elif y == d:
+                coulomb += self.two_int[a, b, c, x]
+                exchange -= self.two_int[a, b, x, c]
 
         return sign * one_electron, sign * coulomb, sign * exchange
