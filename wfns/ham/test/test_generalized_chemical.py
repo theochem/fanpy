@@ -153,7 +153,6 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(6, 6, 6, 6)
     test = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    assert_raises(NotImplementedError, test.integrate_sd_sd, 0b001001, 0b100100, sign=None, deriv=0)
     assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0, deriv=None)
     assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0.5, deriv=None)
     assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=-0.5, deriv=None)
@@ -164,6 +163,12 @@ def test_integrate_sd_sd_trivial():
                                                                                   0b101100, sign=1)
     assert (0, -two_int[0, 1, 2, 3], two_int[0, 1, 3, 2]) == test.integrate_sd_sd(0b100011,
                                                                                   0b101100, sign=-1)
+    assert (one_int[0, 0], 0, 0) == test.integrate_sd_sd(0b1, 0b1)
+    assert (one_int[0, 1], 0, 0) == test.integrate_sd_sd(0b1, 0b10)
+    assert ((0,
+             -two_int[1, 4, 1, 3] + two_int[0, 4, 0, 3],
+             two_int[1, 4, 3, 1] - two_int[0, 4, 3, 0])
+            == test.integrate_sd_sd(0b110001, 0b101010, deriv=0))
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -319,3 +324,163 @@ def test_integrate_sd_sd_particlenum():
     assert np.allclose(sum(ham.integrate_sd_sd(civec[0], civec[1])), 0)
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
     assert np.allclose(sum(ham.integrate_sd_sd(civec[1], civec[1])), 4)
+
+
+def test_param_ind_to_rowcol_ind():
+    """Test GeneralizedChemicalHamiltonian.param_ind_to_rowcol_ind."""
+    for n in range(1, 40):
+        ham = GeneralizedChemicalHamiltonian(np.random.rand(n, n), np.random.rand(n, n, n, n))
+        for row_ind in range(n):
+            for col_ind in range(row_ind+1, n):
+                param_ind = row_ind * n - row_ind*(row_ind+1)/2 + col_ind - row_ind - 1
+                assert ham.param_ind_to_rowcol_ind(param_ind) == (row_ind, col_ind)
+
+
+def test_integrate_sd_sd_deriv():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv for trivial cases."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 0.0)
+    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, -1)
+    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 2)
+    assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0) == (0, 0, 0)
+    assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, 0) == (0, 0, 0)
+
+
+def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using H2/STO6G.
+
+    Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
+
+    """
+    restricted_one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.zeros((8, 8))
+    one_int[:4, :4] = restricted_one_int
+    one_int[4:, 4:] = restricted_one_int
+    two_int = np.zeros((8, 8, 8, 8))
+    two_int[:4, :4, :4, :4] = restricted_two_int
+    two_int[:4, 4:, :4, 4:] = restricted_two_int
+    two_int[4:, :4, 4:, :4] = restricted_two_int
+    two_int[4:, 4:, 4:, 4:] = restricted_two_int
+
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    epsilon = 1e-8
+
+    for sd1 in [0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100]:
+        for sd2 in [0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100]:
+            for i in range(test_ham.nparams):
+                addition = np.zeros(test_ham.nparams)
+                addition[i] = epsilon
+                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+
+                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+
+
+@attr('slow')
+def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using H4-STO6G integrals.
+
+    Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
+
+    """
+    restricted_one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.zeros((8, 8))
+    one_int[:4, :4] = restricted_one_int
+    one_int[4:, 4:] = restricted_one_int
+    two_int = np.zeros((8, 8, 8, 8))
+    two_int[:4, :4, :4, :4] = restricted_two_int
+    two_int[:4, 4:, :4, 4:] = restricted_two_int
+    two_int[4:, :4, 4:, :4] = restricted_two_int
+    two_int[4:, 4:, 4:, 4:] = restricted_two_int
+
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    epsilon = 1e-8
+
+    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+
+    for sd1 in sds:
+        for sd2 in sds:
+            for i in range(test_ham.nparams):
+                addition = np.zeros(test_ham.nparams)
+                addition[i] = epsilon
+                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+
+                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+
+
+def test_integrate_sd_sd_deriv_fdiff_random():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using random integrals.
+
+    Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum('ijkl->jilk', two_int) + two_int
+    two_int = np.einsum('ijkl->klij', two_int) + two_int
+
+    # check that the integrals have the appropriate symmetry
+    assert np.allclose(one_int, one_int.T)
+    assert np.allclose(two_int, np.einsum('ijkl->jilk', two_int))
+    assert np.allclose(two_int, np.einsum('ijkl->klij', two_int))
+
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    epsilon = 1e-8
+    sds = sd_list(3, 3, num_limit=None, exc_orders=None)
+
+    for sd1 in sds:
+        for sd2 in sds:
+            for i in range(test_ham.nparams):
+                addition = np.zeros(test_ham.nparams)
+                addition[i] = epsilon
+                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+
+                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+
+
+def test_integrate_sd_sd_deriv_fdiff_random_small():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using random 1e system.
+
+    Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
+
+    """
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum('ijkl->jilk', two_int) + two_int
+    two_int = np.einsum('ijkl->klij', two_int) + two_int
+
+    # check that the integrals have the appropriate symmetry
+    assert np.allclose(one_int, one_int.T)
+    assert np.allclose(two_int, np.einsum('ijkl->jilk', two_int))
+    assert np.allclose(two_int, np.einsum('ijkl->klij', two_int))
+
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    epsilon = 1e-8
+    sds = sd_list(1, 1, num_limit=None, exc_orders=None)
+
+    for sd1 in sds:
+        for sd2 in sds:
+            for i in range(test_ham.nparams):
+                addition = np.zeros(test_ham.nparams)
+                addition[i] = epsilon
+                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+
+                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
