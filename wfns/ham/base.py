@@ -78,8 +78,8 @@ class BaseHamiltonian(ParamContainer):
 
         Returns
         -------
-        dtype : {'restricted', 'unrestricted', 'generalized'}
-            Number of spin orbitals.
+        dtype : {np.float64, np.complex128}
+            Data type of the integrals.
 
         """
         pass
@@ -187,7 +187,7 @@ class BaseHamiltonian(ParamContainer):
 
             H_{ij} = \left< \Phi_i \middle| \hat{H} \middle| \Phi_j \right>
 
-        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_1` and :math:`\Phi_2` are
+        where :math:`\hat{H}` is the Hamiltonian operator, and :math:`\Phi_i` and :math:`\Phi_j` are
         Slater determinants.
 
         Parameters
