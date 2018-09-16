@@ -51,9 +51,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         Placeholder function that would clear the cache.
     assign_params(self, params)
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
-    _update_integrals(self, wfn, sd, sd_m, wfn_deriv, ham_deriv, one_electron, coulomb, exchange)
-        Update integrals for the given Slater determinant.
-        Used to simplify `integrate_wfn_sd`.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
