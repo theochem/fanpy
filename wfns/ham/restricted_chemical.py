@@ -1,7 +1,6 @@
 r"""Hamiltonian used to describe a chemical system expressed wrt restricted orbitals."""
 import numpy as np
 from wfns.backend import slater
-from wfns.ham.restricted_base import BaseRestrictedHamiltonian
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 
@@ -63,8 +62,17 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
-    # inherit from BaseRestrictedHamiltonian
-    nspin = BaseRestrictedHamiltonian.nspin
+    @property
+    def nspin(self):
+        """Return the number of spin orbitals.
+
+        Returns
+        -------
+        nspin : int
+            Number of spin orbitals.
+
+        """
+        return 2 * self.one_int.shape[0]
 
     # FIXME: remove sign?
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
