@@ -20,6 +20,14 @@ class TestWavefunction(object):
         return 0
 
 
+def test_nspin():
+    """Test BaseGeneralizedHamiltonian.nspin."""
+    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
+    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
+    test = RestrictedChemicalHamiltonian(one_int, two_int)
+    assert test.nspin == 4
+
+
 def test_integrate_sd_sd_trivial():
     """Test RestrictedChemicalHamiltonian.integrate_sd_sd for trivial cases."""
     one_int = np.random.rand(3, 3)
