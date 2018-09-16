@@ -1,5 +1,6 @@
 """Hamiltonian that will be used to make the Schrodinger equation."""
 import abc
+from wfns.backend import slater
 from wfns.param import ParamContainer
 
 
@@ -17,6 +18,8 @@ class BaseHamiltonian(ParamContainer):
         Initialize the Hamiltonian.
     assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
         Assigns the nuclear nuclear repulsion.
+    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+        Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
     Abstract Properties
     -------------------
@@ -29,8 +32,6 @@ class BaseHamiltonian(ParamContainer):
     ----------------
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
-        Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
 
@@ -100,15 +101,16 @@ class BaseHamiltonian(ParamContainer):
         """Assign the one- and two-electron integrals."""
         pass
 
-    @abc.abstractmethod
+    # FIXME: need to speed up
+    # TODO: change to integrate_sd_wfn
     def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::
 
             \left< \Phi \middle| \hat{H} \middle| \Psi \right>
-            = \sum_{\mathbf{m} \in S_\Phi} f(\mathbf{m})
-              \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
+            = \sum_{\mathbf{m} \in S_\Phi}
+              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
 
         where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
         :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
@@ -139,8 +141,43 @@ class BaseHamiltonian(ParamContainer):
         exchange : float
             Exchange energy.
 
+        Raises
+        ------
+        ValueError
+            If integral is derivatized to both wavefunction and Hamiltonian parameters.
+
         """
-        pass
+        if wfn_deriv is not None and ham_deriv is not None:
+            raise ValueError('Integral can be derivatized with respect to at most one out of the '
+                             'wavefunction and Hamiltonian parameters.')
+
+        sd = slater.internal_sd(sd)
+        occ_indices = slater.occ_indices(sd)
+        vir_indices = slater.vir_indices(sd, self.nspin)
+
+        one_electron = 0.0
+        coulomb = 0.0
+        exchange = 0.0
+
+        def update_integrals(sd_m):
+            """Wrapped function for updating the integral values."""
+            coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
+            sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
+            return (one_electron + coeff * sd_energy[0],
+                    coulomb + coeff * sd_energy[1],
+                    exchange + coeff * sd_energy[2])
+
+        one_electron, coulomb, exchange = update_integrals(sd)
+        for counter_i, i in enumerate(occ_indices):
+            for counter_a, a in enumerate(vir_indices):
+                sd_m = slater.excite(sd, i, a)
+                one_electron, coulomb, exchange = update_integrals(sd_m)
+                for j in occ_indices[counter_i+1:]:
+                    for b in vir_indices[counter_a+1:]:
+                        sd_m = slater.excite(sd, i, j, b, a)
+                        one_electron, coulomb, exchange = update_integrals(sd_m)
+
+        return one_electron, coulomb, exchange
 
     @abc.abstractmethod
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
