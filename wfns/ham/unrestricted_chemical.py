@@ -61,10 +61,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
-    # inherit from GeneralizedChemicalHamiltonian
-    _update_integrals = GeneralizedChemicalHamiltonian._update_integrals
-    integrate_wfn_sd = GeneralizedChemicalHamiltonian.integrate_wfn_sd
-
     def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
         """Initialize the Hamiltonian.
 
