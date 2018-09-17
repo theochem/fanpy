@@ -96,10 +96,24 @@ class BaseHamiltonian(ParamContainer):
         """
         pass
 
-    @abc.abstractmethod
     def assign_integrals(self, one_int, two_int):
-        """Assign the one- and two-electron integrals."""
-        pass
+        """Assign the one- and two-electron integrals.
+
+        Parameters
+        ----------
+        one_int : np.ndarray(K, K)
+            One electron integrals.
+        two_int : np.ndarray(K, K, K, K)
+            Two electron integrals.
+            Uses physicist's notation.
+
+        Raises
+        ------
+        NotImplementedError
+            If called.
+
+        """
+        raise NotImplementedError
 
     # FIXME: need to speed up
     # TODO: change to integrate_sd_wfn
