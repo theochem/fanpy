@@ -114,6 +114,8 @@ class BaseSchrodinger(BaseObjective):
 
         super().__init__(param_selection, tmpfile=tmpfile)
 
+    # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
+    #        the different )
     def wrapped_get_overlap(self, sd, deriv=None):
         """Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
 
@@ -141,6 +143,9 @@ class BaseSchrodinger(BaseObjective):
         else:
             return self.wfn.get_overlap(sd, deriv)
 
+    # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
+    #        the different deriv's) and when ham is a composite hamiltonian (ham must distinguish
+    #        between different derivs)
     def wrapped_integrate_wfn_sd(self, sd, deriv=None):
         r"""Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
 
@@ -177,6 +182,8 @@ class BaseSchrodinger(BaseObjective):
         else:
             return 0.0
 
+    # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
+    #        different derivs)
     def wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None):
         r"""Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
 

@@ -493,6 +493,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
     # FIXME: incredibly slow/bad approach
     # TODO: instead of all possible combinations (itertools), have something that selects a smaller
     #       subset
+    # FIXME: derivative wrt wavefunction parameters (not jacobi rotation)?
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with an orthonormal Slater determinant.
 
