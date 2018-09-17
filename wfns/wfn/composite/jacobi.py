@@ -546,6 +546,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                         + alpha_sign * beta_sign * 2*sin*cos *
                         self.wfn.get_overlap(slater.excite(sd, q, q + ns, p, p + ns)))
 
+    # FIXME: derivative wrt wavefunction parameters (not jacobi rotation)?
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
 

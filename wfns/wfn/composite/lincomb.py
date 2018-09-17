@@ -189,6 +189,8 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         self.wfns = tuple(wfns)
 
+    # FIXME: derivative should be with respect to the coefficients/params
+    # FIXME: how to derivatize wrt parameters of the wavefunction?
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
