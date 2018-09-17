@@ -37,3 +37,9 @@ def test_assign_energy_nuc_nuc():
     test = Empty()
     assert_raises(TypeError, BaseHamiltonian.assign_energy_nuc_nuc, test, [-2])
     assert_raises(TypeError, BaseHamiltonian.assign_energy_nuc_nuc, test, '2')
+
+
+def test_assign_integrals():
+    """Test BaseHamiltonian.assign_integrals."""
+    test = Empty()
+    assert_raises(NotImplementedError, BaseHamiltonian.assign_integrals, test, None, None)
