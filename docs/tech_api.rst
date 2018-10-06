@@ -8,7 +8,12 @@ Hamiltonians
 ============
 
 * :class:`Base Hamiltonian <wfns.ham.base.BaseHamiltonian>`
-* :class:`Chemical Hamiltonian <wfns.ham.chemical.ChemicalHamiltonian>`
+* :class:`Generalized Base Hamiltonian <wfns.ham.generalized_base.BaseGeneralizedHamiltonian>`
+* :class:`Unrestricted Base Hamiltonian <wfns.ham.unrestricted_base.BaseUnrestrictedHamiltonian>`
+* :class:`Restricted Base Hamiltonian <wfns.ham.restricted_base.BaseRestrictedHamiltonian>`
+* :class:`Generalized Chemical Hamiltonian <wfns.ham.generalized_chemical.GeneralizedChemicalHamiltonian>`
+* :class:`Unrestricted Chemical Hamiltonian <wfns.ham.unrestricted_chemical.UnrestrictedChemicalHamiltonian>`
+* :class:`Restricted Chemical Hamiltonian <wfns.ham.restricted_chemical.RestrictedChemicalHamiltonian>`
 * :class:`Seniority Zero Hamiltonian <wfns.ham.senzero.SeniorityZeroHamiltonian>`
 
 Wavefunctions
@@ -79,12 +84,6 @@ Solvers
 
 Backend
 =======
-* Integrals Storage Classes
-
-  * :class:`Base Integrals <wfns.backend.integrals.BaseIntegrals>`
-  * :class:`One Electron Integrals <wfns.backend.integrals.OneElectronIntegrals>`
-  * :class:`Two Electron Integrals <wfns.backend.integrals.TwoElectronIntegrals>`
-
 * General Math Tools
 
   * :func:`Binomial Coefficient <wfns.backend.math_tools.binomial>`
@@ -132,7 +131,12 @@ Backend
       :toctree: modules/generated
 
       wfns.ham.base.BaseHamiltonian
-      wfns.ham.chemical.ChemicalHamiltonian
+      wfns.ham.generalized_base.BaseGeneralizedHamiltonian
+      wfns.ham.unrestricted_base.BaseUnrestrictedHamiltonian
+      wfns.ham.restricted_base.BaseRestrictedHamiltonian
+      wfns.ham.generalized_chemical.GeneralizedChemicalHamiltonian
+      wfns.ham.unrestricted_chemical.UnrestrictedChemicalHamiltonian
+      wfns.ham.restricted_chemical.RestrictedChemicalHamiltonian
       wfns.ham.senzero.SeniorityZeroHamiltonian
 
       wfns.solver.ci.brute
@@ -168,10 +172,6 @@ Backend
       wfns.wfn.composite.nonorth.NonorthWavefunction
       wfns.wfn.composite.jacobi.JacobiWavefunction
       wfns.wfn.composite.lincomb.LinearCombinationWavefunction
-
-      wfns.backend.integrals.BaseIntegrals
-      wfns.backend.integrals.OneElectronIntegrals
-      wfns.backend.integrals.TwoElectronIntegrals
 
       wfns.backend.math_tools.binomial
       wfns.backend.math_tools.adjugate

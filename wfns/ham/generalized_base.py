@@ -3,6 +3,7 @@ import numpy as np
 from wfns.ham.base import BaseHamiltonian
 
 
+# FIXME: ordering of the words is not consistent with the GeneralizedChemicalHamiltonian
 class BaseGeneralizedHamiltonian(BaseHamiltonian):
     """Base class for Hamiltonian with generalized orbitals.
 
