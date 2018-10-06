@@ -2,6 +2,7 @@
 from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
 
 
+# FIXME: ordering of the words is not consistent with the RestrictedChemicalHamiltonian
 class BaseRestrictedHamiltonian(BaseGeneralizedHamiltonian):
     """Base class for Hamiltonian with restricted orbitals.
 
