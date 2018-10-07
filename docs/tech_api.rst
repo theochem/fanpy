@@ -125,6 +125,10 @@ Backend
   * :func:`Complete Graph Perfect Matching Generator <wfns.backend.graphs.generate_complete_pmatch>`
   * :func:`Bipartite Graph Perfect Matching Generator <wfns.backend.graphs.generate_biclique_pmatch>`
 
+Scripts
+=======
+* :ref:`Run calculation <script_run_calc>`
+* :ref:`Make calculation script <script_make_script>`
 
 .. Silent api generation
     .. autosummary::
