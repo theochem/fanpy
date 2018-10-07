@@ -75,4 +75,5 @@ the electronic structure problem. (FIXME) To do so, we make the following design
   objective
   solver
   tutorial_index
+  example_index
   tech_api
