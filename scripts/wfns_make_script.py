@@ -194,6 +194,9 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
     if save_orbs is not None:
         from_imports.append(('wfns.backend.math_tools', 'unitary_matrix'))
 
+    if memory is not None:
+        memory = "'{}'".format(memory)
+
     output = ''
     for i in imports:
         output += 'import {}\n'.format(i)
@@ -243,7 +246,7 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
 
     output += '# Initialize wavefunction\n'
     wfn_init1 = 'wfn = {}('.format(wfn_name)
-    wfn_init2 = "nelec, nspin, params={}, memory='{}', {})\n".format(wfn_params, memory, wfn_kwargs)
+    wfn_init2 = "nelec, nspin, params={}, memory={}, {})\n".format(wfn_params, memory, wfn_kwargs)
     output += '\n'.join(textwrap.wrap(wfn_init1 + wfn_init2,
                                       width=100, subsequent_indent=' '*len(wfn_init1)))
     output += '\n'
