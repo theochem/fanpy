@@ -99,5 +99,11 @@ if __name__ == '__main__':
 
     data = gaussian_fchk(**kwargs)
     np.save(sys.argv[1], [data['el_energy'], data['nuc_nuc_energy']])
-    np.save(sys.argv[2], data['one_int'])
-    np.save(sys.argv[3], data['two_int'])
+    if len(data['one_int']) == 1:
+        np.save(sys.argv[2], data['one_int'][0])
+    else:
+        np.save(sys.argv[2], data['one_int'])
+    if len(data['two_int']) == 1:
+        np.save(sys.argv[3], data['two_int'][0])
+    else:
+        np.save(sys.argv[3], data['two_int'])

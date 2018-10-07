@@ -213,14 +213,14 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
 
     output += '# One-electron integrals\n'
     output += "one_int_file = '{}'\n".format(one_int_file)
-    output += "one_int = np.load(one_int_file)[0]\n"
+    output += "one_int = np.load(one_int_file)\n"
     output += ("print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))\n"
                "".format(one_int_file))
     output += '\n'
 
     output += '# Two-electron integrals\n'
     output += "two_int_file = '{}'\n".format(two_int_file)
-    output += "two_int = np.load(two_int_file)[0]\n"
+    output += "two_int = np.load(two_int_file)\n"
     output += ("print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))\n"
                "".format(two_int_file))
     output += '\n'
