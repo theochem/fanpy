@@ -219,14 +219,14 @@ def parser_add_arguments():
               'orders of excitations are separated by space. e.g. `--pspace 1 2 3 4`.')
     )
     parser.add_argument(
-        '--objective', type=str, default='system', required=False,
+        '--objective', type=str, default='least_squares', required=False,
         help=('Type of the objective that will be used. Must be one of `system`, `least_squares`, '
-              'and `variational`. Default is `system`')
+              'and `variational`. Default is `least_squares`')
     )
     parser.add_argument(
-        '--solver', type=str, default='least_squares', required=False,
+        '--solver', type=str, default='cma', required=False,
         help=('Type of the solver that will be used. Must be one of `cma`, `diag`, `minimize`, '
-              '`least_squares`, and `root`.')
+              '`least_squares`, and `root`. Default is `cma`.')
     )
     parser.add_argument(
         '--solver_kwargs', type=str, default=None, required=False,
