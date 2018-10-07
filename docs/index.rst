@@ -1,5 +1,6 @@
-FANCI |version|
-###############
+=================
+ FANCI |version|
+=================
 
 FANCI is a free and open source Python module for constructing and solving the Schrödinger
 equation. It is designed to be a research tool for developing new methods that address different
@@ -73,4 +74,5 @@ the electronic structure problem. (FIXME) To do so, we make the following design
   wavefunction
   objective
   solver
+  tutorial_index
   tech_api
