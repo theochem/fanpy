@@ -385,6 +385,8 @@ if __name__ == '__main__':
     parser.description = 'Optimize a wavefunction and/or Hamiltonian.'
     parser.add_argument('--nspin', type=int, required=True, help='Number of spin orbitals.')
     parser_add_arguments()
+    parser.add_argument('--filename', type=str, default=None, required=False,
+                        help='Name of the file that contains the output of the script.')
     args = parser.parse_args()
     make_script(args.nelec, args.nspin, args.one_int_file, args.two_int_file,
                 args.wfn_type, nuc_nuc=args.nuc_nuc, optimize_orbs=args.optimize_orbs,

@@ -112,8 +112,8 @@ def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc,
 
     # check integrals
     integrals = {'one': one_int_file, 'two': two_int_file}
-    for number, filename in integrals.items():
-        if not isinstance(filename, str):
+    for number, name in integrals.items():
+        if not isinstance(name, str):
             raise TypeError('{}-electron integrals must be provided as a numpy save file.'
                             ''.format(number.title()))
         elif not os.path.isfile(one_int_file):
@@ -169,13 +169,13 @@ def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc,
     files = {'load_orbs': load_orbs, 'load_ham': load_ham, 'load_wfn': load_wfn,
              'load_chk': load_chk, 'save_orbs': save_orbs, 'save_ham': save_ham,
              'save_wfn': save_wfn, 'save_chk': save_chk, 'filename': filename}
-    for varname, filename in files.items():
-        if filename is None:
+    for varname, name in files.items():
+        if name is None:
             continue
-        elif not isinstance(filename, str):
+        elif not isinstance(name, str):
             raise TypeError('Name of the file must be given as a string.')
-        elif 'load' in varname and not os.path.isfile(filename):
-            raise ValueError('Cannot find the given file, {}.'.format(filename))
+        elif 'load' in varname and not os.path.isfile(name):
+            raise ValueError('Cannot find the given file, {}.'.format(name))
 
     # check memory
     if memory is None:
@@ -206,80 +206,76 @@ def parser_add_arguments():
               '`determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, `apg`.')
     )
     parser.add_argument(
-        '--nuc_repulsion', type=float, dest='nuc_nuc', nargs='?', default=0.0,
+        '--nuc_repulsion', type=float, dest='nuc_nuc', nargs=1, default=0.0, required=False,
         help='Nuclear-nuclear repulsion.'
     )
     parser.add_argument(
-        '--optimize_orbs', action='store_true',
+        '--optimize_orbs', action='store_true', required=False,
         help='Flag for optimizing orbitals. Orbitals are not optimized by default.'
     )
     parser.add_argument(
-        '--pspace', type=int, dest='pspace_exc', nargs='+', default=[1, 2],
+        '--pspace', type=int, dest='pspace_exc', nargs='+', default=[1, 2], required=False,
         help=('Orders of excitations that will be used to construct the projection space. Multiple '
               'orders of excitations are separated by space. e.g. `--pspace 1 2 3 4`.')
     )
     parser.add_argument(
-        '--objective', type=str, nargs='?', default='system',
+        '--objective', type=str, default='system', required=False,
         help=('Type of the objective that will be used. Must be one of `system`, `least_squares`, '
               'and `variational`. Default is `system`')
     )
     parser.add_argument(
-        '--solver', type=str, nargs='?', default='least_squares',
+        '--solver', type=str, default='least_squares', required=False,
         help=('Type of the solver that will be used. Must be one of `cma`, `diag`, `minimize`, '
               '`least_squares`, and `root`.')
     )
     parser.add_argument(
-        '--solver_kwargs', type=str, nargs='?', default=None,
+        '--solver_kwargs', type=str, default=None, required=False,
         help=('Keyword arguments to customize the solver.')
     )
     parser.add_argument(
-        '--wfn_kwargs', type=str, nargs='?', default=None,
+        '--wfn_kwargs', type=str, default=None, required=False,
         help=('Keyword argumnets to customize the wavefunction.')
     )
     parser.add_argument(
-        '--load_orbs', type=str, nargs='?', default=None,
+        '--load_orbs', type=str, default=None, required=False,
         help=('Numpy file of the orbital transformation matrix that will be applied to the initial '
               'Hamiltonian. If the initial Hamiltonian parameters are provided, the orbitals will '
               'be transformed afterwards.')
     )
     parser.add_argument(
-        '--load_ham', type=str, nargs='?', default=None,
+        '--load_ham', type=str, default=None, required=False,
         help=('Numpy file of the Hamiltonian parameters that will overwrite the parameters of the '
               'initial Hamiltonian.')
     )
     parser.add_argument(
-        '--load_wfn', type=str, nargs='?', default=None,
+        '--load_wfn', type=str, default=None, required=False,
         help=('Numpy file of the wavefunction parameters that will overwrite the parameters of the '
               'initial wavefunction.')
     )
     parser.add_argument(
-        '--load_chk', type=str, nargs='?', default=None,
+        '--load_chk', type=str, default=None, required=False,
         help='Numpy file of the chkpoint file for the objective.'
     )
     parser.add_argument(
-        '--save_orbs', type=str, nargs='?', default=None,
+        '--save_orbs', type=str, default=None, required=False,
         help=('Name of the Numpy file that will store the last orbital transformation matrix that '
               'was applied to the Hamiltonian (after a successful optimization).')
     )
     parser.add_argument(
-        '--save_ham', type=str, nargs='?', default=None,
+        '--save_ham', type=str, default=None, required=False,
         help=('Name of the Numpy file that will store the Hamiltonian parameters after a successful'
               ' optimization.')
     )
     parser.add_argument(
-        '--save_wfn', type=str, nargs='?', default=None,
+        '--save_wfn', type=str, default=None, required=False,
         help=('Name of the Numpy file that will store the wavefunction parameters after a '
               'successful optimization.')
     )
     parser.add_argument(
-        '--save_chk', type=str, nargs='?', default=None,
+        '--save_chk', type=str, default=None, required=False,
         help='Name of the Numpy file that will store the chkpoint of the objective.'
     )
     parser.add_argument(
-        '--filename', type=str, nargs='?', default=None,
-        help='Name of the file that contains the output of the script.'
-    )
-    parser.add_argument(
-        '--memory', type=str, nargs='?', default=None,
+        '--memory', type=str, default=None, required=False,
         help='Memory available to run the calculation.'
     )
