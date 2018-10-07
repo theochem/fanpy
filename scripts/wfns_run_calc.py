@@ -84,8 +84,6 @@ def run_calc(nelec, one_int_file, two_int_file, wfn_type, nuc_nuc=None,
         optimization.
     save_chk : str
         Name of the Numpy file that will store the chkpoint of the objective.
-    filename : str
-        Name of the file that will store the output.
     memory : None
         Memory available for the calculation.
 
@@ -118,4 +116,4 @@ if __name__ == '__main__':
              load_orbs=args.load_orbs, load_ham=args.load_ham, load_wfn=args.load_wfn,
              load_chk=args.load_chk,
              save_orbs=args.save_orbs, save_ham=args.save_ham, save_wfn=args.save_wfn,
-             save_chk=args.save_chk, filename=args.filename, memory=args.memory)
+             save_chk=args.save_chk, memory=args.memory)
