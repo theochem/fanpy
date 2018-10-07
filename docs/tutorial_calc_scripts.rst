@@ -96,6 +96,7 @@ Following are some examples:
 
 For a detailed explanation of each keyword, go to :ref:`wfns_run_calc.py <script_run_calc>`.
 
+.. _tutorial_calc_make_script:
 
 Using a script that makes a script
 ----------------------------------
