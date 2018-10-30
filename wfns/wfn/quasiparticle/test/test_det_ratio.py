@@ -314,27 +314,3 @@ def test_get_overlap():
                        np.linalg.det(matrix1[:, [0, 1]]) / np.linalg.det(matrix2[:, [0, 1]]))
     assert np.allclose(test.get_overlap(0b0011, 0),
                        matrix1[1, 1] / np.linalg.det(matrix2[:, [0, 1]]))
-
-
-# FIXME: this will need to move to the parent class
-def test_load_cache():
-    """Test DeterminantRatio.load_cache."""
-    test = TestDeterminantRatio()
-    test._cache_fns = {}
-    test.memory = np.inf
-    test.load_cache()
-    assert test._cache_fns['overlap'].cache_info().maxsize is None
-    assert test._cache_fns['overlap derivative'].cache_info().maxsize is None
-    test.memory = np.inf
-
-    # 1024 bytes of memory
-    test.memory = 1024
-    test.params = np.arange(16)
-    test.load_cache()
-    assert test._cache_fns['overlap'].cache_info().maxsize == 22
-    assert test._cache_fns['overlap derivative'].cache_info().maxsize == 22
-
-    test = TestDeterminantRatio()
-    test.memory = np.inf
-    test.load_cache()
-    assert hasattr(test, '_cache_fns')

@@ -1,5 +1,4 @@
 """Hard-coded determinant-ratio wavefunction."""
-import functools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -93,6 +92,7 @@ class DeterminantRatio(BaseWavefunction):
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_numerator_mask(numerator_mask)
         self.assign_params(params)
+        self._cache_fns = {}
         self.load_cache()
 
     def assign_numerator_mask(self, numerator_mask=None):
@@ -322,40 +322,6 @@ class DeterminantRatio(BaseWavefunction):
         if isinstance(params, DeterminantRatio):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)
-
-    # FIXME: this method can be moved to the parent class
-    def load_cache(self):
-        """Load the overlaps of the wavefunction.
-
-        Notes
-        -----
-        Needs to access `memory` and `params`.
-
-        """
-        # assign memory allocated to cache
-        if self.memory == np.inf:
-            memory = None
-        else:
-            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
-
-        # create function that will be cached
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp(sd):
-            """cached _olp method without caching the instance."""
-            return self._olp(sd)
-
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp_deriv(sd, deriv):
-            """cached _olp_deriv method without caching the instance."""
-            return self._olp_deriv(sd, deriv)
-
-        # create cache
-        if not hasattr(self, '_cache_fns'):
-            self._cache_fns = {}
-
-        # store the cached function
-        self._cache_fns['overlap'] = _olp
-        self._cache_fns['overlap derivative'] = _olp_deriv
 
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
