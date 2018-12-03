@@ -47,6 +47,11 @@ Wavefunctions
 
   * :class:`Linear Combination of Wavefunctions <wfns.wfn.composite.lincomb.LinearCombinationWavefunction>`
 
+* Network Wavefunction
+
+  * :class:`KerasNetwork <wfns.wfn.network.keras_network.KerasNetwork>`
+
+
 Objectives
 ==========
 
@@ -176,6 +181,7 @@ Scripts
       wfns.wfn.composite.nonorth.NonorthWavefunction
       wfns.wfn.composite.jacobi.JacobiWavefunction
       wfns.wfn.composite.lincomb.LinearCombinationWavefunction
+      wfns.wfn.network.keras_network.KerasNetwork
 
       wfns.backend.math_tools.binomial
       wfns.backend.math_tools.adjugate
