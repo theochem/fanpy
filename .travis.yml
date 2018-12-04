@@ -120,33 +120,28 @@ install:
 - conda config --add channels theochem
 - conda install -q conda conda-build
 
+# Get the right python version for building.
+- conda install -q python=${MYCONDAPY} anaconda-client
+
 # Set the version info from the git tag
 # - git fetch origin --tags &&
 #   export PROJECT_VERSION=$(python tools/gitversion.py) &&
 #   python tools/gitversion.py python > ${PROJECT_NAME}/version.py;
 
 # Get a list of all build and runtime dependencies.
-# This should become easier, without the copy to conda.recipe.ugly.
-# - conda render tools/conda.recipe > tools/conda.recipe/rendered.yaml
-# - CONDA_DEPENDENCIES=$(python -c "from yaml import load;
-#     req1 = load(open('tools/conda.recipe/rendered.yaml'))['requirements'];
-#     deps = req1['build'] + req1['run'];
-#     print(' '.join(set(dep.split()[0] for dep in deps)))")
 - conda install numpy scipy gmpy2 nose
+
+# Install dependencies for linters
+- conda install nose flake8 pycodestyle
+- pip install --upgrade pylint codecov coverage pydocstyle
+
+# Install cma
 - pip install cma
 
 # Install keras
 - pip install keras
 - pip install tensorflow
 
-# Get the right python version for building. This only does something for 3.5.
-# Install extra package needed to make things work. Most things can be listed as
-# dependencies on metal.yaml and setup.py, unless setup.py already imports them.
-# Install conda tools for packaging and uploading
-# - conda install -q python=${MYCONDAPY} anaconda-client ${CONDA_DEPENDENCIES}
-# Install more recent stuff with pip
-- conda install flake8 pycodestyle
-- pip install --upgrade pylint codecov coverage pydocstyle
 # Show conda info for debugging
 - conda info -a
 # check for problems in dependencies
