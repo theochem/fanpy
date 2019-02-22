@@ -102,8 +102,10 @@ before_install:
 install:
 # install horton and pyscf (in python 2.7)
 - source $HOME/miniconda2/bin/activate
-- hash -r
 - conda config --set always_yes yes
+- conda create -n horton python=2.7
+- source $HOME/miniconda2/bin/activate horton
+- hash -r
 - conda install -c conda conda-build
 - conda install -c theochem horton
 - conda install -c pyqc libxc
@@ -111,8 +113,10 @@ install:
 
 # install packages in python 3
 - source $HOME/miniconda3/bin/activate
-- hash -r
 - conda config --set always_yes yes
+- conda create -n test python=3.6
+- source $HOME/miniconda3/bin/activate test
+- hash -r
 - conda config --add channels theochem
 - conda install -q conda conda-build
 
