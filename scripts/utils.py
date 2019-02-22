@@ -161,9 +161,6 @@ def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc,
     # check compatibility b/w solver and orbital optimization
     if solver == 'diag' and optimize_orbs:
         raise ValueError('Orbital optimization is not supported with diagonalization algorithm.')
-    elif solver in ['minimize', 'least_squares', 'root'] and optimize_orbs:
-        raise ValueError('Orbital optimization is not supported with solvers that require a '
-                         ' gradient (`minimize`, `least_squares`, `root`).')
 
     # check files
     files = {'load_orbs': load_orbs, 'load_ham': load_ham, 'load_wfn': load_wfn,
