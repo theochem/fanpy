@@ -354,7 +354,8 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
     output += "    print('Optimization was successful')\n"
     output += "else:\n"
     output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
-    output += "print('Final Energy: {}'.format(results['energy']))\n"
+    output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
+    output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
     if objective == 'system':
         output += "print('Cost: {}'.format(results['cost']))\n"
 
