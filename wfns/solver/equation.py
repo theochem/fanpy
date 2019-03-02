@@ -69,6 +69,9 @@ def cma(objective, save_file='', **kwargs):
         kwargs = {'sigma0': 0.01, 'options': {'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
                                               'verb_filenameprefix': 'outcmaes', 'verb_log': 0}}
 
+    if objective.params.size == 1:
+        raise ValueError('CMA solver cannot be used on objectives with only one parameter.')
+
     results = cma.fmin(objective.objective, objective.params, **kwargs)
 
     output = {}

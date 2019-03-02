@@ -84,6 +84,8 @@ def test_cma():
 
     assert_raises(TypeError, equation.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
     assert_raises(ValueError, equation.cma, SystemEquations(wfn, ham, refwfn=0b0011))
+    assert_raises(ValueError, equation.cma, OneSidedEnergy(wfn, ham,
+                                                           param_selection=[[wfn, np.array([0])]]))
 
     results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file='temp.npy')
     test = np.load('temp.npy')
