@@ -20,7 +20,7 @@ import os
 
 
 def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc, objective, solver,
-                 nuc_nuc, optimize_orbs=False,
+                 nuc_nuc, optimize_orbs=False, ham_noise=None, wfn_noise=None,
                  load_orbs=None, load_ham=None, load_wfn=None, load_chk=None,
                  save_orbs=None, save_ham=None, save_wfn=None, save_chk=None,
                  filename=None, memory=None):
@@ -68,6 +68,14 @@ def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc,
         If False, orbitals are not optimized.
         By default, orbitals are not optimized.
         Not compatible with solvers that require a gradient (everything except cma).
+    ham_noise : float
+        Scale of the noise to be applied to the Hamiltonian parameters.
+        The noise is generated using a uniform distribution between -1 and 1.
+        By default, no noise is added.
+    wfn_noise : bool
+        Scale of the noise to be applied to the wavefunction parameters.
+        The noise is generated using a uniform distribution between -1 and 1.
+        By default, no noise is added.
     load_orbs : str
         Numpy file of the orbital transformation matrix that will be applied to the initial
         Hamiltonian.
@@ -105,6 +113,12 @@ def check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc,
         raise TypeError('Number of spin orbitals must be given as an integer.')
     if not isinstance(nuc_nuc, (int, float)):
         raise TypeError('Nuclear-nuclear repulsion energy must be provided as an integer or float.')
+    if not isinstance(ham_noise, (int, float, type(None))):
+        raise TypeError('Scale for the noise applied to the Hamiltonian parameters must be an '
+                        'integer or float')
+    if not isinstance(wfn_noise, (int, float, type(None))):
+        raise TypeError('Scale for the noise applied to the wavefunction parameters must be an '
+                        'integer or float')
 
     # check flags
     if not isinstance(optimize_orbs, bool):
@@ -224,6 +238,14 @@ def parser_add_arguments():
         '--solver', type=str, default='cma', required=False,
         help=('Type of the solver that will be used. Must be one of `cma`, `diag`, `minimize`, '
               '`least_squares`, and `root`. Default is `cma`.')
+    )
+    parser.add_argument(
+        '--ham_noise', type=float, default=0.0, required=False,
+        help='Scale of the noise to be applied to the Hamiltonian parameters.'
+    )
+    parser.add_argument(
+        '--wfn_noise', type=float, default=0.0, required=False,
+        help='Scale of the noise to be applied to the wavefunction parameters.'
     )
     parser.add_argument(
         '--solver_kwargs', type=str, default=None, required=False,
