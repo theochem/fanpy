@@ -7,6 +7,7 @@ from utils import check_inputs, parser, parser_add_arguments
 def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None,
                 optimize_orbs=False, pspace_exc=None, objective=None,
                 solver=None, solver_kwargs=None, wfn_kwargs=None,
+                ham_noise=None, wfn_noise=None,
                 load_orbs=None, load_ham=None, load_wfn=None, load_chk=None,
                 save_orbs=None, save_ham=None, save_wfn=None, save_chk=None,
                 filename=None, memory=None):
@@ -61,6 +62,14 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
         Keyword arguments for the solver.
     wfn_kwargs : str
         Keyword arguments for the wavefunction.
+    ham_noise : float
+        Scale of the noise to be applied to the Hamiltonian parameters.
+        The noise is generated using a uniform distribution between -1 and 1.
+        By default, no noise is added.
+    wfn_noise : bool
+        Scale of the noise to be applied to the wavefunction parameters.
+        The noise is generated using a uniform distribution between -1 and 1.
+        By default, no noise is added.
     load_orbs : str
         Numpy file of the orbital transformation matrix that will be applied to the initial
         Hamiltonian.
@@ -250,6 +259,9 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
     output += '\n'.join(textwrap.wrap(wfn_init1 + wfn_init2,
                                       width=100, subsequent_indent=' '*len(wfn_init1)))
     output += '\n'
+    if wfn_noise not in [0, None]:
+        output += ('wfn.assign_params(wfn.params + '
+                   '{} * 2 * (np.random.rand(*wfn.params.shape) - 0.5))\n'.format(wfn_noise))
     output += "print('Wavefunction: {}')\n".format(wfn_name)
     output += '\n'
 
@@ -270,6 +282,9 @@ def make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=None
     output += '\n'.join(textwrap.wrap(ham_init1 + ham_init2,
                                       width=100, subsequent_indent=' '*len(ham_init1)))
     output += '\n'
+    if ham_noise not in [0, None]:
+        output += ('ham.assign_params(ham.params + '
+                   '{} * 2 * (np.random.rand(*ham.params.shape) - 0.5))\n'.format(ham_noise))
     output += "print('Hamiltonian: {}')\n".format(ham_name)
     output += '\n'
 
@@ -396,6 +411,7 @@ if __name__ == '__main__':
                 args.wfn_type, nuc_nuc=args.nuc_nuc, optimize_orbs=args.optimize_orbs,
                 pspace_exc=args.pspace_exc, objective=args.objective, solver=args.solver,
                 solver_kwargs=args.solver_kwargs, wfn_kwargs=args.wfn_kwargs,
+                ham_noise=args.ham_noise, wfn_noise=args.wfn_noise,
                 load_orbs=args.load_orbs, load_ham=args.load_ham, load_wfn=args.load_wfn,
                 load_chk=args.load_chk,
                 save_orbs=args.save_orbs, save_ham=args.save_ham, save_wfn=args.save_wfn,
