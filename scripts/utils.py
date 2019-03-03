@@ -217,7 +217,7 @@ def parser_add_arguments():
               '`determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, `apg`.')
     )
     parser.add_argument(
-        '--nuc_repulsion', type=float, dest='nuc_nuc', nargs=1, default=0.0, required=False,
+        '--nuc_repulsion', type=float, dest='nuc_nuc', default=0.0, required=False,
         help='Nuclear-nuclear repulsion.'
     )
     parser.add_argument(
