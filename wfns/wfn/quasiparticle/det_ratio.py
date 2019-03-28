@@ -204,7 +204,7 @@ class DeterminantRatio(BaseWavefunction):
         """
         if not isinstance(index, int):
             raise TypeError('index must be given as an integer.')
-        elif not 0 <= index < self.num_matrices:
+        if not 0 <= index < self.num_matrices:
             raise ValueError('index must be greater than or equal to zero and less than the number '
                              'of matrices.')
 
