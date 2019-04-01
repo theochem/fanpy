@@ -1,7 +1,6 @@
 """Test wfns.wavefunction.geminals.apr2g.APr2G."""
 from nose.plugins.attrib import attr
 import numpy as np
-from wfns.tools import find_datafile
 from wfns.wfn.geminal.rank2_approx import full_to_rank2
 from wfns.wfn.geminal.apr2g import APr2G
 from wfns.ham.senzero import SeniorityZeroHamiltonian
@@ -9,12 +8,7 @@ from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import minimize, cma
-
-
-class TestAPr2G(APr2G):
-    """APr2G that skips initialization."""
-    def __init__(self):
-        self._cache_fns = {}
+from utils import find_datafile
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -26,8 +20,8 @@ def answer_apr2g_h2_631gdp():
     Uses APIG answer from test_apr2g_apig.answer_apig_h2_631gdp, converting it to APr2G.
 
     """
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -68,8 +62,8 @@ def test_apr2g_apr2g_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apr2g = APr2G(2, 20)
@@ -93,8 +87,8 @@ def answer_apr2g_lih_sto6g():
     Uses APIG answer from test_apr2g_apig.answer_apig_lih_sto6g, converting it to APr2G.
 
     """
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -135,8 +129,8 @@ def test_apr2g_apr2g_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apr2g = APr2G(4, 12)

@@ -3,23 +3,12 @@ import collections
 import numpy as np
 from nose.tools import assert_raises
 from wfns.param import ParamContainer, ParamMask
-
-
-class TestParamContainer(ParamContainer):
-    """ParamContainer that skips initialization."""
-    def __init__(self):
-        pass
-
-
-class TestParamMask(ParamMask):
-    """ParamMask that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_assign_param():
     """Test ParamContainer.assign_param."""
-    test = TestParamContainer()
+    test = skip_init(ParamContainer)
     # int
     test.assign_params(1)
     assert np.array_equal(test.params, np.array([1]))
@@ -62,7 +51,7 @@ def test_nparams():
 
 def test_parammask_load_mask_container_params():
     """Test ParamMask.load_mask_container_params."""
-    test = TestParamMask()
+    test = skip_init(ParamMask)
     test._masks_container_params = collections.OrderedDict()
     assert_raises(TypeError, test.load_mask_container_params, 1, np.array([2]))
     container = ParamContainer(np.arange(10))
@@ -91,7 +80,7 @@ def test_parammask_load_mask_container_params():
 
 def test_parammask_load_mask_objective_params():
     """Test ParamMask.load_mask_objective_params."""
-    test = TestParamMask()
+    test = skip_init(ParamMask)
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))

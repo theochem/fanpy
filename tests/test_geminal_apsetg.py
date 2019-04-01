@@ -4,24 +4,18 @@ from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 import types
 from wfns.backend import graphs
-from wfns.tools import find_datafile
 from wfns.wfn.geminal.apsetg import BasicAPsetG
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import minimize, cma
-
-
-class TestBasicAPsetG(BasicAPsetG):
-    """BasicAPsetG that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_apsetg_assign_orbpairs():
     """Test BasicAPsetG.assign_orbpairs."""
-    test = TestBasicAPsetG()
+    test = skip_init(BasicAPsetG)
     test.nspin = 10
     assert_raises(ValueError, test.assign_orbpairs, (0, 5))
     assert_raises(ValueError, test.assign_orbpairs, [(0, 5)])
@@ -38,7 +32,7 @@ def test_apsetg_assign_orbpairs():
 
 def test_apsetg_get_col_ind():
     """Test BasicAPsetG.get_col_ind."""
-    test = TestBasicAPsetG()
+    test = skip_init(BasicAPsetG)
     test.nspin = 10
 
     orbpairs = [(i, j) for i in range(5) for j in range(5, 10)]
@@ -53,7 +47,7 @@ def test_apsetg_get_col_ind():
 
 def test_apsetg_get_orbpair():
     """Test BasicAPsetG.get_orbpair."""
-    test = TestBasicAPsetG()
+    test = skip_init(BasicAPsetG)
     test.nspin = 10
 
     orbpairs = [(i, j) for i in range(5) for j in range(5, 10)]
@@ -67,7 +61,7 @@ def test_apsetg_get_orbpair():
 
 def test_assign_pmatch_generator():
     """Test BasicAPsetG.generate_possible_orbpairs"""
-    test = TestBasicAPsetG()
+    test = skip_init(BasicAPsetG)
     test.assign_nspin(6)
     sd = (0, 1, 2, 3, 4, 5)
     assert isinstance(test.generate_possible_orbpairs(sd), types.GeneratorType)
@@ -79,8 +73,8 @@ def test_assign_pmatch_generator():
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_h2_sto6g():
     """Find the APsetG/STO-6G wavefunction variationally for H2 system."""
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 4)
@@ -108,8 +102,8 @@ def test_apsetg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 4)
@@ -124,8 +118,8 @@ def test_apsetg_h2_sto6g():
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_h2_631gdp():
     """Find the APsetG/6-31G** wavefunction variationally for H2 system."""
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 20)
@@ -147,8 +141,8 @@ def test_apsetg_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 20)
@@ -163,8 +157,8 @@ def test_apsetg_h2_631gdp():
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_lih_sto6g():
     """Find the BasicAPsetG/STO-6G wavefunction variationally for LiH system."""
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(4, 12)
@@ -191,8 +185,8 @@ def test_apsetg_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(4, 12)

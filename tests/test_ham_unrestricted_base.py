@@ -3,22 +3,7 @@ import itertools as it
 import numpy as np
 from nose.tools import assert_raises
 from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
-
-
-class Empty:
-    """Empty container class."""
-    pass
-
-
-class TestBaseUnrestrictedHamiltonian(BaseUnrestrictedHamiltonian):
-    """BaseUnrestrictedHamiltonian class that bypasses the abstract methods."""
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        """Abstract method."""
-        pass
-
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
-        """Abstract method."""
-        pass
+from utils import skip_init, disable_abstract
 
 
 def test_assign_integrals():
@@ -27,13 +12,13 @@ def test_assign_integrals():
     one_int = np.random.rand(4, 4)
     two_int = np.random.rand(4, 4, 4, 4)
 
-    test = Empty()
-    BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int]*3)
+    test = skip_init(disable_abstract(BaseUnrestrictedHamiltonian))
+    test.assign_integrals([one_int]*2, [two_int]*3)
     assert np.allclose(test.one_int, one_int)
     assert np.allclose(test.two_int, two_int)
 
     # bad input
-    test = Empty()
+    test = skip_init(disable_abstract(BaseUnrestrictedHamiltonian))
 
     assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
                   one_int, [two_int]*3)
@@ -82,7 +67,7 @@ def test_nspin():
     """Test BaseUnrestrictedHamiltonian.nspin."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = TestBaseUnrestrictedHamiltonian(2*[one_int], 3*[two_int])
+    test = disable_abstract(BaseUnrestrictedHamiltonian)(2*[one_int], 3*[two_int])
     assert test.nspin == 4
 
 
@@ -90,7 +75,7 @@ def test_dtype():
     """Test BaseUnrestrictedHamiltonian.dtype."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = TestBaseUnrestrictedHamiltonian(2*[one_int], 3*[two_int])
+    test = disable_abstract(BaseUnrestrictedHamiltonian)(2*[one_int], 3*[two_int])
     assert test.dtype == float
 
 
@@ -104,8 +89,8 @@ def test_orb_rotate_jacobi():
 
     theta = 2 * np.pi * (np.random.random() - 0.5)
 
-    ham = TestBaseUnrestrictedHamiltonian([one_int_alpha, one_int_beta],
-                                          [two_int_aaaa, two_int_abab, two_int_bbbb])
+    Test = disable_abstract(BaseUnrestrictedHamiltonian)
+    ham = Test([one_int_alpha, one_int_beta], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
     assert_raises(TypeError, ham.orb_rotate_jacobi, {0, 1}, 0.0)
     assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1, 2), 0.0)
@@ -133,9 +118,9 @@ def test_orb_rotate_jacobi():
         answer_aaaa = np.einsum('ijkl,ia,jb,kc,ld->abcd', two_int_aaaa, *[jacobi_rotation]*4)
         answer_abab = np.einsum('ijkl,ia,kc->ajcl', two_int_abab, *[jacobi_rotation]*2)
 
-        ham = TestBaseUnrestrictedHamiltonian([np.copy(one_int_alpha), np.copy(one_int_beta)],
-                                              [np.copy(two_int_aaaa), np.copy(two_int_abab),
-                                               np.copy(two_int_bbbb)])
+        ham = Test([np.copy(one_int_alpha), np.copy(one_int_beta)],
+                   [np.copy(two_int_aaaa), np.copy(two_int_abab),
+                    np.copy(two_int_bbbb)])
         ham.orb_rotate_jacobi((p, q), theta)
 
         assert np.allclose(ham.one_int[0], answer_alpha)
@@ -144,9 +129,9 @@ def test_orb_rotate_jacobi():
         assert np.allclose(ham.two_int[1], answer_abab)
         assert np.allclose(ham.two_int[2], two_int_bbbb)
 
-        ham = TestBaseUnrestrictedHamiltonian([np.copy(one_int_alpha), np.copy(one_int_beta)],
-                                              [np.copy(two_int_aaaa), np.copy(two_int_abab),
-                                               np.copy(two_int_bbbb)])
+        ham = Test([np.copy(one_int_alpha), np.copy(one_int_beta)],
+                   [np.copy(two_int_aaaa), np.copy(two_int_abab),
+                    np.copy(two_int_bbbb)])
         ham.orb_rotate_jacobi((q, p), theta)
 
         assert np.allclose(ham.one_int[0], answer_alpha)
@@ -166,9 +151,9 @@ def test_orb_rotate_jacobi():
         answer_bbbb = np.einsum('ijkl,ia,jb,kc,ld->abcd', two_int_bbbb, *[jacobi_rotation]*4)
         answer_abab = np.einsum('ijkl,jb,ld->ibkd', two_int_abab, *[jacobi_rotation]*2)
 
-        ham = TestBaseUnrestrictedHamiltonian([np.copy(one_int_alpha), np.copy(one_int_beta)],
-                                              [np.copy(two_int_aaaa), np.copy(two_int_abab),
-                                               np.copy(two_int_bbbb)])
+        ham = Test([np.copy(one_int_alpha), np.copy(one_int_beta)],
+                   [np.copy(two_int_aaaa), np.copy(two_int_abab),
+                    np.copy(two_int_bbbb)])
         ham.orb_rotate_jacobi((p, q), theta)
 
         assert np.allclose(ham.one_int[0], one_int_alpha)
@@ -177,9 +162,9 @@ def test_orb_rotate_jacobi():
         assert np.allclose(ham.two_int[1], answer_abab)
         assert np.allclose(ham.two_int[2], answer_bbbb)
 
-        ham = TestBaseUnrestrictedHamiltonian([np.copy(one_int_alpha), np.copy(one_int_beta)],
-                                              [np.copy(two_int_aaaa), np.copy(two_int_abab),
-                                               np.copy(two_int_bbbb)])
+        ham = Test([np.copy(one_int_alpha), np.copy(one_int_beta)],
+                   [np.copy(two_int_aaaa), np.copy(two_int_abab),
+                    np.copy(two_int_bbbb)])
         ham.orb_rotate_jacobi((q, p), theta)
 
         assert np.allclose(ham.one_int[0], one_int_alpha)
@@ -202,7 +187,7 @@ def test_orb_rotate_matrix():
     one_orig = np.copy(one_int)
     two_orig = np.copy(two_int)
 
-    ham = TestBaseUnrestrictedHamiltonian((one_int, one_int), (two_int, two_int, two_int))
+    ham = disable_abstract(BaseUnrestrictedHamiltonian)((one_int, one_int), (two_int, two_int, two_int))
     ham.orb_rotate_matrix(transform1)
     assert np.allclose(ham.one_int[0], np.einsum('ij,ia,jb->ab', one_orig, transform1, transform1))
     assert np.allclose(ham.one_int[1], np.einsum('ij,ia,jb->ab', one_orig, transform1, transform1))
@@ -213,7 +198,7 @@ def test_orb_rotate_matrix():
     assert np.allclose(ham.two_int[2],  np.einsum('ijkl,ia,jb,kc,ld->abcd', two_orig,
                                                   transform1, transform1, transform1, transform1))
 
-    ham = TestBaseUnrestrictedHamiltonian((one_int, one_int), (two_int, two_int, two_int))
+    ham = disable_abstract(BaseUnrestrictedHamiltonian)((one_int, one_int), (two_int, two_int, two_int))
     ham.orb_rotate_matrix([transform1, transform2])
     assert np.allclose(ham.one_int[0], np.einsum('ij,ia,jb->ab', one_orig, transform1, transform1))
     assert np.allclose(ham.one_int[1], np.einsum('ij,ia,jb->ab', one_orig, transform2, transform2))

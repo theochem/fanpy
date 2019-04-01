@@ -1,21 +1,15 @@
 """Test wfns.wavefunction.ci_pairs."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.tools import find_datafile
 from wfns.wfn.ci.ci_pairs import CIPairs
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.solver.ci import brute
-
-
-class TestCIPairs(CIPairs):
-    """CIPairs class without initializer."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_assign_sd_vec():
     """Test CIPairs.assign_sd_vec."""
-    test = TestCIPairs()
+    test = skip_init(CIPairs)
     test.assign_nelec(6)
     test.assign_nspin(10)
     test.assign_spin(0)
@@ -53,8 +47,8 @@ def test_to_ap1rog_h2_sto6g_ground():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -74,8 +68,8 @@ def test_to_ap1rog_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = (np.load(find_datafile('test/lih_hf_sto6g_oneint.npy')), )
-    two_int = (np.load(find_datafile('test/lih_hf_sto6g_twoint.npy')), )
+    one_int = (np.load(find_datafile('data_lih_hf_sto6g_oneint.npy')), )
+    two_int = (np.load(find_datafile('data_lih_hf_sto6g_twoint.npy')), )
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -96,8 +90,8 @@ def test_to_ap1rog_h4_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     nuc_nuc = 2.70710678119
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 

@@ -5,17 +5,12 @@ from nose.tools import assert_raises
 from wfns.wfn.network.keras_network import KerasNetwork
 import wfns.backend.slater as slater
 from wfns.backend.sd_list import sd_list
-
-
-class TestKerasNetwork(KerasNetwork):
-    """KerasNetwork that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_assign_dtype():
     "Test KerasNetwork.assign_dtype."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.assign_dtype(float)
     assert test.dtype == np.float64
     assert_raises(ValueError, test.assign_dtype, complex)
@@ -23,7 +18,7 @@ def test_assign_dtype():
 
 def test_assign_model():
     "Test KerasNetwork.assign_model."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nspin = 10
     # default
     test.assign_model()
@@ -69,7 +64,7 @@ def test_assign_model():
 
 def test_nparams():
     "Test KerasNetwork.nparams."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
     model.add(keras.layers.core.Dense(100, input_dim=10, use_bias=True))
@@ -80,7 +75,7 @@ def test_nparams():
 
 def test_params_shape():
     "Test KerasNetwork.params_shape."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
     model.add(keras.layers.core.Dense(100, input_dim=10, use_bias=True))
@@ -91,7 +86,7 @@ def test_params_shape():
 
 def test_template_params():
     "Test KerasNetwork.template_params."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     params = np.random.rand(100)
     test._template_params = params
     assert np.allclose(test.template_params, params)
@@ -99,7 +94,7 @@ def test_template_params():
 
 def test_assign_template_params():
     "Test KerasNetwork.assign_template_params."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
@@ -128,7 +123,7 @@ def test_assign_template_params():
 
 def test_assign_params():
     "Test KerasNetwork.assign_params."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nspin = 10
     test.dtype = np.float64
     test.assign_model()
@@ -150,7 +145,7 @@ def test_assign_params():
 
 def test_get_overlap():
     "Test KerasNetwork.get_overlap."
-    test = TestKerasNetwork()
+    test = skip_init(KerasNetwork)
     test.nspin = 4
     test.dtype = np.float64
     model = keras.engine.sequential.Sequential()

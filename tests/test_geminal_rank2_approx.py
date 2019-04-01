@@ -4,9 +4,10 @@ import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
 from wfns.wfn.geminal.apig import APIG
 from wfns.wfn.geminal.rank2_approx import RankTwoApprox, full_to_rank2
+from utils import skip_init
 
 
-class TestRankTwoGeminal(RankTwoApprox, BaseGeminal):
+class RankTwoGeminal(RankTwoApprox, BaseGeminal):
     """RankTwoGeminal that skips initialization."""
     def __init__(self):
         self._cache_fns = {}
@@ -51,7 +52,7 @@ def test_rank2_geminal_template_params():
     """Test RankTwoGeminal.template_params."""
     np.random.seed(424242)
 
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(10)
     test.assign_orbpairs()
@@ -90,7 +91,7 @@ def test_rank2_geminal_template_params():
 
 def test_rank2_geminal_assign_params():
     """Test RankTwoGeminal.assign_params."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
@@ -120,7 +121,7 @@ def test_rank2_geminal_assign_params():
 
 def test_rank2_geminal_lambdas():
     """Test RankTwoGeminal.lambdas."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
@@ -132,7 +133,7 @@ def test_rank2_geminal_lambdas():
 
 def test_rank2_geminal_epsilons():
     """Test RankTwoGeminal.epsilons."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
@@ -144,7 +145,7 @@ def test_rank2_geminal_epsilons():
 
 def test_rank2_geminal_zetas():
     """Test RankTwoGeminal.zetas."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
@@ -156,7 +157,7 @@ def test_rank2_geminal_zetas():
 
 def test_rank2_geminal_fullrank_params():
     """Test RankTwoGeminal.fullrank_params."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
@@ -169,7 +170,7 @@ def test_rank2_geminal_fullrank_params():
 
 def test_rank2_geminal_compute_permanent():
     """Test RankTwoGeminal.compute_permanent."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_orbpairs([(0, 4), (1, 5), (2, 6), (3, 7)])
@@ -259,7 +260,7 @@ def test_rank2_geminal_compute_permanent():
 
 def test_rank2_geminal_get_overlap():
     """Test RankTwoGeminal.get_overlap."""
-    test = TestRankTwoGeminal()
+    test = RankTwoGeminal()
     test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)

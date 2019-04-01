@@ -2,22 +2,16 @@
 import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
-from wfns.tools import find_datafile
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import cma
-
-
-class TestDOCI(DOCI):
-    """DOCI instance that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_assign_nelec():
     """Test DOCI.assign_nelec."""
-    test = TestDOCI()
+    test = skip_init(DOCI)
     # int
     test.assign_nelec(2)
     assert test.nelec == 2
@@ -33,7 +27,7 @@ def test_assign_nelec():
 
 def test_assign_spin():
     """Test DOCI.assign_spin."""
-    test = TestDOCI()
+    test = skip_init(DOCI)
     test.assign_spin()
     assert test.spin == 0
     test.assign_spin(0)
@@ -45,7 +39,7 @@ def test_assign_spin():
 
 def test_assign_seniority():
     """Test DOCI.ssign_seniority."""
-    test = TestDOCI()
+    test = skip_init(DOCI)
     test.assign_seniority()
     assert test.seniority == 0
     test.assign_seniority(0)
@@ -74,8 +68,8 @@ def test_doci_h4_hf_sto6g():
     #                     [0.000004942751, 0.707106849959, 0.707106712365, 0.000006630781],
     #                     [0.000004410256, 0.707106712383, -0.707106849949, -0.000006245943]])
 
-    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     nuc_nuc = 2.70710678119
 
     # rotate orbitals
@@ -140,8 +134,8 @@ def test_doci_h2_hf_631gdp():
     #                      0.000000474065, -0.119224270382, 0.611439523904, 0.000002445211,
     #                      -0.000002458517, 0.606180602568]])
 
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
 
     # rotate orbitals

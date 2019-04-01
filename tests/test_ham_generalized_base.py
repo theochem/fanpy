@@ -3,22 +3,7 @@ import itertools as it
 import numpy as np
 from nose.tools import assert_raises
 from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
-
-
-class Empty:
-    """Empty container class."""
-    pass
-
-
-class TestBaseGeneralizedHamiltonian(BaseGeneralizedHamiltonian):
-    """BaseGeneralizedHamiltonian class that bypasses the abstract methods."""
-    def integrate_wfn_sd(self, wfn, sd, deriv=None):
-        """Abstract method."""
-        pass
-
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
-        """Abstract method."""
-        pass
+from utils import skip_init, disable_abstract
 
 
 def test_assign_integrals():
@@ -27,13 +12,13 @@ def test_assign_integrals():
     one_int = np.random.rand(4, 4)
     two_int = np.random.rand(4, 4, 4, 4)
 
-    test = Empty()
-    BaseGeneralizedHamiltonian.assign_integrals(test, one_int, two_int)
+    test = skip_init(disable_abstract(BaseGeneralizedHamiltonian))
+    test.assign_integrals(one_int, two_int)
     assert np.allclose(test.one_int, one_int)
     assert np.allclose(test.two_int, two_int)
 
     # bad input
-    test = Empty()
+    test = skip_init(disable_abstract(BaseGeneralizedHamiltonian))
     assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
                   [[1, 2], [3, 4]], np.random.rand(2, 2, 2, 2))
     assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
@@ -58,7 +43,7 @@ def test_nspin():
     """Test BaseGeneralizedHamiltonian.nspin."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = TestBaseGeneralizedHamiltonian(one_int, two_int)
+    test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     assert test.nspin == 2
 
 
@@ -66,12 +51,12 @@ def test_dtype():
     """Test BaseGeneralizedHamiltonian.dtype."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = TestBaseGeneralizedHamiltonian(one_int, two_int)
+    test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     assert test.dtype == float
 
     one_int = np.arange(1, 5, dtype=complex).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=complex).reshape(2, 2, 2, 2)
-    test = TestBaseGeneralizedHamiltonian(one_int, two_int)
+    test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     assert test.dtype == complex
 
 
@@ -82,7 +67,7 @@ def test_orb_rotate_jacobi():
 
     theta = 2 * np.pi * (np.random.random() - 0.5)
 
-    ham = TestBaseGeneralizedHamiltonian(one_int, two_int)
+    ham = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     assert_raises(TypeError, ham.orb_rotate_jacobi, {0, 1}, 0)
     assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1, 2), 0)
     assert_raises(TypeError, ham.orb_rotate_jacobi, (0.0, 1), 0)
@@ -106,12 +91,12 @@ def test_orb_rotate_jacobi():
         one_answer = np.einsum('ij,ia,jb->ab', one_int, jacobi_matrix, jacobi_matrix)
         two_answer = np.einsum('ijkl,ia,jb,kc,ld->abcd', two_int, *[jacobi_matrix]*4)
 
-        ham = TestBaseGeneralizedHamiltonian(np.copy(one_int), np.copy(two_int))
+        ham = disable_abstract(BaseGeneralizedHamiltonian)(np.copy(one_int), np.copy(two_int))
         ham.orb_rotate_jacobi((p, q), theta)
         assert np.allclose(ham.one_int, one_answer)
         assert np.allclose(ham.two_int, two_answer)
 
-        ham = TestBaseGeneralizedHamiltonian(np.copy(one_int), np.copy(two_int))
+        ham = disable_abstract(BaseGeneralizedHamiltonian)(np.copy(one_int), np.copy(two_int))
         ham.orb_rotate_jacobi((q, p), theta)
         assert np.allclose(ham.one_int, one_answer)
         assert np.allclose(ham.two_int, two_answer)
@@ -134,7 +119,7 @@ def test_orb_rotate_matrix():
     two_answer = np.einsum('abkl,kc->abcl', two_answer, transform)
     two_answer = np.einsum('abcl,ld->abcd', two_answer, transform)
 
-    ham = TestBaseGeneralizedHamiltonian(one_int, two_int)
+    ham = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     ham.orb_rotate_matrix(transform)
     assert np.allclose(ham.one_int, one_answer)
     assert np.allclose(ham.two_int, two_answer)

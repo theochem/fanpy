@@ -3,7 +3,7 @@ import numpy as np
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 from wfns.ham.density import add_one_density, add_two_density, density_matrix
-from wfns.tools import find_datafile
+from utils import find_datafile
 
 
 def test_add_one_density():
@@ -403,11 +403,11 @@ def test_density_matrix_restricted_h2_fci_sto6g():
     assert np.allclose(one_density[0], ref_one_density)
 
     # Reconstruct FCI energy
-    # hf_dict = gaussian_fchk(find_datafile('test/h2_hf_sto6g.fchk'))
+    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     # physicist notation
     assert abs((np.einsum('ij,ij', one_int, one_density[0]) +
                 0.5*np.einsum('ijkl,ijkl', two_int, two_density[0])) - (-1.85908985)) < 1e-8
@@ -432,16 +432,16 @@ def test_density_matrix_restricted_h2_631gdp():
     nelec = 2
 
     # read in gaussian fchk file and generate one and two electron integrals (using horton)
-    # hf_dict = gaussian_fchk(find_datafile('test/h2_hf_631gdp.fchk'))
+    # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
-    ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
-    civec = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
+    ci_matrix = np.load(find_datafile('data_h2_hf_631gdp_cimatrix.npy'))
+    civec = np.load(find_datafile('data_h2_hf_631gdp_civec.npy'))
     civec = [int(i) for i in civec]
     sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
     energy = np.linalg.eigh(ci_matrix)[0][0]
@@ -476,16 +476,16 @@ def test_density_matrix_restricted_lih_sto6g():
     nelec = 4
 
     # read in gaussian fchk file and generate one and two electron integrals (using horton)
-    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
-    ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
-    civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    ci_matrix = np.load(find_datafile('data_lih_hf_sto6g_cimatrix.npy'))
+    civec = np.load(find_datafile('data_lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
     sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
     energy = np.linalg.eigh(ci_matrix)[0][0]
@@ -521,16 +521,16 @@ def test_density_matrix_restricted_lih_631g():
     nelec = 4
 
     # read in gaussian fchk file and generate one and two electron integrals (using horton)
-    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_631g.fchk'))
+    # hf_dict = gaussian_fchk('test/lih_hf_631g.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
-    ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
-    civec = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
+    ci_matrix = np.load(find_datafile('data_lih_hf_631g_cimatrix.npy'))
+    civec = np.load(find_datafile('data_lih_hf_631g_civec.npy'))
     civec = [int(i) for i in civec]
     sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
     energy = np.linalg.eigh(ci_matrix)[0][0]
@@ -565,16 +565,16 @@ def test_density_matrix_unrestricted_lih_sto6g():
     nelec = 4
 
     # read in gaussian fchk file and generate one and two electron integrals (using horton)
-    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
-    ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
-    civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    ci_matrix = np.load(find_datafile('data_lih_hf_sto6g_cimatrix.npy'))
+    civec = np.load(find_datafile('data_lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
     sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
     energy = np.linalg.eigh(ci_matrix)[0][0]
@@ -617,16 +617,16 @@ def test_density_matrix_generalized_lih_sto6g():
     nelec = 4
 
     # read in gaussian fchk file and generate one and two electron integrals (using horton)
-    # hf_dict = gaussian_fchk(find_datafile('test/lih_hf_sto6g.fchk'))
+    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
     # one_int = hf_dict["one_int"][0]
     # two_int = hf_dict["two_int"][0]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
 
     # generate ci matrix from pyscf
     # ci_matrix, civec = generate_fci_cimatrix(one_int, two_int, nelec, is_chemist_notation=False)
-    ci_matrix = np.load(find_datafile('test/lih_hf_sto6g_cimatrix.npy'))
-    civec = np.load(find_datafile('test/lih_hf_sto6g_civec.npy'))
+    ci_matrix = np.load(find_datafile('data_lih_hf_sto6g_cimatrix.npy'))
+    civec = np.load(find_datafile('data_lih_hf_sto6g_civec.npy'))
     civec = [int(i) for i in civec]
     sd_coeffs = np.linalg.eigh(ci_matrix)[1][:, 0]
     energy = np.linalg.eigh(ci_matrix)[0][0]

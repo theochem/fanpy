@@ -3,28 +3,12 @@ from nose.tools import assert_raises
 import functools
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
-
-
-class TestWavefunction(BaseWavefunction):
-    """Base wavefunction that bypasses abstract class structure."""
-    def __init__(self):
-        pass
-
-    def get_overlap(self):
-        pass
-
-    @property
-    def params_shape(self):
-        return (10, 10)
-
-    @property
-    def template_params(self):
-        return np.identity(10)
+from utils import skip_init, disable_abstract
 
 
 def test_assign_nelec():
     """Test BaseWavefunction.assign_nelec."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
     assert_raises(TypeError, test.assign_nelec, None)
     assert_raises(TypeError, test.assign_nelec, 2.0)
@@ -38,7 +22,7 @@ def test_assign_nelec():
 
 def test_nspin():
     """Test BaseWavefunction.nspin."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
     assert_raises(TypeError, test.assign_nspin, None)
     assert_raises(TypeError, test.assign_nspin, 2.0)
@@ -53,7 +37,7 @@ def test_nspin():
 
 def test_assign_dtype():
     """Test BaseWavefunction.assign_dtype."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
     assert_raises(TypeError, test.assign_dtype, '')
     assert_raises(TypeError, test.assign_dtype, 'float64')
@@ -73,7 +57,7 @@ def test_assign_dtype():
 
 def test_assign_memory():
     """Test BaseWavefunction.assign_memory."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     test.assign_memory(None)
     assert test.memory == np.inf
     test.assign_memory(10)
@@ -91,20 +75,44 @@ def test_assign_memory():
 def test_assign_params():
     """Test BaseWavefunction.assign_params."""
     # default
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.identity(10)),
+                "params_shape": property(lambda self: (10, 10)),
+            },
+        )
+    )
     test.assign_dtype(float)
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
     assert test.dtype == test.params.dtype
 
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.identity(10)),
+                "params_shape": property(lambda self: (10, 10)),
+            },
+        )
+    )
     test.assign_dtype(complex)
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
     assert test.dtype == test.params.dtype
 
     # check errors
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.identity(10)),
+                "params_shape": property(lambda self: (10, 10)),
+            },
+        )
+    )
     test.assign_dtype(float)
     assert_raises(ValueError, test.assign_params, 2)
     assert_raises(TypeError, test.assign_params, [2, 3])
@@ -114,13 +122,29 @@ def test_assign_params():
     assert_raises(ValueError, test.assign_params, np.arange(100, dtype=float).reshape(2, 5, 2, 5))
 
     # check noise
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.identity(10)),
+                "params_shape": property(lambda self: (10, 10)),
+            },
+        )
+    )
     test.assign_dtype(float)
     test.assign_params(add_noise=True)
     assert np.all(np.abs(test.params - np.identity(10)) <= 0.2/100)
     assert not np.allclose(test.params, np.identity(10))
 
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.identity(10)),
+                "params_shape": property(lambda self: (10, 10)),
+            },
+        )
+    )
     test.assign_dtype(complex)
     test.assign_params(add_noise=True)
     assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1/100)
@@ -129,17 +153,15 @@ def test_assign_params():
     assert not np.allclose(np.imag(test.params), np.zeros((10, 10)))
 
     # for testing one line of code
-    class TempTestWavefunction(TestWavefunction):
-        """Class for testing param_shape."""
-        @property
-        def params_shape(self):
-            return (1, 1, 1)
-
-        @property
-        def template_params(self):
-            return np.array([[[0.0]]])
-
-    test = TempTestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction,
+            dict_overwrite={
+                "template_params": property(lambda self: np.zeros((1, 1, 1))),
+                "params_shape": property(lambda self: (1, 1, 1)),
+            },
+        )
+    )
     test.assign_dtype(complex)
     test.assign_params(2.0)
     assert test.params.shape == (1, 1, 1)
@@ -147,7 +169,7 @@ def test_assign_params():
 
 def test_init():
     """Test BaseWavefunction.__init__."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     BaseWavefunction.__init__(test, 2, 10, dtype=float, memory=20)
     assert test.nelec == 2
     assert test.nspin == 10
@@ -157,19 +179,23 @@ def test_init():
 
 def test_olp():
     """Test BaseWavefunction._olp."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     assert_raises(NotImplementedError, test._olp, 0b0101)
 
 
 def test_olp_deriv():
     """Test BaseWavefunction._olp_deriv."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     assert_raises(NotImplementedError, test._olp_deriv, 0b0101, 0)
 
 
 def test_load_cache():
     """Test BaseWavefunction.load_cache."""
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction, dict_overwrite={"params_shape": property(lambda self: (10, 10))}
+        )
+    )
     test.memory = 1000
     test.params = np.array([1, 2, 3])
     test._cache_fns = {}
@@ -185,7 +211,7 @@ def test_load_cache():
 
 def test_clear_cache():
     """Test BaseWavefunction.clear_cache."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     assert_raises(AttributeError, test.clear_cache)
 
     @functools.lru_cache(2)
@@ -220,24 +246,28 @@ def test_clear_cache():
 
 def test_nspatial():
     """Test BaseWavefunction.nspatial."""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     test.assign_nspin(10)
     assert test.nspatial == 5
 
 
 def test_nparams():
     """Test BaseWavefunction.nparams."""
-    test = TestWavefunction()
+    test = skip_init(
+        disable_abstract(
+            BaseWavefunction, dict_overwrite={"params_shape": property(lambda self: (10, 10))}
+        )
+    )
     assert test.nparams == 100
 
 
 def test_spin():
     """Test BaseWavefunction.spin"""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     assert test.spin is None
 
 
 def test_seniority():
     """Test BaseWavefunction.seniority"""
-    test = TestWavefunction()
+    test = skip_init(disable_abstract(BaseWavefunction))
     assert test.seniority is None
