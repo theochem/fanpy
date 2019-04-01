@@ -13,7 +13,7 @@ The FANCI module has been developed using the following dependencies:
 * SciPy >= 0.18.0: http://www.scipy.org/
 * NumPy >= 1.11.0: http://www.numpy.org/
 * gmpy2 >= 2.0.8:
-* Nosetests >= 1.1.2: http://readthedocs.org/docs/nose/en/latest/
+* pytest >= 4.0.0: https://docs.pytest.org/en/latest/
 
 The latest versions of these modules can be accessed with conda or pip.
 
@@ -22,14 +22,14 @@ Conda
 
   .. code-block:: bash
 
-     conda install numpy scipy gmpy2 nose
+     conda install numpy scipy gmpy2 pytest
 
 Pip
 ---
 
   .. code-block:: bash
 
-     pip install numpy scipy gmpy2 nose
+     pip install numpy scipy gmpy2 pytest
 
 
 Optional Dependencies

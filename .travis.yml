@@ -129,11 +129,11 @@ install:
 #   python tools/gitversion.py python > ${PROJECT_NAME}/version.py;
 
 # Get a list of all build and runtime dependencies.
-- conda install numpy scipy gmpy2 nose
+- conda install numpy scipy gmpy2 pytest
 
 # Install dependencies for linters
-- conda install nose flake8 pycodestyle
-- pip install --upgrade pylint codecov coverage pydocstyle
+- conda install flake8 pycodestyle
+- pip install --upgrade pylint codecov pytest pytest-cov pydocstyle
 
 # Install cma
 - pip install cma
@@ -160,9 +160,7 @@ script:
 # - conda build -q tools/conda.recipe
 # - conda install --use-local ${CONDA_PKG_NAME_PY}
 - python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
-- nosetests ${PROJECT_NAME}
-  -v --detailed-errors --with-coverage --cover-package=${PROJECT_NAME}
-  --cover-tests --cover-inclusive --cover-branches -a '!slow'
+- pytest ./tests -v --cov=./${PROJECT_NAME} --cov-branch -k 'not slow'
 - coverage xml -i --omit=horton_*.py,pyscf_*.py
 # - conda uninstall ${CONDA_PKG_NAME_PY}
 
