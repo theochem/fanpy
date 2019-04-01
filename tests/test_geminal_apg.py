@@ -1,6 +1,5 @@
 """Test wfns.wavefunction.geminals.apg."""
 import pytest
-from nose.plugins.attrib import attr
 import types
 import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
@@ -149,8 +148,7 @@ def answer_apg_h2_631gdp():
     print(apg.params)
 
 
-@attr('slow')
-def test_apg_h2_631gdp():
+def test_apg_h2_631gdp_slow():
     """Test APG wavefunction using H2 with HF/6-31G** orbitals.
 
     Answers obtained from answer_apg_h2_631gdp
@@ -199,8 +197,7 @@ def answer_apg_lih_sto6g():
     print(apg.params)
 
 
-@attr('slow')
-def test_apg_lih_sto6g():
+def test_apg_lih_sto6g_slow():
     """Test APG wavefunction using H2 with LiH/STO-6G orbital.
 
     Answers obtained from answer_apg_lih_sto6g

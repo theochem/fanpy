@@ -1,6 +1,5 @@
 """Test wfns.wavefunction.fci."""
 import numpy as np
-from nose.plugins.attrib import attr
 import pytest
 from wfns.wfn.ci.fci import FCI
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
@@ -84,8 +83,7 @@ def test_fci_lih_sto6g():
     assert abs(energy + nuc_nuc - (-7.9723355823)) < 1e-7
 
 
-@attr('slow')
-def test_fci_lih_631g():
+def test_fci_lih_631g_slow():
     """Test FCI wavefunction for LiH 6-31G.
 
     HF energy: -7.97926894940

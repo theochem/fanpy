@@ -1,5 +1,4 @@
 """Test wfns.wavefunction.geminals.apr2g.APr2G."""
-from nose.plugins.attrib import attr
 import numpy as np
 from wfns.wfn.geminal.rank2_approx import full_to_rank2
 from wfns.wfn.geminal.apr2g import APr2G
@@ -40,8 +39,7 @@ def answer_apr2g_h2_631gdp():
     print(apr2g.params)
 
 
-@attr('slow')
-def test_apr2g_apr2g_h2_631gdp():
+def test_apr2g_apr2g_h2_631gdp_slow():
     """Test ground state APr2G wavefunction using H2 with HF/6-31G** orbitals.
 
     Answers obtained from answer_apr2g_h2_631gdp
@@ -109,8 +107,7 @@ def answer_apr2g_lih_sto6g():
     print(apr2g.params)
 
 
-@attr('slow')
-def test_apr2g_apr2g_lih_sto6g():
+def test_apr2g_apr2g_lih_sto6g_slow():
     """Test APr2G wavefunction using LiH with HF/STO-6G orbitals.
 
     Answers obtained from answer_apr2g_lih_sto6g
