@@ -16,13 +16,13 @@ requirements:
     - scipy
     - gmpy2
     - setuptools
-    - nose
+    - pytest
   run:
     - python
     - numpy
     - scipy
     - gmpy2
-    - nose
+    - pytest
 
 about:
   home: https://github.com/quantumelephant/olsens
