@@ -1,6 +1,6 @@
 """Test wfns.ham.senzero."""
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.backend.slater import get_seniority
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.ham.senzero import SeniorityZeroHamiltonian
@@ -13,11 +13,14 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(4, 4, 4, 4)
     test = SeniorityZeroHamiltonian(one_int, two_int)
 
-    assert_raises(NotImplementedError,
-                  test.integrate_sd_sd, 0b00010001, 0b01000100, sign=None, deriv=0)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b00010001, 0b01000100, sign=0, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b00010001, 0b01000100, sign=0.5, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b00010001, 0b01000100, sign=-0.5, deriv=None)
+    with pytest.raises(NotImplementedError):
+        test.integrate_sd_sd(0b00010001, 0b01000100, sign=None, deriv=0)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b00010001, 0b01000100, sign=0, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b00010001, 0b01000100, sign=0.5, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b00010001, 0b01000100, sign=-0.5, deriv=None)
 
     assert (0, 0, 0) == test.integrate_sd_sd(0b00010001, 0b00100001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b00100001, 0b00010001)
@@ -100,7 +103,8 @@ def test_integrate_wfn_sd_2e():
     assert coulomb == 1*17 + 2*20
     assert exchange == 0
 
-    assert_raises(ValueError, ham.integrate_wfn_sd, test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
+    with pytest.raises(ValueError):
+        ham.integrate_wfn_sd(test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
 
 
 def test_integrate_wfn_sd_4e():
@@ -130,4 +134,5 @@ def test_integrate_wfn_sd_4e():
     assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b110110),
                        ham_full.integrate_wfn_sd(test_wfn, 0b110110))
 
-    assert_raises(ValueError, ham.integrate_wfn_sd, test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
+    with pytest.raises(ValueError):
+        ham.integrate_wfn_sd(test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)

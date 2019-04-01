@@ -1,7 +1,7 @@
 """Test wfns.wavefunction.geminals.apig."""
 import numpy as np
 import scipy
-from nose.tools import assert_raises
+import pytest
 from wfns.wfn.geminal.apig import APIG
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
@@ -31,8 +31,10 @@ def test_apig_assign_orbpairs():
     assert test.dict_orbpair_ind == {(0, 5): 0, (1, 6): 1, (2, 7): 2, (3, 8): 3, (4, 9): 4}
     test.assign_orbpairs(((0, 5), (2, 7), (1, 6), (3, 8), (4, 9)))
     assert test.dict_orbpair_ind == {(0, 5): 0, (1, 6): 2, (2, 7): 1, (3, 8): 3, (4, 9): 4}
-    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5), (5, 7), (6, 7)))
-    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (2, 3), (4, 5)))
+    with pytest.raises(ValueError):
+        test.assign_orbpairs(((0, 1), (2, 3), (4, 5), (5, 7), (6, 7)))
+    with pytest.raises(ValueError):
+        test.assign_orbpairs(((0, 1), (2, 3), (4, 5)))
 
 
 def test_apig_generate_possible_orbpairs():
@@ -47,7 +49,8 @@ def test_apig_generate_possible_orbpairs():
     assert (0, 5) in possible_orbpairs[0][0]
     assert (2, 7) in possible_orbpairs[0][0]
     assert (4, 9) in possible_orbpairs[0][0]
-    assert_raises(ValueError, lambda: next(test.generate_possible_orbpairs([0, 5, 2, 7])))
+    with pytest.raises(ValueError):
+        next(test.generate_possible_orbpairs([0, 5, 2, 7]))
 
 
 def answer_apig_h2_sto6g():

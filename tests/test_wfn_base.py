@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.wavefunctions."""
-from nose.tools import assert_raises
+import pytest
 import functools
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
@@ -10,11 +10,16 @@ def test_assign_nelec():
     """Test BaseWavefunction.assign_nelec."""
     test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
-    assert_raises(TypeError, test.assign_nelec, None)
-    assert_raises(TypeError, test.assign_nelec, 2.0)
-    assert_raises(TypeError, test.assign_nelec, '2')
-    assert_raises(ValueError, test.assign_nelec, 0)
-    assert_raises(ValueError, test.assign_nelec, -2)
+    with pytest.raises(TypeError):
+        test.assign_nelec(None)
+    with pytest.raises(TypeError):
+        test.assign_nelec(2.0)
+    with pytest.raises(TypeError):
+        test.assign_nelec('2')
+    with pytest.raises(ValueError):
+        test.assign_nelec(0)
+    with pytest.raises(ValueError):
+        test.assign_nelec(-2)
     # int
     test.assign_nelec(2)
     assert test.nelec == 2
@@ -24,12 +29,18 @@ def test_nspin():
     """Test BaseWavefunction.nspin."""
     test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
-    assert_raises(TypeError, test.assign_nspin, None)
-    assert_raises(TypeError, test.assign_nspin, 2.0)
-    assert_raises(TypeError, test.assign_nspin, '2')
-    assert_raises(ValueError, test.assign_nspin, 0)
-    assert_raises(ValueError, test.assign_nspin, -2)
-    assert_raises(NotImplementedError, test.assign_nspin, 3)
+    with pytest.raises(TypeError):
+        test.assign_nspin(None)
+    with pytest.raises(TypeError):
+        test.assign_nspin(2.0)
+    with pytest.raises(TypeError):
+        test.assign_nspin('2')
+    with pytest.raises(ValueError):
+        test.assign_nspin(0)
+    with pytest.raises(ValueError):
+        test.assign_nspin(-2)
+    with pytest.raises(NotImplementedError):
+        test.assign_nspin(3)
     # int
     test.assign_nspin(2)
     assert test.nspin == 2
@@ -39,10 +50,14 @@ def test_assign_dtype():
     """Test BaseWavefunction.assign_dtype."""
     test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
-    assert_raises(TypeError, test.assign_dtype, '')
-    assert_raises(TypeError, test.assign_dtype, 'float64')
-    assert_raises(TypeError, test.assign_dtype, int)
-    assert_raises(TypeError, test.assign_dtype, np.float32)
+    with pytest.raises(TypeError):
+        test.assign_dtype('')
+    with pytest.raises(TypeError):
+        test.assign_dtype('float64')
+    with pytest.raises(TypeError):
+        test.assign_dtype(int)
+    with pytest.raises(TypeError):
+        test.assign_dtype(np.float32)
     # None assigned
     test.assign_dtype(None)
     assert test.dtype == np.float64
@@ -68,8 +83,10 @@ def test_assign_memory():
     assert test.memory == 1e6 * 10
     test.assign_memory('20.1gb')
     assert test.memory == 1e9 * 20.1
-    assert_raises(TypeError, test.assign_memory, [])
-    assert_raises(ValueError, test.assign_memory, '20.1kb')
+    with pytest.raises(TypeError):
+        test.assign_memory([])
+    with pytest.raises(ValueError):
+        test.assign_memory('20.1kb')
 
 
 def test_assign_params():
@@ -114,12 +131,18 @@ def test_assign_params():
         )
     )
     test.assign_dtype(float)
-    assert_raises(ValueError, test.assign_params, 2)
-    assert_raises(TypeError, test.assign_params, [2, 3])
-    assert_raises(ValueError, test.assign_params, np.random.rand(10, 11))
-    assert_raises(TypeError, test.assign_params, np.arange(100, dtype=int).reshape(10, 10))
-    assert_raises(TypeError, test.assign_params, np.arange(100, dtype=complex).reshape(10, 10))
-    assert_raises(ValueError, test.assign_params, np.arange(100, dtype=float).reshape(2, 5, 2, 5))
+    with pytest.raises(ValueError):
+        test.assign_params(2)
+    with pytest.raises(TypeError):
+        test.assign_params([2, 3])
+    with pytest.raises(ValueError):
+        test.assign_params(np.random.rand(10, 11))
+    with pytest.raises(TypeError):
+        test.assign_params(np.arange(100, dtype=int).reshape(10, 10))
+    with pytest.raises(TypeError):
+        test.assign_params(np.arange(100, dtype=complex).reshape(10, 10))
+    with pytest.raises(ValueError):
+        test.assign_params(np.arange(100, dtype=float).reshape(2, 5, 2, 5))
 
     # check noise
     test = skip_init(
@@ -180,13 +203,15 @@ def test_init():
 def test_olp():
     """Test BaseWavefunction._olp."""
     test = skip_init(disable_abstract(BaseWavefunction))
-    assert_raises(NotImplementedError, test._olp, 0b0101)
+    with pytest.raises(NotImplementedError):
+        test._olp(0b0101)
 
 
 def test_olp_deriv():
     """Test BaseWavefunction._olp_deriv."""
     test = skip_init(disable_abstract(BaseWavefunction))
-    assert_raises(NotImplementedError, test._olp_deriv, 0b0101, 0)
+    with pytest.raises(NotImplementedError):
+        test._olp_deriv(0b0101, 0)
 
 
 def test_load_cache():
@@ -201,8 +226,10 @@ def test_load_cache():
     test._cache_fns = {}
     test.load_cache()
     assert hasattr(test, '_cache_fns')
-    assert_raises(NotImplementedError, test._cache_fns['overlap'], 0)
-    assert_raises(NotImplementedError, test._cache_fns['overlap derivative'], 0, 1)
+    with pytest.raises(NotImplementedError):
+        test._cache_fns['overlap'](0)
+    with pytest.raises(NotImplementedError):
+        test._cache_fns['overlap derivative'](0, 1)
 
     test.memory = np.inf
     test.load_cache()
@@ -212,7 +239,8 @@ def test_load_cache():
 def test_clear_cache():
     """Test BaseWavefunction.clear_cache."""
     test = skip_init(disable_abstract(BaseWavefunction))
-    assert_raises(AttributeError, test.clear_cache)
+    with pytest.raises(AttributeError):
+        test.clear_cache()
 
     @functools.lru_cache(2)
     def olp(sd):
@@ -221,7 +249,8 @@ def test_clear_cache():
 
     test._cache_fns = {}
     test._cache_fns['overlap'] = olp
-    assert_raises(KeyError, test.clear_cache, 'overlap derivative')
+    with pytest.raises(KeyError):
+        test.clear_cache('overlap derivative')
 
     @functools.lru_cache(2)
     def olp_deriv(sd, deriv):

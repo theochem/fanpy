@@ -1,7 +1,7 @@
 "Tests for wfns.wfn.network.keras_network.KerasNetwork."
 import numpy as np
 import keras
-from nose.tools import assert_raises
+import pytest
 from wfns.wfn.network.keras_network import KerasNetwork
 import wfns.backend.slater as slater
 from wfns.backend.sd_list import sd_list
@@ -13,7 +13,8 @@ def test_assign_dtype():
     test = skip_init(KerasNetwork)
     test.assign_dtype(float)
     assert test.dtype == np.float64
-    assert_raises(ValueError, test.assign_dtype, complex)
+    with pytest.raises(ValueError):
+        test.assign_dtype(complex)
 
 
 def test_assign_model():
@@ -51,14 +52,18 @@ def test_assign_model():
     assert len(test.model.outputs) == 1
     assert test.model.outputs[0].shape[1] == 1
     # raises
-    assert_raises(TypeError, test.assign_model, 1)
-    assert_raises(TypeError, test.assign_model, keras.engine.network.Network())
+    with pytest.raises(TypeError):
+        test.assign_model(1)
+    with pytest.raises(TypeError):
+        test.assign_model(keras.engine.network.Network())
     model = keras.engine.sequential.Sequential()
     model.add(keras.layers.core.Dense(1, input_dim=9, use_bias=True))
-    assert_raises(ValueError, test.assign_model, model)
+    with pytest.raises(ValueError):
+        test.assign_model(model)
     model = keras.engine.sequential.Sequential()
     model.add(keras.layers.core.Dense(2, input_dim=10, use_bias=True))
-    assert_raises(ValueError, test.assign_model, model)
+    with pytest.raises(ValueError):
+        test.assign_model(model)
     # FIXME: does not test networks with different number of sets of inputs and outputs
 
 
@@ -114,11 +119,14 @@ def test_assign_template_params():
     model.add(keras.layers.core.Dense(100, input_dim=10, use_bias=True))
     model.add(keras.layers.core.Dense(1, input_dim=100, use_bias=True))
     test.assign_model(model)
-    assert_raises(ValueError, test.assign_template_params)
+    with pytest.raises(ValueError):
+        test.assign_template_params()
     test.nelec = 12
-    assert_raises(ValueError, test.assign_template_params)
+    with pytest.raises(ValueError):
+        test.assign_template_params()
     test.nelec = 9
-    assert_raises(ValueError, test.assign_template_params)
+    with pytest.raises(ValueError):
+        test.assign_template_params()
 
 
 def test_assign_params():
@@ -168,7 +176,8 @@ def test_get_overlap():
     hidden_units[hidden_units < 0] = 0
     assert np.allclose(test.get_overlap(0b1110), hidden_units.dot(matrix2))
     # derivative
-    assert_raises(TypeError, test.get_overlap, 0b0101, 0.0)
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, 0.0)
     assert test.get_overlap(0b0101, 20) == 0
     input_vec = np.zeros(4)
     input_vec[[0, 2]] = 1

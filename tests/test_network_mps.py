@@ -1,5 +1,5 @@
 """Tests for the wfns.wfn.network.mps."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.network.mps import MatrixProductState
 from utils import skip_init
@@ -15,8 +15,10 @@ def test_assign_dimension():
     test.assign_dimension(2)
     assert test.dimension == 2
 
-    assert_raises(TypeError, test.assign_dimension, 2.0)
-    assert_raises(ValueError, test.assign_dimension, -5)
+    with pytest.raises(TypeError):
+        test.assign_dimension(2.0)
+    with pytest.raises(ValueError):
+        test.assign_dimension(-5)
 
 
 def test_get_occupation_indices():
@@ -40,9 +42,12 @@ def test_get_matrix_shape():
     assert test.get_matrix_shape(2) == (4, 10, 10)
     assert test.get_matrix_shape(3) == (4, 10, 1)
 
-    assert_raises(TypeError, test.get_matrix_shape, 0.0)
-    assert_raises(ValueError, test.get_matrix_shape, -1)
-    assert_raises(ValueError, test.get_matrix_shape, 4)
+    with pytest.raises(TypeError):
+        test.get_matrix_shape(0.0)
+    with pytest.raises(ValueError):
+        test.get_matrix_shape(-1)
+    with pytest.raises(ValueError):
+        test.get_matrix_shape(4)
 
 
 def test_get_matrix_indices():
@@ -231,7 +236,8 @@ def test_get_overlap():
     test = MatrixProductState(2, 6, dimension=2,
                               params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat]))
 
-    assert_raises(TypeError, test.get_overlap, 0b0101, 0.0)
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, 0.0)
     assert test.get_overlap(0b001001, -1) == 0
     assert test.get_overlap(0b001001, 32) == 0
     for i in range(32):

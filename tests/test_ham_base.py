@@ -1,6 +1,6 @@
 """Test wfns.ham.base."""
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.ham.base import BaseHamiltonian
 
 
@@ -35,11 +35,14 @@ def test_assign_energy_nuc_nuc():
 
     # bad option
     test = Empty()
-    assert_raises(TypeError, BaseHamiltonian.assign_energy_nuc_nuc, test, [-2])
-    assert_raises(TypeError, BaseHamiltonian.assign_energy_nuc_nuc, test, '2')
+    with pytest.raises(TypeError):
+        BaseHamiltonian.assign_energy_nuc_nuc(test, [-2])
+    with pytest.raises(TypeError):
+        BaseHamiltonian.assign_energy_nuc_nuc(test, '2')
 
 
 def test_assign_integrals():
     """Test BaseHamiltonian.assign_integrals."""
     test = Empty()
-    assert_raises(NotImplementedError, BaseHamiltonian.assign_integrals, test, None, None)
+    with pytest.raises(NotImplementedError):
+        BaseHamiltonian.assign_integrals(test, None, None)

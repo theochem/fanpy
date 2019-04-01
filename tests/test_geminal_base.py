@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.geminal.gem_wavefunction."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
 from utils import skip_init, disable_abstract
@@ -24,13 +24,20 @@ def test_gem_assign_nelec():
     test.assign_nelec(2)
     assert test.nelec == 2
     # check errors
-    assert_raises(TypeError, test.assign_nelec, None)
-    assert_raises(TypeError, test.assign_nelec, 2.0)
-    assert_raises(TypeError, test.assign_nelec, '2')
-    assert_raises(ValueError, test.assign_nelec, 0)
-    assert_raises(ValueError, test.assign_nelec, -2)
-    assert_raises(ValueError, test.assign_nelec, 1)
-    assert_raises(ValueError, test.assign_nelec, 3)
+    with pytest.raises(TypeError):
+        test.assign_nelec(None)
+    with pytest.raises(TypeError):
+        test.assign_nelec(2.0)
+    with pytest.raises(TypeError):
+        test.assign_nelec('2')
+    with pytest.raises(ValueError):
+        test.assign_nelec(0)
+    with pytest.raises(ValueError):
+        test.assign_nelec(-2)
+    with pytest.raises(ValueError):
+        test.assign_nelec(1)
+    with pytest.raises(ValueError):
+        test.assign_nelec(3)
 
 
 def test_gem_spin():
@@ -61,11 +68,16 @@ def test_gem_assign_ngem():
     test.assign_ngem(3)
     assert test.ngem == 3
     # check errors
-    assert_raises(TypeError, test.assign_ngem, 2.0)
-    assert_raises(TypeError, test.assign_ngem, '2')
-    assert_raises(ValueError, test.assign_ngem, 0)
-    assert_raises(ValueError, test.assign_ngem, 1)
-    assert_raises(ValueError, test.assign_ngem, -2)
+    with pytest.raises(TypeError):
+        test.assign_ngem(2.0)
+    with pytest.raises(TypeError):
+        test.assign_ngem('2')
+    with pytest.raises(ValueError):
+        test.assign_ngem(0)
+    with pytest.raises(ValueError):
+        test.assign_ngem(1)
+    with pytest.raises(ValueError):
+        test.assign_ngem(-2)
 
 
 def test_gem_assign_orbpair():
@@ -81,13 +93,20 @@ def test_gem_assign_orbpair():
                                      (4, 5): 14}
 
     # not iterable
-    assert_raises(TypeError, test.assign_orbpairs, 3)
-    assert_raises(TypeError, test.assign_orbpairs, True)
-    assert_raises(TypeError, test.assign_orbpairs, ('1,2', (1, 2)))
-    assert_raises(TypeError, test.assign_orbpairs, ((0, 1), (1, 2, 3)))
-    assert_raises(TypeError, test.assign_orbpairs, ((0, 1), (1, 2.0)))
-    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (1, 1)))
-    assert_raises(ValueError, test.assign_orbpairs, ((0, 1), (1, 0)))
+    with pytest.raises(TypeError):
+        test.assign_orbpairs(3)
+    with pytest.raises(TypeError):
+        test.assign_orbpairs(True)
+    with pytest.raises(TypeError):
+        test.assign_orbpairs(('1,2', (1, 2)))
+    with pytest.raises(TypeError):
+        test.assign_orbpairs(((0, 1), (1, 2, 3)))
+    with pytest.raises(TypeError):
+        test.assign_orbpairs(((0, 1), (1, 2.0)))
+    with pytest.raises(ValueError):
+        test.assign_orbpairs(((0, 1), (1, 1)))
+    with pytest.raises(ValueError):
+        test.assign_orbpairs(((0, 1), (1, 0)))
     # generator of tuple
     test.assign_orbpairs(((i, i+3) for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
@@ -155,14 +174,17 @@ def test_gem_assign_params():
     test2 = skip_init(disable_abstract(BaseGeminal))
     test2.assign_dtype(float)
     test2.assign_nelec(4)
-    assert_raises(ValueError, test.assign_params, test2)
+    with pytest.raises(ValueError):
+        test.assign_params(test2)
     test2.assign_nelec(6)
     test2.assign_nspin(8)
-    assert_raises(ValueError, test.assign_params, test2)
+    with pytest.raises(ValueError):
+        test.assign_params(test2)
     test2.assign_nelec(6)
     test2.assign_nspin(6)
     test2.assign_ngem(4)
-    assert_raises(ValueError, test.assign_params, test2)
+    with pytest.raises(ValueError):
+        test.assign_params(test2)
     test2.assign_nelec(6)
     test2.assign_nspin(6)
     test2.assign_ngem(3)
@@ -189,8 +211,10 @@ def test_gem_get_col_ind():
     test.dict_orbpair_ind = {(0, 1): 0, (1, 5): 6}
     assert test.get_col_ind((0, 1)) == 0
     assert test.get_col_ind((1, 5)) == 6
-    assert_raises(ValueError, test.get_col_ind, [0, 1])
-    assert_raises(ValueError, test.get_col_ind, (0, 2))
+    with pytest.raises(ValueError):
+        test.get_col_ind([0, 1])
+    with pytest.raises(ValueError):
+        test.get_col_ind((0, 2))
 
 
 def test_gem_get_orbpair():
@@ -199,8 +223,10 @@ def test_gem_get_orbpair():
     test.dict_ind_orbpair = {0: (0, 1), 6: (1, 5)}
     assert test.get_orbpair(0) == (0, 1)
     assert test.get_orbpair(6) == (1, 5)
-    assert_raises(ValueError, test.get_orbpair, 1)
-    assert_raises(ValueError, test.get_orbpair, '0')
+    with pytest.raises(ValueError):
+        test.get_orbpair(1)
+    with pytest.raises(ValueError):
+        test.get_orbpair('0')
 
 
 def test_gem_compute_permanent():
@@ -296,4 +322,5 @@ def test_gem_get_overlap():
     assert test.get_overlap(0b000111, deriv=0) == 0
     assert test.get_overlap(0b001111, deriv=45) == 0
     assert test.get_overlap(0b001111, deriv=3) == 0
-    assert_raises(TypeError, test.get_overlap, 0b001111, '1')
+    with pytest.raises(TypeError):
+        test.get_overlap(0b001111, '1')

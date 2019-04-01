@@ -1,6 +1,6 @@
 """Test wfns.ci.density."""
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from nose.plugins.attrib import attr
 from wfns.ham.density import add_one_density, add_two_density, density_matrix
 from utils import find_datafile
@@ -10,25 +10,28 @@ def test_add_one_density():
     """Test density.add_one_density."""
     # check error
     #  tuple of numpy array
-    assert_raises(TypeError, lambda: add_one_density((np.zeros((2, 2)),), 1, 1, 0.5, 'restricted'))
+    with pytest.raises(TypeError):
+        add_one_density((np.zeros((2, 2)),), 1, 1, 0.5, 'restricted')
     #  list of nonnumpy array
-    assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 2)).tolist(), ], 1, 1, 0.5,
-                                                     'restricted'))
+    with pytest.raises(TypeError):
+        add_one_density([np.zeros((2, 2)).tolist(), ], 1, 1, 0.5, 'restricted')
     #  bad matrix shape
-    assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 2, 2))], 1, 1, 0.5,
-                                                     'restricted'))
-    assert_raises(TypeError, lambda: add_one_density([np.zeros((2, 3))], 1, 1, 0.5, 'generalized'))
+    with pytest.raises(TypeError):
+        add_one_density([np.zeros((2, 2, 2))], 1, 1, 0.5, 'restricted')
+    with pytest.raises(TypeError):
+        add_one_density([np.zeros((2, 3))], 1, 1, 0.5, 'generalized')
     #  bad orbital type
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5, 'dsfsdfdsf'))
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5,
-                                                      'Restricted'))
+    with pytest.raises(ValueError):
+        add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5, 'dsfsdfdsf')
+    with pytest.raises(ValueError):
+        add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5, 'Restricted')
     #  mismatching orbital type and matrices
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5,
-                                                      'restricted'))
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5,
-                                                      'generalized'))
-    assert_raises(ValueError, lambda: add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5,
-                                                      'unrestricted'))
+    with pytest.raises(ValueError):
+        add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5, 'restricted')
+    with pytest.raises(ValueError):
+        add_one_density([np.zeros((2, 2))]*2, 1, 1, 0.5, 'generalized')
+    with pytest.raises(ValueError):
+        add_one_density([np.zeros((2, 2)), ], 1, 1, 0.5, 'unrestricted')
 
     # restricted (3 spatial orbitals, 6 spin orbitals)
     matrices = [np.zeros((3, 3))]
@@ -92,28 +95,28 @@ def test_add_two_density():
     """Test density.add_two_density."""
     # check error
     #  tuple of numpy array
-    assert_raises(TypeError, lambda: add_two_density((np.zeros((2, 2, 2, 2)),), 1, 1, 1, 1, 0.5,
-                                                     'restricted'))
+    with pytest.raises(TypeError):
+        add_two_density((np.zeros((2, 2, 2, 2)),), 1, 1, 1, 1, 0.5, 'restricted')
     #  list of nonnumpy array
-    assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2, 2)).tolist(), ], 1, 1, 1,
-                                                     1, 0.5, 'restricted'))
+    with pytest.raises(TypeError):
+        add_two_density([np.zeros((2, 2, 2, 2)).tolist(), ], 1, 1, 1, 1, 0.5, 'restricted')
     #  bad matrix shape
-    assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2))], 1, 1, 1, 1, 0.5,
-                                                     'restricted'))
-    assert_raises(TypeError, lambda: add_two_density([np.zeros((2, 2, 2, 3))], 1, 1, 1, 1, 0.5,
-                                                     'unrestricted'))
+    with pytest.raises(TypeError):
+        add_two_density([np.zeros((2, 2, 2))], 1, 1, 1, 1, 0.5, 'restricted')
+    with pytest.raises(TypeError):
+        add_two_density([np.zeros((2, 2, 2, 3))], 1, 1, 1, 1, 0.5, 'unrestricted')
     #  bad orbital type
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5,
-                                                      'dsfsdfdsf'))
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5,
-                                                      'Restricted'))
+    with pytest.raises(ValueError):
+        add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5, 'dsfsdfdsf')
+    with pytest.raises(ValueError):
+        add_two_density([np.zeros((2, 2, 2, 2)), ], 1, 1, 1, 1, 0.5, 'Restricted')
     #  mismatching orbital type and matrices
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5,
-                                                      'restricted'))
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5,
-                                                      'generalized'))
-    assert_raises(ValueError, lambda: add_two_density([np.zeros((2, 2, 2, 2))], 1, 1, 1, 1, 0.5,
-                                                      'unrestricted'))
+    with pytest.raises(ValueError):
+        add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5, 'restricted')
+    with pytest.raises(ValueError):
+        add_two_density([np.zeros((2, 2, 2, 2))]*3, 1, 1, 1, 1, 0.5, 'generalized')
+    with pytest.raises(ValueError):
+        add_two_density([np.zeros((2, 2, 2, 2))], 1, 1, 1, 1, 0.5, 'unrestricted')
 
     # restricted (3 spatial orbitals, 6 spin orbitals)
     matrices = [np.zeros((4, 4, 4, 4))]
@@ -274,10 +277,8 @@ def test_add_two_density():
 def test_density_matrix():
     """Test density.density_matrix."""
     # check type
-    assert_raises(TypeError, lambda: density_matrix(np.arange(1, 5),
-                                                    [0b0101, 0b1001, 0b0110, 0b1010], 2,
-                                                    is_chemist_notation=False, val_threshold=0,
-                                                    orbtype='daslkfjaslkdf'))
+    with pytest.raises(TypeError):
+        density_matrix(np.arange(1, 5), [0b0101, 0b1001, 0b0110, 0b1010], 2, is_chemist_notation=False, val_threshold=0, orbtype='daslkfjaslkdf')
     # restricted
     one_density_r, two_density_r = density_matrix(np.arange(1, 4), [0b0101, 0b1010, 0b0110], 2,
                                                   is_chemist_notation=False, val_threshold=0,

@@ -1,7 +1,7 @@
 """Test wfns.ham.generalized_base."""
 import itertools as it
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
 from utils import skip_init, disable_abstract
 
@@ -19,24 +19,24 @@ def test_assign_integrals():
 
     # bad input
     test = skip_init(disable_abstract(BaseGeneralizedHamiltonian))
-    assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  [[1, 2], [3, 4]], np.random.rand(2, 2, 2, 2))
-    assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 4).astype(int), np.random.rand(4, 4, 4, 4))
-    assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 4), np.random.rand(4, 4, 4, 4).astype(int))
+    with pytest.raises(TypeError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, [[1, 2], [3, 4]], np.random.rand(2, 2, 2, 2))
+    with pytest.raises(TypeError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(int), np.random.rand(4, 4, 4, 4))
+    with pytest.raises(TypeError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(4, 4, 4, 4).astype(int))
 
-    assert_raises(TypeError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 4).astype(float), np.random.rand(4, 4, 4, 4).astype(complex))
+    with pytest.raises(TypeError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(float), np.random.rand(4, 4, 4, 4).astype(complex))
 
-    assert_raises(ValueError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 3), np.random.rand(4, 4, 4, 4))
+    with pytest.raises(ValueError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 3), np.random.rand(4, 4, 4, 4))
 
-    assert_raises(ValueError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 4), np.random.rand(4, 4, 4, 3))
+    with pytest.raises(ValueError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(4, 4, 4, 3))
 
-    assert_raises(ValueError, BaseGeneralizedHamiltonian.assign_integrals, test,
-                  np.random.rand(4, 4), np.random.rand(6, 6, 6, 6))
+    with pytest.raises(ValueError):
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(6, 6, 6, 6))
 
 
 def test_nspin():
@@ -68,18 +68,27 @@ def test_orb_rotate_jacobi():
     theta = 2 * np.pi * (np.random.random() - 0.5)
 
     ham = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, {0, 1}, 0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1, 2), 0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0.0, 1), 0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1.0), 0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi({0, 1}, 0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1, 2), 0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0.0, 1), 0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1.0), 0)
 
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 0), 0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 0), 0)
 
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (-1, 1), 0)
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 4), 0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((-1, 1), 0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 4), 0)
 
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1), '0.0')
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1), np.array([0.0, 1.0]))
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1), '0.0')
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1), np.array([0.0, 1.0]))
 
     for p, q in it.combinations(range(4), 2):
         jacobi_matrix = np.identity(4)
@@ -124,8 +133,11 @@ def test_orb_rotate_matrix():
     assert np.allclose(ham.one_int, one_answer)
     assert np.allclose(ham.two_int, two_answer)
 
-    assert_raises(TypeError, ham.orb_rotate_matrix, np.random.rand(4, 4).tolist())
+    with pytest.raises(TypeError):
+        ham.orb_rotate_matrix(np.random.rand(4, 4).tolist())
 
-    assert_raises(ValueError, ham.orb_rotate_matrix, np.random.rand(4, 4, 1))
+    with pytest.raises(ValueError):
+        ham.orb_rotate_matrix(np.random.rand(4, 4, 1))
 
-    assert_raises(ValueError, ham.orb_rotate_matrix, np.random.rand(3, 4))
+    with pytest.raises(ValueError):
+        ham.orb_rotate_matrix(np.random.rand(3, 4))

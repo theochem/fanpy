@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.cisd."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.ci.cisd import CISD
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
@@ -18,7 +18,8 @@ def test_cisd_assign_sd_vec():
     assert test.sd_vec == (0b001011, 0b011001, 0b001101, 0b101001, 0b011010, 0b001110, 0b101010,
                            0b010011, 0b000111, 0b100011, 0b011100, 0b111000, 0b101100, 0b010101,
                            0b110001, 0b100101, 0b010110, 0b110010, 0b100110)
-    assert_raises(ValueError, test.assign_sd_vec, (0b001011, 0b011001))
+    with pytest.raises(ValueError):
+        test.assign_sd_vec((0b001011, 0b011001))
 
 
 def test_cisd_h2_631gdp():

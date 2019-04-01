@@ -1,7 +1,7 @@
 """Test wfns.wavefunction.doci."""
 import numpy as np
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
+import pytest
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
@@ -16,13 +16,20 @@ def test_assign_nelec():
     test.assign_nelec(2)
     assert test.nelec == 2
     # check errors
-    assert_raises(TypeError, test.assign_nelec, None)
-    assert_raises(TypeError, test.assign_nelec, 2.0)
-    assert_raises(TypeError, test.assign_nelec, '2')
-    assert_raises(ValueError, test.assign_nelec, 0)
-    assert_raises(ValueError, test.assign_nelec, -2)
-    assert_raises(ValueError, test.assign_nelec, 1)
-    assert_raises(ValueError, test.assign_nelec, 3)
+    with pytest.raises(TypeError):
+        test.assign_nelec(None)
+    with pytest.raises(TypeError):
+        test.assign_nelec(2.0)
+    with pytest.raises(TypeError):
+        test.assign_nelec('2')
+    with pytest.raises(ValueError):
+        test.assign_nelec(0)
+    with pytest.raises(ValueError):
+        test.assign_nelec(-2)
+    with pytest.raises(ValueError):
+        test.assign_nelec(1)
+    with pytest.raises(ValueError):
+        test.assign_nelec(3)
 
 
 def test_assign_spin():
@@ -32,9 +39,12 @@ def test_assign_spin():
     assert test.spin == 0
     test.assign_spin(0)
     assert test.spin == 0
-    assert_raises(ValueError, test.assign_spin, 0.5)
-    assert_raises(ValueError, test.assign_spin, 1)
-    assert_raises(ValueError, test.assign_spin, True)
+    with pytest.raises(ValueError):
+        test.assign_spin(0.5)
+    with pytest.raises(ValueError):
+        test.assign_spin(1)
+    with pytest.raises(ValueError):
+        test.assign_spin(True)
 
 
 def test_assign_seniority():
@@ -44,8 +54,10 @@ def test_assign_seniority():
     assert test.seniority == 0
     test.assign_seniority(0)
     assert test.seniority == 0
-    assert_raises(ValueError, test.assign_seniority, 1)
-    assert_raises(ValueError, test.assign_seniority, True)
+    with pytest.raises(ValueError):
+        test.assign_seniority(1)
+    with pytest.raises(ValueError):
+        test.assign_seniority(True)
 
 
 def test_doci_h4_hf_sto6g():

@@ -1,7 +1,7 @@
 """Test wfns.param."""
 import collections
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.param import ParamContainer, ParamMask
 from utils import skip_init
 
@@ -35,10 +35,13 @@ def test_assign_param():
     assert test.params.dtype == complex
 
     # other iterables
-    assert_raises(TypeError, test.assign_params, [1, 2])
-    assert_raises(TypeError, test.assign_params, (1, 2))
+    with pytest.raises(TypeError):
+        test.assign_params([1, 2])
+    with pytest.raises(TypeError):
+        test.assign_params((1, 2))
     # bad dtypes
-    assert_raises(TypeError, test.assign_params, np.array([1, 2], dtype=str))
+    with pytest.raises(TypeError):
+        test.assign_params(np.array([1, 2], dtype=str))
 
 
 def test_nparams():
@@ -53,13 +56,19 @@ def test_parammask_load_mask_container_params():
     """Test ParamMask.load_mask_container_params."""
     test = skip_init(ParamMask)
     test._masks_container_params = collections.OrderedDict()
-    assert_raises(TypeError, test.load_mask_container_params, 1, np.array([2]))
+    with pytest.raises(TypeError):
+        test.load_mask_container_params(1, np.array([2]))
     container = ParamContainer(np.arange(10))
-    assert_raises(TypeError, test.load_mask_container_params, container, range(10))
-    assert_raises(TypeError, test.load_mask_container_params, container, np.arange(10, dtype=float))
-    assert_raises(ValueError, test.load_mask_container_params, container, np.array([-1]))
-    assert_raises(ValueError, test.load_mask_container_params, container, np.array([10]))
-    assert_raises(ValueError, test.load_mask_container_params, container, np.zeros(11, dtype=bool))
+    with pytest.raises(TypeError):
+        test.load_mask_container_params(container, range(10))
+    with pytest.raises(TypeError):
+        test.load_mask_container_params(container, np.arange(10, dtype=float))
+    with pytest.raises(ValueError):
+        test.load_mask_container_params(container, np.array([-1]))
+    with pytest.raises(ValueError):
+        test.load_mask_container_params(container, np.array([10]))
+    with pytest.raises(ValueError):
+        test.load_mask_container_params(container, np.zeros(11, dtype=bool))
 
     sel = np.array([0, 1])
     test.load_mask_container_params(container, sel)
@@ -115,9 +124,12 @@ def test_parammask_load_params():
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = ParamMask((param1, False), (param2, np.array(0)),
                      (param3, np.array([True, False, False, True])))
-    assert_raises(TypeError, test.load_params, [9, 10, 11])
-    assert_raises(TypeError, test.load_params, np.array([[9, 10, 11]]))
-    assert_raises(ValueError, test.load_params, np.array([9, 10, 11, 12]))
+    with pytest.raises(TypeError):
+        test.load_params([9, 10, 11])
+    with pytest.raises(TypeError):
+        test.load_params(np.array([[9, 10, 11]]))
+    with pytest.raises(ValueError):
+        test.load_params(np.array([9, 10, 11, 12]))
     test.load_params(np.array([9, 10, 11]))
     assert np.allclose(param1.params, 1)
     assert np.allclose(param2.params, np.array([9, 3]))
@@ -131,7 +143,8 @@ def test_parammask_derivative_index():
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = ParamMask((param1, False), (param2, np.array(1)),
                      (param3, np.array([True, False, False, True])))
-    assert_raises(TypeError, test.derivative_index, (1, 0))
+    with pytest.raises(TypeError):
+        test.derivative_index((1, 0))
     assert test.derivative_index(ParamContainer(2), 0) is None
     assert test.derivative_index(param1, 0) is None
     assert test.derivative_index(param2, 0) == 1
@@ -158,4 +171,5 @@ def test_parammask_eq():
                        np.array([True, False, False, True])))
     assert test != test2
 
-    assert_raises(TypeError, test.__eq__, 2)
+    with pytest.raises(TypeError):
+        test.__eq__(2)
