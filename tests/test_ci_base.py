@@ -2,17 +2,12 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.ci.base import CIWavefunction
-
-
-class TestCIWavefunction(CIWavefunction):
-    """Class for testing CIWavefunction (bypass the __init__)."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_assign_spin():
     """Test CIWavefunction.assign_spin."""
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     # check error
     assert_raises(TypeError, test.assign_spin, '1')
     assert_raises(TypeError, test.assign_spin, [1])
@@ -31,14 +26,14 @@ def test_assign_spin():
 
 def test_spin():
     """Test CIWavefunction.spin."""
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     test.assign_spin(2)
     assert test.spin == 2
 
 
 def test_assign_seniority():
     """Test CIWavefunction.assign_seniority."""
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     # check error
     assert_raises(TypeError, test.assign_seniority, '1')
     assert_raises(TypeError, test.assign_seniority, 1.0)
@@ -53,14 +48,14 @@ def test_assign_seniority():
 
 def test_seniority():
     """Test CIWavefunction.seniority."""
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     test.assign_seniority(2)
     assert test.seniority == 2
 
 
 def test_assign_sd_vec():
     """Test CIWavefunction.assign_sd_vec."""
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     test.assign_nelec(2)
     test.assign_nspin(6)
     test.assign_spin(0)
@@ -91,7 +86,7 @@ def test_assign_sd_vec():
     test.assign_seniority(None)
     assert_raises(ValueError, test.assign_sd_vec, [])
 
-    test = TestCIWavefunction()
+    test = skip_init(CIWavefunction)
     test.assign_nelec(2)
     test.assign_nspin(6)
     test.assign_spin(None)

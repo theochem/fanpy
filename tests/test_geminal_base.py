@@ -2,9 +2,10 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
+from utils import skip_init, disable_abstract
 
 
-class TestBaseGeminal(BaseGeminal):
+class TempBaseGeminal(BaseGeminal):
     """GeminalWavefunction that skips initialization."""
     def __init__(self):
         self._cache_fns = {}
@@ -18,7 +19,7 @@ class TestBaseGeminal(BaseGeminal):
 
 def test_gem_assign_nelec():
     """Test GeminalWavefunction.assign_nelec."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     # int
     test.assign_nelec(2)
     assert test.nelec == 2
@@ -34,26 +35,26 @@ def test_gem_assign_nelec():
 
 def test_gem_spin():
     """Test GeminalWavefunction.spin."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     assert test.spin is None
 
 
 def test_gem_seniority():
     """Test GeminalWavefunction.seniority."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     assert test.seniority is None
 
 
 def test_gem_npair():
     """Test GeminalWavefunction.npair."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_nelec(4)
     assert test.npair == 2
 
 
 def test_gem_assign_ngem():
     """Test GeminalWavefunction.assign_ngem."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_nelec(4)
     test.assign_ngem(2)
     assert test.ngem == 2
@@ -69,7 +70,7 @@ def test_gem_assign_ngem():
 
 def test_gem_assign_orbpair():
     """Test BaseGeminal.assign_orbpair."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     # default
     test.assign_nspin(6)
     test.assign_orbpairs()
@@ -118,7 +119,7 @@ def test_gem_assign_orbpair():
 
 def test_gem_norbpair():
     """Test BaseGeminal.norbpair."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_nspin(6)
     test.assign_orbpairs()
     assert test.norbpair == 15
@@ -126,7 +127,7 @@ def test_gem_norbpair():
 
 def test_gem_template_params():
     """Test BaseGeminal.template_params."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
@@ -139,7 +140,7 @@ def test_gem_template_params():
 
 def test_gem_assign_params():
     """Test BaseGeminal.assign_params."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
@@ -150,9 +151,8 @@ def test_gem_assign_params():
     np.allclose(test.params, np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
                                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
-    assert test._cache_fns == {}
 
-    test2 = TestBaseGeminal()
+    test2 = skip_init(disable_abstract(BaseGeminal))
     test2.assign_dtype(float)
     test2.assign_nelec(4)
     assert_raises(ValueError, test.assign_params, test2)
@@ -185,7 +185,7 @@ def test_gem_assign_params():
 
 def test_gem_get_col_ind():
     """Test BaseGeminal.get_col_ind."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.dict_orbpair_ind = {(0, 1): 0, (1, 5): 6}
     assert test.get_col_ind((0, 1)) == 0
     assert test.get_col_ind((1, 5)) == 6
@@ -195,7 +195,7 @@ def test_gem_get_col_ind():
 
 def test_gem_get_orbpair():
     """Test BaseGeminal.get_orbpair."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.dict_ind_orbpair = {0: (0, 1), 6: (1, 5)}
     assert test.get_orbpair(0) == (0, 1)
     assert test.get_orbpair(6) == (1, 5)
@@ -205,7 +205,7 @@ def test_gem_get_orbpair():
 
 def test_gem_compute_permanent():
     """Test BaseGeminal.compute_permanent."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
@@ -233,7 +233,7 @@ def test_gem_compute_permanent():
 
 def test_gem_compute_permanent_deriv():
     """Test derivatives of BaseGeminal.compute_permanent using finite difference."""
-    test = TestBaseGeminal()
+    test = skip_init(disable_abstract(BaseGeminal))
     test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
@@ -241,6 +241,7 @@ def test_gem_compute_permanent_deriv():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.random.rand(3, 15)*10)
+    test._cache_fns = {}
     test.load_cache()
 
     original_params = test.params[:]
@@ -264,7 +265,16 @@ def test_gem_compute_permanent_deriv():
 
 def test_gem_get_overlap():
     """Test BaseGeminal.get_overlap."""
-    test = TestBaseGeminal()
+    test = skip_init(
+        disable_abstract(
+            BaseGeminal,
+            dict_overwrite={
+                'generate_possible_orbpairs':
+                lambda self, occ_indices:
+                [(((0, 1), (2, 3)), 1) if occ_indices == (0, 1, 2, 3) else ((), 1)]
+            },
+        )
+    )
     test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_nspin(6)
@@ -272,6 +282,7 @@ def test_gem_get_overlap():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
+    test._cache_fns = {}
     test.load_cache()
     assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
     assert test.get_overlap(0b000111) == 0

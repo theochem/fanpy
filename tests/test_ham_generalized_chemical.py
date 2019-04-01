@@ -4,21 +4,8 @@ from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
-
-
-class TestWavefunction(object):
-    """Mock wavefunction for testing."""
-    def get_overlap(self, sd, deriv=None):
-        """Get overlap of wavefunction with Slater determinant."""
-        if sd == 0b0101:
-            return 1
-        elif sd == 0b1010:
-            return 2
-        elif sd == 0b1100:
-            return 3
-        return 0
+from utils import find_datafile
 
 
 def test_init():
@@ -122,7 +109,12 @@ def test_integrate_wfn_sd():
     two_int[2:, 2:, 2:, 2:] = restricted_two_int
 
     test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
-    test_wfn = TestWavefunction()
+    test_wfn = type("Temporary wavefunction.", (object, ),
+                    {'get_overlap': lambda sd, deriv=None:
+                     1 if sd == 0b0101
+                     else 2 if sd == 0b1010
+                     else 3 if sd == 0b1100 else 0}
+    )
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101)
     assert one_energy == 1*1 + 1*1
@@ -178,8 +170,8 @@ def test_integrate_sd_sd_h2_631gdp():
     Integrals that correspond to restricted orbitals were used.
 
     """
-    restricted_one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     one_int = np.zeros((20, 20))
     one_int[:10, :10] = restricted_one_int
     one_int[10:, 10:] = restricted_one_int
@@ -191,8 +183,8 @@ def test_integrate_sd_sd_h2_631gdp():
 
     ham = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile('data_h2_hf_631gdp_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('data_h2_hf_631gdp_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -208,8 +200,8 @@ def test_integrate_wfn_sd_h2_631gdp():
     Integrals that correspond to restricted orbitals were used.
 
     """
-    restricted_one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     one_int = np.zeros((20, 20))
     one_int[:10, :10] = restricted_one_int
     one_int[10:, 10:] = restricted_one_int
@@ -221,8 +213,8 @@ def test_integrate_wfn_sd_h2_631gdp():
 
     ham = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy')).tolist()
+    ref_ci_matrix = np.load(find_datafile('data_h2_hf_631gdp_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('data_h2_hf_631gdp_civec.npy')).tolist()
 
     params = np.random.rand(len(ref_pspace))
     wfn = CIWavefunction(2, 10, sd_vec=ref_pspace, params=params)
@@ -247,8 +239,8 @@ def test_integrate_wfn_sd_h4_sto6g():
     np.random.seed(1000)
     wfn.assign_params(np.random.rand(len(sds)))
 
-    restricted_one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     one_int = np.zeros((8, 8))
     one_int[:4, :4] = restricted_one_int
     one_int[4:, 4:] = restricted_one_int
@@ -279,8 +271,8 @@ def test_integrate_sd_sd_lih_631g():
     Integrals that correspond to restricted orbitals were used.
 
     """
-    restricted_one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     one_int = np.zeros((22, 22))
     one_int[:11, :11] = restricted_one_int
     one_int[11:, 11:] = restricted_one_int
@@ -292,8 +284,8 @@ def test_integrate_sd_sd_lih_631g():
 
     ham = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile('data_lih_hf_631g_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('data_lih_hf_631g_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -355,8 +347,8 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    restricted_one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     one_int = np.zeros((8, 8))
     one_int[:4, :4] = restricted_one_int
     one_int[4:, 4:] = restricted_one_int
@@ -389,8 +381,8 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    restricted_one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    restricted_two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    restricted_one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    restricted_two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     one_int = np.zeros((8, 8))
     one_int[:4, :4] = restricted_one_int
     one_int[4:, 4:] = restricted_one_int

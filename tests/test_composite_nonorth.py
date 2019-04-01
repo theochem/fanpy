@@ -1,21 +1,15 @@
 """Test wfns.wavefunction.composite.nonorth."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.nonorth import NonorthWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from utils import skip_init, find_datafile
 
 
-class TestNonorthWavefunction(NonorthWavefunction):
-    """Class to test NonorthWavefunction."""
-    def __init__(self):
-        pass
-
-
-class TestWavefunction(BaseWavefunction):
+class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
     _spin = None
     _seniority = None
@@ -45,13 +39,13 @@ class TestWavefunction(BaseWavefunction):
 
 def test_nonorth_assign_params():
     """Tests NonorthWavefunction.assign_params."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -97,13 +91,13 @@ def test_nonorth_assign_params():
 
 def test_nonorth_spin():
     """Test NonorthWavefunction.spin"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -124,13 +118,13 @@ def test_nonorth_spin():
 
 def test_nonorth_seniority():
     """Test NonorthWavefunction.seniority"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -151,13 +145,13 @@ def test_nonorth_seniority():
 
 def test_nonorth_template_params():
     """Test NonorthWavefunction.template_params"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -171,13 +165,13 @@ def test_nonorth_template_params():
 
 def test_nonorth_nparams():
     """Test NonorthWavefunction.nparams"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -197,13 +191,13 @@ def test_nonorth_nparams():
 
 def test_nonorth_param_shape():
     """Test NonorthWavefunction.param_shape"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -223,13 +217,13 @@ def test_nonorth_param_shape():
 
 def test_nonorth_orbtype():
     """Test NonorthWavefunction.orbtype"""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.memory = 10
 
-    test_wfn = TestWavefunction()
+    test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
     test_wfn.dtype = np.float64
@@ -252,7 +246,7 @@ def test_nonorth_orbtype():
 
 def test_nonorth_olp_generalized():
     """Test NonorthWavefunction._olp for generalized orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -295,7 +289,7 @@ def test_nonorth_olp_generalized():
 
 def test_nonorth_olp_unrestricted():
     """Test NonorthWavefunction._olp for unrestricted orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -338,7 +332,7 @@ def test_nonorth_olp_unrestricted():
 
 def test_nonorth_olp_restricted():
     """Test NonorthWavefunction._olp for restricted orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -381,7 +375,7 @@ def test_nonorth_olp_restricted():
 
 def test_nonorth_olp_deriv_generalized():
     """Test NonorthWavefunction._olp_deriv for generalized orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -409,7 +403,7 @@ def test_nonorth_olp_deriv_generalized():
 
 def test_nonorth_olp_deriv_unrestricted():
     """Test NonorthWavefunction._olp_deriv for unrestricted orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -447,7 +441,7 @@ def test_nonorth_olp_deriv_unrestricted():
 
 def test_nonorth_olp_deriv_restricted():
     """Test NonorthWavefunction._olp_deriv for restricted orbitals."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -487,7 +481,7 @@ def test_nonorth_olp_deriv_restricted():
 
 def test_nonorth_get_overlap():
     """Test NonorthWavefunction.get_overap."""
-    test = TestNonorthWavefunction()
+    test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -562,8 +556,8 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
         doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01,
                                      -4.22775180e-02, 2.01842251e-01, 8.50414717e-04]))
 
-        ham = RestrictedChemicalHamiltonian(np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                                            np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy')))
+        ham = RestrictedChemicalHamiltonian(np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy')),
+                                            np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy')))
 
         # rotating hamiltonian using orb_rotate_matrix
         if wfn_type == 'doci':

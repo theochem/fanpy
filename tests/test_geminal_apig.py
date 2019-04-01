@@ -2,36 +2,30 @@
 import numpy as np
 import scipy
 from nose.tools import assert_raises
-from wfns.tools import find_datafile
 from wfns.wfn.geminal.apig import APIG
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import minimize
-
-
-class TestAPIG(APIG):
-    """Class for testing APIG (stops initialization)"""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_apig_spin():
     """Test APIG.spin."""
-    test = TestAPIG()
+    test = skip_init(APIG)
     assert test.spin == 0
 
 
 def test_apig_seniority():
     """Test APIG.seniority."""
-    test = TestAPIG()
+    test = skip_init(APIG)
     assert test.seniority == 0
 
 
 def test_apig_assign_orbpairs():
     """Test APIG.assign_orbpairs."""
-    test = TestAPIG()
+    test = skip_init(APIG)
     test.assign_nspin(10)
     test.assign_orbpairs()
     assert test.dict_orbpair_ind == {(0, 5): 0, (1, 6): 1, (2, 7): 2, (3, 8): 3, (4, 9): 4}
@@ -43,7 +37,7 @@ def test_apig_assign_orbpairs():
 
 def test_apig_generate_possible_orbpairs():
     """Test APIG.generate_possible_orbpair."""
-    test = TestAPIG()
+    test = skip_init(APIG)
     test.assign_nspin(10)
     test.assign_nelec(6)
     test.assign_orbpairs()
@@ -65,8 +59,8 @@ def answer_apig_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
@@ -147,8 +141,8 @@ def test_apig_h2_sto6g_ground():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
@@ -173,8 +167,8 @@ def test_apig_h2_sto6g_excited():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4, params=np.array([0.0, 1.0]))
@@ -193,8 +187,8 @@ def answer_apig_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=float))
@@ -222,8 +216,8 @@ def test_apig_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20)
@@ -246,8 +240,8 @@ def answer_apig_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)
@@ -276,8 +270,8 @@ def test_apig_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)

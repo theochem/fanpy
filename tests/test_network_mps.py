@@ -2,17 +2,12 @@
 from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.network.mps import MatrixProductState
-
-
-class TestMatrixProductState(MatrixProductState):
-    """MatrixProductState that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_assign_dimension():
     """Test MatrixProductState.assign_dimension."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 4
 
     test.assign_dimension()
@@ -26,7 +21,7 @@ def test_assign_dimension():
 
 def test_get_occupation_indices():
     """Test MatrixProductState.get_occupation_indices."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 6
     assert np.allclose(test.get_occupation_indices(0b000000), [0, 0, 0])
     assert np.allclose(test.get_occupation_indices(0b000001), [1, 0, 0])
@@ -37,7 +32,7 @@ def test_get_occupation_indices():
 
 def test_get_matrix_shape():
     """Test MatrixProductState.get_matrix_shape."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 8
     test.dimension = 10
     assert test.get_matrix_shape(0) == (4, 1, 10)
@@ -52,7 +47,7 @@ def test_get_matrix_shape():
 
 def test_get_matrix_indices():
     """Test MatrixProductState.get_matrix_indices."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 8
     test.dimension = 10
     assert test.get_matrix_indices(0) == (0, 40)
@@ -63,7 +58,7 @@ def test_get_matrix_indices():
 
 def test_get_matrix():
     """Test MatrixProductState.get_matrix."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 8
     test.dimension = 10
     test.params = np.arange(880)
@@ -75,7 +70,7 @@ def test_get_matrix():
 
 def test_decompose_index():
     """Test MatrixProductState.decompose_index."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nspin = 8
     test.dimension = 10
     for i in range(40):
@@ -101,7 +96,7 @@ def test_decompose_index():
 
 def test_template_params():
     """Test MatrixProductState.template_params."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.nelec = 4
     test.nspin = 8
     test.dimension = 10
@@ -140,7 +135,7 @@ def test_template_params():
 # FIXME: this may move to the parent class
 def test_assign_params():
     """Test MatrixProductState.assign_params."""
-    test = TestMatrixProductState()
+    test = skip_init(MatrixProductState)
     test.dtype = float
     test.nelec = 2
     test.nspin = 6
@@ -151,7 +146,7 @@ def test_assign_params():
     test.assign_params(params=None, add_noise=False)
     assert np.allclose(test.params, params)
 
-    test2 = TestMatrixProductState()
+    test2 = skip_init(MatrixProductState)
     test2.dtype = float
     test2.nelec = 2
     test2.nspin = 6

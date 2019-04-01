@@ -1,24 +1,18 @@
 """Test wfns.wavefunction.geminals.ap1rog.AP1roG."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.tools import find_datafile
 from wfns.wfn.geminal.ap1rog import AP1roG
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import minimize
-
-
-class TestAP1roG(AP1roG):
-    """AP1roG that skips initialization."""
-    def __init__(self):
-        self._cache_fns = {}
+from utils import skip_init, find_datafile
 
 
 def test_ap1rog_assign_ref_sd():
     """Test AP1roG.assign_ref_sd."""
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_nelec(4)
     test.assign_nspin(8)
     test.assign_ref_sd(None)
@@ -37,14 +31,14 @@ def test_ap1rog_assign_ref_sd():
 
 def test_ap1rog_assign_ngem():
     """Test AP1roG.assign_ngem."""
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_nelec(4)
     assert_raises(NotImplementedError, test.assign_ngem, 3)
 
 
 def test_ap1rog_assign_orbpairs():
     """Test AP1roG.assign_orbpairs."""
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_nelec(4)
     test.assign_nspin(6)
     test.assign_ref_sd()
@@ -55,7 +49,7 @@ def test_ap1rog_assign_orbpairs():
 
 def test_ap1rog_template_params():
     """Test AP1roG.template_params."""
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -63,7 +57,7 @@ def test_ap1rog_template_params():
     test.assign_ref_sd()
     test.assign_orbpairs()
     assert np.allclose(test.template_params, np.zeros((2, 1)))
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_ngem(3)
@@ -75,7 +69,7 @@ def test_ap1rog_template_params():
 
 def test_ap1rog_get_overlap():
     """Test AP1roG.get_overlap."""
-    test = TestAP1roG()
+    test = skip_init(AP1roG)
     test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_nspin(10)
@@ -84,6 +78,7 @@ def test_ap1rog_get_overlap():
     test.assign_ref_sd()
     test.assign_orbpairs()
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
+    test._cache_fns = {}
     test.load_cache()
     assert test.get_overlap(0b0001100011) == 1.0
     assert test.get_overlap(0b0010100101) == 3.0
@@ -116,8 +111,8 @@ def answer_ap1rog_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -181,8 +176,8 @@ def test_ap1rog_h2_sto6g_ground():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 4)
@@ -208,8 +203,8 @@ def test_ap1rog_h2_sto6g_excited():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 4, ref_sd=0b1010)
@@ -228,8 +223,8 @@ def answer_ap1rog_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 20)
@@ -255,8 +250,8 @@ def test_ap1rog_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 20)
@@ -279,8 +274,8 @@ def answer_ap1rog_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(4, 12)
@@ -306,8 +301,8 @@ def test_ap1rog_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(4, 12)

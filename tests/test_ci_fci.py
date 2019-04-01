@@ -2,21 +2,15 @@
 import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
-from wfns.tools import find_datafile
 from wfns.wfn.ci.fci import FCI
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
-
-
-class TestFCI(FCI):
-    """FCI instance that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_fci_assign_seniority():
     """Test FCI.assign_seniority."""
-    test = TestFCI()
+    test = skip_init(FCI)
     assert_raises(ValueError, test.assign_seniority, 0)
     assert_raises(ValueError, test.assign_seniority, 1)
     test.assign_seniority(None)
@@ -47,8 +41,8 @@ def test_fci_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -74,8 +68,8 @@ def test_fci_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -102,8 +96,8 @@ def test_fci_lih_631g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 

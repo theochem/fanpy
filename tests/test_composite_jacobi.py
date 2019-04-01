@@ -2,7 +2,6 @@
 from nose.tools import assert_raises
 import numpy as np
 import itertools as it
-from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.jacobi import JacobiWavefunction
@@ -11,15 +10,10 @@ from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.ci.doci import DOCI
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
+from utils import skip_init, find_datafile
 
 
-class TestJacobiWavefunction(JacobiWavefunction):
-    """Class to test JacobiWavefunction."""
-    def __init__(self):
-        pass
-
-
-class TestWavefunction(BaseWavefunction):
+class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
     _spin = None
     _seniority = None
@@ -49,7 +43,7 @@ class TestWavefunction(BaseWavefunction):
 
 def test_jacobi_template_params():
     """Test JacobiWavefunction.template_params."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     assert test.template_params.size == 1
     assert test.template_params.shape == ()
     assert np.allclose(test.template_params, [0])
@@ -57,8 +51,8 @@ def test_jacobi_template_params():
 
 def test_jacobi_spin():
     """Test JacobiWavefunction.spin."""
-    test = TestJacobiWavefunction()
-    test_wfn = TestWavefunction()
+    test = skip_init(JacobiWavefunction)
+    test_wfn = TempWavefunction()
     test_wfn._spin = 2
     test.wfn = test_wfn
 
@@ -75,8 +69,8 @@ def test_jacobi_spin():
 
 def test_jacobi_seniority():
     """Test JacobiWavefunction.seniority."""
-    test = TestJacobiWavefunction()
-    test_wfn = TestWavefunction()
+    test = skip_init(JacobiWavefunction)
+    test_wfn = TempWavefunction()
     test_wfn._seniority = 2
     test.wfn = test_wfn
 
@@ -93,7 +87,7 @@ def test_jacobi_seniority():
 
 def test_jacobi_jacobi_rotation():
     """Tests JacobiWavefunction.jacobi_rotation."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     theta = 2 * np.pi * (np.random.random() - 0.5)
     test.dtype = float
     test.params = np.array(theta)
@@ -146,7 +140,7 @@ def test_jacobi_jacobi_rotation():
 
 def test_jacobi_assign_params():
     """Test JacobiWavefunction.assign_params."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.assign_dtype(float)
     test.assign_params(0)
     assert test.params.size == 1
@@ -157,7 +151,7 @@ def test_jacobi_assign_params():
 
 def test_jacobi_assign_orbtype():
     """Test JacobiWavefunction.assign_orbtype."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
@@ -177,7 +171,7 @@ def test_jacobi_assign_orbtype():
 
 def test_jacobi_assign_jacobi_indices():
     """Test JacobiWavefunction.assign_jacobi_indices."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
@@ -222,7 +216,7 @@ def test_jacobi_assign_jacobi_indices():
 
 def test_jacobi_get_overlap():
     """Test JacobiWavefunction.get_overlap"""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -342,7 +336,7 @@ def test_jacobi_get_overlap():
 
 def test_jacobi_get_overlap_restricted():
     """Test JacobiWavefunction.get_overlap for a larger restricted case"""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
     test.dtype = np.float64
@@ -442,7 +436,7 @@ def test_jacobi_get_overlap_restricted():
 
 def test_jacobi_get_overlap_der():
     """Test JacobiWavefunction.get_overlap with derivatization."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
     test.dtype = np.float64
@@ -560,7 +554,7 @@ def test_jacobi_get_overlap_der():
 
 def test_jacobi_get_overlap_restricted_der():
     """Test JacobiWavefunction.get_overlap for a larger restricted case with derivatization."""
-    test = TestJacobiWavefunction()
+    test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
     test.dtype = np.float64
@@ -729,8 +723,8 @@ def test_jacobi_energy():
         """Get energy that correspond to the rotation of the given orbitals."""
         doci = DOCI(nelec, nspin)
         ham = RestrictedChemicalHamiltonian(
-                  np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy')),
-                  np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+                  np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy')),
+                  np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
               )
         results = brute(doci, ham)
         coeffs = results['eigvec']

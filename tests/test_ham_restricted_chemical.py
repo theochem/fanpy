@@ -3,21 +3,8 @@ import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import assert_raises
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
-
-
-class TestWavefunction(object):
-    """Mock wavefunction for testing."""
-    def get_overlap(self, sd, deriv=None):
-        """Get overlap of wavefunction with Slater determinant."""
-        if sd == 0b0101:
-            return 1
-        elif sd == 0b1010:
-            return 2
-        elif sd == 0b1100:
-            return 3
-        return 0
+from utils import find_datafile
 
 
 def test_nspin():
@@ -54,12 +41,12 @@ def test_integrate_sd_sd_h2_631gdp():
     Compare CI matrix with the PySCF result.
 
     """
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('test/h2_hf_631gdp_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile('data_h2_hf_631gdp_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('data_h2_hf_631gdp_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -69,8 +56,8 @@ def test_integrate_sd_sd_h2_631gdp():
 
 def test_integrate_sd_sd_lih_631g_case():
     """Test RestrictedChemicalHamiltonian.integrate_sd_sd using sd's of LiH HF/6-31G orbitals."""
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     sd1 = 0b0000000001100000000111
@@ -85,12 +72,12 @@ def test_integrate_sd_sd_lih_631g_full():
     Compared to all of the CI matrix.
 
     """
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('test/lih_hf_631g_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile('data_lih_hf_631g_cimatrix.npy'))
+    ref_pspace = np.load(find_datafile('data_lih_hf_631g_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -119,7 +106,12 @@ def test_integrate_wfn_sd():
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
-    test_wfn = TestWavefunction()
+    test_wfn = type("Temporary wavefunction.", (object, ),
+                    {'get_overlap': lambda sd, deriv=None:
+                     1 if sd == 0b0101
+                     else 2 if sd == 0b1010
+                     else 3 if sd == 0b1100 else 0}
+    )
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101)
     assert one_energy == 1*1 + 1*1
@@ -170,8 +162,8 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
@@ -196,8 +188,8 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8

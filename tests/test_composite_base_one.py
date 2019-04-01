@@ -3,14 +3,10 @@ from nose.tools import assert_raises
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
+from utils import skip_init, disable_abstract
 
 
-class Container:
-    """Just some container class to represent the wavefunction."""
-    pass
-
-
-class TestWavefunction(BaseWavefunction):
+class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
     _spin = None
     _seniority = None
@@ -37,19 +33,19 @@ class TestWavefunction(BaseWavefunction):
 
 def test_assign_wfn():
     """Test BaseCompositeOneWavefunction.assign_wfn."""
-    test = Container()
+    test = skip_init(disable_abstract(BaseCompositeOneWavefunction))
     assert_raises(TypeError, BaseCompositeOneWavefunction.assign_wfn, test, 1)
     assert_raises(TypeError, BaseCompositeOneWavefunction.assign_wfn, test,
-                  (TestWavefunction(4, 10), ))
+                  (TempWavefunction(4, 10), ))
     test.nelec = 4
     assert_raises(ValueError, BaseCompositeOneWavefunction.assign_wfn, test,
-                  TestWavefunction(5, 10))
+                  TempWavefunction(5, 10))
     test.dtype = np.float64
     assert_raises(ValueError, BaseCompositeOneWavefunction.assign_wfn, test,
-                  TestWavefunction(4, 10, dtype=complex))
+                  TempWavefunction(4, 10, dtype=complex))
     test.memory = np.inf
     assert_raises(ValueError, BaseCompositeOneWavefunction.assign_wfn, test,
-                  TestWavefunction(4, 10, memory='2gb'))
-    BaseCompositeOneWavefunction.assign_wfn(test, TestWavefunction(4, 10))
+                  TempWavefunction(4, 10, memory='2gb'))
+    BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10))
     assert test.wfn.nelec == 4
     assert test.wfn.nspin == 10

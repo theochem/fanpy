@@ -1,21 +1,15 @@
 """Test wfns.wavefunction.cisd."""
 from nose.tools import assert_raises
 import numpy as np
-from wfns.tools import find_datafile
 from wfns.wfn.ci.cisd import CISD
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
-
-
-class TestCISD(CISD):
-    """CISD without initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_cisd_assign_sd_vec():
     """Test CISD.assign_sd_vec."""
-    test = TestCISD()
+    test = skip_init(CISD)
     test.assign_nelec(3)
     test.assign_nspin(6)
     test.assign_spin(None)
@@ -48,8 +42,8 @@ def test_cisd_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -81,8 +75,8 @@ def test_cisd_lih_631g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 

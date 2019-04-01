@@ -4,7 +4,7 @@ from nose.tools import assert_raises
 from wfns.backend.slater import get_seniority
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.tools import find_datafile
+from utils import find_datafile
 
 
 def test_integrate_sd_sd_trivial():
@@ -33,12 +33,12 @@ def test_integrate_sd_sd_h2_631gdp():
     Compare CI matrix with the PySCF result.
 
     """
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     full_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     test_ham = SeniorityZeroHamiltonian(one_int, two_int)
 
-    ref_pspace = np.load(find_datafile('test/h2_hf_631gdp_civec.npy'))
+    ref_pspace = np.load(find_datafile('data_h2_hf_631gdp_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         sd1 = int(sd1)
@@ -58,12 +58,12 @@ def test_integrate_sd_sd_lih_631g_full():
     Compared to all of the CI matrix.
 
     """
-    one_int = np.load(find_datafile('test/lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
     full_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     test_ham = SeniorityZeroHamiltonian(one_int, two_int)
 
-    ref_pspace = np.load(find_datafile('test/lih_hf_631g_civec.npy'))
+    ref_pspace = np.load(find_datafile('data_lih_hf_631g_civec.npy'))
 
     for i, sd1 in enumerate(ref_pspace):
         sd1 = int(sd1)
@@ -77,23 +77,16 @@ def test_integrate_sd_sd_lih_631g_full():
                                test_ham.integrate_sd_sd(sd1, sd2))
 
 
-class TestWavefunction_2e(object):
-    """Mock 2-electron wavefunction for testing."""
-    def get_overlap(self, sd, deriv=None):
-        """Get overlap of wavefunction with Slater determinant."""
-        if sd == 0b0101:
-            return 1
-        elif sd == 0b1010:
-            return 2
-        return 0
-
-
 def test_integrate_wfn_sd_2e():
     """Test SeniorityZeroHamiltonian.integrate_wfn_sd with 2 electron wavefunction."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     ham = SeniorityZeroHamiltonian(one_int, two_int)
-    test_wfn = TestWavefunction_2e()
+    test_wfn = type(
+        "Temporary class with desired overlap",
+        (object, ),
+        {'get_overlap': lambda sd, deriv=None: 1 if sd == 0b0101 else 2 if sd == 0b1010 else 0},
+    )
 
     assert (0, 0, 0) == ham.integrate_wfn_sd(test_wfn, 0b1001)
 
@@ -110,26 +103,23 @@ def test_integrate_wfn_sd_2e():
     assert_raises(ValueError, ham.integrate_wfn_sd, test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
 
 
-class TestWavefunction_4e(object):
-    """Mock 4-electron wavefunction for testing."""
-    def get_overlap(self, sd, deriv=None):
-        """Get overlap of wavefunction with Slater determinant."""
-        if sd == 0b011011:
-            return 1
-        elif sd == 0b101101:
-            return 2
-        elif sd == 0b110110:
-            return 3
-        return 0
-
-
 def test_integrate_wfn_sd_4e():
     """Test SeniorityZeroHamiltonian.integrate_wfn_sd with 4 electron wavefunction."""
     one_int = np.arange(1, 10, dtype=float).reshape(3, 3)
     two_int = np.arange(1, 82, dtype=float).reshape(3, 3, 3, 3)
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     ham_full = RestrictedChemicalHamiltonian(one_int, two_int)
-    test_wfn = TestWavefunction_4e()
+    test_wfn = type(
+        "Temporary class with desired overlap",
+        (object, ),
+        {
+            'get_overlap':
+            lambda sd, deriv=None:
+            (
+                1 if sd == 0b011011 else 2 if sd == 0b101101 else 3 if sd == 0b110110 else 0
+            )
+        },
+    )
 
     assert np.allclose(ham.integrate_wfn_sd(test_wfn, 0b011011),
                        ham_full.integrate_wfn_sd(test_wfn, 0b011011))

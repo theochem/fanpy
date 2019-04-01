@@ -4,24 +4,18 @@ from nose.plugins.attrib import attr
 import types
 import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
-from wfns.tools import find_datafile
 from wfns.wfn.geminal.apg import APG
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import minimize, cma
-
-
-class TestAPG(APG):
-    """APG that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init, find_datafile
 
 
 def test_apg_assign_orbpairs():
     """Test APG.assign_orbpairs."""
-    test = TestAPG()
+    test = skip_init(APG)
     test.nspin = 10
     assert_raises(ValueError, test.assign_orbpairs, (0, 1))
     assert_raises(ValueError, test.assign_orbpairs, [(0, 1)])
@@ -38,7 +32,7 @@ def test_apg_assign_orbpairs():
 
 def test_apg_get_col_ind():
     """Test APG.get_col_ind."""
-    test = TestAPG()
+    test = skip_init(APG)
     test.nspin = 10
 
     orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
@@ -54,7 +48,7 @@ def test_apg_get_col_ind():
 
 def test_apg_get_orbpair():
     """Test APG.get_orbpair."""
-    test = TestAPG()
+    test = skip_init(APG)
     test.nspin = 10
 
     orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
@@ -68,7 +62,7 @@ def test_apg_get_orbpair():
 
 def test_assign_pmatch_generator():
     """Test APG.generate_possible_orbpairs."""
-    test = TestAPG()
+    test = skip_init(APG)
     sd = (0, 1, 2, 3, 4, 5)
     assert isinstance(test.generate_possible_orbpairs(sd), types.GeneratorType)
     for i, j in zip(test.generate_possible_orbpairs(sd), generate_complete_pmatch(sd)):
@@ -83,8 +77,8 @@ def answer_apg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 4)
@@ -112,8 +106,8 @@ def test_apg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 4)
@@ -133,8 +127,8 @@ def answer_apg_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 20)
@@ -163,8 +157,8 @@ def test_apg_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('test/h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
+    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 20)
@@ -184,8 +178,8 @@ def answer_apg_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(4, 12)
@@ -213,8 +207,8 @@ def test_apg_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('test/lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(4, 12)

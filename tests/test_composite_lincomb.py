@@ -4,14 +4,10 @@ import numpy as np
 import types
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.lincomb import LinearCombinationWavefunction
+from utils import skip_init
 
 
-class Container:
-    """Just some container class to represent the wavefunction."""
-    pass
-
-
-class TestWavefunction(BaseWavefunction):
+class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
     _spin = None
     _seniority = None
@@ -38,22 +34,22 @@ class TestWavefunction(BaseWavefunction):
 
 def test_assign_wfns():
     """Test LinearCombinationWavefunction.assign_wfns."""
-    test_wfn = TestWavefunction(4, 10)
-    test = Container()
+    test_wfn = TempWavefunction(4, 10)
+    test = skip_init(LinearCombinationWavefunction)
     assert_raises(TypeError, LinearCombinationWavefunction.assign_wfns, test, (1, test_wfn))
     assert_raises(TypeError, LinearCombinationWavefunction.assign_wfns, test, (test_wfn, 2))
     test.nelec = 4
     assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TestWavefunction(5, 10)))
+                  (test_wfn, TempWavefunction(5, 10)))
     test.dtype = np.float64
     assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TestWavefunction(4, 10, dtype=complex)))
+                  (test_wfn, TempWavefunction(4, 10, dtype=complex)))
     test.memory = np.inf
     assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TestWavefunction(4, 10, memory='2gb')))
+                  (test_wfn, TempWavefunction(4, 10, memory='2gb')))
     assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test, (test_wfn, ))
     # NOTE: wavefunctions with different numbers of spin orbitals are allowed
-    LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TestWavefunction(4, 12)))
+    LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 12)))
     assert test.wfns[0].nelec == 4
     assert test.wfns[0].nspin == 10
     assert test.wfns[1].nelec == 4
@@ -62,31 +58,31 @@ def test_assign_wfns():
 
 def test_spin():
     """Test LinearCombinationWavefunction.spin."""
-    test_wfn = TestWavefunction(4, 10)
+    test_wfn = TempWavefunction(4, 10)
     test_wfn._spin = 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
     assert test.spin == 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, TestWavefunction(4, 10)))
+    test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.spin is None
 
 
 def test_seniority():
     """Test LinearCombinationWavefunction.seniority."""
-    test_wfn = TestWavefunction(4, 10)
+    test_wfn = TempWavefunction(4, 10)
     test_wfn._seniority = 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
     assert test.seniority == 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, TestWavefunction(4, 10)))
+    test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.seniority is None
 
 
 def test_template_params():
     """Test LinearCombinationWavefunction.template_params."""
-    test_wfn = TestWavefunction(4, 10)
+    test_wfn = TempWavefunction(4, 10)
     test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
     assert np.allclose(test.template_params, np.array([1, 0, 0]))
     assert np.allclose(test.template_params, np.array([1, 0, 0]))
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, TestWavefunction(4, 10)))
+    test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert np.allclose(test.template_params, np.array([1, 0]))
 
 
@@ -97,9 +93,9 @@ def test_get_overlap():
     Make simple CI wavefunction as a demonstration.
 
     """
-    test_wfn_1 = TestWavefunction(4, 10)
+    test_wfn_1 = TempWavefunction(4, 10)
     test_wfn_1.params = np.array([0.9])
-    test_wfn_2 = TestWavefunction(4, 10)
+    test_wfn_2 = TempWavefunction(4, 10)
     test_wfn_2.params = np.array([0.1])
 
     def olp_one(self, sd, deriv=None):
