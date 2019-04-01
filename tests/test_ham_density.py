@@ -1,7 +1,6 @@
 """Test wfns.ci.density."""
 import numpy as np
 import pytest
-from nose.plugins.attrib import attr
 from wfns.ham.density import add_one_density, add_two_density, density_matrix
 from utils import find_datafile
 
@@ -510,8 +509,7 @@ def test_density_matrix_restricted_lih_sto6g():
                 0.5*np.einsum('ijkl,iklj', two_int, two_density[0])) - (energy)) < 1e-8
 
 
-@attr('slow')
-def test_density_matrix_restricted_lih_631g():
+def test_density_matrix_restricted_lih_631g_slow():
     """Test density.density_matrix using LiH system (FCI/6-31G) with restricted orbitals.
 
     Uses numbers obtained from PySCF

@@ -1,6 +1,5 @@
 """Test wfns.ham.generalized_chemical."""
 import numpy as np
-from nose.plugins.attrib import attr
 import pytest
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
@@ -271,8 +270,7 @@ def test_integrate_wfn_sd_h4_sto6g():
                                for sd1 in sds))
 
 
-@attr('slow')
-def test_integrate_sd_sd_lih_631g():
+def test_integrate_sd_sd_lih_631g_trial():
     """Test GeneralizedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
     Integrals that correspond to restricted orbitals were used.
@@ -384,8 +382,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                 assert np.allclose(finite_diff, derivative, atol=20*epsilon)
 
 
-@attr('slow')
-def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
+def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial():
     """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using H4-STO6G integrals.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.

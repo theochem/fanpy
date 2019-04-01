@@ -1,6 +1,5 @@
 """Test wfns.ham.restricted_chemical."""
 import numpy as np
-from nose.plugins.attrib import attr
 import pytest
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.backend.sd_list import sd_list
@@ -68,8 +67,7 @@ def test_integrate_sd_sd_lih_631g_case():
     assert (0, two_int[1, 2, 3, 8], -two_int[1, 2, 8, 3]) == ham.integrate_sd_sd(sd1, sd2)
 
 
-@attr('slow')
-def test_integrate_sd_sd_lih_631g_full():
+def test_integrate_sd_sd_lih_631g_full_slow():
     """Test RestrictedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
     Compared to all of the CI matrix.
@@ -187,8 +185,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
 
 
 # TODO: add test for comparing Unrestricted with Generalized
-@attr('slow')
-def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
+def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     """Test RestrictedChemicalHamiltonian._integrate_sd_sd_deriv using H4/STO6G.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.

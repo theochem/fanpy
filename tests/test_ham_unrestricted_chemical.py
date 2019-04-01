@@ -1,6 +1,5 @@
 """Test wfns.ham.unrestricted_chemical."""
 import numpy as np
-from nose.plugins.attrib import attr
 import pytest
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 from wfns.backend.sd_list import sd_list
@@ -152,8 +151,7 @@ def test_integrate_sd_sd_lih_631g_case():
             two_int[0, 1, 0, 2], -two_int[0, 1, 2, 0]) == ham.integrate_sd_sd(sd1, sd2)
 
 
-@attr('slow')
-def test_integrate_sd_sd_lih_631g():
+def test_integrate_sd_sd_lih_631g_slow():
     """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
     Integrals that correspond to restricted orbitals were used.
@@ -276,8 +274,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                 assert np.allclose(finite_diff, derivative, atol=1e-5)
 
 
-@attr('slow')
-def test_integrate_sd_sd_deriv_fdiff_h4_sto6g():
+def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv with using H4/STO6G.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.

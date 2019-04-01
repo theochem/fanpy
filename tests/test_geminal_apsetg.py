@@ -1,7 +1,6 @@
 """Test wfns.wfn.geminal.apsetg."""
 import numpy as np
 import pytest
-from nose.plugins.attrib import attr
 import types
 from wfns.backend import graphs
 from wfns.wfn.geminal.apsetg import BasicAPsetG
@@ -140,8 +139,7 @@ def answer_apsetg_h2_631gdp():
     print(apsetg.params)
 
 
-@attr('slow')
-def test_apsetg_h2_631gdp():
+def test_apsetg_h2_631gdp_slow():
     """Test BasicAPsetG wavefunction using H2 with HF/6-31G** orbitals."""
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h2_hf_631gdp.fchk')
@@ -178,8 +176,7 @@ def answer_apsetg_lih_sto6g():
     print(apsetg.params)
 
 
-@attr('slow')
-def test_apsetg_lih_sto6g():
+def test_apsetg_lih_sto6g_slow():
     """Test BasicAPsetG with LiH using HF/STO-6G orbitals.
 
     HF Value :       -8.9472891719
