@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.geminals.rank2_geminal.RankTwoGeminal."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.geminal.base import BaseGeminal
 from wfns.wfn.geminal.apig import APIG
@@ -107,16 +107,26 @@ def test_rank2_geminal_assign_params():
     zetas = test.params[6:]
     assert np.allclose(zetas / (lambdas - epsilons), np.eye(2, 4), atol=0.001, rtol=0)
     # check error
-    assert_raises(ValueError, test.assign_params, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 1, 9, 9, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 1, 9, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 1, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 1, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 2, 9, 9, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 2, 9, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 2, 9, 0, 0, 0, 0.0]))
-    assert_raises(ValueError, test.assign_params, np.array([1, 2, 9, 9, 9, 2, 0, 0, 0, 0.0]))
-    assert_raises(NotImplementedError, test.assign_params, test)
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 1, 9, 9, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 1, 9, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 9, 1, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 9, 9, 1, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 2, 9, 9, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 2, 9, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 9, 2, 9, 0, 0, 0, 0.0]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([1, 2, 9, 9, 9, 2, 0, 0, 0, 0.0]))
+    with pytest.raises(NotImplementedError):
+        test.assign_params(test)
 
 
 def test_rank2_geminal_lambdas():
@@ -195,8 +205,10 @@ def test_rank2_geminal_compute_permanent():
     assert test.compute_permanent([0], deriv=6) == 0
     assert test.compute_permanent([0], deriv=7) == 0
     assert test.compute_permanent([0], deriv=8) == 0
-    assert_raises(ValueError, test.compute_permanent, [0], deriv=99)
-    assert_raises(ValueError, test.compute_permanent, [0], deriv=-1)
+    with pytest.raises(ValueError):
+        test.compute_permanent([0], deriv=99)
+    with pytest.raises(ValueError):
+        test.compute_permanent([0], deriv=-1)
 
     # four electrons
     test.assign_nelec(4)
@@ -255,7 +267,8 @@ def test_rank2_geminal_compute_permanent():
                         + test.fullrank_params[0, 0]
                         * (1.0/(test.lambdas[1] - test.epsilons[1]))))
     assert test.compute_permanent([0, 1], deriv=8) == 0
-    assert_raises(ValueError, test.compute_permanent, [0, 1], deriv=99)
+    with pytest.raises(ValueError):
+        test.compute_permanent([0, 1], deriv=99)
 
 
 def test_rank2_geminal_get_overlap():

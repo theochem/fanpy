@@ -1,7 +1,7 @@
 """Test wfns.ham.unrestricted_base."""
 import itertools as it
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
 from utils import skip_init, disable_abstract
 
@@ -20,47 +20,47 @@ def test_assign_integrals():
     # bad input
     test = skip_init(disable_abstract(BaseUnrestrictedHamiltonian))
 
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  one_int, [two_int]*3)
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int], [two_int]*3)
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int, one_int.astype(int)]*2, [two_int]*3)
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int.tolist(), one_int]*2, [two_int]*3)
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, one_int, [two_int]*3)
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int], [two_int]*3)
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.astype(int)]*2, [two_int]*3)
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int.tolist(), one_int]*2, [two_int]*3)
 
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, two_int)
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int])
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int, two_int, two_int.astype(int)])
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int, two_int, two_int.tolist()])
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, two_int)
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int])
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.astype(int)])
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.tolist()])
 
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int, one_int], [two_int, two_int, two_int.astype(complex)])
-    assert_raises(TypeError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int, one_int.astype(complex)], [two_int, two_int, two_int])
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int], [two_int, two_int, two_int.astype(complex)])
+    with pytest.raises(TypeError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.astype(complex)], [two_int, two_int, two_int])
 
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int, one_int.reshape(1, 4, 4)], [two_int]*3)
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int, one_int[:, :3]], [two_int]*3)
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.reshape(1, 4, 4)], [two_int]*3)
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int[:, :3]], [two_int]*3)
 
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int, two_int, two_int.reshape(1, 4, 4, 4, 4)])
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int, two_int, two_int[:, :, :, :3]])
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.reshape(1, 4, 4, 4, 4)])
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int[:, :, :, :3]])
 
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int[:3, :3], one_int], [two_int]*3)
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int[:3, :3], one_int], [two_int]*3)
 
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int, two_int, two_int[:3, :3, :3, :3]])
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int[:3, :3, :3, :3]])
 
-    assert_raises(ValueError, BaseUnrestrictedHamiltonian.assign_integrals, test,
-                  [one_int]*2, [two_int[:3, :3, :3, :3]]*3)
+    with pytest.raises(ValueError):
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int[:3, :3, :3, :3]]*3)
 
 
 def test_nspin():
@@ -92,21 +92,32 @@ def test_orb_rotate_jacobi():
     Test = disable_abstract(BaseUnrestrictedHamiltonian)
     ham = Test([one_int_alpha, one_int_beta], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
-    assert_raises(TypeError, ham.orb_rotate_jacobi, {0, 1}, 0.0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1, 2), 0.0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0.0, 1), 0.0)
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1.0), 0.0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi({0, 1}, 0.0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1, 2), 0.0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0.0, 1), 0.0)
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1.0), 0.0)
 
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 0), 0.0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 0), 0.0)
 
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (-1, 1), 0.0)
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 4), 0.0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((-1, 1), 0.0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 4), 0.0)
 
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 4), 0.0)
-    assert_raises(ValueError, ham.orb_rotate_jacobi, (0, 4), 0.0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 4), 0.0)
+    with pytest.raises(ValueError):
+        ham.orb_rotate_jacobi((0, 4), 0.0)
 
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1), '0.0')
-    assert_raises(TypeError, ham.orb_rotate_jacobi, (0, 1), np.array([0.0, 1.0]))
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1), '0.0')
+    with pytest.raises(TypeError):
+        ham.orb_rotate_jacobi((0, 1), np.array([0.0, 1.0]))
 
     for p, q in it.combinations(range(4), 2):
         jacobi_rotation = np.identity(4)
@@ -209,12 +220,15 @@ def test_orb_rotate_matrix():
     assert np.allclose(ham.two_int[2],  np.einsum('ijkl,ia,jb,kc,ld->abcd', two_orig,
                                                   transform2, transform2, transform2, transform2))
 
-    assert_raises(TypeError, ham.orb_rotate_matrix, [np.random.rand(4, 4)])
-    assert_raises(TypeError, ham.orb_rotate_matrix, [np.random.rand(4, 4).tolist(),
-                                                     np.random.rand(4, 4)])
-    assert_raises(TypeError, ham.orb_rotate_matrix, [np.random.rand(4, 4),
-                                                     np.random.rand(4, 4).tolist()])
+    with pytest.raises(TypeError):
+        ham.orb_rotate_matrix([np.random.rand(4, 4)])
+    with pytest.raises(TypeError):
+        ham.orb_rotate_matrix([np.random.rand(4, 4).tolist(), np.random.rand(4, 4)])
+    with pytest.raises(TypeError):
+        ham.orb_rotate_matrix([np.random.rand(4, 4), np.random.rand(4, 4).tolist()])
 
-    assert_raises(ValueError, ham.orb_rotate_matrix, np.random.rand(4, 4, 4))
+    with pytest.raises(ValueError):
+        ham.orb_rotate_matrix(np.random.rand(4, 4, 4))
 
-    assert_raises(ValueError, ham.orb_rotate_matrix, np.random.rand(3, 4))
+    with pytest.raises(ValueError):
+        ham.orb_rotate_matrix(np.random.rand(3, 4))

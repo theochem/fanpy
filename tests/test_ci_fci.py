@@ -1,7 +1,7 @@
 """Test wfns.wavefunction.fci."""
 import numpy as np
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
+import pytest
 from wfns.wfn.ci.fci import FCI
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
@@ -11,8 +11,10 @@ from utils import skip_init, find_datafile
 def test_fci_assign_seniority():
     """Test FCI.assign_seniority."""
     test = skip_init(FCI)
-    assert_raises(ValueError, test.assign_seniority, 0)
-    assert_raises(ValueError, test.assign_seniority, 1)
+    with pytest.raises(ValueError):
+        test.assign_seniority(0)
+    with pytest.raises(ValueError):
+        test.assign_seniority(1)
     test.assign_seniority(None)
     assert test.seniority is None
 
@@ -20,8 +22,10 @@ def test_fci_assign_seniority():
 def test_fci_assign_sd_vec():
     """Test FCI.assign_sd_vec."""
     test = FCI(2, 4)
-    assert_raises(ValueError, test.assign_sd_vec, 1)
-    assert_raises(ValueError, test.assign_sd_vec, [0b0101])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec(1)
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([0b0101])
     test.assign_sd_vec(None)
     assert test.sd_vec == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
 

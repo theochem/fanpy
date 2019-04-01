@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.geminals.ap1rog.AP1roG."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.geminal.ap1rog import AP1roG
 from wfns.ham.senzero import SeniorityZeroHamiltonian
@@ -19,13 +19,18 @@ def test_ap1rog_assign_ref_sd():
     assert test.ref_sd == 0b00110011
     test.assign_ref_sd(0b00110011)
     assert test.ref_sd == 0b00110011
-    assert_raises(ValueError, test.assign_ref_sd, 0b00010001)
-    assert_raises(ValueError, test.assign_ref_sd, 0b01110001)
-    assert_raises(ValueError, test.assign_ref_sd, 0b01010011)
+    with pytest.raises(ValueError):
+        test.assign_ref_sd(0b00010001)
+    with pytest.raises(ValueError):
+        test.assign_ref_sd(0b01110001)
+    with pytest.raises(ValueError):
+        test.assign_ref_sd(0b01010011)
     # NOTE: multiple references is not supported
-    assert_raises(TypeError, test.assign_ref_sd, [0b00110011, 0b01010101])
+    with pytest.raises(TypeError):
+        test.assign_ref_sd([0b00110011, 0b01010101])
     # this is equivalent to
-    assert_raises(TypeError, test.assign_ref_sd, [51, 85])
+    with pytest.raises(TypeError):
+        test.assign_ref_sd([51, 85])
     # which means that the 51st and the 85th orbitals are occupied
 
 
@@ -33,7 +38,8 @@ def test_ap1rog_assign_ngem():
     """Test AP1roG.assign_ngem."""
     test = skip_init(AP1roG)
     test.assign_nelec(4)
-    assert_raises(NotImplementedError, test.assign_ngem, 3)
+    with pytest.raises(NotImplementedError):
+        test.assign_ngem(3)
 
 
 def test_ap1rog_assign_orbpairs():
@@ -101,7 +107,8 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0110001100, deriv=3) == 1
     assert test.get_overlap(0b0110001100, deriv=4) == 0
     assert test.get_overlap(0b0110001100, deriv=99) == 0
-    assert_raises(TypeError, test.get_overlap, 0b0001100011, '0')
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0001100011, '0')
 
 
 def answer_ap1rog_h2_sto6g():

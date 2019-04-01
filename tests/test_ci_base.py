@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.base."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.ci.base import CIWavefunction
 from utils import skip_init
@@ -9,9 +9,12 @@ def test_assign_spin():
     """Test CIWavefunction.assign_spin."""
     test = skip_init(CIWavefunction)
     # check error
-    assert_raises(TypeError, test.assign_spin, '1')
-    assert_raises(TypeError, test.assign_spin, [1])
-    assert_raises(ValueError, test.assign_spin, 1.33)
+    with pytest.raises(TypeError):
+        test.assign_spin('1')
+    with pytest.raises(TypeError):
+        test.assign_spin([1])
+    with pytest.raises(ValueError):
+        test.assign_spin(1.33)
     # None
     test.assign_spin(None)
     assert test._spin is None
@@ -35,9 +38,12 @@ def test_assign_seniority():
     """Test CIWavefunction.assign_seniority."""
     test = skip_init(CIWavefunction)
     # check error
-    assert_raises(TypeError, test.assign_seniority, '1')
-    assert_raises(TypeError, test.assign_seniority, 1.0)
-    assert_raises(ValueError, test.assign_seniority, -1)
+    with pytest.raises(TypeError):
+        test.assign_seniority('1')
+    with pytest.raises(TypeError):
+        test.assign_seniority(1.0)
+    with pytest.raises(ValueError):
+        test.assign_seniority(-1)
     # None
     test.assign_seniority(None)
     assert test.seniority is None
@@ -62,29 +68,36 @@ def test_assign_sd_vec():
     test.assign_seniority(0)
     # check error
     #  not iterable
-    assert_raises(TypeError, test.assign_sd_vec, 2)
+    with pytest.raises(TypeError):
+        test.assign_sd_vec(2)
     #  iterable of not ints
-    assert_raises(TypeError, test.assign_sd_vec, (str(i) for i in range(2)))
-    assert_raises(TypeError, test.assign_sd_vec, [float(i) for i in range(2)])
+    with pytest.raises(TypeError):
+        test.assign_sd_vec((str(i) for i in range(2)))
+    with pytest.raises(TypeError):
+        test.assign_sd_vec([float(i) for i in range(2)])
     #  bad electron number
-    assert_raises(ValueError, test.assign_sd_vec, [0b1, 0b111])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([0b1, 0b111])
     #  bad spin
     test.assign_spin(0.5)
     test.assign_seniority(None)
-    assert_raises(ValueError, test.assign_sd_vec, [0b000011, 0b000110])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([0b000011, 0b000110])
     #  bad seniority
     test.assign_spin(None)
     test.assign_seniority(0)
-    assert_raises(ValueError, test.assign_sd_vec, [0b000011, 0b000110])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([0b000011, 0b000110])
     #  bad spin and seniority
     test.assign_spin(1)
     test.assign_seniority(0)
-    assert_raises(ValueError, test.assign_sd_vec, [0b000011, 0b000110, 0b110000, 0b001001,
-                                                   0b000101])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
     #  empty list
     test.assign_spin(None)
     test.assign_seniority(None)
-    assert_raises(ValueError, test.assign_sd_vec, [])
+    with pytest.raises(ValueError):
+        test.assign_sd_vec([])
 
     test = skip_init(CIWavefunction)
     test.assign_nelec(2)

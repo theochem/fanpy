@@ -1,7 +1,7 @@
 """Test wfns.ham.generalized_chemical."""
 import numpy as np
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
+import pytest
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend.sd_list import sd_list
@@ -65,9 +65,12 @@ def test_assign_params():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
 
     test = GeneralizedChemicalHamiltonian(one_int, two_int)
-    assert_raises(ValueError, test.assign_params, [0])
-    assert_raises(ValueError, test.assign_params, np.array([[0]]))
-    assert_raises(ValueError, test.assign_params, np.array([0, 1]))
+    with pytest.raises(ValueError):
+        test.assign_params([0])
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([[0]]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([0, 1]))
 
     test.assign_params(np.array([0]))
     assert np.allclose(test.params, np.zeros(1))
@@ -136,7 +139,8 @@ def test_integrate_wfn_sd():
     assert coulomb == 3*10
     assert exchange == -3*11
 
-    assert_raises(ValueError, test_ham.integrate_wfn_sd, test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
+    with pytest.raises(ValueError):
+        test_ham.integrate_wfn_sd(test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
 
 
 def test_integrate_sd_sd_trivial():
@@ -145,9 +149,12 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(6, 6, 6, 6)
     test = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0.5, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=-0.5, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=0, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=0.5, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=-0.5, deriv=None)
 
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b001001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
@@ -334,9 +341,12 @@ def test_integrate_sd_sd_deriv():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 0.0)
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, -1)
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 2)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 0.0)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, -1)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 2)
     assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0) == (0, 0, 0)
     assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, 0) == (0, 0, 0)
 

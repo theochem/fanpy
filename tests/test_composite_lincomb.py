@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.composite.lincomb."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 import types
 from wfns.wfn.base import BaseWavefunction
@@ -36,18 +36,21 @@ def test_assign_wfns():
     """Test LinearCombinationWavefunction.assign_wfns."""
     test_wfn = TempWavefunction(4, 10)
     test = skip_init(LinearCombinationWavefunction)
-    assert_raises(TypeError, LinearCombinationWavefunction.assign_wfns, test, (1, test_wfn))
-    assert_raises(TypeError, LinearCombinationWavefunction.assign_wfns, test, (test_wfn, 2))
+    with pytest.raises(TypeError):
+        LinearCombinationWavefunction.assign_wfns(test, (1, test_wfn))
+    with pytest.raises(TypeError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, 2))
     test.nelec = 4
-    assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TempWavefunction(5, 10)))
+    with pytest.raises(ValueError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(5, 10)))
     test.dtype = np.float64
-    assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TempWavefunction(4, 10, dtype=complex)))
+    with pytest.raises(ValueError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 10, dtype=complex)))
     test.memory = np.inf
-    assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test,
-                  (test_wfn, TempWavefunction(4, 10, memory='2gb')))
-    assert_raises(ValueError, LinearCombinationWavefunction.assign_wfns, test, (test_wfn, ))
+    with pytest.raises(ValueError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 10, memory='2gb')))
+    with pytest.raises(ValueError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, ))
     # NOTE: wavefunctions with different numbers of spin orbitals are allowed
     LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 12)))
     assert test.wfns[0].nelec == 4

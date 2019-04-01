@@ -1,5 +1,5 @@
 """Test for wfns.backend.math_tools."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.backend.math_tools import (binomial, adjugate, permanent_combinatoric, permanent_ryser,
                                      permanent_borchardt, unitary_matrix)
@@ -21,9 +21,12 @@ def test_binomial():
 def test_adjugate():
     """Test adjugate."""
     # 0 by 1
-    assert_raises(ValueError, adjugate, np.ndarray(shape=(0, 0)))
-    assert_raises(ValueError, adjugate, np.ndarray(shape=(0, 1)))
-    assert_raises(ValueError, adjugate, np.ndarray(shape=(1, 0)))
+    with pytest.raises(ValueError):
+        adjugate(np.ndarray(shape=(0, 0)))
+    with pytest.raises(ValueError):
+        adjugate(np.ndarray(shape=(0, 1)))
+    with pytest.raises(ValueError):
+        adjugate(np.ndarray(shape=(1, 0)))
     # 1 by 1
     assert np.allclose(adjugate(np.array([[1]])), 1)
     assert np.allclose(adjugate(np.array([[3]])), 1)
@@ -47,14 +50,18 @@ def test_adjugate():
     assert np.allclose(adjugate(matrix), cofactor.T)
     # non invertible matrix
     matrix[0] = matrix[1] + matrix[2]
-    assert_raises(np.linalg.LinAlgError, adjugate, matrix)
+    with pytest.raises(np.linalg.LinAlgError):
+        adjugate(matrix)
 
 
 def test_permanent_combinatoric():
     """Test permanent_combinatoric."""
-    assert_raises(ValueError, permanent_combinatoric, np.ndarray(shape=(0, 0)))
-    assert_raises(ValueError, permanent_combinatoric, np.ndarray(shape=(1, 0)))
-    assert_raises(ValueError, permanent_combinatoric, np.ndarray(shape=(0, 1)))
+    with pytest.raises(ValueError):
+        permanent_combinatoric(np.ndarray(shape=(0, 0)))
+    with pytest.raises(ValueError):
+        permanent_combinatoric(np.ndarray(shape=(1, 0)))
+    with pytest.raises(ValueError):
+        permanent_combinatoric(np.ndarray(shape=(0, 1)))
 
     assert np.allclose(permanent_combinatoric(np.arange(1, 10).reshape(3, 3)), 450)
     assert np.allclose(permanent_combinatoric(np.arange(1, 13).reshape(3, 4)), 3900)
@@ -62,9 +69,12 @@ def test_permanent_combinatoric():
 
 def test_permanent_ryser():
     """Test permanent_ryser."""
-    assert_raises(ValueError, permanent_ryser, np.ndarray(shape=(0, 0)))
-    assert_raises(ValueError, permanent_ryser, np.ndarray(shape=(1, 0)))
-    assert_raises(ValueError, permanent_ryser, np.ndarray(shape=(0, 1)))
+    with pytest.raises(ValueError):
+        permanent_ryser(np.ndarray(shape=(0, 0)))
+    with pytest.raises(ValueError):
+        permanent_ryser(np.ndarray(shape=(1, 0)))
+    with pytest.raises(ValueError):
+        permanent_ryser(np.ndarray(shape=(0, 1)))
 
     for i in range(1, 6):
         for j in range(1, 6):
@@ -82,10 +92,14 @@ def test_permanent_borchardt_square():
     zetas = np.random.rand(p)
     etas = np.random.rand(p)
 
-    assert_raises(ValueError, permanent_borchardt, lambdas, epsilons[:p-1], zetas, etas=None)
-    assert_raises(ValueError, permanent_borchardt, lambdas, epsilons, zetas[:p-1], etas=None)
-    assert_raises(ValueError, permanent_borchardt, lambdas, epsilons, zetas, etas[:p-1])
-    assert_raises(ValueError, permanent_borchardt, lambdas[:p-1], epsilons, zetas, etas)
+    with pytest.raises(ValueError):
+        permanent_borchardt(lambdas, epsilons[:p-1], zetas, etas=None)
+    with pytest.raises(ValueError):
+        permanent_borchardt(lambdas, epsilons, zetas[:p-1], etas=None)
+    with pytest.raises(ValueError):
+        permanent_borchardt(lambdas, epsilons, zetas, etas[:p-1])
+    with pytest.raises(ValueError):
+        permanent_borchardt(lambdas[:p-1], epsilons, zetas, etas)
 
     # without etas
     gem_coeffs = zetas / (epsilons - lambdas[:, np.newaxis])
@@ -151,12 +165,18 @@ def test_permanent_borchardt_rect():
 
 def test_unitary_matrix():
     """Test math_tools.unitary_matrix."""
-    assert_raises(TypeError, unitary_matrix, [1, 2, 3])
-    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [3]]))
-    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [0, 3]]))
-    assert_raises(TypeError, unitary_matrix, np.array([[1, 2], [-2, 3]]))
-    assert_raises(ValueError, unitary_matrix, np.array([1, 2, 3, 4]))
-    assert_raises(ValueError, unitary_matrix, np.array([1, 2, 3, 4, 5]))
+    with pytest.raises(TypeError):
+        unitary_matrix([1, 2, 3])
+    with pytest.raises(TypeError):
+        unitary_matrix(np.array([[1, 2], [3]]))
+    with pytest.raises(TypeError):
+        unitary_matrix(np.array([[1, 2], [0, 3]]))
+    with pytest.raises(TypeError):
+        unitary_matrix(np.array([[1, 2], [-2, 3]]))
+    with pytest.raises(ValueError):
+        unitary_matrix(np.array([1, 2, 3, 4]))
+    with pytest.raises(ValueError):
+        unitary_matrix(np.array([1, 2, 3, 4, 5]))
 
     assert np.allclose(unitary_matrix(np.zeros(1)), np.identity(2))
     assert np.allclose(unitary_matrix(np.zeros(3)), np.identity(3))
@@ -181,4 +201,5 @@ def test_unitary_matrix():
     assert np.allclose(matrix.T.dot(matrix), np.identity(4))
 
     antiherm_elements = np.random.rand(6) * 14
-    assert_raises(ValueError, unitary_matrix, antiherm_elements)
+    with pytest.raises(ValueError):
+        unitary_matrix(antiherm_elements)

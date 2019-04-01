@@ -1,5 +1,5 @@
 """Test wfns.sd_list."""
-from nose.tools import assert_raises
+import pytest
 import gmpy2
 from wfns.backend import sd_list
 
@@ -31,20 +31,34 @@ def test_satisfies_conditions():
 
 def test_ci_sd_list():
     """Test sd_list.sd_list."""
-    assert_raises(TypeError, lambda: sd_list.sd_list(4.0, 3))
-    assert_raises(TypeError, lambda: sd_list.sd_list(None, 3))
-    assert_raises(TypeError, lambda: sd_list.sd_list('4', 3))
-    assert_raises(TypeError, lambda: sd_list.sd_list(3, 4.0))
-    assert_raises(TypeError, lambda: sd_list.sd_list(3, None))
-    assert_raises(TypeError, lambda: sd_list.sd_list(3, '4'))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, num_limit=3.0))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, num_limit='3'))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, exc_orders=3))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, exc_orders=[3.0]))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, spin='3'))
-    assert_raises(TypeError, lambda: sd_list.sd_list(4, 3, seniority='3'))
-    assert_raises(ValueError, lambda: sd_list.sd_list(4, 3, spin=0.5, seniority=0))
-    assert_raises(ValueError, lambda: sd_list.sd_list(4, 3, spin=-1, seniority=1))
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4.0, 3)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(None, 3)
+    with pytest.raises(TypeError):
+        sd_list.sd_list('4', 3)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(3, 4.0)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(3, None)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(3, '4')
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, num_limit=3.0)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, num_limit='3')
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, exc_orders=3)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, exc_orders=[3.0])
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, spin='3')
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 3, seniority='3')
+    with pytest.raises(ValueError):
+        sd_list.sd_list(4, 3, spin=0.5, seniority=0)
+    with pytest.raises(ValueError):
+        sd_list.sd_list(4, 3, spin=-1, seniority=1)
 
     assert sd_list.sd_list(4, 3, num_limit=0) == []
     assert sd_list.sd_list(4, 3, num_limit=1) == [gmpy2.mpz(0b011011)]

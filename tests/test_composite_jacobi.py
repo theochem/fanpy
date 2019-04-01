@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.composite.jacobi"""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 import itertools as it
 from wfns.backend.sd_list import sd_list
@@ -166,7 +166,8 @@ def test_jacobi_assign_orbtype():
     test.assign_orbtype('generalized')
     assert test.orbtype == 'generalized'
 
-    assert_raises(ValueError, test.assign_orbtype, 'lkjsadf')
+    with pytest.raises(ValueError):
+        test.assign_orbtype('lkjsadf')
 
 
 def test_jacobi_assign_jacobi_indices():
@@ -178,32 +179,45 @@ def test_jacobi_assign_jacobi_indices():
     test.memory = 10
 
     # not tuple or list
-    assert_raises(TypeError, test.assign_jacobi_indices, 1)
-    assert_raises(TypeError, test.assign_jacobi_indices, {1: 0, 2: 3})
-    assert_raises(TypeError, test.assign_jacobi_indices, set([0, 1]))
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices(1)
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices({1: 0, 2: 3})
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices(set([0, 1]))
     # bad number of entries
-    assert_raises(TypeError, test.assign_jacobi_indices, [0])
-    assert_raises(TypeError, test.assign_jacobi_indices, (1, 2, 3))
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices([0])
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices((1, 2, 3))
     # bad type of entries
-    assert_raises(TypeError, test.assign_jacobi_indices, [0, 1.0])
-    assert_raises(TypeError, test.assign_jacobi_indices, ('0', 1))
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices([0, 1.0])
+    with pytest.raises(TypeError):
+        test.assign_jacobi_indices(('0', 1))
 
     # negative entry
-    assert_raises(ValueError, test.assign_jacobi_indices, [0, -1])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([0, -1])
     # same entries
-    assert_raises(ValueError, test.assign_jacobi_indices, [0, 0])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([0, 0])
     # bad input for given orbital type
     test.orbtype = 'generalized'
-    assert_raises(ValueError, test.assign_jacobi_indices, [0, 10])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([0, 10])
     test.assign_jacobi_indices([0, 9])
     assert test.jacobi_indices == (0, 9)
     test.orbtype = 'restricted'
-    assert_raises(ValueError, test.assign_jacobi_indices, [0, 5])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([0, 5])
     test.assign_jacobi_indices([0, 4])
     assert test.jacobi_indices == (0, 4)
     test.orbtype = 'unrestricted'
-    assert_raises(ValueError, test.assign_jacobi_indices, [0, 6])
-    assert_raises(ValueError, test.assign_jacobi_indices, [1, 9])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([0, 6])
+    with pytest.raises(ValueError):
+        test.assign_jacobi_indices([1, 9])
     test.assign_jacobi_indices([0, 1])
     assert test.jacobi_indices == (0, 1)
     test.assign_jacobi_indices([5, 6])
@@ -656,8 +670,10 @@ def test_jacobi_get_overlap_restricted_der():
                        + 2*sin*cos * wfn_sd_coeff[0b00110011]))
 
     # error
-    assert_raises(ValueError, test.get_overlap, 0b0101, '1')
-    assert_raises(ValueError, test.get_overlap, 0b0101, -1)
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, '1')
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, -1)
 
 
 def test_jacobi_compare_nonorth():

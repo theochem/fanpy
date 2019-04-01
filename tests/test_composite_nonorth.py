@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.composite.nonorth."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.backend.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
@@ -59,16 +59,26 @@ def test_nonorth_assign_params():
     assert np.allclose(test.params[0], np.eye(5, 6, dtype=float))
 
     test_params = np.random.rand(5, 6)
-    assert_raises(TypeError, test.assign_params, (test_params, )*3)
-    assert_raises(TypeError, test.assign_params, [])
-    assert_raises(TypeError, test.assign_params, {0: test_params})
-    assert_raises(TypeError, test.assign_params, [test_params.tolist()])
-    assert_raises(TypeError, test.assign_params, [np.random.rand(5, 6, 1)])
-    assert_raises(TypeError, test.assign_params, [test_params.astype(complex)])
-    assert_raises(ValueError, test.assign_params, [np.random.rand(6, 5)])
-    assert_raises(ValueError, test.assign_params, [np.random.rand(9, 9)])
-    assert_raises(ValueError, test.assign_params, [np.random.rand(5, 6), np.random.rand(5, 5)])
-    assert_raises(ValueError, test.assign_params, [np.random.rand(5, 5), np.random.rand(5, 6)])
+    with pytest.raises(TypeError):
+        test.assign_params((test_params, )*3)
+    with pytest.raises(TypeError):
+        test.assign_params([])
+    with pytest.raises(TypeError):
+        test.assign_params({0: test_params})
+    with pytest.raises(TypeError):
+        test.assign_params([test_params.tolist()])
+    with pytest.raises(TypeError):
+        test.assign_params([np.random.rand(5, 6, 1)])
+    with pytest.raises(TypeError):
+        test.assign_params([test_params.astype(complex)])
+    with pytest.raises(ValueError):
+        test.assign_params([np.random.rand(6, 5)])
+    with pytest.raises(ValueError):
+        test.assign_params([np.random.rand(9, 9)])
+    with pytest.raises(ValueError):
+        test.assign_params([np.random.rand(5, 6), np.random.rand(5, 5)])
+    with pytest.raises(ValueError):
+        test.assign_params([np.random.rand(5, 5), np.random.rand(5, 6)])
 
     test.assign_params(test_params)
     assert isinstance(test.params, tuple)
@@ -241,7 +251,8 @@ def test_nonorth_orbtype():
     assert test.orbtype == 'generalized'
     # else
     test.params = np.random.rand(10, 12)
-    assert_raises(NotImplementedError, lambda: test.orbtype)
+    with pytest.raises(NotImplementedError):
+        test.orbtype
 
 
 def test_nonorth_olp_generalized():
@@ -525,8 +536,10 @@ def test_nonorth_get_overlap():
     assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
 
     # trivial cases
-    assert_raises(ValueError, test.get_overlap, 0b0101, '1')
-    assert_raises(ValueError, test.get_overlap, 0b0101, -1)
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, '1')
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, -1)
 
 
 def test_nonorth_energy_unitary_transform_hamiltonian():

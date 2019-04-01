@@ -1,7 +1,7 @@
 """Test wfns.ham.unrestricted_chemical."""
 import numpy as np
 from nose.plugins.attrib import attr
-from nose.tools import assert_raises
+import pytest
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 from wfns.backend.sd_list import sd_list
 from utils import skip_init, find_datafile
@@ -63,9 +63,12 @@ def test_assign_params():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
 
     test = UnrestrictedChemicalHamiltonian([one_int]*2, [two_int]*3)
-    assert_raises(ValueError, test.assign_params, [0, 0])
-    assert_raises(ValueError, test.assign_params, np.array([[0], [0]]))
-    assert_raises(ValueError, test.assign_params, np.array([0]))
+    with pytest.raises(ValueError):
+        test.assign_params([0, 0])
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([[0], [0]]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([0]))
 
     test.assign_params(np.array([0, 0]))
     assert np.allclose(test.params, np.zeros(1))
@@ -95,9 +98,12 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(3, 3, 3, 3)
     test = UnrestrictedChemicalHamiltonian([one_int]*2, [two_int]*3)
 
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=0.5, deriv=None)
-    assert_raises(ValueError, test.integrate_sd_sd, 0b001001, 0b100100, sign=-0.5, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=0, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=0.5, deriv=None)
+    with pytest.raises(ValueError):
+        test.integrate_sd_sd(0b001001, 0b100100, sign=-0.5, deriv=None)
 
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b001001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
@@ -235,9 +241,12 @@ def test_integrate_sd_sd_deriv():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = UnrestrictedChemicalHamiltonian([one_int]*2, [two_int]*3)
 
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 0.0)
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, -1)
-    assert_raises(ValueError, test_ham._integrate_sd_sd_deriv, 0b0101, 0b0101, 2)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 0.0)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, -1)
+    with pytest.raises(ValueError):
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 2)
     assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0) == (0, 0, 0)
     assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, 0) == (0, 0, 0)
 

@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.ci_pairs."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.ci.ci_pairs import CIPairs
 from wfns.ham.senzero import SeniorityZeroHamiltonian
@@ -17,7 +17,8 @@ def test_assign_sd_vec():
     test.assign_sd_vec()
     assert test.sd_vec == (0b0011100111, 0b0101101011, 0b1001110011, 0b0110101101, 0b1010110101,
                            0b0111001110, 0b1011010110)
-    assert_raises(ValueError, test.assign_sd_vec, (0b0011100111, ))
+    with pytest.raises(ValueError):
+        test.assign_sd_vec((0b0011100111, ))
 
 
 def test_to_ap1rog():

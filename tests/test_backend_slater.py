@@ -1,5 +1,5 @@
 """Test wfns.slater."""
-from nose.tools import assert_raises
+import pytest
 import gmpy2
 from wfns.backend import slater
 
@@ -27,8 +27,10 @@ def test_is_alpha():
     assert not slater.is_alpha(6, 4)
     assert not slater.is_alpha(7, 4)
 
-    assert_raises(ValueError, slater.is_alpha, -1, 4)
-    assert_raises(ValueError, slater.is_alpha, 99, 4)
+    with pytest.raises(ValueError):
+        slater.is_alpha(-1, 4)
+    with pytest.raises(ValueError):
+        slater.is_alpha(99, 4)
 
 
 def test_spatial_index():
@@ -45,8 +47,10 @@ def test_spatial_index():
     assert slater.spatial_index(6, 4) == 2
     assert slater.spatial_index(7, 4) == 3
 
-    assert_raises(ValueError, slater.spatial_index, -1, 4)
-    assert_raises(ValueError, slater.spatial_index, 99, 4)
+    with pytest.raises(ValueError):
+        slater.spatial_index(-1, 4)
+    with pytest.raises(ValueError):
+        slater.spatial_index(99, 4)
 
 
 def test_spin_index():
@@ -63,9 +67,12 @@ def test_spin_index():
     assert slater.spin_index(2, 4, spin='beta') == 6
     assert slater.spin_index(3, 4, spin='beta') == 7
 
-    assert_raises(ValueError, slater.spin_index, -1, 4, 'alpha')
-    assert_raises(ValueError, slater.spin_index, 99, 4, 'alpha')
-    assert_raises(ValueError, slater.spin_index, 1, 4, 'generalized')
+    with pytest.raises(ValueError):
+        slater.spin_index(-1, 4, 'alpha')
+    with pytest.raises(ValueError):
+        slater.spin_index(99, 4, 'alpha')
+    with pytest.raises(ValueError):
+        slater.spin_index(1, 4, 'generalized')
 
 
 def test_total_occ():
@@ -135,7 +142,8 @@ def test_create():
 def test_excite():
     """Test slater.excite."""
     # Check error
-    assert_raises(ValueError, lambda: slater.excite(0b1111, 1, 2, 5))
+    with pytest.raises(ValueError):
+        slater.excite(0b1111, 1, 2, 5)
 
     # Excite spatial orbitals from occupied to virtual
     assert slater.excite(0b0001, 0, 1) == 0b10
@@ -160,13 +168,16 @@ def test_excite():
 
 def test_ground():
     """Test slater.ground."""
-    assert_raises(ValueError, lambda: slater.ground(2, 1))
+    with pytest.raises(ValueError):
+        slater.ground(2, 1)
     assert slater.ground(2, 2) == 0b11
-    assert_raises(ValueError, lambda: slater.ground(2, 3))
+    with pytest.raises(ValueError):
+        slater.ground(2, 3)
     assert slater.ground(2, 4) == 0b0101
     assert slater.ground(2, 6) == 0b001001
     assert slater.ground(2, 8) == 0b00010001
-    assert_raises(ValueError, lambda: slater.ground(3, 2))
+    with pytest.raises(ValueError):
+        slater.ground(3, 2)
     assert slater.ground(3, 4) == 0b0111
     assert slater.ground(3, 6) == 0b001011
 
@@ -183,9 +194,12 @@ def test_is_internal_sd():
 def test_internal_sd():
     """Test slater.internal_sd."""
     # Check error
-    assert_raises(TypeError, lambda: slater.internal_sd(None))
-    assert_raises(TypeError, lambda: slater.internal_sd('5'))
-    assert_raises(TypeError, lambda: slater.internal_sd([0, 3]))
+    with pytest.raises(TypeError):
+        slater.internal_sd(None)
+    with pytest.raises(TypeError):
+        slater.internal_sd('5')
+    with pytest.raises(TypeError):
+        slater.internal_sd([0, 3])
 
     # integer
     assert slater.internal_sd(5) == gmpy2.mpz(5)
@@ -247,8 +261,10 @@ def test_diff_orbs():
 
 def test_combine_spin():
     """Test slater.combine_spin."""
-    assert_raises(ValueError, lambda: slater.combine_spin(0b0, 0b0, 0))
-    assert_raises(ValueError, lambda: slater.combine_spin(0b0, 0b0, -1))
+    with pytest.raises(ValueError):
+        slater.combine_spin(0b0, 0b0, 0)
+    with pytest.raises(ValueError):
+        slater.combine_spin(0b0, 0b0, -1)
     assert slater.combine_spin(0b1, 0b0, 1) == 0b1
     assert slater.combine_spin(0b0, 0b1, 1) == 0b10
     assert slater.combine_spin(0b111, 0b0, 3) == 0b111
@@ -260,8 +276,10 @@ def test_combine_spin():
 
 def test_split_spin():
     """Test slater.split_spin."""
-    assert_raises(ValueError, lambda: slater.split_spin(0b0, 0))
-    assert_raises(ValueError, lambda: slater.split_spin(0b0, -1))
+    with pytest.raises(ValueError):
+        slater.split_spin(0b0, 0)
+    with pytest.raises(ValueError):
+        slater.split_spin(0b0, -1)
     assert slater.split_spin(0b1, 1) == (0b1, 0b0)
     assert slater.split_spin(0b10, 1) == (0b0, 0b1)
     assert slater.split_spin(0b111, 3) == (0b111, 0b0)
@@ -274,9 +292,12 @@ def test_split_spin():
 def test_interleave_index():
     """Test slater.interleave_index."""
     # Check error
-    assert_raises(ValueError, lambda: slater.interleave_index(-1, 4))
-    assert_raises(ValueError, lambda: slater.interleave_index(8, 4))
-    assert_raises(ValueError, lambda: slater.interleave_index(9, 4))
+    with pytest.raises(ValueError):
+        slater.interleave_index(-1, 4)
+    with pytest.raises(ValueError):
+        slater.interleave_index(8, 4)
+    with pytest.raises(ValueError):
+        slater.interleave_index(9, 4)
     # 1 spatial orbital
     assert slater.interleave_index(0, 1) == 0
     assert slater.interleave_index(1, 1) == 1
@@ -297,9 +318,12 @@ def test_interleave_index():
 def test_deinterleave_index():
     """Test slater.deinterleave_index."""
     # Check error
-    assert_raises(ValueError, lambda: slater.deinterleave_index(-1, 4))
-    assert_raises(ValueError, lambda: slater.deinterleave_index(8, 4))
-    assert_raises(ValueError, lambda: slater.deinterleave_index(9, 4))
+    with pytest.raises(ValueError):
+        slater.deinterleave_index(-1, 4)
+    with pytest.raises(ValueError):
+        slater.deinterleave_index(8, 4)
+    with pytest.raises(ValueError):
+        slater.deinterleave_index(9, 4)
     # 1 spatial orbital
     assert slater.deinterleave_index(0, 1) == 0
     assert slater.deinterleave_index(1, 1) == 1
@@ -319,7 +343,8 @@ def test_deinterleave_index():
 
 def test_interleave():
     """Test slater.interleave."""
-    assert_raises(ValueError, lambda: slater.interleave(0, -4))
+    with pytest.raises(ValueError):
+        slater.interleave(0, -4)
     assert slater.interleave(0b11, 1) == 0b11
     assert slater.interleave(0b0011, 2) == 0b0101
     assert slater.interleave(0b000011, 3) == 0b000101
@@ -329,7 +354,8 @@ def test_interleave():
 
 def test_deinterleave():
     """Test slater.deinterleave."""
-    assert_raises(ValueError, lambda: slater.deinterleave(0, -4))
+    with pytest.raises(ValueError):
+        slater.deinterleave(0, -4)
     assert slater.deinterleave(0b11, 1) == 0b11
     assert slater.deinterleave(0b0101, 2) == 0b0011
     assert slater.deinterleave(0b000101, 3) == 0b000011
@@ -340,7 +366,8 @@ def test_deinterleave():
 def test_get_spin():
     """Test slater.get_spin."""
     # 0 spatial orbital
-    assert_raises(ValueError, lambda: slater.get_spin(0b0000, 0))
+    with pytest.raises(ValueError):
+        slater.get_spin(0b0000, 0)
     # 1 spatial orbital
     assert slater.get_spin(0b00, 1) == 0
     assert slater.get_spin(0b01, 1) == 0.5
@@ -367,8 +394,10 @@ def test_get_spin():
 def test_get_seniority():
     """Test slater.get_seniority."""
     # 0 spatial orbital
-    assert_raises(ValueError, lambda: slater.get_seniority(0b0000, 0))
-    assert_raises(ValueError, lambda: slater.get_seniority(0b0011, 0))
+    with pytest.raises(ValueError):
+        slater.get_seniority(0b0000, 0)
+    with pytest.raises(ValueError):
+        slater.get_seniority(0b0011, 0)
     # 1 spatial orbital
     assert slater.get_seniority(0b00, 1) == 0
     assert slater.get_seniority(0b01, 1) == 1
@@ -493,16 +522,22 @@ def test_sign_perm():
     assert slater.sign_perm([6, 4, 1, 3], [1, 3, 4, 6], is_decreasing=True) == -1
     assert slater.sign_perm([6, 4, 3, 1], [1, 3, 4, 6], is_decreasing=True) == 1
 
-    assert_raises(ValueError, slater.sign_perm, [1, 3, 6, 4], [1, 3, 6, 4], False)
-    assert_raises(ValueError, slater.sign_perm, [1, 3, 6, 4], [1, 3, 6, 4], True)
+    with pytest.raises(ValueError):
+        slater.sign_perm([1, 3, 6, 4], [1, 3, 6, 4], False)
+    with pytest.raises(ValueError):
+        slater.sign_perm([1, 3, 6, 4], [1, 3, 6, 4], True)
 
 
 def test_sign_swap():
     """Test slater.sign_swap."""
-    assert_raises(ValueError, slater.sign_swap, None, 0, 1)
-    assert_raises(ValueError, slater.sign_swap, 0b01, -1, 1)
-    assert_raises(ValueError, slater.sign_swap, 0b01, 0, -1)
-    assert_raises(ValueError, slater.sign_swap, 0b00, 0, 1)
+    with pytest.raises(ValueError):
+        slater.sign_swap(None, 0, 1)
+    with pytest.raises(ValueError):
+        slater.sign_swap(0b01, -1, 1)
+    with pytest.raises(ValueError):
+        slater.sign_swap(0b01, 0, -1)
+    with pytest.raises(ValueError):
+        slater.sign_swap(0b00, 0, 1)
 
     assert slater.sign_swap(0b000001, 0, 1) == 1
     assert slater.sign_swap(0b000001, 0, 2) == 1
@@ -551,7 +586,11 @@ def test_sign_excite():
     assert slater.sign_excite(0b0011, [0, 1], [1, 2]) == -1
     assert slater.sign_excite(0b0011, [0, 1], [2, 1]) == 1
 
-    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 1, 1], [2, 3])
-    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 1], [2, 2, 3])
-    assert_raises(ValueError, slater.sign_excite, 0b0011, [0, 2], [3])
-    assert_raises(ValueError, slater.sign_excite, 0b0011, [0], [1])
+    with pytest.raises(ValueError):
+        slater.sign_excite(0b0011, [0, 1, 1], [2, 3])
+    with pytest.raises(ValueError):
+        slater.sign_excite(0b0011, [0, 1], [2, 2, 3])
+    with pytest.raises(ValueError):
+        slater.sign_excite(0b0011, [0, 2], [3])
+    with pytest.raises(ValueError):
+        slater.sign_excite(0b0011, [0], [1])

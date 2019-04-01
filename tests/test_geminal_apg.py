@@ -1,5 +1,5 @@
 """Test wfns.wavefunction.geminals.apg."""
-from nose.tools import assert_raises
+import pytest
 from nose.plugins.attrib import attr
 import types
 import numpy as np
@@ -17,8 +17,10 @@ def test_apg_assign_orbpairs():
     """Test APG.assign_orbpairs."""
     test = skip_init(APG)
     test.nspin = 10
-    assert_raises(ValueError, test.assign_orbpairs, (0, 1))
-    assert_raises(ValueError, test.assign_orbpairs, [(0, 1)])
+    with pytest.raises(ValueError):
+        test.assign_orbpairs((0, 1))
+    with pytest.raises(ValueError):
+        test.assign_orbpairs([(0, 1)])
     test.assign_orbpairs(None)
     dict_orbpair_ind = {}
     dict_ind_orbpair = {}
@@ -41,9 +43,12 @@ def test_apg_get_col_ind():
         assert test.get_col_ind(orbpair) == i
 
     assert test.get_col_ind((1, 0)) == 0
-    assert_raises(ValueError, test.get_col_ind, (0, 10))
-    assert_raises(ValueError, test.get_col_ind, (0, 0))
-    assert_raises(ValueError, test.get_col_ind, (9, 10))
+    with pytest.raises(ValueError):
+        test.get_col_ind((0, 10))
+    with pytest.raises(ValueError):
+        test.get_col_ind((0, 0))
+    with pytest.raises(ValueError):
+        test.get_col_ind((9, 10))
 
 
 def test_apg_get_orbpair():
@@ -56,8 +61,10 @@ def test_apg_get_orbpair():
     for i, orbpair in enumerate(orbpairs):
         assert test.get_orbpair(i) == orbpair
 
-    assert_raises(ValueError, test.get_orbpair, -1)
-    assert_raises(ValueError, test.get_orbpair, len(orbpairs))
+    with pytest.raises(ValueError):
+        test.get_orbpair(-1)
+    with pytest.raises(ValueError):
+        test.get_orbpair(len(orbpairs))
 
 
 def test_assign_pmatch_generator():
