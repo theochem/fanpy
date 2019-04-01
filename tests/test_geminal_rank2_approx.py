@@ -47,7 +47,7 @@ def test_rank2_geminal_params_from_full():
                        atol=0.1, rtol=0)
 
 
-@np.testing.dec.skipif(True, 'Test does not always pass (depends on random noise).')
+@pytest.mark.skip(reason='Test does not always pass (depends on random noise).')
 def test_rank2_geminal_template_params():
     """Test RankTwoGeminal.template_params."""
     np.random.seed(424242)
