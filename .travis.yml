@@ -1,180 +1,40 @@
-# TEMPLATED FROM https://raw.githubusercontent.com/theochem/python-cython-ci-example/master/.travis.yml
-
-env:
-  matrix:
-  # - MYCONDAPY=3.5
-  - MYCONDAPY=3.6
-  global:
-    # ANACONDA_TOKEN
-    # - secure: NOT_SUPPORTED
-    # GITHUB_TOKEN
-    # - secure: NOT_SUPPORTED
-    # PYPI_PASSWD
-    # - secure: NOT_SUPPORTED
-    - PROJECT_NAME=wfns
-    - GITHUB_REPO_NAME=quantumelephant/fanpy
-    - CONDA_PKG_NAME_PY=wfns
-    # paths for using horton and pyscf
-    - HORTONPYTHON=$HOME/miniconda2/bin/python
-    - PYSCFPYTHON=$HOME/miniconda2/bin/python
-
-####
-# EVERYTHING BELOW THIS LINE WILL BE COPIED INTO OTHER YMLs
-####
-
-# Do not use Travis Python to save some time.
-language: generic
-os:
-  - linux
-  - osx
-osx_image: xcode8.3
-dist: trusty
 sudo: false
-
+language: python
 matrix:
-  # We only test on Linux with one specific Python version, unless we make a release. All
-  # other cases are allowed to fail and will exit early. With the fast_finish option,
-  # travis will send a status update to github as soon as the non-allowed-to-fail has
-  # finished. This speeds up testing in PRs.
-  #
-  # This is not ideal. It would be better to run just one item from the build matrix when
-  # not preparing a release. This is not possible on Travis. There are several tickets on
-  # travis-ci related to this limitation.
-  #
-  #    https://github.com/travis-ci/travis-ci/issues/7451
-  #    https://github.com/travis-ci/travis-ci/issues/7149
-  #    https://github.com/travis-ci/travis-ci/issues/2778
-  #    ...
+  include:
+    - python: 3.6
+      env: TOXENV=py36
+    - python: 3.6
+      env: TOXENV=linters
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
+    - python: 3.7
+      sudo: required
+      dist: xenial
+      env: TOXENV=py37
+    # TODO: need to make special environment for horton (i.e. install conda and install horton)
+    # - python: 3.6
+    #   env: TOXENV=horton
+    # TODO: need to install pyscf
+    # - python: 3.6
+    #   env: TOXENV=pyscf
+    - python: 3.6
+      env: TOXENV=keras
+      before_script:
+        - pip install --user keras
   fast_finish: true
   allow_failures:
-  - os: osx
-
-
-cache:
-  directories:
-    - $HOME/download # Sufficient to add miniconda.sh to TRAVIS cache.
-    - $HOME/miniconda2 # Add the installation to TRAVIS cache.
-    - $HOME/miniconda3 # Add the installation to TRAVIS cache.
-
-before_cache:
-- rm -rf $HOME/miniconda2/conda-bld
-- rm -rf $HOME/miniconda3/conda-bld
-- rm -rf $HOME/miniconda2/locks $HOME/miniconda2/pkgs $HOME/miniconda2/var $HOME/miniconda2/conda-meta/history
-- rm -rf $HOME/miniconda3/locks $HOME/miniconda3/pkgs $HOME/miniconda3/var $HOME/miniconda3/conda-meta/history
-- pip uninstall -y cardboardlint # Cardboardlint always installs even if no changes are made.
-
-branches:
-  only:
-    - master
-    - /^[0-9]+\.[0-9]+(\.[0-9]+)?([ab][0-9]+)?$/
-
-before_install:
-# Get miniconda. Take the right version, so re-installing python is hopefully not needed.
-- if test -e $HOME/miniconda2/bin; then
-    echo "miniconda2 already installed.";
-  else
-    echo "Installing miniconda2.";
-    rm -rf $HOME/miniconda2;
-    mkdir -p $HOME/download;
-    if [[ -d $HOME/download/miniconda2.sh ]]; then rm -rf $HOME/download/miniconda2.sh; fi;
-    if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O $HOME/download/miniconda2.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda2.sh;
-    fi;
-    bash $HOME/download/miniconda2.sh -b -p $HOME/miniconda2;
-  fi
-- if test -e $HOME/miniconda3/bin; then
-    echo "miniconda3 already installed.";
-  else
-    echo "Installing miniconda3.";
-    rm -rf $HOME/miniconda3;
-    mkdir -p $HOME/download;
-    if [[ -d $HOME/download/miniconda3.sh ]]; then rm -rf $HOME/download/miniconda3.sh; fi;
-    if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $HOME/download/miniconda3.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda3.sh;
-    fi;
-    bash $HOME/download/miniconda3.sh -b -p $HOME/miniconda3;
-  fi
-
-install:
-# install horton and pyscf (in python 2.7)
-- source $HOME/miniconda2/bin/activate
-- conda config --set always_yes yes
-- conda create -n horton python=2.7
-- source $HOME/miniconda2/bin/activate horton
-- hash -r
-- conda install -c conda conda-build
-- conda install -c theochem horton
-- conda install -c pyqc libxc
-- if [ "${TRAVIS_OS_NAME}" = "linux" ]; then conda install -c pyscf pyscf; fi;
-
-# install packages in python 3
-- source $HOME/miniconda3/bin/activate
-- conda config --set always_yes yes
-- conda create -n test python=3.6
-- source $HOME/miniconda3/bin/activate test
-- hash -r
-- conda config --add channels theochem
-- conda install -q conda conda-build
-
-# Get the right python version for building.
-- conda install -q python=${MYCONDAPY} anaconda-client
-
-# Set the version info from the git tag
-# - git fetch origin --tags &&
-#   export PROJECT_VERSION=$(python tools/gitversion.py) &&
-#   python tools/gitversion.py python > ${PROJECT_NAME}/version.py;
-
-# Get a list of all build and runtime dependencies.
-- conda install numpy scipy gmpy2 pytest
-
-# Install dependencies for linters
-- conda install flake8 pycodestyle
-- pip install --upgrade pylint codecov pytest pytest-cov pydocstyle
-
-# Install cma
-- pip install cma
-
-# Install keras
-- pip install keras
-- pip install tensorflow
-
-# Show conda info for debugging
-- conda info -a
-# check for problems in dependencies
-# - pip check
-
-# Install the latest cardboardlinter
-- pip install --upgrade git+https://github.com/kimt33/cardboardlint.git@master#egg=cardboardlint
-
-script:
-# Linting
-# -------
-- cardboardlinter --refspec $TRAVIS_BRANCH
-
-# Unit tests and dynamic linting
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# - conda build -q tools/conda.recipe
-# - conda install --use-local ${CONDA_PKG_NAME_PY}
-- pip install -e ./
-- pytest ./tests -v --cov=./${PROJECT_NAME} --cov-branch -k 'not slow'
-- coverage xml -i --omit=horton_*.py,pyscf_*.py
-# - conda uninstall ${CONDA_PKG_NAME_PY}
-
-# Make CPP and PY source package for github deployment
-# - python setup.py sdist;
-
-# Some other stuff
-# ----------------
-
-# Compile documentation
-- if [[ -e doc ]]; then
-    (cd doc; make html);
-  fi
-
-after_success:
-# Upload the coverage analysis
-- codecov -f coverage.xml
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
+    - python: 3.7
+      sudo: required
+      dist: xenial
+      env: TOXENV=py37
+    - python: 3.6
+      env: TOXENV=keras
+install: pip install tox
+script: tox
