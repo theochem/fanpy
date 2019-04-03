@@ -62,8 +62,8 @@ def answer_apig_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
@@ -77,19 +77,22 @@ def answer_apig_h2_sto6g():
         for j in np.arange(-2, 2, 0.1):
             apig.assign_params(np.array([[i, j]]))
             # FIXME: need function to compute norm
-            norm = sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+            norm = sum(apig.get_overlap(sd) ** 2 for sd in (0b0101, 0b1010))
             if np.allclose(norm, 0):
                 continue
             # FIXME: need to normalize
             xs.append(apig.params[0, 0])
             ys.append(apig.params[0, 1])
             # FIXME: need function to compute energy
-            energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
-                         * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
+            energy = sum(
+                sum(ham.integrate_wfn_sd(apig, sd)) * apig.get_overlap(sd)
+                for sd in (0b0101, 0b1010)
+            )
             energy /= norm
             energies.append(energy)
 
     import matplotlib.pyplot as plt
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.scatter(ys, energies)
@@ -106,26 +109,28 @@ def answer_apig_h2_sto6g():
     def min_energy(params):
         """Find minimum energy."""
         apig.assign_params(params.reshape(apig.params_shape))
-        energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
-                     * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
-        energy /= sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+        energy = sum(
+            sum(ham.integrate_wfn_sd(apig, sd)) * apig.get_overlap(sd) for sd in (0b0101, 0b1010)
+        )
+        energy /= sum(apig.get_overlap(sd) ** 2 for sd in (0b0101, 0b1010))
         return energy
 
     res = scipy.optimize.minimize(min_energy, np.array([0.99388373467361912, -0.1104315260748444]))
-    print('Minimum energy')
+    print("Minimum energy")
     print(res)
 
     # find exact maximum
     def max_energy(params):
         """Find maximum energy."""
         apig.assign_params(params.reshape(apig.params_shape))
-        energy = sum(sum(ham.integrate_wfn_sd(apig, sd))
-                     * apig.get_overlap(sd) for sd in (0b0101, 0b1010))
-        energy /= sum(apig.get_overlap(sd)**2 for sd in (0b0101, 0b1010))
+        energy = sum(
+            sum(ham.integrate_wfn_sd(apig, sd)) * apig.get_overlap(sd) for sd in (0b0101, 0b1010)
+        )
+        energy /= sum(apig.get_overlap(sd) ** 2 for sd in (0b0101, 0b1010))
         return -energy
 
     res = scipy.optimize.minimize(max_energy, np.array([0.11043152607484739, 0.99388373467361879]))
-    print('Maximum energy')
+    print("Maximum energy")
     print(res)
 
 
@@ -144,8 +149,8 @@ def test_apig_h2_sto6g_ground():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4)
@@ -153,7 +158,7 @@ def test_apig_h2_sto6g_ground():
     # Solve system of equations
     objective = SystemEquations(apig, ham, refwfn=[0b0101, 0b1010])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8590898441488894)
+    assert np.allclose(results["energy"], -1.8590898441488894)
 
 
 def test_apig_h2_sto6g_excited():
@@ -170,8 +175,8 @@ def test_apig_h2_sto6g_excited():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 4, params=np.array([0.0, 1.0]))
@@ -179,7 +184,7 @@ def test_apig_h2_sto6g_excited():
     # Solve system of equations
     objective = SystemEquations(apig, ham, refwfn=[0b0101, 0b1010])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -0.2416648697421632)
+    assert np.allclose(results["energy"], -0.2416648697421632)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -190,8 +195,8 @@ def answer_apig_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=float))
@@ -219,20 +224,28 @@ def test_apig_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(2, 20)
-    full_sds = (0b00000000010000000001, 0b00000000100000000010, 0b00000001000000000100,
-                0b00000010000000001000, 0b00000100000000010000, 0b00001000000000100000,
-                0b00010000000001000000, 0b00100000000010000000, 0b01000000000100000000,
-                0b10000000001000000000)
+    full_sds = (
+        0b00000000010000000001,
+        0b00000000100000000010,
+        0b00000001000000000100,
+        0b00000010000000001000,
+        0b00000100000000010000,
+        0b00001000000000100000,
+        0b00010000000001000000,
+        0b00100000000010000000,
+        0b01000000000100000000,
+        0b10000000001000000000,
+    )
 
     # Solve system of equations
     objective = SystemEquations(apig, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8696828608304896)
+    assert np.allclose(results["energy"], -1.8696828608304896)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -243,8 +256,8 @@ def answer_apig_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)
@@ -273,16 +286,30 @@ def test_apig_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apig = APIG(4, 12)
-    full_sds = [0b000011000011, 0b000101000101, 0b001001001001, 0b010001010001, 0b100001100001,
-                0b000110000110, 0b001010001010, 0b010010010010, 0b100010100010, 0b001100001100,
-                0b010100010100, 0b100100100100, 0b011000011000, 0b101000101000, 0b110000110000]
+    full_sds = [
+        0b000011000011,
+        0b000101000101,
+        0b001001001001,
+        0b010001010001,
+        0b100001100001,
+        0b000110000110,
+        0b001010001010,
+        0b010010010010,
+        0b100010100010,
+        0b001100001100,
+        0b010100010100,
+        0b100100100100,
+        0b011000011000,
+        0b101000101000,
+        0b110000110000,
+    ]
 
     # Solve system of equations
     objective = SystemEquations(apig, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -8.963531109581904)
+    assert np.allclose(results["energy"], -8.963531109581904)

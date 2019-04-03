@@ -5,12 +5,29 @@ from utils import check_inputs, parser, parser_add_arguments
 
 
 # FIXME: not tested
-def run_calc(nelec, one_int_file, two_int_file, wfn_type, nuc_nuc=None,
-             optimize_orbs=False, pspace_exc=None, objective=None,
-             solver=None, solver_kwargs=None, wfn_kwargs=None,
-             load_orbs=None, load_ham=None, load_wfn=None, load_chk=None,
-             save_orbs=None, save_ham=None, save_wfn=None, save_chk='',
-             filename=None, memory=None):
+def run_calc(
+    nelec,
+    one_int_file,
+    two_int_file,
+    wfn_type,
+    nuc_nuc=None,
+    optimize_orbs=False,
+    pspace_exc=None,
+    objective=None,
+    solver=None,
+    solver_kwargs=None,
+    wfn_kwargs=None,
+    load_orbs=None,
+    load_ham=None,
+    load_wfn=None,
+    load_chk=None,
+    save_orbs=None,
+    save_ham=None,
+    save_wfn=None,
+    save_chk="",
+    filename=None,
+    memory=None,
+):
     """Script for running some basic calculations.
 
     Parameters
@@ -89,31 +106,62 @@ def run_calc(nelec, one_int_file, two_int_file, wfn_type, nuc_nuc=None,
 
     """
     # check inputs
-    check_inputs(nelec, 0, one_int_file, two_int_file, wfn_type, pspace_exc, objective, solver,
-                 nuc_nuc)
+    check_inputs(
+        nelec, 0, one_int_file, two_int_file, wfn_type, pspace_exc, objective, solver, nuc_nuc
+    )
     nspin = np.load(one_int_file)[0].shape[0] * 2
 
     # make script
-    script = make_script(nelec, nspin, one_int_file, two_int_file, wfn_type, nuc_nuc=nuc_nuc,
-                         wfn_kwargs=wfn_kwargs, optimize_orbs=optimize_orbs, pspace_exc=pspace_exc,
-                         objective=objective, solver=solver,
-                         load_orbs=load_orbs, load_ham=load_ham, load_wfn=load_wfn,
-                         load_chk=load_chk, save_orbs=save_orbs, save_ham=save_ham,
-                         save_wfn=save_wfn, save_chk=save_chk,
-                         filename=-1, memory=memory)
+    script = make_script(
+        nelec,
+        nspin,
+        one_int_file,
+        two_int_file,
+        wfn_type,
+        nuc_nuc=nuc_nuc,
+        wfn_kwargs=wfn_kwargs,
+        optimize_orbs=optimize_orbs,
+        pspace_exc=pspace_exc,
+        objective=objective,
+        solver=solver,
+        load_orbs=load_orbs,
+        load_ham=load_ham,
+        load_wfn=load_wfn,
+        load_chk=load_chk,
+        save_orbs=save_orbs,
+        save_ham=save_ham,
+        save_wfn=save_wfn,
+        save_chk=save_chk,
+        filename=-1,
+        memory=memory,
+    )
     # run script
     exec(script)
 
 
-if __name__ == '__main__':
-    parser.description = 'Optimize a wavefunction and/or Hamiltonian.'
+if __name__ == "__main__":
+    parser.description = "Optimize a wavefunction and/or Hamiltonian."
     parser_add_arguments()
     args = parser.parse_args()
-    run_calc(args.nelec, args.one_int_file, args.two_int_file, args.wfn_type,
-             nuc_nuc=args.nuc_nuc, optimize_orbs=args.optimize_orbs, pspace_exc=args.pspace_exc,
-             objective=args.objective, solver=args.solver, solver_kwargs=args.solver_kwargs,
-             wfn_kwargs=args.wfn_kwargs,
-             load_orbs=args.load_orbs, load_ham=args.load_ham, load_wfn=args.load_wfn,
-             load_chk=args.load_chk,
-             save_orbs=args.save_orbs, save_ham=args.save_ham, save_wfn=args.save_wfn,
-             save_chk=args.save_chk, memory=args.memory)
+    run_calc(
+        args.nelec,
+        args.one_int_file,
+        args.two_int_file,
+        args.wfn_type,
+        nuc_nuc=args.nuc_nuc,
+        optimize_orbs=args.optimize_orbs,
+        pspace_exc=args.pspace_exc,
+        objective=args.objective,
+        solver=args.solver,
+        solver_kwargs=args.solver_kwargs,
+        wfn_kwargs=args.wfn_kwargs,
+        load_orbs=args.load_orbs,
+        load_ham=args.load_ham,
+        load_wfn=args.load_wfn,
+        load_chk=args.load_chk,
+        save_orbs=args.save_orbs,
+        save_ham=args.save_ham,
+        save_wfn=args.save_wfn,
+        save_chk=args.save_chk,
+        memory=args.memory,
+    )

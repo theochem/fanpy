@@ -1,8 +1,14 @@
 """Test for wfns.backend.math_tools."""
 import pytest
 import numpy as np
-from wfns.backend.math_tools import (binomial, adjugate, permanent_combinatoric, permanent_ryser,
-                                     permanent_borchardt, unitary_matrix)
+from wfns.backend.math_tools import (
+    binomial,
+    adjugate,
+    permanent_combinatoric,
+    permanent_ryser,
+    permanent_borchardt,
+    unitary_matrix,
+)
 
 
 def test_binomial():
@@ -33,8 +39,9 @@ def test_adjugate():
     assert np.allclose(adjugate(np.array([[-3]])), 1)
     # 2 by 2
     matrix = np.random.rand(4).reshape(2, 2)
-    assert np.allclose(adjugate(matrix),
-                       np.array([[matrix[1, 1], -matrix[0, 1]], [-matrix[1, 0], matrix[0, 0]]]))
+    assert np.allclose(
+        adjugate(matrix), np.array([[matrix[1, 1], -matrix[0, 1]], [-matrix[1, 0], matrix[0, 0]]])
+    )
     # 3 by 3
     matrix = np.random.rand(9).reshape(3, 3)
     row_mask = np.ones(3, dtype=bool)
@@ -44,7 +51,7 @@ def test_adjugate():
         for j in range(3):
             row_mask[i] = False
             col_mask[j] = False
-            cofactor[i, j] = (-1)**((i + j) % 2) * np.linalg.det(matrix[row_mask][:, col_mask])
+            cofactor[i, j] = (-1) ** ((i + j) % 2) * np.linalg.det(matrix[row_mask][:, col_mask])
             row_mask[i] = True
             col_mask[j] = True
     assert np.allclose(adjugate(matrix), cofactor.T)
@@ -79,8 +86,8 @@ def test_permanent_ryser():
     for i in range(1, 6):
         for j in range(1, 6):
             assert np.allclose(
-                permanent_ryser(np.arange(1, i*j + 1).reshape(i, j)),
-                permanent_combinatoric(np.arange(1, i*j + 1).reshape(i, j)),
+                permanent_ryser(np.arange(1, i * j + 1).reshape(i, j)),
+                permanent_combinatoric(np.arange(1, i * j + 1).reshape(i, j)),
             )
 
 
@@ -93,25 +100,27 @@ def test_permanent_borchardt_square():
     etas = np.random.rand(p)
 
     with pytest.raises(ValueError):
-        permanent_borchardt(lambdas, epsilons[:p-1], zetas, etas=None)
+        permanent_borchardt(lambdas, epsilons[: p - 1], zetas, etas=None)
     with pytest.raises(ValueError):
-        permanent_borchardt(lambdas, epsilons, zetas[:p-1], etas=None)
+        permanent_borchardt(lambdas, epsilons, zetas[: p - 1], etas=None)
     with pytest.raises(ValueError):
-        permanent_borchardt(lambdas, epsilons, zetas, etas[:p-1])
+        permanent_borchardt(lambdas, epsilons, zetas, etas[: p - 1])
     with pytest.raises(ValueError):
-        permanent_borchardt(lambdas[:p-1], epsilons, zetas, etas)
+        permanent_borchardt(lambdas[: p - 1], epsilons, zetas, etas)
 
     # without etas
     gem_coeffs = zetas / (epsilons - lambdas[:, np.newaxis])
 
-    assert np.allclose(permanent_combinatoric(gem_coeffs),
-                       permanent_borchardt(lambdas, epsilons, zetas))
+    assert np.allclose(
+        permanent_combinatoric(gem_coeffs), permanent_borchardt(lambdas, epsilons, zetas)
+    )
 
     # with etas
     gem_coeffs = zetas * etas[:, np.newaxis] / (epsilons - lambdas[:, np.newaxis])
 
-    assert np.allclose(permanent_combinatoric(gem_coeffs),
-                       permanent_borchardt(lambdas, epsilons, zetas, etas))
+    assert np.allclose(
+        permanent_combinatoric(gem_coeffs), permanent_borchardt(lambdas, epsilons, zetas, etas)
+    )
 
 
 def test_permanent_borchardt_rect():

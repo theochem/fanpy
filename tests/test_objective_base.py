@@ -8,8 +8,8 @@ from utils import disable_abstract
 
 def test_baseobjective_init():
     """Test BaseObjective.__init__."""
-    test = disable_abstract(BaseObjective)(tmpfile='tmpfile.npy')
-    assert test.tmpfile == 'tmpfile.npy'
+    test = disable_abstract(BaseObjective)(tmpfile="tmpfile.npy")
+    assert test.tmpfile == "tmpfile.npy"
     with pytest.raises(TypeError):
         disable_abstract(BaseObjective)(tmpfile=23)
 
@@ -24,8 +24,11 @@ def test_baseobjective_assign_param_selection():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    param_selection = [(param1, False), (param2, np.array(0)),
-                       (param3, np.array([True, False, False, True]))]
+    param_selection = [
+        (param1, False),
+        (param2, np.array(0)),
+        (param3, np.array([True, False, False, True])),
+    ]
     for mask in [param_selection, ParamMask(*param_selection)]:
         test.assign_param_selection(mask)
         assert len(test.param_selection._masks_container_params) == 3
@@ -48,8 +51,9 @@ def test_baseobjective_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = disable_abstract(BaseObjective)([(param1, False), (param2, np.array(0)),
-                                            (param3, np.array([True, False, False, True]))])
+    test = disable_abstract(BaseObjective)(
+        [(param1, False), (param2, np.array(0)), (param3, np.array([True, False, False, True]))]
+    )
     assert np.allclose(test.params, np.array([2, 4, 7]))
 
 
@@ -58,8 +62,9 @@ def test_baseobjective_assign_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = disable_abstract(BaseObjective)([(param1, False), (param2, np.array(0)),
-                                            (param3, np.array([True, False, False, True]))])
+    test = disable_abstract(BaseObjective)(
+        [(param1, False), (param2, np.array(0)), (param3, np.array([True, False, False, True]))]
+    )
     test.assign_params(np.array([99, 98, 97]))
     assert np.allclose(param1.params, [1])
     assert np.allclose(param2.params, [99, 3])

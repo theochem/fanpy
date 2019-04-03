@@ -50,21 +50,25 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         If orbital type is not one of 'restricted', 'unrestricted', 'generalized'.
     """
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
-        raise TypeError('Matrices must be given as a list of numpy arrays')
+        raise TypeError("Matrices must be given as a list of numpy arrays")
 
     if any(len(i.shape) != 2 for i in matrices):
-        raise TypeError('All matrices must be two dimensional')
+        raise TypeError("All matrices must be two dimensional")
     if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
-        raise TypeError('All matrices must be square')
+        raise TypeError("All matrices must be square")
 
-    if orbtype in ['restricted', 'generalized'] and len(matrices) != 1:
-        raise ValueError('Density matrix must be given as a list of one numpy array for'
-                         ' restricted and generalized orbitals')
-    elif orbtype in ['unrestricted'] and len(matrices) != 2:
-        raise ValueError('Density matrix must be given as a list of two numpy arrays for'
-                         ' unrestricted orbitals')
+    if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
+        raise ValueError(
+            "Density matrix must be given as a list of one numpy array for"
+            " restricted and generalized orbitals"
+        )
+    elif orbtype in ["unrestricted"] and len(matrices) != 2:
+        raise ValueError(
+            "Density matrix must be given as a list of two numpy arrays for"
+            " unrestricted orbitals"
+        )
 
-    if orbtype == 'restricted':
+    if orbtype == "restricted":
         nspatial = matrices[0].shape[0]
         spatial_i = slater.spatial_index(spin_i, nspatial)
         spatial_j = slater.spatial_index(spin_j, nspatial)
@@ -72,7 +76,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
             # CHECK: is there a factor of 2 missing here?
             matrices[0][spatial_i, spatial_j] += val
 
-    elif orbtype == 'unrestricted':
+    elif orbtype == "unrestricted":
         nspatial = matrices[0].shape[0]
         spatial_i = slater.spatial_index(spin_i, nspatial)
         spatial_j = slater.spatial_index(spin_j, nspatial)
@@ -83,11 +87,11 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         elif not slater.is_alpha(spin_i, nspatial) and not slater.is_alpha(spin_j, nspatial):
             matrices[1][spatial_i, spatial_j] += val
 
-    elif orbtype == 'generalized':
+    elif orbtype == "generalized":
         matrices[0][spin_i, spin_j] += val
 
     else:
-        raise ValueError('Unsupported orbital type')
+        raise ValueError("Unsupported orbital type")
 
 
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
@@ -132,61 +136,79 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 
     """
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
-        raise TypeError('Matrices must be given as a list of numpy arrays')
+        raise TypeError("Matrices must be given as a list of numpy arrays")
 
     if any(len(i.shape) != 4 for i in matrices):
-        raise TypeError('All matrices must be four dimensional')
+        raise TypeError("All matrices must be four dimensional")
     if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
-        raise TypeError('All matrices should have the same dimension along all of the axes')
+        raise TypeError("All matrices should have the same dimension along all of the axes")
 
-    if orbtype in ['restricted', 'generalized'] and len(matrices) != 1:
-        raise ValueError('Density matrix must be given as a list of one numpy array for'
-                         ' restricted and generalized orbitals')
-    elif orbtype in ['unrestricted'] and len(matrices) != 3:
-        raise ValueError('Density matrix must be given as a list of three numpy arrays for'
-                         ' unrestricted orbitals')
+    if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
+        raise ValueError(
+            "Density matrix must be given as a list of one numpy array for"
+            " restricted and generalized orbitals"
+        )
+    elif orbtype in ["unrestricted"] and len(matrices) != 3:
+        raise ValueError(
+            "Density matrix must be given as a list of three numpy arrays for"
+            " unrestricted orbitals"
+        )
 
-    if orbtype == 'restricted':
+    if orbtype == "restricted":
         nspatial = matrices[0].shape[0]
         spatial_i = slater.spatial_index(spin_i, nspatial)
         spatial_j = slater.spatial_index(spin_j, nspatial)
         spatial_k = slater.spatial_index(spin_k, nspatial)
         spatial_l = slater.spatial_index(spin_l, nspatial)
         # if i and k have same spin and j and l have same spin
-        if (slater.is_alpha(spin_i, nspatial) == slater.is_alpha(spin_k, nspatial) and
-                slater.is_alpha(spin_j, nspatial) == slater.is_alpha(spin_l, nspatial)):
+        if slater.is_alpha(spin_i, nspatial) == slater.is_alpha(
+            spin_k, nspatial
+        ) and slater.is_alpha(spin_j, nspatial) == slater.is_alpha(spin_l, nspatial):
             matrices[0][spatial_i, spatial_j, spatial_k, spatial_l] += val
 
-    elif orbtype == 'unrestricted':
+    elif orbtype == "unrestricted":
         nspatial = matrices[0].shape[0]
         spatial_i = slater.spatial_index(spin_i, nspatial)
         spatial_j = slater.spatial_index(spin_j, nspatial)
         spatial_k = slater.spatial_index(spin_k, nspatial)
         spatial_l = slater.spatial_index(spin_l, nspatial)
         # if all spins are alpha
-        if (slater.is_alpha(spin_i, nspatial) and slater.is_alpha(spin_k, nspatial) and
-                slater.is_alpha(spin_j, nspatial) and slater.is_alpha(spin_l, nspatial)):
+        if (
+            slater.is_alpha(spin_i, nspatial)
+            and slater.is_alpha(spin_k, nspatial)
+            and slater.is_alpha(spin_j, nspatial)
+            and slater.is_alpha(spin_l, nspatial)
+        ):
             matrices[0][spatial_i, spatial_j, spatial_k, spatial_l] += val
         # if alpha beta alpha beta
-        elif (slater.is_alpha(spin_i, nspatial) and slater.is_alpha(spin_k, nspatial) and
-              not slater.is_alpha(spin_j, nspatial) and not slater.is_alpha(spin_l, nspatial)):
+        elif (
+            slater.is_alpha(spin_i, nspatial)
+            and slater.is_alpha(spin_k, nspatial)
+            and not slater.is_alpha(spin_j, nspatial)
+            and not slater.is_alpha(spin_l, nspatial)
+        ):
             matrices[1][spatial_i, spatial_j, spatial_k, spatial_l] += val
         # if all spins are beta
-        elif (not slater.is_alpha(spin_i, nspatial) and not slater.is_alpha(spin_k, nspatial) and
-              not slater.is_alpha(spin_j, nspatial) and not slater.is_alpha(spin_l, nspatial)):
+        elif (
+            not slater.is_alpha(spin_i, nspatial)
+            and not slater.is_alpha(spin_k, nspatial)
+            and not slater.is_alpha(spin_j, nspatial)
+            and not slater.is_alpha(spin_l, nspatial)
+        ):
             matrices[2][spatial_i, spatial_j, spatial_k, spatial_l] += val
 
-    elif orbtype == 'generalized':
+    elif orbtype == "generalized":
         matrices[0][spin_i, spin_j, spin_k, spin_l] += val
 
     else:
-        raise ValueError('Unsupported orbital type')
+        raise ValueError("Unsupported orbital type")
 
 
 # FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
 # TODO: generalize to arbitrary order density matrix
-def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0,
-                   orbtype='restricted'):
+def density_matrix(
+    sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0, orbtype="restricted"
+):
     r"""Return the first and second order density matrices.
 
     Second order density matrix uses the Physicist's notation:
@@ -245,27 +267,27 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
     # initiate output
     one_densities = []
     two_densities = []
-    if orbtype == 'restricted':
-        one_densities = [np.zeros((nspatial, )*2)]
-        two_densities = [np.zeros((nspatial, )*4)]
-    elif orbtype == 'unrestricted':
-        one_densities = [np.zeros((nspatial, )*2) for i in range(2)]
-        two_densities = [np.zeros((nspatial, )*4) for i in range(3)]
-    elif orbtype == 'generalized':
-        one_densities = [np.zeros((2*nspatial, )*2)]
-        two_densities = [np.zeros((2*nspatial, )*4)]
+    if orbtype == "restricted":
+        one_densities = [np.zeros((nspatial,) * 2)]
+        two_densities = [np.zeros((nspatial,) * 4)]
+    elif orbtype == "unrestricted":
+        one_densities = [np.zeros((nspatial,) * 2) for i in range(2)]
+        two_densities = [np.zeros((nspatial,) * 4) for i in range(3)]
+    elif orbtype == "generalized":
+        one_densities = [np.zeros((2 * nspatial,) * 2)]
+        two_densities = [np.zeros((2 * nspatial,) * 4)]
     else:
-        raise TypeError('Unsupported orbital type')
+        raise TypeError("Unsupported orbital type")
 
     for count1, sd1 in enumerate(sorted_sd):
         # truncation condition
-        if (sorted_x[count1] * (num_sds - count1))**2 < val_threshold:
+        if (sorted_x[count1] * (num_sds - count1)) ** 2 < val_threshold:
             break
         for count2, sd2 in enumerate(sorted_sd[count1:]):
             # increatement counter (because enumerate)
             count2 += count1
             # truncation condition
-            if abs(sorted_x[count1] * sorted_x[count2]) * (num_sds - count1)**2 < val_threshold:
+            if abs(sorted_x[count1] * sorted_x[count2]) * (num_sds - count1) ** 2 < val_threshold:
                 break
 
             # orbitals that are not shared by the two determinants
@@ -276,7 +298,7 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
             num_transpositions_0 = np.sum(shared_indices[:, np.newaxis] < np.array(left_diff))
             num_transpositions_1 = np.sum(shared_indices[:, np.newaxis] < np.array(right_diff))
             num_transpositions = num_transpositions_0 + num_transpositions_1
-            sign = (-1)**num_transpositions
+            sign = (-1) ** num_transpositions
 
             # contributing value
             val = sorted_x[count1] * sorted_x[count2] * sign
@@ -290,7 +312,7 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
             elif len(left_diff) == 0:
                 for ind, i in enumerate(shared_indices):
                     add_one_density(one_densities, i, i, val, orbtype=orbtype)
-                    for j in shared_indices[ind+1:]:
+                    for j in shared_indices[ind + 1 :]:
                         add_two_density(two_densities, i, j, i, j, val, orbtype=orbtype)
                         add_two_density(two_densities, j, i, j, i, val, orbtype=orbtype)
                         add_two_density(two_densities, i, j, j, i, -val, orbtype=orbtype)
@@ -324,5 +346,5 @@ def density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_th
                 add_two_density(two_densities, k, l, j, i, -val, orbtype=orbtype)
     # change notation if necessary
     if is_chemist_notation:
-        two_densities = [np.einsum('ijkl->iklj', i) for i in two_densities]
+        two_densities = [np.einsum("ijkl->iklj", i) for i in two_densities]
     return tuple(one_densities), tuple(two_densities)

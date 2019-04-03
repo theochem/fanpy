@@ -44,6 +44,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+
     def __init__(self, one_int, two_int, energy_nuc_nuc=None):
         """Initialize the Hamiltonian.
 
@@ -114,32 +115,50 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             If one- and two-electron integrals do not have the same number of orbitals.
 
         """
-        if not (isinstance(one_int, (list, tuple)) and len(one_int) == 2 and
-                all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in one_int)):
-            raise TypeError('One-electron integrals must be given as a list/tuple of two numpy '
-                            'arrays (with dtype float/complex).')
-        elif not (isinstance(two_int, (list, tuple)) and len(two_int) == 3 and
-                  all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in two_int)):
-            raise TypeError('Two-electron integrals must be given as a list/tuple of three numpy '
-                            'arrays (with dtype float/complex).')
-        elif not (one_int[0].dtype == one_int[1].dtype and
-                  one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype):
-            raise TypeError('Each block of one- and two-electron integrals must have the same data'
-                            ' type.')
+        if not (
+            isinstance(one_int, (list, tuple))
+            and len(one_int) == 2
+            and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in one_int)
+        ):
+            raise TypeError(
+                "One-electron integrals must be given as a list/tuple of two numpy "
+                "arrays (with dtype float/complex)."
+            )
+        elif not (
+            isinstance(two_int, (list, tuple))
+            and len(two_int) == 3
+            and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in two_int)
+        ):
+            raise TypeError(
+                "Two-electron integrals must be given as a list/tuple of three numpy "
+                "arrays (with dtype float/complex)."
+            )
+        elif not (
+            one_int[0].dtype == one_int[1].dtype
+            and one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype
+        ):
+            raise TypeError(
+                "Each block of one- and two-electron integrals must have the same data" " type."
+            )
         elif not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
-            raise ValueError('Each block of one-electron integrals be a (two-dimensional) square '
-                             'matrix.')
-        elif not all(i.ndim == 4 and i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3]
-                     for i in two_int):
-            raise ValueError('Each block of two-electron integrals must have four-dimensional '
-                             'tensor with equal number rows in each axis.')
+            raise ValueError(
+                "Each block of one-electron integrals be a (two-dimensional) square " "matrix."
+            )
+        elif not all(
+            i.ndim == 4 and i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3] for i in two_int
+        ):
+            raise ValueError(
+                "Each block of two-electron integrals must have four-dimensional "
+                "tensor with equal number rows in each axis."
+            )
         elif one_int[0].shape != one_int[1].shape:
-            raise ValueError('Each block of one-electron integrals must have the same shape.')
+            raise ValueError("Each block of one-electron integrals must have the same shape.")
         elif not two_int[0].shape == two_int[1].shape == two_int[2].shape:
-            raise ValueError('Each block of two-electron integrals must have the same shape.')
+            raise ValueError("Each block of two-electron integrals must have the same shape.")
         elif one_int[0].shape[0] != two_int[0].shape[0]:
-            raise ValueError('One- and two-electron integrals must have the same number of '
-                             'orbitals.')
+            raise ValueError(
+                "One- and two-electron integrals must have the same number of " "orbitals."
+            )
 
         self.one_int = tuple(one_int)
         self.two_int = tuple(two_int)
@@ -160,19 +179,26 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         """
         num_orbs = self.one_int[0].shape[0]
 
-        if not (isinstance(jacobi_indices, (tuple, list)) and len(jacobi_indices) == 2 and
-                isinstance(jacobi_indices[0], int) and isinstance(jacobi_indices[1], int)):
-            raise TypeError('Indices must be given a tuple or list of two integers.')
+        if not (
+            isinstance(jacobi_indices, (tuple, list))
+            and len(jacobi_indices) == 2
+            and isinstance(jacobi_indices[0], int)
+            and isinstance(jacobi_indices[1], int)
+        ):
+            raise TypeError("Indices must be given a tuple or list of two integers.")
         elif jacobi_indices[0] == jacobi_indices[1]:
-            raise ValueError('Indices must be different.')
+            raise ValueError("Indices must be different.")
         elif not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
-            raise ValueError('Indices must be greater than or equal to 0 and less than the number '
-                             'of rows.')
+            raise ValueError(
+                "Indices must be greater than or equal to 0 and less than the number " "of rows."
+            )
         elif jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
-            raise ValueError('Indices must select from orbitals of same spin.')
-        elif not (isinstance(theta, float) or
-                  (isinstance(theta, np.ndarray) and theta.dtype == float and theta.size == 1)):
-            raise TypeError('Angle `theta` must be a float or numpy array of one float.')
+            raise ValueError("Indices must select from orbitals of same spin.")
+        elif not (
+            isinstance(theta, float)
+            or (isinstance(theta, np.ndarray) and theta.dtype == float and theta.size == 1)
+        ):
+            raise TypeError("Angle `theta` must be a float or numpy array of one float.")
 
         p, q = jacobi_indices
         if p > q:
@@ -182,15 +208,17 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         # one_electron
         p_col = self.one_int[spin_index][:, p]
         q_col = self.one_int[spin_index][:, q]
-        (self.one_int[spin_index][:, p],
-         self.one_int[spin_index][:, q]) = (np.cos(theta)*p_col - np.sin(theta)*q_col,
-                                            np.sin(theta)*p_col + np.cos(theta)*q_col)
+        (self.one_int[spin_index][:, p], self.one_int[spin_index][:, q]) = (
+            np.cos(theta) * p_col - np.sin(theta) * q_col,
+            np.sin(theta) * p_col + np.cos(theta) * q_col,
+        )
 
         p_row = self.one_int[spin_index][p, :]
         q_row = self.one_int[spin_index][q, :]
-        (self.one_int[spin_index][p, :],
-         self.one_int[spin_index][q, :]) = (np.cos(theta)*p_row - np.sin(theta)*q_row,
-                                            np.sin(theta)*p_row + np.cos(theta)*q_row)
+        (self.one_int[spin_index][p, :], self.one_int[spin_index][q, :]) = (
+            np.cos(theta) * p_row - np.sin(theta) * q_row,
+            np.sin(theta) * p_row + np.cos(theta) * q_row,
+        )
 
         # two electron
         spin_index *= 2
@@ -199,51 +227,59 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
         p_slice = self.two_int[spin_index][:, :, :, p]
         q_slice = self.two_int[spin_index][:, :, :, q]
-        (self.two_int[spin_index][:, :, :, p],
-         self.two_int[spin_index][:, :, :, q]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                                  np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[spin_index][:, :, :, p], self.two_int[spin_index][:, :, :, q]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[spin_index][:, :, p, :]
         q_slice = self.two_int[spin_index][:, :, q, :]
-        (self.two_int[spin_index][:, :, p, :],
-         self.two_int[spin_index][:, :, q, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                                  np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[spin_index][:, :, p, :], self.two_int[spin_index][:, :, q, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[spin_index][:, p, :, :]
         q_slice = self.two_int[spin_index][:, q, :, :]
-        (self.two_int[spin_index][:, p, :, :],
-         self.two_int[spin_index][:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                                  np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[spin_index][:, p, :, :], self.two_int[spin_index][:, q, :, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[spin_index][p, :, :, :]
         q_slice = self.two_int[spin_index][q, :, :, :]
-        (self.two_int[spin_index][p, :, :, :],
-         self.two_int[spin_index][q, :, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                                  np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[spin_index][p, :, :, :], self.two_int[spin_index][q, :, :, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         if spin_index == 0:
             p_slice = self.two_int[1][:, :, p, :]
             q_slice = self.two_int[1][:, :, q, :]
-            (self.two_int[1][:, :, p, :],
-             self.two_int[1][:, :, q, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                             np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            (self.two_int[1][:, :, p, :], self.two_int[1][:, :, q, :]) = (
+                np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+                np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+            )
             p_slice = self.two_int[1][p, :, :, :]
             q_slice = self.two_int[1][q, :, :, :]
-            (self.two_int[1][p, :, :, :],
-             self.two_int[1][q, :, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                             np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            (self.two_int[1][p, :, :, :], self.two_int[1][q, :, :, :]) = (
+                np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+                np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+            )
 
         else:
             p_slice = self.two_int[1][:, :, :, p]
             q_slice = self.two_int[1][:, :, :, q]
-            (self.two_int[1][:, :, :, p],
-             self.two_int[1][:, :, :, q]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                             np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            (self.two_int[1][:, :, :, p], self.two_int[1][:, :, :, q]) = (
+                np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+                np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+            )
             p_slice = self.two_int[1][:, p, :, :]
             q_slice = self.two_int[1][:, q, :, :]
-            (self.two_int[1][:, p, :, :],
-             self.two_int[1][:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                             np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+            (self.two_int[1][:, p, :, :], self.two_int[1][:, q, :, :]) = (
+                np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+                np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+            )
 
     def orb_rotate_matrix(self, matrix):
         r"""Rotate orbitals with a transformation matrix.
@@ -272,47 +308,56 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         """
         if isinstance(matrix, np.ndarray):
             matrix = (matrix, matrix)
-        elif not (isinstance(matrix, (list, tuple)) and len(matrix) == 2 and
-                  isinstance(matrix[0], np.ndarray) and isinstance(matrix[1], np.ndarray)):
-            raise TypeError('Transformation matrix must be given as a numpy array or as list/tuple '
-                            'of two numpy arrays.')
+        elif not (
+            isinstance(matrix, (list, tuple))
+            and len(matrix) == 2
+            and isinstance(matrix[0], np.ndarray)
+            and isinstance(matrix[1], np.ndarray)
+        ):
+            raise TypeError(
+                "Transformation matrix must be given as a numpy array or as list/tuple "
+                "of two numpy arrays."
+            )
 
         if not (matrix[0].ndim == 2 and matrix[1].ndim == 2):
-            raise ValueError('Transformation matrices must be two-dimensional.')
-        elif not (matrix[0].shape[0] == self.one_int[0].shape[0] and
-                  matrix[1].shape[0] == self.one_int[1].shape[0]):
-            raise ValueError('Shape of the transformation matrix must match with the shape of the '
-                             'integrals.')
+            raise ValueError("Transformation matrices must be two-dimensional.")
+        elif not (
+            matrix[0].shape[0] == self.one_int[0].shape[0]
+            and matrix[1].shape[0] == self.one_int[1].shape[0]
+        ):
+            raise ValueError(
+                "Shape of the transformation matrix must match with the shape of the " "integrals."
+            )
         # NOTE: don't need to check that matrix matches up with two_int b/c one_int and two_int have
         #       the same number of rows/columns
 
         new_one_ints = []
-        one_int = np.einsum('ij,ia->aj', self.one_int[0], matrix[0])
-        one_int = np.einsum('aj,jb->ab', one_int, matrix[0])
+        one_int = np.einsum("ij,ia->aj", self.one_int[0], matrix[0])
+        one_int = np.einsum("aj,jb->ab", one_int, matrix[0])
         new_one_ints.append(one_int)
 
-        one_int = np.einsum('ij,ia->aj', self.one_int[1], matrix[1])
-        one_int = np.einsum('aj,jb->ab', one_int, matrix[1])
+        one_int = np.einsum("ij,ia->aj", self.one_int[1], matrix[1])
+        one_int = np.einsum("aj,jb->ab", one_int, matrix[1])
         new_one_ints.append(one_int)
         self.one_int = tuple(new_one_ints)
 
         new_two_ints = []
-        two_int = np.einsum('ijkl,ia->ajkl', self.two_int[0], matrix[0])
-        two_int = np.einsum('ajkl,jb->abkl', two_int, matrix[0])
-        two_int = np.einsum('abkl,kc->abcl', two_int, matrix[0])
-        two_int = np.einsum('abcl,ld->abcd', two_int, matrix[0])
+        two_int = np.einsum("ijkl,ia->ajkl", self.two_int[0], matrix[0])
+        two_int = np.einsum("ajkl,jb->abkl", two_int, matrix[0])
+        two_int = np.einsum("abkl,kc->abcl", two_int, matrix[0])
+        two_int = np.einsum("abcl,ld->abcd", two_int, matrix[0])
         new_two_ints.append(two_int)
 
-        two_int = np.einsum('ijkl,ia->ajkl', self.two_int[1], matrix[0])
-        two_int = np.einsum('ajkl,jb->abkl', two_int, matrix[1])
-        two_int = np.einsum('abkl,kc->abcl', two_int, matrix[0])
-        two_int = np.einsum('abcl,ld->abcd', two_int, matrix[1])
+        two_int = np.einsum("ijkl,ia->ajkl", self.two_int[1], matrix[0])
+        two_int = np.einsum("ajkl,jb->abkl", two_int, matrix[1])
+        two_int = np.einsum("abkl,kc->abcl", two_int, matrix[0])
+        two_int = np.einsum("abcl,ld->abcd", two_int, matrix[1])
         new_two_ints.append(two_int)
 
-        two_int = np.einsum('ijkl,ia->ajkl', self.two_int[2], matrix[1])
-        two_int = np.einsum('ajkl,jb->abkl', two_int, matrix[1])
-        two_int = np.einsum('abkl,kc->abcl', two_int, matrix[1])
-        two_int = np.einsum('abcl,ld->abcd', two_int, matrix[1])
+        two_int = np.einsum("ijkl,ia->ajkl", self.two_int[2], matrix[1])
+        two_int = np.einsum("ajkl,jb->abkl", two_int, matrix[1])
+        two_int = np.einsum("abkl,kc->abcl", two_int, matrix[1])
+        two_int = np.einsum("abcl,ld->abcd", two_int, matrix[1])
         new_two_ints.append(two_int)
 
         self.two_int = tuple(new_two_ints)

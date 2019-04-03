@@ -144,7 +144,7 @@ def internal_sd(identifier):
     elif is_internal_sd(identifier):
         return identifier
     else:
-        raise TypeError('Unsupported Slater determinant form, {0}'.format(type(identifier)))
+        raise TypeError("Unsupported Slater determinant form, {0}".format(type(identifier)))
 
 
 def occ(sd, i):
@@ -260,8 +260,8 @@ def is_alpha(i, nspatial):
         If `i > 2*nspatial`.
 
     """
-    if nspatial <= 0 or i < 0 or i > 2*nspatial:
-        raise ValueError('If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.')
+    if nspatial <= 0 or i < 0 or i > 2 * nspatial:
+        raise ValueError("If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.")
     return i < nspatial
 
 
@@ -288,8 +288,8 @@ def spatial_index(i, nspatial):
         If `i > 2*nspatial`.
 
     """
-    if nspatial <= 0 or i < 0 or i > 2*nspatial:
-        raise ValueError('If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.')
+    if nspatial <= 0 or i < 0 or i > 2 * nspatial:
+        raise ValueError("If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.")
 
     if is_alpha(i, nspatial):
         return i
@@ -297,7 +297,7 @@ def spatial_index(i, nspatial):
         return i - nspatial
 
 
-def spin_index(i, nspatial, spin='beta'):
+def spin_index(i, nspatial, spin="beta"):
     """Return the spin orbital index that corresponds to the spatial orbital `i`.
 
     Parameters
@@ -322,17 +322,19 @@ def spin_index(i, nspatial, spin='beta'):
 
     """
     if not nspatial > 0:
-        raise ValueError('Number of spatial orbitals must be greater than zero.')
+        raise ValueError("Number of spatial orbitals must be greater than zero.")
     elif not 0 <= i < nspatial:
-        raise ValueError('Spatial orbital index must be greater than or equal to 0 and less than '
-                         'the number of spatial orbitals.')
+        raise ValueError(
+            "Spatial orbital index must be greater than or equal to 0 and less than "
+            "the number of spatial orbitals."
+        )
 
-    if spin == 'alpha':
+    if spin == "alpha":
         return i
-    elif spin == 'beta':
+    elif spin == "beta":
         return i + nspatial
     else:
-        raise ValueError('Spin of the orbital must be either alpha or beta.')
+        raise ValueError("Spin of the orbital must be either alpha or beta.")
 
 
 def annihilate(sd, *indices):
@@ -412,8 +414,8 @@ def excite(sd, *indices):
     """
     if (len(indices) % 2) != 0:
         raise ValueError("Unqual number of creators and annihilators")
-    sd = annihilate(sd, *indices[:len(indices) // 2])
-    sd = create(sd, *indices[len(indices) // 2:])
+    sd = annihilate(sd, *indices[: len(indices) // 2])
+    sd = create(sd, *indices[len(indices) // 2 :])
     return sd
 
 
@@ -447,10 +449,12 @@ def ground(nocc, norbs):
 
     """
     if nocc > norbs:
-        raise ValueError('Number of occupied spin-orbitals must be less than the total number of'
-                         ' spin-orbitals')
+        raise ValueError(
+            "Number of occupied spin-orbitals must be less than the total number of"
+            " spin-orbitals"
+        )
     if norbs % 2 != 0:
-        raise ValueError('Total number of spin-orbitals must be even')
+        raise ValueError("Total number of spin-orbitals must be even")
     alpha_bits = gmpy2.bit_mask(nocc // 2 + nocc % 2)
     beta_bits = gmpy2.bit_mask(nocc // 2) << (norbs // 2)
     return alpha_bits | beta_bits
@@ -549,7 +553,7 @@ def combine_spin(alpha_bits, beta_bits, nspatial):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
-        raise ValueError('Number of spatial orbitals must be greater than 0.')
+        raise ValueError("Number of spatial orbitals must be greater than 0.")
     return alpha_bits | (beta_bits << nspatial)
 
 
@@ -585,7 +589,7 @@ def split_spin(block_sd, nspatial):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
-        raise ValueError('Number of spatial orbitals must be greater than 0')
+        raise ValueError("Number of spatial orbitals must be greater than 0")
     alpha_bits = gmpy2.t_mod_2exp(block_sd, nspatial)
     beta_bits = block_sd >> nspatial
     return (alpha_bits, beta_bits)
@@ -614,14 +618,14 @@ def interleave_index(i, nspatial):
 
     """
     if i < 0:
-        raise ValueError('Index must be greater than or equal to zero.')
-    elif i >= 2*nspatial:
-        raise ValueError('Index must be less than the number of spin orbitals.')
+        raise ValueError("Index must be greater than or equal to zero.")
+    elif i >= 2 * nspatial:
+        raise ValueError("Index must be less than the number of spin orbitals.")
 
     if i < nspatial:
-        return 2*i
+        return 2 * i
     else:
-        return 2*(i - nspatial) + 1
+        return 2 * (i - nspatial) + 1
 
 
 def deinterleave_index(i, nspatial):
@@ -647,14 +651,14 @@ def deinterleave_index(i, nspatial):
 
     """
     if i < 0:
-        raise ValueError('Index must be greater than or equal to zero.')
-    elif i >= 2*nspatial:
-        raise ValueError('Index must be less than the number of spin orbitals.')
+        raise ValueError("Index must be greater than or equal to zero.")
+    elif i >= 2 * nspatial:
+        raise ValueError("Index must be less than the number of spin orbitals.")
 
     if i % 2 == 0:
-        return i//2
+        return i // 2
     else:
-        return i//2 + nspatial
+        return i // 2 + nspatial
 
 
 def interleave(block_sd, nspatial):
@@ -693,7 +697,7 @@ def interleave(block_sd, nspatial):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
-        raise ValueError('Number of spatial orbitals must be greater than 0')
+        raise ValueError("Number of spatial orbitals must be greater than 0")
 
     # OPTION 1
     # shuffled_sd = gmpy2.mpz(0)
@@ -705,9 +709,9 @@ def interleave(block_sd, nspatial):
 
     # OPTION 2
     sd_bit = bin(block_sd)[2:]
-    sd_bit = '0'*(nspatial*2-len(sd_bit)) + sd_bit
+    sd_bit = "0" * (nspatial * 2 - len(sd_bit)) + sd_bit
     alpha_bit, beta_bit = sd_bit[nspatial:], sd_bit[:nspatial]
-    shuffled_bit = '0b'+''.join(''.join(i) for i in zip(beta_bit, alpha_bit))
+    shuffled_bit = "0b" + "".join("".join(i) for i in zip(beta_bit, alpha_bit))
     shuffled_sd = gmpy2.mpz(shuffled_bit)
     return shuffled_sd
 
@@ -755,7 +759,7 @@ def deinterleave(shuffled_sd, nspatial):
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if nspatial <= 0:
-        raise ValueError('Number of spatial orbitals must be greater than 0')
+        raise ValueError("Number of spatial orbitals must be greater than 0")
 
     # OPTION 1
     # block_sd = gmpy2.mpz(0)
@@ -768,9 +772,9 @@ def deinterleave(shuffled_sd, nspatial):
     # OPTION 2
     sd_bit = bin(shuffled_sd)[2:]
     alpha_bit, beta_bit = sd_bit[-1::-2][::-1], sd_bit[-2::-2][::-1]
-    alpha_bit = '0'*(nspatial - len(alpha_bit)) + alpha_bit
-    beta_bit = '0'*(nspatial - len(beta_bit)) + beta_bit
-    block_bit = '0b' + beta_bit + alpha_bit
+    alpha_bit = "0" * (nspatial - len(alpha_bit)) + alpha_bit
+    beta_bit = "0" * (nspatial - len(beta_bit)) + beta_bit
+    block_bit = "0b" + beta_bit + alpha_bit
     block_sd = gmpy2.mpz(block_bit)
     return block_sd
 
@@ -804,7 +808,7 @@ def get_spin(sd, nspatial):
 
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
-    return (0.5)*(total_occ(alpha_bits) - total_occ(beta_bits))
+    return (0.5) * (total_occ(alpha_bits) - total_occ(beta_bits))
 
 
 def get_seniority(sd, nspatial):
@@ -865,7 +869,7 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
     if ordered_set is None:
         ordered_set = sorted(jumbled_set)
     elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
-        raise ValueError('ordered_set must be strictly increasing.')
+        raise ValueError("ordered_set must be strictly increasing.")
 
     sign = 1
     # for each ordered number
@@ -906,19 +910,19 @@ def sign_swap(sd, pos_current, pos_future):
 
     """
     if sd is None:
-        raise ValueError('Bad Slater determinant is given.')
+        raise ValueError("Bad Slater determinant is given.")
     if not (isinstance(pos_current, int) and pos_current >= 0):
-        raise ValueError('The current orbital position must be a positive integer.')
+        raise ValueError("The current orbital position must be a positive integer.")
     if not (isinstance(pos_future, int) and pos_future >= 0):
-        raise ValueError('The future orbital position must be a positive integer.')
+        raise ValueError("The future orbital position must be a positive integer.")
     if not occ(sd, pos_current):
-        raise ValueError('Given orbital is not occupied in the given Slater determinant.')
+        raise ValueError("Given orbital is not occupied in the given Slater determinant.")
 
     sd = gmpy2.mpz(sd)
     if pos_current < pos_future:
         # remove everything before pos_current (including pos_current)
         # remove everything after pos_future (excluding pos_future)
-        num_trans = gmpy2.popcount(sd[pos_current+1:pos_future+1])
+        num_trans = gmpy2.popcount(sd[pos_current + 1 : pos_future + 1])
     else:
         # remove everything after pos_current (including pos_current)
         # remove everything before pos_future (excluding pos_future)
@@ -968,8 +972,10 @@ def sign_excite(sd, annihilators, creators):
     sign = 1
     for i in annihilators:
         if not occ(sd, i):
-            raise ValueError('Given Slater determinant cannot be excited using the given creators '
-                             'and annihilators.')
+            raise ValueError(
+                "Given Slater determinant cannot be excited using the given creators "
+                "and annihilators."
+            )
         # move creator i in the Slater determinant to the front (cancelling out the annihilator)
         sign *= sign_swap(sd, i, 0)
         sd = annihilate(sd, i)
@@ -977,8 +983,10 @@ def sign_excite(sd, annihilators, creators):
     for i in creators:
         sd = create(sd, i)
         if sd is None:
-            raise ValueError('Given Slater determinant cannot be excited using the given creators '
-                             'and annihilators.')
+            raise ValueError(
+                "Given Slater determinant cannot be excited using the given creators "
+                "and annihilators."
+            )
         # move creator i from the first poisition to its position
         sign *= sign_swap(sd, i, 0)
 

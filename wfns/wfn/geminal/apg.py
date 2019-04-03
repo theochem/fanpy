@@ -83,6 +83,7 @@ class APG(BaseGeminal):
         Yield all possible orbital pairs that can construct the given Slater determinant.
 
     """
+
     def assign_orbpairs(self, orbpairs=None):
         """Assign all possible orbital pairs.
 
@@ -112,9 +113,11 @@ class APG(BaseGeminal):
 
         """
         if orbpairs is not None:
-            raise ValueError('Cannot specify the orbital pairs for the APG wavefunction. All '
-                             'possible orbital pairs will be used.')
-        orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i+1, self.nspin))
+            raise ValueError(
+                "Cannot specify the orbital pairs for the APG wavefunction. All "
+                "possible orbital pairs will be used."
+            )
+        orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
         self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
@@ -142,8 +145,9 @@ class APG(BaseGeminal):
         if i > j:
             i, j = j, i
         if not 0 <= i < j < self.nspin:
-            raise ValueError('Given orbital pair, {0}, is not included in the '
-                             'wavefunction.'.format(orbpair))
+            raise ValueError(
+                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+            )
         # col_ind = (iK - i(i+1)/2) + (j - i)
         return int(self.nspin * i - i * (i + 1) / 2 + (j - i - 1))
 
@@ -168,9 +172,10 @@ class APG(BaseGeminal):
 
         """
         if not 0 <= col_ind < self.nspin * (self.nspin - 1) / 2:
-            raise ValueError('Given column index, {0}, is not used in the '
-                             'wavefunction'.format(col_ind))
-        x = (2 * self.nspin - 1 - ((1 - 2 * self.nspin)**2 - 8 * col_ind)**0.5) / 2
+            raise ValueError(
+                "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)
+            )
+        x = (2 * self.nspin - 1 - ((1 - 2 * self.nspin) ** 2 - 8 * col_ind) ** 0.5) / 2
         i = int(x)
         j = int(col_ind - (i * self.nspin - i * (i + 1) / 2 - i - 1))
         return (i, j)

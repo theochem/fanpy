@@ -57,6 +57,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+
     def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
         """Initialize the Hamiltonian.
 
@@ -85,10 +86,12 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         """Cache away contractions of the two electron integrals."""
         # store away tensor contractions
         indices = np.arange(self.one_int.shape[0])
-        self._cached_two_int_ijij = self.two_int[indices[:, None], indices,
-                                                 indices[:, None], indices]
-        self._cached_two_int_ijji = self.two_int[indices[:, None], indices,
-                                                 indices, indices[:, None]]
+        self._cached_two_int_ijij = self.two_int[
+            indices[:, None], indices, indices[:, None], indices
+        ]
+        self._cached_two_int_ijji = self.two_int[
+            indices[:, None], indices, indices, indices[:, None]
+        ]
 
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
@@ -117,9 +120,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             params = np.zeros(num_params)
 
         if not (isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
-            raise ValueError('Parameters for orbital rotation must be a one-dimension numpy array '
-                             'with {0}=K*(K-1)/2 elements, where K is the number of '
-                             'orbitals.'.format(num_params))
+            raise ValueError(
+                "Parameters for orbital rotation must be a one-dimension numpy array "
+                "with {0}=K*(K-1)/2 elements, where K is the number of "
+                "orbitals.".format(num_params)
+            )
 
         # assign parameters
         self.params = params
@@ -203,19 +208,19 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         if sign is None:
             sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
         elif sign not in [1, -1]:
-            raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
+            raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
         # two sd's are the same
         if diff_order == 0 and shared_indices.size > 0:
             one_electron += np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb += np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
-                                                                shared_indices],
-                                      k=1))
-            exchange -= np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
-                                                                 shared_indices],
-                                       k=1))
+            coulomb += np.sum(
+                np.triu(self._cached_two_int_ijij[shared_indices[:, None], shared_indices], k=1)
+            )
+            exchange -= np.sum(
+                np.triu(self._cached_two_int_ijji[shared_indices[:, None], shared_indices], k=1)
+            )
 
         # two sd's are different by single excitation
         elif diff_order == 1:
@@ -282,12 +287,12 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         """
         # ind = i
         n = self.nspin
-        for k in range(n+1):  # pragma: no cover
+        for k in range(n + 1):  # pragma: no cover
             x = k
-            if param_ind - n*(x+1) + (x+1)*(x+2)/2 < 0:
+            if param_ind - n * (x + 1) + (x + 1) * (x + 2) / 2 < 0:
                 break
         # ind_flat = j
-        ind_flat = param_ind + (x+1)*(x+2)/2
+        ind_flat = param_ind + (x + 1) * (x + 2) / 2
         y = ind_flat % n
 
         return int(x), int(y)
@@ -345,9 +350,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # check deriv
         if not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
-            raise ValueError('Given derivative index must be an integer greater than or equal to '
-                             'zero and less than the number of parameters, '
-                             'nspatial * (nspatial-1)/2')
+            raise ValueError(
+                "Given derivative index must be an integer greater than or equal to "
+                "zero and less than the number of parameters, "
+                "nspatial * (nspatial-1)/2"
+            )
 
         # turn deriv into indices of the matrix, (x, y), where x < y
         x, y = self.param_ind_to_rowcol_ind(deriv)
@@ -363,18 +370,22 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             if x in shared_indices:
                 one_electron -= 2 * np.real(self.one_int[x, y])
                 if shared_indices_no_x.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[x, shared_indices_no_x,
-                                                               y, shared_indices_no_x]))
-                    exchange += 2 * np.sum(np.real(self.two_int[x, shared_indices_no_x,
-                                                                shared_indices_no_x, y]))
+                    coulomb -= 2 * np.sum(
+                        np.real(self.two_int[x, shared_indices_no_x, y, shared_indices_no_x])
+                    )
+                    exchange += 2 * np.sum(
+                        np.real(self.two_int[x, shared_indices_no_x, shared_indices_no_x, y])
+                    )
 
             if y in shared_indices:
                 one_electron += 2 * np.real(self.one_int[x, y])
                 if shared_indices_no_y.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[x, shared_indices_no_y,
-                                                               y, shared_indices_no_y]))
-                    exchange -= 2 * np.sum(np.real(self.two_int[x, shared_indices_no_y,
-                                                                shared_indices_no_y, y]))
+                    coulomb += 2 * np.sum(
+                        np.real(self.two_int[x, shared_indices_no_y, y, shared_indices_no_y])
+                    )
+                    exchange -= 2 * np.sum(
+                        np.real(self.two_int[x, shared_indices_no_y, shared_indices_no_y, y])
+                    )
         # two sd's are different by single excitation
         elif diff_order == 1:
             a, = diff_sd1

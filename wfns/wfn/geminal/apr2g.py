@@ -81,4 +81,5 @@ class APr2G(RankTwoApprox, APIG):
         Yield the possible orbital pairs that can construct the given Slater determinant.
 
     """
+
     pass

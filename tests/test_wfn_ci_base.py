@@ -10,7 +10,7 @@ def test_assign_spin():
     test = skip_init(CIWavefunction)
     # check error
     with pytest.raises(TypeError):
-        test.assign_spin('1')
+        test.assign_spin("1")
     with pytest.raises(TypeError):
         test.assign_spin([1])
     with pytest.raises(ValueError):
@@ -39,7 +39,7 @@ def test_assign_seniority():
     test = skip_init(CIWavefunction)
     # check error
     with pytest.raises(TypeError):
-        test.assign_seniority('1')
+        test.assign_seniority("1")
     with pytest.raises(TypeError):
         test.assign_seniority(1.0)
     with pytest.raises(ValueError):
@@ -106,21 +106,49 @@ def test_assign_sd_vec():
     test.assign_seniority(None)
     # None assigned
     test.assign_sd_vec()
-    assert test.sd_vec == (0b001001, 0b001010, 0b011000, 0b001100, 0b101000, 0b000011, 0b010001,
-                           0b000101, 0b100001, 0b010010, 0b000110, 0b100010, 0b010100, 0b110000,
-                           0b100100)
+    assert test.sd_vec == (
+        0b001001,
+        0b001010,
+        0b011000,
+        0b001100,
+        0b101000,
+        0b000011,
+        0b010001,
+        0b000101,
+        0b100001,
+        0b010010,
+        0b000110,
+        0b100010,
+        0b010100,
+        0b110000,
+        0b100100,
+    )
     del test.sd_vec
     test.assign_sd_vec(None)
-    assert test.sd_vec == (0b001001, 0b001010, 0b011000, 0b001100, 0b101000, 0b000011, 0b010001,
-                           0b000101, 0b100001, 0b010010, 0b000110, 0b100010, 0b010100, 0b110000,
-                           0b100100)
+    assert test.sd_vec == (
+        0b001001,
+        0b001010,
+        0b011000,
+        0b001100,
+        0b101000,
+        0b000011,
+        0b010001,
+        0b000101,
+        0b100001,
+        0b010010,
+        0b000110,
+        0b100010,
+        0b010100,
+        0b110000,
+        0b100100,
+    )
     # tuple assigned
     del test.sd_vec
     test.assign_sd_vec((0b0011,))
     assert test.sd_vec == (0b0011,)
     # list assigned
     del test.sd_vec
-    test.assign_sd_vec([0b1100, ])
+    test.assign_sd_vec([0b1100])
     assert test.sd_vec == (0b1100,)
     # generator assigned
     del test.sd_vec
@@ -128,8 +156,8 @@ def test_assign_sd_vec():
     assert test.sd_vec == (0b1001,)
     # repeated elements
     del test.sd_vec
-    test.assign_sd_vec([0b0101, ]*20)
-    assert test.sd_vec == (0b0101, )*20
+    test.assign_sd_vec([0b0101] * 20)
+    assert test.sd_vec == (0b0101,) * 20
 
 
 def test_get_overlap():

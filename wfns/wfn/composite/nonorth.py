@@ -95,6 +95,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
+
     @property
     def spin(self):
         """Return the spin of the wavefunction.
@@ -110,7 +111,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             None if all spins are allowed.
 
         """
-        if self.orbtype in ['restricted', 'unrestricted']:
+        if self.orbtype in ["restricted", "unrestricted"]:
             return self.wfn.spin
         else:
             return None
@@ -131,7 +132,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             None if all seniority are allowed.
 
         """
-        if self.orbtype in ['restricted', 'unrestricted']:
+        if self.orbtype in ["restricted", "unrestricted"]:
             return self.wfn.seniority
         else:
             return None
@@ -160,7 +161,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             Rotation matrix.
 
         """
-        return (np.eye(*self.params_shape, dtype=self.dtype), )
+        return (np.eye(*self.params_shape, dtype=self.dtype),)
 
     @property
     def nparams(self):
@@ -207,14 +208,17 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if len(self.params) == 1 and self.params[0].shape[0] == self.nspatial:
-            return 'restricted'
-        elif (len(self.params) == 2 and self.params[0].shape[0] == self.nspatial and
-              self.params[1].shape[0] == self.nspatial):
-            return 'unrestricted'
+            return "restricted"
+        elif (
+            len(self.params) == 2
+            and self.params[0].shape[0] == self.nspatial
+            and self.params[1].shape[0] == self.nspatial
+        ):
+            return "unrestricted"
         elif len(self.params) == 1 and self.params[0].shape[0] == self.nspin:
-            return 'generalized'
+            return "generalized"
         else:
-            raise NotImplementedError('Unsupported orbital type.')
+            raise NotImplementedError("Unsupported orbital type.")
 
     def assign_params(self, params=None):
         """Assign the orbital transformation matrix.
@@ -243,36 +247,46 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             params = self.template_params
 
         if isinstance(params, np.ndarray):
-            params = (params, )
+            params = (params,)
         elif not (isinstance(params, (tuple, list)) and len(params) in [1, 2]):
-            raise TypeError('Transformation matrix must be a two dimensional numpy array or a '
-                            '1- or 2-tuple/list of two dimensional numpy arrays. Only one numpy '
-                            'arrays indicate that the orbitals are restricted or generalized and '
-                            'two numpy arrays indicate that the orbitals are unrestricted.')
+            raise TypeError(
+                "Transformation matrix must be a two dimensional numpy array or a "
+                "1- or 2-tuple/list of two dimensional numpy arrays. Only one numpy "
+                "arrays indicate that the orbitals are restricted or generalized and "
+                "two numpy arrays indicate that the orbitals are unrestricted."
+            )
         params = tuple(params)
 
         for i in params:
             if not (isinstance(i, np.ndarray) and len(i.shape) == 2):
-                raise TypeError('Transformation matrix must be a two-dimensional numpy array.')
+                raise TypeError("Transformation matrix must be a two-dimensional numpy array.")
             elif i.dtype != self.dtype:
-                raise TypeError('Transformation matrix must have the same data type as the given '
-                                'wavefunction.')
+                raise TypeError(
+                    "Transformation matrix must have the same data type as the given "
+                    "wavefunction."
+                )
 
-            if (len(params) == 1 and
-                    not ((i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial) or
-                         (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin))):
-                raise ValueError('Given the type of transformation, the numpy matrix has the '
-                                 'wrong shape. If only one numpy array is given, the '
-                                 'orbitals are transformed either from orthonormal spatial '
-                                 'orbitals to nonorthonormal spatial orbitals or from '
-                                 'orthonormal spin orbitals to nonorthonormal spin orbitals.')
+            if len(params) == 1 and not (
+                (i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial)
+                or (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin)
+            ):
+                raise ValueError(
+                    "Given the type of transformation, the numpy matrix has the "
+                    "wrong shape. If only one numpy array is given, the "
+                    "orbitals are transformed either from orthonormal spatial "
+                    "orbitals to nonorthonormal spatial orbitals or from "
+                    "orthonormal spin orbitals to nonorthonormal spin orbitals."
+                )
 
-            elif (len(params) == 2 and
-                  not (i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial)):
-                raise ValueError('Given the type of transformation, the numpy matrix has the '
-                                 'wrong shape. If two numpy arrays are given, the orbitals are '
-                                 'transformed from orthonormal spatial orbitals to nonorthonormal '
-                                 'spatial orbitals.')
+            elif len(params) == 2 and not (
+                i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial
+            ):
+                raise ValueError(
+                    "Given the type of transformation, the numpy matrix has the "
+                    "wrong shape. If two numpy arrays are given, the orbitals are "
+                    "transformed from orthonormal spatial orbitals to nonorthonormal "
+                    "spatial orbitals."
+                )
 
         self.params = params
 
@@ -291,7 +305,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         output = 0.0
-        if self.orbtype == 'generalized':
+        if self.orbtype == "generalized":
             row_inds = slater.occ_indices(sd)
             all_col_inds = range(self.wfn.nspin)
             for col_inds in it.combinations(all_col_inds, self.nelec):
@@ -310,14 +324,16 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     alpha_coeff = 1.0
                 else:
                     # FIXME: use broadcasting
-                    alpha_coeff = np.linalg.det(self.params[0]
-                                                [alpha_row_inds, :][:, alpha_col_inds])
+                    alpha_coeff = np.linalg.det(
+                        self.params[0][alpha_row_inds, :][:, alpha_col_inds]
+                    )
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
                     # FIXME: change i+nspatial to slater.to_beta
-                    nonorth_sd = slater.create(0, *alpha_col_inds,
-                                               *[i + self.nspatial for i in beta_col_inds])
+                    nonorth_sd = slater.create(
+                        0, *alpha_col_inds, *[i + self.nspatial for i in beta_col_inds]
+                    )
                     wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
-                    if self.orbtype == 'restricted':
+                    if self.orbtype == "restricted":
                         i = 0
                     else:
                         i = 1
@@ -326,8 +342,9 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                         beta_coeff = 1.0
                     else:
                         # FIXME: use broadcasting
-                        beta_coeff = np.linalg.det(self.params[i]
-                                                   [beta_row_inds, :][:, beta_col_inds])
+                        beta_coeff = np.linalg.det(
+                            self.params[i][beta_row_inds, :][:, beta_col_inds]
+                        )
                     output += wfn_coeff * alpha_coeff * beta_coeff
         return output
 
@@ -352,11 +369,11 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         nparams_alpha = self.params[0].size
         # lots of repetition b/c slight variations with different orbital types
         transform_ind = deriv // nparams_alpha
-        row_removed = ((deriv % nparams_alpha) // self.param_shape[transform_ind][1])
-        col_removed = ((deriv % nparams_alpha) % self.param_shape[transform_ind][1])
+        row_removed = (deriv % nparams_alpha) // self.param_shape[transform_ind][1]
+        col_removed = (deriv % nparams_alpha) % self.param_shape[transform_ind][1]
 
         output = 0.0
-        if self.orbtype == 'generalized':
+        if self.orbtype == "generalized":
             row_inds = slater.occ_indices(slater.annihilate(sd, row_removed))
             row_sign = (-1) ** np.sum(np.array(row_inds) < row_removed)
             all_col_inds = (i for i in range(self.wfn.nspin) if i != col_removed)
@@ -373,8 +390,11 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         if not (slater.occ(alpha_sd, row_removed) or slater.occ(beta_sd, row_removed)):
             return 0.0
         # FIXME/TODO: need to add signature for derivative
-        if (self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)
-                and slater.occ(beta_sd, row_removed)):
+        if (
+            self.orbtype == "restricted"
+            and slater.occ(alpha_sd, row_removed)
+            and slater.occ(beta_sd, row_removed)
+        ):
             # if both alpha and beta Slater determinants contain the orbital
             alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd, row_removed))
             beta_row_inds = slater.occ_indices(slater.annihilate(beta_sd, row_removed))
@@ -387,66 +407,85 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     der_alpha_coeff = 1.0
                 else:
                     # FIXME: use broadcasting
-                    der_alpha_coeff = np.linalg.det(self.params[0]
-                                                    [alpha_row_inds, :][:, alpha_col_inds])
+                    der_alpha_coeff = np.linalg.det(
+                        self.params[0][alpha_row_inds, :][:, alpha_col_inds]
+                    )
                 # FIXME: use broadcasting
-                alpha_coeff = np.linalg.det(self.params[0]
-                                            [alpha_row_inds+(row_removed, ), :]
-                                            [:, alpha_col_inds+(col_removed, )])
+                alpha_coeff = np.linalg.det(
+                    self.params[0][alpha_row_inds + (row_removed,), :][
+                        :, alpha_col_inds + (col_removed,)
+                    ]
+                )
                 # beta block includes derivatized column
                 # FIXME: change i+nspatial to slater.to_beta
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
-                    nonorth_sd = slater.create(0, col_removed, col_removed + self.nspatial,
-                                               *alpha_col_inds,
-                                               *(i + self.nspatial for i in beta_col_inds))
+                    nonorth_sd = slater.create(
+                        0,
+                        col_removed,
+                        col_removed + self.nspatial,
+                        *alpha_col_inds,
+                        *(i + self.nspatial for i in beta_col_inds)
+                    )
                     wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
                     if len(beta_col_inds) == 0:
                         der_beta_coeff = 1.0
                     else:
                         # FIXME: use broadcasting
-                        der_beta_coeff = np.linalg.det(self.params[0]
-                                                       [beta_row_inds, :]
-                                                       [:, beta_col_inds])
+                        der_beta_coeff = np.linalg.det(
+                            self.params[0][beta_row_inds, :][:, beta_col_inds]
+                        )
                     # FIXME: use broadcasting
-                    beta_coeff = np.linalg.det(self.params[0]
-                                               [beta_row_inds+(row_removed, ), :]
-                                               [:, beta_col_inds+(col_removed, )])
-                    output += wfn_coeff * (der_alpha_coeff * beta_coeff +
-                                           alpha_coeff * der_beta_coeff)
+                    beta_coeff = np.linalg.det(
+                        self.params[0][beta_row_inds + (row_removed,), :][
+                            :, beta_col_inds + (col_removed,)
+                        ]
+                    )
+                    output += wfn_coeff * (
+                        der_alpha_coeff * beta_coeff + alpha_coeff * der_beta_coeff
+                    )
 
                 # beta block does not include derivatized column
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds) + 1):
-                    nonorth_sd = slater.create(0, col_removed, *alpha_col_inds,
-                                               *(i + self.nspatial for i in beta_col_inds))
+                    nonorth_sd = slater.create(
+                        0, col_removed, *alpha_col_inds, *(i + self.nspatial for i in beta_col_inds)
+                    )
                     wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
                     # FIXME: use broadcasting
-                    beta_coeff = np.linalg.det(self.params[0]
-                                               [beta_row_inds+(row_removed,), :][:, beta_col_inds])
+                    beta_coeff = np.linalg.det(
+                        self.params[0][beta_row_inds + (row_removed,), :][:, beta_col_inds]
+                    )
                     output += wfn_coeff * der_alpha_coeff * beta_coeff
             # alpha block does not include the derivatized column
-            for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)+1):
+            for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds) + 1):
                 # FIXME: use broadcasting
-                alpha_coeff = np.linalg.det(self.params[0]
-                                            [alpha_row_inds+(row_removed, ), :][:, alpha_col_inds])
+                alpha_coeff = np.linalg.det(
+                    self.params[0][alpha_row_inds + (row_removed,), :][:, alpha_col_inds]
+                )
                 # beta block includes derivatized column
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
-                    nonorth_sd = slater.create(0, col_removed + self.nspatial, *alpha_col_inds,
-                                               *(i + self.nspatial for i in beta_col_inds))
+                    nonorth_sd = slater.create(
+                        0,
+                        col_removed + self.nspatial,
+                        *alpha_col_inds,
+                        *(i + self.nspatial for i in beta_col_inds)
+                    )
                     wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
                     if len(beta_col_inds) == 0:
                         der_beta_coeff = 1.0
                     else:
                         # FIXME: use broadcasting
-                        der_beta_coeff = np.linalg.det(self.params[0]
-                                                       [beta_row_inds, :][:, beta_col_inds])
+                        der_beta_coeff = np.linalg.det(
+                            self.params[0][beta_row_inds, :][:, beta_col_inds]
+                        )
                     output += wfn_coeff * alpha_coeff * der_beta_coeff
 
             return output
 
         # if only one of alpha and beta Slater determinants contains the orbital
-            # elif slater.occ(alpha_sd, row_removed) != slater.occ(beta_sd, row_removed):
-        if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed)) or
-                (self.orbtype == 'unrestricted' and transform_ind == 0)):
+        # elif slater.occ(alpha_sd, row_removed) != slater.occ(beta_sd, row_removed):
+        if (self.orbtype == "restricted" and slater.occ(alpha_sd, row_removed)) or (
+            self.orbtype == "unrestricted" and transform_ind == 0
+        ):
             alpha_row_inds = slater.occ_indices(slater.annihilate(alpha_sd, row_removed))
             beta_row_inds = slater.occ_indices(beta_sd)
             row_sign = (-1) ** np.sum(np.array(alpha_row_inds) < row_removed)
@@ -466,14 +505,15 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             if len(alpha_col_inds) == 0:
                 alpha_coeff = 1.0
             else:
-                alpha_coeff = np.linalg.det(self.params[0]
-                                            [alpha_row_inds, :][:, alpha_col_inds])
+                alpha_coeff = np.linalg.det(self.params[0][alpha_row_inds, :][:, alpha_col_inds])
             for beta_col_inds in it.combinations(all_beta_col_inds, len(beta_row_inds)):
                 # FIXME: change i+nspatial to slater.to_beta
-                nonorth_sd = slater.create(0, *alpha_col_inds,
-                                            *[i + self.nspatial for i in beta_col_inds])
-                if ((self.orbtype == 'restricted' and slater.occ(alpha_sd, row_removed))
-                        or (self.orbtype == 'unrestricted' and transform_ind == 0)):
+                nonorth_sd = slater.create(
+                    0, *alpha_col_inds, *[i + self.nspatial for i in beta_col_inds]
+                )
+                if (self.orbtype == "restricted" and slater.occ(alpha_sd, row_removed)) or (
+                    self.orbtype == "unrestricted" and transform_ind == 0
+                ):
                     nonorth_sd = slater.create(nonorth_sd, col_removed)
                 else:
                     nonorth_sd = slater.create(nonorth_sd, col_removed + self.nspatial)
@@ -484,9 +524,10 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                 if len(beta_col_inds) == 0:
                     beta_coeff = 1.0
                 else:
-                    orb_ind = 0 if self.orbtype == 'restricted' else 1
-                    beta_coeff = np.linalg.det(self.params[orb_ind]
-                                                [beta_row_inds, :][:, beta_col_inds])
+                    orb_ind = 0 if self.orbtype == "restricted" else 1
+                    beta_coeff = np.linalg.det(
+                        self.params[orb_ind][beta_row_inds, :][:, beta_col_inds]
+                    )
                 output += wfn_coeff * row_sign * col_sign * alpha_coeff * beta_coeff
         return output
 
@@ -518,11 +559,11 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._cache_fns["overlap"](sd)
 
         # if derivatization
         if not (isinstance(deriv, int) and deriv >= 0):
-            raise ValueError('Index for derivatization must be a non-negative integer.')
+            raise ValueError("Index for derivatization must be a non-negative integer.")
 
         if deriv >= self.nparams:
             return 0.0
@@ -537,13 +578,15 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         # if either of these orbitals are not present in the Slater determinant, skip
         # FIXME: change i+nspatial to slater.to_beta
-        if (self.orbtype == 'restricted' and
-                not (slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial))):
+        if self.orbtype == "restricted" and not (
+            slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
+        ):
             return 0.0
-        elif (self.orbtype == 'unrestricted' and
-                not slater.occ(sd, row_removed + transform_ind*self.nspatial)):
+        elif self.orbtype == "unrestricted" and not slater.occ(
+            sd, row_removed + transform_ind * self.nspatial
+        ):
             return 0.0
-        elif self.orbtype == 'generalized' and not slater.occ(sd, row_removed):
+        elif self.orbtype == "generalized" and not slater.occ(sd, row_removed):
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._cache_fns["overlap derivative"](sd, deriv)

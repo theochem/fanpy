@@ -12,7 +12,7 @@ import numpy as np
 from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
 
-LIBFCI = load_library('libfci')
+LIBFCI = load_library("libfci")
 
 
 def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
@@ -46,23 +46,23 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
 
     """
     if not is_chemist_notation:
-        eri = np.einsum('ijkl->ikjl', eri)
+        eri = np.einsum("ijkl->ikjl", eri)
     # adapted/copied from pyscf.fci.direct_spin1.make_hdiag
     # number of spatial orbitals
     norb = h1e.shape[0]
     # number of electrons
     if isinstance(nelec, (int, np.number)):
         # beta
-        nelecb = nelec//2
+        nelecb = nelec // 2
         # alpha
         neleca = nelec - nelecb
     elif isinstance(nelec, (tuple, list)) and len(nelec) == 2:
         neleca, nelecb = nelec
     else:
-        raise ValueError('Unsupported electron number, {0}'.format(nelec))
+        raise ValueError("Unsupported electron number, {0}".format(nelec))
     # integrals
-    h1e = np.asarray(h1e, order='C')
-    eri = np.asarray(eri, order='C')
+    h1e = np.asarray(h1e, order="C")
+    eri = np.asarray(eri, order="C")
     # Construct some sort of lookup table to link different bit string occupations
     # to one another. i.e. From one bit string, and several indices that describes
     # certain excitation, we can get the other bit string
@@ -77,23 +77,27 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # Diagonal of CI Hamiltonian matrix
     hdiag = np.empty(num_sd)
     # Coulomb integrals
-    jdiag = np.asarray(np.einsum('iijj->ij', eri), order='C')
+    jdiag = np.asarray(np.einsum("iijj->ij", eri), order="C")
     # Exchange integrals
-    kdiag = np.asarray(np.einsum('ijji->ij', eri), order='C')
+    kdiag = np.asarray(np.einsum("ijji->ij", eri), order="C")
     # Fucking Magic
-    LIBFCI.FCImake_hdiag_uhf(hdiag.ctypes.data_as(ctypes.c_void_p),
-                             h1e.ctypes.data_as(ctypes.c_void_p),
-                             h1e.ctypes.data_as(ctypes.c_void_p),
-                             jdiag.ctypes.data_as(ctypes.c_void_p),
-                             jdiag.ctypes.data_as(ctypes.c_void_p),
-                             jdiag.ctypes.data_as(ctypes.c_void_p),
-                             kdiag.ctypes.data_as(ctypes.c_void_p),
-                             kdiag.ctypes.data_as(ctypes.c_void_p),
-                             ctypes.c_int(norb),
-                             ctypes.c_int(na), ctypes.c_int(nb),
-                             ctypes.c_int(neleca), ctypes.c_int(nelecb),
-                             occslista.ctypes.data_as(ctypes.c_void_p),
-                             occslistb.ctypes.data_as(ctypes.c_void_p))
+    LIBFCI.FCImake_hdiag_uhf(
+        hdiag.ctypes.data_as(ctypes.c_void_p),
+        h1e.ctypes.data_as(ctypes.c_void_p),
+        h1e.ctypes.data_as(ctypes.c_void_p),
+        jdiag.ctypes.data_as(ctypes.c_void_p),
+        jdiag.ctypes.data_as(ctypes.c_void_p),
+        jdiag.ctypes.data_as(ctypes.c_void_p),
+        kdiag.ctypes.data_as(ctypes.c_void_p),
+        kdiag.ctypes.data_as(ctypes.c_void_p),
+        ctypes.c_int(norb),
+        ctypes.c_int(na),
+        ctypes.c_int(nb),
+        ctypes.c_int(neleca),
+        ctypes.c_int(nelecb),
+        occslista.ctypes.data_as(ctypes.c_void_p),
+        occslistb.ctypes.data_as(ctypes.c_void_p),
+    )
 
     # adapted/copied from pyscf.fci.direct_spin1.pspace
     # PySCF has a fancy indicing of Slater determinants (bitstrings to consecutive integers)
@@ -106,12 +110,15 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # number of slater determinants
     ci_matrix = np.zeros((num_sd, num_sd))
     # More Fucking Magic
-    LIBFCI.FCIpspace_h0tril(ci_matrix.ctypes.data_as(ctypes.c_void_p),
-                            h1e.ctypes.data_as(ctypes.c_void_p),
-                            eri.ctypes.data_as(ctypes.c_void_p),
-                            stra.ctypes.data_as(ctypes.c_void_p),
-                            strb.ctypes.data_as(ctypes.c_void_p),
-                            ctypes.c_int(norb), ctypes.c_int(num_sd))
+    LIBFCI.FCIpspace_h0tril(
+        ci_matrix.ctypes.data_as(ctypes.c_void_p),
+        h1e.ctypes.data_as(ctypes.c_void_p),
+        eri.ctypes.data_as(ctypes.c_void_p),
+        stra.ctypes.data_as(ctypes.c_void_p),
+        strb.ctypes.data_as(ctypes.c_void_p),
+        ctypes.c_int(norb),
+        ctypes.c_int(num_sd),
+    )
 
     for i in range(num_sd):
         ci_matrix[i, i] = hdiag[addr[i]]
@@ -130,18 +137,18 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     return ci_matrix, pspace
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # extract keyword from command line
     kwargs = {key: val for key, val in zip(sys.argv[3::2], sys.argv[4::2])}
     # change data types
-    if 'h1e' in kwargs:
-        kwargs['h1e'] = np.load(kwargs['h1e'])
-    if 'eri' in kwargs:
-        kwargs['eri'] = np.load(kwargs['eri'])
-    if 'nelec' in kwargs:
-        kwargs['nelec'] = int(kwargs['nelec'])
-    if 'is_chemist_notation' in kwargs:
-        kwargs['is_chemist_notation'] = (kwargs['is_chemist_notation'] == 'True')
+    if "h1e" in kwargs:
+        kwargs["h1e"] = np.load(kwargs["h1e"])
+    if "eri" in kwargs:
+        kwargs["eri"] = np.load(kwargs["eri"])
+    if "nelec" in kwargs:
+        kwargs["nelec"] = int(kwargs["nelec"])
+    if "is_chemist_notation" in kwargs:
+        kwargs["is_chemist_notation"] = kwargs["is_chemist_notation"] == "True"
 
     ci_matrix, pspace = generate_fci_cimatrix(**kwargs)
     np.save(sys.argv[1], ci_matrix)

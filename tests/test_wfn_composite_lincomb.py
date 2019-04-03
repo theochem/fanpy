@@ -9,6 +9,7 @@ from utils import skip_init
 
 class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
+
     _spin = None
     _seniority = None
 
@@ -45,12 +46,16 @@ def test_assign_wfns():
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(5, 10)))
     test.dtype = np.float64
     with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 10, dtype=complex)))
+        LinearCombinationWavefunction.assign_wfns(
+            test, (test_wfn, TempWavefunction(4, 10, dtype=complex))
+        )
     test.memory = np.inf
     with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 10, memory='2gb')))
+        LinearCombinationWavefunction.assign_wfns(
+            test, (test_wfn, TempWavefunction(4, 10, memory="2gb"))
+        )
     with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, ))
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn,))
     # NOTE: wavefunctions with different numbers of spin orbitals are allowed
     LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 12)))
     assert test.wfns[0].nelec == 4
@@ -63,7 +68,7 @@ def test_spin():
     """Test LinearCombinationWavefunction.spin."""
     test_wfn = TempWavefunction(4, 10)
     test_wfn._spin = 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
+    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
     assert test.spin == 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.spin is None
@@ -73,7 +78,7 @@ def test_seniority():
     """Test LinearCombinationWavefunction.seniority."""
     test_wfn = TempWavefunction(4, 10)
     test_wfn._seniority = 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
+    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
     assert test.seniority == 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.seniority is None
@@ -82,7 +87,7 @@ def test_seniority():
 def test_template_params():
     """Test LinearCombinationWavefunction.template_params."""
     test_wfn = TempWavefunction(4, 10)
-    test = LinearCombinationWavefunction(4, 10, (test_wfn, )*3)
+    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
     assert np.allclose(test.template_params, np.array([1, 0, 0]))
     assert np.allclose(test.template_params, np.array([1, 0, 0]))
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
@@ -118,7 +123,8 @@ def test_get_overlap():
     test_wfn_1.get_overlap = types.MethodType(olp_one, test_wfn_1)
     test_wfn_2.get_overlap = types.MethodType(olp_two, test_wfn_2)
 
-    test = LinearCombinationWavefunction(4, 10, (test_wfn_1, test_wfn_2),
-                                         params=np.array([0.7, 0.3]))
+    test = LinearCombinationWavefunction(
+        4, 10, (test_wfn_1, test_wfn_2), params=np.array([0.7, 0.3])
+    )
     assert test.get_overlap(0b0101) == 0.7 * test_wfn_1.params[0] + 0.3 * 0
     assert test.get_overlap(0b1010) == 0.7 * 0 + 0.3 * test_wfn_2.params[0]

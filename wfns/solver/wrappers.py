@@ -36,8 +36,9 @@ def wrap_scipy(func):
     >>> least_squares = wrap_scipy(scipy.optimize.least_squares)
 
     """
+
     @wraps(func)
-    def new_func(objective, save_file='', **kwargs):
+    def new_func(objective, save_file="", **kwargs):
         """Solve the objective using the given function.
 
         This function wraps around `func`.
@@ -68,15 +69,16 @@ def wrap_scipy(func):
         results = func(objective.objective, objective.params, **kwargs)
 
         output = {}
-        output['success'] = results.success
-        output['params'] = results.x
-        output['message'] = results.message
-        output['internal'] = results
+        output["success"] = results.success
+        output["params"] = results.x
+        output["message"] = results.message
+        output["internal"] = results
 
-        if save_file != '':
-            np.save(save_file, output['params'])
+        if save_file != "":
+            np.save(save_file, output["params"])
 
         return output
+
     return new_func
 
 
@@ -105,8 +107,9 @@ def wrap_skopt(func):
     >>> forst_minimize = wrap_scipy(skopt.optimizer.forest_minimize)
 
     """
+
     @wraps(func)
-    def new_func(objective, save_file='', **kwargs):
+    def new_func(objective, save_file="", **kwargs):
         """Solve the objective using the given function.
 
         This function wraps around `func`.
@@ -134,18 +137,19 @@ def wrap_skopt(func):
             Returned value of the `scipy.optimize.root`.
 
         """
-        if 'dimensions' not in kwargs:
-            kwargs['dimensions'] = [(i-0.5, i+0.5) for i in objective.params]
+        if "dimensions" not in kwargs:
+            kwargs["dimensions"] = [(i - 0.5, i + 0.5) for i in objective.params]
         results = func(objective.objective, **kwargs)
 
         output = {}
-        output['success'] = results.success
-        output['params'] = results.x
-        output['message'] = results.message
-        output['internal'] = results
+        output["success"] = results.success
+        output["params"] = results.x
+        output["message"] = results.message
+        output["internal"] = results
 
-        if save_file != '':
-            np.save(save_file, output['params'])
+        if save_file != "":
+            np.save(save_file, output["params"])
 
         return output
+
     return new_func

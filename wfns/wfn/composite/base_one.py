@@ -63,6 +63,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
+
     def __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None):
         """Initialize the wavefunction.
 
@@ -108,14 +109,20 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
 
         """
         if not isinstance(wfn, BaseWavefunction):
-            raise TypeError('Given wavefunction must be an instance of BaseWavefunction.')
+            raise TypeError("Given wavefunction must be an instance of BaseWavefunction.")
         elif wfn.nelec != self.nelec:
-            raise ValueError('Given wavefunction does not have the same number of electrons as the'
-                             ' the instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same number of electrons as the"
+                " the instantiated NonorthWavefunction."
+            )
         elif wfn.dtype != self.dtype:
-            raise ValueError('Given wavefunction does not have the same data type as the '
-                             'instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same data type as the "
+                "instantiated NonorthWavefunction."
+            )
         elif wfn.memory != self.memory:
-            raise ValueError('Given wavefunction does not have the same memory as the '
-                             'instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same memory as the "
+                "instantiated NonorthWavefunction."
+            )
         self.wfn = wfn

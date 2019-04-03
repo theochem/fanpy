@@ -46,7 +46,7 @@ def generate_complete_pmatch(indices, sign=1):
     if n % 2 == 1 or n < 2:
         yield tuple(), sign
     elif n == 2:
-        yield ((indices[0], indices[1]), ), sign
+        yield ((indices[0], indices[1]),), sign
     else:
         # smaller subset (all pairs without the last two indices)
         Sn_2 = generate_complete_pmatch(indices[:-2], sign=sign)
@@ -54,14 +54,18 @@ def generate_complete_pmatch(indices, sign=1):
             # add in the last two indices
             yield scheme + (indices[-2:],), inner_sign
             # starting from the last
-            for i in reversed(range(n//2 - 1)):
+            for i in reversed(range(n // 2 - 1)):
                 # replace ith pair in the scheme with last pair
-                yield (scheme[:i] +
-                       ((scheme[i][0], indices[-2]), (scheme[i][1], indices[-1])) +
-                       scheme[i+1:]), -inner_sign
-                yield (scheme[:i] +
-                       ((scheme[i][0], indices[-1]), (scheme[i][1], indices[-2])) +
-                       scheme[i+1:]), inner_sign
+                yield (
+                    scheme[:i]
+                    + ((scheme[i][0], indices[-2]), (scheme[i][1], indices[-1]))
+                    + scheme[i + 1 :]
+                ), -inner_sign
+                yield (
+                    scheme[:i]
+                    + ((scheme[i][0], indices[-1]), (scheme[i][1], indices[-2]))
+                    + scheme[i + 1 :]
+                ), inner_sign
 
 
 def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decreasing=False):
@@ -98,15 +102,19 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
     """
     # assume indices_one and indices_two are sorted
     sign = 1
-    orig_sign = sign_perm([i for pair in zip(indices_one, indices_two) for i in pair],
-                          ordered_set=ordered_set, is_decreasing=is_decreasing)
+    orig_sign = sign_perm(
+        [i for pair in zip(indices_one, indices_two) for i in pair],
+        ordered_set=ordered_set,
+        is_decreasing=is_decreasing,
+    )
 
     if len(indices_one) == 0 or len(indices_two) == 0:
         yield tuple(), sign
     elif len(indices_one) != len(indices_two):
         yield tuple(), sign
-    elif (len(set(indices_one).symmetric_difference(set(indices_two)))
-          < len(indices_one + indices_two)):
+    elif len(set(indices_one).symmetric_difference(set(indices_two))) < len(
+        indices_one + indices_two
+    ):
         yield tuple(), sign
     else:
         # for new_indices in it.permutations(indices_two):
@@ -120,7 +128,7 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
         n = len(pool)
         indices = list(range(n))
         # indices select the specific ordering
-        cycles = list(reversed(range(1, n+1)))
+        cycles = list(reversed(range(1, n + 1)))
         # cycles keeps track of the number of swaps and the positions of elements that are swapped
         yield tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
         # NOTE: to obtain the signature, the jumbld pair structure must be unzipped, then sorted
@@ -130,10 +138,10 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
                 cycles[i] -= 1
                 if cycles[i] == 0:
                     # move ith index to the end
-                    indices[i:] = indices[i+1:] + indices[i:i+1]
+                    indices[i:] = indices[i + 1 :] + indices[i : i + 1]
                     # in order to move ith element to the end, it must jump over n-i-1 elements
                     # (because i starts from 0)
-                    sign *= (-1)**(n - i - 1)
+                    sign *= (-1) ** (n - i - 1)
                     # reset cycles (back to its original number)
                     cycles[i] = n - i
                 else:
@@ -209,7 +217,7 @@ def generate_unordered_partition(collection, bin_size_num):
             # ensure that the first elements from each subset is ordered
             if len(subset) == 0:
                 # element can go into the empty subset/bin
-                yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin+1:]
+                yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin + 1 :]
                 # if there are more than empty bins of the same size
                 if bin_size_num[ind_size][1] > 1:
                     # NOTE: If the subset/bin is empty, all subsequent subsets/bins of the same size
@@ -232,7 +240,7 @@ def generate_unordered_partition(collection, bin_size_num):
                 continue
 
             # add the last element to the selected bin
-            yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin+1:]
+            yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin + 1 :]
 
 
 # FIXME: make this dynamic or store/cache some of the results on file
@@ -278,9 +286,9 @@ def int_partition_recursive(coins, num_coin_types, total):
         return
 
     # include last coin
-    for partition in int_partition_recursive(coins,
-                                             num_coin_types,
-                                             total - coins[num_coin_types-1]):
-        yield [coins[num_coin_types-1]] + partition
+    for partition in int_partition_recursive(
+        coins, num_coin_types, total - coins[num_coin_types - 1]
+    ):
+        yield [coins[num_coin_types - 1]] + partition
     # exclude last coin
     yield from int_partition_recursive(coins, num_coin_types - 1, total)

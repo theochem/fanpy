@@ -58,6 +58,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+
     def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
         """Initialize the Hamiltonian.
 
@@ -79,23 +80,31 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
     def set_ref_ints(self):
         """Store the current integrals as the reference from which orbitals will be rotated."""
         self._ref_one_int = [np.copy(self.one_int[0]), np.copy(self.one_int[1])]
-        self._ref_two_int = [np.copy(self.two_int[0]),
-                             np.copy(self.two_int[1]), np.copy(self.two_int[2])]
+        self._ref_two_int = [
+            np.copy(self.two_int[0]),
+            np.copy(self.two_int[1]),
+            np.copy(self.two_int[2]),
+        ]
 
     def cache_two_ints(self):
         """Cache away contractions of the two electron integrals."""
         # store away tensor contractions
         indices = np.arange(self.one_int[0].shape[0])
-        self._cached_two_int_0_ijij = self.two_int[0][indices[:, None], indices,
-                                                      indices[:, None], indices]
-        self._cached_two_int_1_ijij = self.two_int[1][indices[:, None], indices,
-                                                      indices[:, None], indices]
-        self._cached_two_int_2_ijij = self.two_int[2][indices[:, None], indices,
-                                                      indices[:, None], indices]
-        self._cached_two_int_0_ijji = self.two_int[0][indices[:, None], indices,
-                                                      indices, indices[:, None]]
-        self._cached_two_int_2_ijji = self.two_int[2][indices[:, None], indices,
-                                                      indices, indices[:, None]]
+        self._cached_two_int_0_ijij = self.two_int[0][
+            indices[:, None], indices, indices[:, None], indices
+        ]
+        self._cached_two_int_1_ijij = self.two_int[1][
+            indices[:, None], indices, indices[:, None], indices
+        ]
+        self._cached_two_int_2_ijij = self.two_int[2][
+            indices[:, None], indices, indices[:, None], indices
+        ]
+        self._cached_two_int_0_ijji = self.two_int[0][
+            indices[:, None], indices, indices, indices[:, None]
+        ]
+        self._cached_two_int_2_ijji = self.two_int[2][
+            indices[:, None], indices, indices, indices[:, None]
+        ]
 
     def assign_params(self, params=None):
         """Transform the integrals with a unitary matrix that corresponds to the given parameters.
@@ -121,22 +130,29 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if params is None:
             params = np.zeros(num_params)
 
-        if not(isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
-            raise ValueError('Parameters for orbital rotation must be a one-dimension numpy array '
-                             'with {0}=K*(K-1) elements, where K is the number of '
-                             'orbitals.'.format(num_params))
+        if not (isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
+            raise ValueError(
+                "Parameters for orbital rotation must be a one-dimension numpy array "
+                "with {0}=K*(K-1) elements, where K is the number of "
+                "orbitals.".format(num_params)
+            )
 
         # assign parameters
         self.params = params
 
         # revert integrals back to original
-        self.assign_integrals([np.copy(self._ref_one_int[0]), np.copy(self._ref_one_int[1])],
-                              [np.copy(self._ref_two_int[0]),
-                               np.copy(self._ref_two_int[1]), np.copy(self._ref_two_int[2])])
+        self.assign_integrals(
+            [np.copy(self._ref_one_int[0]), np.copy(self._ref_one_int[1])],
+            [
+                np.copy(self._ref_two_int[0]),
+                np.copy(self._ref_two_int[1]),
+                np.copy(self._ref_two_int[2]),
+            ],
+        )
 
         # convert antihermitian part to unitary matrix.
-        unitary_alpha = math_tools.unitary_matrix(params[:num_params//2])
-        unitary_beta = math_tools.unitary_matrix(params[num_params//2:])
+        unitary_alpha = math_tools.unitary_matrix(params[: num_params // 2])
+        unitary_beta = math_tools.unitary_matrix(params[num_params // 2 :])
 
         # transform integrals
         self.orb_rotate_matrix([unitary_alpha, unitary_beta])
@@ -217,7 +233,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if sign is None:
             sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
         elif sign not in [1, -1]:
-            raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
+            raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
@@ -225,16 +241,20 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if diff_order == 0:
             if shared_alpha.size != 0:
                 one_electron += np.sum(self.one_int[0][shared_alpha, shared_alpha])
-                coulomb += np.sum(np.triu(self._cached_two_int_0_ijij[shared_alpha[:, None],
-                                                                      shared_alpha], k=1))
-                exchange -= np.sum(np.triu(self._cached_two_int_0_ijji[shared_alpha[:, None],
-                                                                       shared_alpha], k=1))
+                coulomb += np.sum(
+                    np.triu(self._cached_two_int_0_ijij[shared_alpha[:, None], shared_alpha], k=1)
+                )
+                exchange -= np.sum(
+                    np.triu(self._cached_two_int_0_ijji[shared_alpha[:, None], shared_alpha], k=1)
+                )
             if shared_beta.size != 0:
                 one_electron += np.sum(self.one_int[1][shared_beta, shared_beta])
-                coulomb += np.sum(np.triu(self._cached_two_int_2_ijij[shared_beta[:, None],
-                                                                      shared_beta], k=1))
-                exchange -= np.sum(np.triu(self._cached_two_int_2_ijji[shared_beta[:, None],
-                                                                       shared_beta], k=1))
+                coulomb += np.sum(
+                    np.triu(self._cached_two_int_2_ijij[shared_beta[:, None], shared_beta], k=1)
+                )
+                exchange -= np.sum(
+                    np.triu(self._cached_two_int_2_ijji[shared_beta[:, None], shared_beta], k=1)
+                )
             if shared_alpha.size != 0 and shared_beta.size != 0:
                 coulomb += np.sum(self._cached_two_int_1_ijij[shared_alpha[:, None], shared_beta])
 
@@ -251,23 +271,29 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             if slater.is_alpha(a, nspatial):
                 one_electron += self.one_int[0][spatial_a, spatial_b]
                 if shared_alpha.size != 0:
-                    coulomb += np.sum(self.two_int[0][shared_alpha, spatial_a,
-                                                      shared_alpha, spatial_b])
-                    exchange -= np.sum(self.two_int[0][shared_alpha, spatial_a,
-                                                       spatial_b, shared_alpha])
+                    coulomb += np.sum(
+                        self.two_int[0][shared_alpha, spatial_a, shared_alpha, spatial_b]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[0][shared_alpha, spatial_a, spatial_b, shared_alpha]
+                    )
                 if shared_beta.size != 0:
-                    coulomb += np.sum(self.two_int[1][spatial_a, shared_beta,
-                                                      spatial_b, shared_beta])
+                    coulomb += np.sum(
+                        self.two_int[1][spatial_a, shared_beta, spatial_b, shared_beta]
+                    )
             else:
                 one_electron += self.one_int[1][spatial_a, spatial_b]
                 if shared_alpha.size != 0:
-                    coulomb += np.sum(self.two_int[1][shared_alpha, spatial_a,
-                                                      shared_alpha, spatial_b])
+                    coulomb += np.sum(
+                        self.two_int[1][shared_alpha, spatial_a, shared_alpha, spatial_b]
+                    )
                 if shared_beta.size != 0:
-                    coulomb += np.sum(self.two_int[2][shared_beta, spatial_a,
-                                                      shared_beta, spatial_b])
-                    exchange -= np.sum(self.two_int[2][shared_beta, spatial_a,
-                                                       spatial_b, shared_beta])
+                    coulomb += np.sum(
+                        self.two_int[2][shared_beta, spatial_a, shared_beta, spatial_b]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[2][shared_beta, spatial_a, spatial_b, shared_beta]
+                    )
 
         # two sd's are different by double excitation
         else:
@@ -278,8 +304,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 spin_index = 0
             elif slater.is_alpha(a, nspatial) and not slater.is_alpha(b, nspatial):
                 spin_index = 1
-            elif (not slater.is_alpha(a, nspatial)
-                  and slater.is_alpha(b, nspatial)):  # pragma: no cover
+            elif not slater.is_alpha(a, nspatial) and slater.is_alpha(
+                b, nspatial
+            ):  # pragma: no cover
                 # NOTE: Since a < b by construction from slater.diff_orbs and alpha orbitals are
                 #       indexed (by convention) to be less than the beta orbitals, `a` cannot be a
                 #       beta orbital if `b` is an alpha orbital.
@@ -297,14 +324,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             spatial_c = slater.spatial_index(c, nspatial)
             spatial_d = slater.spatial_index(d, nspatial)
 
-            if (slater.is_alpha(b, nspatial) == slater.is_alpha(d, nspatial) and
-                    slater.is_alpha(a, nspatial) == slater.is_alpha(c, nspatial)):
+            if slater.is_alpha(b, nspatial) == slater.is_alpha(d, nspatial) and slater.is_alpha(
+                a, nspatial
+            ) == slater.is_alpha(c, nspatial):
                 coulomb += self.two_int[spin_index][spatial_a, spatial_b, spatial_c, spatial_d]
-            if (slater.is_alpha(b, nspatial) == slater.is_alpha(c, nspatial) and
-                    slater.is_alpha(a, nspatial) == slater.is_alpha(d, nspatial)):
+            if slater.is_alpha(b, nspatial) == slater.is_alpha(c, nspatial) and slater.is_alpha(
+                a, nspatial
+            ) == slater.is_alpha(d, nspatial):
                 exchange -= self.two_int[spin_index][spatial_a, spatial_b, spatial_d, spatial_c]
 
-        return sign*one_electron, sign*coulomb, sign*exchange
+        return sign * one_electron, sign * coulomb, sign * exchange
 
     def param_ind_to_rowcol_ind(self, param_ind):
         r"""Return the row and column indices of the antihermitian matrix from the parameter index.
@@ -348,19 +377,19 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         nspatial = self.one_int[0].shape[0]
-        if param_ind < nspatial * (nspatial-1) / 2:
+        if param_ind < nspatial * (nspatial - 1) / 2:
             spin_ind = 0
         else:
-            param_ind -= nspatial * (nspatial-1) // 2
+            param_ind -= nspatial * (nspatial - 1) // 2
             spin_ind = 1
 
         # ind = i
-        for k in range(nspatial+1):  # pragma: no branch
+        for k in range(nspatial + 1):  # pragma: no branch
             x = k
-            if param_ind - nspatial*(x+1) + (x+1)*(x+2)/2 < 0:
+            if param_ind - nspatial * (x + 1) + (x + 1) * (x + 2) / 2 < 0:
                 break
         # ind_flat = j
-        ind_flat = param_ind + (x+1)*(x+2)/2
+        ind_flat = param_ind + (x + 1) * (x + 2) / 2
         y = ind_flat % nspatial
 
         return spin_ind, int(x), int(y)
@@ -405,8 +434,10 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
         # NOTE: shared_alpha and shared_beta contain spatial orbital indices
-        shared_alpha, shared_beta = map(lambda shared_sd: np.array(slater.occ_indices(shared_sd)),
-                                        slater.split_spin(slater.shared_sd(sd1, sd2), nspatial))
+        shared_alpha, shared_beta = map(
+            lambda shared_sd: np.array(slater.occ_indices(shared_sd)),
+            slater.split_spin(slater.shared_sd(sd1, sd2), nspatial),
+        )
         # NOTE: diff_sd1 and diff_sd2 contain spin orbitals
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
 
@@ -422,9 +453,11 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         # check deriv
         if not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
-            raise ValueError('Given derivative index must be an integer greater than or equal to '
-                             'zero and less than the number of parameters, '
-                             'nspatial * (nspatial-1)/2')
+            raise ValueError(
+                "Given derivative index must be an integer greater than or equal to "
+                "zero and less than the number of parameters, "
+                "nspatial * (nspatial-1)/2"
+            )
 
         # turn deriv into indices of the matrix, (x, y), where x < y
         # NOTE: x and y are spatial orbitals
@@ -447,40 +480,50 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 if shared_beta.size != 0:
                     coulomb -= 2 * np.sum(np.real(self.two_int[1][x, shared_beta, y, shared_beta]))
                 if shared_alpha_no_x.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[0][x, shared_alpha_no_x,
-                                                                  y, shared_alpha_no_x]))
-                    exchange += 2 * np.sum(np.real(self.two_int[0][x, shared_alpha_no_x,
-                                                                   shared_alpha_no_x, y]))
+                    coulomb -= 2 * np.sum(
+                        np.real(self.two_int[0][x, shared_alpha_no_x, y, shared_alpha_no_x])
+                    )
+                    exchange += 2 * np.sum(
+                        np.real(self.two_int[0][x, shared_alpha_no_x, shared_alpha_no_x, y])
+                    )
             elif spin_ind == 1 and x in shared_beta:
                 one_electron -= 2 * np.real(self.one_int[1][x, y])
                 if shared_alpha.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[1][shared_alpha, x,
-                                                                  shared_alpha, y]))
+                    coulomb -= 2 * np.sum(
+                        np.real(self.two_int[1][shared_alpha, x, shared_alpha, y])
+                    )
                 if shared_beta_no_x.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[2][x, shared_beta_no_x,
-                                                                  y, shared_beta_no_x]))
-                    exchange += 2 * np.sum(np.real(self.two_int[2][x, shared_beta_no_x,
-                                                                   shared_beta_no_x, y]))
+                    coulomb -= 2 * np.sum(
+                        np.real(self.two_int[2][x, shared_beta_no_x, y, shared_beta_no_x])
+                    )
+                    exchange += 2 * np.sum(
+                        np.real(self.two_int[2][x, shared_beta_no_x, shared_beta_no_x, y])
+                    )
 
             if spin_ind == 0 and y in shared_alpha:
                 one_electron += 2 * np.real(self.one_int[0][x, y])
                 if shared_beta.size != 0:
                     coulomb += 2 * np.sum(np.real(self.two_int[1][x, shared_beta, y, shared_beta]))
                 if shared_alpha_no_y.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[0][x, shared_alpha_no_y,
-                                                                  y, shared_alpha_no_y]))
-                    exchange -= 2 * np.sum(np.real(self.two_int[0][x, shared_alpha_no_y,
-                                                                   shared_alpha_no_y, y]))
+                    coulomb += 2 * np.sum(
+                        np.real(self.two_int[0][x, shared_alpha_no_y, y, shared_alpha_no_y])
+                    )
+                    exchange -= 2 * np.sum(
+                        np.real(self.two_int[0][x, shared_alpha_no_y, shared_alpha_no_y, y])
+                    )
             elif spin_ind == 1 and y in shared_beta:
                 one_electron += 2 * np.real(self.one_int[1][x, y])
                 if shared_alpha.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[1][shared_alpha, x,
-                                                                  shared_alpha, y]))
+                    coulomb += 2 * np.sum(
+                        np.real(self.two_int[1][shared_alpha, x, shared_alpha, y])
+                    )
                 if shared_beta_no_y.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[2][x, shared_beta_no_y,
-                                                                  y, shared_beta_no_y]))
-                    exchange -= 2 * np.sum(np.real(self.two_int[2][x, shared_beta_no_y,
-                                                                   shared_beta_no_y, y]))
+                    coulomb += 2 * np.sum(
+                        np.real(self.two_int[2][x, shared_beta_no_y, y, shared_beta_no_y])
+                    )
+                    exchange -= 2 * np.sum(
+                        np.real(self.two_int[2][x, shared_beta_no_y, shared_beta_no_y, y])
+                    )
         # two sd's are different by single excitation
         elif diff_order == 1:
             a, = diff_sd1
@@ -494,51 +537,47 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 if spin_ind == 0:
                     one_electron -= self.one_int[0][y, spatial_b]
                     if shared_beta.size != 0:
-                        coulomb -= np.sum(self.two_int[1][y, shared_beta,
-                                                          spatial_b, shared_beta])
+                        coulomb -= np.sum(self.two_int[1][y, shared_beta, spatial_b, shared_beta])
                     if shared_alpha.size != 0:
-                        coulomb -= np.sum(self.two_int[0][y, shared_alpha,
-                                                          spatial_b, shared_alpha])
-                        exchange += np.sum(self.two_int[0][y, shared_alpha,
-                                                           shared_alpha, spatial_b])
+                        coulomb -= np.sum(self.two_int[0][y, shared_alpha, spatial_b, shared_alpha])
+                        exchange += np.sum(
+                            self.two_int[0][y, shared_alpha, shared_alpha, spatial_b]
+                        )
                 # spin of x, y, a, b = beta
                 else:
                     one_electron -= self.one_int[1][y, spatial_b]
                     if shared_alpha.size != 0:
-                        coulomb -= np.sum(self.two_int[1][shared_alpha, y,
-                                                          shared_alpha, spatial_b])
+                        coulomb -= np.sum(self.two_int[1][shared_alpha, y, shared_alpha, spatial_b])
                     if shared_beta.size != 0:
-                        coulomb -= np.sum(self.two_int[2][y, shared_beta,
-                                                          spatial_b, shared_beta])
-                        exchange += np.sum(self.two_int[2][y, shared_beta,
-                                                           shared_beta, spatial_b])
+                        coulomb -= np.sum(self.two_int[2][y, shared_beta, spatial_b, shared_beta])
+                        exchange += np.sum(self.two_int[2][y, shared_beta, shared_beta, spatial_b])
             # selected (spin orbital) x = b
             elif x == spatial_b and spin_ind == spin_a == spin_b:
                 # spin of x, y, a, b = alpha
                 if spin_ind == 0:
                     one_electron -= self.one_int[0][spatial_a, y]
                     if shared_beta.size != 0:
-                        coulomb -= np.sum(self.two_int[1][spatial_a, shared_beta,
-                                                          y, shared_beta])
+                        coulomb -= np.sum(self.two_int[1][spatial_a, shared_beta, y, shared_beta])
                     if shared_alpha.size != 0:
-                        coulomb -= np.sum(self.two_int[0][spatial_a, shared_alpha,
-                                                          y, shared_alpha])
-                        exchange += np.sum(self.two_int[0][spatial_a, shared_alpha,
-                                                           shared_alpha, y])
+                        coulomb -= np.sum(self.two_int[0][spatial_a, shared_alpha, y, shared_alpha])
+                        exchange += np.sum(
+                            self.two_int[0][spatial_a, shared_alpha, shared_alpha, y]
+                        )
                 # spin of x, y, a, b = beta
                 else:
                     one_electron -= self.one_int[1][spatial_a, y]
                     if shared_alpha.size != 0:
-                        coulomb -= np.sum(self.two_int[1][shared_alpha, spatial_a,
-                                                          shared_alpha, y])
+                        coulomb -= np.sum(self.two_int[1][shared_alpha, spatial_a, shared_alpha, y])
                     if shared_beta.size != 0:
-                        coulomb -= np.sum(self.two_int[2][spatial_a, shared_beta,
-                                                          y, shared_beta])
-                        exchange += np.sum(self.two_int[2][spatial_a, shared_beta,
-                                                           shared_beta, y])
+                        coulomb -= np.sum(self.two_int[2][spatial_a, shared_beta, y, shared_beta])
+                        exchange += np.sum(self.two_int[2][spatial_a, shared_beta, shared_beta, y])
             # spin of x, y, a, b = alpha and selected (spin orbital) != a, b
-            elif (spin_ind == 0 and spin_a == spin_b == 0 and x in shared_alpha
-                  and x not in [spatial_a, spatial_b]):
+            elif (
+                spin_ind == 0
+                and spin_a == spin_b == 0
+                and x in shared_alpha
+                and x not in [spatial_a, spatial_b]
+            ):
                 coulomb -= self.two_int[0][x, spatial_a, y, spatial_b]
                 coulomb -= self.two_int[0][x, spatial_b, y, spatial_a]
                 exchange += self.two_int[0][x, spatial_b, spatial_a, y]
@@ -552,8 +591,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 coulomb -= self.two_int[1][spatial_a, x, spatial_b, y]
                 coulomb -= self.two_int[1][spatial_b, x, spatial_a, y]
             # spin of x, y, a, b = beta and selected (spin orbital) != a, b
-            elif (spin_ind == 1 and spin_a == spin_b == 1 and x in shared_beta
-                  and x not in [spatial_a, spatial_b]):
+            elif (
+                spin_ind == 1
+                and spin_a == spin_b == 1
+                and x in shared_beta
+                and x not in [spatial_a, spatial_b]
+            ):
                 coulomb -= self.two_int[2][x, spatial_a, y, spatial_b]
                 coulomb -= self.two_int[2][x, spatial_b, y, spatial_a]
                 exchange += self.two_int[2][x, spatial_b, spatial_a, y]
@@ -565,51 +608,47 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 if spin_ind == 0:
                     one_electron += self.one_int[0][x, spatial_b]
                     if shared_beta.size != 0:
-                        coulomb += np.sum(self.two_int[1][x, shared_beta,
-                                                          spatial_b, shared_beta])
+                        coulomb += np.sum(self.two_int[1][x, shared_beta, spatial_b, shared_beta])
                     if shared_alpha.size != 0:
-                        coulomb += np.sum(self.two_int[0][x, shared_alpha,
-                                                          spatial_b, shared_alpha])
-                        exchange -= np.sum(self.two_int[0][x, shared_alpha,
-                                                           shared_alpha, spatial_b])
+                        coulomb += np.sum(self.two_int[0][x, shared_alpha, spatial_b, shared_alpha])
+                        exchange -= np.sum(
+                            self.two_int[0][x, shared_alpha, shared_alpha, spatial_b]
+                        )
                 # spin of x, y, a, b = beta
                 else:
                     one_electron += self.one_int[1][x, spatial_b]
                     if shared_alpha.size != 0:
-                        coulomb += np.sum(self.two_int[1][shared_alpha, x,
-                                                          shared_alpha, spatial_b])
+                        coulomb += np.sum(self.two_int[1][shared_alpha, x, shared_alpha, spatial_b])
                     if shared_beta.size != 0:
-                        coulomb += np.sum(self.two_int[2][x, shared_beta,
-                                                          spatial_b, shared_beta])
-                        exchange -= np.sum(self.two_int[2][x, shared_beta,
-                                                           shared_beta, spatial_b])
+                        coulomb += np.sum(self.two_int[2][x, shared_beta, spatial_b, shared_beta])
+                        exchange -= np.sum(self.two_int[2][x, shared_beta, shared_beta, spatial_b])
             # selected (spin orbital) y = b
             elif y == spatial_b and spin_ind == spin_a == spin_b:
                 # spin of x, y, a, b = alpha
                 if spin_ind == 0:
                     one_electron += self.one_int[0][spatial_a, x]
                     if shared_beta.size != 0:
-                        coulomb += np.sum(self.two_int[1][spatial_a, shared_beta,
-                                                          x, shared_beta])
+                        coulomb += np.sum(self.two_int[1][spatial_a, shared_beta, x, shared_beta])
                     if shared_alpha.size != 0:
-                        coulomb += np.sum(self.two_int[0][spatial_a, shared_alpha,
-                                                          x, shared_alpha])
-                        exchange -= np.sum(self.two_int[0][spatial_a, shared_alpha,
-                                                           shared_alpha, x])
+                        coulomb += np.sum(self.two_int[0][spatial_a, shared_alpha, x, shared_alpha])
+                        exchange -= np.sum(
+                            self.two_int[0][spatial_a, shared_alpha, shared_alpha, x]
+                        )
                 # spin of x, y, a, b = beta
                 else:
                     one_electron += self.one_int[1][spatial_a, x]
                     if shared_alpha.size != 0:
-                        coulomb += np.sum(self.two_int[1][shared_alpha, spatial_a,
-                                                          shared_alpha, x])
+                        coulomb += np.sum(self.two_int[1][shared_alpha, spatial_a, shared_alpha, x])
                     if shared_beta.size != 0:
-                        coulomb += np.sum(self.two_int[2][spatial_a, shared_beta,
-                                                          x, shared_beta])
-                        exchange -= np.sum(self.two_int[2][spatial_a, shared_beta,
-                                                           shared_beta, x])
+                        coulomb += np.sum(self.two_int[2][spatial_a, shared_beta, x, shared_beta])
+                        exchange -= np.sum(self.two_int[2][spatial_a, shared_beta, shared_beta, x])
             # spin of x, y, a, b = alpha and selected (spin orbital) != a, b
-            elif (spin_ind == 0 and spin_a == spin_b == 0 and y in shared_alpha
-                  and y not in [spatial_a, spatial_b]):
+            elif (
+                spin_ind == 0
+                and spin_a == spin_b == 0
+                and y in shared_alpha
+                and y not in [spatial_a, spatial_b]
+            ):
                 coulomb += self.two_int[0][x, spatial_a, y, spatial_b]
                 coulomb += self.two_int[0][x, spatial_b, y, spatial_a]
                 exchange -= self.two_int[0][x, spatial_a, spatial_b, y]
@@ -623,8 +662,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 coulomb += self.two_int[1][spatial_a, x, spatial_b, y]
                 coulomb += self.two_int[1][spatial_b, x, spatial_a, y]
             # spin of x, y, a, b = beta and selected (spin orbital) != a, b
-            elif (spin_ind == 1 and spin_a == spin_b == 1 and y in shared_beta
-                  and y not in [spatial_a, spatial_b]):
+            elif (
+                spin_ind == 1
+                and spin_a == spin_b == 1
+                and y in shared_beta
+                and y not in [spatial_a, spatial_b]
+            ):
                 coulomb += self.two_int[2][x, spatial_a, y, spatial_b]
                 coulomb += self.two_int[2][x, spatial_b, y, spatial_a]
                 exchange -= self.two_int[2][x, spatial_a, spatial_b, y]
@@ -634,10 +677,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         else:
             a, b = diff_sd1
             c, d = diff_sd2
-            (spatial_a, spatial_b,
-             spatial_c, spatial_d) = map(lambda i: slater.spatial_index(i, nspatial), [a, b, c, d])
-            spin_a, spin_b, spin_c, spin_d = map(lambda i: int(not slater.is_alpha(i, nspatial)),
-                                                 [a, b, c, d])
+            (spatial_a, spatial_b, spatial_c, spatial_d) = map(
+                lambda i: slater.spatial_index(i, nspatial), [a, b, c, d]
+            )
+            spin_a, spin_b, spin_c, spin_d = map(
+                lambda i: int(not slater.is_alpha(i, nspatial)), [a, b, c, d]
+            )
 
             if x == spatial_a and spin_ind == spin_a:
                 if spin_ind == spin_c == spin_b == spin_d == 0:

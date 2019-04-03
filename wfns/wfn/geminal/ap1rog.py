@@ -103,8 +103,18 @@ class AP1roG(APIG):
         Assign the reference Slater determinant.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
-                 params=None):
+
+    def __init__(
+        self,
+        nelec,
+        nspin,
+        dtype=None,
+        memory=None,
+        ngem=None,
+        orbpairs=None,
+        ref_sd=None,
+        params=None,
+    ):
         """Initialize the wavefunction.
 
         Parameters
@@ -185,12 +195,13 @@ class AP1roG(APIG):
             sd = slater.ground(self.nelec, self.nspin)
         sd = slater.internal_sd(sd)
         if slater.total_occ(sd) != self.nelec:
-            raise ValueError('Given Slater determinant does not have the correct number of '
-                             'electrons')
+            raise ValueError(
+                "Given Slater determinant does not have the correct number of " "electrons"
+            )
         elif self.spin is not None and slater.get_spin(sd, self.nspatial):
-            raise ValueError('Given Slater determinant does not have the correct spin.')
+            raise ValueError("Given Slater determinant does not have the correct spin.")
         elif self.seniority is not None and slater.get_seniority(sd, self.nspatial):
-            raise ValueError('Given Slater determinant does not have the correct seniority.')
+            raise ValueError("Given Slater determinant does not have the correct seniority.")
         self.ref_sd = sd
 
     def assign_ngem(self, ngem=None):
@@ -214,8 +225,10 @@ class AP1roG(APIG):
         """
         super().assign_ngem(ngem)
         if self.ngem != self.npair:
-            raise NotImplementedError('Currently, AP1roG does not support more than the exactly '
-                                      ' right number of geminals (i.e. number of electron pairs).')
+            raise NotImplementedError(
+                "Currently, AP1roG does not support more than the exactly "
+                " right number of geminals (i.e. number of electron pairs)."
+            )
 
     def assign_orbpairs(self, orbpairs=None):
         """Assign the orbital pairs that will be used to construct the geminals.
@@ -280,10 +293,12 @@ class AP1roG(APIG):
         spatial_sd, _ = slater.split_spin(sd, self.nspatial)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
         orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
-        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_annihilated])
-        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                 for i in orbs_created])
+        inds_annihilated = np.array(
+            [self.dict_reforbpair_ind[(i, i + self.nspatial)] for i in orbs_annihilated]
+        )
+        inds_created = np.array(
+            [self.dict_orbpair_ind[(i, i + self.nspatial)] for i in orbs_created]
+        )
 
         # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
         return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
@@ -307,14 +322,15 @@ class AP1roG(APIG):
         spatial_sd, _ = slater.split_spin(sd, self.nspatial)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
         orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
-        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_annihilated])
-        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                 for i in orbs_created])
+        inds_annihilated = np.array(
+            [self.dict_reforbpair_ind[(i, i + self.nspatial)] for i in orbs_annihilated]
+        )
+        inds_created = np.array(
+            [self.dict_orbpair_ind[(i, i + self.nspatial)] for i in orbs_created]
+        )
 
         # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
-        return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created,
-                                      deriv=deriv)
+        return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created, deriv=deriv)
 
     # FIXME: allow other pairing schemes.
     def get_overlap(self, sd, deriv=None):
@@ -357,24 +373,26 @@ class AP1roG(APIG):
         # convert to spatial orbitals
         # NOTE: these variables are essentially the same as the output of
         #       generate_possible_orbpairs
-        inds_annihilated = np.array([self.dict_reforbpair_ind[(i, i+self.nspatial)]
-                                     for i in orbs_annihilated])
-        inds_created = np.array([self.dict_orbpair_ind[(i, i+self.nspatial)]
-                                 for i in orbs_created])
+        inds_annihilated = np.array(
+            [self.dict_reforbpair_ind[(i, i + self.nspatial)] for i in orbs_annihilated]
+        )
+        inds_created = np.array(
+            [self.dict_orbpair_ind[(i, i + self.nspatial)] for i in orbs_created]
+        )
 
         # if no derivatization
         if deriv is None:
             if inds_annihilated.size == inds_created.size == 0:
                 return 1.0
 
-            return self._cache_fns['overlap'](sd)
+            return self._cache_fns["overlap"](sd)
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
-            raise TypeError('Index for derivatization must be provided as an integer.')
+            raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:
             return 0.0
         if inds_annihilated.size == inds_created.size == 0:
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._cache_fns["overlap derivative"](sd, deriv)

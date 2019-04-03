@@ -120,9 +120,9 @@ class MatrixProductState(BaseWavefunction):
             dimension = self.nspin
 
         if not isinstance(dimension, int):
-            raise TypeError('Provided dimension must be an integer or None.')
+            raise TypeError("Provided dimension must be an integer or None.")
         elif dimension <= 0:
-            raise ValueError('Dimension of the matrices must be given as a nonnegative integer.')
+            raise ValueError("Dimension of the matrices must be given as a nonnegative integer.")
 
         self.dimension = dimension
 
@@ -183,9 +183,9 @@ class MatrixProductState(BaseWavefunction):
 
         """
         if not isinstance(index, (int, np.int64)):
-            raise TypeError('Given index must be an integer.')
+            raise TypeError("Given index must be an integer.")
         elif not 0 <= index < self.nspatial:
-            raise ValueError('Given index must be greater than or equal to zero or less than K.')
+            raise ValueError("Given index must be greater than or equal to zero or less than K.")
 
         if index == 0:
             return (4, 1, self.dimension)
@@ -223,8 +223,9 @@ class MatrixProductState(BaseWavefunction):
         else:
             # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
             #       last one)
-            start = (np.prod(self.get_matrix_shape(0)) +
-                     np.prod(self.get_matrix_shape(1)) * (index - 1))
+            start = np.prod(self.get_matrix_shape(0)) + np.prod(self.get_matrix_shape(1)) * (
+                index - 1
+            )
             return (start, start + np.prod(self.get_matrix_shape(index)))
 
     def get_matrix(self, index):
@@ -243,7 +244,7 @@ class MatrixProductState(BaseWavefunction):
         """
         start_ind, end_ind = self.get_matrix_indices(index)
         matrix_shape = self.get_matrix_shape(index)
-        return self.params[start_ind: end_ind].reshape(matrix_shape)
+        return self.params[start_ind:end_ind].reshape(matrix_shape)
 
     def decompose_index(self, param_index):
         """Return the indices of the spatial orbital, occupation, row and column indices.
@@ -311,9 +312,10 @@ class MatrixProductState(BaseWavefunction):
         #       last one)
         #       assumes that there are K matrices
         matrices = [np.zeros(self.get_matrix_shape(0), dtype=self.dtype)]
-        matrices += [np.zeros(self.get_matrix_shape(1), dtype=self.dtype)
-                     for i in range(self.nspatial - 2)]
-        matrices += [np.zeros(self.get_matrix_shape(self.nspatial-1), dtype=self.dtype)]
+        matrices += [
+            np.zeros(self.get_matrix_shape(1), dtype=self.dtype) for i in range(self.nspatial - 2)
+        ]
+        matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1), dtype=self.dtype)]
 
         ground_sd = slater.ground(self.nelec, self.nspin)
         occ_indices = self.get_occupation_indices(ground_sd)
@@ -326,7 +328,7 @@ class MatrixProductState(BaseWavefunction):
         for i, ind in enumerate(occ_indices[1:-1]):
             # select the diagonal
             diag_indices = np.arange(self.dimension)
-            matrices[i+1][ind, diag_indices, diag_indices] = scale
+            matrices[i + 1][ind, diag_indices, diag_indices] = scale
         # set the last matrix
         matrices[-1][occ_indices[-1], :, 0] = scale
         # flatten and join together
@@ -467,10 +469,10 @@ class MatrixProductState(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._cache_fns["overlap"](sd)
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
-            raise TypeError('Given derivatization index must be an integer.')
+            raise TypeError("Given derivatization index must be an integer.")
 
         if not 0 <= deriv < self.nparams:
             return 0.0
@@ -480,4 +482,4 @@ class MatrixProductState(BaseWavefunction):
         if deriv_occ != occ_indices[deriv_matrix]:
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._cache_fns["overlap derivative"](sd, deriv)

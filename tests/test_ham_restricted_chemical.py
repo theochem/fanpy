@@ -31,10 +31,11 @@ def test_integrate_sd_sd_trivial():
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
     assert (0, two_int[0, 1, 1, 0], 0) == test.integrate_sd_sd(0b110001, 0b101010, sign=1)
     assert (0, -two_int[0, 1, 1, 0], 0) == test.integrate_sd_sd(0b110001, 0b101010, sign=-1)
-    assert (0,
-            -two_int[1, 1, 1, 0] - two_int[0, 1, 1, 1]
-            + two_int[0, 0, 1, 0] + two_int[0, 1, 0, 0],
-            0) == test.integrate_sd_sd(0b110001, 0b101010, sign=1, deriv=0)
+    assert (
+        0,
+        -two_int[1, 1, 1, 0] - two_int[0, 1, 1, 1] + two_int[0, 0, 1, 0] + two_int[0, 1, 0, 0],
+        0,
+    ) == test.integrate_sd_sd(0b110001, 0b101010, sign=1, deriv=0)
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -43,12 +44,12 @@ def test_integrate_sd_sd_h2_631gdp():
     Compare CI matrix with the PySCF result.
 
     """
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('data_h2_hf_631gdp_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('data_h2_hf_631gdp_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile("data_h2_hf_631gdp_cimatrix.npy"))
+    ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy"))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -58,8 +59,8 @@ def test_integrate_sd_sd_h2_631gdp():
 
 def test_integrate_sd_sd_lih_631g_case():
     """Test RestrictedChemicalHamiltonian.integrate_sd_sd using sd's of LiH HF/6-31G orbitals."""
-    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     sd1 = 0b0000000001100000000111
@@ -73,12 +74,12 @@ def test_integrate_sd_sd_lih_631g_full_slow():
     Compared to all of the CI matrix.
 
     """
-    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
-    ref_ci_matrix = np.load(find_datafile('data_lih_hf_631g_cimatrix.npy'))
-    ref_pspace = np.load(find_datafile('data_lih_hf_631g_civec.npy'))
+    ref_ci_matrix = np.load(find_datafile("data_lih_hf_631g_cimatrix.npy"))
+    ref_pspace = np.load(find_datafile("data_lih_hf_631g_civec.npy"))
 
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
@@ -108,30 +109,38 @@ def test_integrate_wfn_sd():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     test_wfn = type(
-        "Temporary wavefunction.", (object, ),
-        {'get_overlap': lambda sd, deriv=None:
-         1 if sd == 0b0101 else 2 if sd == 0b1010 else 3 if sd == 0b1100 else 0}
+        "Temporary wavefunction.",
+        (object,),
+        {
+            "get_overlap": lambda sd, deriv=None: 1
+            if sd == 0b0101
+            else 2
+            if sd == 0b1010
+            else 3
+            if sd == 0b1100
+            else 0
+        },
     )
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101)
-    assert one_energy == 1*1 + 1*1
-    assert coulomb == 1*5 + 2*8
+    assert one_energy == 1 * 1 + 1 * 1
+    assert coulomb == 1 * 5 + 2 * 8
     assert exchange == 0
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1010)
-    assert one_energy == 2*4 + 2*4
-    assert coulomb == 1*17 + 2*20
+    assert one_energy == 2 * 4 + 2 * 4
+    assert coulomb == 1 * 17 + 2 * 20
     assert exchange == 0
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0110)
-    assert one_energy == 1*3 + 2*2
-    assert coulomb == 1*9 + 2*16
+    assert one_energy == 1 * 3 + 2 * 2
+    assert coulomb == 1 * 9 + 2 * 16
     assert exchange == 0
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1100)
-    assert one_energy == 1*3 + 3*4
-    assert coulomb == 3*10
-    assert exchange == -3*11
+    assert one_energy == 1 * 3 + 3 * 4
+    assert coulomb == 3 * 10
+    assert exchange == -3 * 11
 
 
 def test_param_ind_to_rowcol_ind():
@@ -139,8 +148,8 @@ def test_param_ind_to_rowcol_ind():
     for n in range(1, 20):
         ham = RestrictedChemicalHamiltonian(np.random.rand(n, n), np.random.rand(n, n, n, n))
         for row_ind in range(n):
-            for col_ind in range(row_ind+1, n):
-                param_ind = row_ind * n - row_ind*(row_ind+1)/2 + col_ind - row_ind - 1
+            for col_ind in range(row_ind + 1, n):
+                param_ind = row_ind * n - row_ind * (row_ind + 1) / 2 + col_ind - row_ind - 1
                 assert ham.param_ind_to_rowcol_ind(param_ind) == (row_ind, col_ind)
 
 
@@ -165,8 +174,8 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
@@ -177,10 +186,12 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                 addition[i] = epsilon
                 test_ham2 = RestrictedChemicalHamiltonian(one_int, two_int, params=addition)
 
-                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
-                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+                assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
 # TODO: add test for comparing Unrestricted with Generalized
@@ -190,8 +201,8 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy"))
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
@@ -199,8 +210,8 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
     assert np.allclose(one_int, one_int.T)
-    assert np.allclose(np.einsum('ijkl->jilk', two_int), two_int)
-    assert np.allclose(np.einsum('ijkl->klij', two_int), two_int)
+    assert np.allclose(np.einsum("ijkl->jilk", two_int), two_int)
+    assert np.allclose(np.einsum("ijkl->klij", two_int), two_int)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -209,10 +220,12 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
                 addition[i] = epsilon
                 test_ham2 = RestrictedChemicalHamiltonian(one_int, two_int, params=addition)
 
-                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
-                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+                assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
 def test_integrate_sd_sd_deriv_fdiff_random():
@@ -225,13 +238,13 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     one_int = one_int + one_int.T
 
     two_int = np.random.rand(4, 4, 4, 4)
-    two_int = np.einsum('ijkl->jilk', two_int) + two_int
-    two_int = np.einsum('ijkl->klij', two_int) + two_int
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
 
     # check that the in tegrals have the appropriate symmetry
     assert np.allclose(one_int, one_int.T)
-    assert np.allclose(two_int, np.einsum('ijkl->jilk', two_int))
-    assert np.allclose(two_int, np.einsum('ijkl->klij', two_int))
+    assert np.allclose(two_int, np.einsum("ijkl->jilk", two_int))
+    assert np.allclose(two_int, np.einsum("ijkl->klij", two_int))
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
@@ -244,10 +257,12 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                 addition[i] = epsilon
                 test_ham2 = RestrictedChemicalHamiltonian(one_int, two_int, params=addition)
 
-                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
-                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+                assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
@@ -259,13 +274,13 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
     one_int = np.random.rand(2, 2)
     one_int = one_int + one_int.T
     two_int = np.random.rand(2, 2, 2, 2)
-    two_int = np.einsum('ijkl->jilk', two_int) + two_int
-    two_int = np.einsum('ijkl->klij', two_int) + two_int
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
 
     # check that the integrals have the appropriate symmetry
     assert np.allclose(one_int, one_int.T)
-    assert np.allclose(two_int, np.einsum('ijkl->jilk', two_int))
-    assert np.allclose(two_int, np.einsum('ijkl->klij', two_int))
+    assert np.allclose(two_int, np.einsum("ijkl->jilk", two_int))
+    assert np.allclose(two_int, np.einsum("ijkl->klij", two_int))
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
@@ -278,7 +293,9 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
                 addition[i] = epsilon
                 test_ham2 = RestrictedChemicalHamiltonian(one_int, two_int, params=addition)
 
-                finite_diff = (np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                               - np.array(test_ham.integrate_sd_sd(sd1, sd2))) / epsilon
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
-                assert np.allclose(finite_diff, derivative, atol=20*epsilon)
+                assert np.allclose(finite_diff, derivative, atol=20 * epsilon)

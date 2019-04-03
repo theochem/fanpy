@@ -82,6 +82,7 @@ class FCI(CIWavefunction):
         Return the overlap of the CI wavefunction with a Slater determinant.
 
     """
+
     def assign_seniority(self, seniority=None):
         r"""Assign the seniority of the wavefunction.
 
@@ -95,8 +96,10 @@ class FCI(CIWavefunction):
         """
         super().assign_seniority(seniority)
         if self.seniority is not None:
-            raise ValueError('Only seniority of `None` is supported with the FCI wavefunction. '
-                             'i.e. All seniorities must be enabled.')
+            raise ValueError(
+                "Only seniority of `None` is supported with the FCI wavefunction. "
+                "i.e. All seniorities must be enabled."
+            )
 
     def assign_sd_vec(self, sd_vec=None):
         """Assign the list of Slater determinants from which the CI wavefunction is constructed.
@@ -113,6 +116,8 @@ class FCI(CIWavefunction):
         if sd_vec is None:
             super().assign_sd_vec(sd_vec)
         else:
-            raise ValueError('Only the default list of Slater determinants is allowed. i.e. sd_vec '
-                             'is `None`. If you would like to customize your CI wavefunction, use '
-                             'CIWavefunction instead.')
+            raise ValueError(
+                "Only the default list of Slater determinants is allowed. i.e. sd_vec "
+                "is `None`. If you would like to customize your CI wavefunction, use "
+                "CIWavefunction instead."
+            )

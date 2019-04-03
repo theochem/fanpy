@@ -19,8 +19,14 @@ import numpy as np
 dirname = os.path.dirname(os.path.abspath(__file__))
 
 
-def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_name='oneint.npy',
-                                 twoint_name='twoint.npy', remove_npyfiles=False, **kwargs):
+def generate_hartreefock_results(
+    calctype,
+    energies_name="energies.npy",
+    oneint_name="oneint.npy",
+    twoint_name="twoint.npy",
+    remove_npyfiles=False,
+    **kwargs
+):
     """Extract results from a Hartree Fock calculation.
 
     Parameters
@@ -70,13 +76,15 @@ def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_
     """
     # get python interpreter
     try:
-        if calctype in ['horton_hartreefock.py', 'horton_gaussian_fchk.py']:
-            python_name = os.environ['HORTONPYTHON']
-        elif calctype == 'pyscf_hartreefock.py':
-            python_name = os.environ['PYSCFPYTHON']
+        if calctype in ["horton_hartreefock.py", "horton_gaussian_fchk.py"]:
+            python_name = os.environ["HORTONPYTHON"]
+        elif calctype == "pyscf_hartreefock.py":
+            python_name = os.environ["PYSCFPYTHON"]
         else:
-            raise ValueError("The calctype must be one of 'horton_hartreefock.py', "
-                             "'horton_gaussian_fchk.py', and 'pyscf_hartreefock.py'.")
+            raise ValueError(
+                "The calctype must be one of 'horton_hartreefock.py', "
+                "'horton_gaussian_fchk.py', and 'pyscf_hartreefock.py'."
+            )
     except KeyError:
         python_name = sys.executable
 
@@ -84,8 +92,16 @@ def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
     # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
-    call([python_name, os.path.join(dirname, '..', '..', 'scripts', calctype),
-          energies_name, oneint_name, twoint_name, *kwargs])
+    call(
+        [
+            python_name,
+            os.path.join(dirname, "..", "..", "scripts", calctype),
+            energies_name,
+            oneint_name,
+            twoint_name,
+            *kwargs,
+        ]
+    )
     el_energy, nuc_nuc_energy = np.load(energies_name)
     oneint = np.load(oneint_name)
     if oneint.ndim == 3:
@@ -102,8 +118,9 @@ def generate_hartreefock_results(calctype, energies_name='energies.npy', oneint_
     return el_energy, nuc_nuc_energy, oneint, twoint
 
 
-def generate_fci_results(cimatrix_name='cimatrix.npy', sds_name='sds.npy', remove_npyfiles=False,
-                         **kwargs):
+def generate_fci_results(
+    cimatrix_name="cimatrix.npy", sds_name="sds.npy", remove_npyfiles=False, **kwargs
+):
     """Generate results of FCI calculation (from PySCF).
 
     Parameters
@@ -133,30 +150,37 @@ def generate_fci_results(cimatrix_name='cimatrix.npy', sds_name='sds.npy', remov
     """
     # get python interpreter
     try:
-        python_name = os.environ['PYSCFPYTHON']
+        python_name = os.environ["PYSCFPYTHON"]
     except KeyError:
         python_name = sys.executable
 
     # convert integrals
-    if isinstance(kwargs['h1e'], np.ndarray):
-        np.save('temp_h1e.npy', kwargs['h1e'])
-        kwargs['h1e'] = 'temp_h1e.npy'
-    if isinstance(kwargs['eri'], np.ndarray):
-        np.save('temp_eri.npy', kwargs['eri'])
-        kwargs['eri'] = 'temp_eri.npy'
+    if isinstance(kwargs["h1e"], np.ndarray):
+        np.save("temp_h1e.npy", kwargs["h1e"])
+        kwargs["h1e"] = "temp_h1e.npy"
+    if isinstance(kwargs["eri"], np.ndarray):
+        np.save("temp_eri.npy", kwargs["eri"])
+        kwargs["eri"] = "temp_eri.npy"
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
     # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
-    call([python_name, os.path.join(dirname, '..', '..', 'scripts', 'pyscf_generate_fci_matrix.py'),
-          cimatrix_name, sds_name, *kwargs])
+    call(
+        [
+            python_name,
+            os.path.join(dirname, "..", "..", "scripts", "pyscf_generate_fci_matrix.py"),
+            cimatrix_name,
+            sds_name,
+            *kwargs,
+        ]
+    )
 
     cimatrix = np.load(cimatrix_name)
     sds = np.load(sds_name).tolist()
 
     if remove_npyfiles:
-        os.remove('temp_h1e.npy')
-        os.remove('temp_eri.npy')
+        os.remove("temp_h1e.npy")
+        os.remove("temp_eri.npy")
         os.remove(cimatrix_name)
         os.remove(sds_name)
 

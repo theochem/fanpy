@@ -44,14 +44,14 @@ def test_fci_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
     results = brute(fci, ham)
-    energy = results['energy']
+    energy = results["energy"]
     # compare with number from Gaussian
     assert abs(energy + nuc_nuc - (-1.1651486697)) < 1e-7
 
@@ -71,14 +71,14 @@ def test_fci_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
     results = brute(fci, ham)
-    energy = results['energy']
+    energy = results["energy"]
     # compare with number from Gaussian
     assert abs(energy + nuc_nuc - (-7.9723355823)) < 1e-7
 
@@ -98,13 +98,13 @@ def test_fci_lih_631g_slow():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_631g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_631g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
     # optimize
     results = brute(fci, ham)
-    energy = results['energy']
+    energy = results["energy"]
     # compare with number from Gaussian
     assert abs(energy + nuc_nuc - (-7.9982761)) < 1e-7

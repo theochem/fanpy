@@ -15,6 +15,7 @@ from utils import skip_init, find_datafile
 
 class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
+
     _spin = None
     _seniority = None
 
@@ -57,13 +58,13 @@ def test_jacobi_spin():
     test.wfn = test_wfn
 
     # restricted
-    test.orbtype = 'restricted'
+    test.orbtype = "restricted"
     assert test.spin == 2
     # unrestricted
-    test.orbtype = 'unrestricted'
+    test.orbtype = "unrestricted"
     assert test.spin == 2
     # generalized
-    test.orbtype = 'generalized'
+    test.orbtype = "generalized"
     assert test.spin is None
 
 
@@ -75,13 +76,13 @@ def test_jacobi_seniority():
     test.wfn = test_wfn
 
     # restricted
-    test.orbtype = 'restricted'
+    test.orbtype = "restricted"
     assert test.seniority == 2
     # unrestricted
-    test.orbtype = 'unrestricted'
+    test.orbtype = "unrestricted"
     assert test.seniority == 2
     # generalized
-    test.orbtype = 'generalized'
+    test.orbtype = "generalized"
     assert test.seniority is None
 
 
@@ -94,7 +95,7 @@ def test_jacobi_jacobi_rotation():
     test.nspin = 6
 
     # generalized
-    test.orbtype = 'generalized'
+    test.orbtype = "generalized"
     test.jacobi_indices = (0, 4)
     answer = np.identity(6)
     answer[0, 0] = np.cos(theta)
@@ -105,7 +106,7 @@ def test_jacobi_jacobi_rotation():
     assert np.allclose(test.jacobi_rotation[0], answer)
 
     # restricted
-    test.orbtype = 'restricted'
+    test.orbtype = "restricted"
     test.jacobi_indices = (0, 2)
     answer = np.identity(3)
     answer[0, 0] = np.cos(theta)
@@ -116,7 +117,7 @@ def test_jacobi_jacobi_rotation():
     assert np.allclose(test.jacobi_rotation[0], answer)
 
     # unrestricted
-    test.orbtype = 'unrestricted'
+    test.orbtype = "unrestricted"
     test.jacobi_indices = (0, 2)
     answer = np.identity(3)
     answer[0, 0] = np.cos(theta)
@@ -158,16 +159,16 @@ def test_jacobi_assign_orbtype():
     test.memory = 10
 
     test.assign_orbtype(None)
-    assert test.orbtype == 'restricted'
-    test.assign_orbtype('restricted')
-    assert test.orbtype == 'restricted'
-    test.assign_orbtype('unrestricted')
-    assert test.orbtype == 'unrestricted'
-    test.assign_orbtype('generalized')
-    assert test.orbtype == 'generalized'
+    assert test.orbtype == "restricted"
+    test.assign_orbtype("restricted")
+    assert test.orbtype == "restricted"
+    test.assign_orbtype("unrestricted")
+    assert test.orbtype == "unrestricted"
+    test.assign_orbtype("generalized")
+    assert test.orbtype == "generalized"
 
     with pytest.raises(ValueError):
-        test.assign_orbtype('lkjsadf')
+        test.assign_orbtype("lkjsadf")
 
 
 def test_jacobi_assign_jacobi_indices():
@@ -194,7 +195,7 @@ def test_jacobi_assign_jacobi_indices():
     with pytest.raises(TypeError):
         test.assign_jacobi_indices([0, 1.0])
     with pytest.raises(TypeError):
-        test.assign_jacobi_indices(('0', 1))
+        test.assign_jacobi_indices(("0", 1))
 
     # negative entry
     with pytest.raises(ValueError):
@@ -203,17 +204,17 @@ def test_jacobi_assign_jacobi_indices():
     with pytest.raises(ValueError):
         test.assign_jacobi_indices([0, 0])
     # bad input for given orbital type
-    test.orbtype = 'generalized'
+    test.orbtype = "generalized"
     with pytest.raises(ValueError):
         test.assign_jacobi_indices([0, 10])
     test.assign_jacobi_indices([0, 9])
     assert test.jacobi_indices == (0, 9)
-    test.orbtype = 'restricted'
+    test.orbtype = "restricted"
     with pytest.raises(ValueError):
         test.assign_jacobi_indices([0, 5])
     test.assign_jacobi_indices([0, 4])
     assert test.jacobi_indices == (0, 4)
-    test.orbtype = 'unrestricted'
+    test.orbtype = "unrestricted"
     with pytest.raises(ValueError):
         test.assign_jacobi_indices([0, 6])
     with pytest.raises(ValueError):
@@ -243,7 +244,7 @@ def test_jacobi_get_overlap():
     test.load_cache()
 
     # generalized
-    test.assign_orbtype('generalized')
+    test.assign_orbtype("generalized")
     test.assign_jacobi_indices((0, 3))
     # jacobi matrix [[cos, 0, 0, sin],
     #                [0, 1, 0, 0],
@@ -257,20 +258,28 @@ def test_jacobi_get_overlap():
     assert np.isclose(test.get_overlap(0b0110), 1 * wfn_sd_coeff[0b0110])
     # 0b0101 uses [[cos, 0, 0, sin],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0101), (np.cos(test.params) * wfn_sd_coeff[0b0101] -
-                                                 np.sin(test.params) * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b0101),
+        (np.cos(test.params) * wfn_sd_coeff[0b0101] - np.sin(test.params) * wfn_sd_coeff[0b1100]),
+    )
     # 0b0011 uses [[cos, 0, 0, sin],
     #              [0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011), (np.cos(test.params) * wfn_sd_coeff[0b0011] -
-                                                 np.sin(test.params) * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b0011),
+        (np.cos(test.params) * wfn_sd_coeff[0b0011] - np.sin(test.params) * wfn_sd_coeff[0b1010]),
+    )
     # 0b0101 uses [[0, 0, 1, 0],
     #              [-sin, 0, 0, cos]]
-    assert np.isclose(test.get_overlap(0b1100), (np.sin(test.params) * wfn_sd_coeff[0b0101] +
-                                                 np.cos(test.params) * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b1100),
+        (np.sin(test.params) * wfn_sd_coeff[0b0101] + np.cos(test.params) * wfn_sd_coeff[0b1100]),
+    )
     # 0b0011 uses [[0, 1, 0, 0]],
     #              [-sin, 0, 0, cos]]
-    assert np.isclose(test.get_overlap(0b1010), (np.sin(test.params) * wfn_sd_coeff[0b0011] +
-                                                 np.cos(test.params) * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b1010),
+        (np.sin(test.params) * wfn_sd_coeff[0b0011] + np.cos(test.params) * wfn_sd_coeff[0b1010]),
+    )
 
     test.assign_jacobi_indices((0, 2))
     # jacobi matrix [[cos, 0, sin, 0],
@@ -279,15 +288,19 @@ def test_jacobi_get_overlap():
     #                [0, 0, 0, 1]]
     # 0b1001 uses [[cos, 0, sin, 0],
     #              [0, 0, 0, 1]]
-    assert np.isclose(test.get_overlap(0b1001), (np.cos(test.params) * wfn_sd_coeff[0b1001] +
-                                                 np.sin(test.params) * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b1001),
+        (np.cos(test.params) * wfn_sd_coeff[0b1001] + np.sin(test.params) * wfn_sd_coeff[0b1100]),
+    )
     # 0b0011 uses [[cos, 0, sin, 0],
     #              [0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011), (np.cos(test.params) * wfn_sd_coeff[0b0011] -
-                                                 np.sin(test.params) * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0011),
+        (np.cos(test.params) * wfn_sd_coeff[0b0011] - np.sin(test.params) * wfn_sd_coeff[0b0110]),
+    )
 
     # unrestricted
-    test.assign_orbtype('unrestricted')
+    test.assign_orbtype("unrestricted")
     test.assign_jacobi_indices((0, 1))
     test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
@@ -302,15 +315,19 @@ def test_jacobi_get_overlap():
     assert np.isclose(test.get_overlap(0b1100), 1 * wfn_sd_coeff[0b1100])
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0101), (np.cos(test.params) * wfn_sd_coeff[0b0101] +
-                                                 np.sin(test.params) * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0101),
+        (np.cos(test.params) * wfn_sd_coeff[0b0101] + np.sin(test.params) * wfn_sd_coeff[0b0110]),
+    )
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0110), (-np.sin(test.params) * wfn_sd_coeff[0b0101] +
-                                                 np.cos(test.params) * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0110),
+        (-np.sin(test.params) * wfn_sd_coeff[0b0101] + np.cos(test.params) * wfn_sd_coeff[0b0110]),
+    )
 
     # restricted
-    test.assign_orbtype('restricted')
+    test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 1))
     test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
@@ -325,27 +342,37 @@ def test_jacobi_get_overlap():
     assert np.isclose(test.get_overlap(0b1100), 1 * wfn_sd_coeff[0b1100])
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, cos, sin]]
-    assert np.isclose(test.get_overlap(0b0101), (np.cos(test.params)**2 * wfn_sd_coeff[0b0101] +
-                                                 np.sin(test.params)**2 * wfn_sd_coeff[0b1010] +
-                                                 np.cos(test.params) * np.sin(test.params)
-                                                 * wfn_sd_coeff[0b1001] +
-                                                 np.cos(test.params) * np.sin(test.params)
-                                                 * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0101),
+        (
+            np.cos(test.params) ** 2 * wfn_sd_coeff[0b0101]
+            + np.sin(test.params) ** 2 * wfn_sd_coeff[0b1010]
+            + np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b1001]
+            + np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b0110]
+        ),
+    )
     # 0b1001 uses [[cos, sin, 0, 0],
     #              [0, 0, -sin, cos]]
-    assert np.isclose(test.get_overlap(0b1001),
-                      (np.cos(test.params)**2 * wfn_sd_coeff[0b1001] -
-                       np.sin(test.params)**2 * wfn_sd_coeff[0b0110] +
-                       np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b1010] -
-                       np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b0101]))
+    assert np.isclose(
+        test.get_overlap(0b1001),
+        (
+            np.cos(test.params) ** 2 * wfn_sd_coeff[0b1001]
+            - np.sin(test.params) ** 2 * wfn_sd_coeff[0b0110]
+            + np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b1010]
+            - np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b0101]
+        ),
+    )
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, cos, sin]]
-    assert np.isclose(test.get_overlap(0b0110), (np.cos(test.params)**2 * wfn_sd_coeff[0b0110] -
-                                                 np.sin(test.params)**2 * wfn_sd_coeff[0b1001] -
-                                                 np.cos(test.params) * np.sin(test.params)
-                                                 * wfn_sd_coeff[0b0101] +
-                                                 np.cos(test.params) * np.sin(test.params)
-                                                 * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b0110),
+        (
+            np.cos(test.params) ** 2 * wfn_sd_coeff[0b0110]
+            - np.sin(test.params) ** 2 * wfn_sd_coeff[0b1001]
+            - np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b0101]
+            + np.cos(test.params) * np.sin(test.params) * wfn_sd_coeff[0b1010]
+        ),
+    )
 
 
 def test_jacobi_get_overlap_restricted():
@@ -365,7 +392,7 @@ def test_jacobi_get_overlap_restricted():
     sin = np.sin(test.params)
     cos = np.cos(test.params)
 
-    test.assign_orbtype('restricted')
+    test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 2))
     # jacobi matrix [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                [0, 1, 0, 0, 0, 0, 0, 0],
@@ -394,58 +421,86 @@ def test_jacobi_get_overlap_restricted():
     #                  [0, 1, 0, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
-    assert np.isclose(test.get_overlap(0b00010111), (cos * wfn_sd_coeff[0b00010111] +
-                                                     sin * wfn_sd_coeff[0b01000111]))
+    assert np.isclose(
+        test.get_overlap(0b00010111),
+        (cos * wfn_sd_coeff[0b00010111] + sin * wfn_sd_coeff[0b01000111]),
+    )
     # 0b01101010 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01101010), (sin * wfn_sd_coeff[0b00111010] +
-                                                     cos * wfn_sd_coeff[0b01101010]))
+    assert np.isclose(
+        test.get_overlap(0b01101010),
+        (sin * wfn_sd_coeff[0b00111010] + cos * wfn_sd_coeff[0b01101010]),
+    )
     # 0b00101011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00101011), (cos * wfn_sd_coeff[0b00101011] -
-                                                     sin * wfn_sd_coeff[0b00101110]))
+    assert np.isclose(
+        test.get_overlap(0b00101011),
+        (cos * wfn_sd_coeff[0b00101011] - sin * wfn_sd_coeff[0b00101110]),
+    )
     # 0b00110011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00110011), (cos**2 * wfn_sd_coeff[0b00110011]
-                                                     - cos * sin * wfn_sd_coeff[0b01100011]
-                                                     - cos * sin * wfn_sd_coeff[0b00110110]
-                                                     + sin**2 * wfn_sd_coeff[0b01100110]))
+    assert np.isclose(
+        test.get_overlap(0b00110011),
+        (
+            cos ** 2 * wfn_sd_coeff[0b00110011]
+            - cos * sin * wfn_sd_coeff[0b01100011]
+            - cos * sin * wfn_sd_coeff[0b00110110]
+            + sin ** 2 * wfn_sd_coeff[0b01100110]
+        ),
+    )
     # 0b01100011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01100011), (cos**2 * wfn_sd_coeff[0b01100011]
-                                                     + cos * sin * wfn_sd_coeff[0b00110011]
-                                                     - cos * sin * wfn_sd_coeff[0b01100110]
-                                                     - sin**2 * wfn_sd_coeff[0b00110110]))
+    assert np.isclose(
+        test.get_overlap(0b01100011),
+        (
+            cos ** 2 * wfn_sd_coeff[0b01100011]
+            + cos * sin * wfn_sd_coeff[0b00110011]
+            - cos * sin * wfn_sd_coeff[0b01100110]
+            - sin ** 2 * wfn_sd_coeff[0b00110110]
+        ),
+    )
     # 0b00101110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00101110), (cos * wfn_sd_coeff[0b00101110]
-                                                     + sin * wfn_sd_coeff[0b00101011]))
+    assert np.isclose(
+        test.get_overlap(0b00101110),
+        (cos * wfn_sd_coeff[0b00101110] + sin * wfn_sd_coeff[0b00101011]),
+    )
     # 0b00110110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
-    assert np.isclose(test.get_overlap(0b00110110), (cos * cos * wfn_sd_coeff[0b00110110]
-                                                     - cos * sin * wfn_sd_coeff[0b01100110]
-                                                     + cos * sin * wfn_sd_coeff[0b00110011]
-                                                     - sin * sin * wfn_sd_coeff[0b01100011]))
+    assert np.isclose(
+        test.get_overlap(0b00110110),
+        (
+            cos * cos * wfn_sd_coeff[0b00110110]
+            - cos * sin * wfn_sd_coeff[0b01100110]
+            + cos * sin * wfn_sd_coeff[0b00110011]
+            - sin * sin * wfn_sd_coeff[0b01100011]
+        ),
+    )
     # 0b01100110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01100110), (cos * cos * wfn_sd_coeff[0b01100110]
-                                                     + cos * sin * wfn_sd_coeff[0b00110110]
-                                                     + cos * sin * wfn_sd_coeff[0b01100011]
-                                                     + sin * sin * wfn_sd_coeff[0b00110011]))
+    assert np.isclose(
+        test.get_overlap(0b01100110),
+        (
+            cos * cos * wfn_sd_coeff[0b01100110]
+            + cos * sin * wfn_sd_coeff[0b00110110]
+            + cos * sin * wfn_sd_coeff[0b01100011]
+            + sin * sin * wfn_sd_coeff[0b00110011]
+        ),
+    )
 
 
 def test_jacobi_get_overlap_der():
@@ -465,7 +520,7 @@ def test_jacobi_get_overlap_der():
     cos = np.cos(test.params)
 
     # generalized
-    test.assign_orbtype('generalized')
+    test.assign_orbtype("generalized")
     test.assign_jacobi_indices((0, 3))
     # jacobi matrix [[cos, 0, 0, sin],
     #                [0, 1, 0, 0],
@@ -480,20 +535,26 @@ def test_jacobi_get_overlap_der():
     assert np.isclose(test.get_overlap(0b0110, deriv=0), 0.0)
     # 0b0101 uses [[cos, 0, 0, sin],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (-sin * wfn_sd_coeff[0b0101] -
-                                                          cos * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b0101, deriv=0),
+        (-sin * wfn_sd_coeff[0b0101] - cos * wfn_sd_coeff[0b1100]),
+    )
     # 0b0011 uses [[cos, 0, 0, sin],
     #              [0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011, deriv=0), (-sin * wfn_sd_coeff[0b0011] -
-                                                          cos * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b0011, deriv=0),
+        (-sin * wfn_sd_coeff[0b0011] - cos * wfn_sd_coeff[0b1010]),
+    )
     # 0b0101 uses [[0, 0, 1, 0],
     #              [-sin, 0, 0, cos]]
-    assert np.isclose(test.get_overlap(0b1100, deriv=0), (cos * wfn_sd_coeff[0b0101] -
-                                                          sin * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b1100, deriv=0), (cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b1100])
+    )
     # 0b0011 uses [[0, 1, 0, 0]],
     #              [-sin, 0, 0, cos]]
-    assert np.isclose(test.get_overlap(0b1010, deriv=0), (cos * wfn_sd_coeff[0b0011] -
-                                                          sin * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b1010, deriv=0), (cos * wfn_sd_coeff[0b0011] - sin * wfn_sd_coeff[0b1010])
+    )
 
     test.assign_jacobi_indices((0, 2))
     # jacobi matrix [[cos, 0, sin, 0],
@@ -502,15 +563,19 @@ def test_jacobi_get_overlap_der():
     #                [0, 0, 0, 1]]
     # 0b1001 uses [[cos, 0, sin, 0],
     #              [0, 0, 0, 1]]
-    assert np.isclose(test.get_overlap(0b1001, deriv=0), (-sin * wfn_sd_coeff[0b1001] +
-                                                          cos * wfn_sd_coeff[0b1100]))
+    assert np.isclose(
+        test.get_overlap(0b1001, deriv=0),
+        (-sin * wfn_sd_coeff[0b1001] + cos * wfn_sd_coeff[0b1100]),
+    )
     # 0b0011 uses [[cos, 0, sin, 0],
     #              [0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011, deriv=0), (-sin * wfn_sd_coeff[0b0011] -
-                                                          cos * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0011, deriv=0),
+        (-sin * wfn_sd_coeff[0b0011] - cos * wfn_sd_coeff[0b0110]),
+    )
 
     # unrestricted
-    test.assign_orbtype('unrestricted')
+    test.assign_orbtype("unrestricted")
     test.assign_jacobi_indices((0, 1))
     test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
@@ -525,15 +590,19 @@ def test_jacobi_get_overlap_der():
     assert np.isclose(test.get_overlap(0b1100, deriv=0), 0.0)
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (-sin * wfn_sd_coeff[0b0101] +
-                                                          cos * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0101, deriv=0),
+        (-sin * wfn_sd_coeff[0b0101] + cos * wfn_sd_coeff[0b0110]),
+    )
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0110, deriv=0), (-cos * wfn_sd_coeff[0b0101] -
-                                                          sin * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0110, deriv=0),
+        (-cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b0110]),
+    )
 
     # restricted
-    test.assign_orbtype('restricted')
+    test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 1))
     test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
@@ -548,22 +617,37 @@ def test_jacobi_get_overlap_der():
     assert np.isclose(test.get_overlap(0b1100, deriv=0), 0.0)
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, cos, sin]]
-    assert np.isclose(test.get_overlap(0b0101, deriv=0), (-2*cos*sin * wfn_sd_coeff[0b0101] +
-                                                          2*sin*cos * wfn_sd_coeff[0b1010] +
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b1001] +
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b0110]))
+    assert np.isclose(
+        test.get_overlap(0b0101, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b0101]
+            + 2 * sin * cos * wfn_sd_coeff[0b1010]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b1001]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b0110]
+        ),
+    )
     # 0b1001 uses [[cos, sin, 0, 0],
     #              [0, 0, -sin, cos]]
-    assert np.isclose(test.get_overlap(0b1001, deriv=0), (-2*cos*sin * wfn_sd_coeff[0b1001] -
-                                                          2*sin*cos * wfn_sd_coeff[0b0110] +
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b1010] -
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b0101]))
+    assert np.isclose(
+        test.get_overlap(0b1001, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b1001]
+            - 2 * sin * cos * wfn_sd_coeff[0b0110]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b1010]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b0101]
+        ),
+    )
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, cos, sin]]
-    assert np.isclose(test.get_overlap(0b0110, deriv=0), (-2*cos*sin * wfn_sd_coeff[0b0110] -
-                                                          2*sin*cos * wfn_sd_coeff[0b1001] -
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b0101] +
-                                                          (cos**2 - sin**2) * wfn_sd_coeff[0b1010]))
+    assert np.isclose(
+        test.get_overlap(0b0110, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b0110]
+            - 2 * sin * cos * wfn_sd_coeff[0b1001]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b0101]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b1010]
+        ),
+    )
 
 
 def test_jacobi_get_overlap_restricted_der():
@@ -583,7 +667,7 @@ def test_jacobi_get_overlap_restricted_der():
     sin = np.sin(test.params)
     cos = np.cos(test.params)
 
-    test.assign_orbtype('restricted')
+    test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 2))
     # jacobi matrix [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                [0, 1, 0, 0, 0, 0, 0, 0],
@@ -612,66 +696,90 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 1, 0, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
-    assert np.isclose(test.get_overlap(0b00010111, deriv=0), (-sin * wfn_sd_coeff[0b00010111] +
-                                                              cos * wfn_sd_coeff[0b01000111]))
+    assert np.isclose(
+        test.get_overlap(0b00010111, deriv=0),
+        (-sin * wfn_sd_coeff[0b00010111] + cos * wfn_sd_coeff[0b01000111]),
+    )
     # 0b01101010 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01101010, deriv=0), (cos * wfn_sd_coeff[0b00111010] -
-                                                              sin * wfn_sd_coeff[0b01101010]))
+    assert np.isclose(
+        test.get_overlap(0b01101010, deriv=0),
+        (cos * wfn_sd_coeff[0b00111010] - sin * wfn_sd_coeff[0b01101010]),
+    )
     # 0b00101011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00101011, deriv=0), (-sin * wfn_sd_coeff[0b00101011] -
-                                                              cos * wfn_sd_coeff[0b00101110]))
+    assert np.isclose(
+        test.get_overlap(0b00101011, deriv=0),
+        (-sin * wfn_sd_coeff[0b00101011] - cos * wfn_sd_coeff[0b00101110]),
+    )
     # 0b00110011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00110011, deriv=0),
-                      (-2*cos*sin * wfn_sd_coeff[0b00110011]
-                       - (cos**2 - sin**2) * wfn_sd_coeff[0b01100011]
-                       - (cos**2 - sin**2) * wfn_sd_coeff[0b00110110]
-                       + 2*sin*cos * wfn_sd_coeff[0b01100110]))
+    assert np.isclose(
+        test.get_overlap(0b00110011, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b00110011]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100011]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110110]
+            + 2 * sin * cos * wfn_sd_coeff[0b01100110]
+        ),
+    )
     # 0b01100011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01100011, deriv=0),
-                      (-2*cos*sin * wfn_sd_coeff[0b01100011]
-                       + (cos**2 - sin**2) * wfn_sd_coeff[0b00110011]
-                       - (cos**2 - sin**2) * wfn_sd_coeff[0b01100110]
-                       - 2*sin*cos * wfn_sd_coeff[0b00110110]))
+    assert np.isclose(
+        test.get_overlap(0b01100011, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b01100011]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110011]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100110]
+            - 2 * sin * cos * wfn_sd_coeff[0b00110110]
+        ),
+    )
     # 0b00101110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00101110, deriv=0), (-sin * wfn_sd_coeff[0b00101110]
-                                                              + cos * wfn_sd_coeff[0b00101011]))
+    assert np.isclose(
+        test.get_overlap(0b00101110, deriv=0),
+        (-sin * wfn_sd_coeff[0b00101110] + cos * wfn_sd_coeff[0b00101011]),
+    )
     # 0b00110110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
-    assert np.isclose(test.get_overlap(0b00110110, deriv=0),
-                      (-2*cos*sin * wfn_sd_coeff[0b00110110]
-                       - (cos**2 - sin**2) * wfn_sd_coeff[0b01100110]
-                       + (cos**2 - sin**2) * wfn_sd_coeff[0b00110011]
-                       - 2*sin*cos * wfn_sd_coeff[0b01100011]))
+    assert np.isclose(
+        test.get_overlap(0b00110110, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b00110110]
+            - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100110]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110011]
+            - 2 * sin * cos * wfn_sd_coeff[0b01100011]
+        ),
+    )
     # 0b01100110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01100110, deriv=0),
-                      (-2*cos*sin * wfn_sd_coeff[0b01100110]
-                       + (cos**2 - sin**2) * wfn_sd_coeff[0b00110110]
-                       + (cos**2 - sin**2) * wfn_sd_coeff[0b01100011]
-                       + 2*sin*cos * wfn_sd_coeff[0b00110011]))
+    assert np.isclose(
+        test.get_overlap(0b01100110, deriv=0),
+        (
+            -2 * cos * sin * wfn_sd_coeff[0b01100110]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110110]
+            + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100011]
+            + 2 * sin * cos * wfn_sd_coeff[0b00110011]
+        ),
+    )
 
     # error
     with pytest.raises(ValueError):
-        test.get_overlap(0b0101, '1')
+        test.get_overlap(0b0101, "1")
     with pytest.raises(ValueError):
         test.get_overlap(0b0101, -1)
 
@@ -681,22 +789,47 @@ def test_jacobi_compare_nonorth():
     nelec = 4
     nspin = 8
     doci = DOCI(nelec, nspin)
-    doci.assign_params(np.array([7.06555071e-01, -7.06555071e-01, -4.16333634e-15, -3.88578059e-15,
-                                 -2.79272538e-02, 2.79272538e-02]))
+    doci.assign_params(
+        np.array(
+            [
+                7.06555071e-01,
+                -7.06555071e-01,
+                -4.16333634e-15,
+                -3.88578059e-15,
+                -2.79272538e-02,
+                2.79272538e-02,
+            ]
+        )
+    )
 
     # one rotation
-    jacobi = JacobiWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory,
-                                orbtype='restricted', jacobi_indices=(0, 1))
+    jacobi = JacobiWavefunction(
+        nelec,
+        nspin,
+        doci,
+        dtype=doci.dtype,
+        memory=doci.memory,
+        orbtype="restricted",
+        jacobi_indices=(0, 1),
+    )
     nonorth = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory)
 
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
     for sd in sds:
         for theta in np.linspace(-np.pi, np.pi, 100):
-            nonorth.assign_params((np.array([[np.cos(theta), np.sin(theta), 0, 0],
-                                             [-np.sin(theta), np.cos(theta), 0, 0],
-                                             [0, 0, 1, 0],
-                                             [0, 0, 0, 1]]), ))
+            nonorth.assign_params(
+                (
+                    np.array(
+                        [
+                            [np.cos(theta), np.sin(theta), 0, 0],
+                            [-np.sin(theta), np.cos(theta), 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 0, 0, 1],
+                        ]
+                    ),
+                )
+            )
             nonorth.clear_cache()
             jacobi.assign_params(np.array(theta))
             jacobi.clear_cache()
@@ -706,21 +839,42 @@ def test_jacobi_compare_nonorth():
     nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci)
     for sd in sds:
         for theta_one in np.linspace(-np.pi, np.pi, 10):
-            jacobi_one = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
-                                            wfn=doci, orbtype='restricted', jacobi_indices=(0, 1))
+            jacobi_one = JacobiWavefunction(
+                nelec,
+                nspin,
+                dtype=doci.dtype,
+                memory=doci.memory,
+                wfn=doci,
+                orbtype="restricted",
+                jacobi_indices=(0, 1),
+            )
             jacobi_one.assign_params(np.array(theta_one))
             jacobi_one.clear_cache()
             for theta_two in np.linspace(-np.pi, np.pi, 10):
-                jacobi_two = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
-                                                wfn=jacobi_one, orbtype='restricted',
-                                                jacobi_indices=(2, 3))
+                jacobi_two = JacobiWavefunction(
+                    nelec,
+                    nspin,
+                    dtype=doci.dtype,
+                    memory=doci.memory,
+                    wfn=jacobi_one,
+                    orbtype="restricted",
+                    jacobi_indices=(2, 3),
+                )
                 jacobi_two.assign_params(np.array(theta_two))
                 jacobi_two.clear_cache()
 
-                nonorth.assign_params((np.array([[np.cos(theta_one), np.sin(theta_one), 0, 0],
-                                                 [-np.sin(theta_one), np.cos(theta_one), 0, 0],
-                                                 [0, 0, np.cos(theta_two), np.sin(theta_two)],
-                                                 [0, 0, -np.sin(theta_two), np.cos(theta_two)]]), ))
+                nonorth.assign_params(
+                    (
+                        np.array(
+                            [
+                                [np.cos(theta_one), np.sin(theta_one), 0, 0],
+                                [-np.sin(theta_one), np.cos(theta_one), 0, 0],
+                                [0, 0, np.cos(theta_two), np.sin(theta_two)],
+                                [0, 0, -np.sin(theta_two), np.cos(theta_two)],
+                            ]
+                        ),
+                    )
+                )
                 nonorth.clear_cache()
 
                 assert np.isclose(nonorth.get_overlap(sd), jacobi_two.get_overlap(sd))
@@ -739,15 +893,22 @@ def test_jacobi_energy():
         """Get energy that correspond to the rotation of the given orbitals."""
         doci = DOCI(nelec, nspin)
         ham = RestrictedChemicalHamiltonian(
-                  np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy')),
-                  np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
-              )
+            np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy")),
+            np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy")),
+        )
         results = brute(doci, ham)
-        coeffs = results['eigvec']
+        coeffs = results["eigvec"]
         doci.assign_params(coeffs[:, 0].flatten())
-        jacobi = JacobiWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory,
-                                    wfn=doci, orbtype='restricted', jacobi_indices=orbpair,
-                                    params=np.array(theta))
+        jacobi = JacobiWavefunction(
+            nelec,
+            nspin,
+            dtype=doci.dtype,
+            memory=doci.memory,
+            wfn=doci,
+            orbtype="restricted",
+            jacobi_indices=orbpair,
+            params=np.array(theta),
+        )
 
         # check that rotation is unitary
         rotation = jacobi.jacobi_rotation[0]
@@ -755,38 +916,62 @@ def test_jacobi_energy():
         assert np.allclose(rotation.T.dot(rotation), np.identity(4))
 
         # rotating hamiltonian using orb_rotate_jacobi
-        if wfn_type == 'doci':
+        if wfn_type == "doci":
             wfn = doci
             ham.orb_rotate_jacobi(orbpair, theta)
             ham.cache_two_ints()
         # rotating hamiltonian using orb_rotate_matrix
-        elif wfn_type == 'doci_full':
+        elif wfn_type == "doci_full":
             wfn = doci
             ham.orb_rotate_matrix(jacobi.jacobi_rotation[0])
             ham.cache_two_ints()
         # rotating wavefunction as a JacobiWavefunction
-        elif wfn_type == 'jacobi':
+        elif wfn_type == "jacobi":
             wfn = jacobi
         # rotating wavefunction as a NonorthWavefunction
-        elif wfn_type == 'nonorth':
-            wfn = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory,
-                                      params=jacobi.jacobi_rotation)
-        norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
-        if expectation_type == 'ci matrix':
-            return sum(wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2))
-                       * wfn.get_overlap(sd2) for sd1 in sds for sd2 in sds) / norm
-        elif expectation_type == 'projected':
-            return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds)/norm
+        elif wfn_type == "nonorth":
+            wfn = NonorthWavefunction(
+                nelec,
+                nspin,
+                doci,
+                dtype=doci.dtype,
+                memory=doci.memory,
+                params=jacobi.jacobi_rotation,
+            )
+        norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
+        if expectation_type == "ci matrix":
+            return (
+                sum(
+                    wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2)) * wfn.get_overlap(sd2)
+                    for sd1 in sds
+                    for sd2 in sds
+                )
+                / norm
+            )
+        elif expectation_type == "projected":
+            return (
+                sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds) / norm
+            )
 
     for orbpair in it.combinations(range(4), 2):
         theta = np.pi * (np.random.random() - 0.5)
-        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
-                           get_energy(theta, orbpair, 'jacobi', 'ci matrix'))
-        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
-                           get_energy(theta, orbpair, 'nonorth', 'ci matrix'))
-        assert np.allclose(get_energy(theta, orbpair, 'doci', 'projected'),
-                           get_energy(theta, orbpair, 'jacobi', 'projected'))
-        assert np.allclose(get_energy(theta, orbpair, 'doci', 'projected'),
-                           get_energy(theta, orbpair, 'nonorth', 'projected'))
-        assert np.allclose(get_energy(theta, orbpair, 'doci', 'ci matrix'),
-                           get_energy(theta, orbpair, 'doci', 'projected'))
+        assert np.allclose(
+            get_energy(theta, orbpair, "doci", "ci matrix"),
+            get_energy(theta, orbpair, "jacobi", "ci matrix"),
+        )
+        assert np.allclose(
+            get_energy(theta, orbpair, "doci", "ci matrix"),
+            get_energy(theta, orbpair, "nonorth", "ci matrix"),
+        )
+        assert np.allclose(
+            get_energy(theta, orbpair, "doci", "projected"),
+            get_energy(theta, orbpair, "jacobi", "projected"),
+        )
+        assert np.allclose(
+            get_energy(theta, orbpair, "doci", "projected"),
+            get_energy(theta, orbpair, "nonorth", "projected"),
+        )
+        assert np.allclose(
+            get_energy(theta, orbpair, "doci", "ci matrix"),
+            get_energy(theta, orbpair, "doci", "projected"),
+        )

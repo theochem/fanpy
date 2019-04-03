@@ -7,7 +7,7 @@ from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.solver.wrappers import wrap_scipy
 
 
-def cma(objective, save_file='', **kwargs):
+def cma(objective, save_file="", **kwargs):
     """Solve an equation using Covariance Matrix Adaptation Evolution Strategy.
 
     See module `cma` for details.
@@ -61,46 +61,54 @@ def cma(objective, save_file='', **kwargs):
     import cma
 
     if not isinstance(objective, BaseObjective):
-        raise TypeError('Objective must be a BaseObjective instance.')
+        raise TypeError("Objective must be a BaseObjective instance.")
     elif objective.num_eqns != 1:
-        raise ValueError('Objective must contain only one equation.')
+        raise ValueError("Objective must contain only one equation.")
 
     if kwargs == {}:
-        kwargs = {'sigma0': 0.01, 'options': {'ftarget': None, 'timeout': np.inf, 'tolfun': 1e-11,
-                                              'verb_filenameprefix': 'outcmaes', 'verb_log': 0}}
+        kwargs = {
+            "sigma0": 0.01,
+            "options": {
+                "ftarget": None,
+                "timeout": np.inf,
+                "tolfun": 1e-11,
+                "verb_filenameprefix": "outcmaes",
+                "verb_log": 0,
+            },
+        }
 
     if objective.params.size == 1:
-        raise ValueError('CMA solver cannot be used on objectives with only one parameter.')
+        raise ValueError("CMA solver cannot be used on objectives with only one parameter.")
 
     results = cma.fmin(objective.objective, objective.params, **kwargs)
 
     output = {}
-    output['success'] = results[-3] != {}
-    output['params'] = results[0]
-    output['function'] = results[1]
+    output["success"] = results[-3] != {}
+    output["params"] = results[0]
+    output["function"] = results[1]
 
     if isinstance(objective, LeastSquaresEquations):
-        output['energy'] = objective.energy.params
+        output["energy"] = objective.energy.params
     elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):
-        output['energy'] = results[1]
+        output["energy"] = results[1]
 
-    if output['success']:
-        output['message'] = ('Following termination conditions are satisfied:' +
-                             ''.join(' {0}: {1},'.format(key, val)
-                                     for key, val in results[-3].items()))
-        output['message'] = output['message'][:-1] + '.'
+    if output["success"]:
+        output["message"] = "Following termination conditions are satisfied:" + "".join(
+            " {0}: {1},".format(key, val) for key, val in results[-3].items()
+        )
+        output["message"] = output["message"][:-1] + "."
     else:
-        output['message'] = 'Optimization did not succeed.'
+        output["message"] = "Optimization did not succeed."
 
-    output['internal'] = results
+    output["internal"] = results
 
-    if save_file != '':
-        np.save(save_file, output['params'])
+    if save_file != "":
+        np.save(save_file, output["params"])
 
     return output
 
 
-def minimize(objective, save_file='', **kwargs):
+def minimize(objective, save_file="", **kwargs):
     """Solve an equation using `scipy.optimize.minimize`.
 
     See module `scipy.optimize.minimize` for details.
@@ -146,21 +154,21 @@ def minimize(objective, save_file='', **kwargs):
     import scipy.optimize
 
     if not isinstance(objective, BaseObjective):
-        raise TypeError('Objective must be a BaseObjective instance.')
+        raise TypeError("Objective must be a BaseObjective instance.")
     elif objective.num_eqns != 1:
-        raise ValueError('Objective must contain only one equation.')
+        raise ValueError("Objective must contain only one equation.")
 
     if kwargs == {}:
-        if hasattr(objective, 'gradient'):
-            kwargs = {'method': 'BFGS', 'jac': objective.gradient, 'options': {'gtol': 1e-8}}
+        if hasattr(objective, "gradient"):
+            kwargs = {"method": "BFGS", "jac": objective.gradient, "options": {"gtol": 1e-8}}
         else:
-            kwargs = {'method': 'Powell', 'options': {'xtol': 1e-9, 'ftol': 1e-9}}
+            kwargs = {"method": "Powell", "options": {"xtol": 1e-9, "ftol": 1e-9}}
 
     output = wrap_scipy(scipy.optimize.minimize)(objective, save_file=save_file, **kwargs)
-    output['function'] = output['internal'].fun
+    output["function"] = output["internal"].fun
     if isinstance(objective, LeastSquaresEquations):
-        output['energy'] = objective.energy.params
+        output["energy"] = objective.energy.params
     elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):
-        output['energy'] = output['function']
+        output["energy"] = output["function"]
 
     return output

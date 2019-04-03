@@ -12,19 +12,19 @@ def test_twosided_energy_assign_pspaces():
     test = skip_init(TwoSidedEnergy)
     test.wfn = CIWavefunction(2, 4)
     # default pspace_l
-    test.assign_pspaces(pspace_l=None, pspace_r=(0b0101, ), pspace_n=[0b0101])
+    test.assign_pspaces(pspace_l=None, pspace_r=(0b0101,), pspace_n=[0b0101])
     assert test.pspace_l == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
-    assert test.pspace_r == (0b0101, )
-    assert test.pspace_n == (0b0101, )
+    assert test.pspace_r == (0b0101,)
+    assert test.pspace_n == (0b0101,)
     # default pspace_r
-    test.assign_pspaces(pspace_l=[0b0101], pspace_r=None, pspace_n=(0b0101, ))
-    assert test.pspace_l == (0b0101, )
+    test.assign_pspaces(pspace_l=[0b0101], pspace_r=None, pspace_n=(0b0101,))
+    assert test.pspace_l == (0b0101,)
     assert test.pspace_r is None
-    assert test.pspace_n == (0b0101, )
+    assert test.pspace_n == (0b0101,)
     # default pspace_n
-    test.assign_pspaces(pspace_l=[0b0101], pspace_r=(0b0101, ), pspace_n=None)
-    assert test.pspace_l == (0b0101, )
-    assert test.pspace_r == (0b0101, )
+    test.assign_pspaces(pspace_l=[0b0101], pspace_r=(0b0101,), pspace_n=None)
+    assert test.pspace_l == (0b0101,)
+    assert test.pspace_r == (0b0101,)
     assert test.pspace_n is None
     # error checking
     with pytest.raises(TypeError):
@@ -40,12 +40,14 @@ def test_twosided_energy_assign_pspaces():
 def test_num_eqns():
     """Test TwoSidedEnergy.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(1, 5, dtype=float).reshape(2, 2),
+        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
+    )
     test = TwoSidedEnergy(wfn, ham)
     assert test.num_eqns == 1
     with pytest.raises(TypeError):
-        test.assign_pspaces(pspace_n=['0101'])
+        test.assign_pspaces(pspace_n=["0101"])
 
 
 def test_twosided_energy_objective():
@@ -56,8 +58,9 @@ def test_twosided_energy_objective():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
     test = TwoSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
@@ -73,8 +76,9 @@ def test_twosided_energy_gradient():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
     test = TwoSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)

@@ -55,10 +55,10 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    keywords='wavefunction hamiltonian optimization schrodinger equation quantum chemistry',
+    keywords="wavefunction hamiltonian optimization schrodinger equation quantum chemistry",
     packages=find_packages(exclude=["docs", "tests"]),
     python_requires=">=3.4",
-    install_requires=["numpy", "scipy", 'cma', 'gmpy2'],
+    install_requires=["numpy", "scipy", "cma", "gmpy2"],
     extras_require={
         "dev": [
             "tox",

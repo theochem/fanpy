@@ -116,6 +116,7 @@ class LeastSquaresEquations(SystemEquations):
         Return the gradient of the objective function.
 
     """
+
     @property
     def num_eqns(self):
         """Return the number of equations in the objective.
@@ -188,7 +189,7 @@ class LeastSquaresEquations(SystemEquations):
         # patch back
         LeastSquaresEquations.num_eqns = orig_num_eqns
 
-        return np.sum(system_eqns**2)
+        return np.sum(system_eqns ** 2)
 
     def gradient(self, params):
         r"""Gradient of the objective function.

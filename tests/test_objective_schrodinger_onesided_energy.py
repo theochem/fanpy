@@ -16,11 +16,11 @@ def test_onesided_energy_assign_refwfn():
     assert list(test.refwfn) == [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
 
     test.assign_refwfn(refwfn=0b0101)
-    assert test.refwfn == (0b0101, )
+    assert test.refwfn == (0b0101,)
     test.assign_refwfn(refwfn=[0b0101])
-    assert test.refwfn == (0b0101, )
-    test.assign_refwfn(refwfn=(0b0101, ))
-    assert test.refwfn == (0b0101, )
+    assert test.refwfn == (0b0101,)
+    test.assign_refwfn(refwfn=(0b0101,))
+    assert test.refwfn == (0b0101,)
     ciwfn = CIWavefunction(2, 4)
     test.assign_refwfn(refwfn=ciwfn)
     assert test.refwfn == ciwfn
@@ -36,14 +36,16 @@ def test_onesided_energy_assign_refwfn():
     with pytest.raises(ValueError):
         test.assign_refwfn(refwfn=CIWavefunction(2, 6))
     with pytest.raises(TypeError):
-        test.assign_refwfn(refwfn=['0101'])
+        test.assign_refwfn(refwfn=["0101"])
 
 
 def test_num_eqns():
     """Test OneSidedEnergy.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(1, 5, dtype=float).reshape(2, 2),
-                                        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(1, 5, dtype=float).reshape(2, 2),
+        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
+    )
     test = OneSidedEnergy(wfn, ham)
     assert test.num_eqns == 1
 
@@ -56,8 +58,9 @@ def test_onesided_energy_objective():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
     test = OneSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
@@ -73,8 +76,9 @@ def test_onesided_energy_gradient():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
-                                        np.arange(16, dtype=float).reshape(2, 2, 2, 2))
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
     test = OneSidedEnergy(wfn, ham)
     # check assignment
     guess = np.random.rand(6)

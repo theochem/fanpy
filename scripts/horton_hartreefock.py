@@ -8,15 +8,32 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
 """
 import sys
 import numpy as np
-from horton import (IOData, get_gobasis,
-                    PlainSCFSolver, EDIIS2SCFSolver,
-                    DenseLinalgFactory,
-                    compute_nucnuc, guess_core_hamiltonian, transform_integrals,
-                    AufbauOccModel, RTwoIndexTerm, RDirectTerm, RExchangeTerm, REffHam)
+from horton import (
+    IOData,
+    get_gobasis,
+    PlainSCFSolver,
+    EDIIS2SCFSolver,
+    DenseLinalgFactory,
+    compute_nucnuc,
+    guess_core_hamiltonian,
+    transform_integrals,
+    AufbauOccModel,
+    RTwoIndexTerm,
+    RDirectTerm,
+    RExchangeTerm,
+    REffHam,
+)
 
 
-def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0e-12,
-                horton_internal=False, **kwargs):
+def hartreefock(
+    fn=None,
+    basis=None,
+    nelec=None,
+    solver=EDIIS2SCFSolver,
+    tol=1.0e-12,
+    horton_internal=False,
+    **kwargs
+):
     """Run a HF calculation using HORTON.
 
     Parameters
@@ -101,7 +118,7 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
         ham.compute_fock(fock_alpha)
         orb.from_fock_and_dm(fock_alpha, dm, olp)
     else:
-        raise ValueError('Given solver, {0}, is not callable'.format(solver))
+        raise ValueError("Given solver, {0}, is not callable".format(solver))
     energy = ham.cache["energy"]
 
     # Transform one- and two- electron integrals into MO basis
@@ -125,35 +142,36 @@ def hartreefock(fn=None, basis=None, nelec=None, solver=EDIIS2SCFSolver, tol=1.0
             "occ_model": occ_model,
             "one": one,
             "two": two,
-            "orb": [orb, ],
+            "orb": [orb],
             "olp": olp,
         }
-        raise NotImplementedError('horton_internal storage is unsupported until it become Python '
-                                  '3.6 compatible.')
+        raise NotImplementedError(
+            "horton_internal storage is unsupported until it become Python " "3.6 compatible."
+        )
 
     return output
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # extract keyword from command line
     kwargs = {key: val for key, val in zip(sys.argv[4::2], sys.argv[5::2])}
     # change data types
-    if 'nelec' in kwargs:
-        kwargs['nelec'] = int(kwargs['nelec'])
-    if 'tol' in kwargs:
-        kwargs['tol'] = float(kwargs['tol'])
-    if 'horton_internal' in kwargs:
-        kwargs['horton_internal'] = bool(kwargs['horton_internal'])
-    if 'solver' in kwargs:
-        kwargs['solver'] = locals()[kwargs['solver']]
+    if "nelec" in kwargs:
+        kwargs["nelec"] = int(kwargs["nelec"])
+    if "tol" in kwargs:
+        kwargs["tol"] = float(kwargs["tol"])
+    if "horton_internal" in kwargs:
+        kwargs["horton_internal"] = bool(kwargs["horton_internal"])
+    if "solver" in kwargs:
+        kwargs["solver"] = locals()[kwargs["solver"]]
 
     data = hartreefock(**kwargs)
-    np.save(sys.argv[1], [data['el_energy'], data['nuc_nuc_energy']])
-    if len(data['one_int']) == 1:
-        np.save(sys.argv[2], data['one_int'][0])
+    np.save(sys.argv[1], [data["el_energy"], data["nuc_nuc_energy"]])
+    if len(data["one_int"]) == 1:
+        np.save(sys.argv[2], data["one_int"][0])
     else:
-        np.save(sys.argv[2], data['one_int'])
-    if len(data['two_int']) == 1:
-        np.save(sys.argv[3], data['two_int'][0])
+        np.save(sys.argv[2], data["one_int"])
+    if len(data["two_int"]) == 1:
+        np.save(sys.argv[3], data["two_int"][0])
     else:
-        np.save(sys.argv[3], data['two_int'])
+        np.save(sys.argv[3], data["two_int"])

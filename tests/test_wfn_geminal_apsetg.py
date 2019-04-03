@@ -71,16 +71,17 @@ def test_assign_pmatch_generator():
     test.assign_nspin(6)
     sd = (0, 1, 2, 3, 4, 5)
     assert isinstance(test.generate_possible_orbpairs(sd), types.GeneratorType)
-    for i, j in zip(test.generate_possible_orbpairs(sd),
-                    graphs.generate_biclique_pmatch((0, 1, 2), (3, 4, 5))):
+    for i, j in zip(
+        test.generate_possible_orbpairs(sd), graphs.generate_biclique_pmatch((0, 1, 2), (3, 4, 5))
+    ):
         assert i == j
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_h2_sto6g():
     """Find the APsetG/STO-6G wavefunction variationally for H2 system."""
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 4)
@@ -108,8 +109,8 @@ def test_apsetg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 4)
@@ -118,21 +119,21 @@ def test_apsetg_h2_sto6g():
     # Solve system of equations
     objective = SystemEquations(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8590898441488932)
+    assert np.allclose(results["energy"], -1.8590898441488932)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_h2_631gdp():
     """Find the APsetG/6-31G** wavefunction variationally for H2 system."""
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(10) for j in range(10, 20)]
 
     objective = OneSidedEnergy(apsetg, ham, refwfn=full_sds)
-    results = cma(objective, sigma0=0.01, gradf=None, options={'tolfun': 1e-6, 'verb_log': 0})
+    results = cma(objective, sigma0=0.01, gradf=None, options={"tolfun": 1e-6, "verb_log": 0})
     print(results)
     results = minimize(objective)
     print(results)
@@ -146,8 +147,8 @@ def test_apsetg_h2_631gdp_slow():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(2, 20)
@@ -156,19 +157,24 @@ def test_apsetg_h2_631gdp_slow():
     # Solve system of equations
     objective = SystemEquations(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], 0.0)
+    assert np.allclose(results["energy"], 0.0)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
 def answer_apsetg_lih_sto6g():
     """Find the BasicAPsetG/STO-6G wavefunction variationally for LiH system."""
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(4, 12)
-    full_sds = [1 << i | 1 << j | 1 << k | 1 << l for i in range(6) for j in range(i+1, 6)
-                for k in range(6, 12) for l in range(k+1, 12)]
+    full_sds = [
+        1 << i | 1 << j | 1 << k | 1 << l
+        for i in range(6)
+        for j in range(i + 1, 6)
+        for k in range(6, 12)
+        for l in range(k + 1, 12)
+    ]
 
     objective = OneSidedEnergy(apsetg, ham, refwfn=full_sds)
     results = minimize(objective)
@@ -189,15 +195,20 @@ def test_apsetg_lih_sto6g_slow():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apsetg = BasicAPsetG(4, 12)
-    full_sds = [1 << i | 1 << j | 1 << k | 1 << l for i in range(6) for j in range(i+1, 6)
-                for k in range(6, 12) for l in range(k+1, 12)]
+    full_sds = [
+        1 << i | 1 << j | 1 << k | 1 << l
+        for i in range(6)
+        for j in range(i + 1, 6)
+        for k in range(6, 12)
+        for l in range(k + 1, 12)
+    ]
 
     # Solve system of equations
     objective = SystemEquations(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], 0.0)
+    assert np.allclose(results["energy"], 0.0)

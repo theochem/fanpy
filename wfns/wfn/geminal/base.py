@@ -117,8 +117,10 @@ class BaseGeminal(BaseWavefunction):
         Yield the possible orbital pairs that can construct the given Slater determinant.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None,
-                 params=None):
+
+    def __init__(
+        self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None
+    ):
         """Initialize the wavefunction.
 
         Parameters
@@ -158,7 +160,7 @@ class BaseGeminal(BaseWavefunction):
             Number of electron pairs.
 
         """
-        return self.nelec//2
+        return self.nelec // 2
 
     @property
     def norbpair(self):
@@ -202,7 +204,7 @@ class BaseGeminal(BaseWavefunction):
         """
         params = np.zeros(self.params_shape, dtype=self.dtype)
         for i in range(self.ngem):
-            col_ind = self.get_col_ind((i, i+self.nspatial))
+            col_ind = self.get_col_ind((i, i + self.nspatial))
             params[i, col_ind] += 1
         return params
 
@@ -225,7 +227,7 @@ class BaseGeminal(BaseWavefunction):
         """
         super().assign_nelec(nelec)
         if self.nelec % 2 != 0:
-            raise ValueError('Odd number of electrons is not supported')
+            raise ValueError("Odd number of electrons is not supported")
 
     def assign_ngem(self, ngem=None):
         """Assign the number of geminals.
@@ -251,9 +253,9 @@ class BaseGeminal(BaseWavefunction):
         if ngem is None:
             ngem = self.npair
         if not isinstance(ngem, int):
-            raise TypeError('`ngem` must be an integer.')
+            raise TypeError("`ngem` must be an integer.")
         elif ngem < self.npair:
-            raise ValueError('`ngem` must be greater than the number of electron pairs.')
+            raise ValueError("`ngem` must be greater than the number of electron pairs.")
         self.ngem = ngem
 
     def assign_orbpairs(self, orbpairs=None):
@@ -283,29 +285,30 @@ class BaseGeminal(BaseWavefunction):
         """
         # FIXME: terrible memory usage
         if orbpairs is None:
-            orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i+1, self.nspin))
+            orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
 
-        if not hasattr(orbpairs, '__iter__'):
-            raise TypeError('`orbpairs` must iterable.')
+        if not hasattr(orbpairs, "__iter__"):
+            raise TypeError("`orbpairs` must iterable.")
 
         dict_orbpair_ind = {}
         for i, orbpair in enumerate(orbpairs):
             if not isinstance(orbpair, (list, tuple)):
-                raise TypeError('Each orbital pair must be a list or a tuple')
+                raise TypeError("Each orbital pair must be a list or a tuple")
             elif len(orbpair) != 2:
-                raise TypeError('Each orbital pair must contain two elements')
+                raise TypeError("Each orbital pair must contain two elements")
             elif not (isinstance(orbpair[0], int) and isinstance(orbpair[1], int)):
-                raise TypeError('Each orbital index must be given as an integer')
+                raise TypeError("Each orbital index must be given as an integer")
             elif orbpair[0] == orbpair[1]:
-                raise ValueError('Orbital pair of the same orbital is invalid')
+                raise ValueError("Orbital pair of the same orbital is invalid")
 
             orbpair = tuple(orbpair)
             # sort orbitals within the pair
             if orbpair[0] > orbpair[1]:
                 orbpair = orbpair[::-1]
             if orbpair in dict_orbpair_ind:
-                raise ValueError('The given orbital pairs have multiple entries of {0}'
-                                 ''.format(orbpair))
+                raise ValueError(
+                    "The given orbital pairs have multiple entries of {0}" "".format(orbpair)
+                )
             else:
                 dict_orbpair_ind[orbpair] = i
 
@@ -338,22 +341,27 @@ class BaseGeminal(BaseWavefunction):
         if isinstance(params, BaseGeminal):
             other = params
             if self.nelec != other.nelec:
-                raise ValueError('The number of electrons in the two wavefunctions must be the '
-                                 'same.')
+                raise ValueError(
+                    "The number of electrons in the two wavefunctions must be the " "same."
+                )
             if self.nspin != other.nspin:
-                raise ValueError('The number of spin orbitals in the two wavefunctions must be the '
-                                 'same.')
+                raise ValueError(
+                    "The number of spin orbitals in the two wavefunctions must be the " "same."
+                )
             if self.ngem != other.ngem:
-                raise ValueError('The number of geminals in the two wavefunctions must be the '
-                                 'same.')
+                raise ValueError(
+                    "The number of geminals in the two wavefunctions must be the " "same."
+                )
             params = np.zeros(self.params_shape, dtype=self.dtype)
             for ind, orbpair in other.dict_ind_orbpair.items():
                 try:
                     params[:, self.get_col_ind(orbpair)] = other.params[:, ind]
                 except ValueError:
-                    print('The orbital pair of the given wavefunction, {0}, is not possible in the '
-                          'current wavefunction. Parameters corresponding to this orbital pair will'
-                          ' be ignored.')
+                    print(
+                        "The orbital pair of the given wavefunction, {0}, is not possible in the "
+                        "current wavefunction. Parameters corresponding to this orbital pair will"
+                        " be ignored."
+                    )
         super().assign_params(params=params, add_noise=add_noise)
 
     def get_col_ind(self, orbpair):
@@ -379,8 +387,9 @@ class BaseGeminal(BaseWavefunction):
         try:
             return self.dict_orbpair_ind[orbpair]
         except (KeyError, TypeError):
-            raise ValueError('Given orbital pair, {0}, is not included in the '
-                             'wavefunction.'.format(orbpair))
+            raise ValueError(
+                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+            )
 
     def get_orbpair(self, col_ind):
         """Get the orbital pair that corresponds to the given column index.
@@ -405,8 +414,9 @@ class BaseGeminal(BaseWavefunction):
         try:
             return self.dict_ind_orbpair[col_ind]
         except (KeyError, TypeError):
-            raise ValueError('Given column index, {0}, is not used in the '
-                             'wavefunction'.format(col_ind))
+            raise ValueError(
+                "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)
+            )
 
     def compute_permanent(self, col_inds, row_inds=None, deriv=None):
         """Compute the permanent of the matrix that corresponds to the given orbital pairs.
@@ -545,10 +555,10 @@ class BaseGeminal(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._cache_fns["overlap"](sd)
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
-            raise TypeError('Index for derivatization must be provided as an integer.')
+            raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:
             return 0.0
@@ -561,7 +571,7 @@ class BaseGeminal(BaseWavefunction):
         if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._cache_fns["overlap derivative"](sd, deriv)
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):

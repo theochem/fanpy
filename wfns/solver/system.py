@@ -3,7 +3,7 @@ from wfns.objective.schrodinger.least_squares import SystemEquations
 from wfns.solver.wrappers import wrap_scipy
 
 
-def least_squares(objective, save_file='', **kwargs):
+def least_squares(objective, save_file="", **kwargs):
     """Solve the system of Schrodinger equations as a least squares problem.
 
     This function wraps around `scipy.optimize.least_squares`.
@@ -49,20 +49,25 @@ def least_squares(objective, save_file='', **kwargs):
     from scipy.optimize import least_squares
 
     if not isinstance(objective, SystemEquations):
-        raise TypeError('Given objective must be an instance of SystemEquations.')
+        raise TypeError("Given objective must be an instance of SystemEquations.")
 
     if kwargs == {}:
-        kwargs = {'xtol': 1.0e-15, 'ftol': 1.0e-15, 'gtol': 1.0e-15,
-                  'max_nfev': 1000*objective.params.size, 'jac': objective.jacobian}
+        kwargs = {
+            "xtol": 1.0e-15,
+            "ftol": 1.0e-15,
+            "gtol": 1.0e-15,
+            "max_nfev": 1000 * objective.params.size,
+            "jac": objective.jacobian,
+        }
 
     output = wrap_scipy(least_squares)(objective, save_file=save_file, verbose=2, **kwargs)
-    output['energy'] = objective.energy.params
-    output['residuals'] = output['internal'].fun
-    output['cost'] = output['internal'].cost
+    output["energy"] = objective.energy.params
+    output["residuals"] = output["internal"].fun
+    output["cost"] = output["internal"].cost
     return output
 
 
-def root(objective, save_file='', **kwargs):
+def root(objective, save_file="", **kwargs):
     """Solve the system of Schrodinger equations by finding its root.
 
     This function wraps around `scipy.optimize.root`.
@@ -105,14 +110,15 @@ def root(objective, save_file='', **kwargs):
     from scipy.optimize import root
 
     if not isinstance(objective, SystemEquations):
-        raise TypeError('Given objective must be an instance of SystemEquations.')
+        raise TypeError("Given objective must be an instance of SystemEquations.")
     elif objective.num_eqns != objective.params.size:
-        raise ValueError('Given objective must have the same number of equations as the number of '
-                         'parameters.')
+        raise ValueError(
+            "Given objective must have the same number of equations as the number of " "parameters."
+        )
 
     if kwargs == {}:
-        kwargs = {'method': 'hybr', 'jac': objective.jacobian, 'options': {'xtol': 1.0e-9}}
+        kwargs = {"method": "hybr", "jac": objective.jacobian, "options": {"xtol": 1.0e-9}}
 
     output = wrap_scipy(root)(objective, save_file=save_file, **kwargs)
-    output['energy'] = objective.energy.params
+    output["energy"] = objective.energy.params
     return output

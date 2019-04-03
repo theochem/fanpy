@@ -7,6 +7,7 @@ from utils import skip_init, disable_abstract
 
 class TempBaseGeminal(BaseGeminal):
     """GeminalWavefunction that skips initialization."""
+
     def __init__(self):
         self._cache_fns = {}
 
@@ -29,7 +30,7 @@ def test_gem_assign_nelec():
     with pytest.raises(TypeError):
         test.assign_nelec(2.0)
     with pytest.raises(TypeError):
-        test.assign_nelec('2')
+        test.assign_nelec("2")
     with pytest.raises(ValueError):
         test.assign_nelec(0)
     with pytest.raises(ValueError):
@@ -71,7 +72,7 @@ def test_gem_assign_ngem():
     with pytest.raises(TypeError):
         test.assign_ngem(2.0)
     with pytest.raises(TypeError):
-        test.assign_ngem('2')
+        test.assign_ngem("2")
     with pytest.raises(ValueError):
         test.assign_ngem(0)
     with pytest.raises(ValueError):
@@ -86,11 +87,23 @@ def test_gem_assign_orbpair():
     # default
     test.assign_nspin(6)
     test.assign_orbpairs()
-    assert test.dict_orbpair_ind == {(0, 1): 0, (0, 2): 1, (0, 3): 2, (0, 4): 3, (0, 5): 4,
-                                     (1, 2): 5, (1, 3): 6, (1, 4): 7, (1, 5): 8,
-                                     (2, 3): 9, (2, 4): 10, (2, 5): 11,
-                                     (3, 4): 12, (3, 5): 13,
-                                     (4, 5): 14}
+    assert test.dict_orbpair_ind == {
+        (0, 1): 0,
+        (0, 2): 1,
+        (0, 3): 2,
+        (0, 4): 3,
+        (0, 5): 4,
+        (1, 2): 5,
+        (1, 3): 6,
+        (1, 4): 7,
+        (1, 5): 8,
+        (2, 3): 9,
+        (2, 4): 10,
+        (2, 5): 11,
+        (3, 4): 12,
+        (3, 5): 13,
+        (4, 5): 14,
+    }
 
     # not iterable
     with pytest.raises(TypeError):
@@ -98,7 +111,7 @@ def test_gem_assign_orbpair():
     with pytest.raises(TypeError):
         test.assign_orbpairs(True)
     with pytest.raises(TypeError):
-        test.assign_orbpairs(('1,2', (1, 2)))
+        test.assign_orbpairs(("1,2", (1, 2)))
     with pytest.raises(TypeError):
         test.assign_orbpairs(((0, 1), (1, 2, 3)))
     with pytest.raises(TypeError):
@@ -108,31 +121,31 @@ def test_gem_assign_orbpair():
     with pytest.raises(ValueError):
         test.assign_orbpairs(((0, 1), (1, 0)))
     # generator of tuple
-    test.assign_orbpairs(((i, i+3) for i in range(3)))
+    test.assign_orbpairs(((i, i + 3) for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # list of tuple
-    test.assign_orbpairs([(i, i+3) for i in range(3)])
+    test.assign_orbpairs([(i, i + 3) for i in range(3)])
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # tuple of tuple
-    test.assign_orbpairs(tuple((i, i+3) for i in range(3)))
+    test.assign_orbpairs(tuple((i, i + 3) for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # generator of list
-    test.assign_orbpairs(([i, i+3] for i in range(3)))
+    test.assign_orbpairs(([i, i + 3] for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # list of list
-    test.assign_orbpairs([[i, i+3] for i in range(3)])
+    test.assign_orbpairs([[i, i + 3] for i in range(3)])
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # tuple of list
-    test.assign_orbpairs(tuple([i, i+3] for i in range(3)))
+    test.assign_orbpairs(tuple([i, i + 3] for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # generator of tuple unordered
-    test.assign_orbpairs(((i+3, i) for i in range(3)))
+    test.assign_orbpairs(((i + 3, i) for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # list of tuple unordered
-    test.assign_orbpairs([(i+3, i) for i in range(3)])
+    test.assign_orbpairs([(i + 3, i) for i in range(3)])
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
     # tuple of tuple unordered
-    test.assign_orbpairs(tuple((i+3, i) for i in range(3)))
+    test.assign_orbpairs(tuple((i + 3, i) for i in range(3)))
     assert test.dict_orbpair_ind == {(0, 3): 0, (1, 4): 1, (2, 5): 2}
 
 
@@ -152,9 +165,16 @@ def test_gem_template_params():
     test.assign_nspin(6)
     test.assign_orbpairs()
     test.assign_ngem(3)
-    np.allclose(test.template_params, np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                                [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                                                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
+    np.allclose(
+        test.template_params,
+        np.array(
+            [
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            ]
+        ),
+    )
 
 
 def test_gem_assign_params():
@@ -167,9 +187,16 @@ def test_gem_assign_params():
     test.assign_ngem(3)
     # default
     test.assign_params()
-    np.allclose(test.params, np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
+    np.allclose(
+        test.params,
+        np.array(
+            [
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            ]
+        ),
+    )
 
     test2 = skip_init(disable_abstract(BaseGeminal))
     test2.assign_dtype(float)
@@ -191,18 +218,47 @@ def test_gem_assign_params():
     test2.dict_ind_orbpair = {0: (0, 4), 1: (1, 3)}
     test2.params = np.arange(6).reshape(3, 2)
     test.assign_params(test2)
-    np.allclose(test.params, np.array([[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 4, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0]]))
+    np.allclose(
+        test.params,
+        np.array(
+            [
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 4, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0],
+            ]
+        ),
+    )
 
-    test.assign_orbpairs({(0, 1): 0, (0, 2): 1, (0, 3): 2, (0, 4): 3, (0, 5): 4, (1, 2): 5,
-                          (1, 4): 6, (1, 5): 7, (2, 3): 8, (2, 4): 9, (2, 5): 10,
-                          (3, 4): 11, (3, 5): 12, (4, 5): 13})
+    test.assign_orbpairs(
+        {
+            (0, 1): 0,
+            (0, 2): 1,
+            (0, 3): 2,
+            (0, 4): 3,
+            (0, 5): 4,
+            (1, 2): 5,
+            (1, 4): 6,
+            (1, 5): 7,
+            (2, 3): 8,
+            (2, 4): 9,
+            (2, 5): 10,
+            (3, 4): 11,
+            (3, 5): 12,
+            (4, 5): 13,
+        }
+    )
     test.assign_params()
     test.assign_params(test2)
-    np.allclose(test.params, np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                       [0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]))
+    np.allclose(
+        test.params,
+        np.array(
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            ]
+        ),
+    )
 
 
 def test_gem_get_col_ind():
@@ -226,7 +282,7 @@ def test_gem_get_orbpair():
     with pytest.raises(ValueError):
         test.get_orbpair(1)
     with pytest.raises(ValueError):
-        test.get_orbpair('0')
+        test.get_orbpair("0")
 
 
 def test_gem_compute_permanent():
@@ -238,23 +294,33 @@ def test_gem_compute_permanent():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
-    assert np.equal(test.compute_permanent([0, 1, 2]),
-                    0*(16*32 + 17*31) + 1*(15*32 + 17*30) + 2*(15*31 + 16*30))
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=0), 16*32 + 17*31)
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=16), 0*32 + 2*30)
+    assert np.equal(
+        test.compute_permanent([0, 1, 2]),
+        0 * (16 * 32 + 17 * 31) + 1 * (15 * 32 + 17 * 30) + 2 * (15 * 31 + 16 * 30),
+    )
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv=0), 16 * 32 + 17 * 31)
+    assert np.equal(test.compute_permanent((0, 1, 2), deriv=16), 0 * 32 + 2 * 30)
     assert np.equal(test.compute_permanent((0, 1, 2), deriv=34), 0)
     assert np.equal(test.compute_permanent((0, 1, 2), deriv=9999), 0)
-    assert np.equal(test.compute_permanent((3, 4, 5)),
-                    3*(19*35 + 34*20) + 4*(18*35 + 33*20) + 5*(18*34 + 33*19))
-    assert np.equal(test.compute_permanent((3, 4, 5), deriv=35), 3*19 + 18*4)
+    assert np.equal(
+        test.compute_permanent((3, 4, 5)),
+        3 * (19 * 35 + 34 * 20) + 4 * (18 * 35 + 33 * 20) + 5 * (18 * 34 + 33 * 19),
+    )
+    assert np.equal(test.compute_permanent((3, 4, 5), deriv=35), 3 * 19 + 18 * 4)
     # row inds
-    assert np.equal(test.compute_permanent(col_inds=(1, 2), row_inds=[0, 1]), 1*17 + 16*2)
+    assert np.equal(test.compute_permanent(col_inds=(1, 2), row_inds=[0, 1]), 1 * 17 + 16 * 2)
     # ryser
-    assert np.equal(test.compute_permanent(col_inds=(0, 1, 2, 3), row_inds=[0, 1]),
-                    (0*16 + 15*1) + (0*17 + 15*2) + (0*18 + 15*3) + (1*17 + 2*16) + (1*18 + 3*16) +
-                    (2*18 + 17*3))
+    assert np.equal(
+        test.compute_permanent(col_inds=(0, 1, 2, 3), row_inds=[0, 1]),
+        (0 * 16 + 15 * 1)
+        + (0 * 17 + 15 * 2)
+        + (0 * 18 + 15 * 3)
+        + (1 * 17 + 2 * 16)
+        + (1 * 18 + 3 * 16)
+        + (2 * 18 + 17 * 3),
+    )
     # one by one matrix derivatized
-    assert np.equal(test.compute_permanent(col_inds=(0, ), row_inds=(0, ), deriv=0), 1)
+    assert np.equal(test.compute_permanent(col_inds=(0,), row_inds=(0,), deriv=0), 1)
 
 
 def test_gem_compute_permanent_deriv():
@@ -266,7 +332,7 @@ def test_gem_compute_permanent_deriv():
     test.assign_memory(1000)
     test.assign_orbpairs()
     test.assign_ngem(3)
-    test.assign_params(np.random.rand(3, 15)*10)
+    test.assign_params(np.random.rand(3, 15) * 10)
     test._cache_fns = {}
     test.load_cache()
 
@@ -285,8 +351,12 @@ def test_gem_compute_permanent_deriv():
             two = test.compute_permanent(range(15))
             # FIXME: not quite sure why the difference between permanent derivative and finite
             #        difference increases as the step size decreases
-            assert np.allclose(test.compute_permanent(range(15), deriv=15*i+j),
-                               (two - one) / step, rtol=0, atol=1e-5)
+            assert np.allclose(
+                test.compute_permanent(range(15), deriv=15 * i + j),
+                (two - one) / step,
+                rtol=0,
+                atol=1e-5,
+            )
 
 
 def test_gem_get_overlap():
@@ -295,9 +365,9 @@ def test_gem_get_overlap():
         disable_abstract(
             BaseGeminal,
             dict_overwrite={
-                'generate_possible_orbpairs':
-                lambda self, occ_indices:
-                [(((0, 1), (2, 3)), 1) if occ_indices == (0, 1, 2, 3) else ((), 1)]
+                "generate_possible_orbpairs": lambda self, occ_indices: [
+                    (((0, 1), (2, 3)), 1) if occ_indices == (0, 1, 2, 3) else ((), 1)
+                ]
             },
         )
     )
@@ -310,17 +380,17 @@ def test_gem_get_overlap():
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     test._cache_fns = {}
     test.load_cache()
-    assert test.get_overlap(0b001111) == 9*(15*1 + 30*1) + 1*(15*39 + 30*24)
+    assert test.get_overlap(0b001111) == 9 * (15 * 1 + 30 * 1) + 1 * (15 * 39 + 30 * 24)
     assert test.get_overlap(0b000111) == 0
     # check derivatives
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
-    assert test.get_overlap(0b001111, deriv=0) == 24*1 + 39*1
+    assert test.get_overlap(0b001111, deriv=0) == 24 * 1 + 39 * 1
     assert test.get_overlap(0b001111, deriv=1) == 0
-    assert test.get_overlap(0b001111, deriv=9) == 15*1 + 30*1
-    assert test.get_overlap(0b001111, deriv=15) == 9*1 + 39*1
-    assert test.get_overlap(0b001111, deriv=39) == 0*1 + 15*1
+    assert test.get_overlap(0b001111, deriv=9) == 15 * 1 + 30 * 1
+    assert test.get_overlap(0b001111, deriv=15) == 9 * 1 + 39 * 1
+    assert test.get_overlap(0b001111, deriv=39) == 0 * 1 + 15 * 1
     assert test.get_overlap(0b000111, deriv=0) == 0
     assert test.get_overlap(0b001111, deriv=45) == 0
     assert test.get_overlap(0b001111, deriv=3) == 0
     with pytest.raises(TypeError):
-        test.get_overlap(0b001111, '1')
+        test.get_overlap(0b001111, "1")

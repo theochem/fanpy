@@ -93,7 +93,8 @@ class OneSidedEnergy(BaseSchrodinger):
         Return the gradient of the objective.
 
     """
-    def __init__(self, wfn, ham, tmpfile='', param_selection=None, refwfn=None):
+
+    def __init__(self, wfn, ham, tmpfile="", param_selection=None, refwfn=None):
         """Initialize the objective instance.
 
         Parameters
@@ -164,8 +165,14 @@ class OneSidedEnergy(BaseSchrodinger):
 
         """
         if refwfn is None:
-            self.refwfn = tuple(sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial,
-                                                spin=self.wfn.spin, seniority=self.wfn.seniority))
+            self.refwfn = tuple(
+                sd_list.sd_list(
+                    self.wfn.nelec,
+                    self.wfn.nspatial,
+                    spin=self.wfn.spin,
+                    seniority=self.wfn.seniority,
+                )
+            )
             # break out of function
             return
 
@@ -177,25 +184,35 @@ class OneSidedEnergy(BaseSchrodinger):
                 if slater.is_sd_compatible(sd):
                     occs = slater.occ_indices(sd)
                     if len(occs) != self.wfn.nelec:
-                        raise ValueError('Given Slater determinant does not have the same number of'
-                                         ' electrons as the given wavefunction.')
+                        raise ValueError(
+                            "Given Slater determinant does not have the same number of"
+                            " electrons as the given wavefunction."
+                        )
                     elif any(i >= self.wfn.nspin for i in occs):
-                        raise ValueError('Given Slater determinant does not have the same number of'
-                                         ' spin orbitals as the given wavefunction.')
+                        raise ValueError(
+                            "Given Slater determinant does not have the same number of"
+                            " spin orbitals as the given wavefunction."
+                        )
                 else:
-                    raise TypeError('Projection space (for the reference wavefunction) must only '
-                                    'contain Slater determinants.')
+                    raise TypeError(
+                        "Projection space (for the reference wavefunction) must only "
+                        "contain Slater determinants."
+                    )
             self.refwfn = tuple(refwfn)
         elif isinstance(refwfn, CIWavefunction):
             if refwfn.nelec != self.wfn.nelec:
-                raise ValueError('Given reference wavefunction does not have the same number of '
-                                 'electrons as the given wavefunction.')
+                raise ValueError(
+                    "Given reference wavefunction does not have the same number of "
+                    "electrons as the given wavefunction."
+                )
             elif refwfn.nspin != self.wfn.nspin:
-                raise ValueError('Given reference wavefunction does not have the same number of '
-                                 'spin orbitals as the given wavefunction.')
+                raise ValueError(
+                    "Given reference wavefunction does not have the same number of "
+                    "spin orbitals as the given wavefunction."
+                )
             self.refwfn = refwfn
         else:
-            raise TypeError('Projection space must be given as a list or a tuple.')
+            raise TypeError("Projection space must be given as a list or a tuple.")
 
     @property
     def num_eqns(self):

@@ -55,24 +55,24 @@ def test_spatial_index():
 
 def test_spin_index():
     """Test slater.spin_index."""
-    assert slater.spin_index(0, 1, spin='alpha') == 0
-    assert slater.spin_index(0, 1, spin='beta') == 1
+    assert slater.spin_index(0, 1, spin="alpha") == 0
+    assert slater.spin_index(0, 1, spin="beta") == 1
 
-    assert slater.spin_index(0, 4, spin='alpha') == 0
-    assert slater.spin_index(1, 4, spin='alpha') == 1
-    assert slater.spin_index(2, 4, spin='alpha') == 2
-    assert slater.spin_index(3, 4, spin='alpha') == 3
-    assert slater.spin_index(0, 4, spin='beta') == 4
-    assert slater.spin_index(1, 4, spin='beta') == 5
-    assert slater.spin_index(2, 4, spin='beta') == 6
-    assert slater.spin_index(3, 4, spin='beta') == 7
+    assert slater.spin_index(0, 4, spin="alpha") == 0
+    assert slater.spin_index(1, 4, spin="alpha") == 1
+    assert slater.spin_index(2, 4, spin="alpha") == 2
+    assert slater.spin_index(3, 4, spin="alpha") == 3
+    assert slater.spin_index(0, 4, spin="beta") == 4
+    assert slater.spin_index(1, 4, spin="beta") == 5
+    assert slater.spin_index(2, 4, spin="beta") == 6
+    assert slater.spin_index(3, 4, spin="beta") == 7
 
     with pytest.raises(ValueError):
-        slater.spin_index(-1, 4, 'alpha')
+        slater.spin_index(-1, 4, "alpha")
     with pytest.raises(ValueError):
-        slater.spin_index(99, 4, 'alpha')
+        slater.spin_index(99, 4, "alpha")
     with pytest.raises(ValueError):
-        slater.spin_index(1, 4, 'generalized')
+        slater.spin_index(1, 4, "generalized")
 
 
 def test_total_occ():
@@ -197,7 +197,7 @@ def test_internal_sd():
     with pytest.raises(TypeError):
         slater.internal_sd(None)
     with pytest.raises(TypeError):
-        slater.internal_sd('5')
+        slater.internal_sd("5")
     with pytest.raises(TypeError):
         slater.internal_sd([0, 3])
 

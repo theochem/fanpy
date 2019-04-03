@@ -45,6 +45,7 @@ class RankTwoApprox:
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
+
     @property
     def params_shape(self):
         """Return the shape of the wavefunction parameters.
@@ -83,9 +84,9 @@ class RankTwoApprox:
         # self.params_shape, which comes from RankTwoApprox
         template = np.zeros(super().params_shape, dtype=self.dtype)
         for i in range(self.ngem):
-            col_ind = self.get_col_ind((i, i+self.nspatial))
+            col_ind = self.get_col_ind((i, i + self.nspatial))
             template[i, col_ind] += 1
-        template += 0.0001*np.random.rand(*template.shape)
+        template += 0.0001 * np.random.rand(*template.shape)
         # FIXME: fails a lot
         return full_to_rank2(template, rmsd=0.01)
 
@@ -99,7 +100,7 @@ class RankTwoApprox:
             The :math:`lambda` part of the parameters.
 
         """
-        return self.params[:self.ngem]
+        return self.params[: self.ngem]
 
     @property
     def epsilons(self):
@@ -111,7 +112,7 @@ class RankTwoApprox:
             The :math:`epsilon` part of the parameters.
 
         """
-        return self.params[self.ngem:self.ngem+self.norbpair]
+        return self.params[self.ngem : self.ngem + self.norbpair]
 
     @property
     def zetas(self):
@@ -123,7 +124,7 @@ class RankTwoApprox:
             The :math:`zeta` part of the parameters.
 
         """
-        return self.params[self.ngem+self.norbpair:]
+        return self.params[self.ngem + self.norbpair :]
 
     @property
     def fullrank_params(self):
@@ -162,12 +163,13 @@ class RankTwoApprox:
 
         """
         if isinstance(params, BaseGeminal):
-            raise NotImplementedError('Rank 2 Wavefunction cannot assign parameters using a '
-                                      'BaseGeminal instance.')
+            raise NotImplementedError(
+                "Rank 2 Wavefunction cannot assign parameters using a " "BaseGeminal instance."
+            )
         super().assign_params(params=params)
         # check for zeros in denominator
         if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
-            raise ValueError('Corresponding geminal coefficient matrix has a division by zero')
+            raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
 
     def compute_permanent(self, col_inds, deriv=None):
         """Compute the permanent of the matrix that corresponds to the given orbital pairs.
@@ -196,9 +198,9 @@ class RankTwoApprox:
         col_inds = np.array(col_inds)
 
         if deriv is None:
-            return math_tools.permanent_borchardt(self.lambdas[row_inds],
-                                                  self.epsilons[col_inds],
-                                                  self.zetas[col_inds])
+            return math_tools.permanent_borchardt(
+                self.lambdas[row_inds], self.epsilons[col_inds], self.zetas[col_inds]
+            )
         # if differentiating along row (lambda)
         # FIXME: not the best way of evaluating
         elif 0 <= deriv < self.npair:
@@ -211,18 +213,21 @@ class RankTwoApprox:
                 if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
                     continue
                 # derivative of matrix element c_ij wrt lambda_i
-                der_cij_rowi = (-self.zetas[col_to_remove] /
-                                (self.lambdas[row_to_remove] - self.epsilons[col_to_remove])**2)
+                der_cij_rowi = (
+                    -self.zetas[col_to_remove]
+                    / (self.lambdas[row_to_remove] - self.epsilons[col_to_remove]) ** 2
+                )
                 if row_inds_trunc.size == col_inds_trunc.size == 0:
                     val += der_cij_rowi
                 else:
-                    val += (der_cij_rowi
-                            * math_tools.permanent_borchardt(self.lambdas[row_inds_trunc],
-                                                             self.epsilons[col_inds_trunc],
-                                                             self.zetas[col_inds_trunc]))
+                    val += der_cij_rowi * math_tools.permanent_borchardt(
+                        self.lambdas[row_inds_trunc],
+                        self.epsilons[col_inds_trunc],
+                        self.zetas[col_inds_trunc],
+                    )
             return val
         # if differentiating along column (epsilon or zeta)
-        elif self.ngem <= deriv < self.ngem + 2*self.norbpair:
+        elif self.ngem <= deriv < self.ngem + 2 * self.norbpair:
             col_to_remove = (deriv - self.ngem) % self.norbpair
             col_inds_trunc = col_inds[col_inds != col_to_remove]
             if col_inds_trunc.size == col_inds.size:
@@ -234,22 +239,27 @@ class RankTwoApprox:
                 # differentiating wrt column
                 if self.ngem <= deriv < self.ngem + self.norbpair:
                     # derivative of matrix element c_ij wrt epsilon_j
-                    der_cij_colj = (self.zetas[col_to_remove] /
-                                    (self.lambdas[row_to_remove] - self.epsilons[col_to_remove])**2)
+                    der_cij_colj = (
+                        self.zetas[col_to_remove]
+                        / (self.lambdas[row_to_remove] - self.epsilons[col_to_remove]) ** 2
+                    )
                 else:
                     # derivative of matrix element c_ij wrt zeta_j
-                    der_cij_colj = 1.0/(self.lambdas[row_to_remove] - self.epsilons[col_to_remove])
+                    der_cij_colj = 1.0 / (
+                        self.lambdas[row_to_remove] - self.epsilons[col_to_remove]
+                    )
 
                 if row_inds_trunc.size == col_inds_trunc.size == 0:
                     val += der_cij_colj
                 else:
-                    val += (der_cij_colj
-                            * math_tools.permanent_borchardt(self.lambdas[row_inds_trunc],
-                                                             self.epsilons[col_inds_trunc],
-                                                             self.zetas[col_inds_trunc]))
+                    val += der_cij_colj * math_tools.permanent_borchardt(
+                        self.lambdas[row_inds_trunc],
+                        self.epsilons[col_inds_trunc],
+                        self.zetas[col_inds_trunc],
+                    )
             return val
         else:
-            raise ValueError('Invalid derivatization index.')
+            raise ValueError("Invalid derivatization index.")
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
@@ -280,22 +290,22 @@ class RankTwoApprox:
         sd = slater.internal_sd(sd)
 
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._cache_fns["overlap"](sd)
         elif isinstance(deriv, (int, np.int64)):
             if deriv >= self.nparams:
                 return 0.0
             # if differentiating along column (epsilon/zeta)
-            if self.ngem <= deriv < self.ngem + 2*self.norbpair:
+            if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
                 col_removed = (deriv - self.ngem) % self.norbpair
                 orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
                 # if differentiating along column that is not used by the Slater determinant
                 if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                     return 0.0
 
-            return self._cache_fns['overlap derivative'](sd, deriv)
+            return self._cache_fns["overlap derivative"](sd, deriv)
 
 
-def full_to_rank2(params, rmsd=0.1, method='least squares'):
+def full_to_rank2(params, rmsd=0.1, method="least squares"):
     r"""Convert full rank parameters to the rank-2 parameters.
 
     Using least squares, the full rank geminal coefficients are converted to the rank-2 variant,
@@ -400,21 +410,21 @@ def full_to_rank2(params, rmsd=0.1, method='least squares'):
     """
     ngem, norbpair = params.shape
     # assign least squares matrix by reference
-    matrix = np.zeros((params.size, ngem + 2*norbpair), dtype=params.dtype)
+    matrix = np.zeros((params.size, ngem + 2 * norbpair), dtype=params.dtype)
     # set up submatrices that references a specific part of the matrix
     # NOTE: these values are broadcasted to `matrix`
     lambdas = matrix[:, :ngem]
-    epsilons = matrix[:, ngem:ngem + norbpair]
-    zetas = matrix[:, ngem + norbpair:ngem + 2*norbpair]
+    epsilons = matrix[:, ngem : ngem + norbpair]
+    zetas = matrix[:, ngem + norbpair : ngem + 2 * norbpair]
     for i in range(ngem):
-        lambdas[i*norbpair:(i + 1)*norbpair, i] = -params[i, :]
-        epsilons[i*norbpair:(i + 1)*norbpair, :] = np.diag(params[i, :])
-        zetas[i*norbpair:(i + 1)*norbpair, :] = np.identity(norbpair)
+        lambdas[i * norbpair : (i + 1) * norbpair, i] = -params[i, :]
+        epsilons[i * norbpair : (i + 1) * norbpair, :] = np.diag(params[i, :])
+        zetas[i * norbpair : (i + 1) * norbpair, :] = np.identity(norbpair)
 
     # solve by Least Squares
-    if method == 'least squares':
+    if method == "least squares":
         # Turn system of equations heterogeneous
-        indices = np.zeros(ngem + 2*norbpair, dtype=bool)
+        indices = np.zeros(ngem + 2 * norbpair, dtype=bool)
         vals = np.array([])
 
         # assign lambdas
@@ -440,26 +450,32 @@ def full_to_rank2(params, rmsd=0.1, method='least squares'):
         not_indices = np.logical_not(indices)
         rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
     # solve by SVD
-    elif method == 'svd':
+    elif method == "svd":
         _, s, vT = np.linalg.svd(matrix, full_matrices=False)
         # find null vectors
         indices = np.abs(s) < 1
         # guess solution
-        b = np.vstack([np.random.rand(ngem, 1),
-                       np.sort(np.random.rand(norbpair, 1)) - 1,
-                       np.ones((norbpair, 1))])
+        b = np.vstack(
+            [
+                np.random.rand(ngem, 1),
+                np.sort(np.random.rand(norbpair, 1)) - 1,
+                np.ones((norbpair, 1)),
+            ]
+        )
         # linearly combine right null vectors
         lin_comb = np.linalg.lstsq(vT[indices].T, b)[0]
         rank2_params = vT[indices].T.dot(lin_comb).flatten()
 
     # Check
     lambdas = rank2_params[:ngem, np.newaxis]
-    epsilons = rank2_params[ngem:ngem+norbpair]
-    zetas = rank2_params[ngem+norbpair:]
+    epsilons = rank2_params[ngem : ngem + norbpair]
+    zetas = rank2_params[ngem + norbpair :]
     rank2_coeffs = zetas / (lambdas - epsilons)
-    deviation = (np.sum((params - rank2_coeffs)**2)/params.size)**(0.5)
+    deviation = (np.sum((params - rank2_coeffs) ** 2) / params.size) ** (0.5)
     if np.isnan(deviation) or deviation > rmsd:
-        raise ValueError('Rank-2 coefficient matrix has RMSD of {0} with the full-rank coefficient '
-                         'matrix'.format(deviation))
+        raise ValueError(
+            "Rank-2 coefficient matrix has RMSD of {0} with the full-rank coefficient "
+            "matrix".format(deviation)
+        )
 
     return rank2_params

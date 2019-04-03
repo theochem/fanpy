@@ -11,6 +11,7 @@ from utils import skip_init, find_datafile
 
 class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
+
     _spin = None
     _seniority = None
 
@@ -60,7 +61,7 @@ def test_nonorth_assign_params():
 
     test_params = np.random.rand(5, 6)
     with pytest.raises(TypeError):
-        test.assign_params((test_params, )*3)
+        test.assign_params((test_params,) * 3)
     with pytest.raises(TypeError):
         test.assign_params([])
     with pytest.raises(TypeError):
@@ -216,13 +217,13 @@ def test_nonorth_param_shape():
 
     # restricted
     test.assign_params(np.random.rand(5, 6))
-    assert test.param_shape == ((5, 6), )
+    assert test.param_shape == ((5, 6),)
     # unrestricted
     test.assign_params([np.random.rand(5, 6), np.random.rand(5, 6)])
     assert test.param_shape == ((5, 6), (5, 6))
     # generalized
     test.assign_params(np.random.rand(10, 12))
-    assert test.param_shape == ((10, 12), )
+    assert test.param_shape == ((10, 12),)
 
 
 def test_nonorth_orbtype():
@@ -242,13 +243,13 @@ def test_nonorth_orbtype():
 
     # restricted
     test.assign_params(np.random.rand(5, 6))
-    assert test.orbtype == 'restricted'
+    assert test.orbtype == "restricted"
     # unrestricted
     test.assign_params([np.random.rand(5, 6), np.random.rand(5, 6)])
-    assert test.orbtype == 'unrestricted'
+    assert test.orbtype == "unrestricted"
     # generalized
     test.assign_params(np.random.rand(10, 12))
-    assert test.orbtype == 'generalized'
+    assert test.orbtype == "generalized"
     # else
     test.params = np.random.rand(10, 12)
     with pytest.raises(NotImplementedError):
@@ -271,31 +272,49 @@ def test_nonorth_olp_generalized():
     test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
-    assert np.isclose(test._olp(0b0101), ((1*10 - 2*9) * wfn_sd_coeff[0b0011] +
-                                          (1*11 - 3*9) * wfn_sd_coeff[0b0101] +
-                                          (1*12 - 4*9) * wfn_sd_coeff[0b1001] +
-                                          (2*11 - 3*10) * wfn_sd_coeff[0b0110] +
-                                          (2*12 - 4*10) * wfn_sd_coeff[0b1010] +
-                                          (3*12 - 4*11) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0101),
+        (
+            (1 * 10 - 2 * 9) * wfn_sd_coeff[0b0011]
+            + (1 * 11 - 3 * 9) * wfn_sd_coeff[0b0101]
+            + (1 * 12 - 4 * 9) * wfn_sd_coeff[0b1001]
+            + (2 * 11 - 3 * 10) * wfn_sd_coeff[0b0110]
+            + (2 * 12 - 4 * 10) * wfn_sd_coeff[0b1010]
+            + (3 * 12 - 4 * 11) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b0110 uses [[5, 6, 7, 8],
     #              [9, 10, 11, 12]]
-    assert np.isclose(test._olp(0b0110), ((5*10 - 6*9) * wfn_sd_coeff[0b0011] +
-                                          (5*11 - 7*9) * wfn_sd_coeff[0b0101] +
-                                          (5*12 - 8*9) * wfn_sd_coeff[0b1001] +
-                                          (6*11 - 7*10) * wfn_sd_coeff[0b0110] +
-                                          (6*12 - 8*10) * wfn_sd_coeff[0b1010] +
-                                          (7*12 - 8*11) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0110),
+        (
+            (5 * 10 - 6 * 9) * wfn_sd_coeff[0b0011]
+            + (5 * 11 - 7 * 9) * wfn_sd_coeff[0b0101]
+            + (5 * 12 - 8 * 9) * wfn_sd_coeff[0b1001]
+            + (6 * 11 - 7 * 10) * wfn_sd_coeff[0b0110]
+            + (6 * 12 - 8 * 10) * wfn_sd_coeff[0b1010]
+            + (7 * 12 - 8 * 11) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b1100 uses [[9, 10, 11, 12],
     #              [13, 14, 15, 16]]
-    assert np.isclose(test._olp(0b1100), ((9*14 - 10*13) * wfn_sd_coeff[0b0011] +
-                                          (9*15 - 11*13) * wfn_sd_coeff[0b0101] +
-                                          (9*16 - 12*13) * wfn_sd_coeff[0b1001] +
-                                          (10*15 - 11*14) * wfn_sd_coeff[0b0110] +
-                                          (10*16 - 12*14) * wfn_sd_coeff[0b1010] +
-                                          (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b1100),
+        (
+            (9 * 14 - 10 * 13) * wfn_sd_coeff[0b0011]
+            + (9 * 15 - 11 * 13) * wfn_sd_coeff[0b0101]
+            + (9 * 16 - 12 * 13) * wfn_sd_coeff[0b1001]
+            + (10 * 15 - 11 * 14) * wfn_sd_coeff[0b0110]
+            + (10 * 16 - 12 * 14) * wfn_sd_coeff[0b1010]
+            + (11 * 16 - 12 * 15) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
 
 
 def test_nonorth_olp_unrestricted():
@@ -314,31 +333,49 @@ def test_nonorth_olp_unrestricted():
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
-    assert np.isclose(test._olp(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
-                                          (1*11 - 0*0) * wfn_sd_coeff[0b0101] +
-                                          (1*12 - 0*0) * wfn_sd_coeff[0b1001] +
-                                          (2*11 - 0*0) * wfn_sd_coeff[0b0110] +
-                                          (2*12 - 0*0) * wfn_sd_coeff[0b1010] +
-                                          (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0101),
+        (
+            (1 * 0 - 2 * 0) * wfn_sd_coeff[0b0011]
+            + (1 * 11 - 0 * 0) * wfn_sd_coeff[0b0101]
+            + (1 * 12 - 0 * 0) * wfn_sd_coeff[0b1001]
+            + (2 * 11 - 0 * 0) * wfn_sd_coeff[0b0110]
+            + (2 * 12 - 0 * 0) * wfn_sd_coeff[0b1010]
+            + (0 * 12 - 0 * 11) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 11, 12]]
-    assert np.isclose(test._olp(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
-                                          (5*11 - 0*0) * wfn_sd_coeff[0b0101] +
-                                          (5*12 - 0*0) * wfn_sd_coeff[0b1001] +
-                                          (6*11 - 0*0) * wfn_sd_coeff[0b0110] +
-                                          (6*12 - 0*0) * wfn_sd_coeff[0b1010] +
-                                          (0*12 - 0*11) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0110),
+        (
+            (5 * 0 - 6 * 0) * wfn_sd_coeff[0b0011]
+            + (5 * 11 - 0 * 0) * wfn_sd_coeff[0b0101]
+            + (5 * 12 - 0 * 0) * wfn_sd_coeff[0b1001]
+            + (6 * 11 - 0 * 0) * wfn_sd_coeff[0b0110]
+            + (6 * 12 - 0 * 0) * wfn_sd_coeff[0b1010]
+            + (0 * 12 - 0 * 11) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b1100 uses [[0, 0, 11, 12],
     #              [0, 0, 15, 16]]
-    assert np.isclose(test._olp(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
-                                          (0*15 - 11*0) * wfn_sd_coeff[0b0101] +
-                                          (0*16 - 12*0) * wfn_sd_coeff[0b1001] +
-                                          (0*15 - 11*0) * wfn_sd_coeff[0b0110] +
-                                          (0*16 - 12*0) * wfn_sd_coeff[0b1010] +
-                                          (11*16 - 12*15) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b1100),
+        (
+            (0 * 0 - 0 * 0) * wfn_sd_coeff[0b0011]
+            + (0 * 15 - 11 * 0) * wfn_sd_coeff[0b0101]
+            + (0 * 16 - 12 * 0) * wfn_sd_coeff[0b1001]
+            + (0 * 15 - 11 * 0) * wfn_sd_coeff[0b0110]
+            + (0 * 16 - 12 * 0) * wfn_sd_coeff[0b1010]
+            + (11 * 16 - 12 * 15) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
 
 
 def test_nonorth_olp_restricted():
@@ -357,31 +394,49 @@ def test_nonorth_olp_restricted():
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test._olp(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
-                                          (1*1 - 0*0) * wfn_sd_coeff[0b0101] +
-                                          (1*2 - 0*0) * wfn_sd_coeff[0b1001] +
-                                          (2*1 - 0*0) * wfn_sd_coeff[0b0110] +
-                                          (2*2 - 0*0) * wfn_sd_coeff[0b1010] +
-                                          (0*2 - 0*1) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0101),
+        (
+            (1 * 0 - 2 * 0) * wfn_sd_coeff[0b0011]
+            + (1 * 1 - 0 * 0) * wfn_sd_coeff[0b0101]
+            + (1 * 2 - 0 * 0) * wfn_sd_coeff[0b1001]
+            + (2 * 1 - 0 * 0) * wfn_sd_coeff[0b0110]
+            + (2 * 2 - 0 * 0) * wfn_sd_coeff[0b1010]
+            + (0 * 2 - 0 * 1) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test._olp(0b0110), ((5*0 - 6*0) * wfn_sd_coeff[0b0011] +
-                                          (5*1 - 0*0) * wfn_sd_coeff[0b0101] +
-                                          (5*2 - 0*0) * wfn_sd_coeff[0b1001] +
-                                          (6*1 - 0*0) * wfn_sd_coeff[0b0110] +
-                                          (6*2 - 0*0) * wfn_sd_coeff[0b1010] +
-                                          (0*1 - 0*2) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b0110),
+        (
+            (5 * 0 - 6 * 0) * wfn_sd_coeff[0b0011]
+            + (5 * 1 - 0 * 0) * wfn_sd_coeff[0b0101]
+            + (5 * 2 - 0 * 0) * wfn_sd_coeff[0b1001]
+            + (6 * 1 - 0 * 0) * wfn_sd_coeff[0b0110]
+            + (6 * 2 - 0 * 0) * wfn_sd_coeff[0b1010]
+            + (0 * 1 - 0 * 2) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b1100 uses [[0, 0, 1, 2],
     #              [0, 0, 5, 6]]
-    assert np.isclose(test._olp(0b1100), ((0*0 - 0*0) * wfn_sd_coeff[0b0011] +
-                                          (0*1 - 0*5) * wfn_sd_coeff[0b0101] +
-                                          (0*2 - 0*6) * wfn_sd_coeff[0b1001] +
-                                          (0*1 - 0*5) * wfn_sd_coeff[0b0110] +
-                                          (0*2 - 0*6) * wfn_sd_coeff[0b1010] +
-                                          (1*6 - 5*2) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp(0b1100),
+        (
+            (0 * 0 - 0 * 0) * wfn_sd_coeff[0b0011]
+            + (0 * 1 - 0 * 5) * wfn_sd_coeff[0b0101]
+            + (0 * 2 - 0 * 6) * wfn_sd_coeff[0b1001]
+            + (0 * 1 - 0 * 5) * wfn_sd_coeff[0b0110]
+            + (0 * 2 - 0 * 6) * wfn_sd_coeff[0b1010]
+            + (1 * 6 - 5 * 2) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
 
 
 def test_nonorth_olp_deriv_generalized():
@@ -401,15 +456,19 @@ def test_nonorth_olp_deriv_generalized():
     test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
-    assert np.isclose(test._olp_deriv(0b0101, 0), (10 * wfn_sd_coeff[0b0011] +
-                                                   11 * wfn_sd_coeff[0b0101] +
-                                                   12 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0101, 0),
+        (10 * wfn_sd_coeff[0b0011] + 11 * wfn_sd_coeff[0b0101] + 12 * wfn_sd_coeff[0b1001]),
+        rtol=0,
+        atol=1e-12,
+    )
     assert np.isclose(test._olp_deriv(0b0101, 6), 0, rtol=0, atol=1e-12)
-    assert np.isclose(test._olp_deriv(0b0101, 8),  (-2 * wfn_sd_coeff[0b0011] +
-                                                    -3 * wfn_sd_coeff[0b0101] +
-                                                    -4 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0101, 8),
+        (-2 * wfn_sd_coeff[0b0011] + -3 * wfn_sd_coeff[0b0101] + -4 * wfn_sd_coeff[0b1001]),
+        rtol=0,
+        atol=1e-12,
+    )
 
 
 def test_nonorth_olp_deriv_unrestricted():
@@ -428,23 +487,28 @@ def test_nonorth_olp_deriv_unrestricted():
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
-    assert np.isclose(test._olp_deriv(0b0101, 0), (0 * wfn_sd_coeff[0b0011] +
-                                                   11 * wfn_sd_coeff[0b0101] +
-                                                   12 * wfn_sd_coeff[0b1001]),
-                      rtol=0, atol=1e-12)
-    assert np.isclose(test._olp_deriv(0b0101, 5), (1 * wfn_sd_coeff[0b1001] +
-                                                   2 * wfn_sd_coeff[0b1010] +
-                                                   0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0101, 0),
+        (0 * wfn_sd_coeff[0b0011] + 11 * wfn_sd_coeff[0b0101] + 12 * wfn_sd_coeff[0b1001]),
+        rtol=0,
+        atol=1e-12,
+    )
+    assert np.isclose(
+        test._olp_deriv(0b0101, 5),
+        (1 * wfn_sd_coeff[0b1001] + 2 * wfn_sd_coeff[0b1010] + 0 * wfn_sd_coeff[0b1100]),
+        rtol=0,
+        atol=1e-12,
+    )
     assert np.isclose(test._olp_deriv(0b0101, 6), 0, rtol=0, atol=1e-12)
-    assert np.isclose(test._olp_deriv(0b0101, 5), (1 * wfn_sd_coeff[0b1001] +
-                                                   2 * wfn_sd_coeff[0b1010] +
-                                                   0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0101, 5),
+        (1 * wfn_sd_coeff[0b1001] + 2 * wfn_sd_coeff[0b1010] + 0 * wfn_sd_coeff[0b1100]),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b1100 uses [[0, 0, 11, 12],
     #              [0, 0, 15, 16]]
-    assert np.isclose(test._olp_deriv(0b1100, 6), -12 * wfn_sd_coeff[0b1100],
-                      rtol=0, atol=1e-12)
+    assert np.isclose(test._olp_deriv(0b1100, 6), -12 * wfn_sd_coeff[0b1100], rtol=0, atol=1e-12)
 
     # check trivial
     assert test._olp_deriv(0b1100, 0) == 0
@@ -468,25 +532,33 @@ def test_nonorth_olp_deriv_restricted():
     test.load_cache()
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test._olp_deriv(0b0110, 0), (5 * wfn_sd_coeff[0b0101] +
-                                                   6 * wfn_sd_coeff[0b0110] +
-                                                   0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0110, 0),
+        (5 * wfn_sd_coeff[0b0101] + 6 * wfn_sd_coeff[0b0110] + 0 * wfn_sd_coeff[0b1100]),
+        rtol=0,
+        atol=1e-12,
+    )
 
     # restricted (two block)
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test._olp_deriv(0b0101, 0), (0 * wfn_sd_coeff[0b0011] +
-                                                   2*1 * wfn_sd_coeff[0b0101] +
-                                                   2 * wfn_sd_coeff[0b1001] +
-                                                   2 * wfn_sd_coeff[0b0110] +
-                                                   0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test._olp_deriv(0b0101, 0),
+        (
+            0 * wfn_sd_coeff[0b0011]
+            + 2 * 1 * wfn_sd_coeff[0b0101]
+            + 2 * wfn_sd_coeff[0b1001]
+            + 2 * wfn_sd_coeff[0b0110]
+            + 0 * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
 
     # check trivial
     assert test._olp_deriv(0b1010, 0) == 0
     assert test._olp_deriv(0b1111, 0) == 0
-    print('x'*99)
+    print("x" * 99)
     assert test._olp_deriv(0b1111, 2) == 0
 
 
@@ -507,19 +579,27 @@ def test_nonorth_get_overlap():
     test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test.get_overlap(0b0101), ((1*0 - 2*0) * wfn_sd_coeff[0b0011] +
-                                                 (1*1 - 0*0) * wfn_sd_coeff[0b0101] +
-                                                 (1*2 - 0*0) * wfn_sd_coeff[0b1001] +
-                                                 (2*1 - 0*0) * wfn_sd_coeff[0b0110] +
-                                                 (2*2 - 0*0) * wfn_sd_coeff[0b1010] +
-                                                 (0*2 - 0*1) * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test.get_overlap(0b0101),
+        (
+            (1 * 0 - 2 * 0) * wfn_sd_coeff[0b0011]
+            + (1 * 1 - 0 * 0) * wfn_sd_coeff[0b0101]
+            + (1 * 2 - 0 * 0) * wfn_sd_coeff[0b1001]
+            + (2 * 1 - 0 * 0) * wfn_sd_coeff[0b0110]
+            + (2 * 2 - 0 * 0) * wfn_sd_coeff[0b1010]
+            + (0 * 2 - 0 * 1) * wfn_sd_coeff[0b1100]
+        ),
+        rtol=0,
+        atol=1e-12,
+    )
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
-    assert np.isclose(test.get_overlap(0b0110, 0), (5 * wfn_sd_coeff[0b0101] +
-                                                    6 * wfn_sd_coeff[0b0110] +
-                                                    0 * wfn_sd_coeff[0b1100]),
-                      rtol=0, atol=1e-12)
+    assert np.isclose(
+        test.get_overlap(0b0110, 0),
+        (5 * wfn_sd_coeff[0b0101] + 6 * wfn_sd_coeff[0b0110] + 0 * wfn_sd_coeff[0b1100]),
+        rtol=0,
+        atol=1e-12,
+    )
     assert test.get_overlap(0b0101, 8) == 0
     assert test.get_overlap(0b0101, 2) == 0
 
@@ -537,7 +617,7 @@ def test_nonorth_get_overlap():
 
     # trivial cases
     with pytest.raises(ValueError):
-        test.get_overlap(0b0101, '1')
+        test.get_overlap(0b0101, "1")
     with pytest.raises(ValueError):
         test.get_overlap(0b0101, -1)
 
@@ -554,10 +634,14 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
     # transformed hamiltonian
-    transform = np.array([[0.707106752870, -0.000004484084, 0.000006172115, -0.707106809462],
-                          [0.707106809472, -0.000004868924, -0.000006704609, 0.707106752852],
-                          [0.000004942751, 0.707106849959, 0.707106712365, 0.000006630781],
-                          [0.000004410256, 0.707106712383, -0.707106849949, -0.000006245943]])
+    transform = np.array(
+        [
+            [0.707106752870, -0.000004484084, 0.000006172115, -0.707106809462],
+            [0.707106809472, -0.000004868924, -0.000006704609, 0.707106752852],
+            [0.000004942751, 0.707106849959, 0.707106712365, 0.000006630781],
+            [0.000004410256, 0.707106712383, -0.707106849949, -0.000006245943],
+        ]
+    )
 
     # NOTE: we need to be a little careful with the hamiltonian construction because the integrals
     #       are stored by reference and using the same hamiltonian while transforming it will cause
@@ -566,29 +650,50 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
         """Get energy of the tranformed wavefunction."""
         doci = CIWavefunction(nelec, nspin, seniority=0)
         # optimized parameters for the transformed hamiltonian
-        doci.assign_params(np.array([8.50413921e-04, 2.01842198e-01, -9.57460494e-01,
-                                     -4.22775180e-02, 2.01842251e-01, 8.50414717e-04]))
+        doci.assign_params(
+            np.array(
+                [
+                    8.50413921e-04,
+                    2.01842198e-01,
+                    -9.57460494e-01,
+                    -4.22775180e-02,
+                    2.01842251e-01,
+                    8.50414717e-04,
+                ]
+            )
+        )
 
-        ham = RestrictedChemicalHamiltonian(np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy')),
-                                            np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy')))
+        ham = RestrictedChemicalHamiltonian(
+            np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy")),
+            np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy")),
+        )
 
         # rotating hamiltonian using orb_rotate_matrix
-        if wfn_type == 'doci':
+        if wfn_type == "doci":
             wfn = doci
             ham.orb_rotate_matrix(transform)
             ham.cache_two_ints()
         # rotating wavefunction as a NonorthWavefunction
-        elif wfn_type == 'nonorth':
-            wfn = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory,
-                                      params=transform)
+        elif wfn_type == "nonorth":
+            wfn = NonorthWavefunction(
+                nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory, params=transform
+            )
 
-        norm = sum(wfn.get_overlap(sd)**2 for sd in sds)
-        if expectation_type == 'ci matrix':
-            return sum(wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2))
-                       * wfn.get_overlap(sd2) for sd1 in sds for sd2 in sds) / norm
-        elif expectation_type == 'projected':
-            return sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds)/norm
+        norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
+        if expectation_type == "ci matrix":
+            return (
+                sum(
+                    wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2)) * wfn.get_overlap(sd2)
+                    for sd1 in sds
+                    for sd2 in sds
+                )
+                / norm
+            )
+        elif expectation_type == "projected":
+            return (
+                sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds) / norm
+            )
 
-    assert np.allclose(get_energy('doci', 'ci matrix'), get_energy('nonorth', 'ci matrix'))
-    assert np.allclose(get_energy('doci', 'projected'), get_energy('nonorth', 'projected'))
-    assert np.allclose(get_energy('doci', 'ci matrix'), get_energy('doci', 'projected'))
+    assert np.allclose(get_energy("doci", "ci matrix"), get_energy("nonorth", "ci matrix"))
+    assert np.allclose(get_energy("doci", "projected"), get_energy("nonorth", "projected"))
+    assert np.allclose(get_energy("doci", "ci matrix"), get_energy("doci", "projected"))

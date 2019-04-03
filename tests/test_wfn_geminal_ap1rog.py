@@ -89,7 +89,7 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0001100011) == 1.0
     assert test.get_overlap(0b0010100101) == 3.0
     assert test.get_overlap(0b0000001111) == 0.0
-    assert test.get_overlap(0b0110001100) == 0*4 + 1*3
+    assert test.get_overlap(0b0110001100) == 0 * 4 + 1 * 3
     assert test.get_overlap(0b1010001100) == 0
     # check derivatives
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
@@ -108,7 +108,7 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0110001100, deriv=4) == 0
     assert test.get_overlap(0b0110001100, deriv=99) == 0
     with pytest.raises(TypeError):
-        test.get_overlap(0b0001100011, '0')
+        test.get_overlap(0b0001100011, "0")
 
 
 def answer_ap1rog_h2_sto6g():
@@ -118,8 +118,8 @@ def answer_ap1rog_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
@@ -140,6 +140,7 @@ def answer_ap1rog_h2_sto6g():
         energies_excited.append(objective_excited.get_energy_one_proj([0b0101, 0b1010]))
 
     import matplotlib.pyplot as plt
+
     fig = plt.figure()
     ax = fig.add_subplot(211)
     ax.scatter(xs, energies_ground)
@@ -153,7 +154,7 @@ def answer_ap1rog_h2_sto6g():
     ap1rog_ground.assign_params(np.array([[-0.114]]))
     # manually set reference SD (need to get proper energy)
     res = minimize(objective_ground)
-    print('Minimum energy')
+    print("Minimum energy")
     print(res)
 
     # find exact maximum
@@ -162,9 +163,11 @@ def answer_ap1rog_h2_sto6g():
         objective_excited.assign_params(params)
         energy = objective_excited.get_energy_one_proj([0b0101, 0b1010])
         return -energy
+
     import scipy.optimize
+
     res = scipy.optimize.minimize(max_energy, 0.114)
-    print('Maximum energy')
+    print("Maximum energy")
     print(res)
 
 
@@ -183,8 +186,8 @@ def test_ap1rog_h2_sto6g_ground():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 4)
@@ -192,7 +195,7 @@ def test_ap1rog_h2_sto6g_ground():
     # Solve system of equations
     objective = SystemEquations(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8590898441488894)
+    assert np.allclose(results["energy"], -1.8590898441488894)
 
 
 def test_ap1rog_h2_sto6g_excited():
@@ -210,8 +213,8 @@ def test_ap1rog_h2_sto6g_excited():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 4, ref_sd=0b1010)
@@ -219,7 +222,7 @@ def test_ap1rog_h2_sto6g_excited():
     # Solve system of equations
     objective = SystemEquations(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -0.24166486974216012)
+    assert np.allclose(results["energy"], -0.24166486974216012)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -230,15 +233,15 @@ def answer_ap1rog_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 20)
 
     objective = OneSidedEnergy(ap1rog, ham)
     results = minimize(objective)
-    print('Minimum energy')
+    print("Minimum energy")
     print(results)
 
 
@@ -257,20 +260,28 @@ def test_ap1rog_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(2, 20)
-    full_sds = (0b00000000010000000001, 0b00000000100000000010, 0b00000001000000000100,
-                0b00000010000000001000, 0b00000100000000010000, 0b00001000000000100000,
-                0b00010000000001000000, 0b00100000000010000000, 0b01000000000100000000,
-                0b10000000001000000000)
+    full_sds = (
+        0b00000000010000000001,
+        0b00000000100000000010,
+        0b00000001000000000100,
+        0b00000010000000001000,
+        0b00000100000000010000,
+        0b00001000000000100000,
+        0b00010000000001000000,
+        0b00100000000010000000,
+        0b01000000000100000000,
+        0b10000000001000000000,
+    )
 
     # Solve system of equations
     objective = SystemEquations(ap1rog, ham, refwfn=full_sds, constraints=[])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8696828608304892)
+    assert np.allclose(results["energy"], -1.8696828608304892)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -281,15 +292,15 @@ def answer_ap1rog_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(4, 12)
 
     objective = OneSidedEnergy(ap1rog, ham)
     results = minimize(objective)
-    print('Minimum energy')
+    print("Minimum energy")
     print(results)
 
 
@@ -308,16 +319,30 @@ def test_ap1rog_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     ap1rog = AP1roG(4, 12)
-    full_sds = (0b000011000011, 0b000101000101, 0b001001001001, 0b010001010001, 0b100001100001,
-                0b000110000110, 0b001010001010, 0b010010010010, 0b100010100010, 0b001100001100,
-                0b010100010100, 0b100100100100, 0b011000011000, 0b101000101000, 0b110000110000)
+    full_sds = (
+        0b000011000011,
+        0b000101000101,
+        0b001001001001,
+        0b010001010001,
+        0b100001100001,
+        0b000110000110,
+        0b001010001010,
+        0b010010010010,
+        0b100010100010,
+        0b001100001100,
+        0b010100010100,
+        0b100100100100,
+        0b011000011000,
+        0b101000101000,
+        0b110000110000,
+    )
 
     # Solve system of equations
     objective = SystemEquations(ap1rog, ham, refwfn=full_sds, constraints=[])
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -8.963531105243506)
+    assert np.allclose(results["energy"], -8.963531105243506)

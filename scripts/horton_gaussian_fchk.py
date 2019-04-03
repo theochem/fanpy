@@ -44,7 +44,7 @@ def gaussian_fchk(fchk_file, horton_internal=False):
 
     # for spin orbitals
     exps = [mol.exp_alpha]
-    if hasattr(mol, 'exp_beta'):
+    if hasattr(mol, "exp_beta"):
         exps.append(mol.exp_beta)
 
     obasis = mol.obasis
@@ -64,10 +64,10 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     for i, exp_i in enumerate(exps):
         for j, exp_j in enumerate(exps[i:]):
             j += i
-            temp = np.einsum('sd,pqrs->pqrd', exp_j.coeffs, two_ab, casting='no', order='C')
-            temp = np.einsum('rc,pqrd->pqcd', exp_i.coeffs, temp, casting='no', order='C')
-            temp = np.einsum('qb,pqcd->pbcd', exp_j.coeffs, temp, casting='no', order='C')
-            temp = np.einsum('pa,pbcd->abcd', exp_i.coeffs, temp, casting='no', order='C')
+            temp = np.einsum("sd,pqrs->pqrd", exp_j.coeffs, two_ab, casting="no", order="C")
+            temp = np.einsum("rc,pqrd->pqcd", exp_i.coeffs, temp, casting="no", order="C")
+            temp = np.einsum("qb,pqcd->pbcd", exp_j.coeffs, temp, casting="no", order="C")
+            temp = np.einsum("pa,pbcd->abcd", exp_i.coeffs, temp, casting="no", order="C")
             two_mo.append(temp)
         one_mo.append(exp_i.coeffs.T.dot(one_ab).dot(exp_i.coeffs))
 
@@ -78,8 +78,9 @@ def gaussian_fchk(fchk_file, horton_internal=False):
         "two_int": tuple(two_mo),
     }
     if horton_internal:
-        raise NotImplementedError('horton_internal storage is unsupported until it become Python '
-                                  '3.6 compatible.')
+        raise NotImplementedError(
+            "horton_internal storage is unsupported until it become Python " "3.6 compatible."
+        )
         # output["horton_internal"] = {
         #     "mol": mol,
         #     "lf": mol.lf,
@@ -90,20 +91,20 @@ def gaussian_fchk(fchk_file, horton_internal=False):
     return output
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # extract keyword from command line
     kwargs = {key: val for key, val in zip(sys.argv[4::2], sys.argv[5::2])}
     # change data types
-    if 'horton_internal' in kwargs:
-        kwargs['horton_internal'] = (kwargs['horton_internal'] == 'True')
+    if "horton_internal" in kwargs:
+        kwargs["horton_internal"] = kwargs["horton_internal"] == "True"
 
     data = gaussian_fchk(**kwargs)
-    np.save(sys.argv[1], [data['el_energy'], data['nuc_nuc_energy']])
-    if len(data['one_int']) == 1:
-        np.save(sys.argv[2], data['one_int'][0])
+    np.save(sys.argv[1], [data["el_energy"], data["nuc_nuc_energy"]])
+    if len(data["one_int"]) == 1:
+        np.save(sys.argv[2], data["one_int"][0])
     else:
-        np.save(sys.argv[2], data['one_int'])
-    if len(data['two_int']) == 1:
-        np.save(sys.argv[3], data['two_int'][0])
+        np.save(sys.argv[2], data["one_int"])
+    if len(data["two_int"]) == 1:
+        np.save(sys.argv[3], data["two_int"][0])
     else:
-        np.save(sys.argv[3], data['two_int'])
+        np.save(sys.argv[3], data["two_int"])

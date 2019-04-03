@@ -65,7 +65,8 @@ class BaseSchrodinger(BaseObjective):
         Return the value of the objective for the given parameters.
 
     """
-    def __init__(self, wfn, ham, tmpfile='', param_selection=None):
+
+    def __init__(self, wfn, ham, tmpfile="", param_selection=None):
         """Initialize the objective instance.
 
         Parameters
@@ -96,16 +97,19 @@ class BaseSchrodinger(BaseObjective):
 
         """
         if not isinstance(wfn, BaseWavefunction):
-            raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
-                            'child).')
+            raise TypeError(
+                "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
+            )
         if not isinstance(ham, BaseHamiltonian):
-            raise TypeError('Given Hamiltonian is not an instance of BaseWavefunction (or its '
-                            'child).')
+            raise TypeError(
+                "Given Hamiltonian is not an instance of BaseWavefunction (or its " "child)."
+            )
         if wfn.dtype != ham.dtype:
-            raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
+            raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
         if wfn.nspin != ham.nspin:
-            raise ValueError('Wavefunction and Hamiltonian do not have the same number of spin '
-                             'orbitals')
+            raise ValueError(
+                "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
+            )
         self.wfn = wfn
         self.ham = ham
 
@@ -292,8 +296,9 @@ class BaseSchrodinger(BaseObjective):
                 else:
                     d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
                     d_ref_coeffs[ref_deriv] = 1
-        elif slater.is_sd_compatible(refwfn) or (isinstance(refwfn, (list, tuple)) and
-                                                 all(slater.is_sd_compatible(sd) for sd in refwfn)):
+        elif slater.is_sd_compatible(refwfn) or (
+            isinstance(refwfn, (list, tuple)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
+        ):
             if slater.is_sd_compatible(refwfn):
                 refwfn = [refwfn]
             ref_sds = refwfn
@@ -301,10 +306,12 @@ class BaseSchrodinger(BaseObjective):
             if deriv is not None:
                 d_ref_coeffs = get_overlap(refwfn, deriv)
         else:
-            raise TypeError('Reference state must be given as a Slater determinant, a CI '
-                            'Wavefunction, or a list/tuple of Slater determinants. See '
-                            '`backend.slater` for compatible representations of the Slater '
-                            'determinants.')
+            raise TypeError(
+                "Reference state must be given as a Slater determinant, a CI "
+                "Wavefunction, or a list/tuple of Slater determinants. See "
+                "`backend.slater` for compatible representations of the Slater "
+                "determinants."
+            )
 
         # overlaps and integrals
         overlaps = get_overlap(ref_sds)
@@ -387,12 +394,18 @@ class BaseSchrodinger(BaseObjective):
             pspace_norm = pspace_l
 
         for pspace in [pspace_l, pspace_r, pspace_norm]:
-            if not (slater.is_sd_compatible(pspace) or
-                    (isinstance(pspace, (list, tuple)) and
-                     all(slater.is_sd_compatible(sd) for sd in pspace))):
-                raise TypeError('Projection space must be given as a Slater determinant or a '
-                                'list/tuple of Slater determinants. See `backend.slater` for '
-                                'compatible representations of the Slater determinants.')
+            if not (
+                slater.is_sd_compatible(pspace)
+                or (
+                    isinstance(pspace, (list, tuple))
+                    and all(slater.is_sd_compatible(sd) for sd in pspace)
+                )
+            ):
+                raise TypeError(
+                    "Projection space must be given as a Slater determinant or a "
+                    "list/tuple of Slater determinants. See `backend.slater` for "
+                    "compatible representations of the Slater determinants."
+                )
 
         if slater.is_sd_compatible(pspace_l):
             pspace_l = [pspace_l]
@@ -419,7 +432,7 @@ class BaseSchrodinger(BaseObjective):
         overlaps_norm = get_overlap(pspace_norm)
 
         # norm
-        norm = np.sum(overlaps_norm**2)
+        norm = np.sum(overlaps_norm ** 2)
 
         # energy
         if deriv is None:
@@ -427,9 +440,9 @@ class BaseSchrodinger(BaseObjective):
         else:
             d_norm = 2 * np.sum(overlaps_norm * get_overlap(pspace_norm, deriv))
             d_energy = np.sum(get_overlap(pspace_l, deriv) * ci_matrix * overlaps_r) / norm
-            d_energy += np.sum(overlaps_l
-                               * integrate_sd_sd(pspace_l, pspace_r, deriv)
-                               * overlaps_r) / norm
+            d_energy += (
+                np.sum(overlaps_l * integrate_sd_sd(pspace_l, pspace_r, deriv) * overlaps_r) / norm
+            )
             d_energy += np.sum(overlaps_l * ci_matrix * get_overlap(pspace_r, deriv)) / norm
-            d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm**2
+            d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
             return d_energy

@@ -93,9 +93,9 @@ def test_parammask_load_mask_objective_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test._masks_container_params = collections.OrderedDict([(param1, np.array([0])),
-                                                            (param2, np.array([1])),
-                                                            (param3, np.array([2, 3]))])
+    test._masks_container_params = collections.OrderedDict(
+        [(param1, np.array([0])), (param2, np.array([1])), (param3, np.array([2, 3]))]
+    )
 
     test.load_masks_objective_params()
     assert np.allclose(test._masks_objective_params[param1], np.array([True, False, False, False]))
@@ -105,15 +105,21 @@ def test_parammask_load_mask_objective_params():
 
 def test_parammask_all_params():
     """Test ParamMask.all_params."""
-    test = ParamMask((ParamContainer(1), False), (ParamContainer(np.array([2, 3])), np.array(0)),
-                     (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])))
+    test = ParamMask(
+        (ParamContainer(1), False),
+        (ParamContainer(np.array([2, 3])), np.array(0)),
+        (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])),
+    )
     assert np.allclose(test.all_params, np.array([1, 2, 3, 4, 5, 6, 7]))
 
 
 def test_parammask_active_params():
     """Test ParamMask.active_params."""
-    test = ParamMask((ParamContainer(1), False), (ParamContainer(np.array([2, 3])), np.array(0)),
-                     (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])))
+    test = ParamMask(
+        (ParamContainer(1), False),
+        (ParamContainer(np.array([2, 3])), np.array(0)),
+        (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])),
+    )
     assert np.allclose(test.active_params, np.array([2, 4, 7]))
 
 
@@ -122,8 +128,9 @@ def test_parammask_load_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = ParamMask((param1, False), (param2, np.array(0)),
-                     (param3, np.array([True, False, False, True])))
+    test = ParamMask(
+        (param1, False), (param2, np.array(0)), (param3, np.array([True, False, False, True]))
+    )
     with pytest.raises(TypeError):
         test.load_params([9, 10, 11])
     with pytest.raises(TypeError):
@@ -141,8 +148,9 @@ def test_parammask_derivative_index():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = ParamMask((param1, False), (param2, np.array(1)),
-                     (param3, np.array([True, False, False, True])))
+    test = ParamMask(
+        (param1, False), (param2, np.array(1)), (param3, np.array([True, False, False, True]))
+    )
     with pytest.raises(TypeError):
         test.derivative_index(1, 0)
     assert test.derivative_index(ParamContainer(2), 0) is None
@@ -159,16 +167,19 @@ def test_parammask_eq():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = ParamMask((param1, False), (param2, np.array(1)),
-                     (param3, np.array([True, False, False, True])))
+    test = ParamMask(
+        (param1, False), (param2, np.array(1)), (param3, np.array([True, False, False, True]))
+    )
     assert test == test
-    assert test == ParamMask((param1, False), (param2, np.array(1)),
-                             (param3, np.array([True, False, False, True])))
+    assert test == ParamMask(
+        (param1, False), (param2, np.array(1)), (param3, np.array([True, False, False, True]))
+    )
 
-    test2 = ParamMask((ParamContainer(1), False),
-                      (ParamContainer(np.array([2, 3])), np.array(1)),
-                      (ParamContainer(np.array([4, 5, 6, 7])),
-                       np.array([True, False, False, True])))
+    test2 = ParamMask(
+        (ParamContainer(1), False),
+        (ParamContainer(np.array([2, 3])), np.array(1)),
+        (ParamContainer(np.array([4, 5, 6, 7])), np.array([True, False, False, True])),
+    )
     assert test != test2
 
     with pytest.raises(TypeError):

@@ -66,11 +66,11 @@ def adjugate(matrix):
 
     """
     if matrix.size == 0:
-        raise ValueError('Given matrix has nothing inside.')
+        raise ValueError("Given matrix has nothing inside.")
 
     det = np.linalg.det(matrix)
     if abs(det) <= 1e-12:
-        raise np.linalg.LinAlgError('Matrix is singular')
+        raise np.linalg.LinAlgError("Matrix is singular")
     return det * np.linalg.inv(matrix)
 
 
@@ -104,7 +104,7 @@ def permanent_combinatoric(matrix):
     """
     nrow, ncol = matrix.shape
     if nrow == 0 or ncol == 0:
-        raise ValueError('Given matrix has no numbers')
+        raise ValueError("Given matrix has no numbers")
 
     # Ensure that the number of rows is less than or equal to the number of columns
     if nrow > ncol:
@@ -166,7 +166,7 @@ def permanent_ryser(matrix):
     # on rectangular matrices A(m, n) where m <= n.
     nrow, ncol = matrix.shape
     if nrow == 0 or ncol == 0:
-        raise ValueError('Given matrix has no numbers')
+        raise ValueError("Given matrix has no numbers")
 
     factor = 1.0
     # if rectangular
@@ -174,8 +174,9 @@ def permanent_ryser(matrix):
         if nrow > ncol:
             matrix = matrix.transpose()
             nrow, ncol = ncol, nrow
-        matrix = np.pad(matrix, ((0, ncol - nrow), (0, 0)), mode="constant",
-                        constant_values=((0, 1.0), (0, 0)))
+        matrix = np.pad(
+            matrix, ((0, ncol - nrow), (0, 0)), mode="constant", constant_values=((0, 1.0), (0, 0))
+        )
         factor /= np.math.factorial(ncol - nrow)
 
     # Initialize rowsum array.
@@ -264,9 +265,9 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
 
     """
     if zetas.size != epsilons.size:
-        raise ValueError('The the number of zetas and epsilons must be equal')
+        raise ValueError("The the number of zetas and epsilons must be equal")
     if etas is not None and etas.size != lambdas.size:
-        raise ValueError('The number of etas and lambdas must be equal')
+        raise ValueError("The number of etas and lambdas must be equal")
 
     num_row = lambdas.size
     num_col = epsilons.size
@@ -284,7 +285,7 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
         indices = np.array(indices)
         submatrix = cauchy_matrix[:, indices]
         perm_zetas = np.product(zetas[indices])
-        perm_cauchy += np.linalg.det(submatrix**2) / np.linalg.det(submatrix) * perm_zetas
+        perm_cauchy += np.linalg.det(submatrix ** 2) / np.linalg.det(submatrix) * perm_zetas
 
     perm_etas = np.prod(etas)
 
@@ -325,15 +326,22 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
         upper triangular component of a square matrix.
 
     """
-    if not (isinstance(antiherm_elements, np.ndarray) and
-            antiherm_elements.dtype in [int, float, complex] and antiherm_elements.ndim == 1):
-        raise TypeError('Antihermitian elements must be given as a one-dimensional numpy array of '
-                        'integers, floats, or complex numbers.')
+    if not (
+        isinstance(antiherm_elements, np.ndarray)
+        and antiherm_elements.dtype in [int, float, complex]
+        and antiherm_elements.ndim == 1
+    ):
+        raise TypeError(
+            "Antihermitian elements must be given as a one-dimensional numpy array of "
+            "integers, floats, or complex numbers."
+        )
 
     dim = (1 + np.sqrt(1 + 8 * antiherm_elements.size)) / 2
     if not dim.is_integer():
-        raise ValueError('Number of elements is not compatible with the upper triangular part of '
-                         'any square matrix.')
+        raise ValueError(
+            "Number of elements is not compatible with the upper triangular part of "
+            "any square matrix."
+        )
     dim = int(dim)
 
     antiherm = np.zeros((dim, dim))
@@ -343,13 +351,13 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
     unitary = np.identity(dim)
     n = 1
     cache = antiherm
-    norm = np.linalg.norm(cache, ord='fro')
+    norm = np.linalg.norm(cache, ord="fro")
     while norm > norm_threshold and n < num_threshold:
         unitary += cache
         n += 1
         cache = cache.dot(antiherm) / n
-        norm = np.linalg.norm(cache, ord='fro')
+        norm = np.linalg.norm(cache, ord="fro")
         if norm > 1e6:
-            raise ValueError('The norm of the matrix got too big (greater than 1e6).')
+            raise ValueError("The norm of the matrix got too big (greater than 1e6).")
 
     return unitary
