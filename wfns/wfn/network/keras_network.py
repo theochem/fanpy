@@ -157,8 +157,6 @@ class KerasNetwork(BaseWavefunction):
         # function)
         def loss(y_true, y_pred):
             """Loss function used to hack in objective into Keras."""
-            if y_true.shape[0] != 1 or y_pred.shape[0] != 1:
-                raise ValueError("This loss function can only support one data point.")
             return keras.backend.sum(y_true - y_pred)
         model.compile(loss=loss, optimizer='sgd')
 
@@ -233,7 +231,7 @@ class KerasNetwork(BaseWavefunction):
         params = []
         for layer in self.model.layers[:-1]:
             # NOTE: it was ASSUMED that there is only one variable for weights
-            if len(layer.weights) > 1:
+            if len(layer.weights[:-1]) > 1:
                 raise ValueError("Cannot generate initial guess for Keras networks that have layers"
                                  " with more than one variable for weights.")
             params += np.eye(*layer.weights[0].shape).flatten().tolist()
