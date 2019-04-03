@@ -1,23 +1,12 @@
 """Test wfns.objective.schrodinger.base."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 import itertools as it
 from wfns.param import ParamContainer
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-
-
-class TestBaseSchrodinger(BaseSchrodinger):
-    """BaseSchrodinger with abstract property and method defined."""
-    @property
-    def num_eqns(self):
-        """Abstract property."""
-        pass
-
-    def objective(self, params):
-        """Abstract method."""
-        pass
+from utils import disable_abstract
 
 
 def test_baseschrodinger_init():
@@ -25,16 +14,21 @@ def test_baseschrodinger_init():
     wfn = CIWavefunction(2, 4)
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    assert_raises(TypeError, TestBaseSchrodinger, ham, ham)
-    assert_raises(TypeError, TestBaseSchrodinger, wfn, wfn)
+    with pytest.raises(TypeError):
+        disable_abstract(BaseSchrodinger)(ham, ham)
+    with pytest.raises(TypeError):
+        disable_abstract(BaseSchrodinger)(wfn, wfn)
     wfn = CIWavefunction(2, 4, dtype=complex)
-    assert_raises(ValueError, TestBaseSchrodinger, wfn, ham)
+    with pytest.raises(ValueError):
+        disable_abstract(BaseSchrodinger)(wfn, ham)
     wfn = CIWavefunction(2, 6)
-    assert_raises(ValueError, TestBaseSchrodinger, wfn, ham)
+    with pytest.raises(ValueError):
+        disable_abstract(BaseSchrodinger)(wfn, ham)
     wfn = CIWavefunction(2, 4)
-    assert_raises(TypeError, TestBaseSchrodinger, wfn, ham, tmpfile=2)
+    with pytest.raises(TypeError):
+        disable_abstract(BaseSchrodinger)(wfn, ham, tmpfile=2)
 
-    test = TestBaseSchrodinger(wfn, ham, tmpfile='tmpfile.npy')
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, tmpfile='tmpfile.npy')
     assert test.wfn == wfn
     assert test.ham == ham
     assert test.tmpfile == 'tmpfile.npy'
@@ -48,7 +42,7 @@ def test_baseschrodinger_wrapped_get_overlap():
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_get_overlap(0b0101, deriv=None) == wfn.get_overlap(0b0101, deriv=None)
     assert test.wrapped_get_overlap(0b0101, deriv=0) == wfn.get_overlap(0b0101, deriv=0)
@@ -63,7 +57,7 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
     assert test.wrapped_integrate_wfn_sd(0b0101,
@@ -85,7 +79,7 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    test = TestBaseSchrodinger(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])),
                                                           (ParamContainer(3), True)])
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=0) == 0.0
@@ -101,7 +95,7 @@ def test_baseschrodinger_get_energy_one_proj():
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    test = TestBaseSchrodinger(wfn, ham)
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
     sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
     # sd
@@ -194,7 +188,8 @@ def test_baseschrodinger_get_energy_one_proj():
                                / (coeff1 * olp1 + coeff2 * olp2)**2)
 
         # others
-        assert_raises(TypeError, test.get_energy_one_proj, '0b0101')
+        with pytest.raises(TypeError):
+            test.get_energy_one_proj('0b0101')
 
 
 def test_baseschrodinger_get_energy_two_proj():
@@ -203,7 +198,7 @@ def test_baseschrodinger_get_energy_two_proj():
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(np.arange(4, dtype=float).reshape(2, 2),
                                         np.arange(16, dtype=float).reshape(2, 2, 2, 2))
-    test = TestBaseSchrodinger(wfn, ham)
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
     sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]
     # sd

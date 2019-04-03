@@ -1,20 +1,15 @@
 """Test wfns.objective.twosided_energy."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-
-
-class TestTwoSidedEnergy(TwoSidedEnergy):
-    """TwoSidedEnergy that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_twosided_energy_assign_pspaces():
     """Test TwoSidedEnergy.assign_pspaces."""
-    test = TestTwoSidedEnergy()
+    test = skip_init(TwoSidedEnergy)
     test.wfn = CIWavefunction(2, 4)
     # default pspace_l
     test.assign_pspaces(pspace_l=None, pspace_r=(0b0101, ), pspace_n=[0b0101])
@@ -32,10 +27,14 @@ def test_twosided_energy_assign_pspaces():
     assert test.pspace_r == (0b0101, )
     assert test.pspace_n is None
     # error checking
-    assert_raises(TypeError, test.assign_pspaces, pspace_l=set([0b0101, 0b1010]))
-    assert_raises(TypeError, test.assign_pspaces, pspace_n=CIWavefunction(2, 4))
-    assert_raises(ValueError, test.assign_pspaces, pspace_r=[0b1101])
-    assert_raises(ValueError, test.assign_pspaces, pspace_r=[0b10001])
+    with pytest.raises(TypeError):
+        test.assign_pspaces(pspace_l=set([0b0101, 0b1010]))
+    with pytest.raises(TypeError):
+        test.assign_pspaces(pspace_n=CIWavefunction(2, 4))
+    with pytest.raises(ValueError):
+        test.assign_pspaces(pspace_r=[0b1101])
+    with pytest.raises(ValueError):
+        test.assign_pspaces(pspace_r=[0b10001])
 
 
 def test_num_eqns():
@@ -45,7 +44,8 @@ def test_num_eqns():
                                         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2))
     test = TwoSidedEnergy(wfn, ham)
     assert test.num_eqns == 1
-    assert_raises(TypeError, test.assign_pspaces, pspace_n=['0101'])
+    with pytest.raises(TypeError):
+        test.assign_pspaces(pspace_n=['0101'])
 
 
 def test_twosided_energy_objective():

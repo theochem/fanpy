@@ -1,10 +1,10 @@
 """Test wfns.wrapper.horton."""
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 import os
 import sys
 from subprocess import call
-from wfns.tools import find_datafile
+from utils import find_datafile
 from wfns.wrapper.python_wrapper import generate_hartreefock_results, generate_fci_results
 
 
@@ -51,8 +51,8 @@ def check_data_h2_uhf_sto6g(el_energy, nuc_nuc_energy, one_int, two_ints):
 #     assert np.allclose(nuc_nuc_energy, 0.7131768310)
 
 #     # check types of the integrals
-#     assert np.allclose(one_int, np.load(find_datafile('test/h2_hf_631gdp_oneint.npy')))
-#     assert np.allclose(two_int, np.load(find_datafile('test/h2_hf_631gdp_twoint.npy')))
+#     assert np.allclose(one_int, np.load(find_datafile('data_h2_hf_631gdp_oneint.npy')))
+#     assert np.allclose(two_int, np.load(find_datafile('data_h2_hf_631gdp_twoint.npy')))
 
 
 def check_data_lih_rhf_sto6g(*data):
@@ -106,7 +106,7 @@ def test_generate_hartreefock_results_error():
         generate_hartreefock_results('sdf')
 
 
-@np.testing.dec.skipif(not check_dependency('horton'),
+@pytest.mark.skipif(not check_dependency('horton'),
                        'HORTON is not available or HORTONPATH is not set.')
 def test_horton_hartreefock_h2_rhf_sto6g():
     """Test HORTON's hartreefock against H2 HF STO-6G data from Gaussian."""
@@ -115,11 +115,11 @@ def test_horton_hartreefock_h2_rhf_sto6g():
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           fn=find_datafile('test/h2.xyz'), basis="sto-6g", nelec=2)
+                                           fn=find_datafile('data_h2.xyz'), basis="sto-6g", nelec=2)
     check_data_h2_rhf_sto6g(*hf_data)
 
 
-@np.testing.dec.skipif(not check_dependency('horton'),
+@pytest.mark.skipif(not check_dependency('horton'),
                        'HORTON is not available or HORTONPATH is not set.')
 def test_horton_gaussian_fchk_h2_rhf_sto6g():
     """Test HORTON's gaussian_fchk against H2 HF STO-6G data from Gaussian."""
@@ -128,12 +128,12 @@ def test_horton_gaussian_fchk_h2_rhf_sto6g():
                                              oneint_name='oneint.npy',
                                              twoint_name='twoint.npy',
                                              remove_npyfiles=True,
-                                             fchk_file=find_datafile('test/h2_hf_sto6g.fchk'),
+                                             fchk_file=find_datafile('data_h2_hf_sto6g.fchk'),
                                              horton_internal=False)
     check_data_h2_rhf_sto6g(*fchk_data)
 
 
-@np.testing.dec.skipif(not check_dependency('horton'),
+@pytest.mark.skipif(not check_dependency('horton'),
                        'HORTON is not available or HORTONPATH is not set.')
 def test_gaussian_fchk_h2_uhf_sto6g():
     """Test HORTON's gaussian_fchk against H2 UHF STO-6G data from Gaussian"""
@@ -142,12 +142,12 @@ def test_gaussian_fchk_h2_uhf_sto6g():
                                              oneint_name='oneint.npy',
                                              twoint_name='twoint.npy',
                                              remove_npyfiles=True,
-                                             fchk_file=find_datafile('test/h2_uhf_sto6g.fchk'),
+                                             fchk_file=find_datafile('data_h2_uhf_sto6g.fchk'),
                                              horton_internal=False)
     check_data_h2_uhf_sto6g(*fchk_data)
 
 
-@np.testing.dec.skipif(not check_dependency('pyscf'),
+@pytest.mark.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
 def test_pyscf_hartreefock_h2_rhf_sto6g():
     """Test PySCF HF against H2 RHF STO-6G data from Gaussian"""
@@ -156,11 +156,11 @@ def test_pyscf_hartreefock_h2_rhf_sto6g():
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           xyz_file=find_datafile('test/h2.xyz'), basis="sto-6g")
+                                           xyz_file=find_datafile('data_h2.xyz'), basis="sto-6g")
     check_data_h2_rhf_sto6g(*hf_data)
 
 
-@np.testing.dec.skipif(not check_dependency('pyscf'),
+@pytest.mark.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
 def test_pyscf_hartreefock_lih_rhf_sto6g():
     """Test PySCF HF against LiH RHF STO6G data from Gaussian."""
@@ -170,11 +170,11 @@ def test_pyscf_hartreefock_lih_rhf_sto6g():
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           xyz_file=find_datafile('test/lih.xyz'), basis="sto-6g")
+                                           xyz_file=find_datafile('data_lih.xyz'), basis="sto-6g")
     check_data_lih_rhf_sto6g(*hf_data)
 
 
-@np.testing.dec.skipif(not check_dependency('pyscf'),
+@pytest.mark.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
 def test_generate_fci_cimatrix_h2_631gdp():
     """Test PySCF's FCI calculation against H2 FCI 6-31G** data from Gaussian.
@@ -188,7 +188,7 @@ def test_generate_fci_cimatrix_h2_631gdp():
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           xyz_file=find_datafile('test/h2.xyz'), basis="6-31gss")
+                                           xyz_file=find_datafile('data_h2.xyz'), basis="6-31gss")
 
     nelec = 2
     el_energy, nuc_nuc, one_int, two_int = hf_data
@@ -217,7 +217,7 @@ def test_generate_fci_cimatrix_h2_631gdp():
     assert abs(ground_energy - (-1.1651486697)) < 1e-7
 
 
-@np.testing.dec.skipif(not check_dependency('pyscf'),
+@pytest.mark.skipif(not check_dependency('pyscf'),
                        'PYSCF is not available or PYSCFPATH is not set.')
 def test_generate_fci_cimatrix_lih_sto6g():
     """Test python_wrapper.generate_fci_cimatrix with LiH STO-6G.
@@ -231,7 +231,7 @@ def test_generate_fci_cimatrix_lih_sto6g():
                                            oneint_name='oneint.npy',
                                            twoint_name='twoint.npy',
                                            remove_npyfiles=True,
-                                           xyz_file=find_datafile('test/lih.xyz'), basis="sto-6g")
+                                           xyz_file=find_datafile('data_lih.xyz'), basis="sto-6g")
 
     nelec = 4
     el_energy, nuc_nuc, one_int, two_int = hf_data

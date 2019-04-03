@@ -1,17 +1,12 @@
 """Test wfns.objective.system_nonlinear."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.param import ParamContainer, ParamMask
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-
-
-class TestSystemEquations(SystemEquations):
-    """SystemEquations that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_system_init_energy():
@@ -30,11 +25,15 @@ def test_system_init_energy():
     test = SystemEquations(wfn, ham, energy=np.complex128(2.0), energy_type='compute')
     assert test.energy.params == 2.0
 
-    assert_raises(TypeError, SystemEquations, wfn, ham, energy=0, energy_type='compute')
-    assert_raises(TypeError, SystemEquations, wfn, ham, energy='1', energy_type='compute')
+    with pytest.raises(TypeError):
+        SystemEquations(wfn, ham, energy=0, energy_type='compute')
+    with pytest.raises(TypeError):
+        SystemEquations(wfn, ham, energy='1', energy_type='compute')
 
-    assert_raises(ValueError, SystemEquations, wfn, ham, energy=None, energy_type='something else')
-    assert_raises(ValueError, SystemEquations, wfn, ham, energy=None, energy_type=0)
+    with pytest.raises(ValueError):
+        SystemEquations(wfn, ham, energy=None, energy_type='something else')
+    with pytest.raises(ValueError):
+        SystemEquations(wfn, ham, energy=None, energy_type=0)
 
     test = SystemEquations(wfn, ham, energy=0.0, energy_type='variable')
     assert np.allclose(test.param_selection._masks_container_params[test.energy],
@@ -51,7 +50,7 @@ def test_system_init_energy():
 
 def test_system_nproj():
     """Test SystemEquation.nproj"""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.assign_pspace([0b0101, 0b1010])
     assert test.nproj == 2
     test.assign_pspace([0b0101, 0b1010, 0b0110])
@@ -60,7 +59,7 @@ def test_system_nproj():
 
 def test_system_assign_pspace():
     """Test SystemEquations.assign_pspace."""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_pspace()
@@ -71,13 +70,15 @@ def test_system_assign_pspace():
     for sd, sol_sd in zip(test.pspace, [0b0101, 0b1010]):
         assert sd == sol_sd
 
-    assert_raises(TypeError, test.assign_pspace, 0b0101)
-    assert_raises(TypeError, test.assign_pspace, '0101')
+    with pytest.raises(TypeError):
+        test.assign_pspace(0b0101)
+    with pytest.raises(TypeError):
+        test.assign_pspace('0101')
 
 
 def test_system_assign_refwfn():
     """Test SystemEquations.assign_refwfn."""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_refwfn()
@@ -93,14 +94,17 @@ def test_system_assign_refwfn():
     test.assign_refwfn(ciwfn)
     assert test.refwfn == ciwfn
 
-    assert_raises(TypeError, test.assign_refwfn, [ciwfn, ciwfn])
-    assert_raises(TypeError, test.assign_refwfn, '0101')
-    assert_raises(TypeError, test.assign_refwfn, np.array([0b0101, 0b0110]))
+    with pytest.raises(TypeError):
+        test.assign_refwfn([ciwfn, ciwfn])
+    with pytest.raises(TypeError):
+        test.assign_refwfn('0101')
+    with pytest.raises(TypeError):
+        test.assign_refwfn(np.array([0b0101, 0b0110]))
 
 
 def test_system_assign_eqn_weights():
     """Test SystemEquations.assign_eqn_weights."""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
     test.assign_pspace()
     test.assign_refwfn()
@@ -119,16 +123,19 @@ def test_system_assign_eqn_weights():
     test.assign_constraints([norm_constraint, norm_constraint])
     test.assign_eqn_weights(np.zeros(8))
 
-    assert_raises(TypeError, test.assign_eqn_weights, [1, 1, 1, 1, 1, 1, 1])
+    with pytest.raises(TypeError):
+        test.assign_eqn_weights([1, 1, 1, 1, 1, 1, 1])
 
-    assert_raises(TypeError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
+    with pytest.raises(TypeError):
+        test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0]))
 
-    assert_raises(ValueError, test.assign_eqn_weights, np.array([0, 0, 0, 0, 0, 0], dtype=float))
+    with pytest.raises(ValueError):
+        test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0], dtype=float))
 
 
 def test_system_assign_constraints():
     """Test SystemEquations.assign_constraints."""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn(0b0101)
     test.assign_param_selection(
@@ -149,18 +156,23 @@ def test_system_assign_constraints():
     assert test.constraints[0].wfn == test.wfn
     assert test.constraints[0].refwfn == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
 
-    assert_raises(TypeError, test.assign_constraints, lambda x: None)
-    assert_raises(TypeError, test.assign_constraints, np.array(norm_constraint))
-    assert_raises(TypeError, test.assign_constraints, [norm_constraint, lambda x: None])
+    with pytest.raises(TypeError):
+        test.assign_constraints(lambda x: None)
+    with pytest.raises(TypeError):
+        test.assign_constraints(np.array(norm_constraint))
+    with pytest.raises(TypeError):
+        test.assign_constraints([norm_constraint, lambda x: None])
     norm_constraint.assign_param_selection(ParamMask((ParamContainer(test.wfn.params),
                                                       np.ones(6, dtype=bool))))
-    assert_raises(ValueError, test.assign_constraints, norm_constraint)
-    assert_raises(ValueError, test.assign_constraints, [norm_constraint])
+    with pytest.raises(ValueError):
+        test.assign_constraints(norm_constraint)
+    with pytest.raises(ValueError):
+        test.assign_constraints([norm_constraint])
 
 
 def test_num_eqns():
     """Test SystemEquation.num_eqns."""
-    test = TestSystemEquations()
+    test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn()
     test.assign_param_selection()

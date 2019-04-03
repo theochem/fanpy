@@ -1,32 +1,22 @@
 """Test wfns.objective.base."""
-from nose.tools import assert_raises
 import numpy as np
+import pytest
 from wfns.param import ParamContainer, ParamMask
 from wfns.objective.base import BaseObjective
-
-
-class TestBaseObjective(BaseObjective):
-    """BaseObjective with abstract property and method defined."""
-    @property
-    def num_eqns(self):
-        """Abstract property."""
-        pass
-
-    def objective(self, params):
-        """Abstract method."""
-        pass
+from utils import disable_abstract
 
 
 def test_baseobjective_init():
     """Test BaseObjective.__init__."""
-    test = TestBaseObjective(tmpfile='tmpfile.npy')
+    test = disable_abstract(BaseObjective)(tmpfile='tmpfile.npy')
     assert test.tmpfile == 'tmpfile.npy'
-    assert_raises(TypeError, TestBaseObjective, tmpfile=23)
+    with pytest.raises(TypeError):
+        disable_abstract(BaseObjective)(tmpfile=23)
 
 
 def test_baseobjective_assign_param_selection():
     """Test BaseObjective.assign_param_selection."""
-    test = TestBaseObjective()
+    test = disable_abstract(BaseObjective)()
 
     test.assign_param_selection(())
     assert isinstance(test.param_selection, ParamMask)
@@ -49,7 +39,8 @@ def test_baseobjective_assign_param_selection():
         assert container == param1
         assert np.allclose(sel, np.array([]))
 
-    assert_raises(TypeError, test.assign_param_selection, np.array([(param1, False)]))
+    with pytest.raises(TypeError):
+        test.assign_param_selection(np.array([(param1, False)]))
 
 
 def test_baseobjective_params():
@@ -57,8 +48,8 @@ def test_baseobjective_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = TestBaseObjective([(param1, False), (param2, np.array(0)),
-                              (param3, np.array([True, False, False, True]))])
+    test = disable_abstract(BaseObjective)([(param1, False), (param2, np.array(0)),
+                                            (param3, np.array([True, False, False, True]))])
     assert np.allclose(test.params, np.array([2, 4, 7]))
 
 
@@ -67,8 +58,8 @@ def test_baseobjective_assign_params():
     param1 = ParamContainer(1)
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    test = TestBaseObjective([(param1, False), (param2, np.array(0)),
-                              (param3, np.array([True, False, False, True]))])
+    test = disable_abstract(BaseObjective)([(param1, False), (param2, np.array(0)),
+                                            (param3, np.array([True, False, False, True]))])
     test.assign_params(np.array([99, 98, 97]))
     assert np.allclose(param1.params, [1])
     assert np.allclose(param2.params, [99, 3])
