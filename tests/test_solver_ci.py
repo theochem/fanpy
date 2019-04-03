@@ -1,12 +1,12 @@
 """Test wfn.solver.ci."""
 import numpy as np
-from nose.tools import assert_raises
+import pytest
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver import ci
 
 
-class TestChemicalHamiltonian(RestrictedChemicalHamiltonian):
+class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):
     """Class that overwrite integrate_sd_sd for simplicity."""
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
         if sd1 > sd2:
@@ -22,24 +22,30 @@ class TestChemicalHamiltonian(RestrictedChemicalHamiltonian):
 def test_brute():
     """Test wfn.solver.ci.brute."""
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
-    test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
+    test_ham = TempChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
     # check type
-    assert_raises(TypeError, ci.brute, None, test_ham, 0)
-    assert_raises(TypeError, ci.brute, test_wfn, None, 0)
+    with pytest.raises(TypeError):
+        ci.brute(None, test_ham, 0)
+    with pytest.raises(TypeError):
+        ci.brute(test_wfn, None, 0)
 
-    test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=complex),
+    test_ham = TempChemicalHamiltonian(np.ones((2, 2), dtype=complex),
                                        np.ones((2, 2, 2, 2), dtype=complex))
-    assert_raises(ValueError, ci.brute, test_wfn, test_ham, 0)
-    test_ham = TestChemicalHamiltonian(np.ones((3, 3), dtype=complex),
+    with pytest.raises(ValueError):
+        ci.brute(test_wfn, test_ham, 0)
+    test_ham = TempChemicalHamiltonian(np.ones((3, 3), dtype=complex),
                                        np.ones((3, 3, 3, 3), dtype=complex))
-    assert_raises(ValueError, ci.brute, test_wfn, test_ham, 0)
+    with pytest.raises(ValueError):
+        ci.brute(test_wfn, test_ham, 0)
 
     test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
-    test_ham = TestChemicalHamiltonian(np.ones((2, 2), dtype=float),
+    test_ham = TempChemicalHamiltonian(np.ones((2, 2), dtype=float),
                                        np.ones((2, 2, 2, 2), dtype=float))
-    assert_raises(TypeError, ci.brute, test_wfn, test_ham, None)
-    assert_raises(TypeError, ci.brute, test_wfn, test_ham, -1)
+    with pytest.raises(TypeError):
+        ci.brute(test_wfn, test_ham, None)
+    with pytest.raises(TypeError):
+        ci.brute(test_wfn, test_ham, -1)
 
     # 0 = det [[1, 3]
     #          [3, 8]]

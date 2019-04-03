@@ -1,6 +1,6 @@
 """Test wfns.solver.equation."""
 import os
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.wfn.base import BaseWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
@@ -10,7 +10,7 @@ from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 import wfns.solver.equation as equation
 
 
-class TestBaseWavefunction(BaseWavefunction):
+class TempBaseWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abc structure and overwrite properties and attributes."""
     def __init__(self):
         pass
@@ -57,10 +57,10 @@ def check_cma():
         return True
 
 
-@np.testing.dec.skipif(not check_cma(), 'The module `cma` is unavailable.')
+@pytest.mark.skipif(not check_cma(), 'The module `cma` is unavailable.')
 def test_cma():
     """Test wnfs.solver.equation.cma."""
-    wfn = TestBaseWavefunction()
+    wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
@@ -82,10 +82,12 @@ def test_cma():
                                   'Following termination conditions are satisfied: tolfun: 1e-11, '
                                   'tolfunhist: 1e-12.']
 
-    assert_raises(TypeError, equation.cma, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
-    assert_raises(ValueError, equation.cma, SystemEquations(wfn, ham, refwfn=0b0011))
-    assert_raises(ValueError, equation.cma, OneSidedEnergy(wfn, ham,
-                                                           param_selection=[[wfn, np.array([0])]]))
+    with pytest.raises(TypeError):
+        equation.cma(lambda x, y: (x-3)*(y-2) + x**3 + y**2)
+    with pytest.raises(ValueError):
+        equation.cma(SystemEquations(wfn, ham, refwfn=0b0011))
+    with pytest.raises(ValueError):
+        equation.cma(OneSidedEnergy(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
     results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file='temp.npy')
     test = np.load('temp.npy')
@@ -95,7 +97,7 @@ def test_cma():
 
 def test_minimize():
     """Test wnfs.solver.equation.minimize."""
-    wfn = TestBaseWavefunction()
+    wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
@@ -114,5 +116,7 @@ def test_minimize():
     assert np.allclose(results['energy'], 2)
     assert np.allclose(results['function'], 0, atol=1e-7)
 
-    assert_raises(TypeError, equation.minimize, lambda x, y: (x-3)*(y-2) + x**3 + y**2)
-    assert_raises(ValueError, equation.minimize, SystemEquations(wfn, ham, refwfn=0b0011))
+    with pytest.raises(TypeError):
+        equation.minimize(lambda x, y: (x-3)*(y-2) + x**3 + y**2)
+    with pytest.raises(ValueError):
+        equation.minimize(SystemEquations(wfn, ham, refwfn=0b0011))

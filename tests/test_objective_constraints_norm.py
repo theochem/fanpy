@@ -1,6 +1,6 @@
 """Test wfns.objective.constraints.norm."""
 import itertools as it
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.wfn.ci.base import CIWavefunction
@@ -9,8 +9,10 @@ from wfns.param import ParamContainer
 
 def test_norm_init():
     """Test NormConstraint.__init__."""
-    assert_raises(TypeError, NormConstraint, 2)
-    assert_raises(TypeError, NormConstraint, ParamContainer(4))
+    with pytest.raises(TypeError):
+        NormConstraint(2)
+    with pytest.raises(TypeError):
+        NormConstraint(ParamContainer(4))
     wfn = CIWavefunction(2, 4)
     test = NormConstraint(wfn)
     assert test.wfn == wfn

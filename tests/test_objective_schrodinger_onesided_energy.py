@@ -1,20 +1,15 @@
 """Test wfns.objective.onesided_energy."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-
-
-class TestOneSidedEnergy(OneSidedEnergy):
-    """OneSidedEnergy that skips initialization."""
-    def __init__(self):
-        pass
+from utils import skip_init
 
 
 def test_onesided_energy_assign_refwfn():
     """Test OneSidedEnergy.assign_refwfn."""
-    test = TestOneSidedEnergy()
+    test = skip_init(OneSidedEnergy)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_refwfn(refwfn=None)
@@ -30,12 +25,18 @@ def test_onesided_energy_assign_refwfn():
     test.assign_refwfn(refwfn=ciwfn)
     assert test.refwfn == ciwfn
 
-    assert_raises(TypeError, test.assign_refwfn, refwfn=set([0b0101, 0b1010]))
-    assert_raises(ValueError, test.assign_refwfn, refwfn=[0b1101])
-    assert_raises(ValueError, test.assign_refwfn, refwfn=[0b10001])
-    assert_raises(ValueError, test.assign_refwfn, refwfn=CIWavefunction(3, 4))
-    assert_raises(ValueError, test.assign_refwfn, refwfn=CIWavefunction(2, 6))
-    assert_raises(TypeError, test.assign_refwfn, refwfn=['0101'])
+    with pytest.raises(TypeError):
+        test.assign_refwfn(refwfn=set([0b0101, 0b1010]))
+    with pytest.raises(ValueError):
+        test.assign_refwfn(refwfn=[0b1101])
+    with pytest.raises(ValueError):
+        test.assign_refwfn(refwfn=[0b10001])
+    with pytest.raises(ValueError):
+        test.assign_refwfn(refwfn=CIWavefunction(3, 4))
+    with pytest.raises(ValueError):
+        test.assign_refwfn(refwfn=CIWavefunction(2, 6))
+    with pytest.raises(TypeError):
+        test.assign_refwfn(refwfn=['0101'])
 
 
 def test_num_eqns():
