@@ -277,7 +277,7 @@ class MatrixProductState(BaseWavefunction):
 
         matrix_shape = self.get_matrix_shape(ind_spatial)
         ind_occ, ind_row, ind_col = np.unravel_index([param_index], matrix_shape)
-        return ind_spatial, np.asscalar(ind_occ), np.asscalar(ind_row), np.asscalar(ind_col)
+        return ind_spatial, ind_occ.item(), ind_row.item(), ind_col.item()
 
     @property
     def params_shape(self):
@@ -388,7 +388,7 @@ class MatrixProductState(BaseWavefunction):
         temp_matrix = self.get_matrix(0)[occ_indices[0], :, :]
         for i in range(1, occ_indices.size):
             temp_matrix = temp_matrix.dot(self.get_matrix(i)[occ_indices[i], :, :])
-        return np.asscalar(temp_matrix)
+        return temp_matrix.item()
 
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
@@ -435,7 +435,7 @@ class MatrixProductState(BaseWavefunction):
             for i in reversed(range(index_left)):
                 left_temp = self.get_matrix(i)[occ_indices[i], :, :].dot(left_temp)
 
-        return np.asscalar(left_temp * right_temp)
+        return (left_temp * right_temp).item()
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
