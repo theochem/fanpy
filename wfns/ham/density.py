@@ -335,7 +335,7 @@ def density_matrix(
             # if double excitation
             elif len(left_diff) == 2:
                 i, j = left_diff
-                k, l = right_diff
+                k, l = right_diff  # noqa: E741
                 add_two_density(two_densities, i, j, k, l, val, orbtype=orbtype)
                 add_two_density(two_densities, j, i, l, k, val, orbtype=orbtype)
                 add_two_density(two_densities, k, l, i, j, val, orbtype=orbtype)

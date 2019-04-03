@@ -2,7 +2,6 @@ r"""Hamiltonian used to describe a chemical system expressed wrt unrestricted or
 import numpy as np
 from wfns.backend import slater, math_tools
 from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
-from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 
 class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
