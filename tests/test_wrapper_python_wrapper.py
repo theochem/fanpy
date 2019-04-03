@@ -89,7 +89,7 @@ def check_dependency(dependency):
             python_name = os.environ['HORTONPYTHON']
         elif dependency == 'pyscf':
             python_name = os.environ['PYSCFPYTHON']
-    except KeyError:
+    except (KeyError, FileNotFoundError):
         python_name = sys.executable
 
     exit_code = call([python_name, '-c', "import {0}".format(dependency)])
