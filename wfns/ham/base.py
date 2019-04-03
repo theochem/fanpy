@@ -69,7 +69,7 @@ class BaseHamiltonian(ParamContainer):
         elif isinstance(energy_nuc_nuc, (int, float)):
             energy_nuc_nuc = float(energy_nuc_nuc)
         else:
-            raise TypeError('Nuclear-nuclear repulsion must be given as a int, float, or None.')
+            raise TypeError("Nuclear-nuclear repulsion must be given as a int, float, or None.")
         self.energy_nuc_nuc = energy_nuc_nuc
 
     @abc.abstractproperty
@@ -162,8 +162,10 @@ class BaseHamiltonian(ParamContainer):
 
         """
         if wfn_deriv is not None and ham_deriv is not None:
-            raise ValueError('Integral can be derivatized with respect to at most one out of the '
-                             'wavefunction and Hamiltonian parameters.')
+            raise ValueError(
+                "Integral can be derivatized with respect to at most one out of the "
+                "wavefunction and Hamiltonian parameters."
+            )
 
         sd = slater.internal_sd(sd)
         occ_indices = slater.occ_indices(sd)
@@ -177,17 +179,19 @@ class BaseHamiltonian(ParamContainer):
             """Wrapped function for updating the integral values."""
             coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
             sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
-            return (one_electron + coeff * sd_energy[0],
-                    coulomb + coeff * sd_energy[1],
-                    exchange + coeff * sd_energy[2])
+            return (
+                one_electron + coeff * sd_energy[0],
+                coulomb + coeff * sd_energy[1],
+                exchange + coeff * sd_energy[2],
+            )
 
         one_electron, coulomb, exchange = update_integrals(sd)
         for counter_i, i in enumerate(occ_indices):
             for counter_a, a in enumerate(vir_indices):
                 sd_m = slater.excite(sd, i, a)
                 one_electron, coulomb, exchange = update_integrals(sd_m)
-                for j in occ_indices[counter_i+1:]:
-                    for b in vir_indices[counter_a+1:]:
+                for j in occ_indices[counter_i + 1 :]:
+                    for b in vir_indices[counter_a + 1 :]:
                         sd_m = slater.excite(sd, i, j, b, a)
                         one_electron, coulomb, exchange = update_integrals(sd_m)
 

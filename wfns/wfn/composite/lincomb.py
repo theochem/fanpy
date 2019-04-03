@@ -130,7 +130,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
             Shape of the parameters.
 
         """
-        return (len(self.wfns), )
+        return (len(self.wfns),)
 
     @property
     def template_params(self):
@@ -174,18 +174,24 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         """
         if any(not isinstance(wfn, BaseWavefunction) for wfn in wfns):
-            raise TypeError('Each wavefunction must be a instance of `BaseWavefunction`.')
+            raise TypeError("Each wavefunction must be a instance of `BaseWavefunction`.")
         elif any(wfn.nelec != self.nelec for wfn in wfns):
-            raise ValueError('Given wavefunction does not have the same number of electrons as the'
-                             ' the instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same number of electrons as the"
+                " the instantiated NonorthWavefunction."
+            )
         elif any(wfn.dtype != self.dtype for wfn in wfns):
-            raise ValueError('Given wavefunction does not have the same data type as the '
-                             'instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same data type as the "
+                "instantiated NonorthWavefunction."
+            )
         elif any(wfn.memory != self.memory for wfn in wfns):
-            raise ValueError('Given wavefunction does not have the same memory as the '
-                             'instantiated NonorthWavefunction.')
+            raise ValueError(
+                "Given wavefunction does not have the same memory as the "
+                "instantiated NonorthWavefunction."
+            )
         elif len(wfns) == 1:
-            raise ValueError('Only one wavefunction is given.')
+            raise ValueError("Only one wavefunction is given.")
 
         self.wfns = tuple(wfns)
 

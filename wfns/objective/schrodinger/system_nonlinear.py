@@ -113,9 +113,20 @@ class SystemEquations(BaseSchrodinger):
         Return the Jacobian of the objective function.
 
     """
-    def __init__(self, wfn, ham, tmpfile='', param_selection=None,
-                 pspace=None, refwfn=None, eqn_weights=None, energy_type='compute', energy=None,
-                 constraints=None):
+
+    def __init__(
+        self,
+        wfn,
+        ham,
+        tmpfile="",
+        param_selection=None,
+        pspace=None,
+        refwfn=None,
+        eqn_weights=None,
+        energy_type="compute",
+        energy=None,
+        constraints=None,
+    ):
         """Initialize the objective instance.
 
         Parameters
@@ -178,17 +189,17 @@ class SystemEquations(BaseSchrodinger):
         self.assign_pspace(pspace)
         self.assign_refwfn(refwfn)
 
-        if energy_type not in ['fixed', 'variable', 'compute']:
+        if energy_type not in ["fixed", "variable", "compute"]:
             raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
         self.energy_type = energy_type
 
         if energy is None:
             energy = self.get_energy_one_proj(self.refwfn)
         elif not isinstance(energy, (float, complex)):
-            raise TypeError('Energy must be given as a float or complex.')
+            raise TypeError("Energy must be given as a float or complex.")
         self.energy = ParamContainer(energy)
-        if energy_type in ['fixed', 'variable']:
-            self.param_selection.load_mask_container_params(self.energy, energy_type == 'variable')
+        if energy_type in ["fixed", "variable"]:
+            self.param_selection.load_mask_container_params(self.energy, energy_type == "variable")
             self.param_selection.load_masks_objective_params()
 
         self.assign_constraints(constraints)
@@ -235,15 +246,18 @@ class SystemEquations(BaseSchrodinger):
 
         """
         if pspace is None:
-            pspace = sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin,
-                                     seniority=self.wfn.seniority)
-        elif (isinstance(pspace, (list, tuple)) and
-              all(slater.is_sd_compatible(state) or isinstance(state, CIWavefunction)
-                  for state in pspace)):
+            pspace = sd_list.sd_list(
+                self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin, seniority=self.wfn.seniority
+            )
+        elif isinstance(pspace, (list, tuple)) and all(
+            slater.is_sd_compatible(state) or isinstance(state, CIWavefunction) for state in pspace
+        ):
             pspace = tuple(pspace)
         else:
-            raise TypeError('Projected space must be given as a list/tuple of Slater determinants. '
-                            'See `backend.slater` for compatible Slater determinant formats.')
+            raise TypeError(
+                "Projected space must be given as a list/tuple of Slater determinants. "
+                "See `backend.slater` for compatible Slater determinant formats."
+            )
         self.pspace = pspace
 
     def assign_refwfn(self, refwfn=None):
@@ -259,18 +273,21 @@ class SystemEquations(BaseSchrodinger):
 
         """
         if refwfn is None:
-            self.refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin), )
+            self.refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin),)
         elif slater.is_sd_compatible(refwfn):
-            self.refwfn = (refwfn, )
-        elif (isinstance(refwfn, (list, tuple)) and
-              all(slater.is_sd_compatible(sd) for sd in refwfn)):
+            self.refwfn = (refwfn,)
+        elif isinstance(refwfn, (list, tuple)) and all(
+            slater.is_sd_compatible(sd) for sd in refwfn
+        ):
             self.refwfn = tuple(slater.internal_sd(sd) for sd in refwfn)
         elif isinstance(refwfn, CIWavefunction):
             self.refwfn = refwfn
         else:
-            raise TypeError('Reference state must be given as a Slater determinant, a list/tuple of'
-                            ' Slater determinants, or a CIWavefunction. See `backend.slater` for '
-                            'compatible representations of the Slater determinants.')
+            raise TypeError(
+                "Reference state must be given as a Slater determinant, a list/tuple of"
+                " Slater determinants, or a CIWavefunction. See `backend.slater` for "
+                "compatible representations of the Slater determinants."
+            )
 
     def assign_constraints(self, constraints=None):
         """Assign the constraints on the objective.
@@ -292,21 +309,27 @@ class SystemEquations(BaseSchrodinger):
 
         """
         if constraints is None:
-            constraints = [NormConstraint(self.wfn, refwfn=self.refwfn,
-                                          param_selection=self.param_selection)]
+            constraints = [
+                NormConstraint(self.wfn, refwfn=self.refwfn, param_selection=self.param_selection)
+            ]
         elif isinstance(constraints, BaseObjective):
             constraints = [constraints]
         elif not isinstance(constraints, (list, tuple)):
-            raise TypeError('Constraints must be given as a BaseObjective instance or list/tuple '
-                            'of BaseObjective instances.')
+            raise TypeError(
+                "Constraints must be given as a BaseObjective instance or list/tuple "
+                "of BaseObjective instances."
+            )
 
         for constraint in constraints:
             if not isinstance(constraint, BaseObjective):
-                raise TypeError('Each constraint must be an instance of BaseObjective or its '
-                                'child.')
+                raise TypeError(
+                    "Each constraint must be an instance of BaseObjective or its " "child."
+                )
             elif constraint.param_selection != self.param_selection:
-                raise ValueError('The given constraint must have the same parameter selection (in '
-                                 'the form of ParamMask) as the objective.')
+                raise ValueError(
+                    "The given constraint must have the same parameter selection (in "
+                    "the form of ParamMask) as the objective."
+                )
         self.constraints = constraints
 
     def assign_eqn_weights(self, eqn_weights=None):
@@ -331,15 +354,19 @@ class SystemEquations(BaseSchrodinger):
         num_constraints = sum(cons.num_eqns for cons in self.constraints)
         if eqn_weights is None:
             eqn_weights = np.ones(self.nproj + num_constraints)
-            eqn_weights[self.nproj:] *= self.nproj
+            eqn_weights[self.nproj :] *= self.nproj
         elif not isinstance(eqn_weights, np.ndarray):
-            raise TypeError('Weights of the equations must be given as a numpy array.')
+            raise TypeError("Weights of the equations must be given as a numpy array.")
         elif eqn_weights.dtype != self.wfn.dtype:
-            raise TypeError('Weights of the equations must have the same dtype as the wavefunction '
-                            'and Hamiltonian.')
-        elif eqn_weights.shape != (self.nproj + num_constraints, ):
-            raise ValueError('Weights of the equations must be given as a one-dimensional array of '
-                             'shape, {0}.'.format((self.nproj + num_constraints, )))
+            raise TypeError(
+                "Weights of the equations must have the same dtype as the wavefunction "
+                "and Hamiltonian."
+            )
+        elif eqn_weights.shape != (self.nproj + num_constraints,):
+            raise ValueError(
+                "Weights of the equations must be given as a one-dimensional array of "
+                "shape, {0}.".format((self.nproj + num_constraints,))
+            )
         self.eqn_weights = eqn_weights
 
     def objective(self, params):
@@ -389,9 +416,9 @@ class SystemEquations(BaseSchrodinger):
         integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
 
         # reference values
-        if self.energy_type in ['variable', 'fixed']:
+        if self.energy_type in ["variable", "fixed"]:
             energy = self.energy.params
-        elif self.energy_type == 'compute':
+        elif self.energy_type == "compute":
             # define reference
             if isinstance(self.refwfn, CIWavefunction):
                 ref_sds = self.refwfn.sd_vec
@@ -410,10 +437,10 @@ class SystemEquations(BaseSchrodinger):
         # objective
         obj = np.empty(self.num_eqns)
         # <SD|H|Psi> - E<SD|Psi> == 0
-        obj[:self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
+        obj[: self.nproj] = integrate_wfn_sd(self.pspace) - energy * get_overlap(self.pspace)
         # Add constraints
         if self.nproj < self.num_eqns:
-            obj[self.nproj:] = np.hstack([cons.objective(params) for cons in self.constraints])
+            obj[self.nproj :] = np.hstack([cons.objective(params) for cons in self.constraints])
         # weigh equations
         obj *= self.eqn_weights
 
@@ -492,11 +519,16 @@ class SystemEquations(BaseSchrodinger):
         d_norm += np.sum(ref_coeffs * d_ref_sds_olps, axis=0)
 
         # energy
-        if self.energy_type in ['variable', 'fixed']:
+        if self.energy_type in ["variable", "fixed"]:
             energy = self.energy.params
-            d_energy = np.array([self.param_selection.derivative_index(self.energy, i) is not None
-                                 for i in range(params.size)], dtype=float)
-        elif self.energy_type == 'compute':
+            d_energy = np.array(
+                [
+                    self.param_selection.derivative_index(self.energy, i) is not None
+                    for i in range(params.size)
+                ],
+                dtype=float,
+            )
+        elif self.energy_type == "compute":
             # norm
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>
@@ -516,12 +548,12 @@ class SystemEquations(BaseSchrodinger):
 
         # jacobian
         jac = np.empty((self.num_eqns, params.size))
-        jac[:self.nproj, :] = integrate_wfn_sd(pspace, derivs)
-        jac[:self.nproj, :] -= energy * get_overlap(pspace, derivs)
-        jac[:self.nproj, :] -= d_energy[np.newaxis, :] * get_overlap(pspace)
+        jac[: self.nproj, :] = integrate_wfn_sd(pspace, derivs)
+        jac[: self.nproj, :] -= energy * get_overlap(pspace, derivs)
+        jac[: self.nproj, :] -= d_energy[np.newaxis, :] * get_overlap(pspace)
         # Add constraints
         if self.nproj < self.num_eqns:
-            jac[self.nproj:] = np.vstack([cons.gradient(params) for cons in self.constraints])
+            jac[self.nproj :] = np.vstack([cons.gradient(params) for cons in self.constraints])
         # weigh equations
         jac *= self.eqn_weights[:, np.newaxis]
 

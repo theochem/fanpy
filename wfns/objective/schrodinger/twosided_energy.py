@@ -102,8 +102,17 @@ class TwoSidedEnergy(BaseSchrodinger):
         Return the value of the objective for the given parameters.
 
     """
-    def __init__(self, wfn, ham, tmpfile='', param_selection=None, pspace_l=None, pspace_r=None,
-                 pspace_n=None):
+
+    def __init__(
+        self,
+        wfn,
+        ham,
+        tmpfile="",
+        param_selection=None,
+        pspace_l=None,
+        pspace_r=None,
+        pspace_n=None,
+    ):
         r"""Initialize the objective instance.
 
         Parameters
@@ -177,25 +186,30 @@ class TwoSidedEnergy(BaseSchrodinger):
 
         """
         if pspace_l is None:
-            pspace_l = sd_list.sd_list(self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin,
-                                       seniority=self.wfn.seniority)
+            pspace_l = sd_list.sd_list(
+                self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin, seniority=self.wfn.seniority
+            )
 
         for pspace in [pspace_l, pspace_r, pspace_n]:
             if pspace is None:
                 continue
             if not isinstance(pspace, (list, tuple)):
-                raise TypeError('Projection space must be given as a list or a tuple.')
+                raise TypeError("Projection space must be given as a list or a tuple.")
             for state in pspace:
                 if slater.is_sd_compatible(state):
                     occs = slater.occ_indices(state)
                     if len(occs) != self.wfn.nelec:
-                        raise ValueError('Given state does not have the same number of electrons as'
-                                         ' the given wavefunction.')
+                        raise ValueError(
+                            "Given state does not have the same number of electrons as"
+                            " the given wavefunction."
+                        )
                     elif any(i >= self.wfn.nspin for i in occs):
-                        raise ValueError('Given state does not have the same number of spin '
-                                         'orbitals as the given wavefunction.')
+                        raise ValueError(
+                            "Given state does not have the same number of spin "
+                            "orbitals as the given wavefunction."
+                        )
                 else:
-                    raise TypeError('Projection space must only contain Slater determinants.')
+                    raise TypeError("Projection space must only contain Slater determinants.")
 
         self.pspace_l = tuple(pspace_l)
         self.pspace_r = tuple(pspace_r) if pspace_r is not None else pspace_r
@@ -257,5 +271,9 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return np.array([self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, i)
-                         for i in range(params.size)])
+        return np.array(
+            [
+                self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, i)
+                for i in range(params.size)
+            ]
+        )

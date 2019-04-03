@@ -15,7 +15,7 @@ def test_assign_nelec():
     with pytest.raises(TypeError):
         test.assign_nelec(2.0)
     with pytest.raises(TypeError):
-        test.assign_nelec('2')
+        test.assign_nelec("2")
     with pytest.raises(ValueError):
         test.assign_nelec(0)
     with pytest.raises(ValueError):
@@ -34,7 +34,7 @@ def test_nspin():
     with pytest.raises(TypeError):
         test.assign_nspin(2.0)
     with pytest.raises(TypeError):
-        test.assign_nspin('2')
+        test.assign_nspin("2")
     with pytest.raises(ValueError):
         test.assign_nspin(0)
     with pytest.raises(ValueError):
@@ -51,9 +51,9 @@ def test_assign_dtype():
     test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
     with pytest.raises(TypeError):
-        test.assign_dtype('')
+        test.assign_dtype("")
     with pytest.raises(TypeError):
-        test.assign_dtype('float64')
+        test.assign_dtype("float64")
     with pytest.raises(TypeError):
         test.assign_dtype(int)
     with pytest.raises(TypeError):
@@ -79,14 +79,14 @@ def test_assign_memory():
     assert test.memory == 10
     test.assign_memory(20.0)
     assert test.memory == 20
-    test.assign_memory('10mb')
+    test.assign_memory("10mb")
     assert test.memory == 1e6 * 10
-    test.assign_memory('20.1gb')
+    test.assign_memory("20.1gb")
     assert test.memory == 1e9 * 20.1
     with pytest.raises(TypeError):
         test.assign_memory([])
     with pytest.raises(ValueError):
-        test.assign_memory('20.1kb')
+        test.assign_memory("20.1kb")
 
 
 def test_assign_params():
@@ -156,7 +156,7 @@ def test_assign_params():
     )
     test.assign_dtype(float)
     test.assign_params(add_noise=True)
-    assert np.all(np.abs(test.params - np.identity(10)) <= 0.2/100)
+    assert np.all(np.abs(test.params - np.identity(10)) <= 0.2 / 100)
     assert not np.allclose(test.params, np.identity(10))
 
     test = skip_init(
@@ -170,8 +170,8 @@ def test_assign_params():
     )
     test.assign_dtype(complex)
     test.assign_params(add_noise=True)
-    assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1/100)
-    assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01*0.1/100)
+    assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1 / 100)
+    assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01 * 0.1 / 100)
     assert not np.allclose(np.real(test.params), np.identity(10))
     assert not np.allclose(np.imag(test.params), np.zeros((10, 10)))
 
@@ -225,15 +225,15 @@ def test_load_cache():
     test.params = np.array([1, 2, 3])
     test._cache_fns = {}
     test.load_cache()
-    assert hasattr(test, '_cache_fns')
+    assert hasattr(test, "_cache_fns")
     with pytest.raises(NotImplementedError):
-        test._cache_fns['overlap'](0)
+        test._cache_fns["overlap"](0)
     with pytest.raises(NotImplementedError):
-        test._cache_fns['overlap derivative'](0, 1)
+        test._cache_fns["overlap derivative"](0, 1)
 
     test.memory = np.inf
     test.load_cache()
-    assert test._cache_fns['overlap'].cache_info().maxsize is None
+    assert test._cache_fns["overlap"].cache_info().maxsize is None
 
 
 def test_clear_cache():
@@ -248,29 +248,29 @@ def test_clear_cache():
         return 0.0
 
     test._cache_fns = {}
-    test._cache_fns['overlap'] = olp
+    test._cache_fns["overlap"] = olp
     with pytest.raises(KeyError):
-        test.clear_cache('overlap derivative')
+        test.clear_cache("overlap derivative")
 
     @functools.lru_cache(2)
     def olp_deriv(sd, deriv):
         """Derivative of the overlap of wavefunction."""
         return 0.0
 
-    test._cache_fns['overlap derivative'] = olp_deriv
+    test._cache_fns["overlap derivative"] = olp_deriv
 
-    test._cache_fns['overlap'](2)
-    test._cache_fns['overlap'](3)
-    test._cache_fns['overlap derivative'](2, 0)
-    test._cache_fns['overlap derivative'](3, 0)
-    assert test._cache_fns['overlap'].cache_info().currsize == 2
-    assert test._cache_fns['overlap derivative'].cache_info().currsize == 2
-    test.clear_cache('overlap')
-    assert test._cache_fns['overlap'].cache_info().currsize == 0
-    assert test._cache_fns['overlap derivative'].cache_info().currsize == 2
+    test._cache_fns["overlap"](2)
+    test._cache_fns["overlap"](3)
+    test._cache_fns["overlap derivative"](2, 0)
+    test._cache_fns["overlap derivative"](3, 0)
+    assert test._cache_fns["overlap"].cache_info().currsize == 2
+    assert test._cache_fns["overlap derivative"].cache_info().currsize == 2
+    test.clear_cache("overlap")
+    assert test._cache_fns["overlap"].cache_info().currsize == 0
+    assert test._cache_fns["overlap derivative"].cache_info().currsize == 2
     test.clear_cache()
-    assert test._cache_fns['overlap'].cache_info().currsize == 0
-    assert test._cache_fns['overlap derivative'].cache_info().currsize == 0
+    assert test._cache_fns["overlap"].cache_info().currsize == 0
+    assert test._cache_fns["overlap derivative"].cache_info().currsize == 0
 
 
 def test_nspatial():

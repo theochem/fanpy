@@ -38,8 +38,9 @@ def satisfies_conditions(sd, nspatial, spin, seniority):
         False if Slater determinant does not have the desired spin and seniority.
 
         """
-    return (spin in [None, slater.get_spin(sd, nspatial)]
-            and (seniority is None or seniority >= slater.get_seniority(sd, nspatial)))
+    return spin in [None, slater.get_spin(sd, nspatial)] and (
+        seniority is None or seniority >= slater.get_seniority(sd, nspatial)
+    )
 
 
 def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniority=None):
@@ -87,40 +88,41 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     """
     if not isinstance(nspatial, int):
-        raise TypeError('Number of spatial orbitals should be an integer')
+        raise TypeError("Number of spatial orbitals should be an integer")
 
     if not isinstance(nelec, int):
-        raise TypeError('Number of electrons should be an integer')
+        raise TypeError("Number of electrons should be an integer")
 
     if num_limit is None:
         num_limit = -1
     elif not isinstance(num_limit, int):
-        raise TypeError('Number of Slater determinants should be an integer')
+        raise TypeError("Number of Slater determinants should be an integer")
 
     if exc_orders is None:
         exc_orders = range(1, nelec + 1)
-    elif not (hasattr(exc_orders, '__iter__') and all(isinstance(i, int) for i in exc_orders)):
-        raise TypeError('Orders of excitations should be given as a list or tuple of integers')
+    elif not (hasattr(exc_orders, "__iter__") and all(isinstance(i, int) for i in exc_orders)):
+        raise TypeError("Orders of excitations should be given as a list or tuple of integers")
 
     if not isinstance(spin, (int, float, type(None))):
-        raise TypeError('Spin should be given as an integer or a floating point')
+        raise TypeError("Spin should be given as an integer or a floating point")
 
     if not isinstance(seniority, (int, type(None))):
-        raise TypeError('Seniority should be given as an integer')
-    elif None not in [spin, seniority] and seniority < abs(2*spin):
-        raise ValueError('Cannot have spin, {0}, with seniority, {1}.'.format(spin, seniority))
+        raise TypeError("Seniority should be given as an integer")
+    elif None not in [spin, seniority] and seniority < abs(2 * spin):
+        raise ValueError("Cannot have spin, {0}, with seniority, {1}.".format(spin, seniority))
 
     sd_vec = []
     # ASSUME: spin orbitals are ordered by increasing energy
-    ground = slater.ground(nelec, 2*nspatial)
+    ground = slater.ground(nelec, 2 * nspatial)
     if satisfies_conditions(ground, nspatial, spin, seniority):
         sd_vec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
-    vir_indices = slater.vir_indices(ground, 2*nspatial)
+    vir_indices = slater.vir_indices(ground, 2 * nspatial)
     # order by energy
-    occ_indices = sorted(occ_indices, key=lambda x: x - nspatial if x >= nspatial else x,
-                         reverse=True)
+    occ_indices = sorted(
+        occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True
+    )
     vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
 
     count = 1
@@ -128,7 +130,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
         occ_combinations = combinations(occ_indices, nexc)
         vir_combinations = combinations(vir_indices, nexc)
         for occ, vir in product(occ_combinations, vir_combinations):
-            sd = slater.excite(ground, *(occ+vir))
+            sd = slater.excite(ground, *(occ + vir))
             if not satisfies_conditions(sd, nspatial, spin, seniority):
                 continue
             sd_vec.append(sd)

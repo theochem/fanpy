@@ -5,7 +5,7 @@ from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
 
 
-def brute(wfn, ham, save_file=''):
+def brute(wfn, ham, save_file=""):
     """Solve the wavefunction by eigenvalue decomposition of the CI matrix.
 
     Parameters
@@ -48,30 +48,37 @@ def brute(wfn, ham, save_file=''):
     """
     # check parameters
     if not isinstance(wfn, CIWavefunction):
-        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its child).')
+        raise TypeError("Given wavefunction is not an instance of BaseWavefunction (or its child).")
     elif not isinstance(ham, BaseHamiltonian):
-        raise TypeError('Given Hamiltonian is not an instance of BaseHamiltonian (or its child).')
+        raise TypeError("Given Hamiltonian is not an instance of BaseHamiltonian (or its child).")
     elif wfn.dtype != ham.dtype:
-        raise ValueError('Wavefunction and Hamiltonian do not have the same data type.')
+        raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
     elif wfn.nspin != ham.nspin:
-        raise ValueError('Wavefunction and Hamiltonian do not have the same number of spin '
-                         'orbitals')
+        raise ValueError(
+            "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
+        )
     elif not isinstance(save_file, str):
-        raise TypeError('The save file must be given as a string.')
+        raise TypeError("The save file must be given as a string.")
 
     ci_matrix = np.zeros((wfn.nsd, wfn.nsd), dtype=wfn.dtype)
     for i, sd1 in enumerate(wfn.sd_vec):
         for j, sd2 in enumerate(wfn.sd_vec[i:]):
-            ci_matrix[i, i+j] += sum(ham.integrate_sd_sd(sd1, sd2))
+            ci_matrix[i, i + j] += sum(ham.integrate_sd_sd(sd1, sd2))
     # ci_matrix += ci_matrix.T - np.diag(np.diag(ci_matrix))
 
-    eigval, eigvec = scipy.linalg.eigh(ci_matrix, lower=False, overwrite_a=True, turbo=False,
-                                       type=1)
+    eigval, eigvec = scipy.linalg.eigh(
+        ci_matrix, lower=False, overwrite_a=True, turbo=False, type=1
+    )
     del ci_matrix
 
-    if save_file != '':
+    if save_file != "":
         np.save(save_file, np.vstack(eigval, eigvec))
 
-    output = {'success': True, 'params': eigvec[:, 0], 'energy': eigval[0],
-              'eigval': eigval, 'eigvec': eigvec}
+    output = {
+        "success": True,
+        "params": eigvec[:, 0],
+        "energy": eigval[0],
+        "eigval": eigval,
+        "eigvec": eigvec,
+    }
     return output

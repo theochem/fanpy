@@ -40,26 +40,30 @@ def test_norm_objective():
     for sd in sds:
         test.assign_refwfn(sd)
         olp = wfn.get_overlap(sd)
-        assert np.allclose(test.objective(guess), olp**2 - 1)
+        assert np.allclose(test.objective(guess), olp ** 2 - 1)
     # multiple sd
     for sd1, sd2 in it.combinations(sds, 2):
         test.assign_refwfn([sd1, sd2])
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        assert np.allclose(test.objective(guess), olp1**2 + olp2**2 - 1)
+        assert np.allclose(test.objective(guess), olp1 ** 2 + olp2 ** 2 - 1)
     # ci wavefunction
     ciref = CIWavefunction(2, 4)
     ciref.assign_params(np.random.rand(6))
     test.assign_refwfn(ciref)
-    assert np.allclose(test.objective(guess), sum(ciref.get_overlap(sd) * wfn.get_overlap(sd)
-                                                  for sd in sds) - 1)
+    assert np.allclose(
+        test.objective(guess), sum(ciref.get_overlap(sd) * wfn.get_overlap(sd) for sd in sds) - 1
+    )
     # active ci wavefunction
     ciref = CIWavefunction(2, 4)
     ciref.assign_params(np.random.rand(6))
-    test = NormConstraint(wfn, param_selection=[(wfn, np.arange(6)), (ciref, np.arange(6))],
-                          refwfn=ciref)
-    assert np.allclose(test.objective(np.random.rand(12)),
-                       sum(ciref.get_overlap(sd) * wfn.get_overlap(sd) for sd in sds) - 1)
+    test = NormConstraint(
+        wfn, param_selection=[(wfn, np.arange(6)), (ciref, np.arange(6))], refwfn=ciref
+    )
+    assert np.allclose(
+        test.objective(np.random.rand(12)),
+        sum(ciref.get_overlap(sd) * wfn.get_overlap(sd) for sd in sds) - 1,
+    )
 
 
 def test_norm_gradient():
@@ -91,16 +95,24 @@ def test_norm_gradient():
     ciref = CIWavefunction(2, 4)
     ciref.assign_params(np.random.rand(6))
     test.assign_refwfn(ciref)
-    assert np.allclose(test.gradient(guess),
-                       [sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in sds)
-                        for i in range(guess.size)])
+    assert np.allclose(
+        test.gradient(guess),
+        [
+            sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in sds)
+            for i in range(guess.size)
+        ],
+    )
     # active ci wavefunction
     ciref = CIWavefunction(2, 4)
     ciref.assign_params(np.random.rand(6))
-    test = NormConstraint(wfn, param_selection=[(wfn, np.arange(6)), (ciref, np.arange(6))],
-                          refwfn=ciref)
-    assert np.allclose(test.gradient(np.random.rand(12)),
-                       [sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in sds)
-                        for i in range(6)] +
-                       [sum(ciref.get_overlap(sd, deriv=i) * wfn.get_overlap(sd) for sd in sds)
-                        for i in range(6)])
+    test = NormConstraint(
+        wfn, param_selection=[(wfn, np.arange(6)), (ciref, np.arange(6))], refwfn=ciref
+    )
+    assert np.allclose(
+        test.gradient(np.random.rand(12)),
+        [sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in sds) for i in range(6)]
+        + [
+            sum(ciref.get_overlap(sd, deriv=i) * wfn.get_overlap(sd) for sd in sds)
+            for i in range(6)
+        ],
+    )

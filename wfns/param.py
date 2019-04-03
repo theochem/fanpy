@@ -32,6 +32,7 @@ class ParamContainer(abc.ABC):
         Placeholder function that would clear the cache.
 
     """
+
     def __init__(self, params):
         """Initialize.
 
@@ -75,10 +76,12 @@ class ParamContainer(abc.ABC):
             params = np.array([params])
 
         if not isinstance(params, np.ndarray):
-            raise TypeError('Parameters must be given as a numpy array.')
+            raise TypeError("Parameters must be given as a numpy array.")
         elif params.dtype not in (int, float, complex, np.float64, np.complex128):
-            raise TypeError('Parameters must have data type of `int`, `float`, `complex`, '
-                            '`np.float64` and `np.complex128`.')
+            raise TypeError(
+                "Parameters must have data type of `int`, `float`, `complex`, "
+                "`np.float64` and `np.complex128`."
+            )
         self.params = params
 
     def clear_cache(self):
@@ -144,6 +147,7 @@ class ParamMask(abc.ABC):
         `None` is returned if the selected parameter is considered constant (frozen).
 
     """
+
     def __init__(self, *container_selection):
         """Initialize the masks.
 
@@ -185,15 +189,22 @@ class ParamMask(abc.ABC):
 
         """
         if not isinstance(other, ParamMask):
-            raise TypeError('Cannot compare ParamMask instance with something that is not '
-                            'ParamMask.')
+            raise TypeError(
+                "Cannot compare ParamMask instance with something that is not " "ParamMask."
+            )
 
         if list(self._masks_container_params.keys()) == list(other._masks_container_params.keys()):
-            return all(np.array_equal(self._masks_container_params[container],
-                                      other._masks_container_params[container]) and
-                       np.array_equal(self._masks_objective_params[container],
-                                      other._masks_objective_params[container])
-                       for container in self._masks_container_params.keys())
+            return all(
+                np.array_equal(
+                    self._masks_container_params[container],
+                    other._masks_container_params[container],
+                )
+                and np.array_equal(
+                    self._masks_objective_params[container],
+                    other._masks_objective_params[container],
+                )
+                for container in self._masks_container_params.keys()
+            )
         else:
             return False
 
@@ -234,7 +245,7 @@ class ParamMask(abc.ABC):
 
         """
         if not isinstance(container, ParamContainer):
-            raise TypeError('The provided container must be a `ParamContainer` instance.')
+            raise TypeError("The provided container must be a `ParamContainer` instance.")
         nparams = container.nparams
 
         if sel is None:
@@ -242,20 +253,24 @@ class ParamMask(abc.ABC):
         elif isinstance(sel, bool):
             sel = np.array(sel)
         elif not isinstance(sel, np.ndarray):
-            raise TypeError('The provided selection must be a numpy array.')
+            raise TypeError("The provided selection must be a numpy array.")
         # check index types
         if sel.dtype not in [int, bool]:
-            raise TypeError('The provided selection must have dtype of bool or int.')
+            raise TypeError("The provided selection must have dtype of bool or int.")
         if sel.dtype == int:
             if not np.all(np.logical_and(sel >= 0, sel < nparams)):
-                raise ValueError('The integer indices for selecting the parameters must be greater '
-                                 'than or equal to 0 and less than the number of parameters.')
+                raise ValueError(
+                    "The integer indices for selecting the parameters must be greater "
+                    "than or equal to 0 and less than the number of parameters."
+                )
             bool_sel = np.zeros(nparams, dtype=bool)
             bool_sel[sel] = True
             sel = bool_sel
         elif sel.size != nparams:
-            raise ValueError('The provided boolean selection must have the same number of entries '
-                             'as there are parameters in the provided container.')
+            raise ValueError(
+                "The provided boolean selection must have the same number of entries "
+                "as there are parameters in the provided container."
+            )
         # convert to integer indicing
         self._masks_container_params[container] = np.where(sel)[0]
 
@@ -273,7 +288,7 @@ class ParamMask(abc.ABC):
         for container, sel in self._masks_container_params.items():
             nparams_sel = sel.size
             objective_sel = np.zeros(nparams_objective, dtype=bool)
-            objective_sel[nparams_cumsum: nparams_cumsum+nparams_sel] = True
+            objective_sel[nparams_cumsum : nparams_cumsum + nparams_sel] = True
             masks_objective_params[container] = objective_sel
             nparams_cumsum += nparams_sel
         self._masks_objective_params = masks_objective_params
@@ -316,8 +331,9 @@ class ParamMask(abc.ABC):
         the parameters.
 
         """
-        return np.hstack([obj.params.ravel()[sel]
-                          for obj, sel in self._masks_container_params.items()])
+        return np.hstack(
+            [obj.params.ravel()[sel] for obj, sel in self._masks_container_params.items()]
+        )
 
     def load_params(self, params):
         """Assign given parameters of the objective to the appropriate containers.
@@ -337,19 +353,19 @@ class ParamMask(abc.ABC):
 
         """
         if not isinstance(params, np.ndarray):
-            raise TypeError('Given parameter must be a numpy array.')
+            raise TypeError("Given parameter must be a numpy array.")
         if len(params.shape) != 1:
-            raise TypeError('Given parameter must be one-dimensional.')
+            raise TypeError("Given parameter must be one-dimensional.")
 
         num_sel = sum(sel.size for sel in self._masks_container_params.values())
         if num_sel != params.size:
-            raise ValueError('Number of given parameters does not match up with the selection.')
+            raise ValueError("Number of given parameters does not match up with the selection.")
 
         for container, sel in self._masks_container_params.items():
             new_params = container.params.ravel()
             new_params[sel] = params[self._masks_objective_params[container]]
             container.assign_params(new_params)
-            if hasattr(container, '_cache_fns'):
+            if hasattr(container, "_cache_fns"):
                 container.clear_cache()
 
     def derivative_index(self, container, index):
@@ -370,7 +386,7 @@ class ParamMask(abc.ABC):
 
         """
         if not isinstance(container, ParamContainer):
-            raise TypeError('Given container must be a ParamContainer instance.')
+            raise TypeError("Given container must be a ParamContainer instance.")
 
         try:
             is_active = self._masks_objective_params[container][index]

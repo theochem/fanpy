@@ -102,6 +102,7 @@ class APIG(BaseGeminal):
         Yield the possible orbital pairs that can construct the given Slater determinant.
 
     """
+
     @property
     def spin(self):
         """Spin of geminal wavefunction.
@@ -162,14 +163,14 @@ class APIG(BaseGeminal):
 
         """
         if orbpairs is None:
-            orbpairs = ((i, i+self.nspatial) for i in range(self.nspatial))
+            orbpairs = ((i, i + self.nspatial) for i in range(self.nspatial))
         super().assign_orbpairs(orbpairs)
 
         all_orbs = [j for i in self.dict_orbpair_ind for j in i]
         if len(all_orbs) != len(set(all_orbs)):
-            raise ValueError('At least two orbital pairs share an orbital')
+            raise ValueError("At least two orbital pairs share an orbital")
         elif len(all_orbs) != self.nspin:
-            raise ValueError('Not all of the orbitals are included in orbital pairs')
+            raise ValueError("Not all of the orbitals are included in orbital pairs")
 
     def generate_possible_orbpairs(self, occ_indices):
         """Yield the possible orbital pairs that can construct the given Slater determinant.
@@ -187,8 +188,10 @@ class APIG(BaseGeminal):
 
         """
         if len(occ_indices) != self.nelec:
-            raise ValueError('The number of electrons in the Slater determinant does not match up '
-                             'with the number of electrons in the wavefunction.')
+            raise ValueError(
+                "The number of electrons in the Slater determinant does not match up "
+                "with the number of electrons in the wavefunction."
+            )
         # ASSUME each orbital is associated with exactly one orbital pair
         dict_orb_ind = {orbpair[0]: ind for orbpair, ind in self.dict_orbpair_ind.items()}
         orbpairs = []

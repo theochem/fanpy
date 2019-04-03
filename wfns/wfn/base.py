@@ -174,9 +174,9 @@ class BaseWavefunction(ParamContainer):
 
         """
         if not isinstance(nelec, int):
-            raise TypeError('Number of electrons must be an integer')
+            raise TypeError("Number of electrons must be an integer")
         elif nelec <= 0:
-            raise ValueError('Number of electrons must be a positive integer')
+            raise ValueError("Number of electrons must be a positive integer")
         self.nelec = nelec
 
     def assign_nspin(self, nspin):
@@ -198,11 +198,11 @@ class BaseWavefunction(ParamContainer):
 
         """
         if not isinstance(nspin, int):
-            raise TypeError('Number of spin orbitals must be an integer.')
+            raise TypeError("Number of spin orbitals must be an integer.")
         elif nspin <= 0:
-            raise ValueError('Number of spin orbitals must be a positive integer.')
+            raise ValueError("Number of spin orbitals must be a positive integer.")
         elif nspin % 2 == 1:
-            raise NotImplementedError('Odd number of spin orbitals is not supported.')
+            raise NotImplementedError("Odd number of spin orbitals is not supported.")
         self.nspin = nspin
 
     # FIXME: remove? just use params.dtype?
@@ -249,14 +249,14 @@ class BaseWavefunction(ParamContainer):
         elif isinstance(memory, (int, float)):
             memory = float(memory)
         elif isinstance(memory, str):
-            if 'mb' in memory.lower():
-                memory = 1e6 * float(memory.rstrip('mb .'))
-            elif 'gb' in memory.lower():
-                memory = 1e9 * float(memory.rstrip('gb .'))
+            if "mb" in memory.lower():
+                memory = 1e6 * float(memory.rstrip("mb ."))
+            elif "gb" in memory.lower():
+                memory = 1e9 * float(memory.rstrip("gb ."))
             else:
                 raise ValueError('Memory given as a string should end with either "mb" or "gb".')
         else:
-            raise TypeError('Memory should be given as a `None`, int, float, or string.')
+            raise TypeError("Memory should be given as a `None`, int, float, or string.")
         self.memory = memory
 
     def assign_params(self, params=None, add_noise=False):
@@ -293,18 +293,22 @@ class BaseWavefunction(ParamContainer):
 
         # check shape and dtype
         if params.size != self.nparams:
-            raise ValueError('There must be {0} parameters.'.format(self.nparams))
+            raise ValueError("There must be {0} parameters.".format(self.nparams))
         elif params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
-            raise TypeError('If the parameters are `complex`, then the `dtype` of the wavefunction '
-                            'must be `np.complex128`')
+            raise TypeError(
+                "If the parameters are `complex`, then the `dtype` of the wavefunction "
+                "must be `np.complex128`"
+            )
         elif params.dtype not in [float, np.float64, complex, np.complex128]:
-            raise TypeError('If the parameters are neither float or complex.')
+            raise TypeError("If the parameters are neither float or complex.")
 
         if len(params.shape) == 1:
             params = params.reshape(self.params_shape)
         elif params.shape != self.params_shape:
-            raise ValueError('Parameters must either be flat or have the same shape as the '
-                             'template, {0}.'.format(self.params_shape))
+            raise ValueError(
+                "Parameters must either be flat or have the same shape as the "
+                "template, {0}.".format(self.params_shape)
+            )
 
         self.params = params.astype(self.dtype)
 
@@ -314,8 +318,9 @@ class BaseWavefunction(ParamContainer):
             scale = 0.2 / self.nparams
             self.params += scale * (np.random.rand(*self.params_shape) - 0.5)
             if self.dtype in [complex, np.complex128]:
-                self.params += 0.01j * scale * (np.random.rand(*self.params_shape).astype(complex)
-                                                - 0.5)
+                self.params += (
+                    0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
+                )
 
     def load_cache(self):
         """Load the functions whose values will be cached.
@@ -359,8 +364,8 @@ class BaseWavefunction(ParamContainer):
             return self._olp_deriv(sd, deriv)
 
         # store the cached function
-        self._cache_fns['overlap'] = _olp
-        self._cache_fns['overlap derivative'] = _olp_deriv
+        self._cache_fns["overlap"] = _olp
+        self._cache_fns["overlap derivative"] = _olp_deriv
 
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.
@@ -436,10 +441,11 @@ class BaseWavefunction(ParamContainer):
             else:
                 self._cache_fns[key].cache_clear()
         except KeyError as error:
-            raise KeyError('Given function key is not present in _cache_fns') from error
+            raise KeyError("Given function key is not present in _cache_fns") from error
         except AttributeError as error:
-            raise AttributeError('Given cached function does not have decorator '
-                                 '`functools.lru_cache`') from error
+            raise AttributeError(
+                "Given cached function does not have decorator " "`functools.lru_cache`"
+            ) from error
 
     @abc.abstractproperty
     def params_shape(self):

@@ -84,6 +84,7 @@ class BasicAPsetG(BaseGeminal):
         Yield the possible orbital pairs that can construct the given Slater determinant.
 
     """
+
     def assign_orbpairs(self, orbpairs=None):
         """Assign all possible orbital pairs for the basic APsetG wavefunction.
 
@@ -113,8 +114,10 @@ class BasicAPsetG(BaseGeminal):
 
         """
         if orbpairs is not None:
-            raise ValueError('Cannot specify the orbital pairs for the APsetG wavefunction. Only '
-                             'the default configuration will be used.')
+            raise ValueError(
+                "Cannot specify the orbital pairs for the APsetG wavefunction. Only "
+                "the default configuration will be used."
+            )
         orbpairs = [(i, j) for i in range(self.nspatial) for j in range(self.nspatial, self.nspin)]
         self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
@@ -142,8 +145,9 @@ class BasicAPsetG(BaseGeminal):
         i, j = orbpair
         # ASSUMES: specific structure for alpha and beta orbitals (first alpha then beta)
         if not 0 <= i < self.nspatial <= j < self.nspin:
-            raise ValueError('Given orbital pair, {0}, is not included in the '
-                             'wavefunction.'.format(orbpair))
+            raise ValueError(
+                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+            )
         return int(self.nspatial * i + j - self.nspatial)
 
     def get_orbpair(self, col_ind):
@@ -166,9 +170,10 @@ class BasicAPsetG(BaseGeminal):
             If given orbital pair is not valid.
 
         """
-        if not 0 <= col_ind < self.nspatial**2:
-            raise ValueError('Given column index, {0}, is not used in the '
-                             'wavefunction'.format(col_ind))
+        if not 0 <= col_ind < self.nspatial ** 2:
+            raise ValueError(
+                "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)
+            )
         i = int(col_ind // self.nspatial)
         j = int(col_ind - i * self.nspatial + self.nspatial)
         return (i, j)
@@ -204,5 +209,6 @@ class BasicAPsetG(BaseGeminal):
                 alpha_occ_indices.append(i)
             else:
                 beta_occ_indices.append(i)
-        yield from graphs.generate_biclique_pmatch(alpha_occ_indices, beta_occ_indices, occ_indices,
-                                                   is_decreasing=False)
+        yield from graphs.generate_biclique_pmatch(
+            alpha_occ_indices, beta_occ_indices, occ_indices, is_decreasing=False
+        )

@@ -8,6 +8,7 @@ from wfns.wfn.geminal.rank2_approx import RankTwoApprox, full_to_rank2
 
 class RankTwoGeminal(RankTwoApprox, BaseGeminal):
     """RankTwoGeminal that skips initialization."""
+
     def __init__(self):
         self._cache_fns = {}
 
@@ -20,33 +21,91 @@ def test_rank2_geminal_params_from_full():
     # noise generated using the following code
     # noise = 0.001*np.random.rand(4, 10)
     # but is specified explicitly b/c the test often fails
-    noise = np.array([[4.51870434e-04, 9.74649328e-04, 6.35243079e-04, 2.34541705e-04,
-                       8.38506005e-05, 7.42212732e-05, 7.78475326e-04, 7.90466146e-05,
-                       2.41744423e-04, 5.38114863e-05],
-                      [8.03578883e-04, 4.46145764e-04, 5.06811058e-06, 3.53330804e-04,
-                       3.11343409e-04, 4.88073808e-04, 7.13388210e-04, 1.68058131e-04,
-                       6.01961235e-04, 2.54699230e-04],
-                      [2.17332952e-04, 3.32899445e-04, 8.68823215e-04, 9.61565590e-04,
-                       2.83463946e-04, 9.62409947e-05, 2.15738937e-04, 8.40910378e-04,
-                       8.26679340e-05, 7.85761618e-04],
-                      [3.12310560e-04, 7.53233950e-04, 1.29859605e-05, 8.96259460e-04,
-                       2.06408799e-04, 8.05341015e-04, 5.39334471e-04, 4.67358563e-04,
-                       2.76985551e-04, 9.44197774e-04]])
+    noise = np.array(
+        [
+            [
+                4.51870434e-04,
+                9.74649328e-04,
+                6.35243079e-04,
+                2.34541705e-04,
+                8.38506005e-05,
+                7.42212732e-05,
+                7.78475326e-04,
+                7.90466146e-05,
+                2.41744423e-04,
+                5.38114863e-05,
+            ],
+            [
+                8.03578883e-04,
+                4.46145764e-04,
+                5.06811058e-06,
+                3.53330804e-04,
+                3.11343409e-04,
+                4.88073808e-04,
+                7.13388210e-04,
+                1.68058131e-04,
+                6.01961235e-04,
+                2.54699230e-04,
+            ],
+            [
+                2.17332952e-04,
+                3.32899445e-04,
+                8.68823215e-04,
+                9.61565590e-04,
+                2.83463946e-04,
+                9.62409947e-05,
+                2.15738937e-04,
+                8.40910378e-04,
+                8.26679340e-05,
+                7.85761618e-04,
+            ],
+            [
+                3.12310560e-04,
+                7.53233950e-04,
+                1.29859605e-05,
+                8.96259460e-04,
+                2.06408799e-04,
+                8.05341015e-04,
+                5.39334471e-04,
+                4.67358563e-04,
+                2.76985551e-04,
+                9.44197774e-04,
+            ],
+        ]
+    )
     fullrank_params = np.eye(4, 10) + noise
     test = full_to_rank2(fullrank_params)
-    assert np.allclose(fullrank_params, test[14:24]/(test[:4, np.newaxis] - test[4:14]),
-                       atol=0.1, rtol=0)
+    assert np.allclose(
+        fullrank_params, test[14:24] / (test[:4, np.newaxis] - test[4:14]), atol=0.1, rtol=0
+    )
 
-    fullrank_params = np.array([[1.033593181822e+00, 3.130903350751e-04, -4.321247538977e-03,
-                                 -1.767251395337e-03, -1.769214953534e-03, -1.169729179981e-03],
-                                [-5.327889357199e-01, 9.602580629349e-01, -1.139839360648e-02,
-                                 -2.858698370621e-02, -2.878270043699e-02, -1.129324573431e-01]])
+    fullrank_params = np.array(
+        [
+            [
+                1.033593181822e00,
+                3.130903350751e-04,
+                -4.321247538977e-03,
+                -1.767251395337e-03,
+                -1.769214953534e-03,
+                -1.169729179981e-03,
+            ],
+            [
+                -5.327889357199e-01,
+                9.602580629349e-01,
+                -1.139839360648e-02,
+                -2.858698370621e-02,
+                -2.878270043699e-02,
+                -1.129324573431e-01,
+            ],
+        ]
+    )
     test = full_to_rank2(fullrank_params)
-    assert np.allclose(fullrank_params, test[8:14]/(test[:2, np.newaxis] - test[2:8]),
-                       atol=0.1, rtol=0)
+    assert np.allclose(
+        fullrank_params, test[8:14] / (test[:2, np.newaxis] - test[2:8]), atol=0.1, rtol=0
+    )
 
 
-@pytest.mark.skip(reason='Test does not always pass (depends on random noise).')
+@pytest.mark.skip(reason="Test does not always pass (depends on random noise).")
 def test_rank2_geminal_template_params():
     """Test RankTwoGeminal.template_params."""
     np.random.seed(424242)
@@ -173,8 +232,9 @@ def test_rank2_geminal_fullrank_params():
     test.assign_ngem(2)
     test.assign_orbpairs()
     test.assign_params(np.arange(58, dtype=float))
-    assert np.allclose(test.fullrank_params,
-                       test.params[30:] / (test.params[:2, np.newaxis] - test.params[2:30]))
+    assert np.allclose(
+        test.fullrank_params, test.params[30:] / (test.params[:2, np.newaxis] - test.params[2:30])
+    )
 
 
 def test_rank2_geminal_compute_permanent():
@@ -193,14 +253,18 @@ def test_rank2_geminal_compute_permanent():
     assert np.allclose(test.compute_permanent([2], deriv=None), test.fullrank_params[0, 2])
     assert np.allclose(test.compute_permanent([3], deriv=None), test.fullrank_params[0, 3])
     # differentiate
-    assert np.equal(test.compute_permanent([0], deriv=0),
-                    -test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2)
-    assert np.equal(test.compute_permanent([0], deriv=1),
-                    test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2)
+    assert np.equal(
+        test.compute_permanent([0], deriv=0),
+        -test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2,
+    )
+    assert np.equal(
+        test.compute_permanent([0], deriv=1),
+        test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2,
+    )
     assert test.compute_permanent([0], deriv=2) == 0
     assert test.compute_permanent([0], deriv=3) == 0
     assert test.compute_permanent([0], deriv=4) == 0
-    assert test.compute_permanent([0], deriv=5) == 1.0/(test.lambdas[0]-test.epsilons[0])
+    assert test.compute_permanent([0], deriv=5) == 1.0 / (test.lambdas[0] - test.epsilons[0])
     assert test.compute_permanent([0], deriv=6) == 0
     assert test.compute_permanent([0], deriv=7) == 0
     assert test.compute_permanent([0], deriv=8) == 0
@@ -214,57 +278,99 @@ def test_rank2_geminal_compute_permanent():
     test.assign_ngem(2)
     test.assign_params(np.arange(1, 11, dtype=float))
     # overlap
-    assert np.allclose(test.compute_permanent([0, 1], deriv=None),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 1]
-                        + test.fullrank_params[0, 1]*test.fullrank_params[1, 0]))
-    assert np.allclose(test.compute_permanent([0, 2], deriv=None),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 2]
-                        + test.fullrank_params[1, 0]*test.fullrank_params[0, 2]))
-    assert np.allclose(test.compute_permanent([0, 3], deriv=None),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 0]*test.fullrank_params[0, 3]))
-    assert np.allclose(test.compute_permanent([1, 2], deriv=None),
-                       (test.fullrank_params[0, 1]*test.fullrank_params[1, 2]
-                        + test.fullrank_params[1, 1]*test.fullrank_params[0, 2]))
-    assert np.allclose(test.compute_permanent([1, 3], deriv=None),
-                       (test.fullrank_params[0, 1]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 1]*test.fullrank_params[0, 3]))
-    assert np.allclose(test.compute_permanent([2, 3], deriv=None),
-                       (test.fullrank_params[0, 2]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 2]*test.fullrank_params[0, 3]))
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=None),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 1]
+            + test.fullrank_params[0, 1] * test.fullrank_params[1, 0]
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 2], deriv=None),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 2]
+            + test.fullrank_params[1, 0] * test.fullrank_params[0, 2]
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 3], deriv=None),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 0] * test.fullrank_params[0, 3]
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([1, 2], deriv=None),
+        (
+            test.fullrank_params[0, 1] * test.fullrank_params[1, 2]
+            + test.fullrank_params[1, 1] * test.fullrank_params[0, 2]
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([1, 3], deriv=None),
+        (
+            test.fullrank_params[0, 1] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 1] * test.fullrank_params[0, 3]
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([2, 3], deriv=None),
+        (
+            test.fullrank_params[0, 2] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 2] * test.fullrank_params[0, 3]
+        ),
+    )
     # differentiate
-    assert np.allclose(test.compute_permanent([0, 1], deriv=0),
-                       (test.fullrank_params[1, 1]
-                        * (-test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2)
-                        + test.fullrank_params[1, 0]
-                        * (-test.zetas[1]/(test.lambdas[0] - test.epsilons[1])**2)))
-    assert np.allclose(test.compute_permanent([0, 1], deriv=1),
-                       (test.fullrank_params[0, 1]
-                        * (-test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)
-                        + test.fullrank_params[0, 0]
-                        * (-test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
-    assert np.allclose(test.compute_permanent([0, 1], deriv=2),
-                       (test.fullrank_params[1, 1]
-                        * (test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2)
-                        + test.fullrank_params[0, 1]
-                        * (test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)))
-    assert np.allclose(test.compute_permanent([0, 1], deriv=3),
-                       (test.fullrank_params[1, 0]
-                        * (test.zetas[1]/(test.lambdas[0]-test.epsilons[1])**2)
-                        + test.fullrank_params[0, 0]
-                        * (test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=0),
+        (
+            test.fullrank_params[1, 1]
+            * (-test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[1, 0]
+            * (-test.zetas[1] / (test.lambdas[0] - test.epsilons[1]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=1),
+        (
+            test.fullrank_params[0, 1]
+            * (-test.zetas[0] / (test.lambdas[1] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[0, 0]
+            * (-test.zetas[1] / (test.lambdas[1] - test.epsilons[1]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=2),
+        (
+            test.fullrank_params[1, 1] * (test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[0, 1]
+            * (test.zetas[0] / (test.lambdas[1] - test.epsilons[0]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=3),
+        (
+            test.fullrank_params[1, 0] * (test.zetas[1] / (test.lambdas[0] - test.epsilons[1]) ** 2)
+            + test.fullrank_params[0, 0]
+            * (test.zetas[1] / (test.lambdas[1] - test.epsilons[1]) ** 2)
+        ),
+    )
     assert np.allclose(test.compute_permanent([0, 1], deriv=4), 0)
     assert np.allclose(test.compute_permanent([0, 1], deriv=5), 0)
-    assert np.allclose(test.compute_permanent([0, 1], deriv=6),
-                       (test.fullrank_params[1, 1]
-                        * (1.0/(test.lambdas[0]-test.epsilons[0]))
-                        + test.fullrank_params[0, 1]
-                        * (1.0/(test.lambdas[1] - test.epsilons[0]))))
-    assert np.allclose(test.compute_permanent([0, 1], deriv=7),
-                       (test.fullrank_params[1, 0]
-                        * (1.0/(test.lambdas[0]-test.epsilons[1]))
-                        + test.fullrank_params[0, 0]
-                        * (1.0/(test.lambdas[1] - test.epsilons[1]))))
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=6),
+        (
+            test.fullrank_params[1, 1] * (1.0 / (test.lambdas[0] - test.epsilons[0]))
+            + test.fullrank_params[0, 1] * (1.0 / (test.lambdas[1] - test.epsilons[0]))
+        ),
+    )
+    assert np.allclose(
+        test.compute_permanent([0, 1], deriv=7),
+        (
+            test.fullrank_params[1, 0] * (1.0 / (test.lambdas[0] - test.epsilons[1]))
+            + test.fullrank_params[0, 0] * (1.0 / (test.lambdas[1] - test.epsilons[1]))
+        ),
+    )
     assert test.compute_permanent([0, 1], deriv=8) == 0
     with pytest.raises(ValueError):
         test.compute_permanent([0, 1], deriv=99)
@@ -282,55 +388,97 @@ def test_rank2_geminal_get_overlap():
     test.assign_params(np.arange(1, 11, dtype=float))
     test.load_cache()
     # check overlap
-    assert np.allclose(-test.get_overlap(0b00110011),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 1]
-                        + test.fullrank_params[0, 1]*test.fullrank_params[1, 0]))
-    assert np.allclose(-test.get_overlap(0b01010101),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 2]
-                        + test.fullrank_params[1, 0]*test.fullrank_params[0, 2]))
-    assert np.allclose(-test.get_overlap(0b10011001),
-                       (test.fullrank_params[0, 0]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 0]*test.fullrank_params[0, 3]))
-    assert np.allclose(-test.get_overlap(0b01100110),
-                       (test.fullrank_params[0, 1]*test.fullrank_params[1, 2]
-                        + test.fullrank_params[1, 1]*test.fullrank_params[0, 2]))
-    assert np.allclose(-test.get_overlap(0b10101010),
-                       (test.fullrank_params[0, 1]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 1]*test.fullrank_params[0, 3]))
-    assert np.allclose(-test.get_overlap(0b11001100),
-                       (test.fullrank_params[0, 2]*test.fullrank_params[1, 3]
-                        + test.fullrank_params[1, 2]*test.fullrank_params[0, 3]))
+    assert np.allclose(
+        -test.get_overlap(0b00110011),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 1]
+            + test.fullrank_params[0, 1] * test.fullrank_params[1, 0]
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b01010101),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 2]
+            + test.fullrank_params[1, 0] * test.fullrank_params[0, 2]
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b10011001),
+        (
+            test.fullrank_params[0, 0] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 0] * test.fullrank_params[0, 3]
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b01100110),
+        (
+            test.fullrank_params[0, 1] * test.fullrank_params[1, 2]
+            + test.fullrank_params[1, 1] * test.fullrank_params[0, 2]
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b10101010),
+        (
+            test.fullrank_params[0, 1] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 1] * test.fullrank_params[0, 3]
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b11001100),
+        (
+            test.fullrank_params[0, 2] * test.fullrank_params[1, 3]
+            + test.fullrank_params[1, 2] * test.fullrank_params[0, 3]
+        ),
+    )
     # check derivative
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=0),
-                       (test.fullrank_params[1, 1]
-                        * (-test.zetas[0]/(test.lambdas[0] - test.epsilons[0])**2)
-                        + test.fullrank_params[1, 0]
-                        * (-test.zetas[1]/(test.lambdas[0] - test.epsilons[1])**2)))
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=1),
-                       (test.fullrank_params[0, 1]
-                        * (-test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)
-                        + test.fullrank_params[0, 0]
-                        * (-test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=2),
-                       (test.fullrank_params[1, 1]
-                        * (test.zetas[0]/(test.lambdas[0]-test.epsilons[0])**2)
-                        + test.fullrank_params[0, 1]
-                        * (test.zetas[0]/(test.lambdas[1] - test.epsilons[0])**2)))
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=3),
-                       (test.fullrank_params[1, 0]
-                        * (test.zetas[1]/(test.lambdas[0]-test.epsilons[1])**2)
-                        + test.fullrank_params[0, 0]
-                        * (test.zetas[1]/(test.lambdas[1] - test.epsilons[1])**2)))
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=0),
+        (
+            test.fullrank_params[1, 1]
+            * (-test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[1, 0]
+            * (-test.zetas[1] / (test.lambdas[0] - test.epsilons[1]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=1),
+        (
+            test.fullrank_params[0, 1]
+            * (-test.zetas[0] / (test.lambdas[1] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[0, 0]
+            * (-test.zetas[1] / (test.lambdas[1] - test.epsilons[1]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=2),
+        (
+            test.fullrank_params[1, 1] * (test.zetas[0] / (test.lambdas[0] - test.epsilons[0]) ** 2)
+            + test.fullrank_params[0, 1]
+            * (test.zetas[0] / (test.lambdas[1] - test.epsilons[0]) ** 2)
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=3),
+        (
+            test.fullrank_params[1, 0] * (test.zetas[1] / (test.lambdas[0] - test.epsilons[1]) ** 2)
+            + test.fullrank_params[0, 0]
+            * (test.zetas[1] / (test.lambdas[1] - test.epsilons[1]) ** 2)
+        ),
+    )
     assert np.allclose(-test.get_overlap(0b00110011, deriv=4), 0)
     assert np.allclose(-test.get_overlap(0b00110011, deriv=5), 0)
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=6),
-                       (test.fullrank_params[1, 1]
-                        * (1.0/(test.lambdas[0]-test.epsilons[0]))
-                        + test.fullrank_params[0, 1]
-                        * (1.0/(test.lambdas[1] - test.epsilons[0]))))
-    assert np.allclose(-test.get_overlap(0b00110011, deriv=7),
-                       (test.fullrank_params[1, 0]
-                        * (1.0/(test.lambdas[0]-test.epsilons[1]))
-                        + test.fullrank_params[0, 0]
-                        * (1.0/(test.lambdas[1] - test.epsilons[1]))))
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=6),
+        (
+            test.fullrank_params[1, 1] * (1.0 / (test.lambdas[0] - test.epsilons[0]))
+            + test.fullrank_params[0, 1] * (1.0 / (test.lambdas[1] - test.epsilons[0]))
+        ),
+    )
+    assert np.allclose(
+        -test.get_overlap(0b00110011, deriv=7),
+        (
+            test.fullrank_params[1, 0] * (1.0 / (test.lambdas[0] - test.epsilons[1]))
+            + test.fullrank_params[0, 0] * (1.0 / (test.lambdas[1] - test.epsilons[1]))
+        ),
+    )
     assert test.get_overlap(0b00110011, deriv=8) == 0

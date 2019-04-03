@@ -107,30 +107,30 @@ def test_template_params():
     test.dimension = 10
     test.dtype = float
 
-    answer1 = np.ones(10) * 10 ** (-1/4)
-    answer2 = np.identity(10) * 10 ** (-1/4)
+    answer1 = np.ones(10) * 10 ** (-1 / 4)
+    answer2 = np.identity(10) * 10 ** (-1 / 4)
 
     template = test.template_params
 
-    tensor = template[0: 40].reshape(4, 1, 10)
+    tensor = template[0:40].reshape(4, 1, 10)
     assert np.allclose(tensor[0], 0)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], answer1)
 
-    tensor = template[40: 440].reshape(4, 10, 10)
+    tensor = template[40:440].reshape(4, 10, 10)
     assert np.allclose(tensor[0], 0)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], answer2)
 
-    tensor = template[440: 840].reshape(4, 10, 10)
+    tensor = template[440:840].reshape(4, 10, 10)
     assert np.allclose(tensor[0], answer2)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], 0)
 
-    tensor = template[840: 880].reshape(4, 10, 1)
+    tensor = template[840:880].reshape(4, 10, 1)
     assert np.allclose(tensor[0], answer1)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
@@ -145,9 +145,9 @@ def test_assign_params():
     test.nelec = 2
     test.nspin = 6
     test.dimension = 2
-    params = np.array([0, 0, 0, 0, 0, 0, 1, 1] +
-                      [1, 0, 0, 1] + 3 * [0, 0, 0, 0] +
-                      [1, 1, 0, 0, 0, 0, 0, 0]) * 2 ** (-1/3)
+    params = np.array(
+        [0, 0, 0, 0, 0, 0, 1, 1] + [1, 0, 0, 1] + 3 * [0, 0, 0, 0] + [1, 1, 0, 0, 0, 0, 0, 0]
+    ) * 2 ** (-1 / 3)
     test.assign_params(params=None, add_noise=False)
     assert np.allclose(test.params, params)
 
@@ -166,8 +166,9 @@ def test_olp():
     matrix2 = np.random.rand(4, 2, 2)
     matrix3 = np.random.rand(4, 2, 1)
 
-    test = MatrixProductState(2, 6, dimension=2,
-                              params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat]))
+    test = MatrixProductState(
+        2, 6, dimension=2, params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat])
+    )
 
     assert np.allclose(test._olp(0b000011), matrix1[1].dot(matrix2[1]).dot(matrix3[0]))
     assert np.allclose(test._olp(0b000101), matrix1[1].dot(matrix2[0]).dot(matrix3[1]))
@@ -197,34 +198,49 @@ def test_olp_deriv():
     matrix3 = np.random.rand(4, 2, 2)
     matrix4 = np.random.rand(4, 2, 1)
 
-    test = MatrixProductState(2, 8, dimension=2,
-                              params=np.hstack([matrix1.flat, matrix2.flat,
-                                                matrix3.flat, matrix4.flat]))
+    test = MatrixProductState(
+        2,
+        8,
+        dimension=2,
+        params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat, matrix4.flat]),
+    )
 
-    assert np.allclose(test._olp_deriv(0b00000011, 2),
-                       matrix2[1, 0, :].dot(matrix3[0]).dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 3),
-                       matrix2[1, 1, :].dot(matrix3[0]).dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 12),
-                       matrix1[1, :, 0] * matrix3[0, 0, :].dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 13),
-                       matrix1[1, :, 0] * matrix3[0, 1, :].dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 14),
-                       matrix1[1, :, 1] * matrix3[0, 0, :].dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 15),
-                       matrix1[1, :, 1] * matrix3[0, 1, :].dot(matrix4[0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 24),
-                       matrix1[1].dot(matrix2[1, :, 0]) * matrix4[0, 0, :])
-    assert np.allclose(test._olp_deriv(0b00000011, 25),
-                       matrix1[1].dot(matrix2[1, :, 0]) * matrix4[0, 1, :])
-    assert np.allclose(test._olp_deriv(0b00000011, 26),
-                       matrix1[1].dot(matrix2[1, :, 1]) * matrix4[0, 0, :])
-    assert np.allclose(test._olp_deriv(0b00000011, 27),
-                       matrix1[1].dot(matrix2[1, :, 1]) * matrix4[0, 1, :])
-    assert np.allclose(test._olp_deriv(0b00000011, 40),
-                       matrix1[1].dot(matrix2[1]).dot(matrix3[0, :, 0]))
-    assert np.allclose(test._olp_deriv(0b00000011, 41),
-                       matrix1[1].dot(matrix2[1]).dot(matrix3[0, :, 1]))
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 2), matrix2[1, 0, :].dot(matrix3[0]).dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 3), matrix2[1, 1, :].dot(matrix3[0]).dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 12), matrix1[1, :, 0] * matrix3[0, 0, :].dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 13), matrix1[1, :, 0] * matrix3[0, 1, :].dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 14), matrix1[1, :, 1] * matrix3[0, 0, :].dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 15), matrix1[1, :, 1] * matrix3[0, 1, :].dot(matrix4[0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 24), matrix1[1].dot(matrix2[1, :, 0]) * matrix4[0, 0, :]
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 25), matrix1[1].dot(matrix2[1, :, 0]) * matrix4[0, 1, :]
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 26), matrix1[1].dot(matrix2[1, :, 1]) * matrix4[0, 0, :]
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 27), matrix1[1].dot(matrix2[1, :, 1]) * matrix4[0, 1, :]
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 40), matrix1[1].dot(matrix2[1]).dot(matrix3[0, :, 0])
+    )
+    assert np.allclose(
+        test._olp_deriv(0b00000011, 41), matrix1[1].dot(matrix2[1]).dot(matrix3[0, :, 1])
+    )
 
 
 def test_get_overlap():
@@ -233,8 +249,9 @@ def test_get_overlap():
     matrix2 = np.random.rand(4, 2, 2)
     matrix3 = np.random.rand(4, 2, 1)
 
-    test = MatrixProductState(2, 6, dimension=2,
-                              params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat]))
+    test = MatrixProductState(
+        2, 6, dimension=2, params=np.hstack([matrix1.flat, matrix2.flat, matrix3.flat])
+    )
 
     with pytest.raises(TypeError):
         test.get_overlap(0b0101, 0.0)

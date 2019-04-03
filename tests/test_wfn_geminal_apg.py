@@ -25,7 +25,7 @@ def test_apg_assign_orbpairs():
     dict_ind_orbpair = {}
     counter = 0
     for i in range(10):
-        for j in range(i+1, 10):
+        for j in range(i + 1, 10):
             dict_orbpair_ind[(i, j)] = counter
             dict_ind_orbpair[counter] = (i, j)
             counter += 1
@@ -36,7 +36,7 @@ def test_apg_get_col_ind():
     test = skip_init(APG)
     test.nspin = 10
 
-    orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
+    orbpairs = [(i, j) for i in range(10) for j in range(i + 1, 10)]
 
     for i, orbpair in enumerate(orbpairs):
         assert test.get_col_ind(orbpair) == i
@@ -55,7 +55,7 @@ def test_apg_get_orbpair():
     test = skip_init(APG)
     test.nspin = 10
 
-    orbpairs = [(i, j) for i in range(10) for j in range(i+1, 10)]
+    orbpairs = [(i, j) for i in range(10) for j in range(i + 1, 10)]
 
     for i, orbpair in enumerate(orbpairs):
         assert test.get_orbpair(i) == orbpair
@@ -83,8 +83,8 @@ def answer_apg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 4)
@@ -112,8 +112,8 @@ def test_apg_h2_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 4)
@@ -122,7 +122,7 @@ def test_apg_h2_sto6g():
     # Solve system of equations
     objective = SystemEquations(apg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8590898441488932)
+    assert np.allclose(results["energy"], -1.8590898441488932)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -133,15 +133,15 @@ def answer_apg_h2_631gdp():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 20)
-    full_sds = [1 << i | 1 << j for i in range(20) for j in range(i+1, 20)]
+    full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
 
     objective = OneSidedEnergy(apg, ham, refwfn=full_sds)
-    results = cma(objective, sigma0=0.01, gradf=None, options={'tolfun': 1e-6, 'verb_log': 0})
+    results = cma(objective, sigma0=0.01, gradf=None, options={"tolfun": 1e-6, "verb_log": 0})
     print(results)
     results = minimize(objective)
     print(results)
@@ -162,17 +162,17 @@ def test_apg_h2_631gdp_slow():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_631gdp_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_631gdp_twoint.npy'))
+    one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
+    two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(2, 20)
-    full_sds = [1 << i | 1 << j for i in range(20) for j in range(i+1, 20)]
+    full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
 
     # Solve system of equations
     objective = SystemEquations(apg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], -1.8783255857444985)
+    assert np.allclose(results["energy"], -1.8783255857444985)
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -183,13 +183,18 @@ def answer_apg_lih_sto6g():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(4, 12)
-    full_sds = [1 << i | 1 << j | 1 << k | 1 << l for i in range(12) for j in range(i+1, 12)
-                for k in range(j+1, 12) for l in range(k+1, 12)]
+    full_sds = [
+        1 << i | 1 << j | 1 << k | 1 << l
+        for i in range(12)
+        for j in range(i + 1, 12)
+        for k in range(j + 1, 12)
+        for l in range(k + 1, 12)
+    ]
 
     objective = OneSidedEnergy(apg, ham, refwfn=full_sds)
     results = minimize(objective)
@@ -211,15 +216,20 @@ def test_apg_lih_sto6g_slow():
     # one_int = hf_dict["one_int"]
     # two_int = hf_dict["two_int"]
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_lih_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_lih_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
+    two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
     ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
     apg = APG(4, 12)
-    full_sds = [1 << i | 1 << j | 1 << k | 1 << l for i in range(12) for j in range(i+1, 12)
-                for k in range(j+1, 12) for l in range(k+1, 12)]
+    full_sds = [
+        1 << i | 1 << j | 1 << k | 1 << l
+        for i in range(12)
+        for j in range(i + 1, 12)
+        for k in range(j + 1, 12)
+        for l in range(k + 1, 12)
+    ]
 
     # Solve system of equations
     objective = SystemEquations(apg, ham, refwfn=full_sds)
     results = least_squares(objective)
-    assert np.allclose(results['energy'], 0.0)
+    assert np.allclose(results["energy"], 0.0)

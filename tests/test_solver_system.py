@@ -10,6 +10,7 @@ import wfns.solver.system as system
 
 class TempBaseWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abc structure and overwrite properties and attributes."""
+
     def __init__(self):
         pass
 
@@ -17,7 +18,7 @@ class TempBaseWavefunction(BaseWavefunction):
         """Get overlap between wavefunction and Slater determinant."""
         if sd == 0b0011:
             if deriv is None:
-                return (self.params[0]-3)*(self.params[1]-2)
+                return (self.params[0] - 3) * (self.params[1] - 2)
             elif deriv == 0:
                 return self.params[1] - 2
             elif deriv == 1:
@@ -26,9 +27,9 @@ class TempBaseWavefunction(BaseWavefunction):
                 return 0
         elif sd == 0b1100:
             if deriv is None:
-                return self.params[0]**3 + self.params[1]**2
+                return self.params[0] ** 3 + self.params[1] ** 2
             elif deriv == 0:
-                return 3 * self.params[0]**2
+                return 3 * self.params[0] ** 2
             elif deriv == 1:
                 return 2 * self.params[1]
             else:
@@ -57,10 +58,10 @@ def test_least_squares():
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100])
 
     results = system.least_squares(objective)
-    assert results['success']
-    assert np.allclose(results['energy'], 2)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
     assert np.allclose(objective.objective(wfn.params), 0)
-    assert np.allclose((wfn.params[0] - 3)**2 * (wfn.params[1] - 2)**2, 1)
+    assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
 
     with pytest.raises(TypeError):
         system.least_squares(OneSidedEnergy(wfn, ham))
@@ -78,8 +79,8 @@ def test_root():
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
 
     results = system.root(objective)
-    assert results['success']
-    assert np.allclose(results['energy'], 2)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
     assert np.allclose(objective.objective(wfn.params), 0)
 
     with pytest.raises(TypeError):

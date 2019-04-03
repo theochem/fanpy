@@ -6,6 +6,7 @@ from wfns.ham.base import BaseHamiltonian
 
 class Empty:
     """Empty container class."""
+
     pass
 
 
@@ -38,7 +39,7 @@ def test_assign_energy_nuc_nuc():
     with pytest.raises(TypeError):
         BaseHamiltonian.assign_energy_nuc_nuc(test, [-2])
     with pytest.raises(TypeError):
-        BaseHamiltonian.assign_energy_nuc_nuc(test, '2')
+        BaseHamiltonian.assign_energy_nuc_nuc(test, "2")
 
 
 def test_assign_integrals():

@@ -50,7 +50,8 @@ class NormConstraint(BaseObjective):
         Parameters of the objective at the current state.
 
     """
-    def __init__(self, wfn, refwfn=None, param_selection=None, tmpfile=''):
+
+    def __init__(self, wfn, refwfn=None, param_selection=None, tmpfile=""):
         r"""Initialize the norm constraint.
 
         Parameters
@@ -79,8 +80,9 @@ class NormConstraint(BaseObjective):
 
         """
         if not isinstance(wfn, BaseWavefunction):
-            raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
-                            'child).')
+            raise TypeError(
+                "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
+            )
         self.wfn = wfn
         self.assign_refwfn(refwfn)
         super().__init__(param_selection, tmpfile=tmpfile)

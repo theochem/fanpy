@@ -8,6 +8,7 @@ from utils import skip_init, disable_abstract
 
 class TempWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abstract class structure."""
+
     _spin = None
     _seniority = None
 
@@ -37,7 +38,7 @@ def test_assign_wfn():
     with pytest.raises(TypeError):
         BaseCompositeOneWavefunction.assign_wfn(test, 1)
     with pytest.raises(TypeError):
-        BaseCompositeOneWavefunction.assign_wfn(test, (TempWavefunction(4, 10), ))
+        BaseCompositeOneWavefunction.assign_wfn(test, (TempWavefunction(4, 10),))
     test.nelec = 4
     with pytest.raises(ValueError):
         BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(5, 10))
@@ -46,7 +47,7 @@ def test_assign_wfn():
         BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10, dtype=complex))
     test.memory = np.inf
     with pytest.raises(ValueError):
-        BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10, memory='2gb'))
+        BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10, memory="2gb"))
     BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10))
     assert test.wfn.nelec == 4
     assert test.wfn.nspin == 10

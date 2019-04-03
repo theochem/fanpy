@@ -44,6 +44,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+
     def __init__(self, one_int, two_int, energy_nuc_nuc=None):
         """Initialize the Hamiltonian.
 
@@ -108,21 +109,31 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
             If one- and two-electron integrals do not have the same number of orbitals.
 
         """
-        if not (isinstance(one_int, np.ndarray) and isinstance(two_int, np.ndarray) and
-                one_int.dtype in [float, complex] and two_int.dtype in [float, complex]):
-            raise TypeError('Integrals must be given as a numpy array with dtype of float or '
-                            'complex.')
+        if not (
+            isinstance(one_int, np.ndarray)
+            and isinstance(two_int, np.ndarray)
+            and one_int.dtype in [float, complex]
+            and two_int.dtype in [float, complex]
+        ):
+            raise TypeError(
+                "Integrals must be given as a numpy array with dtype of float or " "complex."
+            )
         elif one_int.dtype != two_int.dtype:
-            raise TypeError('One- and two-electron integrals must have the same data type.')
+            raise TypeError("One- and two-electron integrals must have the same data type.")
         elif not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
-            raise ValueError('One-electron integrals be a (two-dimensional) square matrix.')
-        elif not (two_int.ndim == 4 and
-                  two_int.shape[0] == two_int.shape[1] == two_int.shape[2] == two_int.shape[3]):
-            raise ValueError('Two-electron integrals must have four-dimensional tensor with equal '
-                             'number rows in each axis.')
+            raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
+        elif not (
+            two_int.ndim == 4
+            and two_int.shape[0] == two_int.shape[1] == two_int.shape[2] == two_int.shape[3]
+        ):
+            raise ValueError(
+                "Two-electron integrals must have four-dimensional tensor with equal "
+                "number rows in each axis."
+            )
         elif one_int.shape[0] != two_int.shape[0]:
-            raise ValueError('One- and two-electron integrals must have the same number of '
-                             'orbitals.')
+            raise ValueError(
+                "One- and two-electron integrals must have the same number of " "orbitals."
+            )
 
         self.one_int = one_int
         self.two_int = two_int
@@ -141,19 +152,27 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         ------
 
         """
-        if not (isinstance(jacobi_indices, (tuple, list)) and len(jacobi_indices) == 2 and
-                isinstance(jacobi_indices[0], int) and isinstance(jacobi_indices[1], int)):
-            raise TypeError('Indices must be given a tuple or list of two integers.')
+        if not (
+            isinstance(jacobi_indices, (tuple, list))
+            and len(jacobi_indices) == 2
+            and isinstance(jacobi_indices[0], int)
+            and isinstance(jacobi_indices[1], int)
+        ):
+            raise TypeError("Indices must be given a tuple or list of two integers.")
         elif jacobi_indices[0] == jacobi_indices[1]:
-            raise ValueError('Indices must be different.')
-        elif not (0 <= jacobi_indices[0] < self.one_int.shape[0] and
-                  0 <= jacobi_indices[1] < self.one_int.shape[0]):
-            raise ValueError('Indices must be greater than or equal to 0 and less than the number '
-                             'of rows.')
-        elif not (isinstance(theta, (int, float)) or (isinstance(theta, np.ndarray) and
-                                                      theta.dtype in [int, float] and
-                                                      theta.size == 1)):
-            raise TypeError('Angle `theta` must be a float or numpy array of one float.')
+            raise ValueError("Indices must be different.")
+        elif not (
+            0 <= jacobi_indices[0] < self.one_int.shape[0]
+            and 0 <= jacobi_indices[1] < self.one_int.shape[0]
+        ):
+            raise ValueError(
+                "Indices must be greater than or equal to 0 and less than the number of rows."
+            )
+        elif not (
+            isinstance(theta, (int, float))
+            or (isinstance(theta, np.ndarray) and theta.dtype in [int, float] and theta.size == 1)
+        ):
+            raise TypeError("Angle `theta` must be a float or numpy array of one float.")
 
         p, q = jacobi_indices
         if p > q:
@@ -162,40 +181,46 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         # one_electron
         p_col = self.one_int[:, p]
         q_col = self.one_int[:, q]
-        (self.one_int[:, p],
-         self.one_int[:, q]) = (np.cos(theta)*p_col - np.sin(theta)*q_col,
-                                np.sin(theta)*p_col + np.cos(theta)*q_col)
+        (self.one_int[:, p], self.one_int[:, q]) = (
+            np.cos(theta) * p_col - np.sin(theta) * q_col,
+            np.sin(theta) * p_col + np.cos(theta) * q_col,
+        )
 
         p_row = self.one_int[p, :]
         q_row = self.one_int[q, :]
-        (self.one_int[p, :],
-         self.one_int[q, :]) = (np.cos(theta)*p_row - np.sin(theta)*q_row,
-                                np.sin(theta)*p_row + np.cos(theta)*q_row)
+        (self.one_int[p, :], self.one_int[q, :]) = (
+            np.cos(theta) * p_row - np.sin(theta) * q_row,
+            np.sin(theta) * p_row + np.cos(theta) * q_row,
+        )
 
         # two electron
         p_slice = self.two_int[:, :, :, p]
         q_slice = self.two_int[:, :, :, q]
-        (self.two_int[:, :, :, p],
-         self.two_int[:, :, :, q]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                      np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[:, :, :, p], self.two_int[:, :, :, q]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[:, :, p, :]
         q_slice = self.two_int[:, :, q, :]
-        (self.two_int[:, :, p, :],
-         self.two_int[:, :, q, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                      np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[:, :, p, :], self.two_int[:, :, q, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[:, p, :, :]
         q_slice = self.two_int[:, q, :, :]
-        (self.two_int[:, p, :, :],
-         self.two_int[:, q, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                      np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[:, p, :, :], self.two_int[:, q, :, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
         p_slice = self.two_int[p, :, :, :]
         q_slice = self.two_int[q, :, :, :]
-        (self.two_int[p, :, :, :],
-         self.two_int[q, :, :, :]) = (np.cos(theta)*p_slice - np.sin(theta)*q_slice,
-                                      np.sin(theta)*p_slice + np.cos(theta)*q_slice)
+        (self.two_int[p, :, :, :], self.two_int[q, :, :, :]) = (
+            np.cos(theta) * p_slice - np.sin(theta) * q_slice,
+            np.sin(theta) * p_slice + np.cos(theta) * q_slice,
+        )
 
     def orb_rotate_matrix(self, matrix):
         r"""Rotate orbitals with a transformation matrix.
@@ -219,19 +244,20 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
         """
         if not isinstance(matrix, np.ndarray):
-            raise TypeError('Transformation matrix must be given as a numpy array.')
+            raise TypeError("Transformation matrix must be given as a numpy array.")
         elif matrix.ndim != 2:
-            raise ValueError('Transformation matrix must be two-dimensional.')
+            raise ValueError("Transformation matrix must be two-dimensional.")
         elif matrix.shape[0] != self.one_int.shape[0]:
-            raise ValueError('Shape of the transformation matrix must match with the shape of the '
-                             'integrals.')
+            raise ValueError(
+                "Shape of the transformation matrix must match with the shape of the " "integrals."
+            )
         # NOTE: don't need to check that matrix matches up with two_int b/c one_int and two_int have
         #       the same number of rows/columns
 
-        self.one_int = np.einsum('ij,ia->aj', self.one_int, matrix)
-        self.one_int = np.einsum('aj,jb->ab', self.one_int, matrix)
+        self.one_int = np.einsum("ij,ia->aj", self.one_int, matrix)
+        self.one_int = np.einsum("aj,jb->ab", self.one_int, matrix)
 
-        self.two_int = np.einsum('ijkl,ia->ajkl', self.two_int, matrix)
-        self.two_int = np.einsum('ajkl,jb->abkl', self.two_int, matrix)
-        self.two_int = np.einsum('abkl,kc->abcl', self.two_int, matrix)
-        self.two_int = np.einsum('abcl,ld->abcd', self.two_int, matrix)
+        self.two_int = np.einsum("ijkl,ia->ajkl", self.two_int, matrix)
+        self.two_int = np.einsum("ajkl,jb->abkl", self.two_int, matrix)
+        self.two_int = np.einsum("abkl,kc->abcl", self.two_int, matrix)
+        self.two_int = np.einsum("abcl,ld->abcd", self.two_int, matrix)

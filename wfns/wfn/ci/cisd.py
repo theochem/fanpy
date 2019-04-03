@@ -75,6 +75,7 @@ class CISD(CIWavefunction):
         Return the overlap of the CI wavefunction with a Slater determinant.
 
     """
+
     def assign_sd_vec(self, sd_vec=None):
         """Assign the list of Slater determinants in the CISD wavefunction.
 
@@ -98,10 +99,19 @@ class CISD(CIWavefunction):
 
         """
         if sd_vec is None:
-            super().assign_sd_vec(sd_list(self.nelec, self.nspatial, num_limit=None,
-                                          exc_orders=[1, 2], spin=self.spin,
-                                          seniority=self.seniority))
+            super().assign_sd_vec(
+                sd_list(
+                    self.nelec,
+                    self.nspatial,
+                    num_limit=None,
+                    exc_orders=[1, 2],
+                    spin=self.spin,
+                    seniority=self.seniority,
+                )
+            )
         else:
-            raise ValueError('Only the default list of Slater determinants is allowed. i.e. sd_vec '
-                             'is `None`. If you would like to customize your CI wavefunction, use '
-                             'CIWavefunction instead.')
+            raise ValueError(
+                "Only the default list of Slater determinants is allowed. i.e. sd_vec "
+                "is `None`. If you would like to customize your CI wavefunction, use "
+                "CIWavefunction instead."
+            )

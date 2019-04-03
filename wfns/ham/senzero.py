@@ -83,6 +83,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+
     def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
@@ -100,8 +101,10 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         """
         if wfn_deriv is not None and ham_deriv is not None:
-            raise ValueError('Integral can be derivatized with respect to at most one out of the '
-                             'wavefunction and Hamiltonian parameters.')
+            raise ValueError(
+                "Integral can be derivatized with respect to at most one out of the "
+                "wavefunction and Hamiltonian parameters."
+            )
 
         nspatial = self.nspin // 2
         sd = slater.internal_sd(sd)
@@ -120,19 +123,23 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
             """Wrapped function for updating the integral values."""
             coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
             sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
-            return (one_electron + coeff * sd_energy[0],
-                    coulomb + coeff * sd_energy[1],
-                    exchange + coeff * sd_energy[2])
+            return (
+                one_electron + coeff * sd_energy[0],
+                coulomb + coeff * sd_energy[1],
+                exchange + coeff * sd_energy[2],
+            )
 
         one_electron, coulomb, exchange = update_integrals(sd)
 
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:
-                sd_m = slater.excite(sd,
-                                     slater.spin_index(i, nspatial, 'alpha'),
-                                     slater.spin_index(i, nspatial, 'beta'),
-                                     slater.spin_index(a, nspatial, 'beta'),
-                                     slater.spin_index(a, nspatial, 'alpha'))
+                sd_m = slater.excite(
+                    sd,
+                    slater.spin_index(i, nspatial, "alpha"),
+                    slater.spin_index(i, nspatial, "beta"),
+                    slater.spin_index(a, nspatial, "beta"),
+                    slater.spin_index(a, nspatial, "alpha"),
+                )
                 one_electron, coulomb, exchange = update_integrals(sd_m)
 
         return one_electron, coulomb, exchange
@@ -184,9 +191,11 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         """
         if deriv is not None:
-            raise NotImplementedError('Orbital rotation is not implemented properly: you cannot '
-                                      'take the derivative of CI matrix elements with respect to '
-                                      'orbital rotation coefficients.')
+            raise NotImplementedError(
+                "Orbital rotation is not implemented properly: you cannot "
+                "take the derivative of CI matrix elements with respect to "
+                "orbital rotation coefficients."
+            )
 
         nspatial = self.one_int[0].shape[0]
 
@@ -214,17 +223,19 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         if sign is None:
             sign = 1
         elif sign not in [1, -1]:
-            raise ValueError('The sign associated with the integral must be either `1` or `-1`.')
+            raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
         # two sd's are the same
         if diff_order == 0:
             one_electron = 2 * np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb = 2 * np.sum(np.triu(self._cached_two_int_ijij[shared_indices[:, None],
-                                                                   shared_indices], k=1))
+            coulomb = 2 * np.sum(
+                np.triu(self._cached_two_int_ijij[shared_indices[:, None], shared_indices], k=1)
+            )
             coulomb += np.sum(self._cached_two_int_ijij[shared_indices[:, None], shared_indices])
-            exchange = -2 * np.sum(np.triu(self._cached_two_int_ijji[shared_indices[:, None],
-                                                                     shared_indices], k=1))
+            exchange = -2 * np.sum(
+                np.triu(self._cached_two_int_ijji[shared_indices[:, None], shared_indices], k=1)
+            )
         # two sd's are different by double excitation
         else:
             a, = diff_sd1

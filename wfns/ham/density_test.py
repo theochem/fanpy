@@ -48,11 +48,11 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
 
     """
     if len(indices) % 2 != 0:
-        raise ValueError('There must be even number of indices.')
+        raise ValueError("There must be even number of indices.")
     elif not all(isinstance(i, int) for i in indices):
-        raise TypeError('All indices must be integers.')
-    creators = indices[:len(indices)]
-    annihilators = indices[len(indices):]
+        raise TypeError("All indices must be integers.")
+    creators = indices[: len(indices)]
+    annihilators = indices[len(indices) :]
     # reverse annhilators b/c indices are reversed for the annihilators
     annihilators = annihilators.reverse()
 
@@ -69,8 +69,9 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
 # FIXME: add threshold value below which the contribution from the Slater determinant is discarded
 #        (useful for CIWavefunction and other wavefunctions where we can sort by the contribution of
 #        each Slater determinant)
-def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicist',
-                       orbtype='restricted'):
+def get_density_matrix(
+    wfn, refwfn=None, order=1, deriv=None, notation="physicist", orbtype="restricted"
+):
     r"""Return the density matrix of the given order.
 
     .. math::
@@ -141,13 +142,15 @@ def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicis
 
     """
     if not isinstance(wfn, BaseWavefunction):
-        raise TypeError('Given wavefunction is not an instance of BaseWavefunction (or its '
-                        'child).')
+        raise TypeError(
+            "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
+        )
 
     # check refwfn (copied from OneSidedEnergy.assign_refwfn)
     if refwfn is None:
-        refwfn = tuple(sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin,
-                                       seniority=wfn.seniority))
+        refwfn = tuple(
+            sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)
+        )
     if slater.is_sd_compatible(refwfn):
         refwfn = slater.internal_sd(refwfn)
     elif isinstance(refwfn, (list, tuple)):
@@ -155,30 +158,43 @@ def get_density_matrix(wfn, refwfn=None, order=1, deriv=None, notation='physicis
             if slater.is_sd_compatible(sd):
                 occs = slater.occ_indices(sd)
                 if len(occs) != wfn.nelec:
-                    raise ValueError('Given Slater determinant does not have the same number of'
-                                     ' electrons as the given wavefunction.')
+                    raise ValueError(
+                        "Given Slater determinant does not have the same number of"
+                        " electrons as the given wavefunction."
+                    )
                 elif any(i >= wfn.nspin for i in occs):
-                    raise ValueError('Given Slater determinant does not have the same number of'
-                                     ' spin orbitals as the given wavefunction.')
+                    raise ValueError(
+                        "Given Slater determinant does not have the same number of"
+                        " spin orbitals as the given wavefunction."
+                    )
             else:
-                raise TypeError('Projection space (for the reference wavefunction) must only '
-                                'contain Slater determinants.')
+                raise TypeError(
+                    "Projection space (for the reference wavefunction) must only "
+                    "contain Slater determinants."
+                )
         refwfn = tuple(refwfn)
     elif isinstance(refwfn, CIWavefunction):
         if refwfn.nelec != wfn.nelec:
-            raise ValueError('Given reference wavefunction does not have the same number of '
-                             'electrons as the given wavefunction.')
+            raise ValueError(
+                "Given reference wavefunction does not have the same number of "
+                "electrons as the given wavefunction."
+            )
         elif refwfn.nspin != wfn.nspin:
-            raise ValueError('Given reference wavefunction does not have the same number of '
-                             'spin orbitals as the given wavefunction.')
+            raise ValueError(
+                "Given reference wavefunction does not have the same number of "
+                "spin orbitals as the given wavefunction."
+            )
         refwfn = refwfn
     else:
-        raise TypeError('Reference wavefunction must be given as a Slater determinant, list/tuple '
-                        'of Slater determinants, or a CI wavefunction.')
+        raise TypeError(
+            "Reference wavefunction must be given as a Slater determinant, list/tuple "
+            "of Slater determinants, or a CI wavefunction."
+        )
 
-    if notation not in ['chemist', 'physicist']:
+    if notation not in ["chemist", "physicist"]:
         raise ValueError("The notation can only be one of 'chemist' and 'physicist'.")
 
-    if orbtype not in ['restricted', 'unrestricted', 'generalized']:
-        raise ValueError("The orbital type must be one of 'restricted', 'unrestricted', and "
-                         "'generalized'.")
+    if orbtype not in ["restricted", "unrestricted", "generalized"]:
+        raise ValueError(
+            "The orbital type must be one of 'restricted', 'unrestricted', and " "'generalized'."
+        )

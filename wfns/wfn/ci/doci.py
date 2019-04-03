@@ -76,6 +76,7 @@ class DOCI(CIWavefunction):
         Return the overlap of the CI wavefunction with a Slater determinant.
 
     """
+
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
 
@@ -97,7 +98,7 @@ class DOCI(CIWavefunction):
         """
         super().assign_nelec(nelec)
         if self.nelec % 2 != 0:
-            raise ValueError('`nelec` must be an even number')
+            raise ValueError("`nelec` must be an even number")
 
     def assign_spin(self, spin=None):
         r"""Assign the spin of the wavefunction.
@@ -126,7 +127,7 @@ class DOCI(CIWavefunction):
             spin = 0
         super().assign_spin(spin)
         if self.spin != 0:
-            raise ValueError('DOCI wavefunction can only be singlet')
+            raise ValueError("DOCI wavefunction can only be singlet")
 
     def assign_seniority(self, seniority=None):
         r"""Assign the seniority of the wavefunction.
@@ -152,4 +153,4 @@ class DOCI(CIWavefunction):
             seniority = 0
         super().assign_seniority(seniority)
         if self.seniority != 0:
-            raise ValueError('DOCI wavefunction can only be seniority 0')
+            raise ValueError("DOCI wavefunction can only be seniority 0")

@@ -13,10 +13,17 @@ def test_assign_sd_vec():
     test.assign_spin(0)
     test.assign_seniority(0)
     test.assign_sd_vec()
-    assert test.sd_vec == (0b0011100111, 0b0101101011, 0b1001110011, 0b0110101101, 0b1010110101,
-                           0b0111001110, 0b1011010110)
+    assert test.sd_vec == (
+        0b0011100111,
+        0b0101101011,
+        0b1001110011,
+        0b0110101101,
+        0b1010110101,
+        0b0111001110,
+        0b1011010110,
+    )
     with pytest.raises(ValueError):
-        test.assign_sd_vec((0b0011100111, ))
+        test.assign_sd_vec((0b0011100111,))
 
 
 def test_to_ap1rog():
@@ -25,16 +32,16 @@ def test_to_ap1rog():
     params = np.arange(9, 0, -1, dtype=float).reshape(3, 3)
     test.assign_params(params[:, 0].flatten())
     ap1rog = test.to_ap1rog()
-    assert np.allclose(ap1rog.params, np.array([6/9, 3/9]))
+    assert np.allclose(ap1rog.params, np.array([6 / 9, 3 / 9]))
     test.assign_params(params[:, 1].flatten())
     ap1rog = test.to_ap1rog()
-    assert np.allclose(ap1rog.params, np.array([5/8, 2/8]))
+    assert np.allclose(ap1rog.params, np.array([5 / 8, 2 / 8]))
     test.assign_params(params[:, 2].flatten())
     ap1rog = test.to_ap1rog()
-    assert np.allclose(ap1rog.params, np.array([4/7, 1/7]))
+    assert np.allclose(ap1rog.params, np.array([4 / 7, 1 / 7]))
 
 
-@pytest.mark.skip(reason='No reference to compare against.')
+@pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_h2_sto6g_ground():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals."""
     # nelec = 2
@@ -51,7 +58,7 @@ def test_to_ap1rog_h2_sto6g_ground():
     raise AssertionError("No reference for the CIPairs tests.")
 
 
-@pytest.mark.skip(reason='No reference to compare against.')
+@pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_lih_sto6g():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals."""
     # nelec = 4
@@ -68,7 +75,7 @@ def test_to_ap1rog_lih_sto6g():
     raise AssertionError("No reference for the CIPairs tests.")
 
 
-@pytest.mark.skip(reason='No reference to compare against.')
+@pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_h4_sto6g():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals."""
     # nelec = 4

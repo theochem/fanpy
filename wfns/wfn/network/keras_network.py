@@ -59,6 +59,7 @@ class KerasNetwork(BaseWavefunction):
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
+
     def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None):
         """Initialize the wavefunction.
 
@@ -103,8 +104,8 @@ class KerasNetwork(BaseWavefunction):
         """
         super().assign_dtype(dtype)
         if self.dtype != np.float64:
-            raise ValueError('Given data type must be a np.float64.')
-        keras.backend.common._FLOATX = 'float64'
+            raise ValueError("Given data type must be a np.float64.")
+        keras.backend.common._FLOATX = "float64"
 
     def assign_model(self, model=None):
         """Assign the Keras model used to represent the neural network.
@@ -129,24 +130,45 @@ class KerasNetwork(BaseWavefunction):
         """
         if model is None:
             model = keras.engine.sequential.Sequential()
-            model.add(keras.layers.core.Dense(self.nspin, activation=keras.activations.relu,
-                                              input_dim=self.nspin, use_bias=False))
-            model.add(keras.layers.core.Dense(self.nspin, activation=keras.activations.relu,
-                                              input_dim=self.nspin, use_bias=False))
-            model.add(keras.layers.core.Dense(1, activation=keras.activations.relu,
-                                              input_dim=self.nspin, use_bias=False))
+            model.add(
+                keras.layers.core.Dense(
+                    self.nspin,
+                    activation=keras.activations.relu,
+                    input_dim=self.nspin,
+                    use_bias=False,
+                )
+            )
+            model.add(
+                keras.layers.core.Dense(
+                    self.nspin,
+                    activation=keras.activations.relu,
+                    input_dim=self.nspin,
+                    use_bias=False,
+                )
+            )
+            model.add(
+                keras.layers.core.Dense(
+                    1, activation=keras.activations.relu, input_dim=self.nspin, use_bias=False
+                )
+            )
 
         if not isinstance(model, keras.engine.training.Model):
             raise TypeError("Given model must be an instance of keras.engine.network.Network.")
         if len(model.inputs) != 1:
-            raise ValueError("Given model must only have one set of inputs (for the occupations of "
-                             "the Slater determinant).")
+            raise ValueError(
+                "Given model must only have one set of inputs (for the occupations of "
+                "the Slater determinant)."
+            )
         if model.inputs[0].shape[1] != self.nspin:
-            raise ValueError("Given model must have exactly the same number of input nodes as the "
-                             "number of spin orbitals.")
+            raise ValueError(
+                "Given model must have exactly the same number of input nodes as the "
+                "number of spin orbitals."
+            )
         if len(model.outputs) != 1:
-            raise ValueError("Given model must only have one set of outputs (for the overlap of "
-                             "the Slater determinant).")
+            raise ValueError(
+                "Given model must only have one set of outputs (for the overlap of "
+                "the Slater determinant)."
+            )
         if model.outputs[0].shape[1] != 1:
             raise ValueError("Given model must have exactly one output.")
 
@@ -158,7 +180,8 @@ class KerasNetwork(BaseWavefunction):
         def loss(y_true, y_pred):
             """Loss function used to hack in objective into Keras."""
             return keras.backend.sum(y_true - y_pred)
-        model.compile(loss=loss, optimizer='sgd')
+
+        model.compile(loss=loss, optimizer="sgd")
 
         self.model = model
 
@@ -187,7 +210,7 @@ class KerasNetwork(BaseWavefunction):
         -----
         Instance must have attribut `model`.
         """
-        return (self.nparams, )
+        return (self.nparams,)
 
     @property
     def template_params(self):
@@ -232,16 +255,22 @@ class KerasNetwork(BaseWavefunction):
         for layer in self.model.layers[:-1]:
             # NOTE: it was ASSUMED that there is only one variable for weights
             if len(layer.weights[:-1]) > 1:
-                raise ValueError("Cannot generate initial guess for Keras networks that have layers"
-                                 " with more than one variable for weights.")
+                raise ValueError(
+                    "Cannot generate initial guess for Keras networks that have layers with more "
+                    "than one variable for weights."
+                )
             params += np.eye(*layer.weights[0].shape).flatten().tolist()
         # solve for last layer
         num_hidden_orbs = int(self.model.layers[-1].weights[0].shape[0])
-        hidden_sds = [slater.occ_indices(sd)
-                      for sd in sd_list(self.nelec, num_hidden_orbs//2, exc_orders=[1, 2])]
+        hidden_sds = [
+            slater.occ_indices(sd)
+            for sd in sd_list(self.nelec, num_hidden_orbs // 2, exc_orders=[1, 2])
+        ]
         if len(hidden_sds) < num_hidden_orbs:
-            raise ValueError("Cannot generate initial guess for Keras network because the final "
-                             "hidden layer does not have enough units for the number of electrons.")
+            raise ValueError(
+                "Cannot generate initial guess for Keras network because the final "
+                "hidden layer does not have enough units for the number of electrons."
+            )
         hidden_units = np.zeros((len(hidden_sds), num_hidden_orbs), dtype=self.dtype)
         for i, hidden_sd in enumerate(hidden_sds):
             hidden_units[i, hidden_sd] = 1
@@ -289,7 +318,7 @@ class KerasNetwork(BaseWavefunction):
         counter = 0
         for var_weights in self.model.weights:
             next_counter = counter + np.prod(var_weights.shape)
-            var_params = self.params[counter: next_counter].reshape(var_weights.shape)
+            var_params = self.params[counter:next_counter].reshape(var_weights.shape)
             weights.append(var_params)
             counter = next_counter
         # change weights of model
@@ -335,14 +364,15 @@ class KerasNetwork(BaseWavefunction):
             return self.model.predict(np.array([occ_vector]))[0, 0]
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
-            raise TypeError('Index for derivatization must be provided as an integer.')
+            raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:
             return 0.0
 
-        grad = keras.backend.function(self.model.inputs,
-                                      self.model.optimizer.get_gradients(self.model.output,
-                                                                         self.model.weights))
+        grad = keras.backend.function(
+            self.model.inputs,
+            self.model.optimizer.get_gradients(self.model.output, self.model.weights),
+        )
         # FIXME: this is pretty bad... gradient is computed for the complete set of parameters and
         # only one is selected.
         grad_val = np.hstack([val.flatten() for val in grad([np.array([occ_vector])])])
