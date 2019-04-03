@@ -1,4 +1,5 @@
 """Test wfns.ham.unrestricted_base."""
+# pylint: disable=abstract-class-instantiated
 import itertools as it
 import numpy as np
 import pytest
@@ -34,24 +35,31 @@ def test_assign_integrals():
     with pytest.raises(TypeError):
         BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int])
     with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.astype(int)])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2,
+                                                     [two_int, two_int, two_int.astype(int)])
     with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.tolist()])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2,
+                                                     [two_int, two_int, two_int.tolist()])
 
     with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int], [two_int, two_int, two_int.astype(complex)])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int],
+                                                     [two_int, two_int, two_int.astype(complex)])
     with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.astype(complex)], [two_int, two_int, two_int])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.astype(complex)],
+                                                     [two_int, two_int, two_int])
 
     with pytest.raises(ValueError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.reshape(1, 4, 4)], [two_int]*3)
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int.reshape(1, 4, 4)],
+                                                     [two_int]*3)
     with pytest.raises(ValueError):
         BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int, one_int[:, :3]], [two_int]*3)
 
     with pytest.raises(ValueError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int.reshape(1, 4, 4, 4, 4)])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2,
+                                                     [two_int, two_int, two_int.reshape(1, 4, 4, 4, 4)])
     with pytest.raises(ValueError):
-        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2, [two_int, two_int, two_int[:, :, :, :3]])
+        BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int]*2,
+                                                     [two_int, two_int, two_int[:, :, :, :3]])
 
     with pytest.raises(ValueError):
         BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int[:3, :3], one_int], [two_int]*3)

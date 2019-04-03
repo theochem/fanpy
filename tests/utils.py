@@ -60,7 +60,7 @@ def disable_abstract(abclass, dict_overwrite=None):
         # replace abstract methods with a function that does nothing
         new_dict[abstractmethod] = lambda *args: None
     # replace namespace
-    new_dict.update(dict_overwrite if dict_overwite is not None else {})
+    new_dict.update(dict_overwrite if dict_overwrite is not None else {})
     # make subclass of the abstract class with
     return type(
         "{} class with abstract methods disabled".format(abclass.__name__), (abclass,), new_dict
@@ -139,6 +139,7 @@ def partial_deriv_finite_diff(func, x, order, epsilon=1e-8, num_points=1):
 
 def test_finite_diff():
     """Test finite_diff."""
+    # pylint: disable=function-redefined
 
     def func(x):
         """Test function."""

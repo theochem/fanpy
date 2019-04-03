@@ -1,4 +1,5 @@
 """Test wfns.ham.generalized_base."""
+# pylint: disable=abstract-class-instantiated
 import itertools as it
 import numpy as np
 import pytest
@@ -20,23 +21,30 @@ def test_assign_integrals():
     # bad input
     test = skip_init(disable_abstract(BaseGeneralizedHamiltonian))
     with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, [[1, 2], [3, 4]], np.random.rand(2, 2, 2, 2))
+        BaseGeneralizedHamiltonian.assign_integrals(test, [[1, 2], [3, 4]],
+                                                    np.random.rand(2, 2, 2, 2))
     with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(int), np.random.rand(4, 4, 4, 4))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(int),
+                                                    np.random.rand(4, 4, 4, 4))
     with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(4, 4, 4, 4).astype(int))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4),
+                                                    np.random.rand(4, 4, 4, 4).astype(int))
 
     with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(float), np.random.rand(4, 4, 4, 4).astype(complex))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4).astype(float),
+                                                    np.random.rand(4, 4, 4, 4).astype(complex))
 
     with pytest.raises(ValueError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 3), np.random.rand(4, 4, 4, 4))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 3),
+                                                    np.random.rand(4, 4, 4, 4))
 
     with pytest.raises(ValueError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(4, 4, 4, 3))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4),
+                                                    np.random.rand(4, 4, 4, 3))
 
     with pytest.raises(ValueError):
-        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4), np.random.rand(6, 6, 6, 6))
+        BaseGeneralizedHamiltonian.assign_integrals(test, np.random.rand(4, 4),
+                                                    np.random.rand(6, 6, 6, 6))
 
 
 def test_nspin():

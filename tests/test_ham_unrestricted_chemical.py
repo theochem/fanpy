@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 from wfns.backend.sd_list import sd_list
-from utils import skip_init, find_datafile
+from utils import find_datafile
 
 
 def test_set_ref_ints():
@@ -191,11 +191,10 @@ def test_integrate_wfn_sd():
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = UnrestrictedChemicalHamiltonian([one_int]*2, [two_int]*3)
-    test_wfn = type("Temporary wavefunction.", (object, ),
-                    {'get_overlap': lambda sd, deriv=None:
-                     1 if sd == 0b0101
-                     else 2 if sd == 0b1010
-                     else 3 if sd == 0b1100 else 0}
+    test_wfn = type(
+        "Temporary wavefunction.", (object, ),
+        {'get_overlap': lambda sd, deriv=None:
+        1 if sd == 0b0101 else 2 if sd == 0b1010 else 3 if sd == 0b1100 else 0}
     )
 
     one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101)

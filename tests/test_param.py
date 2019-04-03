@@ -144,7 +144,7 @@ def test_parammask_derivative_index():
     test = ParamMask((param1, False), (param2, np.array(1)),
                      (param3, np.array([True, False, False, True])))
     with pytest.raises(TypeError):
-        test.derivative_index((1, 0))
+        test.derivative_index(1, 0)
     assert test.derivative_index(ParamContainer(2), 0) is None
     assert test.derivative_index(param1, 0) is None
     assert test.derivative_index(param2, 0) == 1

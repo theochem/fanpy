@@ -159,7 +159,7 @@ script:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # - conda build -q tools/conda.recipe
 # - conda install --use-local ${CONDA_PKG_NAME_PY}
-- python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
+- pip install -e ./
 - pytest ./tests -v --cov=./${PROJECT_NAME} --cov-branch -k 'not slow'
 - coverage xml -i --omit=horton_*.py,pyscf_*.py
 # - conda uninstall ${CONDA_PKG_NAME_PY}

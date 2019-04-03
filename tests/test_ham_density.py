@@ -277,7 +277,8 @@ def test_density_matrix():
     """Test density.density_matrix."""
     # check type
     with pytest.raises(TypeError):
-        density_matrix(np.arange(1, 5), [0b0101, 0b1001, 0b0110, 0b1010], 2, is_chemist_notation=False, val_threshold=0, orbtype='daslkfjaslkdf')
+        density_matrix(np.arange(1, 5), [0b0101, 0b1001, 0b0110, 0b1010], 2,
+                       is_chemist_notation=False, val_threshold=0, orbtype='daslkfjaslkdf')
     # restricted
     one_density_r, two_density_r = density_matrix(np.arange(1, 4), [0b0101, 0b1010, 0b0110], 2,
                                                   is_chemist_notation=False, val_threshold=0,
