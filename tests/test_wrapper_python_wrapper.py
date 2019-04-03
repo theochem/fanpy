@@ -102,7 +102,8 @@ def test_generate_hartreefock_results_error():
     Check if it raises correct error.
 
     """
-    assert_raises(ValueError, generate_hartreefock_results, 'sdf')
+    with pytest.raises(ValueError):
+        generate_hartreefock_results('sdf')
 
 
 @np.testing.dec.skipif(not check_dependency('horton'),
