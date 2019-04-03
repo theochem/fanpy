@@ -51,7 +51,7 @@ class TempBaseWavefunction(BaseWavefunction):
 def check_cma():
     """Check if cma module is available."""
     try:
-        import cma
+        import cma  # noqa: F401
     except ModuleNotFoundError:
         return False
     else:

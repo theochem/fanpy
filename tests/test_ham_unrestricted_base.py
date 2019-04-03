@@ -114,7 +114,7 @@ def test_orb_rotate_jacobi():
 
     theta = 2 * np.pi * (np.random.random() - 0.5)
 
-    Test = disable_abstract(BaseUnrestrictedHamiltonian)
+    Test = disable_abstract(BaseUnrestrictedHamiltonian)  # noqa: N806
     ham = Test([one_int_alpha, one_int_beta], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
     with pytest.raises(TypeError):
