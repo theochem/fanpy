@@ -252,7 +252,7 @@ def test_nonorth_orbtype():
     # else
     test.params = np.random.rand(10, 12)
     with pytest.raises(NotImplementedError):
-        test.orbtype
+        test.orbtype  # pylint: disable=pointless-statement
 
 
 def test_nonorth_olp_generalized():

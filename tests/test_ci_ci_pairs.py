@@ -2,9 +2,7 @@
 import pytest
 import numpy as np
 from wfns.wfn.ci.ci_pairs import CIPairs
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.solver.ci import brute
-from utils import skip_init, find_datafile
+from utils import skip_init
 
 
 def test_assign_sd_vec():
@@ -39,63 +37,49 @@ def test_to_ap1rog():
 @pytest.mark.skip(reason='No reference to compare against.')
 def test_to_ap1rog_h2_sto6g_ground():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals."""
-    nelec = 2
-    nspin = 4
-    cipairs = CIPairs(nelec, nspin)
+    # nelec = 2
+    # nspin = 4
+    # cipairs = CIPairs(nelec, nspin)
 
-    # Can be read in using HORTON
-    # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
-    # one_int = hf_dict["one_int"]
-    # two_int = hf_dict["two_int"]
-    # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
-    nuc_nuc = 0.71317683129
-    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    # one_int = np.load(find_datafile('data_h2_hf_sto6g_oneint.npy'))
+    # two_int = np.load(find_datafile('data_h2_hf_sto6g_twoint.npy'))
+    # nuc_nuc = 0.71317683129
+    # ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    results = brute(cipairs, ham)
-    energy = results['energy']
+    # results = brute(cipairs, ham)
+    # energy = results['energy']
+    raise AssertionError("No reference for the CIPairs tests.")
 
 
 @pytest.mark.skip(reason='No reference to compare against.')
 def test_to_ap1rog_lih_sto6g():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals."""
-    nelec = 4
-    nspin = 12
-    cipairs = CIPairs(nelec, nspin)
+    # nelec = 4
+    # nspin = 12
+    # cipairs = CIPairs(nelec, nspin)
 
-    # Can be read in using HORTON
-    # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')
-    # one_int = hf_dict["one_int"]
-    # two_int = hf_dict["two_int"]
-    # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = (np.load(find_datafile('data_lih_hf_sto6g_oneint.npy')), )
-    two_int = (np.load(find_datafile('data_lih_hf_sto6g_twoint.npy')), )
-    nuc_nuc = 0.995317634356
-    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    # one_int = (np.load(find_datafile('data_lih_hf_sto6g_oneint.npy')), )
+    # two_int = (np.load(find_datafile('data_lih_hf_sto6g_twoint.npy')), )
+    # nuc_nuc = 0.995317634356
+    # ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    results = brute(cipairs, ham)
-    energy = results['energy']
-    raise AssertionError('No reference for the CIPairs tests.')
+    # results = brute(cipairs, ham)
+    # energy = results['energy']
+    raise AssertionError("No reference for the CIPairs tests.")
 
 
 @pytest.mark.skip(reason='No reference to compare against.')
 def test_to_ap1rog_h4_sto6g():
     """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals."""
-    nelec = 4
-    nspin = 8
-    cipairs = CIPairs(nelec, nspin)
+    # nelec = 4
+    # nspin = 8
+    # cipairs = CIPairs(nelec, nspin)
 
-    # Can be read in using HORTON
-    # hf_dict = gaussian_fchk('test/h4_square_hf_sto6g.fchk')
-    # one_int = hf_dict["one_int"]
-    # two_int = hf_dict["two_int"]
-    # nuc_nuc = hf_dict["nuc_nuc_energy"]
-    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
-    nuc_nuc = 2.70710678119
-    ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    # one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    # two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
+    # nuc_nuc = 2.70710678119
+    # ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
 
-    results = brute(cipairs, ham)
-    energy = results['energy']
-    raise AssertionError('No reference for the CIPairs tests.')
+    # results = brute(cipairs, ham)
+    # energy = results['energy']
+    raise AssertionError("No reference for the CIPairs tests.")
