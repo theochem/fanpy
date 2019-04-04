@@ -247,7 +247,7 @@ def generate_unordered_partition(collection, bin_size_num):
 
 # FIXME: make this dynamic or store/cache some of the results on file
 def int_partition_recursive(coins, num_coin_types, total):
-    """Generates the combination of coins that results in the given total.
+    """Generate the combination of coins that results in the given total.
 
     Known as the coin problem, we can find different ways of dividing up a given number (e.g. number
     of electrons) as a sum of smaller numbers from a set (e.g. quasiparticles).
@@ -266,7 +266,7 @@ def int_partition_recursive(coins, num_coin_types, total):
         Total sum of the coin values.
 
     Yields
-
+    ------
     partition : list of int
         List of coins that sum up to the total.
 

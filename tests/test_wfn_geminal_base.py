@@ -9,9 +9,11 @@ class TempBaseGeminal(BaseGeminal):
     """GeminalWavefunction that skips initialization."""
 
     def __init__(self):
+        """Do nothing."""
         self._cache_fns = {}
 
     def generate_possible_orbpairs(self, occ_indices):
+        """Generate orbital pairing scheme."""
         if occ_indices == (0, 1, 2, 3):
             yield ((0, 1), (2, 3)), 1
         else:

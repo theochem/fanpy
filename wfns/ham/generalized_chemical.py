@@ -303,7 +303,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
     # a side effect) instead
     # FIXME: too many branches, too many statements
     def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):
-        r"""Derivative of the CI matrix element with respect to the antihermitian elements.
+        r"""Return derivative of the CI matrix element with respect to the antihermitian elements.
 
         Parameters
         ----------

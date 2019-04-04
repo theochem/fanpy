@@ -151,6 +151,12 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
         Raises
         ------
+        TypeError
+            If indices are not given as a tuple/list of two integers.
+            If theta is not a flota or a numpy array of floats.
+        ValueError
+            If any of the pair of indices given are the same.
+            If any of the index is less than 0 or greater than the number of rows.
 
         """
         # pylint: disable=C0103

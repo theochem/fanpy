@@ -48,6 +48,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         If restricted or generalized orbitals and number of matrices is not one.
         If unrestricted orbitals and number of matrices is not two.
         If orbital type is not one of 'restricted', 'unrestricted', 'generalized'.
+
     """
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
         raise TypeError("Matrices must be given as a list of numpy arrays")

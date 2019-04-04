@@ -176,6 +176,13 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
         Raises
         ------
+        TypeError
+            If indices are not given as a tuple/list of two integers.
+            If theta is not a flota or a numpy array of floats.
+        ValueError
+            If any of the pair of indices given are the same.
+            If any of the index is less than 0 or greater than the number of rows.
+            If the pair of indices do not have the same spin.
 
         """
         # pylint: disable=C0103

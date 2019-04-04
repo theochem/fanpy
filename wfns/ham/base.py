@@ -51,7 +51,7 @@ class BaseHamiltonian(ParamContainer):
         self.assign_energy_nuc_nuc(energy_nuc_nuc)
 
     def assign_energy_nuc_nuc(self, energy_nuc_nuc=None):
-        """Assigns the nuclear nuclear repulsion.
+        """Assign the nuclear nuclear repulsion.
 
         Parameters
         ----------
@@ -176,7 +176,7 @@ class BaseHamiltonian(ParamContainer):
         exchange = 0.0
 
         def update_integrals(sd_m):
-            """Wrapped function for updating the integral values."""
+            """Update integral values."""
             coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
             sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
             return (

@@ -85,7 +85,7 @@ class ParamContainer(abc.ABC):
         self.params = params
 
     def clear_cache(self):
-        """Placeholder function that would clear the cache.
+        """Clear the cache of the cached functions.
 
         This function doesn't actually do anything, but exists as a placeholder so that all if the
         cache exists, it can be cleared when updating the parameters in the optimization process. So

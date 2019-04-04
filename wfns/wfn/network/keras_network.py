@@ -210,6 +210,7 @@ class KerasNetwork(BaseWavefunction):
         Notes
         -----
         Instance must have attribut `model`.
+
         """
         return (self.nparams,)
 
@@ -232,7 +233,7 @@ class KerasNetwork(BaseWavefunction):
     # FIXME: not a very robust way of building an initial guess. It is not very good and requires
     # specific network structures.
     def assign_template_params(self):
-        """Assign the intial guess for the HF ground state wavefunction.
+        r"""Assign the intial guess for the HF ground state wavefunction.
 
         Since the template parameters are calculated/approximated, they are computed and stored away
         rather than generating each one on the fly.

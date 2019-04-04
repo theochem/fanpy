@@ -1,4 +1,4 @@
-"Tests for wfns.wfn.network.keras_network.KerasNetwork."
+"""Tests for wfns.wfn.network.keras_network.KerasNetwork."""
 import numpy as np
 import pytest
 import keras
@@ -9,7 +9,7 @@ from utils import skip_init
 
 
 def test_keras_assign_dtype():
-    "Test KerasNetwork.assign_dtype."
+    """Test KerasNetwork.assign_dtype."""
     test = skip_init(KerasNetwork)
     test.assign_dtype(float)
     assert test.dtype == np.float64
@@ -18,7 +18,7 @@ def test_keras_assign_dtype():
 
 
 def test_keras_assign_model():
-    "Test KerasNetwork.assign_model."
+    """Test KerasNetwork.assign_model."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
     # default
@@ -85,7 +85,7 @@ def test_keras_assign_model():
 
 
 def test_keras_nparams():
-    "Test KerasNetwork.nparams."
+    """Test KerasNetwork.nparams."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
@@ -96,7 +96,7 @@ def test_keras_nparams():
 
 
 def test_keras_params_shape():
-    "Test KerasNetwork.params_shape."
+    """Test KerasNetwork.params_shape."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
@@ -107,7 +107,7 @@ def test_keras_params_shape():
 
 
 def test_keras_template_params():
-    "Test KerasNetwork.template_params."
+    """Test KerasNetwork.template_params."""
     test = skip_init(KerasNetwork)
     params = np.random.rand(100)
     test._template_params = params
@@ -115,7 +115,7 @@ def test_keras_template_params():
 
 
 def test_keras_assign_template_params():
-    "Test KerasNetwork.assign_template_params."
+    """Test KerasNetwork.assign_template_params."""
     test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
@@ -145,7 +145,7 @@ def test_keras_assign_template_params():
 
 
 def test_keras_assign_params():
-    "Test KerasNetwork.assign_params."
+    """Test KerasNetwork.assign_params."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
     test.dtype = np.float64
@@ -192,7 +192,7 @@ def test_keras_init():
 
 
 def test_keras_get_overlap():
-    "Test KerasNetwork.get_overlap."
+    """Test KerasNetwork.get_overlap."""
     test = skip_init(KerasNetwork)
     test.nspin = 4
     test.dtype = np.float64

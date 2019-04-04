@@ -10,6 +10,7 @@ class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):
     """Class that overwrite integrate_sd_sd for simplicity."""
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
+        """Return integral."""
         if sd1 > sd2:
             sd1, sd2 = sd2, sd1
         if [sd1, sd2] == [0b0011, 0b0011]:

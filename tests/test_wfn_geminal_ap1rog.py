@@ -159,7 +159,7 @@ def answer_ap1rog_h2_sto6g():
 
     # find exact maximum
     def max_energy(params):
-        """ Find maximum energy"""
+        """Find maximum energy."""
         objective_excited.assign_params(params)
         energy = objective_excited.get_energy_one_proj([0b0101, 0b1010])
         return -energy

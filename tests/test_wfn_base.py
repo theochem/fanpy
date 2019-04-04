@@ -254,7 +254,7 @@ def test_clear_cache():
 
     @functools.lru_cache(2)
     def olp_deriv(sd, deriv):
-        """Derivative of the overlap of wavefunction."""
+        """Return the derivative of the overlap of wavefunction."""
         return 0.0
 
     test._cache_fns["overlap derivative"] = olp_deriv
@@ -291,12 +291,12 @@ def test_nparams():
 
 
 def test_spin():
-    """Test BaseWavefunction.spin"""
+    """Test BaseWavefunction.spin."""
     test = skip_init(disable_abstract(BaseWavefunction))
     assert test.spin is None
 
 
 def test_seniority():
-    """Test BaseWavefunction.seniority"""
+    """Test BaseWavefunction.seniority."""
     test = skip_init(disable_abstract(BaseWavefunction))
     assert test.seniority is None

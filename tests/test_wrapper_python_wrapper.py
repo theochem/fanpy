@@ -166,7 +166,7 @@ def test_horton_gaussian_fchk_h2_rhf_sto6g():
     not check_dependency("horton"), "HORTON is not available or HORTONPATH is not set."
 )
 def test_gaussian_fchk_h2_uhf_sto6g():
-    """Test HORTON"s gaussian_fchk against H2 UHF STO-6G data from Gaussian"""
+    """Test HORTON"s gaussian_fchk against H2 UHF STO-6G data from Gaussian."""
     fchk_data = generate_hartreefock_results(
         "horton_gaussian_fchk.py",
         energies_name="energies.npy",
@@ -183,7 +183,7 @@ def test_gaussian_fchk_h2_uhf_sto6g():
     not check_dependency("pyscf"), "PYSCF is not available or PYSCFPATH is not set."
 )
 def test_pyscf_hartreefock_h2_rhf_sto6g():
-    """Test PySCF HF against H2 RHF STO-6G data from Gaussian"""
+    """Test PySCF HF against H2 RHF STO-6G data from Gaussian."""
     hf_data = generate_hartreefock_results(
         "pyscf_hartreefock.py",
         energies_name="energies.npy",

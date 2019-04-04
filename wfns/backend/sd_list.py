@@ -1,4 +1,4 @@
-r""" Functions used to generate Slater determinants
+"""Functions used to generate Slater determinants.
 
 Functions
 ---------
