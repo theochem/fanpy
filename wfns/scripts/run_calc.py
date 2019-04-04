@@ -1,7 +1,7 @@
 """Script for running calculations."""
 import numpy as np
-from wfns_make_script import make_script
-from utils import check_inputs, parser, parser_add_arguments
+from wfns.scripts.utils import check_inputs, parser, parser_add_arguments
+from wfns.scripts.make_script import make_script
 
 
 # FIXME: not tested
@@ -139,7 +139,7 @@ def run_calc(
     exec(script)
 
 
-if __name__ == "__main__":
+def main():
     parser.description = "Optimize a wavefunction and/or Hamiltonian."
     parser_add_arguments()
     args = parser.parse_args()

@@ -84,14 +84,12 @@ setup(
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # `pip` to create the appropriate form of executable for the target
     # platform.
-    #
-    # For example, the following would provide a command called `sample` which
-    # executes the function `main` from this package when invoked:
-    # entry_points={
-    #     'console_scripts': [
-    #         'sample=sample:main',
-    #     ],
-    # },
+    entry_points={
+        "console_scripts": [
+            "wfns_make_script=wfns.scripts.make_script:main",
+            "wfns_run_calc=wfns.scripts.run_calc:main",
+        ]
+    },
     # List additional URLs that are relevant to your project as a dict.
     project_urls={
         "Bug Reports": "https://github.com/theochem/gbasis/issues",

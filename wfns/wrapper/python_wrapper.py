@@ -92,11 +92,10 @@ def generate_hartreefock_results(
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
     call(
         [
             python_name,
-            os.path.join(DIRNAME, "..", "..", "scripts", calctype),
+            os.path.join(DIRNAME, calctype),
             energies_name,
             oneint_name,
             twoint_name,
@@ -165,11 +164,10 @@ def generate_fci_results(
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    # FIXME: hardcoded the location of scripts (requires installation via `pip install -e`)
     call(
         [
             python_name,
-            os.path.join(DIRNAME, "..", "..", "scripts", "pyscf_generate_fci_matrix.py"),
+            os.path.join(DIRNAME, "pyscf_generate_fci_matrix.py"),
             cimatrix_name,
             sds_name,
             *kwargs,

@@ -1,6 +1,7 @@
 """Code generating script."""
 import textwrap
-from utils import check_inputs, parser, parser_add_arguments
+
+from wfns.scripts.utils import check_inputs, parser, parser_add_arguments
 
 
 # FIXME: not tested
@@ -463,7 +464,7 @@ def make_script(
             f.write(output)
 
 
-if __name__ == "__main__":
+def main():
     parser.description = "Optimize a wavefunction and/or Hamiltonian."
     parser.add_argument("--nspin", type=int, required=True, help="Number of spin orbitals.")
     parser_add_arguments()
