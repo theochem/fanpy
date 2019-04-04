@@ -1,9 +1,10 @@
 """Parent class of CI wavefunctions."""
 import itertools
+
 import numpy as np
-from wfns.wfn.base import BaseWavefunction
 from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
+from wfns.wfn.base import BaseWavefunction
 
 
 class CIWavefunction(BaseWavefunction):

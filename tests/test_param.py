@@ -1,9 +1,10 @@
 """Test wfns.param."""
 import collections
+
 import numpy as np
 import pytest
-from wfns.param import ParamContainer, ParamMask
 from utils import skip_init
+from wfns.param import ParamContainer, ParamMask
 
 
 def test_assign_param():

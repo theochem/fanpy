@@ -1,8 +1,8 @@
 """Test wfns.wavefunction.ci_pairs."""
-import pytest
 import numpy as np
-from wfns.wfn.ci.ci_pairs import CIPairs
+import pytest
 from utils import skip_init
+from wfns.wfn.ci.ci_pairs import CIPairs
 
 
 def test_assign_sd_vec():

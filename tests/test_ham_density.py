@@ -1,8 +1,8 @@
 """Test wfns.ci.density."""
 import numpy as np
 import pytest
-from wfns.ham.density import add_one_density, add_two_density, density_matrix
 from utils import find_datafile
+from wfns.ham.density import add_one_density, add_two_density, density_matrix
 
 
 def test_add_one_density():

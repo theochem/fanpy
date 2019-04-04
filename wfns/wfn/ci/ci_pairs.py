@@ -1,9 +1,9 @@
 """CI Pairs Wavefunction."""
 import numpy as np
+from wfns.backend import slater
+from wfns.backend.sd_list import sd_list
 from wfns.wfn.ci.doci import DOCI
 from wfns.wfn.geminal.ap1rog import AP1roG
-from wfns.backend.sd_list import sd_list
-from wfns.backend import slater
 
 
 class CIPairs(DOCI):

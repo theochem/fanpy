@@ -1,10 +1,10 @@
 """Test wfns.wavefunction.cisd."""
-import pytest
 import numpy as np
-from wfns.wfn.ci.cisd import CISD
+import pytest
+from utils import find_datafile, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
-from utils import skip_init, find_datafile
+from wfns.wfn.ci.cisd import CISD
 
 
 def test_cisd_assign_sd_vec():

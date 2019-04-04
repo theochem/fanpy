@@ -1,6 +1,6 @@
 r"""Hamiltonian used to describe a chemical system expressed wrt unrestricted orbitals."""
 import numpy as np
-from wfns.backend import slater, math_tools
+from wfns.backend import math_tools, slater
 from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
 
 

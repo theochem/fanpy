@@ -1,14 +1,14 @@
 """Test wfns.wavefunction.geminals.apig."""
 import numpy as np
-import scipy
 import pytest
-from wfns.wfn.geminal.apig import APIG
+import scipy
+from utils import find_datafile, skip_init
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.equation import minimize
-from utils import skip_init, find_datafile
+from wfns.solver.system import least_squares
+from wfns.wfn.geminal.apig import APIG
 
 
 def test_apig_spin():

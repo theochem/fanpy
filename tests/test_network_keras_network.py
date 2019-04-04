@@ -1,11 +1,11 @@
 """Tests for wfns.wfn.network.keras_network.KerasNetwork."""
+import keras
 import numpy as np
 import pytest
-import keras
-from wfns.wfn.network.keras_network import KerasNetwork
-import wfns.backend.slater as slater
-from wfns.backend.sd_list import sd_list
 from utils import skip_init
+from wfns.backend.sd_list import sd_list
+import wfns.backend.slater as slater
+from wfns.wfn.network.keras_network import KerasNetwork
 
 
 def test_keras_assign_dtype():

@@ -1,12 +1,12 @@
 """Test wfns.wavefunction.composite.nonorth."""
-import pytest
 import numpy as np
+import pytest
+from utils import find_datafile, skip_init
 from wfns.backend.sd_list import sd_list
-from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.composite.nonorth import NonorthWavefunction
-from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from utils import skip_init, find_datafile
+from wfns.wfn.base import BaseWavefunction
+from wfns.wfn.ci.base import CIWavefunction
+from wfns.wfn.composite.nonorth import NonorthWavefunction
 
 
 class TempWavefunction(BaseWavefunction):

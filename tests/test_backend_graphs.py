@@ -1,7 +1,7 @@
 """Test fors wfn.graphs."""
 from wfns.backend.graphs import (
-    generate_complete_pmatch,
     generate_biclique_pmatch,
+    generate_complete_pmatch,
     generate_unordered_partition,
     int_partition_recursive,
 )

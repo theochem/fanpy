@@ -1,5 +1,6 @@
 """Parent class of the objective equations."""
 import abc
+
 import numpy as np
 from wfns.param import ParamMask
 

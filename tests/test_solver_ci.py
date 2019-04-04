@@ -1,9 +1,9 @@
 """Test wfn.solver.ci."""
 import numpy as np
 import pytest
-from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver import ci
+from wfns.wfn.ci.base import CIWavefunction
 
 
 class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):

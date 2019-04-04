@@ -1,5 +1,6 @@
 """Hamiltonian that will be used to make the Schrodinger equation."""
 import abc
+
 from wfns.backend import slater
 from wfns.param import ParamContainer
 

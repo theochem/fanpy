@@ -1,12 +1,12 @@
 """Test for wfns.backend.math_tools."""
-import pytest
 import numpy as np
+import pytest
 from wfns.backend.math_tools import (
-    binomial,
     adjugate,
+    binomial,
+    permanent_borchardt,
     permanent_combinatoric,
     permanent_ryser,
-    permanent_borchardt,
     unitary_matrix,
 )
 

@@ -1,13 +1,13 @@
 """Test wfns.wavefunction.geminals.apr2g.APr2G."""
 import numpy as np
-from wfns.wfn.geminal.rank2_approx import full_to_rank2
-from wfns.wfn.geminal.apr2g import APr2G
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.solver.system import least_squares
-from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.solver.equation import minimize, cma
 from utils import find_datafile
+from wfns.ham.senzero import SeniorityZeroHamiltonian
+from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.solver.equation import cma, minimize
+from wfns.solver.system import least_squares
+from wfns.wfn.geminal.apr2g import APr2G
+from wfns.wfn.geminal.rank2_approx import full_to_rank2
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)

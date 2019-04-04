@@ -1,9 +1,10 @@
 """Test wfns.wavefunction.wavefunctions."""
-import pytest
 import functools
+
 import numpy as np
+import pytest
+from utils import disable_abstract, skip_init
 from wfns.wfn.base import BaseWavefunction
-from utils import skip_init, disable_abstract
 
 
 def test_assign_nelec():

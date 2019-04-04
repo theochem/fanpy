@@ -15,7 +15,8 @@ permanent_borchardt(matrix)
 
 """
 # pylint: disable=C0103
-from itertools import permutations, combinations
+from itertools import combinations, permutations
+
 import numpy as np
 from scipy.special import comb
 

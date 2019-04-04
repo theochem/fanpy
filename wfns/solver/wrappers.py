@@ -5,6 +5,7 @@ wrapped such that they all have the same API within the `wfns.solver` module.
 
 """
 from functools import wraps
+
 import numpy as np
 
 

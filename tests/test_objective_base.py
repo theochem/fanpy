@@ -1,9 +1,9 @@
 """Test wfns.objective.base."""
 import numpy as np
 import pytest
-from wfns.param import ParamContainer, ParamMask
-from wfns.objective.base import BaseObjective
 from utils import disable_abstract
+from wfns.objective.base import BaseObjective
+from wfns.param import ParamContainer, ParamMask
 
 
 def test_baseobjective_init():

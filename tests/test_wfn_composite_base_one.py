@@ -1,9 +1,9 @@
 """Test wfn.wavefunction.composite.base_one."""
-import pytest
 import numpy as np
+import pytest
+from utils import disable_abstract, skip_init
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
-from utils import skip_init, disable_abstract
 
 
 class TempWavefunction(BaseWavefunction):

@@ -1,8 +1,8 @@
 """Test wfns.wavefunction.base."""
-import pytest
 import numpy as np
-from wfns.wfn.ci.base import CIWavefunction
+import pytest
 from utils import skip_init
+from wfns.wfn.ci.base import CIWavefunction
 
 
 def test_assign_spin():
