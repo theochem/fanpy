@@ -6,6 +6,7 @@ generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
     Generate the FCI Hamiltonian CI matrix.
 
 """
+# pylint: disable=W0212,C0103
 import ctypes
 import sys
 
@@ -151,6 +152,6 @@ if __name__ == "__main__":
     if "is_chemist_notation" in kwargs:
         kwargs["is_chemist_notation"] = kwargs["is_chemist_notation"] == "True"
 
-    ci_matrix, pspace = generate_fci_cimatrix(**kwargs)
-    np.save(sys.argv[1], ci_matrix)
-    np.save(sys.argv[2], pspace)
+    output = generate_fci_cimatrix(**kwargs)
+    np.save(sys.argv[1], output[0])
+    np.save(sys.argv[2], output[1])

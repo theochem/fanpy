@@ -6,6 +6,7 @@ gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
     Extract appropriate information from a Gaussian FCHK file.
 
 """
+# pylint: disable=W0212,C0103
 import sys
 
 from horton import compute_nucnuc, IOData

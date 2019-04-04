@@ -6,6 +6,7 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
     Runs HF in PySCF.
 
 """
+# pylint: disable=C0103
 import os
 import sys
 
