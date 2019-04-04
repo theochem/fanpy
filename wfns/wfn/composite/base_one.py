@@ -64,6 +64,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None):
         """Initialize the wavefunction.
 
@@ -110,17 +111,17 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         """
         if not isinstance(wfn, BaseWavefunction):
             raise TypeError("Given wavefunction must be an instance of BaseWavefunction.")
-        elif wfn.nelec != self.nelec:
+        if wfn.nelec != self.nelec:
             raise ValueError(
                 "Given wavefunction does not have the same number of electrons as the"
                 " the instantiated NonorthWavefunction."
             )
-        elif wfn.dtype != self.dtype:
+        if wfn.dtype != self.dtype:
             raise ValueError(
                 "Given wavefunction does not have the same data type as the "
                 "instantiated NonorthWavefunction."
             )
-        elif wfn.memory != self.memory:
+        if wfn.memory != self.memory:
             raise ValueError(
                 "Given wavefunction does not have the same memory as the "
                 "instantiated NonorthWavefunction."

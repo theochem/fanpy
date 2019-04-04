@@ -76,6 +76,7 @@ class CISD(CIWavefunction):
 
     """
 
+    # pylint:disable=W0223
     def assign_sd_vec(self, sd_vec=None):
         """Assign the list of Slater determinants in the CISD wavefunction.
 

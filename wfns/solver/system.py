@@ -46,7 +46,7 @@ def least_squares(objective, save_file="", **kwargs):
         If objective is not SystemEquations instance.
 
     """
-    from scipy.optimize import least_squares
+    from scipy.optimize import least_squares as solver
 
     if not isinstance(objective, SystemEquations):
         raise TypeError("Given objective must be an instance of SystemEquations.")
@@ -60,7 +60,7 @@ def least_squares(objective, save_file="", **kwargs):
             "jac": objective.jacobian,
         }
 
-    output = wrap_scipy(least_squares)(objective, save_file=save_file, verbose=2, **kwargs)
+    output = wrap_scipy(solver)(objective, save_file=save_file, verbose=2, **kwargs)
     output["energy"] = objective.energy.params
     output["residuals"] = output["internal"].fun
     output["cost"] = output["internal"].cost
@@ -107,11 +107,11 @@ def root(objective, save_file="", **kwargs):
         If objective is not SystemEquations instance.
 
     """
-    from scipy.optimize import root
+    from scipy.optimize import root as solver
 
     if not isinstance(objective, SystemEquations):
         raise TypeError("Given objective must be an instance of SystemEquations.")
-    elif objective.num_eqns != objective.params.size:
+    if objective.num_eqns != objective.params.size:
         raise ValueError(
             "Given objective must have the same number of equations as the number of " "parameters."
         )
@@ -119,6 +119,6 @@ def root(objective, save_file="", **kwargs):
     if kwargs == {}:
         kwargs = {"method": "hybr", "jac": objective.jacobian, "options": {"xtol": 1.0e-9}}
 
-    output = wrap_scipy(root)(objective, save_file=save_file, **kwargs)
+    output = wrap_scipy(solver)(objective, save_file=save_file, **kwargs)
     output["energy"] = objective.energy.params
     return output

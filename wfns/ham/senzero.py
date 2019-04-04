@@ -115,9 +115,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         occ_spatial_indices = slater.occ_indices(sd_spatial)
         vir_spatial_indices = slater.vir_indices(sd_spatial, nspatial)
 
-        one_electron = 0.0
-        coulomb = 0.0
-        exchange = 0.0
+        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
         def update_integrals(sd_m):
             """Wrapped function for updating the integral values."""
@@ -132,7 +130,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         one_electron, coulomb, exchange = update_integrals(sd)
 
         for i in occ_spatial_indices:
-            for a in vir_spatial_indices:
+            for a in vir_spatial_indices:  # pylint: disable=C0103
                 sd_m = slater.excite(
                     sd,
                     slater.spin_index(i, nspatial, "alpha"),
@@ -190,6 +188,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
             If `deriv` is not `None`.
 
         """
+        # pylint: disable=C0103
         if deriv is not None:
             raise NotImplementedError(
                 "Orbital rotation is not implemented properly: you cannot "

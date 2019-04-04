@@ -144,6 +144,7 @@ class AP1roG(APIG):
         Need to skip over APIG.__init__ because `assign_ref_sd` must come before `assign_params`.
 
         """
+        # pylint: disable=W0233,W0231
         BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype)
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
@@ -191,6 +192,7 @@ class AP1roG(APIG):
         This method depends on `nelec`, `nspin`, `spin`, and `seniority`.
 
         """
+        # pylint: disable=C0103
         if sd is None:
             sd = slater.ground(self.nelec, self.nspin)
         sd = slater.internal_sd(sd)
@@ -198,9 +200,9 @@ class AP1roG(APIG):
             raise ValueError(
                 "Given Slater determinant does not have the correct number of " "electrons"
             )
-        elif self.spin is not None and slater.get_spin(sd, self.nspatial):
+        if self.spin is not None and slater.get_spin(sd, self.nspatial):
             raise ValueError("Given Slater determinant does not have the correct spin.")
-        elif self.seniority is not None and slater.get_seniority(sd, self.nspatial):
+        if self.seniority is not None and slater.get_seniority(sd, self.nspatial):
             raise ValueError("Given Slater determinant does not have the correct seniority.")
         self.ref_sd = sd
 
@@ -333,6 +335,7 @@ class AP1roG(APIG):
         return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created, deriv=deriv)
 
     # FIXME: allow other pairing schemes.
+    # FIXME: too many return statements
     def get_overlap(self, sd, deriv=None):
         """Return the overlap of the wavefunction with a Slater determinant.
 
@@ -355,6 +358,7 @@ class AP1roG(APIG):
         This code will fail if another pairing scheme is used.
 
         """
+        # pylint: disable=R0911
         sd = slater.internal_sd(sd)
 
         # cut off beta part (for just the alpha/spatial part)
@@ -387,7 +391,7 @@ class AP1roG(APIG):
 
             return self._cache_fns["overlap"](sd)
         # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
+        if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:

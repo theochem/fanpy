@@ -81,6 +81,7 @@ sign_swap(sd, pos_current, pos_future) : int
     Return the signature of moving a creation operator to a specific position.
 
 """
+# pylint: disable=C0103
 import gmpy2
 import numpy as np
 
@@ -139,6 +140,7 @@ def internal_sd(identifier):
         If `identifier` not an integer or `gmpy2.mpz` object.
 
     """
+    # pylint: disable=R1705
     if isinstance(identifier, (int, np.int64)):
         return gmpy2.mpz(int(identifier))
     elif is_internal_sd(identifier):
@@ -230,7 +232,7 @@ def total_occ(sd):
         Number of occupied orbitals.
 
     """
-    if sd is None:
+    if sd is None:  # pylint: disable=R1705
         return 0
     else:
         return gmpy2.popcount(sd)
@@ -291,7 +293,7 @@ def spatial_index(i, nspatial):
     if nspatial <= 0 or i < 0 or i > 2 * nspatial:
         raise ValueError("If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.")
 
-    if is_alpha(i, nspatial):
+    if is_alpha(i, nspatial):  # pylint: disable=R1705
         return i
     else:
         return i - nspatial
@@ -323,13 +325,13 @@ def spin_index(i, nspatial, spin="beta"):
     """
     if not nspatial > 0:
         raise ValueError("Number of spatial orbitals must be greater than zero.")
-    elif not 0 <= i < nspatial:
+    if not 0 <= i < nspatial:
         raise ValueError(
             "Spatial orbital index must be greater than or equal to 0 and less than "
             "the number of spatial orbitals."
         )
 
-    if spin == "alpha":
+    if spin == "alpha":  # pylint: disable=R1705
         return i
     elif spin == "beta":
         return i + nspatial
@@ -619,10 +621,10 @@ def interleave_index(i, nspatial):
     """
     if i < 0:
         raise ValueError("Index must be greater than or equal to zero.")
-    elif i >= 2 * nspatial:
+    if i >= 2 * nspatial:
         raise ValueError("Index must be less than the number of spin orbitals.")
 
-    if i < nspatial:
+    if i < nspatial:  # pylint: disable=R1705
         return 2 * i
     else:
         return 2 * (i - nspatial) + 1
@@ -652,10 +654,10 @@ def deinterleave_index(i, nspatial):
     """
     if i < 0:
         raise ValueError("Index must be greater than or equal to zero.")
-    elif i >= 2 * nspatial:
+    if i >= 2 * nspatial:
         raise ValueError("Index must be less than the number of spin orbitals.")
 
-    if i % 2 == 0:
+    if i % 2 == 0:  # pylint: disable=R1705
         return i // 2
     else:
         return i // 2 + nspatial
@@ -928,7 +930,7 @@ def sign_swap(sd, pos_current, pos_future):
         # remove everything before pos_future (excluding pos_future)
         num_trans = gmpy2.popcount(sd[pos_future:pos_current])
 
-    if num_trans % 2 == 0:
+    if num_trans % 2 == 0:  # pylint: disable=R1705
         return 1
     else:
         return -1

@@ -203,7 +203,7 @@ class TwoSidedEnergy(BaseSchrodinger):
                             "Given state does not have the same number of electrons as"
                             " the given wavefunction."
                         )
-                    elif any(i >= self.wfn.nspin for i in occs):
+                    if any(i >= self.wfn.nspin for i in occs):
                         raise ValueError(
                             "Given state does not have the same number of spin "
                             "orbitals as the given wavefunction."

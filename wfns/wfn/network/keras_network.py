@@ -60,6 +60,7 @@ class KerasNetwork(BaseWavefunction):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None):
         """Initialize the wavefunction.
 
@@ -105,7 +106,7 @@ class KerasNetwork(BaseWavefunction):
         super().assign_dtype(dtype)
         if self.dtype != np.float64:
             raise ValueError("Given data type must be a np.float64.")
-        keras.backend.common._FLOATX = "float64"
+        keras.backend.common._FLOATX = "float64"  # pylint: disable=W0212
 
     def assign_model(self, model=None):
         """Assign the Keras model used to represent the neural network.
@@ -363,7 +364,7 @@ class KerasNetwork(BaseWavefunction):
         if deriv is None:
             return self.model.predict(np.array([occ_vector]))[0, 0]
         # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
+        if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:

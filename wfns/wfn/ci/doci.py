@@ -77,6 +77,7 @@ class DOCI(CIWavefunction):
 
     """
 
+    # pylint:disable=W0223
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
 

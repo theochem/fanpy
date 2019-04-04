@@ -62,7 +62,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
             "Density matrix must be given as a list of one numpy array for"
             " restricted and generalized orbitals"
         )
-    elif orbtype in ["unrestricted"] and len(matrices) != 2:
+    if orbtype in ["unrestricted"] and len(matrices) != 2:
         raise ValueError(
             "Density matrix must be given as a list of two numpy arrays for"
             " unrestricted orbitals"
@@ -94,6 +94,7 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         raise ValueError("Unsupported orbital type")
 
 
+# FIXME: too many branches
 def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     r"""Add some value to the appropriate one electron density matrix element.
 
@@ -135,6 +136,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     Assumes that the spin orbital indices are given with the physicist's notation.
 
     """
+    # pylint: disable=R0912
     if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
         raise TypeError("Matrices must be given as a list of numpy arrays")
 
@@ -148,7 +150,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
             "Density matrix must be given as a list of one numpy array for"
             " restricted and generalized orbitals"
         )
-    elif orbtype in ["unrestricted"] and len(matrices) != 3:
+    if orbtype in ["unrestricted"] and len(matrices) != 3:
         raise ValueError(
             "Density matrix must be given as a list of three numpy arrays for"
             " unrestricted orbitals"
@@ -206,6 +208,7 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 
 # FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
 # TODO: generalize to arbitrary order density matrix
+# FIXME: too many branches, too many statements
 def density_matrix(
     sd_coeffs, civec, nspatial, is_chemist_notation=False, val_threshold=0, orbtype="restricted"
 ):
@@ -259,6 +262,7 @@ def density_matrix(
         If the orbital type is not one of 'restricted', 'unrestricted', 'generalized'
 
     """
+    # pylint: disable=C0103,R0912,R0915
     # TODO: generalize to arbitrary order density matrix
     # sort coefficients and sd's by the magintude of coefficient (useful for truncating)
     sorted_x, sorted_sd = zip(*sorted(zip(sd_coeffs, civec), key=lambda x: abs(x[0]), reverse=True))

@@ -82,17 +82,13 @@ class BaseWavefunction(ParamContainer):
             Default does not limit memory usage (i.e. infinite).
 
         """
+        # pylint: disable=W0231
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
         self.assign_dtype(dtype)
         self.assign_memory(memory)
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
-
-        # _cache_fns and load_cache are not included because not every wavefunction will be caching
-        # the overlaps
-        # self._cache_fns = {}
-        # self.load_cache()
 
     @property
     def nspatial(self):
@@ -175,7 +171,7 @@ class BaseWavefunction(ParamContainer):
         """
         if not isinstance(nelec, int):
             raise TypeError("Number of electrons must be an integer")
-        elif nelec <= 0:
+        if nelec <= 0:
             raise ValueError("Number of electrons must be a positive integer")
         self.nelec = nelec
 
@@ -199,9 +195,9 @@ class BaseWavefunction(ParamContainer):
         """
         if not isinstance(nspin, int):
             raise TypeError("Number of spin orbitals must be an integer.")
-        elif nspin <= 0:
+        if nspin <= 0:
             raise ValueError("Number of spin orbitals must be a positive integer.")
-        elif nspin % 2 == 1:
+        if nspin % 2 == 1:
             raise NotImplementedError("Odd number of spin orbitals is not supported.")
         self.nspin = nspin
 
@@ -294,12 +290,12 @@ class BaseWavefunction(ParamContainer):
         # check shape and dtype
         if params.size != self.nparams:
             raise ValueError("There must be {0} parameters.".format(self.nparams))
-        elif params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
+        if params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
             raise TypeError(
                 "If the parameters are `complex`, then the `dtype` of the wavefunction "
                 "must be `np.complex128`"
             )
-        elif params.dtype not in [float, np.float64, complex, np.complex128]:
+        if params.dtype not in [float, np.float64, complex, np.complex128]:
             raise TypeError("If the parameters are neither float or complex.")
 
         if len(params.shape) == 1:
@@ -346,6 +342,7 @@ class BaseWavefunction(ParamContainer):
         Needs to access `memory` and `params`.
 
         """
+        # pylint: disable=C0103
         # assign memory allocated to cache
         if self.memory == np.inf:
             memory = None
@@ -364,6 +361,7 @@ class BaseWavefunction(ParamContainer):
             return self._olp_deriv(sd, deriv)
 
         # store the cached function
+        self._cache_fns = {}
         self._cache_fns["overlap"] = _olp
         self._cache_fns["overlap derivative"] = _olp_deriv
 
@@ -388,6 +386,7 @@ class BaseWavefunction(ParamContainer):
         overlap with a nonseniority zero Slater determinant).
 
         """
+        # pylint: disable=C0103
         raise NotImplementedError
 
     def _olp_deriv(self, sd, deriv):
@@ -415,6 +414,7 @@ class BaseWavefunction(ParamContainer):
         parameter that is not involved in the overlap would be zero).
 
         """
+        # pylint: disable=C0103
         raise NotImplementedError
 
     def clear_cache(self, key=None):
@@ -436,8 +436,8 @@ class BaseWavefunction(ParamContainer):
         """
         try:
             if key is None:
-                for fn in self._cache_fns.values():
-                    fn.cache_clear()
+                for func in self._cache_fns.values():
+                    func.cache_clear()
             else:
                 self._cache_fns[key].cache_clear()
         except KeyError as error:
@@ -457,7 +457,6 @@ class BaseWavefunction(ParamContainer):
             Shape of the parameters.
 
         """
-        pass
 
     @abc.abstractproperty
     def template_params(self):
@@ -473,10 +472,9 @@ class BaseWavefunction(ParamContainer):
         May depend on params_shape and other attributes/properties.
 
         """
-        pass
 
     @abc.abstractmethod
-    def get_overlap(self, sd, deriv=None):
+    def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
         .. math::
@@ -509,4 +507,3 @@ class BaseWavefunction(ParamContainer):
         number of values cached this way.
 
         """
-        pass

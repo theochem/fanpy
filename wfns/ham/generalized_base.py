@@ -45,6 +45,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, one_int, two_int, energy_nuc_nuc=None):
         """Initialize the Hamiltonian.
 
@@ -118,11 +119,11 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
             raise TypeError(
                 "Integrals must be given as a numpy array with dtype of float or " "complex."
             )
-        elif one_int.dtype != two_int.dtype:
+        if one_int.dtype != two_int.dtype:
             raise TypeError("One- and two-electron integrals must have the same data type.")
-        elif not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
+        if not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
             raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
-        elif not (
+        if not (
             two_int.ndim == 4
             and two_int.shape[0] == two_int.shape[1] == two_int.shape[2] == two_int.shape[3]
         ):
@@ -130,7 +131,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
                 "Two-electron integrals must have four-dimensional tensor with equal "
                 "number rows in each axis."
             )
-        elif one_int.shape[0] != two_int.shape[0]:
+        if one_int.shape[0] != two_int.shape[0]:
             raise ValueError(
                 "One- and two-electron integrals must have the same number of " "orbitals."
             )
@@ -152,6 +153,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         ------
 
         """
+        # pylint: disable=C0103
         if not (
             isinstance(jacobi_indices, (tuple, list))
             and len(jacobi_indices) == 2
@@ -159,16 +161,16 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
             and isinstance(jacobi_indices[1], int)
         ):
             raise TypeError("Indices must be given a tuple or list of two integers.")
-        elif jacobi_indices[0] == jacobi_indices[1]:
+        if jacobi_indices[0] == jacobi_indices[1]:
             raise ValueError("Indices must be different.")
-        elif not (
+        if not (
             0 <= jacobi_indices[0] < self.one_int.shape[0]
             and 0 <= jacobi_indices[1] < self.one_int.shape[0]
         ):
             raise ValueError(
                 "Indices must be greater than or equal to 0 and less than the number of rows."
             )
-        elif not (
+        if not (
             isinstance(theta, (int, float))
             or (isinstance(theta, np.ndarray) and theta.dtype in [int, float] and theta.size == 1)
         ):
@@ -245,9 +247,9 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         """
         if not isinstance(matrix, np.ndarray):
             raise TypeError("Transformation matrix must be given as a numpy array.")
-        elif matrix.ndim != 2:
+        if matrix.ndim != 2:
             raise ValueError("Transformation matrix must be two-dimensional.")
-        elif matrix.shape[0] != self.one_int.shape[0]:
+        if matrix.shape[0] != self.one_int.shape[0]:
             raise ValueError(
                 "Shape of the transformation matrix must match with the shape of the " "integrals."
             )

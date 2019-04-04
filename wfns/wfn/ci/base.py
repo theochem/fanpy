@@ -86,6 +86,7 @@ class CIWavefunction(BaseWavefunction):
 
     """
 
+    # pylint:disable=W0223
     def __init__(
         self,
         nelec,
@@ -270,7 +271,7 @@ class CIWavefunction(BaseWavefunction):
         """
         if not (seniority is None or isinstance(seniority, int)):
             raise TypeError("Invalid seniority of the wavefunction")
-        elif isinstance(seniority, int) and seniority < 0:
+        if isinstance(seniority, int) and seniority < 0:
             raise ValueError("Seniority must be a nonnegative integer.")
         self._seniority = seniority
 
@@ -298,6 +299,7 @@ class CIWavefunction(BaseWavefunction):
         Needs to have `nelec`, `nspin`, `spin`, `seniority`.
 
         """
+        # pylint: disable=C0103
         # FIXME: terrible memory usage
         # FIXME: no check for repeated entries
         if sd_vec is None:
@@ -323,12 +325,12 @@ class CIWavefunction(BaseWavefunction):
                     "Slater determinant, {0}, does not have the correct number of "
                     "electrons, {1}".format(bin(sd), self.nelec)
                 )
-            elif isinstance(self.spin, float) and slater.get_spin(sd, self.nspatial) != self.spin:
+            if isinstance(self.spin, float) and slater.get_spin(sd, self.nspatial) != self.spin:
                 raise ValueError(
                     "Slater determinant, {0}, does not have the correct spin, {1}"
                     "".format(bin(sd), self.spin)
                 )
-            elif (
+            if (
                 isinstance(self.seniority, int)
                 and slater.get_seniority(sd, self.nspatial) != self.seniority
             ):
@@ -370,6 +372,7 @@ class CIWavefunction(BaseWavefunction):
         """
         sd = slater.internal_sd(sd)
         try:
+            # pylint:disable=R1705
             if deriv is None:
                 return self.params[self.dict_sd_index[sd]]
             elif deriv == self.dict_sd_index[sd]:

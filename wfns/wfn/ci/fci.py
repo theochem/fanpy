@@ -83,6 +83,7 @@ class FCI(CIWavefunction):
 
     """
 
+    # pylint:disable=W0223
     def assign_seniority(self, seniority=None):
         r"""Assign the seniority of the wavefunction.
 

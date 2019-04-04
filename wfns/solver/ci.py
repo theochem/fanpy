@@ -49,15 +49,15 @@ def brute(wfn, ham, save_file=""):
     # check parameters
     if not isinstance(wfn, CIWavefunction):
         raise TypeError("Given wavefunction is not an instance of BaseWavefunction (or its child).")
-    elif not isinstance(ham, BaseHamiltonian):
+    if not isinstance(ham, BaseHamiltonian):
         raise TypeError("Given Hamiltonian is not an instance of BaseHamiltonian (or its child).")
-    elif wfn.dtype != ham.dtype:
+    if wfn.dtype != ham.dtype:
         raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
-    elif wfn.nspin != ham.nspin:
+    if wfn.nspin != ham.nspin:
         raise ValueError(
             "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
         )
-    elif not isinstance(save_file, str):
+    if not isinstance(save_file, str):
         raise TypeError("The save file must be given as a string.")
 
     ci_matrix = np.zeros((wfn.nsd, wfn.nsd), dtype=wfn.dtype)

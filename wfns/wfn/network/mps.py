@@ -121,7 +121,7 @@ class MatrixProductState(BaseWavefunction):
 
         if not isinstance(dimension, int):
             raise TypeError("Provided dimension must be an integer or None.")
-        elif dimension <= 0:
+        if dimension <= 0:
             raise ValueError("Dimension of the matrices must be given as a nonnegative integer.")
 
         self.dimension = dimension
@@ -148,6 +148,7 @@ class MatrixProductState(BaseWavefunction):
         Requires `nspin` attribute.
 
         """
+        # pylint: disable=C0103
         sd = slater.internal_sd(sd)
         indices = np.zeros(self.nspatial, dtype=int)
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
@@ -184,10 +185,10 @@ class MatrixProductState(BaseWavefunction):
         """
         if not isinstance(index, (int, np.int64)):
             raise TypeError("Given index must be an integer.")
-        elif not 0 <= index < self.nspatial:
+        if not 0 <= index < self.nspatial:
             raise ValueError("Given index must be greater than or equal to zero or less than K.")
 
-        if index == 0:
+        if index == 0:  # pylint: disable=R1705
             return (4, 1, self.dimension)
         elif index < self.nspatial - 1:
             return (4, self.dimension, self.dimension)
@@ -220,13 +221,10 @@ class MatrixProductState(BaseWavefunction):
         size_matrix = np.prod(self.get_matrix_shape(index))
         if index == 0:
             return (0, size_matrix)
-        else:
-            # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
-            #       last one)
-            start = np.prod(self.get_matrix_shape(0)) + np.prod(self.get_matrix_shape(1)) * (
-                index - 1
-            )
-            return (start, start + np.prod(self.get_matrix_shape(index)))
+        # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
+        #       last one)
+        start = np.prod(self.get_matrix_shape(0)) + np.prod(self.get_matrix_shape(1)) * (index - 1)
+        return (start, start + np.prod(self.get_matrix_shape(index)))
 
     def get_matrix(self, index):
         """Get the matrix that correspond to the spatial orbital of the given index.
@@ -471,7 +469,7 @@ class MatrixProductState(BaseWavefunction):
         if deriv is None:
             return self._cache_fns["overlap"](sd)
         # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
+        if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Given derivatization index must be an integer.")
 
         if not 0 <= deriv < self.nparams:

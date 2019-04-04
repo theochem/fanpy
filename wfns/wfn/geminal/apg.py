@@ -171,6 +171,7 @@ class APG(BaseGeminal):
             If given orbital pair is not valid.
 
         """
+        # pylint: disable=C0103
         if not 0 <= col_ind < self.nspin * (self.nspin - 1) / 2:
             raise ValueError(
                 "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)

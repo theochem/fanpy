@@ -160,6 +160,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         self.cache_two_ints()
 
     # FIXME: remove sign?
+    # FIXME: too many branches, too many statements
     def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
@@ -209,6 +210,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             If `sign` is not `1`, `-1` or `None`.
 
         """
+        # pylint: disable=C0103,R0912,R0915
         if deriv is not None:
             sign = 1 if sign is None else sign
             return sign * self._integrate_sd_sd_deriv(sd1, sd2, deriv)
@@ -375,6 +377,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             corresponds to the given parameter index.
 
         """
+        # pylint: disable=C0103
         nspatial = self.one_int[0].shape[0]
         if param_ind < nspatial * (nspatial - 1) / 2:
             spin_ind = 0
@@ -395,8 +398,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
     # TODO: Much of the following function can be shortened by using impure functions (function with
     # a side effect) instead
-    def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):  # pylint: disable=too-many-branches
-        r"""Derivative of the CI matrix element with respect to the antihermitian elements.
+    # FIXME: too many statements, too many branches
+    def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):
+        r"""Return derivative of the CI matrix element with respect to the antihermitian elements.
 
         Parameters
         ----------
@@ -428,6 +432,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         real orbitals is not much.
 
         """
+        # pylint: disable=C0103,R0915,R0912
         nspatial = self.one_int[0].shape[0]
 
         sd1 = slater.internal_sd(sd1)

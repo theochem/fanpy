@@ -180,7 +180,7 @@ class OneSidedEnergy(BaseSchrodinger):
             refwfn = [refwfn]
 
         if isinstance(refwfn, (list, tuple)):
-            for sd in refwfn:
+            for sd in refwfn:  # pylint: disable=C0103
                 if slater.is_sd_compatible(sd):
                     occs = slater.occ_indices(sd)
                     if len(occs) != self.wfn.nelec:
@@ -188,7 +188,7 @@ class OneSidedEnergy(BaseSchrodinger):
                             "Given Slater determinant does not have the same number of"
                             " electrons as the given wavefunction."
                         )
-                    elif any(i >= self.wfn.nspin for i in occs):
+                    if any(i >= self.wfn.nspin for i in occs):
                         raise ValueError(
                             "Given Slater determinant does not have the same number of"
                             " spin orbitals as the given wavefunction."
@@ -205,7 +205,7 @@ class OneSidedEnergy(BaseSchrodinger):
                     "Given reference wavefunction does not have the same number of "
                     "electrons as the given wavefunction."
                 )
-            elif refwfn.nspin != self.wfn.nspin:
+            if refwfn.nspin != self.wfn.nspin:
                 raise ValueError(
                     "Given reference wavefunction does not have the same number of "
                     "spin orbitals as the given wavefunction."

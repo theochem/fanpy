@@ -4,6 +4,7 @@ from wfns.wfn.geminal.base import BaseGeminal
 from wfns.backend import math_tools, slater
 
 
+# pylint: disable=E1101
 # FIXME: parent was removed to allow easier multiple inheritance. Maybe multiple inheritance should
 #        be replaced with a wrapper instead? especially since ordering is necessary w/o splitting
 #        the BaseGeminal in two.
@@ -171,6 +172,7 @@ class RankTwoApprox:
         if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
             raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
 
+    # FIXME: too many branches
     def compute_permanent(self, col_inds, deriv=None):
         """Compute the permanent of the matrix that corresponds to the given orbital pairs.
 
@@ -194,6 +196,7 @@ class RankTwoApprox:
             If index with respect to which the permanent is derivatized is invalid.
 
         """
+        # pylint: disable=R0912
         row_inds = np.arange(self.ngem)
         col_inds = np.array(col_inds)
 
@@ -203,7 +206,7 @@ class RankTwoApprox:
             )
         # if differentiating along row (lambda)
         # FIXME: not the best way of evaluating
-        elif 0 <= deriv < self.npair:
+        if 0 <= deriv < self.npair:
             row_to_remove = deriv
             row_inds_trunc = row_inds[row_inds != row_to_remove]
             val = 0.0
@@ -227,7 +230,7 @@ class RankTwoApprox:
                     )
             return val
         # if differentiating along column (epsilon or zeta)
-        elif self.ngem <= deriv < self.ngem + 2 * self.norbpair:
+        if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
             col_to_remove = (deriv - self.ngem) % self.norbpair
             col_inds_trunc = col_inds[col_inds != col_to_remove]
             if col_inds_trunc.size == col_inds.size:
@@ -258,10 +261,10 @@ class RankTwoApprox:
                         self.zetas[col_inds_trunc],
                     )
             return val
-        else:
-            raise ValueError("Invalid derivatization index.")
 
-    def get_overlap(self, sd, deriv=None):
+        raise ValueError("Invalid derivatization index.")
+
+    def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103,R1710
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
         .. math::
@@ -291,7 +294,7 @@ class RankTwoApprox:
 
         if deriv is None:
             return self._cache_fns["overlap"](sd)
-        elif isinstance(deriv, (int, np.int64)):
+        if isinstance(deriv, (int, np.int64)):
             if deriv >= self.nparams:
                 return 0.0
             # if differentiating along column (epsilon/zeta)
@@ -451,7 +454,8 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
         rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
     # solve by SVD
     elif method == "svd":
-        _, s, vT = np.linalg.svd(matrix, full_matrices=False)
+        # pylint: disable=C0103
+        _, s, vh = np.linalg.svd(matrix, full_matrices=False)
         # find null vectors
         indices = np.abs(s) < 1
         # guess solution
@@ -463,8 +467,8 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
             ]
         )
         # linearly combine right null vectors
-        lin_comb = np.linalg.lstsq(vT[indices].T, b)[0]
-        rank2_params = vT[indices].T.dot(lin_comb).flatten()
+        lin_comb = np.linalg.lstsq(vh[indices].T, b)[0]
+        rank2_params = vh[indices].T.dot(lin_comb).flatten()
 
     # Check
     lambdas = rank2_params[:ngem, np.newaxis]

@@ -150,7 +150,6 @@ class BaseObjective(abc.ABC):
             Number of equations in the objective.
 
         """
-        pass
 
     @abc.abstractmethod
     def objective(self, params):
@@ -167,4 +166,3 @@ class BaseObjective(abc.ABC):
             Value of the objective for the given parameters.
 
         """
-        pass

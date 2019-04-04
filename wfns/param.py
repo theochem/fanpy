@@ -77,7 +77,7 @@ class ParamContainer(abc.ABC):
 
         if not isinstance(params, np.ndarray):
             raise TypeError("Parameters must be given as a numpy array.")
-        elif params.dtype not in (int, float, complex, np.float64, np.complex128):
+        if params.dtype not in (int, float, complex, np.float64, np.complex128):
             raise TypeError(
                 "Parameters must have data type of `int`, `float`, `complex`, "
                 "`np.float64` and `np.complex128`."
@@ -93,7 +93,6 @@ class ParamContainer(abc.ABC):
         it must be called clear_cache.
 
         """
-        pass
 
 
 class ParamMask(abc.ABC):
@@ -193,6 +192,7 @@ class ParamMask(abc.ABC):
                 "Cannot compare ParamMask instance with something that is not " "ParamMask."
             )
 
+        #  pylint: disable=W0212
         if list(self._masks_container_params.keys()) == list(other._masks_container_params.keys()):
             return all(
                 np.array_equal(
@@ -205,8 +205,7 @@ class ParamMask(abc.ABC):
                 )
                 for container in self._masks_container_params.keys()
             )
-        else:
-            return False
+        return False
 
     def load_mask_container_params(self, container, sel):
         """Load one mask for the active parameters from the container.
@@ -403,5 +402,4 @@ class ParamMask(abc.ABC):
             # ASSUMES: indices in self._masks_container_params[container] are ordered from smallest
             #          to largest
             return self._masks_container_params[container][ind_active_container]
-        else:
-            return None
+        return None

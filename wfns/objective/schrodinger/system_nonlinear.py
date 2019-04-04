@@ -325,7 +325,7 @@ class SystemEquations(BaseSchrodinger):
                 raise TypeError(
                     "Each constraint must be an instance of BaseObjective or its " "child."
                 )
-            elif constraint.param_selection != self.param_selection:
+            if constraint.param_selection != self.param_selection:
                 raise ValueError(
                     "The given constraint must have the same parameter selection (in "
                     "the form of ParamMask) as the objective."
@@ -496,6 +496,7 @@ class SystemEquations(BaseSchrodinger):
             ref_coeffs = self.refwfn.params[:, np.newaxis]
             d_ref_coeffs = np.zeros((ref_sds.size, params.size))
             try:
+                # pylint: disable=W0212
                 objective_indices = self.param_selection._masks_objective_params[self.refwfn]
                 container_indices = self.param_selection._masks_container_params[self.refwfn]
             except KeyError:
