@@ -465,6 +465,7 @@ def make_script(
 
 
 def main():
+    """Run script for run_calc using arguments obtained via argparse."""
     parser.description = "Optimize a wavefunction and/or Hamiltonian."
     parser.add_argument("--nspin", type=int, required=True, help="Number of spin orbitals.")
     parser_add_arguments()
