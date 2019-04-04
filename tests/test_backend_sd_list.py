@@ -1,6 +1,6 @@
 """Test wfns.sd_list."""
-import pytest
 import gmpy2
+import pytest
 from wfns.backend import sd_list
 
 

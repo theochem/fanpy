@@ -1,10 +1,11 @@
 """Test wfns.objective.constraints.norm."""
 import itertools as it
-import pytest
+
 import numpy as np
+import pytest
 from wfns.objective.constraints.norm import NormConstraint
-from wfns.wfn.ci.base import CIWavefunction
 from wfns.param import ParamContainer
+from wfns.wfn.ci.base import CIWavefunction
 
 
 def test_norm_init():

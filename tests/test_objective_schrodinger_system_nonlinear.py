@@ -1,12 +1,12 @@
 """Test wfns.objective.system_nonlinear."""
-import pytest
 import numpy as np
-from wfns.param import ParamContainer, ParamMask
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.objective.constraints.norm import NormConstraint
-from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+import pytest
 from utils import skip_init
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from wfns.objective.constraints.norm import NormConstraint
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.param import ParamContainer, ParamMask
+from wfns.wfn.ci.base import CIWavefunction
 
 
 def test_system_init_energy():

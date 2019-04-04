@@ -1,10 +1,10 @@
 """Test wfns.wavefunction.fci."""
 import numpy as np
 import pytest
-from wfns.wfn.ci.fci import FCI
+from utils import find_datafile, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
-from utils import skip_init, find_datafile
+from wfns.wfn.ci.fci import FCI
 
 
 def test_fci_assign_seniority():

@@ -1,6 +1,7 @@
 """Parent class of the wavefunctions."""
 import abc
 import functools
+
 import numpy as np
 from wfns.param import ParamContainer
 

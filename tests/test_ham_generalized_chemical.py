@@ -1,10 +1,10 @@
 """Test wfns.ham.generalized_chemical."""
 import numpy as np
 import pytest
+from utils import find_datafile
+from wfns.backend.sd_list import sd_list
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.backend.sd_list import sd_list
-from utils import find_datafile
 
 
 def test_init():

@@ -1,6 +1,7 @@
 """Class for handling the parameters."""
 import abc
 import collections
+
 import numpy as np
 
 

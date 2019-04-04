@@ -1,11 +1,11 @@
 """Test wfns.solver.system."""
-import pytest
 import numpy as np
-from wfns.wfn.base import BaseWavefunction
+import pytest
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 import wfns.solver.system as system
+from wfns.wfn.base import BaseWavefunction
 
 
 class TempBaseWavefunction(BaseWavefunction):

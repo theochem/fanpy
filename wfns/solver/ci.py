@@ -1,8 +1,8 @@
 """Solver for CI wavefunctions."""
 import numpy as np
 import scipy.linalg
-from wfns.wfn.ci.base import CIWavefunction
 from wfns.ham.base import BaseHamiltonian
+from wfns.wfn.ci.base import CIWavefunction
 
 
 def brute(wfn, ham, save_file=""):

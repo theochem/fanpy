@@ -1,8 +1,8 @@
 """Tests for the wfns.wfn.network.mps."""
-import pytest
 import numpy as np
-from wfns.wfn.network.mps import MatrixProductState
+import pytest
 from utils import skip_init
+from wfns.wfn.network.mps import MatrixProductState
 
 
 def test_assign_dimension():

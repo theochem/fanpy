@@ -12,8 +12,9 @@ module can act as a temporary hack to access these modules.
 
 """
 import os
-import sys
 from subprocess import call
+import sys
+
 import numpy as np
 
 DIRNAME = os.path.dirname(os.path.abspath(__file__))

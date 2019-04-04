@@ -1,7 +1,7 @@
 """Rank-2 approximation to geminal wavefunction."""
 import numpy as np
-from wfns.wfn.geminal.base import BaseGeminal
 from wfns.backend import math_tools, slater
+from wfns.wfn.geminal.base import BaseGeminal
 
 
 # pylint: disable=E1101

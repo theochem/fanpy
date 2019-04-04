@@ -1,15 +1,16 @@
 """Test wfns.wavefunction.geminals.apg."""
-import pytest
 import types
+
 import numpy as np
+import pytest
+from utils import find_datafile, skip_init
 from wfns.backend.graphs import generate_complete_pmatch
-from wfns.wfn.geminal.apg import APG
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.solver.system import least_squares
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.solver.equation import minimize, cma
-from utils import skip_init, find_datafile
+from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.solver.equation import cma, minimize
+from wfns.solver.system import least_squares
+from wfns.wfn.geminal.apg import APG
 
 
 def test_apg_assign_orbpairs():

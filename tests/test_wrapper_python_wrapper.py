@@ -1,11 +1,12 @@
 """Test wfns.wrapper.horton."""
+import os
+from subprocess import call
+import sys
+
 import numpy as np
 import pytest
-import os
-import sys
-from subprocess import call
 from utils import find_datafile
-from wfns.wrapper.python_wrapper import generate_hartreefock_results, generate_fci_results
+from wfns.wrapper.python_wrapper import generate_fci_results, generate_hartreefock_results
 
 
 def check_data_h2_rhf_sto6g(el_energy, nuc_nuc_energy, one_int, two_int):

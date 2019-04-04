@@ -1,6 +1,6 @@
 """Antisymmetric Product of Rank-2 (APr2G) Geminals wavefunction."""
-from wfns.wfn.geminal.rank2_approx import RankTwoApprox
 from wfns.wfn.geminal.apig import APIG
+from wfns.wfn.geminal.rank2_approx import RankTwoApprox
 
 
 # FIXME: docstring copied from APIG

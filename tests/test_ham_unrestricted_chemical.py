@@ -1,9 +1,9 @@
 """Test wfns.ham.unrestricted_chemical."""
 import numpy as np
 import pytest
-from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
-from wfns.backend.sd_list import sd_list
 from utils import find_datafile
+from wfns.backend.sd_list import sd_list
+from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 
 
 def test_set_ref_ints():

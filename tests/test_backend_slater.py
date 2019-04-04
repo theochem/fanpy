@@ -1,6 +1,6 @@
 """Test wfns.slater."""
-import pytest
 import gmpy2
+import pytest
 from wfns.backend import slater
 
 

@@ -1,8 +1,8 @@
 """Base class for Geminal wavefunctions."""
 import abc
+
 import numpy as np
-from wfns.backend import slater
-from wfns.backend import math_tools
+from wfns.backend import math_tools, slater
 from wfns.wfn.base import BaseWavefunction
 
 

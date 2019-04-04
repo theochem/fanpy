@@ -1,8 +1,8 @@
 """Test wfns.wavefunction.geminal.gem_wavefunction."""
-import pytest
 import numpy as np
+import pytest
+from utils import disable_abstract, skip_init
 from wfns.wfn.geminal.base import BaseGeminal
-from utils import skip_init, disable_abstract
 
 
 class TempBaseGeminal(BaseGeminal):

@@ -1,5 +1,6 @@
 """Wavefunction with nonorthonormal orbitals."""
 import itertools as it
+
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction

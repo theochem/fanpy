@@ -1,11 +1,11 @@
 """Schrodinger equation as a system of equations."""
 import numpy as np
-from wfns.param import ParamContainer
+from wfns.backend import sd_list, slater
 from wfns.objective.base import BaseObjective
-from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.objective.constraints.norm import NormConstraint
+from wfns.objective.schrodinger.base import BaseSchrodinger
+from wfns.param import ParamContainer
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.backend import slater, sd_list
 
 
 class SystemEquations(BaseSchrodinger):

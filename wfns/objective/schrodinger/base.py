@@ -1,11 +1,11 @@
 """Base class for objectives related to solving the Schrodinger equation."""
 import numpy as np
-from wfns.param import ParamMask
+import wfns.backend.slater as slater
+from wfns.ham.base import BaseHamiltonian
 from wfns.objective.base import BaseObjective
+from wfns.param import ParamMask
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
-from wfns.ham.base import BaseHamiltonian
-import wfns.backend.slater as slater
 
 
 class BaseSchrodinger(BaseObjective):

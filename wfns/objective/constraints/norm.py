@@ -1,11 +1,11 @@
 """Normalization constraint on the wavefunction."""
 import numpy as np
-from wfns.objective.base import BaseObjective
-from wfns.wfn.base import BaseWavefunction
-from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.objective.schrodinger.base import BaseSchrodinger
-from wfns.wfn.ci.base import CIWavefunction
 import wfns.backend.slater as slater
+from wfns.objective.base import BaseObjective
+from wfns.objective.schrodinger.base import BaseSchrodinger
+from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.wfn.base import BaseWavefunction
+from wfns.wfn.ci.base import CIWavefunction
 
 
 class NormConstraint(BaseObjective):

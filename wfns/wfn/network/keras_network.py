@@ -1,9 +1,9 @@
 """Wavefunction using Keras NN."""
 import keras
 import numpy as np
-from wfns.wfn.base import BaseWavefunction
-import wfns.backend.slater as slater
 from wfns.backend.sd_list import sd_list
+import wfns.backend.slater as slater
+from wfns.wfn.base import BaseWavefunction
 
 
 class KerasNetwork(BaseWavefunction):

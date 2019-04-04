@@ -1,10 +1,10 @@
 """Test wfns.ham.senzero."""
 import numpy as np
 import pytest
+from utils import find_datafile
 from wfns.backend.slater import get_seniority
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from utils import find_datafile
 
 
 def test_integrate_sd_sd_trivial():

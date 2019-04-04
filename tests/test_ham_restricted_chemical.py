@@ -1,9 +1,9 @@
 """Test wfns.ham.restricted_chemical."""
 import numpy as np
 import pytest
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.backend.sd_list import sd_list
 from utils import find_datafile
+from wfns.backend.sd_list import sd_list
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 def test_nspin():

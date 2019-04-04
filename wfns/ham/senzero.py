@@ -1,7 +1,7 @@
 """Seniority-zero Hamiltonian object that interacts with the wavefunction."""
 import numpy as np
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.backend import slater
+from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
 
 class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
