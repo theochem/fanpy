@@ -14,6 +14,7 @@ class TempBaseWavefunction(BaseWavefunction):
     """Base wavefunction that bypasses abc structure and overwrite properties and attributes."""
 
     def __init__(self):
+        """Do nothing."""
         pass
 
     def get_overlap(self, sd, deriv=None):
@@ -41,10 +42,12 @@ class TempBaseWavefunction(BaseWavefunction):
 
     @property
     def params_shape(self):
+        """Return shape of parameters."""
         return (2,)
 
     @property
     def template_params(self):
+        """Return template parameters."""
         return 10 * (np.random.rand(2) - 0.5)
 
 

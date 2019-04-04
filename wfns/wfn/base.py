@@ -352,12 +352,12 @@ class BaseWavefunction(ParamContainer):
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp(sd):
-            """cached _olp method without caching the instance."""
+            """Return cached overlap."""
             return self._olp(sd)
 
         @functools.lru_cache(maxsize=memory, typed=False)
         def _olp_deriv(sd, deriv):
-            """cached _olp_deriv method without caching the instance."""
+            """Return cached derivative of the overlap."""
             return self._olp_deriv(sd, deriv)
 
         # store the cached function

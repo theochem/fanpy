@@ -107,7 +107,7 @@ class NormConstraint(BaseObjective):
 
     # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
     def objective(self, params):
-        r"""Normalization constraint of the wavefunction.
+        r"""Return the norm of the wavefunction.
 
         .. math::
 

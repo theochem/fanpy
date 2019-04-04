@@ -6,7 +6,7 @@ from wfns.wfn.geminal.apig import APIG
 
 
 class AP1roG(APIG):
-    r"""Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction
+    r"""Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals Wavefunction.
 
     APIG wavefunction where a part of the geminal coefficient matrix, :math:`C`, is constrained to
     be an identity matrix. This part corresponds uniquely to a reference Slater determinant. Then,

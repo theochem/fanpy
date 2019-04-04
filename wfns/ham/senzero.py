@@ -118,7 +118,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
         def update_integrals(sd_m):
-            """Wrapped function for updating the integral values."""
+            """Update the integral values."""
             coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
             sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
             return (

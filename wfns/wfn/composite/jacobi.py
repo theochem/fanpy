@@ -195,7 +195,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     @property
     def jacobi_rotation(self):
-        """Returns the rotation matrix that corresponds to the given parameter.
+        """Return the rotation matrix that corresponds to the given parameter.
 
         Returns
         -------

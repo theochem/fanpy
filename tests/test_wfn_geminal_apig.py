@@ -54,9 +54,7 @@ def test_apig_generate_possible_orbpairs():
 
 
 def answer_apig_h2_sto6g():
-    """Find the APIG/STO-6G wavefunction by scanning through the coefficients for the lowest energy.
-
-    """
+    """Find the APIG/STO-6G wavefunction by scanning for the coefficients with the lowest energy."""
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/h2_hf_sto6g.fchk')
     # one_int = hf_dict["one_int"]

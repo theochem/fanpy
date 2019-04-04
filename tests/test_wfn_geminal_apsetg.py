@@ -66,7 +66,7 @@ def test_apsetg_get_orbpair():
 
 
 def test_assign_pmatch_generator():
-    """Test BasicAPsetG.generate_possible_orbpairs"""
+    """Test BasicAPsetG.generate_possible_orbpairs."""
     test = skip_init(BasicAPsetG)
     test.assign_nspin(6)
     sd = (0, 1, 2, 3, 4, 5)

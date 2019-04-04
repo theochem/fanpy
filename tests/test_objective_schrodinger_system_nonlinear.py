@@ -52,7 +52,7 @@ def test_system_init_energy():
 
 
 def test_system_nproj():
-    """Test SystemEquation.nproj"""
+    """Test SystemEquation.nproj."""
     test = skip_init(SystemEquations)
     test.assign_pspace([0b0101, 0b1010])
     assert test.nproj == 2

@@ -13,22 +13,27 @@ class TempWavefunction(BaseWavefunction):
     _seniority = None
 
     def get_overlap(self):
+        """Do nothing."""
         pass
 
     @property
     def spin(self):
+        """Return the spin of the wavefunction."""
         return self._spin
 
     @property
     def seniority(self):
+        """Return the seniority of the wavefunction."""
         return self._seniority
 
     @property
     def params_shape(self):
+        """Return the shape of the parameters."""
         return (10, 10)
 
     @property
     def template_params(self):
+        """Return the default parameters."""
         return np.identity(10)
 
 

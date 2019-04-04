@@ -241,6 +241,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             If transformation matrix is not a two dimension numpy array.
         ValueError
             If transformation matrix does not have the right shape.
+
         """
         if params is None:
             params = self.template_params

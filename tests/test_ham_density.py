@@ -197,7 +197,7 @@ def test_add_two_density():
     answer_beta = np.zeros((4, 4, 4, 4))
 
     def check_answer_unrestricted(matrices, answer_alpha, answer_alpha_beta, answer_beta):
-        """ Checks unrestricted answers"""
+        """Check unrestricted answers."""
         assert np.allclose(matrices[0], answer_alpha)
         assert np.allclose(matrices[1], answer_alpha_beta)
         assert np.allclose(matrices[2], answer_beta)

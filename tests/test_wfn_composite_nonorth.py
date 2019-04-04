@@ -16,25 +16,31 @@ class TempWavefunction(BaseWavefunction):
     _seniority = None
 
     def __init__(self):
+        """Do nothing."""
         pass
 
     def get_overlap(self):
+        """Do nothing."""
         pass
 
     @property
     def spin(self):
+        """Return spin of wavefunction."""
         return self._spin
 
     @property
     def seniority(self):
+        """Return seniority of wavefunction."""
         return self._seniority
 
     @property
     def params_shape(self):
+        """Return shape of the parameters."""
         return (10, 10)
 
     @property
     def template_params(self):
+        """Return the default parameters."""
         return np.identity(10)
 
 
@@ -101,7 +107,7 @@ def test_nonorth_assign_params():
 
 
 def test_nonorth_spin():
-    """Test NonorthWavefunction.spin"""
+    """Test NonorthWavefunction.spin."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -128,7 +134,7 @@ def test_nonorth_spin():
 
 
 def test_nonorth_seniority():
-    """Test NonorthWavefunction.seniority"""
+    """Test NonorthWavefunction.seniority."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -155,7 +161,7 @@ def test_nonorth_seniority():
 
 
 def test_nonorth_template_params():
-    """Test NonorthWavefunction.template_params"""
+    """Test NonorthWavefunction.template_params."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -175,7 +181,7 @@ def test_nonorth_template_params():
 
 
 def test_nonorth_nparams():
-    """Test NonorthWavefunction.nparams"""
+    """Test NonorthWavefunction.nparams."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -201,7 +207,7 @@ def test_nonorth_nparams():
 
 
 def test_nonorth_param_shape():
-    """Test NonorthWavefunction.param_shape"""
+    """Test NonorthWavefunction.param_shape."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -227,7 +233,7 @@ def test_nonorth_param_shape():
 
 
 def test_nonorth_orbtype():
-    """Test NonorthWavefunction.orbtype"""
+    """Test NonorthWavefunction.orbtype."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10

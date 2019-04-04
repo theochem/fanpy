@@ -1,4 +1,4 @@
-"""Test wfns.wavefunction.composite.jacobi"""
+"""Test wfns.wavefunction.composite.jacobi."""
 import pytest
 import numpy as np
 import itertools as it
@@ -20,25 +20,31 @@ class TempWavefunction(BaseWavefunction):
     _seniority = None
 
     def __init__(self):
+        """Do nothing."""
         pass
 
     def get_overlap(self):
+        """Do nothing."""
         pass
 
     @property
     def spin(self):
+        """Return spin of the wavefunction."""
         return self._spin
 
     @property
     def seniority(self):
+        """Return seniority of the wavefunction."""
         return self._seniority
 
     @property
     def params_shape(self):
+        """Return the shape of the parameters."""
         return (10, 10)
 
     @property
     def template_params(self):
+        """Return the default parameters."""
         return np.identity(10)
 
 
@@ -230,7 +236,7 @@ def test_jacobi_assign_jacobi_indices():
 
 
 def test_jacobi_get_overlap():
-    """Test JacobiWavefunction.get_overlap"""
+    """Test JacobiWavefunction.get_overlap."""
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
@@ -376,7 +382,7 @@ def test_jacobi_get_overlap():
 
 
 def test_jacobi_get_overlap_restricted():
-    """Test JacobiWavefunction.get_overlap for a larger restricted case"""
+    """Test JacobiWavefunction.get_overlap for a larger restricted case."""
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8

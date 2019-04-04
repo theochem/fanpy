@@ -3,7 +3,7 @@ from wfns.wfn.ci.base import CIWavefunction
 
 
 class FCI(CIWavefunction):
-    r""" Full Configuration Interaction Wavefunction
+    r"""Full Configuration Interaction Wavefunction.
 
     Given :math:`2K` spin orbitals (or :math:`K` spatial orbitals) and :math:`N` electrons, there
     are a total of :math:`\binom{2K}{N}` different Slater determinants. While many of these are
