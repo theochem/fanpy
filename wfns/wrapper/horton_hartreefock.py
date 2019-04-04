@@ -6,6 +6,7 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
     Runs HF in HORTON.
 
 """
+# pylint: disable=W0212,C0103,W0621
 import sys
 
 from horton import (
