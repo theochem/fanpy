@@ -7,8 +7,9 @@ gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
 
 """
 import sys
+
+from horton import compute_nucnuc, IOData
 import numpy as np
-from horton import IOData, compute_nucnuc
 
 
 # FIXME: remove horton_internal

@@ -7,22 +7,23 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
 
 """
 import sys
-import numpy as np
+
 from horton import (
-    IOData,
-    get_gobasis,
-    PlainSCFSolver,
-    EDIIS2SCFSolver,
-    DenseLinalgFactory,
-    compute_nucnuc,
-    guess_core_hamiltonian,
-    transform_integrals,
     AufbauOccModel,
-    RTwoIndexTerm,
+    compute_nucnuc,
+    DenseLinalgFactory,
+    EDIIS2SCFSolver,
+    get_gobasis,
+    guess_core_hamiltonian,
+    IOData,
+    PlainSCFSolver,
     RDirectTerm,
-    RExchangeTerm,
     REffHam,
+    RExchangeTerm,
+    RTwoIndexTerm,
+    transform_integrals,
 )
+import numpy as np
 
 
 def hartreefock(

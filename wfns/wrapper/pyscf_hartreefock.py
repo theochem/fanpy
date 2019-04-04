@@ -8,8 +8,9 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
 """
 import os
 import sys
+
 import numpy as np
-from pyscf import gto, scf, ao2mo
+from pyscf import ao2mo, gto, scf
 from pyscf.lib import load_library
 
 LIBFCI = load_library("libfci")
@@ -74,9 +75,9 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     # run hf
     hf.scf()
     # energies
-    E_nuc = hf.energy_nuc()
-    E_tot = hf.kernel()  # HF is solved here
-    E_elec = E_tot - E_nuc
+    energy_nuc = hf.energy_nuc()
+    energy_tot = hf.kernel()  # HF is solved here
+    energy_elec = energy_tot - energy_nuc
     # mo_coeffs
     mo_coeff = hf.mo_coeff
     # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
@@ -90,8 +91,8 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     two_int = np.einsum("ijkl->ikjl", two_int)
     # results
     result = {
-        "el_energy": E_elec,
-        "nuc_nuc_energy": E_nuc,
+        "el_energy": energy_elec,
+        "nuc_nuc_energy": energy_nuc,
         "one_int": (one_int,),
         "two_int": (two_int,),
     }

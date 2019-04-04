@@ -6,11 +6,12 @@ generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
     Generate the FCI Hamiltonian CI matrix.
 
 """
-import sys
 import ctypes
+import sys
+
 import numpy as np
-from pyscf.lib import load_library, hermi_triu
 from pyscf.fci import cistring
+from pyscf.lib import hermi_triu, load_library
 
 LIBFCI = load_library("libfci")
 
