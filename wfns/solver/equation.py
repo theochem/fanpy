@@ -58,11 +58,11 @@ def cma(objective, save_file="", **kwargs):
         If objective has more than one equation.
 
     """
-    import cma
+    import cma as solver
 
     if not isinstance(objective, BaseObjective):
         raise TypeError("Objective must be a BaseObjective instance.")
-    elif objective.num_eqns != 1:
+    if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
     if kwargs == {}:
@@ -80,7 +80,7 @@ def cma(objective, save_file="", **kwargs):
     if objective.params.size == 1:
         raise ValueError("CMA solver cannot be used on objectives with only one parameter.")
 
-    results = cma.fmin(objective.objective, objective.params, **kwargs)
+    results = solver.fmin(objective.objective, objective.params, **kwargs)
 
     output = {}
     output["success"] = results[-3] != {}
@@ -155,7 +155,7 @@ def minimize(objective, save_file="", **kwargs):
 
     if not isinstance(objective, BaseObjective):
         raise TypeError("Objective must be a BaseObjective instance.")
-    elif objective.num_eqns != 1:
+    if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
     if kwargs == {}:

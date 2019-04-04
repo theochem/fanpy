@@ -113,8 +113,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         """
         if self.orbtype in ["restricted", "unrestricted"]:
             return self.wfn.spin
-        else:
-            return None
+        return None
 
     @property
     def seniority(self):
@@ -134,8 +133,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         """
         if self.orbtype in ["restricted", "unrestricted"]:
             return self.wfn.seniority
-        else:
-            return None
+        return None
 
     @property
     def params_shape(self):
@@ -207,6 +205,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             If unsupported transformation matrices are given.
 
         """
+        # pylint: disable=R1705
         if len(self.params) == 1 and self.params[0].shape[0] == self.nspatial:
             return "restricted"
         elif (
@@ -260,7 +259,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         for i in params:
             if not (isinstance(i, np.ndarray) and len(i.shape) == 2):
                 raise TypeError("Transformation matrix must be a two-dimensional numpy array.")
-            elif i.dtype != self.dtype:
+            if i.dtype != self.dtype:
                 raise TypeError(
                     "Transformation matrix must have the same data type as the given "
                     "wavefunction."
@@ -278,7 +277,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     "orthonormal spin orbitals to nonorthonormal spin orbitals."
                 )
 
-            elif len(params) == 2 and not (
+            if len(params) == 2 and not (
                 i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial
             ):
                 raise ValueError(
@@ -348,6 +347,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     output += wfn_coeff * alpha_coeff * beta_coeff
         return output
 
+    # FIXME: too many branches, too many statements
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -364,6 +364,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             Derivative of the overlap of the wavefunction with the Slater determinant.
 
         """
+        # pylint: disable=R0912,R0915
         # number of parameters for alpha orbitals (this variable will have no effect for restricted
         # and generalized orbital types)
         nparams_alpha = self.params[0].size
@@ -582,11 +583,11 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
         ):
             return 0.0
-        elif self.orbtype == "unrestricted" and not slater.occ(
+        if self.orbtype == "unrestricted" and not slater.occ(
             sd, row_removed + transform_ind * self.nspatial
         ):
             return 0.0
-        elif self.orbtype == "generalized" and not slater.occ(sd, row_removed):
+        if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
             return 0.0
 
         return self._cache_fns["overlap derivative"](sd, deriv)

@@ -37,7 +37,8 @@ def satisfies_conditions(sd, nspatial, spin, seniority):
         True if Slater determinant has the desired spin and seniority.
         False if Slater determinant does not have the desired spin and seniority.
 
-        """
+    """
+    # pylint: disable=C0103
     return spin in [None, slater.get_spin(sd, nspatial)] and (
         seniority is None or seniority >= slater.get_seniority(sd, nspatial)
     )
@@ -87,6 +88,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
         If seniority is not compatible with the spin.
 
     """
+    # pylint: disable=C0103,R0912
     if not isinstance(nspatial, int):
         raise TypeError("Number of spatial orbitals should be an integer")
 
@@ -108,7 +110,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     if not isinstance(seniority, (int, type(None))):
         raise TypeError("Seniority should be given as an integer")
-    elif None not in [spin, seniority] and seniority < abs(2 * spin):
+    if None not in [spin, seniority] and seniority < abs(2 * spin):
         raise ValueError("Cannot have spin, {0}, with seniority, {1}.".format(spin, seniority))
 
     sd_vec = []

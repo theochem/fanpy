@@ -134,7 +134,7 @@ class NormConstraint(BaseObjective):
         self.assign_params(params)
         # Establish shortcuts
         get_overlap = np.vectorize(self.wrapped_get_overlap)
-        ref = self.refwfn
+        ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
             ref_sds = ref.sd_vec
@@ -180,7 +180,7 @@ class NormConstraint(BaseObjective):
         self.assign_params(params)
         # Establish shortcuts
         get_overlap = np.vectorize(self.wrapped_get_overlap)
-        ref = self.refwfn
+        ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
             ref_sds = ref.sd_vec

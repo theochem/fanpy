@@ -47,6 +47,7 @@ class BaseHamiltonian(ParamContainer):
             Default is `0.0`.
 
         """
+        # pylint: disable=W0231
         self.assign_energy_nuc_nuc(energy_nuc_nuc)
 
     def assign_energy_nuc_nuc(self, energy_nuc_nuc=None):
@@ -82,7 +83,6 @@ class BaseHamiltonian(ParamContainer):
             Data type of the integrals.
 
         """
-        pass
 
     @abc.abstractproperty
     def nspin(self):
@@ -94,7 +94,6 @@ class BaseHamiltonian(ParamContainer):
             Number of spin orbitals.
 
         """
-        pass
 
     def assign_integrals(self, one_int, two_int):
         """Assign the one- and two-electron integrals.
@@ -161,6 +160,7 @@ class BaseHamiltonian(ParamContainer):
             If integral is derivatized to both wavefunction and Hamiltonian parameters.
 
         """
+        # pylint: disable=C0103
         if wfn_deriv is not None and ham_deriv is not None:
             raise ValueError(
                 "Integral can be derivatized with respect to at most one out of the "
@@ -239,4 +239,3 @@ class BaseHamiltonian(ParamContainer):
             If `sign` is not `1`, `-1` or `None`.
 
         """
-        pass

@@ -169,7 +169,7 @@ class APIG(BaseGeminal):
         all_orbs = [j for i in self.dict_orbpair_ind for j in i]
         if len(all_orbs) != len(set(all_orbs)):
             raise ValueError("At least two orbital pairs share an orbital")
-        elif len(all_orbs) != self.nspin:
+        if len(all_orbs) != self.nspin:
             raise ValueError("Not all of the orbitals are included in orbital pairs")
 
     def generate_possible_orbpairs(self, occ_indices):

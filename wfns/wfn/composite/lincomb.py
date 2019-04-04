@@ -61,6 +61,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, nelec, nspin, wfns, dtype=None, memory=None, params=None):
         """Initialize the wavefunction.
 
@@ -97,6 +98,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
             `None` means that all spins are allowed.
 
         """
+        # pylint: disable=R1705
         if all(wfn.spin == self.wfns[0].spin for wfn in self.wfns):
             return self.wfns[0].spin
         else:
@@ -115,6 +117,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
             `None` means that all senioritys are allowed.
 
         """
+        # pylint: disable=R1705
         if all(wfn.seniority == self.wfns[0].seniority for wfn in self.wfns):
             return self.wfns[0].seniority
         else:
@@ -175,22 +178,22 @@ class LinearCombinationWavefunction(BaseWavefunction):
         """
         if any(not isinstance(wfn, BaseWavefunction) for wfn in wfns):
             raise TypeError("Each wavefunction must be a instance of `BaseWavefunction`.")
-        elif any(wfn.nelec != self.nelec for wfn in wfns):
+        if any(wfn.nelec != self.nelec for wfn in wfns):
             raise ValueError(
                 "Given wavefunction does not have the same number of electrons as the"
                 " the instantiated NonorthWavefunction."
             )
-        elif any(wfn.dtype != self.dtype for wfn in wfns):
+        if any(wfn.dtype != self.dtype for wfn in wfns):
             raise ValueError(
                 "Given wavefunction does not have the same data type as the "
                 "instantiated NonorthWavefunction."
             )
-        elif any(wfn.memory != self.memory for wfn in wfns):
+        if any(wfn.memory != self.memory for wfn in wfns):
             raise ValueError(
                 "Given wavefunction does not have the same memory as the "
                 "instantiated NonorthWavefunction."
             )
-        elif len(wfns) == 1:
+        if len(wfns) == 1:
             raise ValueError("Only one wavefunction is given.")
 
         self.wfns = tuple(wfns)

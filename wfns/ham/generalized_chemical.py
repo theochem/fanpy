@@ -190,6 +190,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             If `sign` is not `1`, `-1` or `None`.
 
         """
+        # pylint: disable=C0103
         if deriv is not None:
             sign = 1 if sign is None else sign
             return sign * self._integrate_sd_sd_deriv(sd1, sd2, deriv)
@@ -285,6 +286,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         ValueError
 
         """
+        # pylint: disable=C0103
         # ind = i
         n = self.nspin
         for k in range(n + 1):  # pragma: no cover
@@ -299,6 +301,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
     # TODO: Much of the following function can be shortened by using impure functions (function with
     # a side effect) instead
+    # FIXME: too many branches, too many statements
     def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):
         r"""Derivative of the CI matrix element with respect to the antihermitian elements.
 
@@ -332,6 +335,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         real orbitals is not much.
 
         """
+        # pylint: disable=C0103,R0912,R0915
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
         # NOTE: shared_indices contains spatial orbital indices

@@ -16,7 +16,7 @@ import sys
 from subprocess import call
 import numpy as np
 
-dirname = os.path.dirname(os.path.abspath(__file__))
+DIRNAME = os.path.dirname(os.path.abspath(__file__))
 
 
 def generate_hartreefock_results(
@@ -95,7 +95,7 @@ def generate_hartreefock_results(
     call(
         [
             python_name,
-            os.path.join(dirname, "..", "..", "scripts", calctype),
+            os.path.join(DIRNAME, "..", "..", "scripts", calctype),
             energies_name,
             oneint_name,
             twoint_name,
@@ -168,7 +168,7 @@ def generate_fci_results(
     call(
         [
             python_name,
-            os.path.join(dirname, "..", "..", "scripts", "pyscf_generate_fci_matrix.py"),
+            os.path.join(DIRNAME, "..", "..", "scripts", "pyscf_generate_fci_matrix.py"),
             cimatrix_name,
             sds_name,
             *kwargs,

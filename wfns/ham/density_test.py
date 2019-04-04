@@ -47,9 +47,10 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
         If an index is not an integer.
 
     """
+    # pylint: disable=C0103
     if len(indices) % 2 != 0:
         raise ValueError("There must be even number of indices.")
-    elif not all(isinstance(i, int) for i in indices):
+    if not all(isinstance(i, int) for i in indices):
         raise TypeError("All indices must be integers.")
     creators = indices[: len(indices)]
     annihilators = indices[len(indices) :]
@@ -57,7 +58,7 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
     annihilators = annihilators.reverse()
 
     sign = slater.sign_excite(sd, creators, annihilators)
-    if sign is None:
+    if sign is None:  # pylint: disable=R1705
         return 0.0
     else:
         return sign * wfn.get_overlap(slater.excite(sd, *creators, *annihilators), deriv=deriv)
@@ -141,6 +142,7 @@ def get_density_matrix(
         wavefunction.
 
     """
+    # pylint: disable=W0613,R0912
     if not isinstance(wfn, BaseWavefunction):
         raise TypeError(
             "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
@@ -154,7 +156,7 @@ def get_density_matrix(
     if slater.is_sd_compatible(refwfn):
         refwfn = slater.internal_sd(refwfn)
     elif isinstance(refwfn, (list, tuple)):
-        for sd in refwfn:
+        for sd in refwfn:  # pylint: disable=C0103
             if slater.is_sd_compatible(sd):
                 occs = slater.occ_indices(sd)
                 if len(occs) != wfn.nelec:
@@ -162,7 +164,7 @@ def get_density_matrix(
                         "Given Slater determinant does not have the same number of"
                         " electrons as the given wavefunction."
                     )
-                elif any(i >= wfn.nspin for i in occs):
+                if any(i >= wfn.nspin for i in occs):
                     raise ValueError(
                         "Given Slater determinant does not have the same number of"
                         " spin orbitals as the given wavefunction."
@@ -179,7 +181,7 @@ def get_density_matrix(
                 "Given reference wavefunction does not have the same number of "
                 "electrons as the given wavefunction."
             )
-        elif refwfn.nspin != wfn.nspin:
+        if refwfn.nspin != wfn.nspin:
             raise ValueError(
                 "Given reference wavefunction does not have the same number of "
                 "spin orbitals as the given wavefunction."

@@ -66,6 +66,7 @@ class BaseSchrodinger(BaseObjective):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, wfn, ham, tmpfile="", param_selection=None):
         """Initialize the objective instance.
 
@@ -137,6 +138,7 @@ class BaseSchrodinger(BaseObjective):
             Overlap of the wavefunction.
 
         """
+        # pylint: disable=C0103
         if deriv is None:
             return self.wfn.get_overlap(sd)
 
@@ -144,8 +146,7 @@ class BaseSchrodinger(BaseObjective):
         deriv = self.param_selection.derivative_index(self.wfn, deriv)
         if deriv is None:
             return 0.0
-        else:
-            return self.wfn.get_overlap(sd, deriv)
+        return self.wfn.get_overlap(sd, deriv)
 
     # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
     #        the different deriv's) and when ham is a composite hamiltonian (ham must distinguish
@@ -172,6 +173,7 @@ class BaseSchrodinger(BaseObjective):
         derivatized with respect to the paramters of the hamiltonian and of the wavefunction.
 
         """
+        # pylint: disable=C0103
         if deriv is None:
             return sum(self.ham.integrate_wfn_sd(self.wfn, sd))
 
@@ -181,10 +183,9 @@ class BaseSchrodinger(BaseObjective):
         if wfn_deriv is not None:
             return sum(self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv))
         # b/c the integral cannot be derivatized wrt both wfn and ham
-        elif ham_deriv is not None:
+        if ham_deriv is not None:
             return sum(self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv))
-        else:
-            return 0.0
+        return 0.0
 
     # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
     #        different derivs)
@@ -214,8 +215,7 @@ class BaseSchrodinger(BaseObjective):
         deriv = self.param_selection.derivative_index(self.ham, deriv)
         if deriv is None:
             return 0.0
-        else:
-            return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
+        return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
 
     def get_energy_one_proj(self, refwfn, deriv=None):
         r"""Return the energy of the Schrodinger equation with respect to a reference wavefunction.
@@ -325,13 +325,13 @@ class BaseSchrodinger(BaseObjective):
 
         if deriv is None:
             return energy
-        else:
-            d_norm = np.sum(d_ref_coeffs * overlaps)
-            d_norm += np.sum(ref_coeffs * get_overlap(ref_sds, deriv))
-            d_energy = np.sum(d_ref_coeffs * integrals) / norm
-            d_energy += np.sum(ref_coeffs * integrate_wfn_sd(ref_sds, deriv=deriv)) / norm
-            d_energy -= d_norm * energy / norm
-            return d_energy
+
+        d_norm = np.sum(d_ref_coeffs * overlaps)
+        d_norm += np.sum(ref_coeffs * get_overlap(ref_sds, deriv))
+        d_energy = np.sum(d_ref_coeffs * integrals) / norm
+        d_energy += np.sum(ref_coeffs * integrate_wfn_sd(ref_sds, deriv=deriv)) / norm
+        d_energy -= d_norm * energy / norm
+        return d_energy
 
     def get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None):
         r"""Return the energy of the Schrodinger equation after projecting out both sides.
@@ -437,12 +437,12 @@ class BaseSchrodinger(BaseObjective):
         # energy
         if deriv is None:
             return np.sum(overlaps_l * ci_matrix * overlaps_r) / norm
-        else:
-            d_norm = 2 * np.sum(overlaps_norm * get_overlap(pspace_norm, deriv))
-            d_energy = np.sum(get_overlap(pspace_l, deriv) * ci_matrix * overlaps_r) / norm
-            d_energy += (
-                np.sum(overlaps_l * integrate_sd_sd(pspace_l, pspace_r, deriv) * overlaps_r) / norm
-            )
-            d_energy += np.sum(overlaps_l * ci_matrix * get_overlap(pspace_r, deriv)) / norm
-            d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
-            return d_energy
+
+        d_norm = 2 * np.sum(overlaps_norm * get_overlap(pspace_norm, deriv))
+        d_energy = np.sum(get_overlap(pspace_l, deriv) * ci_matrix * overlaps_r) / norm
+        d_energy += (
+            np.sum(overlaps_l * integrate_sd_sd(pspace_l, pspace_r, deriv) * overlaps_r) / norm
+        )
+        d_energy += np.sum(overlaps_l * ci_matrix * get_overlap(pspace_r, deriv)) / norm
+        d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
+        return d_energy

@@ -14,6 +14,7 @@ permanent_borchardt(matrix)
     Computes the permanent of rank-2 Cauchy matrix
 
 """
+# pylint: disable=C0103
 from itertools import permutations, combinations
 import numpy as np
 from scipy.special import comb
@@ -123,6 +124,7 @@ def permanent_combinatoric(matrix):
     return permanent
 
 
+# FIXME: too many branches?
 def permanent_ryser(matrix):
     r"""Calculate the permanent of a square or rectangular matrix using the Borchardt theorem.
 
@@ -162,7 +164,7 @@ def permanent_ryser(matrix):
         If the number of etas and lambdas (number of rows) are not equal.
 
     """
-
+    # pylint: disable=R0912
     # on rectangular matrices A(m, n) where m <= n.
     nrow, ncol = matrix.shape
     if nrow == 0 or ncol == 0:

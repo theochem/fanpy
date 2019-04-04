@@ -45,6 +45,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, one_int, two_int, energy_nuc_nuc=None):
         """Initialize the Hamiltonian.
 
@@ -124,7 +125,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                 "One-electron integrals must be given as a list/tuple of two numpy "
                 "arrays (with dtype float/complex)."
             )
-        elif not (
+        if not (
             isinstance(two_int, (list, tuple))
             and len(two_int) == 3
             and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in two_int)
@@ -133,29 +134,29 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                 "Two-electron integrals must be given as a list/tuple of three numpy "
                 "arrays (with dtype float/complex)."
             )
-        elif not (
+        if not (
             one_int[0].dtype == one_int[1].dtype
             and one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype
         ):
             raise TypeError(
                 "Each block of one- and two-electron integrals must have the same data" " type."
             )
-        elif not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
+        if not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
             raise ValueError(
                 "Each block of one-electron integrals be a (two-dimensional) square " "matrix."
             )
-        elif not all(
+        if not all(
             i.ndim == 4 and i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3] for i in two_int
         ):
             raise ValueError(
                 "Each block of two-electron integrals must have four-dimensional "
                 "tensor with equal number rows in each axis."
             )
-        elif one_int[0].shape != one_int[1].shape:
+        if one_int[0].shape != one_int[1].shape:
             raise ValueError("Each block of one-electron integrals must have the same shape.")
-        elif not two_int[0].shape == two_int[1].shape == two_int[2].shape:
+        if not two_int[0].shape == two_int[1].shape == two_int[2].shape:
             raise ValueError("Each block of two-electron integrals must have the same shape.")
-        elif one_int[0].shape[0] != two_int[0].shape[0]:
+        if one_int[0].shape[0] != two_int[0].shape[0]:
             raise ValueError(
                 "One- and two-electron integrals must have the same number of " "orbitals."
             )
@@ -177,6 +178,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         ------
 
         """
+        # pylint: disable=C0103
         num_orbs = self.one_int[0].shape[0]
 
         if not (
@@ -186,15 +188,15 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             and isinstance(jacobi_indices[1], int)
         ):
             raise TypeError("Indices must be given a tuple or list of two integers.")
-        elif jacobi_indices[0] == jacobi_indices[1]:
+        if jacobi_indices[0] == jacobi_indices[1]:
             raise ValueError("Indices must be different.")
-        elif not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
+        if not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
             raise ValueError(
                 "Indices must be greater than or equal to 0 and less than the number " "of rows."
             )
-        elif jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
+        if jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
             raise ValueError("Indices must select from orbitals of same spin.")
-        elif not (
+        if not (
             isinstance(theta, float)
             or (isinstance(theta, np.ndarray) and theta.dtype == float and theta.size == 1)
         ):
@@ -321,7 +323,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
         if not (matrix[0].ndim == 2 and matrix[1].ndim == 2):
             raise ValueError("Transformation matrices must be two-dimensional.")
-        elif not (
+        if not (
             matrix[0].shape[0] == self.one_int[0].shape[0]
             and matrix[1].shape[0] == self.one_int[1].shape[0]
         ):

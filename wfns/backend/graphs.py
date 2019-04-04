@@ -41,6 +41,7 @@ def generate_complete_pmatch(indices, sign=1):
     ordered, then signatures won't really mean anything.
 
     """
+    # pylint: disable=C0103
     indices = tuple(indices)
     n = len(indices)
     if n % 2 == 1 or n < 2:
@@ -49,8 +50,8 @@ def generate_complete_pmatch(indices, sign=1):
         yield ((indices[0], indices[1]),), sign
     else:
         # smaller subset (all pairs without the last two indices)
-        Sn_2 = generate_complete_pmatch(indices[:-2], sign=sign)
-        for scheme, inner_sign in Sn_2:
+        subsets_pairs = generate_complete_pmatch(indices[:-2], sign=sign)
+        for scheme, inner_sign in subsets_pairs:
             # add in the last two indices
             yield scheme + (indices[-2:],), inner_sign
             # starting from the last
@@ -100,6 +101,7 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
     The generator must be iterated to raise error.
 
     """
+    # pylint: disable=C0103
     # assume indices_one and indices_two are sorted
     sign = 1
     orig_sign = sign_perm(

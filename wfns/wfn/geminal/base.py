@@ -254,7 +254,7 @@ class BaseGeminal(BaseWavefunction):
             ngem = self.npair
         if not isinstance(ngem, int):
             raise TypeError("`ngem` must be an integer.")
-        elif ngem < self.npair:
+        if ngem < self.npair:
             raise ValueError("`ngem` must be greater than the number of electron pairs.")
         self.ngem = ngem
 
@@ -294,11 +294,11 @@ class BaseGeminal(BaseWavefunction):
         for i, orbpair in enumerate(orbpairs):
             if not isinstance(orbpair, (list, tuple)):
                 raise TypeError("Each orbital pair must be a list or a tuple")
-            elif len(orbpair) != 2:
+            if len(orbpair) != 2:
                 raise TypeError("Each orbital pair must contain two elements")
-            elif not (isinstance(orbpair[0], int) and isinstance(orbpair[1], int)):
+            if not (isinstance(orbpair[0], int) and isinstance(orbpair[1], int)):
                 raise TypeError("Each orbital index must be given as an integer")
-            elif orbpair[0] == orbpair[1]:
+            if orbpair[0] == orbpair[1]:
                 raise ValueError("Orbital pair of the same orbital is invalid")
 
             orbpair = tuple(orbpair)
@@ -309,8 +309,7 @@ class BaseGeminal(BaseWavefunction):
                 raise ValueError(
                     "The given orbital pairs have multiple entries of {0}" "".format(orbpair)
                 )
-            else:
-                dict_orbpair_ind[orbpair] = i
+            dict_orbpair_ind[orbpair] = i
 
         self.dict_orbpair_ind = dict_orbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in dict_orbpair_ind.items()}
@@ -453,19 +452,20 @@ class BaseGeminal(BaseWavefunction):
 
         if deriv is None:
             return permanent(self.params[row_inds, :][:, col_inds])
+
+        row_removed = deriv // self.norbpair
+        col_removed = deriv % self.norbpair
+        # cut out rows and columns that corresponds to the element with which the permanent is
+        # derivatized
+        row_inds_trunc = row_inds[row_inds != row_removed]
+        col_inds_trunc = col_inds[col_inds != col_removed]
+        # pylint: disable=R1705
+        if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
+            return 0.0
+        elif row_inds_trunc.size == col_inds_trunc.size == 0:
+            return 1.0
         else:
-            row_removed = deriv // self.norbpair
-            col_removed = deriv % self.norbpair
-            # cut out rows and columns that corresponds to the element with which the permanent is
-            # derivatized
-            row_inds_trunc = row_inds[row_inds != row_removed]
-            col_inds_trunc = col_inds[col_inds != col_removed]
-            if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
-                return 0.0
-            elif row_inds_trunc.size == col_inds_trunc.size == 0:
-                return 1.0
-            else:
-                return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
+            return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
 
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
@@ -557,7 +557,7 @@ class BaseGeminal(BaseWavefunction):
         if deriv is None:
             return self._cache_fns["overlap"](sd)
         # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
+        if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
 
         if deriv >= self.nparams:
@@ -593,4 +593,3 @@ class BaseGeminal(BaseWavefunction):
             original order in `occ_indices`.
 
         """
-        pass
