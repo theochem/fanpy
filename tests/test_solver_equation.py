@@ -62,7 +62,7 @@ def check_cma():
         return True
 
 
-@pytest.mark.skipif(not check_cma(), "The module `cma` is unavailable.")
+@pytest.mark.skipif(not check_cma(), reason="The module `cma` is unavailable.")
 def test_cma():
     """Test wnfs.solver.equation.cma."""
     wfn = TempBaseWavefunction()

@@ -129,7 +129,7 @@ def test_generate_hartreefock_results_error():
 
 
 @pytest.mark.skipif(
-    not check_dependency("horton"), "HORTON is not available or HORTONPATH is not set."
+    not check_dependency("horton"), reason="HORTON is not available or HORTONPATH is not set."
 )
 def test_horton_hartreefock_h2_rhf_sto6g():
     """Test HORTON"s hartreefock against H2 HF STO-6G data from Gaussian."""
@@ -147,7 +147,7 @@ def test_horton_hartreefock_h2_rhf_sto6g():
 
 
 @pytest.mark.skipif(
-    not check_dependency("horton"), "HORTON is not available or HORTONPATH is not set."
+    not check_dependency("horton"), reason="HORTON is not available or HORTONPATH is not set."
 )
 def test_horton_gaussian_fchk_h2_rhf_sto6g():
     """Test HORTON"s gaussian_fchk against H2 HF STO-6G data from Gaussian."""
@@ -164,7 +164,7 @@ def test_horton_gaussian_fchk_h2_rhf_sto6g():
 
 
 @pytest.mark.skipif(
-    not check_dependency("horton"), "HORTON is not available or HORTONPATH is not set."
+    not check_dependency("horton"), reason="HORTON is not available or HORTONPATH is not set."
 )
 def test_gaussian_fchk_h2_uhf_sto6g():
     """Test HORTON"s gaussian_fchk against H2 UHF STO-6G data from Gaussian."""
@@ -181,7 +181,7 @@ def test_gaussian_fchk_h2_uhf_sto6g():
 
 
 @pytest.mark.skipif(
-    not check_dependency("pyscf"), "PYSCF is not available or PYSCFPATH is not set."
+    not check_dependency("pyscf"), reason="PYSCF is not available or PYSCFPATH is not set."
 )
 def test_pyscf_hartreefock_h2_rhf_sto6g():
     """Test PySCF HF against H2 RHF STO-6G data from Gaussian."""
@@ -198,7 +198,7 @@ def test_pyscf_hartreefock_h2_rhf_sto6g():
 
 
 @pytest.mark.skipif(
-    not check_dependency("pyscf"), "PYSCF is not available or PYSCFPATH is not set."
+    not check_dependency("pyscf"), reason="PYSCF is not available or PYSCFPATH is not set."
 )
 def test_pyscf_hartreefock_lih_rhf_sto6g():
     """Test PySCF HF against LiH RHF STO6G data from Gaussian."""
@@ -216,7 +216,7 @@ def test_pyscf_hartreefock_lih_rhf_sto6g():
 
 
 @pytest.mark.skipif(
-    not check_dependency("pyscf"), "PYSCF is not available or PYSCFPATH is not set."
+    not check_dependency("pyscf"), reason="PYSCF is not available or PYSCFPATH is not set."
 )
 def test_generate_fci_cimatrix_h2_631gdp():
     """Test PySCF's FCI calculation against H2 FCI 6-31G** data from Gaussian.
@@ -267,7 +267,7 @@ def test_generate_fci_cimatrix_h2_631gdp():
 
 
 @pytest.mark.skipif(
-    not check_dependency("pyscf"), "PYSCF is not available or PYSCFPATH is not set."
+    not check_dependency("pyscf"), reason="PYSCF is not available or PYSCFPATH is not set."
 )
 def test_generate_fci_cimatrix_lih_sto6g():
     """Test python_wrapper.generate_fci_cimatrix with LiH STO-6G.
