@@ -114,6 +114,11 @@ def check_dependency(dependency):
     if not os.path.isfile(python_name):
         return False
     # FIXME: I can't think of a way to make sure that the python_name is a python interpreter.
+
+    # NOTE: this is a possible security risk since we don't check that python_name is actually a
+    # python interpreter. However, it is up to the user to make sure that their environment variable
+    # is set up properly. Ideally, we shouldn't even have to call a python outside the current
+    # python, but here we are.
     exit_code = call([python_name, "-c", "import {0}".format(dependency)])
     return exit_code == 0
 
