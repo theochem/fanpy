@@ -1,4 +1,4 @@
-sudo: false
+sudo: required  # FIXME: turn this off when the gmpy2 requirement gets removed
 language: python
 matrix:
   include:
@@ -36,5 +36,8 @@ matrix:
       env: TOXENV=py37
     - python: 3.6
       env: TOXENV=keras
-install: pip install tox
+install:
+  # FIXME: remove when the gmpy2 requirement is removed
+  - sudo apt-get install libgmp-dev libmpfr-dev libmpfi-dev libmpc-dev
+  - pip install tox
 script: tox
