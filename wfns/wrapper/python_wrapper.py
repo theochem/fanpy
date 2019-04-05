@@ -12,7 +12,7 @@ module can act as a temporary hack to access these modules.
 
 """
 import os
-from subprocess import call
+from subprocess import call  # nosec:B404
 import sys
 
 import numpy as np
@@ -74,11 +74,22 @@ def generate_hartreefock_results(
         If calctype is not one of 'horton_hartreefock.py', 'horton_gaussian_fchk.py', or
         'pyscf_hartreefock.py'.
 
+    Note
+    ----
+    Since HORTON is available only for Python 2.7, it is not compatible with this module. This
+    function executes the given scripts using the Python interpreter that is compatible with HORTOn,
+    provided via an environment variable `HORTONPYTHON`. However, this function is a security risk
+    since we do not actually check that the file provided by the environment variable is a Python
+    interpreter. This means that **it is up to the user to specify the correct path for the Python
+    interpreter**.
+
     """
     # get python interpreter
     try:
         if calctype in ["horton_hartreefock.py", "horton_gaussian_fchk.py"]:
             python_name = os.environ["HORTONPYTHON"]
+        # FIXME: I think pyscf support many of the Python 3's so it doesn't have to go through this
+        # awful procedure anymore
         elif calctype == "pyscf_hartreefock.py":
             python_name = os.environ["PYSCFPYTHON"]
         else:
@@ -88,11 +99,20 @@ def generate_hartreefock_results(
             )
     except KeyError:
         python_name = sys.executable
+    if not os.path.isfile(python_name):
+        raise FileNotFoundError(
+            "The file provided in HORTONPYTHON environment variable is not a python executable."
+        )
+    # FIXME: I can't think of a way to make sure that the python_name is a python interpreter.
 
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    call(
+    # NOTE: this is a possible security risk since we don't check that python_name is actually a
+    # python interpreter. However, it is up to the user to make sure that their environment variable
+    # is set up properly. Ideally, we shouldn't even have to call a python outside the current
+    # python, but here we are.
+    call(  # nosec: B603
         [
             python_name,
             os.path.join(DIRNAME, calctype),
@@ -118,6 +138,8 @@ def generate_hartreefock_results(
     return el_energy, nuc_nuc_energy, oneint, twoint
 
 
+# FIXME: I think pyscf support many of the Python 3's so it doesn't have to go through this awful
+# procedure anymore
 def generate_fci_results(
     cimatrix_name="cimatrix.npy", sds_name="sds.npy", remove_npyfiles=False, **kwargs
 ):
@@ -153,6 +175,11 @@ def generate_fci_results(
         python_name = os.environ["PYSCFPYTHON"]
     except KeyError:
         python_name = sys.executable
+    if not os.path.isfile(python_name):
+        raise FileNotFoundError(
+            "The file provided in HORTONPYTHON environment variable is not a python executable."
+        )
+    # FIXME: I can't think of a way to make sure that the python_name is a python interpreter.
 
     # convert integrals
     if isinstance(kwargs["h1e"], np.ndarray):
@@ -164,7 +191,11 @@ def generate_fci_results(
     # turn keywords to pair of key and value
     kwargs = [str(i) for item in kwargs.items() for i in item]
     # call script with appropriate python
-    call(
+    # NOTE: this is a possible security risk since we don't check that python_name is actually a
+    # python interpreter. However, it is up to the user to make sure that their environment variable
+    # is set up properly. Ideally, we shouldn't even have to call a python outside the current
+    # python, but here we are.
+    call(  # nosec: B603
         [
             python_name,
             os.path.join(DIRNAME, "pyscf_generate_fci_matrix.py"),

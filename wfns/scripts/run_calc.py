@@ -136,7 +136,9 @@ def run_calc(
         memory=memory,
     )
     # run script
-    exec(script)
+    # NOTE: Since the script is entirely generated from make_script, it should be more difficult to
+    # inject something into the executable. (hopefully)
+    exec(script)  # nosec: B102
 
 
 def main():
