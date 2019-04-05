@@ -89,10 +89,12 @@ def check_dependency(dependency):
             python_name = os.environ['HORTONPYTHON']
         elif dependency == 'pyscf':
             python_name = os.environ['PYSCFPYTHON']
-    except (KeyError, FileNotFoundError):
+    except KeyError:
         python_name = sys.executable
-
-    exit_code = call([python_name, '-c', "import {0}".format(dependency)])
+    if not os.path.isfile(python_name):
+        return False
+    # FIXME: I can't think of a way to make sure that the python_name is a python interpreter.
+    exit_code = call([python_name, '-c', 'import {0}'.format(dependency)])
     return exit_code == 0
 
 
