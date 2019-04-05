@@ -42,6 +42,8 @@ def check_inputs(
     save_chk=None,
     filename=None,
     memory=None,
+    solver_kwargs=None,
+    wfn_kwargs=None,
 ):
     """Check if the given inputs are compatible with the scripts.
 
@@ -123,6 +125,10 @@ def check_inputs(
         Name of the file that will store the output.
     memory : None
         Memory available to run calculations.
+    solver_kwargs : {str, None}
+        Keyword arguments for the solver.
+    wfn_kwargs : {str, None}
+        Keyword arguments for the wavefunction.
 
     """
     # check numbers
@@ -155,10 +161,15 @@ def check_inputs(
                 "{}-electron integrals must be provided as a numpy save file."
                 "".format(number.title())
             )
-        elif not os.path.isfile(one_int_file):
+        if not os.path.isfile(one_int_file):
             raise ValueError(
                 "Cannot find the {}-electron integrals at {}."
                 "".format(number, os.path.abspath(one_int_file))
+            )
+        if "\n" in name or ";" in name:
+            raise ValueError(
+                "There can be no newline or ':' in the filename. This will hopefully prevent code "
+                "injection."
             )
 
     # check wavefunction type
@@ -238,10 +249,15 @@ def check_inputs(
     for varname, name in files.items():
         if name is None:
             continue
-        elif not isinstance(name, str):
+        if not isinstance(name, str):
             raise TypeError("Name of the file must be given as a string.")
-        elif "load" in varname and not os.path.isfile(name):
+        if "load" in varname and not os.path.isfile(name):
             raise ValueError("Cannot find the given file, {}.".format(name))
+        if "\n" in name or ";" in name:
+            raise ValueError(
+                "There can be no newline or ';' in the filename. This will hopefully prevent code "
+                "injection."
+            )
 
     # check memory
     if memory is None:
@@ -250,6 +266,18 @@ def check_inputs(
         raise TypeError("Memory must be provided as a string.")
     elif memory.lower()[-2:] not in ["mb", "gb"]:
         raise ValueError("Memory must end in either mb or gb.")
+
+    # check kwargs
+    for kwargs in [solver_kwargs, wfn_kwargs]:
+        if kwargs is None:
+            continue
+        if not isinstance(kwargs, str):
+            raise TypeError("Keyword arguments must be given as a string.")
+        if "\n" in kwargs or ";" in kwargs:
+            raise ValueError(
+                "There can be no newline or ';' in the keyword arguments. This will hopefully "
+                "prevent code injection."
+            )
 
 
 parser = argparse.ArgumentParser()

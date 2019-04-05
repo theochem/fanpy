@@ -143,8 +143,12 @@ def make_script(
         save_ham=save_ham,
         save_wfn=save_wfn,
         save_chk=save_chk,
-        filename=filename,
+        filename=filename if filename != -1 else None,
         memory=memory,
+        solver_kwargs=solver_kwargs,
+        wfn_kwargs=wfn_kwargs,
+        ham_noise=ham_noise,
+        wfn_noise=wfn_noise,
     )
 
     imports = ["numpy as np", "os"]
