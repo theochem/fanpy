@@ -133,7 +133,7 @@ class NormConstraint(BaseObjective):
         # Assign params
         self.assign_params(params)
         # Establish shortcuts
-        get_overlap = np.vectorize(self.wrapped_get_overlap)
+        get_overlap = self.wrapped_get_overlap
         ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
@@ -143,9 +143,9 @@ class NormConstraint(BaseObjective):
             if slater.is_sd_compatible(ref):
                 ref = [ref]
             ref_sds = ref
-            ref_coeffs = get_overlap(ref)
+            ref_coeffs = np.array([get_overlap(i) for i in ref])
         # Compute
-        overlaps = get_overlap(ref_sds)
+        overlaps = np.array([get_overlap(i) for i in ref_sds])
         return np.sum(ref_coeffs * overlaps) - 1
 
     # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
@@ -179,7 +179,7 @@ class NormConstraint(BaseObjective):
         # Assign params
         self.assign_params(params)
         # Establish shortcuts
-        get_overlap = np.vectorize(self.wrapped_get_overlap)
+        get_overlap = self.wrapped_get_overlap
         ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
@@ -189,8 +189,8 @@ class NormConstraint(BaseObjective):
             if slater.is_sd_compatible(ref):
                 ref = [ref]
             ref_sds = ref
-            ref_coeffs = get_overlap(ref)
-        overlaps = get_overlap(ref_sds)
+            ref_coeffs = np.array([get_overlap(i) for i in ref])
+        overlaps = np.array([get_overlap(i) for i in ref_sds])
 
         d_norm = np.zeros(params.size)
         # FIXME: there is a better way to do this, but I'm hoping that the number of parameters is
@@ -205,8 +205,8 @@ class NormConstraint(BaseObjective):
                     d_ref_coeffs = np.zeros(ref.nparams, dtype=float)
                     d_ref_coeffs[ref_deriv] = 1
             else:
-                d_ref_coeffs = get_overlap(ref, i)
+                d_ref_coeffs = np.array([get_overlap(k, i) for k in ref])
             # Compute
             d_norm[i] = np.sum(d_ref_coeffs * overlaps)
-            d_norm[i] += np.sum(ref_coeffs * get_overlap(ref_sds, i))
+            d_norm[i] += np.sum(ref_coeffs * np.array([get_overlap(k, i) for k in ref_sds]))
         return d_norm
