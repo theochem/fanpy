@@ -281,9 +281,8 @@ class BaseSchrodinger(BaseObjective):
             If `refwfn` is not a CIWavefunction, int, or list/tuple of int.
 
         """
-        # vectorize functions
-        get_overlap = np.vectorize(self.wrapped_get_overlap)
-        integrate_wfn_sd = np.vectorize(self.wrapped_integrate_wfn_sd)
+        get_overlap = self.wrapped_get_overlap
+        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
         # define reference
         if isinstance(refwfn, CIWavefunction):
@@ -302,9 +301,9 @@ class BaseSchrodinger(BaseObjective):
             if slater.is_sd_compatible(refwfn):
                 refwfn = [refwfn]
             ref_sds = refwfn
-            ref_coeffs = get_overlap(refwfn)
+            ref_coeffs = np.array([get_overlap(i) for i in refwfn])
             if deriv is not None:
-                d_ref_coeffs = get_overlap(refwfn, deriv)
+                d_ref_coeffs = np.array([get_overlap(i, deriv) for i in refwfn])
         else:
             raise TypeError(
                 "Reference state must be given as a Slater determinant, a CI "
@@ -314,8 +313,8 @@ class BaseSchrodinger(BaseObjective):
             )
 
         # overlaps and integrals
-        overlaps = get_overlap(ref_sds)
-        integrals = integrate_wfn_sd(ref_sds)
+        overlaps = np.array([get_overlap(i) for i in ref_sds])
+        integrals = np.array([integrate_wfn_sd(i) for i in ref_sds])
 
         # norm
         norm = np.sum(ref_coeffs * overlaps)
@@ -327,9 +326,11 @@ class BaseSchrodinger(BaseObjective):
             return energy
 
         d_norm = np.sum(d_ref_coeffs * overlaps)
-        d_norm += np.sum(ref_coeffs * get_overlap(ref_sds, deriv))
+        d_norm += np.sum(ref_coeffs * np.array([get_overlap(i, deriv) for i in ref_sds]))
         d_energy = np.sum(d_ref_coeffs * integrals) / norm
-        d_energy += np.sum(ref_coeffs * integrate_wfn_sd(ref_sds, deriv=deriv)) / norm
+        d_energy += (
+            np.sum(ref_coeffs * np.array([integrate_wfn_sd(i, deriv) for i in ref_sds])) / norm
+        )
         d_energy -= d_norm * energy / norm
         return d_energy
 
@@ -417,19 +418,14 @@ class BaseSchrodinger(BaseObjective):
         pspace_r = np.array(pspace_r)
         pspace_norm = np.array(pspace_norm)
 
-        # vectorize functions
-        get_overlap = np.vectorize(self.wrapped_get_overlap)
-        integrate_sd_sd = np.vectorize(self.wrapped_integrate_sd_sd)
-
-        # reshape for broadcasting
-        pspace_l = pspace_l[:, np.newaxis]
-        pspace_r = pspace_r[np.newaxis, :]
+        get_overlap = self.wrapped_get_overlap
+        integrate_sd_sd = self.wrapped_integrate_sd_sd
 
         # overlaps and integrals
-        overlaps_l = get_overlap(pspace_l)
-        overlaps_r = get_overlap(pspace_r)
-        ci_matrix = integrate_sd_sd(pspace_l, pspace_r)
-        overlaps_norm = get_overlap(pspace_norm)
+        overlaps_l = np.array([[get_overlap(i)] for i in pspace_l])
+        overlaps_r = np.array([[get_overlap(i) for i in pspace_r]])
+        ci_matrix = np.array([[integrate_sd_sd(i, j) for j in pspace_r] for i in pspace_l])
+        overlaps_norm = np.array([get_overlap(i) for i in pspace_norm])
 
         # norm
         norm = np.sum(overlaps_norm ** 2)
@@ -438,11 +434,22 @@ class BaseSchrodinger(BaseObjective):
         if deriv is None:
             return np.sum(overlaps_l * ci_matrix * overlaps_r) / norm
 
-        d_norm = 2 * np.sum(overlaps_norm * get_overlap(pspace_norm, deriv))
-        d_energy = np.sum(get_overlap(pspace_l, deriv) * ci_matrix * overlaps_r) / norm
-        d_energy += (
-            np.sum(overlaps_l * integrate_sd_sd(pspace_l, pspace_r, deriv) * overlaps_r) / norm
+        d_norm = 2 * np.sum(overlaps_norm * np.array([get_overlap(i, deriv) for i in pspace_norm]))
+        d_energy = (
+            np.sum(np.array([[get_overlap(i, deriv)] for i in pspace_l]) * ci_matrix * overlaps_r)
+            / norm
         )
-        d_energy += np.sum(overlaps_l * ci_matrix * get_overlap(pspace_r, deriv)) / norm
+        d_energy += (
+            np.sum(
+                overlaps_l
+                * np.array([[integrate_sd_sd(i, j, deriv) for j in pspace_r] for i in pspace_l])
+                * overlaps_r
+            )
+            / norm
+        )
+        d_energy += (
+            np.sum(overlaps_l * ci_matrix * np.array([[get_overlap(i, deriv) for i in pspace_r]]))
+            / norm
+        )
         d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
         return d_energy
