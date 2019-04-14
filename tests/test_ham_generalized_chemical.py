@@ -569,3 +569,88 @@ def test_integrate_sd_sds_two():
             ]
         ).T,
     )
+
+
+def test_integrate_sd_sds_deriv_zero():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_zero w/ _integrate_sd_sd_zero."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    vir_indices = np.array([2, 5, 6, 7])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_zero(occ_indices, vir_indices),
+        np.array(
+            [
+                [
+                    test_ham._integrate_sd_sd_deriv_zero(i, j, occ_indices)
+                    for i in range(7)
+                    for j in range(i + 1, 8)
+                ]
+            ]
+        ).T,
+    )
+
+
+def test_integrate_sd_sds_deriv_one():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_one with _integrate_sd_sd_one."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    vir_indices = np.array([2, 5, 6, 7])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_one(occ_indices, vir_indices),
+        np.transpose(
+            np.array(
+                [
+                    [
+                        test_ham._integrate_sd_sd_deriv_one(
+                            (i,), (j,), x, y, occ_indices[occ_indices != i]
+                        )
+                        for x in range(8)
+                        for y in range(x + 1, 8)
+                    ]
+                    for i in occ_indices
+                    for j in vir_indices
+                ]
+            )
+        ),
+    )
+
+
+def test_integrate_sd_sds_deriv_two():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_two with _integrate_sd_sd_two."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    vir_indices = np.array([2, 5, 6, 7])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_two(occ_indices, vir_indices),
+        np.transpose(
+            np.array(
+                [
+                    [
+                        test_ham._integrate_sd_sd_deriv_two(occ, vir, x, y)
+                        for x in (range(8))
+                        for y in range(x + 1, 8)
+                    ]
+                    for occ in it.combinations(occ_indices, 2)
+                    for vir in it.combinations(vir_indices, 2)
+                ]
+            )
+        ),
+    )
