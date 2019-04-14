@@ -1,4 +1,6 @@
 """Test wfns.ham.generalized_chemical."""
+import itertools as it
+
 import numpy as np
 import pytest
 from utils import find_datafile
@@ -505,3 +507,65 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
                 ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
+
+
+def test_integrate_sd_sds_zero():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_zero(occ_indices),
+        np.array(test_ham._integrate_sd_sd_zero(occ_indices)).reshape(3, 1),
+    )
+
+
+def test_integrate_sd_sds_one():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_one against _integrate_sd_sd_one."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    vir_indices = np.array([2, 5, 6, 7])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_one(occ_indices, vir_indices),
+        np.array(
+            [
+                test_ham._integrate_sd_sd_one((i,), (j,), occ_indices[occ_indices != i])
+                for i in occ_indices
+                for j in vir_indices
+            ]
+        ).T,
+    )
+
+
+def test_integrate_sd_sds_two():
+    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_two against _integrate_sd_sd_two."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    occ_indices = np.array([0, 1, 3, 4])
+    vir_indices = np.array([2, 5, 6, 7])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_two(occ_indices, vir_indices),
+        np.array(
+            [
+                test_ham._integrate_sd_sd_two(diff1, diff2)
+                for diff1 in it.combinations(occ_indices, 2)
+                for diff2 in it.combinations(vir_indices, 2)
+            ]
+        ).T,
+    )
