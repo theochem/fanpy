@@ -190,7 +190,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             If `sign` is not `1`, `-1` or `None`.
 
         """
-        # pylint: disable=C0103
         if deriv is not None:
             sign = 1 if sign is None else sign
             return sign * self._integrate_sd_sd_deriv(sd1, sd2, deriv)
@@ -211,35 +210,102 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         elif sign not in [1, -1]:
             raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
-        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
-
         # two sd's are the same
         if diff_order == 0 and shared_indices.size > 0:
-            one_electron += np.sum(self.one_int[shared_indices, shared_indices])
-            coulomb += np.sum(
-                np.triu(self._cached_two_int_ijij[shared_indices[:, None], shared_indices], k=1)
-            )
-            exchange -= np.sum(
-                np.triu(self._cached_two_int_ijji[shared_indices[:, None], shared_indices], k=1)
-            )
-
+            one_electron, coulomb, exchange = self._integrate_sd_sd_zero(shared_indices)
         # two sd's are different by single excitation
         elif diff_order == 1:
-            a, = diff_sd1
-            b, = diff_sd2
-            one_electron += self.one_int[a, b]
-            if shared_indices.size > 0:
-                coulomb += np.sum(self.two_int[shared_indices, a, shared_indices, b])
-                exchange -= np.sum(self.two_int[shared_indices, a, b, shared_indices])
-
+            one_electron, coulomb, exchange = self._integrate_sd_sd_one(
+                diff_sd1, diff_sd2, shared_indices
+            )
         # two sd's are different by double excitation
         else:
-            a, b = diff_sd1
-            c, d = diff_sd2
-            coulomb += self.two_int[a, b, c, d]
-            exchange -= self.two_int[a, b, d, c]
+            one_electron, coulomb, exchange = self._integrate_sd_sd_two(diff_sd1, diff_sd2)
 
         return sign * one_electron, sign * coulomb, sign * exchange
+
+    def _integrate_sd_sd_zero(self, shared_indices):
+        """Return integrals of the given Slater determinant with itself.
+
+        Parameters
+        ----------
+        shared_indices : np.ndarray
+            Integer indices of the orbitals that are occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            Integrals of the given Slater determinant with itself.
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with itself.
+
+        """
+        one_electron = np.sum(self.one_int[shared_indices, shared_indices])
+        coulomb = np.sum(
+            np.triu(self._cached_two_int_ijij[shared_indices[:, None], shared_indices], k=1)
+        )
+        exchange = -np.sum(
+            np.triu(self._cached_two_int_ijji[shared_indices[:, None], shared_indices], k=1)
+        )
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_one(self, diff_sd1, diff_sd2, shared_indices):
+        """Return integrals of the given Slater determinant with its first order excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 1-tuple of int
+            Index of the orbital that is occupied in the first Slater determinant and not occupied
+            in the second.
+        diff_sd2 : 1-tuple of int
+            Index of the orbital that is occupied in the second Slater determinant and not occupied
+            in the first.
+        shared_indices : np.ndarray
+            Integer indices of the orbitals that are shared between the first and second Slater
+            determinants.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            Integrals of the given Slater determinant with itself.
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with itself.
+
+        """
+        # pylint: disable=C0103
+        a, = diff_sd1
+        b, = diff_sd2
+        shared_indices = shared_indices.astype(int)
+        one_electron = self.one_int[a, b]
+        coulomb = np.sum(self.two_int[shared_indices, a, shared_indices, b])
+        exchange = -np.sum(self.two_int[shared_indices, a, b, shared_indices])
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_two(self, diff_sd1, diff_sd2):
+        """Return integrals of the given Slater determinant with its second order excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 2-tuple of int
+            Indices of the orbitals that are occupied in the first Slater determinant and not
+            occupied in the second.
+        diff_sd2 : 2-tuple of int
+            Indices of the orbitals that are occupied in the second Slater determinant and not
+            occupied in the first.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with itself.
+
+        """
+        # pylint: disable=C0103
+        a, b = diff_sd1
+        c, d = diff_sd2
+        coulomb = self.two_int[a, b, c, d]
+        exchange = -self.two_int[a, b, d, c]
+        return 0, coulomb, exchange
 
     def param_ind_to_rowcol_ind(self, param_ind):
         r"""Return the row and column indices of the antihermitian matrix from the parameter index.
