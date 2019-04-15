@@ -81,7 +81,7 @@ sign_swap(sd, pos_current, pos_future) : int
     Return the signature of moving a creation operator to a specific position.
 
 """
-# pylint: disable=C0103
+# pylint: disable=C0103,C0302
 import gmpy2
 import numpy as np
 
@@ -992,4 +992,74 @@ def sign_excite(sd, annihilators, creators):
         # move creator i from the first poisition to its position
         sign *= sign_swap(sd, i, 0)
 
+    return sign
+
+
+def sign_excite_array(occs, annihilators, creators, nspin):
+    r"""Return the sign of the Slater determinant after applying excitation operators.
+
+    Parameters
+    ----------
+    occs : np.ndarray(N,)
+        Indices of the spin orbitals that are occupied in the Slater determinant.
+    annihilators : np.ndarray(L, M_a)
+        Indices of the annihilators that are applied to the Slater determinant.
+        First dimension corresponds to different `M_a`-body annihilators.
+        Second dimension corresponds to the indices of each one-body annihilator within the
+        `M_a`-body annihilator.
+        Each `M_a`-body annihilator must have ordered one-body annihilators (smallest to largest).
+    creators : np.ndarray(L, M_c)
+        Indices of the creators that are applied to the Slater determinant (after the annihilators).
+        First dimension corresponds to different `M_c`-body creators.
+        Second dimension corresponds to the indices of each one-body creator within the `M_c`-body
+        creators.
+        Each `M_c`-body annihilator must have ordered one-body creators (smallest to largest).
+    nspin : int
+        Number of spin orbitals.
+
+    Returns
+    -------
+    signs : np.ndarray(M_a, M_c)
+        Signs of the Slater determinant after applying the excitation operators.
+
+    Notes
+    -----
+    Assume that we are applying the annihilators then creators from right to left (to a ket). This
+    means that the smallest index annihilators are applied first (so they would be ordered from
+    largest to smallest from left to right) and the largest index creator are applied first (so they
+    would be ordered from smallest to largest from left to right). For example, :math:`a^\dagger_i
+    a^\dagger_j a_l a_k` where i < j and k < l. Though it doesn't affect the end result, it will be
+    assumed that the creators in the Slater determinant are ordered from largest to smallest (from
+    left to right).
+
+    """
+    indices = np.zeros(nspin, dtype=int)
+    indices[occs] = np.arange(occs.size)
+
+    shared_indices = np.tile(occs, [annihilators.shape[0], 1])
+
+    num_jumps_annihilate = np.zeros(annihilators.shape[0])
+    # apply each one-body annihilator (for each M_a body annihilator) in order
+    for one_annihilators in annihilators.T:
+        # count the number of jumps each one-body annihilator must make to get to the correct
+        # position. Note that the annihilator jumps from the side with the largest index to the
+        # smallest)
+        num_jumps_annihilate += np.sum(one_annihilators[:, None] < shared_indices, axis=1)
+        # remove the index that have been removed (the annihilator made it to the correct index and
+        # annihilated it)
+        shared_indices[np.arange(one_annihilators.size), indices[one_annihilators]] = -1
+
+    # move the one-body creator (for each M_c body creator) in order
+    num_jumps_create = np.zeros((annihilators.shape[0], creators.shape[0]))
+    for one_creators in creators.T:
+        # count the number of jumps each one-body creator must make to get to the correct position.
+        # Note that the creator jumps from the side with the largest index to the smallest)
+        num_jumps_create += np.sum(shared_indices[:, :, None] > one_creators[None, None, :], axis=1)
+
+    sign = num_jumps_annihilate[:, None] + num_jumps_create
+    sign = (-1) ** sign
+    # Reverse the ordering of creators. Above, the smallest index creator was applied first, but
+    # conventional ordering of creators in an excitation operator has the largest index creators
+    # being applied first
+    sign *= (-1) ** (creators.shape[1] // 2 % 2)
     return sign
