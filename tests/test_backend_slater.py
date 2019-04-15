@@ -1,5 +1,8 @@
 """Test wfns.slater."""
+import itertools as it
+
 import gmpy2
+import numpy as np
 import pytest
 from wfns.backend import slater
 
@@ -594,3 +597,24 @@ def test_sign_excite():
         slater.sign_excite(0b0011, [0, 2], [3])
     with pytest.raises(ValueError):
         slater.sign_excite(0b0011, [0], [1])
+
+
+def test_sign_excite_array():
+    """Test slater.sign_excite_array by comparing it against slater.sign_excite."""
+    for k in range(6):
+        for n in range(1, 5):
+            for occ_indices in it.combinations(range(11), n):
+                occ_indices = np.array(occ_indices)
+                vir_indices = np.array([i for i in range(11) if i not in occ_indices])
+                sign = slater.sign_excite_array(
+                    occ_indices,
+                    np.array(list(it.combinations(occ_indices, k))),
+                    np.array(list(it.combinations(vir_indices, k))),
+                    11,
+                ).ravel()
+                ref = [
+                    slater.sign_excite(slater.create(0, *occ_indices.tolist()), i, reversed(j))
+                    for i in it.combinations(occ_indices.tolist(), k)
+                    for j in it.combinations(vir_indices.tolist(), k)
+                ]
+                assert np.allclose(sign, ref)
