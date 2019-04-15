@@ -644,16 +644,12 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             and exchange (third element) integrals.
 
         """
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
         one_electron = np.sum(self.one_int[occ_indices, occ_indices])
         coulomb = np.sum(np.triu(self._cached_two_int_ijij[occ_indices[:, None], occ_indices], k=1))
         exchange = -np.sum(
             np.triu(self._cached_two_int_ijji[occ_indices[:, None], occ_indices], k=1)
         )
-        return sign * np.array([[one_electron], [coulomb], [exchange]])
+        return np.array([[one_electron], [coulomb], [exchange]])
 
     def _integrate_sd_sds_one(self, occ_indices, vir_indices):
         """Return the integrals of the given Slater determinant with its first order excitations.
@@ -678,10 +674,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             `M` is the number of first order excitations of the given Slater determinants.
 
         """
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
+        # FIXME: move into the slater module?
         shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
         shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
         shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
@@ -694,6 +687,10 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         #     shape=(occ.size-1, occ.size),
         #     strides=(s0 + s1, s1)
         # ).reshape(occ.size, occ.size-1)
+
+        sign = slater.sign_excite_array(
+            occ_indices, occ_indices[:, None], vir_indices[:, None], self.nspin
+        ).ravel()
 
         one_electron = self.one_int[occ_indices[:, np.newaxis], vir_indices[np.newaxis, :]]
         coulomb = np.sum(
@@ -714,7 +711,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             ],
             axis=1,
         )
-        return sign * np.array([one_electron.ravel(), coulomb.ravel(), exchange.ravel()])
+        return sign[None, :] * np.array([one_electron.ravel(), coulomb.ravel(), exchange.ravel()])
 
     def _integrate_sd_sds_two(self, occ_indices, vir_indices):
         """Return the integrals of the given Slater determinant with its second order excitations.
@@ -742,10 +739,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
         # FIXME: use method in slater module
         annihilators = np.array(list(it.combinations(occ_indices, 2)))
         a = annihilators[:, 0]
@@ -754,9 +747,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
+        sign = slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+
         coulomb = self.two_int[a[:, None], b[:, None], c[None, :], d[None, :]]
         exchange = -self.two_int[a[:, None], b[:, None], d[None, :], c[None, :]]
-        return sign * np.array([np.zeros(coulomb.size), coulomb.ravel(), exchange.ravel()])
+        return sign[None, :] * np.array([np.zeros(coulomb.size), coulomb.ravel(), exchange.ravel()])
 
     def _integrate_sd_sds_deriv_zero(self, occ_indices, vir_indices):
         """Return the derivative of the integrals of the given Slater determinant with itself.
@@ -778,10 +773,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             derivatived.
 
         """
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
         shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
         shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
         shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
@@ -932,15 +923,15 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             `M` is the number of first order excitations of the given Slater determinants.
 
         """
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
         shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
         shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
         shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
         shared_indices = shared_indices.astype(int)
         all_indices = np.arange(self.nspin)
+
+        sign = slater.sign_excite_array(
+            occ_indices, occ_indices[:, None], vir_indices[:, None], self.nspin
+        ).ravel()
 
         # NOTE: here, we use the following convention for indices:
         # the first index corresponds to the row index of the antihermitian matrix for orbital
@@ -1201,7 +1192,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         ]
 
         triu_rows, triu_cols = np.triu_indices(self.nspin, k=1)
-        return sign * np.array(
+        return sign[None, None, :] * np.array(
             [
                 one_electron[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
                 coulomb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
@@ -1235,10 +1226,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        # FIXME: need sign
-        sign = 1
-        # sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-
         all_indices = np.arange(self.nspin)
 
         # TODO: use method in slater module
@@ -1248,6 +1235,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         creators = np.array(list(it.combinations(vir_indices, 2)))
         c = creators[:, 0]
         d = creators[:, 1]
+
+        sign = slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
 
         occ_array_indices = np.arange(a.size)
         vir_array_indices = np.arange(c.size)
@@ -1452,7 +1441,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         ]
 
         triu_rows, triu_cols = np.triu_indices(self.nspin, k=1)
-        return sign * np.array(
+        return sign[None, None, :] * np.array(
             [
                 one_electron[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
                 coulomb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),

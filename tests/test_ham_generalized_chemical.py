@@ -4,6 +4,7 @@ import itertools as it
 import numpy as np
 import pytest
 from utils import find_datafile
+from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
@@ -540,9 +541,10 @@ def test_integrate_sd_sds_one():
         test_ham._integrate_sd_sds_one(occ_indices, vir_indices),
         np.array(
             [
-                test_ham._integrate_sd_sd_one((i,), (j,), occ_indices[occ_indices != i])
-                for i in occ_indices
-                for j in vir_indices
+                np.array(test_ham._integrate_sd_sd_one((i,), (j,), occ_indices[occ_indices != i]))
+                * slater.sign_excite(0b11011, [i], [j])
+                for i in occ_indices.tolist()
+                for j in vir_indices.tolist()
             ]
         ).T,
     )
@@ -563,9 +565,10 @@ def test_integrate_sd_sds_two():
         test_ham._integrate_sd_sds_two(occ_indices, vir_indices),
         np.array(
             [
-                test_ham._integrate_sd_sd_two(diff1, diff2)
-                for diff1 in it.combinations(occ_indices, 2)
-                for diff2 in it.combinations(vir_indices, 2)
+                np.array(test_ham._integrate_sd_sd_two(diff1, diff2))
+                * slater.sign_excite(0b11011, diff1, reversed(diff2))
+                for diff1 in it.combinations(occ_indices.tolist(), 2)
+                for diff2 in it.combinations(vir_indices.tolist(), 2)
             ]
         ).T,
     )
@@ -613,14 +616,17 @@ def test_integrate_sd_sds_deriv_one():
             np.array(
                 [
                     [
-                        test_ham._integrate_sd_sd_deriv_one(
-                            (i,), (j,), x, y, occ_indices[occ_indices != i]
+                        np.array(
+                            test_ham._integrate_sd_sd_deriv_one(
+                                (i,), (j,), x, y, occ_indices[occ_indices != i]
+                            )
                         )
+                        * slater.sign_excite(0b11011, [i], [j])
                         for x in range(8)
                         for y in range(x + 1, 8)
                     ]
-                    for i in occ_indices
-                    for j in vir_indices
+                    for i in occ_indices.tolist()
+                    for j in vir_indices.tolist()
                 ]
             )
         ),
@@ -644,12 +650,13 @@ def test_integrate_sd_sds_deriv_two():
             np.array(
                 [
                     [
-                        test_ham._integrate_sd_sd_deriv_two(occ, vir, x, y)
+                        np.array(test_ham._integrate_sd_sd_deriv_two(occ, vir, x, y))
+                        * slater.sign_excite(0b11011, occ, reversed(vir))
                         for x in (range(8))
                         for y in range(x + 1, 8)
                     ]
-                    for occ in it.combinations(occ_indices, 2)
-                    for vir in it.combinations(vir_indices, 2)
+                    for occ in it.combinations(occ_indices.tolist(), 2)
+                    for vir in it.combinations(vir_indices.tolist(), 2)
                 ]
             )
         ),
