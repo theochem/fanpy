@@ -661,3 +661,58 @@ def test_integrate_sd_sds_deriv_two():
             )
         ),
     )
+
+
+def test_integrate_sd_wfn():
+    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn with integrate_wfn_sd."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    for n in range(1, 8):
+        wfn = CIWavefunction(n, 8)
+        wfn.assign_params(np.random.rand(*wfn.params_shape))
+        for occ_indices in it.combinations(range(8), n):
+            assert np.allclose(
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=None),
+                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=None),
+            )
+            assert np.allclose(
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=0),
+                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=0),
+            )
+
+
+def test_integrate_sd_wfn_deriv():
+    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn_deriv with integrate_wfn_sd."""
+    one_int = np.random.rand(8, 8)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(8, 8, 8, 8)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+
+    wfn = CIWavefunction(4, 8)
+    wfn.assign_params(np.random.rand(*wfn.params_shape))
+    assert np.allclose(
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(28)),
+        np.array([test_ham.integrate_wfn_sd(wfn, 0b01101010, ham_deriv=i) for i in range(28)]).T,
+    )
+
+    ham_derivs = np.array([0, 3, 5, 7, 8, 11, 13])
+    for n in range(1, 8):
+        wfn = CIWavefunction(n, 8)
+        wfn.assign_params(np.random.rand(*wfn.params_shape))
+        for occ_indices in it.combinations(range(8), n):
+            assert np.allclose(
+                test_ham.integrate_sd_wfn_deriv(slater.create(0, *occ_indices), wfn, ham_derivs),
+                np.array(
+                    [
+                        test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), ham_deriv=i)
+                        for i in ham_derivs.tolist()
+                    ]
+                ).T,
+            )
