@@ -371,7 +371,7 @@ class BaseWavefunction(ParamContainer):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
 
@@ -395,7 +395,7 @@ class BaseWavefunction(ParamContainer):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
         deriv : int

@@ -472,7 +472,7 @@ class BaseGeminal(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
 
         Returns
@@ -498,7 +498,7 @@ class BaseGeminal(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
         deriv : int
             Index of the parameter with respect to which the overlap is derivatized.

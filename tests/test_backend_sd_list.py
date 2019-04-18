@@ -1,5 +1,4 @@
 """Test wfns.sd_list."""
-import gmpy2
 import pytest
 from wfns.backend import sd_list
 
@@ -61,119 +60,105 @@ def test_ci_sd_list():
         sd_list.sd_list(4, 3, spin=-1, seniority=1)
 
     assert sd_list.sd_list(4, 3, num_limit=0) == []
-    assert sd_list.sd_list(4, 3, num_limit=1) == [gmpy2.mpz(0b011011)]
-    assert sd_list.sd_list(4, 3, num_limit=2) == [gmpy2.mpz(0b011011), gmpy2.mpz(0b011101)]
+    assert sd_list.sd_list(4, 3, num_limit=1) == [0b011011]
+    assert sd_list.sd_list(4, 3, num_limit=2) == [0b011011, 0b011101]
     assert sd_list.sd_list(4, 3, num_limit=10, exc_orders=[1]) == [
-        gmpy2.mpz(0b011011),
-        gmpy2.mpz(0b011101),
-        gmpy2.mpz(0b111001),
-        gmpy2.mpz(0b001111),
-        gmpy2.mpz(0b101011),
-        gmpy2.mpz(0b011110),
-        gmpy2.mpz(0b111010),
-        gmpy2.mpz(0b010111),
-        gmpy2.mpz(0b110011),
+        0b011011,
+        0b011101,
+        0b111001,
+        0b001111,
+        0b101011,
+        0b011110,
+        0b111010,
+        0b010111,
+        0b110011,
     ]
     assert sd_list.sd_list(4, 3, num_limit=10, exc_orders=[2]) == [
-        gmpy2.mpz(0b011011),
-        gmpy2.mpz(0b101101),
-        gmpy2.mpz(0b111100),
-        gmpy2.mpz(0b110101),
-        gmpy2.mpz(0b101110),
-        gmpy2.mpz(0b100111),
-        gmpy2.mpz(0b110110),
+        0b011011,
+        0b101101,
+        0b111100,
+        0b110101,
+        0b101110,
+        0b100111,
+        0b110110,
     ]
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2]) == [
-        gmpy2.mpz(0b011011),
-        gmpy2.mpz(0b011101),
-        gmpy2.mpz(0b111001),
-        gmpy2.mpz(0b001111),
-        gmpy2.mpz(0b101011),
-        gmpy2.mpz(0b011110),
-        gmpy2.mpz(0b111010),
-        gmpy2.mpz(0b010111),
-        gmpy2.mpz(0b110011),
-        gmpy2.mpz(0b101101),
-        gmpy2.mpz(0b111100),
-        gmpy2.mpz(0b110101),
-        gmpy2.mpz(0b101110),
-        gmpy2.mpz(0b100111),
-        gmpy2.mpz(0b110110),
+        0b011011,
+        0b011101,
+        0b111001,
+        0b001111,
+        0b101011,
+        0b011110,
+        0b111010,
+        0b010111,
+        0b110011,
+        0b101101,
+        0b111100,
+        0b110101,
+        0b101110,
+        0b100111,
+        0b110110,
     ]
     assert sd_list.sd_list(4, 3, exc_orders=[2, 1]) == [
-        gmpy2.mpz(0b011011),
-        gmpy2.mpz(0b101101),
-        gmpy2.mpz(0b111100),
-        gmpy2.mpz(0b110101),
-        gmpy2.mpz(0b101110),
-        gmpy2.mpz(0b100111),
-        gmpy2.mpz(0b110110),
-        gmpy2.mpz(0b011101),
-        gmpy2.mpz(0b111001),
-        gmpy2.mpz(0b001111),
-        gmpy2.mpz(0b101011),
-        gmpy2.mpz(0b011110),
-        gmpy2.mpz(0b111010),
-        gmpy2.mpz(0b010111),
-        gmpy2.mpz(0b110011),
+        0b011011,
+        0b101101,
+        0b111100,
+        0b110101,
+        0b101110,
+        0b100111,
+        0b110110,
+        0b011101,
+        0b111001,
+        0b001111,
+        0b101011,
+        0b011110,
+        0b111010,
+        0b010111,
+        0b110011,
     ]
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0) == [
-        gmpy2.mpz(0b011011),
-        gmpy2.mpz(0b011101),
-        gmpy2.mpz(0b101011),
-        gmpy2.mpz(0b011110),
-        gmpy2.mpz(0b110011),
-        gmpy2.mpz(0b101101),
-        gmpy2.mpz(0b110101),
-        gmpy2.mpz(0b101110),
-        gmpy2.mpz(0b110110),
+        0b011011,
+        0b011101,
+        0b101011,
+        0b011110,
+        0b110011,
+        0b101101,
+        0b110101,
+        0b101110,
+        0b110110,
     ]
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0.5) == []
     assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-0.5) == []
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=1) == [
-        gmpy2.mpz(0b001111),
-        gmpy2.mpz(0b010111),
-        gmpy2.mpz(0b100111),
-    ]
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-1) == [
-        gmpy2.mpz(0b111001),
-        gmpy2.mpz(0b111010),
-        gmpy2.mpz(0b111100),
-    ]
+    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=1) == [0b001111, 0b010111, 0b100111]
+    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-1) == [0b111001, 0b111010, 0b111100]
 
 
 def test_doci_sd_list():
     """Test sd_list.doci_sd_list."""
     assert sd_list.sd_list(4, 4, num_limit=0, seniority=0) == []
-    assert sd_list.sd_list(4, 4, num_limit=1, seniority=0) == [gmpy2.mpz(0b00110011)]
-    assert sd_list.sd_list(4, 4, num_limit=2, seniority=0) == [
-        gmpy2.mpz(0b00110011),
-        gmpy2.mpz(0b01010101),
-    ]
+    assert sd_list.sd_list(4, 4, num_limit=1, seniority=0) == [0b00110011]
+    assert sd_list.sd_list(4, 4, num_limit=2, seniority=0) == [0b00110011, 0b01010101]
     assert sd_list.sd_list(4, 4, exc_orders=[2], seniority=0) == [
-        gmpy2.mpz(0b00110011),
-        gmpy2.mpz(0b01010101),
-        gmpy2.mpz(0b10011001),
-        gmpy2.mpz(0b01100110),
-        gmpy2.mpz(0b10101010),
+        0b00110011,
+        0b01010101,
+        0b10011001,
+        0b01100110,
+        0b10101010,
     ]
-    assert sd_list.sd_list(4, 4, exc_orders=[4], seniority=0) == [
-        gmpy2.mpz(0b00110011),
-        gmpy2.mpz(0b11001100),
-    ]
+    assert sd_list.sd_list(4, 4, exc_orders=[4], seniority=0) == [0b00110011, 0b11001100]
     assert sd_list.sd_list(4, 4, exc_orders=[2, 4], seniority=0) == [
-        gmpy2.mpz(0b00110011),
-        gmpy2.mpz(0b01010101),
-        gmpy2.mpz(0b10011001),
-        gmpy2.mpz(0b01100110),
-        gmpy2.mpz(0b10101010),
-        gmpy2.mpz(0b11001100),
+        0b00110011,
+        0b01010101,
+        0b10011001,
+        0b01100110,
+        0b10101010,
+        0b11001100,
     ]
     assert sd_list.sd_list(4, 4, exc_orders=[4, 2], seniority=0) == [
-        gmpy2.mpz(0b00110011),
-        gmpy2.mpz(0b11001100),
-        gmpy2.mpz(0b01010101),
-        gmpy2.mpz(0b10011001),
-        gmpy2.mpz(0b01100110),
-        gmpy2.mpz(0b10101010),
+        0b00110011,
+        0b11001100,
+        0b01010101,
+        0b10011001,
+        0b01100110,
+        0b10101010,
     ]
