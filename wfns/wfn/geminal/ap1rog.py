@@ -135,7 +135,7 @@ class AP1roG(APIG):
             Indices of the orbital pairs that will be used to construct each geminal.
         params : np.ndarray
             Geminal coefficient matrix.
-        ref_sd : {int, gmpy2.mpz, None}
+        ref_sd : {int, None}
             Reference Slater determinant.
             Default is the HF ground state.
 
@@ -282,7 +282,7 @@ class AP1roG(APIG):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
 
         Returns
@@ -310,7 +310,7 @@ class AP1roG(APIG):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
         deriv : int
             Index of the parameter with respect to which the overlap is derivatized.

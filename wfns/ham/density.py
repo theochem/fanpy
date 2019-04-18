@@ -231,7 +231,7 @@ def density_matrix(
     ----------
     sd_coeffs : list of float
         Slater determinant coefficients.
-    civec : list of int/gmpy2.mpz
+    civec : list of int
         Slater determinant.
     nspatial : int
         Number of spatial orbitals.

@@ -1,7 +1,6 @@
 """Test wfns.slater."""
 import itertools as it
 
-import gmpy2
 import numpy as np
 import pytest
 from wfns.backend import slater
@@ -187,11 +186,10 @@ def test_ground():
 
 def test_is_internal_sd():
     """Test slater.is_internal_sd."""
-    assert slater.is_internal_sd(gmpy2.mpz(2))
-    assert not slater.is_internal_sd(2)
+    assert slater.is_internal_sd(2)
     assert not slater.is_internal_sd([5])
     assert not slater.is_internal_sd(None)
-    assert not slater.is_internal_sd((3))
+    assert not slater.is_internal_sd((3,))
 
 
 def test_internal_sd():
@@ -205,11 +203,8 @@ def test_internal_sd():
         slater.internal_sd([0, 3])
 
     # integer
-    assert slater.internal_sd(5) == gmpy2.mpz(5)
-    assert isinstance(slater.internal_sd(5), type(gmpy2.mpz(5)))
-    # gmpy2 object
-    assert slater.internal_sd(gmpy2.mpz(5)) == gmpy2.mpz(5)
-    assert isinstance(slater.internal_sd(gmpy2.mpz(5)), type(gmpy2.mpz(5)))
+    assert slater.internal_sd(5) == 5
+    assert isinstance(slater.internal_sd(5), int)
 
 
 def test_occ_indices():
