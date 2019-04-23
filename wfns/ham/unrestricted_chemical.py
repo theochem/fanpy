@@ -1,4 +1,6 @@
 r"""Hamiltonian used to describe a chemical system expressed wrt unrestricted orbitals."""
+import itertools as it
+
 import numpy as np
 from wfns.backend import math_tools, slater
 from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
@@ -1033,3 +1035,247 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 coulomb += self.two_int[2][spatial_b, spatial_a, x, spatial_c]
 
         return one_electron, coulomb, exchange
+
+    def _integrate_sd_sds_zero(self, occ_alpha, occ_beta):
+        """Return the integrals of the given Slater determinant with itself.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(3, 1)
+            Integrals of the given Slater determinant with itself.
+            First index corresponds to the one-electron (first element), coulomb (second element),
+            and exchange (third element) integrals.
+
+        """
+        one_electron = np.sum(self.one_int[0][occ_alpha, occ_alpha])
+        one_electron += np.sum(self.one_int[1][occ_beta, occ_beta])
+
+        coulomb = np.sum(np.triu(self._cached_two_int_0_ijij[occ_alpha[:, None], occ_alpha], k=1))
+        coulomb += np.sum(self._cached_two_int_1_ijij[occ_alpha[:, None], occ_beta])
+        coulomb += np.sum(np.triu(self._cached_two_int_2_ijij[occ_beta[:, None], occ_beta], k=1))
+
+        exchange = -np.sum(np.triu(self._cached_two_int_0_ijji[occ_alpha[:, None], occ_alpha], k=1))
+        exchange -= np.sum(np.triu(self._cached_two_int_2_ijji[occ_beta[:, None], occ_beta], k=1))
+
+        return np.array([[one_electron], [coulomb], [exchange]])
+
+    def _integrate_sd_sds_one(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
+        """Return the integrals of the given Slater determinant with its first order excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(3, M)
+            Integrals of the given Slater determinant with its first order excitations.
+            First index corresponds to the one-electron (first element), coulomb (second element),
+            and exchange (third element) integrals.
+            Second index corresponds to the first order excitations of the given Slater determinant.
+            The excitations are ordered by the occupied orbital then the virtual orbital. For
+            example, given occupied orbitals [1, 2] and virtual orbitals [3, 4], the ordering of the
+            excitations would be [(1, 3), (1, 4), (2, 3), (2, 4)]. `M` is the number of first order
+            excitations of the given Slater determinants.
+
+        """
+        # FIXME: move into the slater module?
+        shared_alpha = np.tile(occ_alpha, [occ_alpha.size, 1])
+        shared_alpha = shared_alpha[~np.identity(occ_alpha.size, dtype=bool)]
+        shared_alpha = shared_alpha.reshape(occ_alpha.size, occ_alpha.size - 1)
+        shared_alpha = shared_alpha.astype(int)
+
+        shared_beta = np.tile(occ_beta, [occ_beta.size, 1])
+        shared_beta = shared_beta[~np.identity(occ_beta.size, dtype=bool)]
+        shared_beta = shared_beta.reshape(occ_beta.size, occ_beta.size - 1)
+        shared_beta = shared_beta.astype(int)
+        # using strides will make it faster
+        # strided = np.lib.stride_tricks.as_strided
+        # s0, s1 = shared.strides
+        # out = strided(
+        #     shared.ravel()[1:],
+        #     shape=(occ.size-1, occ.size),
+        #     strides=(s0 + s1, s1)
+        # ).reshape(occ.size, occ.size-1)
+
+        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
+        nspatial = self.nspin // 2
+        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+        sign_a = slater.sign_excite_array(
+            occ_indices, occ_alpha[:, None], vir_alpha[:, None], self.nspin
+        ).ravel()
+        sign_b = slater.sign_excite_array(
+            occ_indices, occ_beta[:, None] + nspatial, vir_beta[:, None] + nspatial, self.nspin
+        ).ravel()
+        sign = np.hstack([sign_a, sign_b])
+
+        one_electron_a = self.one_int[0][occ_alpha[:, np.newaxis], vir_alpha[np.newaxis, :]].ravel()
+        one_electron_b = self.one_int[1][occ_beta[:, np.newaxis], vir_beta[np.newaxis, :]].ravel()
+
+        coulomb_a = np.sum(
+            self.two_int[0][
+                shared_alpha[:, :, np.newaxis],
+                occ_alpha[:, np.newaxis, np.newaxis],
+                shared_alpha[:, :, np.newaxis],
+                vir_alpha[np.newaxis, np.newaxis, :],
+            ],
+            axis=1,
+        ).ravel()
+        coulomb_a += np.sum(
+            self.two_int[1][
+                occ_alpha[:, np.newaxis, np.newaxis],
+                occ_beta[np.newaxis, :, np.newaxis],
+                vir_alpha[np.newaxis, np.newaxis, :],
+                occ_beta[np.newaxis, :, np.newaxis],
+            ],
+            axis=1,
+        ).ravel()
+        coulomb_b = np.sum(
+            self.two_int[2][
+                shared_beta[:, :, np.newaxis],
+                occ_beta[:, np.newaxis, np.newaxis],
+                shared_beta[:, :, np.newaxis],
+                vir_beta[np.newaxis, np.newaxis, :],
+            ],
+            axis=1,
+        ).ravel()
+        coulomb_b += np.sum(
+            self.two_int[1][
+                occ_alpha[np.newaxis, :, np.newaxis],
+                occ_beta[:, np.newaxis, np.newaxis],
+                occ_alpha[np.newaxis, :, np.newaxis],
+                vir_beta[np.newaxis, np.newaxis, :],
+            ],
+            axis=1,
+        ).ravel()
+
+        exchange_a = -np.sum(
+            self.two_int[0][
+                shared_alpha[:, :, np.newaxis],
+                occ_alpha[:, np.newaxis, np.newaxis],
+                vir_alpha[np.newaxis, np.newaxis, :],
+                shared_alpha[:, :, np.newaxis],
+            ],
+            axis=1,
+        ).ravel()
+        exchange_b = -np.sum(
+            self.two_int[2][
+                shared_beta[:, :, np.newaxis],
+                occ_beta[:, np.newaxis, np.newaxis],
+                vir_beta[np.newaxis, np.newaxis, :],
+                shared_beta[:, :, np.newaxis],
+            ],
+            axis=1,
+        ).ravel()
+
+        return sign[None, :] * np.array(
+            [
+                np.hstack([one_electron_a, one_electron_b]),
+                np.hstack([coulomb_a, coulomb_b]),
+                np.hstack([exchange_a, exchange_b]),
+            ]
+        )
+
+    def _integrate_sd_sds_two(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
+        """Return the integrals of the given Slater determinant with its second order excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(3, M)
+            Integrals of the given Slater determinant with its second order excitations..
+            First index corresponds to the one-electron (first element), coulomb (second element),
+            and exchange (third element) energy.
+            Second index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=C0103
+        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
+        nspatial = self.nspin // 2
+        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+
+        sign, coulomb, exchange = [], [], []
+
+        # FIXME: use method in slater module
+        annihilators = np.array(list(it.combinations(occ_alpha, 2)))
+        a = annihilators[:, 0]
+        b = annihilators[:, 1]
+        creators = np.array(list(it.combinations(vir_alpha, 2)))
+        c = creators[:, 0]
+        d = creators[:, 1]
+
+        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
+        sign.append(
+            slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+        )
+        coulomb.append(self.two_int[0][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
+        exchange.append(-self.two_int[0][a[:, None], b[:, None], d[None, :], c[None, :]].ravel())
+
+        annihilators = np.array(list(it.product(occ_alpha, occ_beta)))
+        a = annihilators[:, 0]
+        b = annihilators[:, 1]
+        creators = np.array(list(it.product(vir_alpha, vir_beta)))
+        c = creators[:, 0]
+        d = creators[:, 1]
+
+        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
+        sign.append(
+            slater.sign_excite_array(
+                occ_indices,
+                np.array([a, b + nspatial]).T,
+                np.array([c, d + nspatial]).T,
+                self.nspin,
+            ).ravel()
+        )
+        coulomb.append(self.two_int[1][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
+        exchange.append(np.zeros(coulomb[-1].size))
+
+        annihilators = np.array(list(it.combinations(occ_beta, 2)))
+        a = annihilators[:, 0]
+        b = annihilators[:, 1]
+        creators = np.array(list(it.combinations(vir_beta, 2)))
+        c = creators[:, 0]
+        d = creators[:, 1]
+
+        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
+        sign.append(
+            slater.sign_excite_array(
+                occ_indices, annihilators + nspatial, creators + nspatial, self.nspin
+            ).ravel()
+        )
+        coulomb.append(self.two_int[2][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
+        exchange.append(-self.two_int[2][a[:, None], b[:, None], d[None, :], c[None, :]].ravel())
+
+        sign = np.hstack(sign)
+        coulomb = np.hstack(coulomb)
+        exchange = np.hstack(exchange)
+        return sign[None, :] * np.array([np.zeros(coulomb.size), coulomb, exchange])
