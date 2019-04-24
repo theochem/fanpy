@@ -2617,26 +2617,26 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             ]
         )
 
-    def _integrate_sd_sds_deriv_two(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
-        """Return derivative of integrals of given Slater determinant with its second excitations.
+    def _integrate_sd_sds_deriv_two_aaa(self, occ_alpha, occ_beta, vir_alpha):
+        """Return (alpha) derivatives of integrals of an SD and its (alpha) double excitations.
 
         Paramters
         ---------
         occ_alpha : np.ndarray(N_a,)
             Indices of the alpha spin orbitals that are occupied in the Slater determinant.
-        vir_alpha : np.ndarray(K-N_a,)
-            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
         occ_beta : np.ndarray(N_b,)
             Indices of the beta spin orbitals that are occupied in the Slater determinant.
-        vir_beta : np.ndarray(K-N_b,)
-            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
 
         Returns
         -------
-        integrals : np.ndarray(3, N_params, M)
-            Integrals of the given Slater determinant with its second order excitations.
-            First index corresponds to the one-electron (first element), coulomb (second element),
-            and exchange (third element) integrals.
+        integrals : np.ndarray(2, N_params, M)
+            Derivatives of the coulomb and exchange integrals (with respect to parameters associated
+            with alpha orbitals) of the given Slater determinant with its second order excitations
+            involving only alpha orbitals.
+            First index of the numpy array corresponds to the one-electron (first element), coulomb
+            (second elements), and exchange (third element) integrals.
             Second index corresponds to index of the parameter with respect to which the integral is
             derivatived.
             Third index corresponds to the second order excitations of the given Slater
@@ -2650,7 +2650,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # pylint: disable=R0915,C0103
         nspatial = self.nspin // 2
         all_alpha = np.arange(nspatial)
-        all_beta = np.arange(nspatial)
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -2872,6 +2871,54 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             c[None, None, :],  # c
         ]
 
+        triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
+        return sign_aa[None, None, :] * np.array(
+            [
+                coulomb_aa[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
+                exchange_aa[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
+            ]
+        )
+
+    def _integrate_sd_sds_deriv_two_aab(self, occ_alpha, occ_beta, vir_alpha, vir_beta):
+        """Return (alpha) derivatives of integrals of an SD and its (alpha beta) double excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(N_params, M)
+            Derivatives of the coulomb integrals (with respect to parameters associated with alpha
+            orbitals) of the given Slater determinant with its second order excitations involving
+            alpha and beta orbitals.
+            First index corresponds to index of the parameter with respect to which the integral is
+            derivatived.
+            Second index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=R0915,C0103
+        nspatial = self.nspin // 2
+        all_alpha = np.arange(nspatial)
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
+
         annihilators = np.array(list(it.product(occ_alpha, occ_beta)))
         a = annihilators[:, 0]
         b = annihilators[:, 1]
@@ -2890,7 +2937,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # excitation
         # the fourth index corresponds to the occupied orbital that will be created in the
         # excitation
-        coulomb_ab = np.zeros((2, nspatial, nspatial, a.size, c.size))
+        coulomb_ab = np.zeros((nspatial, nspatial, a.size, c.size))
 
         sign_ab = slater.sign_excite_array(
             occ_indices,
@@ -2911,7 +2958,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         # x == a
         coulomb_ab[
-            0,
             a[:, None, None],  # x
             all_alpha[None, :, None],  # y
             occ_array_indices[:, None, None],  # a, b (occupied index)
@@ -2922,22 +2968,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             c[None, None, :],  # c
             d[None, None, :],  # d
         ]
-        # x == b
-        coulomb_ab[
-            1,
-            b[:, None, None],  # x
-            all_beta[None, :, None],  # y
-            occ_array_indices[:, None, None],  # a, b (occupied index)
-            vir_array_indices[None, None, :],  # c, d (virtual index)
-        ] -= self.two_int[1][
-            a[:, None, None],  # a
-            all_beta[None, :, None],  # y
-            c[None, None, :],  # c
-            d[None, None, :],  # d
-        ]
         # x == c
         coulomb_ab[
-            0,
             c[None, None, :],  # x
             all_alpha[None, :, None],  # y
             occ_array_indices[:, None, None],  # a, b (occupied index)
@@ -2948,9 +2980,126 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             all_alpha[None, :, None],  # y
             d[None, None, :],  # d
         ]
-        # x == d
+
+        # y == a
         coulomb_ab[
-            1,
+            all_alpha[None, :, None],  # x
+            a[:, None, None],  # y
+            occ_array_indices[:, None, None],  # a, b (occupied index)
+            vir_array_indices[None, None, :],  # c, d (virtual index)
+        ] += self.two_int[1][
+            all_alpha[None, :, None],  # x
+            b[:, None, None],  # b
+            c[None, None, :],  # c
+            d[None, None, :],  # d
+        ]
+        # y == c
+        coulomb_ab[
+            all_alpha[None, :, None],  # x
+            c[None, None, :],  # y
+            occ_array_indices[:, None, None],  # a, b (occupied index)
+            vir_array_indices[None, None, :],  # c, d (virtual index)
+        ] += self.two_int[1][
+            a[:, None, None],  # a
+            b[:, None, None],  # b
+            all_alpha[None, :, None],  # x
+            d[None, None, :],  # d
+        ]
+
+        triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
+        return sign_ab[None, :] * coulomb_ab[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1)
+
+    def _integrate_sd_sds_deriv_two_bab(self, occ_alpha, occ_beta, vir_alpha, vir_beta):
+        """Return (beta) derivatives of integrals of an SD and its (alpha, beta) double excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(N_params, M)
+            Derivatives of the coulomb integrals (with respect to parameters associated with beta
+            orbitals) of the given Slater determinant with its second order excitations involving
+            alpha and beta orbitals.
+            First index corresponds to index of the parameter with respect to which the integral is
+            derivatived.
+            Second index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=R0915,C0103
+        nspatial = self.nspin // 2
+        all_beta = np.arange(nspatial)
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
+
+        annihilators = np.array(list(it.product(occ_alpha, occ_beta)))
+        a = annihilators[:, 0]
+        b = annihilators[:, 1]
+        creators = np.array(list(it.product(vir_alpha, vir_beta)))
+        c = creators[:, 0]
+        d = creators[:, 1]
+        occ_array_indices = np.arange(a.size)
+        vir_array_indices = np.arange(c.size)
+
+        # NOTE: here, we use the following convention for indices:
+        # the first index corresponds to the row index of the antihermitian matrix for orbital
+        # rotation
+        # the second index corresponds to the column index of the antihermitian matrix for orbital
+        # rotation
+        # the third index corresponds to the occupied orbital that will be annihilated in the
+        # excitation
+        # the fourth index corresponds to the occupied orbital that will be created in the
+        # excitation
+        coulomb_ba = np.zeros((nspatial, nspatial, b.size, d.size))
+
+        sign_ab = slater.sign_excite_array(
+            occ_indices,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(a, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(b, nspatial, to_beta=True),
+                ]
+            ).T,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(c, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(d, nspatial, to_beta=True),
+                ]
+            ).T,
+            self.nspin,
+        ).ravel()
+
+        # x == b
+        coulomb_ba[
+            b[:, None, None],  # x
+            all_beta[None, :, None],  # y
+            occ_array_indices[:, None, None],  # a, b (occupied index)
+            vir_array_indices[None, None, :],  # c, d (virtual index)
+        ] -= self.two_int[1][
+            a[:, None, None],  # a
+            all_beta[None, :, None],  # y
+            c[None, None, :],  # c
+            d[None, None, :],  # d
+        ]
+        # x == d
+        coulomb_ba[
             d[None, None, :],  # x
             all_beta[None, :, None],  # y
             occ_array_indices[:, None, None],  # a, b (occupied index)
@@ -2962,22 +3111,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             all_beta[None, :, None],  # y
         ]
 
-        # y == a
-        coulomb_ab[
-            0,
-            all_alpha[None, :, None],  # x
-            a[:, None, None],  # y
-            occ_array_indices[:, None, None],  # a, b (occupied index)
-            vir_array_indices[None, None, :],  # c, d (virtual index)
-        ] += self.two_int[1][
-            all_alpha[None, :, None],  # x
-            b[:, None, None],  # b
-            c[None, None, :],  # c
-            d[None, None, :],  # d
-        ]
         # y == b
-        coulomb_ab[
-            1,
+        coulomb_ba[
             all_beta[None, :, None],  # x
             b[:, None, None],  # y
             occ_array_indices[:, None, None],  # a, b (occupied index)
@@ -2988,22 +3123,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             c[None, None, :],  # c
             d[None, None, :],  # d
         ]
-        # y == c
-        coulomb_ab[
-            0,
-            all_alpha[None, :, None],  # x
-            c[None, None, :],  # y
-            occ_array_indices[:, None, None],  # a, b (occupied index)
-            vir_array_indices[None, None, :],  # c, d (virtual index)
-        ] += self.two_int[1][
-            a[:, None, None],  # a
-            b[:, None, None],  # b
-            all_alpha[None, :, None],  # x
-            d[None, None, :],  # d
-        ]
         # y == d
-        coulomb_ab[
-            1,
+        coulomb_ba[
             all_beta[None, :, None],  # x
             d[None, None, :],  # y
             occ_array_indices[:, None, None],  # a, b (occupied index)
@@ -3014,6 +3135,49 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             c[None, None, :],  # c
             all_beta[None, :, None],  # x
         ]
+
+        triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
+        return sign_ab[None, :] * coulomb_ba[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1)
+
+    def _integrate_sd_sds_deriv_two_bbb(self, occ_alpha, occ_beta, vir_beta):
+        """Return (beta) derivatives of integrals of an SD and its (beta) double excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(2, N_params, M)
+            Derivatives of the coulomb and exchange integrals (with respect to parameters associated
+            with beta orbitals) of the given Slater determinant with its second order excitations
+            involving only beta orbitals.
+            First index of the numpy array corresponds to the one-electron (first element), coulomb
+            (second elements), and exchange (third element) integrals.
+            Second index corresponds to index of the parameter with respect to which the integral is
+            derivatived.
+            Third index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=R0915,C0103
+        nspatial = self.nspin // 2
+        all_beta = np.arange(nspatial)
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
 
         annihilators = np.array(list(it.combinations(occ_beta, 2)))
         a = annihilators[:, 0]
@@ -3031,6 +3195,15 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             self.nspin,
         ).ravel()
 
+        # NOTE: here, we use the following convention for indices:
+        # the first index corresponds to the row index of the antihermitian matrix for orbital
+        # rotation of the beta orbitals
+        # the second index corresponds to the column index of the antihermitian matrix for orbital
+        # rotation of the beta orbitals
+        # the third index corresponds to the beta occupied orbitals that will be annihilated in the
+        # excitation
+        # the fourth index corresponds to the alpha occupied orbitals that will be created in the
+        # excitation
         coulomb_bb = np.zeros((nspatial, nspatial, a.size, c.size))
         exchange_bb = np.zeros((nspatial, nspatial, a.size, c.size))
 
@@ -3221,21 +3394,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         ]
 
         triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
-        return (
-            sign_aa[None, None, :]
-            * np.array(
-                [
-                    coulomb_aa[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
-                    exchange_aa[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
-                ]
-            ),
-            sign_ab[None, None, None, :]
-            * np.array([coulomb_ab[:, triu_rows, triu_cols, :, :].reshape(2, triu_rows.size, -1)]),
-            sign_bb[None, None, :]
-            * np.array(
-                [
-                    coulomb_bb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
-                    exchange_bb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
-                ]
-            ),
+        return sign_bb[None, None, :] * np.array(
+            [
+                coulomb_bb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
+                exchange_bb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
+            ]
         )
