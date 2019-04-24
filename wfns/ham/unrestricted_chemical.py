@@ -1218,26 +1218,24 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         return sign_b[None, :] * np.array([one_electron_b, coulomb_b, exchange_b])
 
-    def _integrate_sd_sds_two(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
-        """Return the integrals of the given Slater determinant with its second order excitations.
+    def _integrate_sd_sds_two_aa(self, occ_alpha, occ_beta, vir_alpha):
+        """Return the integrals of a Slater determinant with its second order (alpha) excitations.
 
         Paramters
         ---------
         occ_alpha : np.ndarray(N_a,)
             Indices of the alpha spin orbitals that are occupied in the Slater determinant.
-        vir_alpha : np.ndarray(K-N_a,)
-            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
         occ_beta : np.ndarray(N_b,)
             Indices of the beta spin orbitals that are occupied in the Slater determinant.
-        vir_beta : np.ndarray(K-N_b,)
-            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
 
         Returns
         -------
-        integrals : np.ndarray(3, M)
-            Integrals of the given Slater determinant with its second order excitations..
-            First index corresponds to the one-electron (first element), coulomb (second element),
-            and exchange (third element) energy.
+        integrals : np.ndarray(2, M)
+            Integrals of the given Slater determinant with its second order excitations involving
+            the alpha spin orbitals.
+            First index corresponds to the coulomb (index 0) and exchange (index 1) integrals.
             Second index corresponds to the second order excitations of the given Slater
             determinant. The excitations are ordered by the occupied orbital then the virtual
             orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
@@ -1255,8 +1253,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             ]
         )
 
-        sign, coulomb, exchange = [], [], []
-
         annihilators = np.array(list(it.combinations(occ_alpha, 2)))
         a = annihilators[:, 0]
         b = annihilators[:, 1]
@@ -1264,16 +1260,53 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        sign.append(
-            slater.sign_excite_array(
-                occ_indices,
-                slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=False),
-                slater.spatial_to_spin_indices(creators, nspatial, to_beta=False),
-                self.nspin,
-            ).ravel()
+        sign = slater.sign_excite_array(
+            occ_indices,
+            slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=False),
+            slater.spatial_to_spin_indices(creators, nspatial, to_beta=False),
+            self.nspin,
+        ).ravel()
+
+        coulomb = self.two_int[0][a[:, None], b[:, None], c[None, :], d[None, :]].ravel()
+        exchange = -self.two_int[0][a[:, None], b[:, None], d[None, :], c[None, :]].ravel()
+
+        return sign[None, :] * np.array([coulomb, exchange])
+
+    def _integrate_sd_sds_two_ab(self, occ_alpha, occ_beta, vir_alpha, vir_beta):
+        """Return the integrals of a SD with its second order (alpha and beta) excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(M,)
+            Coulomb integrals of the given Slater determinant with its second order excitations
+            involving both alpha and beta orbitals
+            Second index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=C0103
+        nspatial = self.nspin // 2
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
         )
-        coulomb.append(self.two_int[0][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
-        exchange.append(-self.two_int[0][a[:, None], b[:, None], d[None, :], c[None, :]].ravel())
 
         annihilators = np.array(list(it.product(occ_alpha, occ_beta)))
         a = annihilators[:, 0]
@@ -1282,26 +1315,60 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        sign.append(
-            slater.sign_excite_array(
-                occ_indices,
-                np.array(
-                    [
-                        slater.spatial_to_spin_indices(a, nspatial, to_beta=False),
-                        slater.spatial_to_spin_indices(b, nspatial, to_beta=True),
-                    ]
-                ).T,
-                np.array(
-                    [
-                        slater.spatial_to_spin_indices(c, nspatial, to_beta=False),
-                        slater.spatial_to_spin_indices(d, nspatial, to_beta=True),
-                    ]
-                ).T,
-                self.nspin,
-            ).ravel()
+        sign = slater.sign_excite_array(
+            occ_indices,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(a, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(b, nspatial, to_beta=True),
+                ]
+            ).T,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(c, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(d, nspatial, to_beta=True),
+                ]
+            ).T,
+            self.nspin,
+        ).ravel()
+        coulomb = self.two_int[1][a[:, None], b[:, None], c[None, :], d[None, :]].ravel()
+
+        return sign * coulomb
+
+    def _integrate_sd_sds_two_bb(self, occ_alpha, occ_beta, vir_beta):
+        """Return the integrals of a Slater determinant with its second order (beta) excitations.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(2, M)
+            Integrals of the given Slater determinant with its second order excitations involving
+            the beta spin orbitals.
+            First index corresponds to the coulomb (index 0) and exchange (index 1) integrals.
+            Second index corresponds to the second order excitations of the given Slater
+            determinant. The excitations are ordered by the occupied orbital then the virtual
+            orbital. For example, given occupied orbitals [1, 2, 3] and virtual orbitals [4, 5, 6],
+            the ordering of the excitations would be [(1, 2, 4, 5), (1, 2, 4, 6), (1, 2, 5, 6), (1,
+            3, 4, 5), (1, 3, 4, 6), (1, 3, 5, 6), (2, 3, 4, 5), (2, 3, 4, 6), (2, 3, 5, 6)]. `M` is
+            the number of first order excitations of the given Slater determinants.
+
+        """
+        # pylint: disable=C0103
+        nspatial = self.nspin // 2
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
         )
-        coulomb.append(self.two_int[1][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
-        exchange.append(np.zeros(coulomb[-1].size))
 
         annihilators = np.array(list(it.combinations(occ_beta, 2)))
         a = annihilators[:, 0]
@@ -1310,21 +1377,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        sign.append(
-            slater.sign_excite_array(
-                occ_indices,
-                slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=True),
-                slater.spatial_to_spin_indices(creators, nspatial, to_beta=True),
-                self.nspin,
-            ).ravel()
-        )
-        coulomb.append(self.two_int[2][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
-        exchange.append(-self.two_int[2][a[:, None], b[:, None], d[None, :], c[None, :]].ravel())
+        sign = slater.sign_excite_array(
+            occ_indices,
+            slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=True),
+            slater.spatial_to_spin_indices(creators, nspatial, to_beta=True),
+            self.nspin,
+        ).ravel()
+        coulomb = self.two_int[2][a[:, None], b[:, None], c[None, :], d[None, :]].ravel()
+        exchange = -self.two_int[2][a[:, None], b[:, None], d[None, :], c[None, :]].ravel()
 
-        sign = np.hstack(sign)
-        coulomb = np.hstack(coulomb)
-        exchange = np.hstack(exchange)
-        return sign[None, :] * np.array([np.zeros(coulomb.size), coulomb, exchange])
+        return sign[None, :] * np.array([coulomb, exchange])
 
     def _integrate_sd_sds_deriv_zero(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
         """Return the derivative of the integrals of the given Slater determinant with itself.
