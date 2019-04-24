@@ -672,8 +672,8 @@ def test_integrate_sd_sds_two_bb():
     )
 
 
-def test_integrate_sd_sds_deriv_zero():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_zero.
+def test_integrate_sd_sds_deriv_zero_alpha():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_zero_alpha.
 
     Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_zero.
 
@@ -699,14 +699,53 @@ def test_integrate_sd_sds_deriv_zero():
     occ_alpha = np.array([0, 3, 4])
     occ_beta = np.array([0, 2, 3, 5])
     vir_alpha = np.array([1, 2, 5])
-    vir_beta = np.array([1, 4])
     assert np.allclose(
-        test_ham._integrate_sd_sds_deriv_zero(occ_alpha, vir_alpha, occ_beta, vir_beta),
+        test_ham._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha),
         np.array(
             [
                 [
-                    test_ham._integrate_sd_sd_deriv_zero(spin_ind, x, y, occ_alpha, occ_beta)
-                    for spin_ind in range(2)
+                    test_ham._integrate_sd_sd_deriv_zero(0, x, y, occ_alpha, occ_beta)
+                    for x in range(5)
+                    for y in range(x + 1, 6)
+                ]
+            ]
+        ).T,
+    )
+
+
+def test_integrate_sd_sds_deriv_zero_beta():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_zero_beta.
+
+    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_zero.
+
+    """
+    one_int_a = np.random.rand(6, 6)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(6, 6)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(6, 6, 6, 6)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(6, 6, 6, 6)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(6, 6, 6, 6)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    test_ham = UnrestrictedChemicalHamiltonian(
+        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
+    )
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_beta = np.array([1, 4])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_zero_beta(occ_alpha, occ_beta, vir_beta),
+        np.array(
+            [
+                [
+                    test_ham._integrate_sd_sd_deriv_zero(1, x, y, occ_alpha, occ_beta)
                     for x in range(5)
                     for y in range(x + 1, 6)
                 ]
