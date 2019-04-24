@@ -1098,11 +1098,18 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
         shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
-        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         nspatial = self.nspin // 2
-        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
         sign_a = slater.sign_excite_array(
-            occ_indices, occ_alpha[:, None], vir_alpha[:, None], self.nspin
+            occ_indices,
+            slater.spatial_to_spin_indices(occ_alpha[:, None], nspatial, to_beta=False),
+            slater.spatial_to_spin_indices(vir_alpha[:, None], nspatial, to_beta=False),
+            self.nspin,
         ).ravel()
         sign_b = slater.sign_excite_array(
             occ_indices, occ_beta[:, None] + nspatial, vir_beta[:, None] + nspatial, self.nspin
@@ -1205,13 +1212,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         nspatial = self.nspin // 2
-        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
 
         sign, coulomb, exchange = [], [], []
 
-        # FIXME: use method in slater module
         annihilators = np.array(list(it.combinations(occ_alpha, 2)))
         a = annihilators[:, 0]
         b = annihilators[:, 1]
@@ -1219,9 +1229,13 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         sign.append(
-            slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+            slater.sign_excite_array(
+                occ_indices,
+                slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(creators, nspatial, to_beta=False),
+                self.nspin,
+            ).ravel()
         )
         coulomb.append(self.two_int[0][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
         exchange.append(-self.two_int[0][a[:, None], b[:, None], d[None, :], c[None, :]].ravel())
@@ -1233,12 +1247,21 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         sign.append(
             slater.sign_excite_array(
                 occ_indices,
-                np.array([a, b + nspatial]).T,
-                np.array([c, d + nspatial]).T,
+                np.array(
+                    [
+                        slater.spatial_to_spin_indices(a, nspatial, to_beta=False),
+                        slater.spatial_to_spin_indices(b, nspatial, to_beta=True),
+                    ]
+                ).T,
+                np.array(
+                    [
+                        slater.spatial_to_spin_indices(c, nspatial, to_beta=False),
+                        slater.spatial_to_spin_indices(d, nspatial, to_beta=True),
+                    ]
+                ).T,
                 self.nspin,
             ).ravel()
         )
@@ -1252,10 +1275,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         sign.append(
             slater.sign_excite_array(
-                occ_indices, annihilators + nspatial, creators + nspatial, self.nspin
+                occ_indices,
+                slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=True),
+                slater.spatial_to_spin_indices(creators, nspatial, to_beta=True),
+                self.nspin,
             ).ravel()
         )
         coulomb.append(self.two_int[2][a[:, None], b[:, None], c[None, :], d[None, :]].ravel())
@@ -1503,11 +1528,15 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915
-        # FIXME: hardcoded slater determinant structure
         nspatial = self.nspin // 2
         all_alpha = np.arange(nspatial)
         all_beta = np.arange(nspatial)
-        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
         occ_alpha_array_indices = np.arange(occ_alpha.size)
         vir_alpha_array_indices = np.arange(vir_alpha.size)
         occ_beta_array_indices = np.arange(occ_beta.size)
@@ -1517,10 +1546,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
         sign_a = slater.sign_excite_array(
-            occ_indices, occ_alpha[:, None], vir_alpha[:, None], self.nspin
+            occ_indices,
+            slater.spatial_to_spin_indices(occ_alpha[:, None], nspatial, to_beta=False),
+            slater.spatial_to_spin_indices(vir_alpha[:, None], nspatial, to_beta=False),
+            self.nspin,
         ).ravel()
         sign_b = slater.sign_excite_array(
-            occ_indices, occ_beta[:, None] + nspatial, vir_beta[:, None] + nspatial, self.nspin
+            occ_indices,
+            slater.spatial_to_spin_indices(occ_beta[:, None], nspatial, to_beta=True),
+            slater.spatial_to_spin_indices(vir_beta[:, None], nspatial, to_beta=True),
+            self.nspin,
         ).ravel()
 
         # NOTE: here, we use the following convention for indices:
@@ -2283,13 +2318,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915,C0103
-        # FIXME: hardcoded slater determinant structure
         nspatial = self.nspin // 2
         all_alpha = np.arange(nspatial)
         all_beta = np.arange(nspatial)
-        occ_indices = np.hstack([occ_alpha, occ_beta + nspatial])
+        occ_indices = np.hstack(
+            [
+                slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
+                slater.spatial_to_spin_indices(occ_beta, nspatial, to_beta=True),
+            ]
+        )
 
-        # FIXME: use method in slater module
         annihilators = np.array(list(it.combinations(occ_alpha, 2)))
         a = annihilators[:, 0]
         b = annihilators[:, 1]
@@ -2311,7 +2349,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         coulomb_aa = np.zeros((nspatial, nspatial, a.size, c.size))
         exchange_aa = np.zeros((nspatial, nspatial, a.size, c.size))
 
-        sign_aa = slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+        sign_aa = slater.sign_excite_array(
+            occ_indices,
+            slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=False),
+            slater.spatial_to_spin_indices(creators, nspatial, to_beta=False),
+            self.nspin,
+        ).ravel()
 
         # x == a
         coulomb_aa[
@@ -2520,7 +2563,20 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         coulomb_ab = np.zeros((2, nspatial, nspatial, a.size, c.size))
 
         sign_ab = slater.sign_excite_array(
-            occ_indices, np.array([a, b + nspatial]).T, np.array([c, d + nspatial]).T, self.nspin
+            occ_indices,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(a, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(b, nspatial, to_beta=True),
+                ]
+            ).T,
+            np.array(
+                [
+                    slater.spatial_to_spin_indices(c, nspatial, to_beta=False),
+                    slater.spatial_to_spin_indices(d, nspatial, to_beta=True),
+                ]
+            ).T,
+            self.nspin,
         ).ravel()
 
         # x == a
@@ -2639,7 +2695,10 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         vir_array_indices = np.arange(c.size)
 
         sign_bb = slater.sign_excite_array(
-            occ_indices, annihilators + nspatial, creators + nspatial, self.nspin
+            occ_indices,
+            slater.spatial_to_spin_indices(annihilators, nspatial, to_beta=True),
+            slater.spatial_to_spin_indices(creators, nspatial, to_beta=True),
+            self.nspin,
         ).ravel()
 
         coulomb_bb = np.zeros((nspatial, nspatial, a.size, c.size))
