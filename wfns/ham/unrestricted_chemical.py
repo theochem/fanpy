@@ -1388,37 +1388,32 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         return sign[None, :] * np.array([coulomb, exchange])
 
-    def _integrate_sd_sds_deriv_zero(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
-        """Return the derivative of the integrals of the given Slater determinant with itself.
+    def _integrate_sd_sds_deriv_zero_alpha(self, occ_alpha, occ_beta, vir_alpha):
+        """Return the derivative wrt alpha parameters of the integrals of the given SD with itself.
 
         Paramters
         ---------
         occ_alpha : np.ndarray(N_a,)
             Indices of the alpha spin orbitals that are occupied in the Slater determinant.
-        vir_alpha : np.ndarray(K-N_a,)
-            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
         occ_beta : np.ndarray(N_b,)
             Indices of the beta spin orbitals that are occupied in the Slater determinant.
-        vir_beta : np.ndarray(K-N_b,)
-            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+        vir_alpha : np.ndarray(K-N_a,)
+            Indices of the alpha spin orbitals that are not occupied in the Slater determinant.
 
         Returns
         -------
         integrals : np.ndarray(3, N_params, 1)
-            Integrals of the given Slater determinant with itself.
+            Derivatives of the integrals of the given Slater determinant with itself with respect to
+            the parameters that correspond to the alpha orbitals.
             First index corresponds to the one-electron (first element), coulomb (second element),
             and exchange (third element) integrals.
             Second index corresponds to index of the parameter with respect to which the integral is
             derivatived.
 
         """
-        # FIXME: hardcoded slater determinant structure
         nspatial = self.nspin // 2
         all_alpha = np.arange(nspatial)
-        all_beta = np.arange(nspatial)
-        # FIXME: move into the slater module?
         shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
-        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
         # NOTE: here, we use the following convention for indices:
         # the first index corresponds to the row index of the antihermitian matrix for orbital
@@ -1426,23 +1421,16 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # the second index corresponds to the column index of the antihermitian matrix for orbital
         # rotation
         one_electron_a = np.zeros((nspatial, nspatial))
-        one_electron_b = np.zeros((nspatial, nspatial))
         coulomb_a = np.zeros((nspatial, nspatial))
-        coulomb_b = np.zeros((nspatial, nspatial))
         exchange_a = np.zeros((nspatial, nspatial))
-        exchange_b = np.zeros((nspatial, nspatial))
 
         # NOTE: if both x and y are occupied these cancel each other out
-        for array, spin_ind, occ_inds, vir_inds in (
-            (one_electron_a, 0, occ_alpha, vir_alpha),
-            (one_electron_b, 1, occ_beta, vir_beta),
-        ):
-            array[occ_inds[:, None], vir_inds[None, :]] -= 2 * np.real(
-                self.one_int[spin_ind][occ_inds[:, None], vir_inds[None, :]]
-            )
-            array[vir_inds[:, None], occ_inds[None, :]] += 2 * np.real(
-                self.one_int[spin_ind][vir_inds[:, None], occ_inds[None, :]]
-            )
+        one_electron_a[occ_alpha[:, None], vir_alpha[None, :]] -= 2 * np.real(
+            self.one_int[0][occ_alpha[:, None], vir_alpha[None, :]]
+        )
+        one_electron_a[vir_alpha[:, None], occ_alpha[None, :]] += 2 * np.real(
+            self.one_int[0][vir_alpha[:, None], occ_alpha[None, :]]
+        )
 
         # if x is occupied and alpha
         coulomb_a[occ_alpha[:, None], all_alpha[None, :]] -= 2 * np.sum(
@@ -1486,52 +1474,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                     occ_beta[None, :, None],  # shared beta no y
                     occ_alpha[None, None, :],  # y
                     occ_beta[None, :, None],  # shared beta no y
-                ]
-            ),
-            axis=1,
-        )
-        # if x is occupied and beta
-        coulomb_b[occ_beta[:, None], all_beta[None, :]] -= 2 * np.sum(
-            np.real(
-                self.two_int[2][
-                    occ_beta[:, None, None],  # x
-                    shared_beta[:, :, None],  # shared beta no x
-                    all_beta[None, None, :],  # y
-                    shared_beta[:, :, None],  # shared beta no x
-                ]
-            ),
-            axis=1,
-        )
-        coulomb_b[occ_beta[:, None], all_beta[None, :]] -= 2 * np.sum(
-            np.real(
-                self.two_int[1][
-                    occ_alpha[None, :, None],  # shared alpha no x
-                    occ_beta[:, None, None],  # x
-                    occ_alpha[None, :, None],  # shared alpha no x
-                    all_beta[None, None, :],  # y
-                ]
-            ),
-            axis=1,
-        )
-        # if y is occupied and beta
-        coulomb_b[all_beta[:, None], occ_beta[None, :]] += 2 * np.sum(
-            np.real(
-                self.two_int[2][
-                    all_beta[:, None, None],  # x
-                    shared_beta.T[None, :, :],  # shared beta no y
-                    occ_beta[None, None, :],  # y
-                    shared_beta.T[None, :, :],  # shared beta no y
-                ]
-            ),
-            axis=1,
-        )
-        coulomb_b[all_beta[:, None], occ_beta[None, :]] += 2 * np.sum(
-            np.real(
-                self.two_int[1][
-                    occ_alpha[None, :, None],  # shared alpha no y
-                    all_beta[:, None, None],  # x
-                    occ_alpha[None, :, None],  # shared alpha no y
-                    occ_beta[None, None, :],  # y
                 ]
             ),
             axis=1,
@@ -1561,6 +1503,103 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             ),
             axis=1,
         )
+
+        triu_indices = np.triu_indices(nspatial, k=1)
+        return np.array(
+            [one_electron_a[triu_indices], coulomb_a[triu_indices], exchange_a[triu_indices]]
+        )[:, :, None]
+
+    def _integrate_sd_sds_deriv_zero_beta(self, occ_alpha, occ_beta, vir_beta):
+        """Return the derivative wrt beta parameters of the integrals of the given SD with itself.
+
+        Paramters
+        ---------
+        occ_alpha : np.ndarray(N_a,)
+            Indices of the alpha spin orbitals that are occupied in the Slater determinant.
+        occ_beta : np.ndarray(N_b,)
+            Indices of the beta spin orbitals that are occupied in the Slater determinant.
+        vir_beta : np.ndarray(K-N_b,)
+            Indices of the beta spin orbitals that are not occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : np.ndarray(3, N_params, 1)
+            Derivatives of the integrals of the given Slater determinant with itself with respect to
+            the parameters that correspond to the beta orbitals.
+            First index corresponds to the one-electron (first element), coulomb (second element),
+            and exchange (third element) integrals.
+            Second index corresponds to index of the parameter with respect to which the integral is
+            derivatived.
+
+        """
+        nspatial = self.nspin // 2
+        all_beta = np.arange(nspatial)
+        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
+
+        # NOTE: here, we use the following convention for indices:
+        # the first index corresponds to the row index of the antihermitian matrix for orbital
+        # rotation
+        # the second index corresponds to the column index of the antihermitian matrix for orbital
+        # rotation
+        one_electron_b = np.zeros((nspatial, nspatial))
+        coulomb_b = np.zeros((nspatial, nspatial))
+        exchange_b = np.zeros((nspatial, nspatial))
+
+        # NOTE: if both x and y are occupied these cancel each other out
+        one_electron_b[occ_beta[:, None], vir_beta[None, :]] -= 2 * np.real(
+            self.one_int[1][occ_beta[:, None], vir_beta[None, :]]
+        )
+        one_electron_b[vir_beta[:, None], occ_beta[None, :]] += 2 * np.real(
+            self.one_int[1][vir_beta[:, None], occ_beta[None, :]]
+        )
+
+        # if x is occupied and beta
+        coulomb_b[occ_beta[:, None], all_beta[None, :]] -= 2 * np.sum(
+            np.real(
+                self.two_int[2][
+                    occ_beta[:, None, None],  # x
+                    shared_beta[:, :, None],  # shared beta no x
+                    all_beta[None, None, :],  # y
+                    shared_beta[:, :, None],  # shared beta no x
+                ]
+            ),
+            axis=1,
+        )
+        coulomb_b[occ_beta[:, None], all_beta[None, :]] -= 2 * np.sum(
+            np.real(
+                self.two_int[1][
+                    occ_alpha[None, :, None],  # shared alpha no x
+                    occ_beta[:, None, None],  # x
+                    occ_alpha[None, :, None],  # shared alpha no x
+                    all_beta[None, None, :],  # y
+                ]
+            ),
+            axis=1,
+        )
+        # if y is occupied and beta
+        coulomb_b[all_beta[:, None], occ_beta[None, :]] += 2 * np.sum(
+            np.real(
+                self.two_int[2][
+                    all_beta[:, None, None],  # x
+                    shared_beta.T[None, :, :],  # shared beta no y
+                    occ_beta[None, None, :],  # y
+                    shared_beta.T[None, :, :],  # shared beta no y
+                ]
+            ),
+            axis=1,
+        )
+        coulomb_b[all_beta[:, None], occ_beta[None, :]] += 2 * np.sum(
+            np.real(
+                self.two_int[1][
+                    occ_alpha[None, :, None],  # shared alpha no y
+                    all_beta[:, None, None],  # x
+                    occ_alpha[None, :, None],  # shared alpha no y
+                    occ_beta[None, None, :],  # y
+                ]
+            ),
+            axis=1,
+        )
+
         # if x is occupied and beta
         exchange_b[occ_beta[:, None], all_beta[None, :]] += 2 * np.sum(
             np.real(
@@ -1588,11 +1627,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         triu_indices = np.triu_indices(nspatial, k=1)
         return np.array(
-            [
-                np.hstack([one_electron_a[triu_indices], one_electron_b[triu_indices]]),
-                np.hstack([coulomb_a[triu_indices], coulomb_b[triu_indices]]),
-                np.hstack([exchange_a[triu_indices], exchange_b[triu_indices]]),
-            ]
+            [one_electron_b[triu_indices], coulomb_b[triu_indices], exchange_b[triu_indices]]
         )[:, :, None]
 
     def _integrate_sd_sds_deriv_one(self, occ_alpha, vir_alpha, occ_beta, vir_beta):
