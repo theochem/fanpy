@@ -674,19 +674,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             `M` is the number of first order excitations of the given Slater determinants.
 
         """
-        # FIXME: move into the slater module?
-        shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
-        shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
-        shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
-        shared_indices = shared_indices.astype(int)
-        # using strides will make it faster
-        # strided = np.lib.stride_tricks.as_strided
-        # s0, s1 = shared.strides
-        # out = strided(
-        #     shared.ravel()[1:],
-        #     shape=(occ.size-1, occ.size),
-        #     strides=(s0 + s1, s1)
-        # ).reshape(occ.size, occ.size-1)
+        shared_indices = slater.shared_indices_remove_one_index(occ_indices)
 
         sign = slater.sign_excite_array(
             occ_indices, occ_indices[:, None], vir_indices[:, None], self.nspin
@@ -773,10 +761,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             derivatived.
 
         """
-        shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
-        shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
-        shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
-        shared_indices = shared_indices.astype(int)
+        shared_indices = slater.shared_indices_remove_one_index(occ_indices)
 
         # NOTE: here, we use the following convention for indices:
         # the first index corresponds to the row index of the antihermitian matrix for orbital
@@ -923,10 +908,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             `M` is the number of first order excitations of the given Slater determinants.
 
         """
-        shared_indices = np.tile(occ_indices, [occ_indices.size, 1])
-        shared_indices = shared_indices[~np.identity(occ_indices.size, dtype=bool)]
-        shared_indices = shared_indices.reshape(occ_indices.size, occ_indices.size - 1)
-        shared_indices = shared_indices.astype(int)
+        shared_indices = slater.shared_indices_remove_one_index(occ_indices)
         all_indices = np.arange(self.nspin)
 
         sign = slater.sign_excite_array(

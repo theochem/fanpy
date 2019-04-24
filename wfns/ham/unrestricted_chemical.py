@@ -1095,24 +1095,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             excitations of the given Slater determinants.
 
         """
-        # FIXME: move into the slater module?
-        shared_alpha = np.tile(occ_alpha, [occ_alpha.size, 1])
-        shared_alpha = shared_alpha[~np.identity(occ_alpha.size, dtype=bool)]
-        shared_alpha = shared_alpha.reshape(occ_alpha.size, occ_alpha.size - 1)
-        shared_alpha = shared_alpha.astype(int)
-
-        shared_beta = np.tile(occ_beta, [occ_beta.size, 1])
-        shared_beta = shared_beta[~np.identity(occ_beta.size, dtype=bool)]
-        shared_beta = shared_beta.reshape(occ_beta.size, occ_beta.size - 1)
-        shared_beta = shared_beta.astype(int)
-        # using strides will make it faster
-        # strided = np.lib.stride_tricks.as_strided
-        # s0, s1 = shared.strides
-        # out = strided(
-        #     shared.ravel()[1:],
-        #     shape=(occ.size-1, occ.size),
-        #     strides=(s0 + s1, s1)
-        # ).reshape(occ.size, occ.size-1)
+        shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
+        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
         # FIXME: hardcoded Slater determinant structure. need to call function from slater module
         nspatial = self.nspin // 2
@@ -1311,23 +1295,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         all_alpha = np.arange(nspatial)
         all_beta = np.arange(nspatial)
         # FIXME: move into the slater module?
-        shared_alpha = np.tile(occ_alpha, [occ_alpha.size, 1])
-        shared_alpha = shared_alpha[~np.identity(occ_alpha.size, dtype=bool)]
-        shared_alpha = shared_alpha.reshape(occ_alpha.size, occ_alpha.size - 1)
-        shared_alpha = shared_alpha.astype(int)
-
-        shared_beta = np.tile(occ_beta, [occ_beta.size, 1])
-        shared_beta = shared_beta[~np.identity(occ_beta.size, dtype=bool)]
-        shared_beta = shared_beta.reshape(occ_beta.size, occ_beta.size - 1)
-        shared_beta = shared_beta.astype(int)
-        # using strides will make it faster
-        # strided = np.lib.stride_tricks.as_strided
-        # s0, s1 = shared.strides
-        # out = strided(
-        #     shared.ravel()[1:],
-        #     shape=(occ.size-1, occ.size),
-        #     strides=(s0 + s1, s1)
-        # ).reshape(occ.size, occ.size-1)
+        shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
+        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
         # NOTE: here, we use the following convention for indices:
         # the first index corresponds to the row index of the antihermitian matrix for orbital
@@ -1544,24 +1513,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         occ_beta_array_indices = np.arange(occ_beta.size)
         vir_beta_array_indices = np.arange(vir_beta.size)
 
-        # FIXME: move into the slater module?
-        shared_alpha = np.tile(occ_alpha, [occ_alpha.size, 1])
-        shared_alpha = shared_alpha[~np.identity(occ_alpha.size, dtype=bool)]
-        shared_alpha = shared_alpha.reshape(occ_alpha.size, occ_alpha.size - 1)
-        shared_alpha = shared_alpha.astype(int)
-
-        shared_beta = np.tile(occ_beta, [occ_beta.size, 1])
-        shared_beta = shared_beta[~np.identity(occ_beta.size, dtype=bool)]
-        shared_beta = shared_beta.reshape(occ_beta.size, occ_beta.size - 1)
-        shared_beta = shared_beta.astype(int)
-        # using strides will make it faster
-        # strided = np.lib.stride_tricks.as_strided
-        # s0, s1 = shared.strides
-        # out = strided(
-        #     shared.ravel()[1:],
-        #     shape=(occ.size-1, occ.size),
-        #     strides=(s0 + s1, s1)
-        # ).reshape(occ.size, occ.size-1)
+        shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
+        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
         sign_a = slater.sign_excite_array(
             occ_indices, occ_alpha[:, None], vir_alpha[:, None], self.nspin
