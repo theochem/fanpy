@@ -656,7 +656,6 @@ def test_integrate_sd_sds_two_bb():
 
     occ_alpha = np.array([0, 3, 4])
     occ_beta = np.array([0, 2, 3, 5])
-    vir_alpha = np.array([1, 2, 5])
     vir_beta = np.array([1, 4])
 
     assert np.allclose(
@@ -947,8 +946,52 @@ def test_integrate_sd_sds_deriv_one_bb():
     )
 
 
-def test_integrate_sd_sds_deriv_two():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two.
+def test_integrate_sd_sds_deriv_two_aaa():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_aaa.
+
+    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int_a = np.random.rand(6, 6)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(6, 6)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(6, 6, 6, 6)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(6, 6, 6, 6)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(6, 6, 6, 6)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    test_ham = UnrestrictedChemicalHamiltonian(
+        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
+    )
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_alpha = np.array([1, 2, 5])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_two_aaa(occ_alpha, occ_beta, vir_alpha),
+        np.array(
+            [
+                [
+                    np.array(test_ham._integrate_sd_sd_deriv_two(diff1, diff2, 0, x, y))
+                    * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
+                    for x in range(5)
+                    for y in range(x + 1, 6)
+                ]
+                for diff1 in it.combinations(occ_alpha.tolist(), 2)
+                for diff2 in it.combinations(vir_alpha.tolist(), 2)
+            ]
+        ).T[[1, 2]],
+    )
+
+
+def test_integrate_sd_sds_deriv_two_aab():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_aab.
 
     Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
 
@@ -976,22 +1019,7 @@ def test_integrate_sd_sds_deriv_two():
     vir_alpha = np.array([1, 2, 5])
     vir_beta = np.array([1, 4])
     assert np.allclose(
-        test_ham._integrate_sd_sds_deriv_two(occ_alpha, vir_alpha, occ_beta, vir_beta)[0],
-        np.array(
-            [
-                [
-                    np.array(test_ham._integrate_sd_sd_deriv_two(diff1, diff2, 0, x, y))
-                    * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
-                    for x in range(5)
-                    for y in range(x + 1, 6)
-                ]
-                for diff1 in it.combinations(occ_alpha.tolist(), 2)
-                for diff2 in it.combinations(vir_alpha.tolist(), 2)
-            ]
-        ).T[[1, 2]],
-    )
-    assert np.allclose(
-        test_ham._integrate_sd_sds_deriv_two(occ_alpha, vir_alpha, occ_beta, vir_beta)[1][0, 0],
+        test_ham._integrate_sd_sds_deriv_two_aab(occ_alpha, occ_beta, vir_alpha, vir_beta),
         np.array(
             [
                 [
@@ -1005,8 +1033,38 @@ def test_integrate_sd_sds_deriv_two():
             ]
         ).T[1],
     )
+
+
+def test_integrate_sd_sds_deriv_two_bab():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_bab.
+
+    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int_a = np.random.rand(6, 6)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(6, 6)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(6, 6, 6, 6)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(6, 6, 6, 6)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(6, 6, 6, 6)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    test_ham = UnrestrictedChemicalHamiltonian(
+        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
+    )
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_alpha = np.array([1, 2, 5])
+    vir_beta = np.array([1, 4])
     assert np.allclose(
-        test_ham._integrate_sd_sds_deriv_two(occ_alpha, vir_alpha, occ_beta, vir_beta)[1][0, 1],
+        test_ham._integrate_sd_sds_deriv_two_bab(occ_alpha, occ_beta, vir_alpha, vir_beta),
         np.array(
             [
                 [
@@ -1020,8 +1078,37 @@ def test_integrate_sd_sds_deriv_two():
             ]
         ).T[1],
     )
+
+
+def test_integrate_sd_sds_deriv_two_bbb():
+    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_bbb.
+
+    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int_a = np.random.rand(6, 6)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(6, 6)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(6, 6, 6, 6)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(6, 6, 6, 6)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(6, 6, 6, 6)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    test_ham = UnrestrictedChemicalHamiltonian(
+        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
+    )
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_beta = np.array([1, 4])
     assert np.allclose(
-        test_ham._integrate_sd_sds_deriv_two(occ_alpha, vir_alpha, occ_beta, vir_beta)[2],
+        test_ham._integrate_sd_sds_deriv_two_bbb(occ_alpha, occ_beta, vir_beta),
         np.array(
             [
                 [
@@ -1035,33 +1122,6 @@ def test_integrate_sd_sds_deriv_two():
             ]
         ).T[[1, 2]],
     )
-    assert np.allclose(
-        0,
-        np.array(
-            [
-                [
-                    np.array(test_ham._integrate_sd_sd_deriv_two(diff1, diff2, 0, x, y))
-                    * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
-                    for x in range(5)
-                    for y in range(x + 1, 6)
-                ]
-                for diff1 in it.combinations(occ_alpha.tolist(), 2)
-                for diff2 in it.combinations(vir_alpha.tolist(), 2)
-            ]
-        ).T[0],
     )
     assert np.allclose(
-        0,
-        np.array(
-            [
-                [
-                    np.array(test_ham._integrate_sd_sd_deriv_two(diff1, diff2, 1, x, y))
-                    * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
-                    for x in range(5)
-                    for y in range(x + 1, 6)
-                ]
-                for diff1 in it.combinations((occ_beta + 6).tolist(), 2)
-                for diff2 in it.combinations((vir_beta + 6).tolist(), 2)
-            ]
-        ).T[0],
     )
