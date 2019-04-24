@@ -613,3 +613,11 @@ def test_sign_excite_array():
                     for j in it.combinations(vir_indices.tolist(), k)
                 ]
                 assert np.allclose(sign, ref)
+
+
+def test_shared_indices_remove_one_index():
+    """Test slater.shared_indices_remove_one_index."""
+    assert np.allclose(
+        slater.shared_indices_remove_one_index(np.array([0, 3, 5, 6, 7])),
+        np.array([[3, 5, 6, 7], [0, 5, 6, 7], [0, 3, 6, 7], [0, 3, 5, 7], [0, 3, 5, 6]]),
+    )

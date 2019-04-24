@@ -1051,3 +1051,26 @@ def sign_excite_array(occs, annihilators, creators, nspin):
     # being applied first
     sign *= (-1) ** (creators.shape[1] // 2 % 2)
     return sign
+
+
+def shared_indices_remove_one_index(indices):
+    """Return the indices where one index is removed.
+
+    Parameters
+    ----------
+    indices : np.ndarray(N,)
+        Indices of the orbitals.
+
+    Returns
+    -------
+    shared_indices : np.ndarray(N, N-1)
+        Indices where one of the indices are removed.
+        First index of the array is the index of the element removed.
+        Second index of the array is the elements are not removed.
+
+    """
+    shared_indices = np.tile(indices, [indices.size, 1])
+    shared_indices = shared_indices[~np.identity(indices.size, dtype=bool)]
+    shared_indices = shared_indices.reshape(indices.size, max(indices.size - 1, 0))
+    shared_indices = shared_indices.astype(int)
+    return shared_indices
