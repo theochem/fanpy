@@ -2051,8 +2051,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         occ_alpha_array_indices = np.arange(occ_alpha.size)
         vir_alpha_array_indices = np.arange(vir_alpha.size)
 
-        shared_beta = slater.shared_indices_remove_one_index(occ_beta)
-
         sign_a = slater.sign_excite_array(
             occ_indices,
             slater.spatial_to_spin_indices(occ_alpha[:, None], nspatial, to_beta=False),
@@ -2074,49 +2072,49 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         #
         coulomb_ba[
-            shared_beta[:, :, None, None, None],  # x
+            occ_beta[:, None, None, None],  # x
             all_beta[None, None, None, :, None],  # y
             occ_alpha_array_indices[None, None, :, None, None],  # a (occupied index)
             vir_alpha_array_indices[None, None, None, None, :],  # b (virtual index)
         ] -= self.two_int[1][
             occ_alpha[None, None, :, None, None],  # a (occupied index)
-            shared_beta[:, :, None, None, None],  # x
+            occ_beta[:, None, None, None],  # x
             vir_alpha[None, None, None, None, :],  # b (virtual index)
             all_beta[None, None, None, :, None],  # y
         ]
         coulomb_ba[
-            shared_beta[:, :, None, None, None],  # x
+            occ_beta[:, None, None, None],  # x
             all_beta[None, None, None, :, None],  # y
             occ_alpha_array_indices[None, None, :, None, None],  # a (occupied index)
             vir_alpha_array_indices[None, None, None, None, :],  # b (virtual index)
         ] -= self.two_int[1][
             vir_alpha[None, None, None, None, :],  # b (virtual index)
-            shared_beta[:, :, None, None, None],  # x
+            occ_beta[:, None, None, None],  # x
             occ_alpha[None, None, :, None, None],  # a (occupied index)
             all_beta[None, None, None, :, None],  # y
         ]
         #
         coulomb_ba[
             all_beta[None, None, None, :, None],  # x
-            shared_beta[:, :, None, None, None],  # y
+            occ_beta[:, None, None, None],  # y
             occ_alpha_array_indices[None, None, :, None, None],  # a (occupied index)
             vir_alpha_array_indices[None, None, None, None, :],  # b (virtual index)
         ] += self.two_int[1][
             occ_alpha[None, None, :, None, None],  # a (occupied index)
             all_beta[None, None, None, :, None],  # x
             vir_alpha[None, None, None, None, :],  # b (virtual index)
-            shared_beta[:, :, None, None, None],  # y
+            occ_beta[:, None, None, None],  # y
         ]
         coulomb_ba[
             all_beta[None, None, None, :, None],  # x
-            shared_beta[:, :, None, None, None],  # y
+            occ_beta[:, None, None, None],  # y
             occ_alpha_array_indices[None, None, :, None, None],  # a (occupied index)
             vir_alpha_array_indices[None, None, None, None, :],  # b (virtual index)
         ] += self.two_int[1][
             vir_alpha[None, None, None, None, :],  # b (virtual index)
             all_beta[None, None, None, :, None],  # x
             occ_alpha[None, None, :, None, None],  # a (occupied index)
-            shared_beta[:, :, None, None, None],  # y
+            occ_beta[:, None, None, None],  # y
         ]
 
         triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
@@ -2161,8 +2159,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         occ_beta_array_indices = np.arange(occ_beta.size)
         vir_beta_array_indices = np.arange(vir_beta.size)
 
-        shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
-
         sign_b = slater.sign_excite_array(
             occ_indices,
             slater.spatial_to_spin_indices(occ_beta[:, None], nspatial, to_beta=True),
@@ -2184,49 +2180,49 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         #
         coulomb_ab[
-            shared_alpha[:, :, None, None, None],  # x
-            all_alpha[None, None, None, :, None],  # y
-            occ_beta_array_indices[None, None, :, None, None],  # a (occupied index)
-            vir_beta_array_indices[None, None, None, None, :],  # b (virtual index)
+            occ_alpha[:, None, None, None],  # x
+            all_alpha[None, None, :, None],  # y
+            occ_beta_array_indices[None, :, None, None],  # a (occupied index)
+            vir_beta_array_indices[None, None, None, :],  # b (virtual index)
         ] -= self.two_int[1][
-            shared_alpha[:, :, None, None, None],  # x
-            occ_beta[None, None, :, None, None],  # a (occupied index)
-            all_alpha[None, None, None, :, None],  # y
-            vir_beta[None, None, None, None, :],  # b (virtual index)
+            occ_alpha[:, None, None, None],  # x
+            occ_beta[None, :, None, None],  # a (occupied index)
+            all_alpha[None, None, :, None],  # y
+            vir_beta[None, None, None, :],  # b (virtual index)
         ]
         coulomb_ab[
-            shared_alpha[:, :, None, None, None],  # x
-            all_alpha[None, None, None, :, None],  # y
-            occ_beta_array_indices[None, None, :, None, None],  # a (occupied index)
-            vir_beta_array_indices[None, None, None, None, :],  # b (virtual index)
+            occ_alpha[:, None, None, None],  # x
+            all_alpha[None, None, :, None],  # y
+            occ_beta_array_indices[None, :, None, None],  # a (occupied index)
+            vir_beta_array_indices[None, None, None, :],  # b (virtual index)
         ] -= self.two_int[1][
-            shared_alpha[:, :, None, None, None],  # x
-            vir_beta[None, None, None, None, :],  # b (virtual index)
-            all_alpha[None, None, None, :, None],  # y
-            occ_beta[None, None, :, None, None],  # a (occupied index)
+            occ_alpha[:, None, None, None],  # x
+            vir_beta[None, None, None, :],  # b (virtual index)
+            all_alpha[None, None, :, None],  # y
+            occ_beta[None, :, None, None],  # a (occupied index)
         ]
         #
         coulomb_ab[
             all_alpha[None, None, None, :, None],  # x
-            shared_alpha[:, :, None, None, None],  # y
-            occ_beta_array_indices[None, None, :, None, None],  # a (occupied index)
-            vir_beta_array_indices[None, None, None, None, :],  # b (virtual index)
+            occ_alpha[:, None, None, None],  # y
+            occ_beta_array_indices[None, :, None, None],  # a (occupied index)
+            vir_beta_array_indices[None, None, None, :],  # b (virtual index)
         ] += self.two_int[1][
-            all_alpha[None, None, None, :, None],  # x
-            occ_beta[None, None, :, None, None],  # a (occupied index)
-            shared_alpha[:, :, None, None, None],  # y
-            vir_beta[None, None, None, None, :],  # b (virtual index)
+            all_alpha[None, None, :, None],  # x
+            occ_beta[None, :, None, None],  # a (occupied index)
+            occ_alpha[:, None, None, None],  # y
+            vir_beta[None, None, None, :],  # b (virtual index)
         ]
         coulomb_ab[
-            all_alpha[None, None, None, :, None],  # x
-            shared_alpha[:, :, None, None, None],  # y
-            occ_beta_array_indices[None, None, :, None, None],  # a (occupied index)
-            vir_beta_array_indices[None, None, None, None, :],  # b (virtual index)
+            all_alpha[None, None, :, None],  # x
+            occ_alpha[:, None, None, None],  # y
+            occ_beta_array_indices[None, :, None, None],  # a (occupied index)
+            vir_beta_array_indices[None, None, None, :],  # b (virtual index)
         ] += self.two_int[1][
-            all_alpha[None, None, None, :, None],  # x
-            vir_beta[None, None, None, None, :],  # b (virtual index)
-            shared_alpha[:, :, None, None, None],  # y
-            occ_beta[None, None, :, None, None],  # a (occupied index)
+            all_alpha[None, None, :, None],  # x
+            vir_beta[None, None, None, :],  # b (virtual index)
+            occ_alpha[:, None, None, None],  # y
+            occ_beta[None, :, None, None],  # a (occupied index)
         ]
 
         triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
