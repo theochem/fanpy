@@ -621,3 +621,25 @@ def test_shared_indices_remove_one_index():
         slater.shared_indices_remove_one_index(np.array([0, 3, 5, 6, 7])),
         np.array([[3, 5, 6, 7], [0, 5, 6, 7], [0, 3, 6, 7], [0, 3, 5, 7], [0, 3, 5, 6]]),
     )
+
+
+def test_spatial_to_spin_indices():
+    """Test slater.spatial_to_spin_indices."""
+    assert slater.spatial_to_spin_indices(np.array([0]), 1, to_beta=False) == 0
+    assert slater.spatial_to_spin_indices(np.array([0]), 1, to_beta=True) == 1
+
+    assert slater.spatial_to_spin_indices(np.array([0]), 4, to_beta=False) == 0
+    assert slater.spatial_to_spin_indices(np.array([1]), 4, to_beta=False) == 1
+    assert slater.spatial_to_spin_indices(np.array([2]), 4, to_beta=False) == 2
+    assert slater.spatial_to_spin_indices(np.array([3]), 4, to_beta=False) == 3
+    assert slater.spatial_to_spin_indices(np.array([0]), 4, to_beta=True) == 4
+    assert slater.spatial_to_spin_indices(np.array([1]), 4, to_beta=True) == 5
+    assert slater.spatial_to_spin_indices(np.array([2]), 4, to_beta=True) == 6
+    assert slater.spatial_to_spin_indices(np.array([3]), 4, to_beta=True) == 7
+
+    with pytest.raises(ValueError):
+        slater.spatial_to_spin_indices(np.array([0]), 0, False)
+    with pytest.raises(ValueError):
+        slater.spatial_to_spin_indices(np.array([0, -1]), 4, False)
+    with pytest.raises(ValueError):
+        slater.spatial_to_spin_indices(np.array([0, 5]), 4, False)

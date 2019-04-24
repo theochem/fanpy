@@ -1074,3 +1074,47 @@ def shared_indices_remove_one_index(indices):
     shared_indices = shared_indices.reshape(indices.size, max(indices.size - 1, 0))
     shared_indices = shared_indices.astype(int)
     return shared_indices
+
+
+def spatial_to_spin_indices(spatial_indices, nspatial, to_beta=True):
+    """Return the spin indices that corresponds to the spatial indices.
+
+    Parameters
+    ----------
+    spatial_indices : np.ndarray
+        Spatial orbital indices.
+    nspatial : int
+        Number of spatial orbitals.
+    to_beta : bool
+        True if the produced spin orbitals have spin beta.
+        False if the produced spin orbitals have spin alpha.
+        By default, beta spin orbitals are produced.
+
+    Returns
+    -------
+    ind_spatial : int
+        Spin orbital indices that corresponds to the spatial indices.
+
+    Raises
+    ------
+    ValueError
+        If `nspin <= 0`.
+        If `spin` is not 'alpha' or 'beta'.
+
+    Notes
+    -----
+    Array analog of function `slater.spin_index`
+
+    """
+    # pylint: disable=R1705
+    if not nspatial > 0:
+        raise ValueError("Number of spatial orbitals must be greater than zero.")
+    if not np.all(np.logical_and(spatial_indices >= 0, spatial_indices < nspatial)):
+        raise ValueError(
+            "Spatial orbital index must be greater than or equal to 0 and less than "
+            "the number of spatial orbitals."
+        )
+    if to_beta:
+        return spatial_indices + nspatial
+    else:
+        return spatial_indices
