@@ -849,6 +849,29 @@ def test_integrate_sd_sds_deriv_one_ab():
         ).T[1],
     )
 
+    occ_alpha = np.array([0])
+    occ_beta = np.array([0])
+    vir_beta = np.array([1, 2, 3, 4, 5])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta),
+        np.array(
+            [
+                [
+                    np.array(
+                        test_ham._integrate_sd_sd_deriv_one(
+                            [i + 6], [j + 6], 0, x, y, occ_alpha, occ_beta[occ_beta != i]
+                        )
+                    )
+                    * slater.sign_excite(0b000001000001, [i + 6], [j + 6])
+                    for x in range(5)
+                    for y in range(x + 1, 6)
+                ]
+                for i in occ_beta.tolist()
+                for j in vir_beta.tolist()
+            ]
+        ).T[1],
+    )
+
 
 def test_integrate_sd_sds_deriv_one_ba():
     """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_one_ba.
@@ -888,6 +911,29 @@ def test_integrate_sd_sds_deriv_one_ba():
                         )
                     )
                     * slater.sign_excite(0b101101011001, [i], [j])
+                    for x in range(5)
+                    for y in range(x + 1, 6)
+                ]
+                for i in occ_alpha.tolist()
+                for j in vir_alpha.tolist()
+            ]
+        ).T[1],
+    )
+
+    occ_alpha = np.array([0])
+    occ_beta = np.array([0])
+    vir_alpha = np.array([1, 2, 3, 4, 5])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha),
+        np.array(
+            [
+                [
+                    np.array(
+                        test_ham._integrate_sd_sd_deriv_one(
+                            [i], [j], 1, x, y, occ_alpha[occ_alpha != i], occ_beta
+                        )
+                    )
+                    * slater.sign_excite(0b000001000001, [i], [j])
                     for x in range(5)
                     for y in range(x + 1, 6)
                 ]
