@@ -149,70 +149,19 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         elif sign not in [1, -1]:
             raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
-        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
-
         # two sd's are the same
         if diff_order == 0:
-            if shared_alpha.size != 0:
-                one_electron += np.sum(self.one_int[shared_alpha, shared_alpha])
-                coulomb += np.sum(
-                    np.triu(self._cached_two_int_ijij[shared_alpha[:, None], shared_alpha], k=1)
-                )
-                exchange -= np.sum(
-                    np.triu(self._cached_two_int_ijji[shared_alpha[:, None], shared_alpha], k=1)
-                )
-            if shared_beta.size != 0:
-                one_electron += np.sum(self.one_int[shared_beta, shared_beta])
-                coulomb += np.sum(
-                    np.triu(self._cached_two_int_ijij[shared_beta[:, None], shared_beta], k=1)
-                )
-                exchange -= np.sum(
-                    np.triu(self._cached_two_int_ijji[shared_beta[:, None], shared_beta], k=1)
-                )
-            if shared_alpha.size != 0 and shared_beta.size != 0:
-                coulomb += np.sum(self._cached_two_int_ijij[shared_alpha[:, None], shared_beta])
+            one_electron, coulomb, exchange = self._integrate_sd_sd_zero(shared_alpha, shared_beta)
 
         # two sd's are different by single excitation
         elif diff_order == 1:
-            a, = diff_sd1
-            b, = diff_sd2
-            # get spatial indices
-            spatial_a = slater.spatial_index(a, nspatial)
-            spatial_b = slater.spatial_index(b, nspatial)
-
-            if slater.is_alpha(a, nspatial) != slater.is_alpha(b, nspatial):
-                return 0.0, 0.0, 0.0
-
-            one_electron += self.one_int[spatial_a, spatial_b]
-            if shared_alpha.size != 0:
-                coulomb += np.sum(self.two_int[shared_alpha, spatial_a, shared_alpha, spatial_b])
-                if slater.is_alpha(a, nspatial):
-                    exchange -= np.sum(
-                        self.two_int[shared_alpha, spatial_a, spatial_b, shared_alpha]
-                    )
-            if shared_beta.size != 0:
-                coulomb += np.sum(self.two_int[shared_beta, spatial_a, shared_beta, spatial_b])
-                if not slater.is_alpha(a, nspatial):
-                    exchange -= np.sum(self.two_int[shared_beta, spatial_a, spatial_b, shared_beta])
+            one_electron, coulomb, exchange = self._integrate_sd_sd_one(
+                diff_sd1, diff_sd2, shared_alpha, shared_beta
+            )
 
         # two sd's are different by double excitation
         else:
-            a, b = diff_sd1
-            c, d = diff_sd2
-            # get spatial indices
-            spatial_a = slater.spatial_index(a, nspatial)
-            spatial_b = slater.spatial_index(b, nspatial)
-            spatial_c = slater.spatial_index(c, nspatial)
-            spatial_d = slater.spatial_index(d, nspatial)
-
-            if slater.is_alpha(b, nspatial) == slater.is_alpha(d, nspatial) and slater.is_alpha(
-                a, nspatial
-            ) == slater.is_alpha(c, nspatial):
-                coulomb += self.two_int[spatial_a, spatial_b, spatial_c, spatial_d]
-            if slater.is_alpha(b, nspatial) == slater.is_alpha(c, nspatial) and slater.is_alpha(
-                a, nspatial
-            ) == slater.is_alpha(d, nspatial):
-                exchange -= self.two_int[spatial_a, spatial_b, spatial_d, spatial_c]
+            one_electron, coulomb, exchange = self._integrate_sd_sd_two(diff_sd1, diff_sd2)
 
         return sign * one_electron, sign * coulomb, sign * exchange
 
@@ -359,6 +308,137 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 if shared_alpha_no_x.size != 0:
                     coulomb -= 2 * np.sum(
                         np.real(self.two_int[x, shared_alpha_no_x, y, shared_alpha_no_x])
+
+    def _integrate_sd_sd_zero(self, shared_alpha, shared_beta):
+        """Return integrals of the given Slater determinant with itself.
+
+        Parameters
+        ----------
+        shared_indices : np.ndarray
+            Integer indices of the orbitals that are occupied in the Slater determinant.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            Integrals of the given Slater determinant with itself.
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with itself.
+
+        """
+        one_electron, coulomb, exchange = 0, 0, 0
+
+        if shared_alpha.size != 0:
+            one_electron += np.sum(self.one_int[shared_alpha, shared_alpha])
+            coulomb += np.sum(
+                np.triu(self._cached_two_int_ijij[shared_alpha[:, None], shared_alpha], k=1)
+            )
+            exchange -= np.sum(
+                np.triu(self._cached_two_int_ijji[shared_alpha[:, None], shared_alpha], k=1)
+            )
+        if shared_beta.size != 0:
+            one_electron += np.sum(self.one_int[shared_beta, shared_beta])
+            coulomb += np.sum(
+                np.triu(self._cached_two_int_ijij[shared_beta[:, None], shared_beta], k=1)
+            )
+            exchange -= np.sum(
+                np.triu(self._cached_two_int_ijji[shared_beta[:, None], shared_beta], k=1)
+            )
+        if shared_alpha.size != 0 and shared_beta.size != 0:
+            coulomb += np.sum(self._cached_two_int_ijij[shared_alpha[:, None], shared_beta])
+
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_one(self, diff_sd1, diff_sd2, shared_alpha, shared_beta):
+        """Return integrals of the given Slater determinant with its first order excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 1-tuple of int
+            Index of the orbital that is occupied in the first Slater determinant and not occupied
+            in the second.
+        diff_sd2 : 1-tuple of int
+            Index of the orbital that is occupied in the second Slater determinant and not occupied
+            in the first.
+        shared_alpha : np.ndarray
+            Integer indices of the alpha orbitals that are shared between the first and second
+            Slater determinants.
+        shared_beta : np.ndarray
+            Integer indices of the beta orbitals that are shared between the first and second Slater
+            determinants.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with its first order excitations.
+
+        """
+        # pylint:disable=C0103
+        one_electron, coulomb, exchange = 0, 0, 0
+        nspatial = self.nspin // 2
+
+        a, = diff_sd1
+        b, = diff_sd2
+        # get spatial indices
+        spatial_a = slater.spatial_index(a, nspatial)
+        spatial_b = slater.spatial_index(b, nspatial)
+
+        if slater.is_alpha(a, nspatial) != slater.is_alpha(b, nspatial):
+            return 0.0, 0.0, 0.0
+
+        one_electron += self.one_int[spatial_a, spatial_b]
+        if shared_alpha.size != 0:
+            coulomb += np.sum(self.two_int[shared_alpha, spatial_a, shared_alpha, spatial_b])
+            if slater.is_alpha(a, nspatial):
+                exchange -= np.sum(self.two_int[shared_alpha, spatial_a, spatial_b, shared_alpha])
+        if shared_beta.size != 0:
+            coulomb += np.sum(self.two_int[shared_beta, spatial_a, shared_beta, spatial_b])
+            if not slater.is_alpha(a, nspatial):
+                exchange -= np.sum(self.two_int[shared_beta, spatial_a, spatial_b, shared_beta])
+
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_two(self, diff_sd1, diff_sd2):
+        """Return integrals of the given Slater determinant with its second order excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 2-tuple of int
+            Indices of the orbitals that are occupied in the first Slater determinant and not
+            occupied in the second.
+        diff_sd2 : 2-tuple of int
+            Indices of the orbitals that are occupied in the second Slater determinant and not
+            occupied in the first.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The one-electron (first element), coulomb (second element), and exchange (third element)
+            integrals of the given Slater determinant with itself.
+
+        """
+        # pylint:disable=C0103
+        one_electron, coulomb, exchange = 0, 0, 0
+        nspatial = self.nspin // 2
+
+        a, b = diff_sd1
+        c, d = diff_sd2
+        # get spatial indices
+        spatial_a = slater.spatial_index(a, nspatial)
+        spatial_b = slater.spatial_index(b, nspatial)
+        spatial_c = slater.spatial_index(c, nspatial)
+        spatial_d = slater.spatial_index(d, nspatial)
+
+        if slater.is_alpha(b, nspatial) == slater.is_alpha(d, nspatial) and slater.is_alpha(
+            a, nspatial
+        ) == slater.is_alpha(c, nspatial):
+            coulomb += self.two_int[spatial_a, spatial_b, spatial_c, spatial_d]
+        if slater.is_alpha(b, nspatial) == slater.is_alpha(c, nspatial) and slater.is_alpha(
+            a, nspatial
+        ) == slater.is_alpha(d, nspatial):
+            exchange -= self.two_int[spatial_a, spatial_b, spatial_d, spatial_c]
+
+        return one_electron, coulomb, exchange
                     )
                     exchange += 2 * np.sum(
                         np.real(self.two_int[x, shared_alpha_no_x, shared_alpha_no_x, y])
