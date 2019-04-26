@@ -256,7 +256,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         real orbitals is not much.
 
         """
-        # pylint: disable=C0103,R0912,R0915
+        # pylint: disable=C0103
         nspatial = self.one_int[0].shape[0]
 
         sd1 = slater.internal_sd(sd1)
@@ -295,19 +295,23 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         # two sd's are the same
         if diff_order == 0:
-            # remove orbitals x and y from the shared indices
-            shared_alpha_no_x = shared_alpha[shared_alpha != x]
-            shared_alpha_no_y = shared_alpha[shared_alpha != y]
-            shared_beta_no_x = shared_beta[shared_beta != x]
-            shared_beta_no_y = shared_beta[shared_beta != y]
+            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_zero(
+                x, y, shared_alpha, shared_beta
+            )
 
-            if x in shared_alpha:
-                one_electron -= 2 * np.real(self.one_int[x, y])
-                if shared_beta.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[x, shared_beta, y, shared_beta]))
-                if shared_alpha_no_x.size != 0:
-                    coulomb -= 2 * np.sum(
-                        np.real(self.two_int[x, shared_alpha_no_x, y, shared_alpha_no_x])
+        # two sd's are different by single excitation
+        elif diff_order == 1:
+            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_one(
+                diff_sd1, diff_sd2, x, y, shared_alpha, shared_beta
+            )
+
+        # two sd's are different by double excitation
+        else:
+            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_two(
+                diff_sd1, diff_sd2, x, y
+            )
+
+        return sign * one_electron, sign * coulomb, sign * exchange
 
     def _integrate_sd_sd_zero(self, shared_alpha, shared_beta):
         """Return integrals of the given Slater determinant with itself.
@@ -439,396 +443,505 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             exchange -= self.two_int[spatial_a, spatial_b, spatial_d, spatial_c]
 
         return one_electron, coulomb, exchange
-                    )
-                    exchange += 2 * np.sum(
-                        np.real(self.two_int[x, shared_alpha_no_x, shared_alpha_no_x, y])
-                    )
-            if x in shared_beta:
-                one_electron -= 2 * np.real(self.one_int[x, y])
-                if shared_alpha.size != 0:
-                    coulomb -= 2 * np.sum(np.real(self.two_int[shared_alpha, x, shared_alpha, y]))
-                if shared_beta_no_x.size != 0:
-                    coulomb -= 2 * np.sum(
-                        np.real(self.two_int[x, shared_beta_no_x, y, shared_beta_no_x])
-                    )
-                    exchange += 2 * np.sum(
-                        np.real(self.two_int[x, shared_beta_no_x, shared_beta_no_x, y])
-                    )
 
-            if y in shared_alpha:
-                one_electron += 2 * np.real(self.one_int[x, y])
-                if shared_beta.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[x, shared_beta, y, shared_beta]))
-                if shared_alpha_no_y.size != 0:
-                    coulomb += 2 * np.sum(
-                        np.real(self.two_int[x, shared_alpha_no_y, y, shared_alpha_no_y])
-                    )
-                    exchange -= 2 * np.sum(
-                        np.real(self.two_int[x, shared_alpha_no_y, shared_alpha_no_y, y])
-                    )
-            if y in shared_beta:
-                one_electron += 2 * np.real(self.one_int[x, y])
-                if shared_alpha.size != 0:
-                    coulomb += 2 * np.sum(np.real(self.two_int[shared_alpha, x, shared_alpha, y]))
-                if shared_beta_no_y.size != 0:
-                    coulomb += 2 * np.sum(
-                        np.real(self.two_int[x, shared_beta_no_y, y, shared_beta_no_y])
-                    )
-                    exchange -= 2 * np.sum(
-                        np.real(self.two_int[x, shared_beta_no_y, shared_beta_no_y, y])
-                    )
-        # two sd's are different by single excitation
-        elif diff_order == 1:
-            a, = diff_sd1
-            b, = diff_sd2
-            spatial_a, spatial_b = map(lambda i: slater.spatial_index(i, nspatial), [a, b])
-            spin_a, spin_b = map(lambda i: int(not slater.is_alpha(i, nspatial)), [a, b])
+    def _integrate_sd_sd_deriv_zero(self, x, y, shared_alpha, shared_beta):
+        """Return the derivative of the integrals of the given Slater determinant with itself.
 
-            if spin_a == 0 and spin_b == 0:
-                shared_alpha_no_ab = shared_alpha[~np.in1d(shared_alpha, [a, b])]
-                shared_beta_no_ab = shared_beta
-            elif spin_a == 0 and spin_b == 1:
-                shared_alpha_no_ab = shared_alpha[shared_alpha != a]
-                shared_beta_no_ab = shared_beta[shared_beta != b]
-            elif spin_a == 1 and spin_b == 0:
-                shared_alpha_no_ab = shared_alpha[shared_alpha != b]
-                shared_beta_no_ab = shared_beta[shared_beta != a]
-            else:
-                shared_alpha_no_ab = shared_alpha
-                shared_beta_no_ab = shared_beta[~np.in1d(shared_beta, [a, b])]
+        Parameters
+        ----------
+        x : int
+            Row of the antihermitian matrix (of the given spin) at which the integral will be
+            derivatized.
+        y : int
+            Column of the antihermitian matrix (of the given spin) at which the integral will be
+            derivatized.
+        shared_alpha : np.ndarray
+            Integer indices of the alpha orbitals that are occupied by the Slater determinant.
+            Dtype must be int.
+        shared_beta : np.ndarray
+            Integer indices of the beta orbitals that are occupied by the Slater determinant.
+            Dtype must be int.
 
-            # selected (spin orbital) x = a
-            if x == spatial_a and spin_a == spin_b:
-                one_electron -= self.one_int[y, spatial_b]
-                # spin of a, b = alpha
-                if spin_b == 0:
-                    if shared_beta_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[y, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
-                        )
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[y, shared_alpha_no_ab, spatial_b, shared_alpha_no_ab]
-                        )
-                        exchange += np.sum(
-                            self.two_int[y, shared_alpha_no_ab, shared_alpha_no_ab, spatial_b]
-                        )
-                # spin of a, b = beta
-                else:
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[shared_alpha_no_ab, y, shared_alpha_no_ab, spatial_b]
-                        )
-                    if shared_beta_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[y, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
-                        )
-                        exchange += np.sum(
-                            self.two_int[y, shared_beta_no_ab, shared_beta_no_ab, spatial_b]
-                        )
-            # selected (spin orbital) x = b
-            elif x == spatial_b and spin_a == spin_b:
-                one_electron -= self.one_int[spatial_a, y]
-                # spin of a, b = alpha
-                if spin_a == 0:
-                    if shared_beta_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, y, shared_beta_no_ab]
-                        )
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[spatial_a, shared_alpha_no_ab, y, shared_alpha_no_ab]
-                        )
-                        exchange += np.sum(
-                            self.two_int[spatial_a, shared_alpha_no_ab, shared_alpha_no_ab, y]
-                        )
-                # spin of a, b = beta
-                else:
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[shared_alpha_no_ab, spatial_a, shared_alpha_no_ab, y]
-                        )
-                    if shared_beta_no_ab.size != 0:
-                        coulomb -= np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, y, shared_beta_no_ab]
-                        )
-                        exchange += np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, shared_beta_no_ab, y]
-                        )
-            # non selected (spin orbital) x, spin of a, b = 0
-            if spin_a == spin_b == 0:
-                if x in shared_alpha:
-                    coulomb -= self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb -= self.two_int[x, spatial_b, y, spatial_a]
-                    exchange += self.two_int[x, spatial_b, spatial_a, y]
-                    exchange += self.two_int[x, spatial_a, spatial_b, y]
-                if x in shared_beta:
-                    coulomb -= self.two_int[spatial_a, x, spatial_b, y]
-                    coulomb -= self.two_int[spatial_b, x, spatial_a, y]
-            # non selected (spin orbital) x, spin of a, b = 1
-            elif spin_a == spin_b == 1:
-                if x in shared_beta:
-                    coulomb -= self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb -= self.two_int[x, spatial_b, y, spatial_a]
-                    exchange += self.two_int[x, spatial_b, spatial_a, y]
-                    exchange += self.two_int[x, spatial_a, spatial_b, y]
-                if x in shared_alpha:
-                    coulomb -= self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb -= self.two_int[x, spatial_b, y, spatial_a]
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The derivatives (with respect to the given parameter) of the one-electron (first
+            element), coulomb (second element), and exchange (third element) integrals of the given
+            Slater determinant with itself.
 
-            # selected (spin orbital) y = a
-            if y == spatial_a and spin_a == spin_b:
-                one_electron += self.one_int[x, spatial_b]
-                # spin of a, b = alpha
-                if spin_b == 0:
-                    if shared_beta_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[x, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
-                        )
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[x, shared_alpha_no_ab, spatial_b, shared_alpha_no_ab]
-                        )
-                        exchange -= np.sum(
-                            self.two_int[x, shared_alpha_no_ab, shared_alpha_no_ab, spatial_b]
-                        )
-                # spin of a, b = beta
-                else:
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[shared_alpha_no_ab, x, shared_alpha_no_ab, spatial_b]
-                        )
-                    if shared_beta_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[x, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
-                        )
-                        exchange -= np.sum(
-                            self.two_int[x, shared_beta_no_ab, shared_beta_no_ab, spatial_b]
-                        )
-            # selected (spin orbital) x = b
-            elif y == spatial_b and spin_a == spin_b:
-                one_electron += self.one_int[spatial_a, x]
-                # spin of a, b = alpha
-                if spin_a == 0:
-                    if shared_beta_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, x, shared_beta_no_ab]
-                        )
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[spatial_a, shared_alpha_no_ab, x, shared_alpha_no_ab]
-                        )
-                        exchange -= np.sum(
-                            self.two_int[spatial_a, shared_alpha_no_ab, shared_alpha_no_ab, x]
-                        )
-                # spin of a, b = beta
-                else:
-                    if shared_alpha_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[shared_alpha_no_ab, spatial_a, shared_alpha_no_ab, x]
-                        )
-                    if shared_beta_no_ab.size != 0:
-                        coulomb += np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, x, shared_beta_no_ab]
-                        )
-                        exchange -= np.sum(
-                            self.two_int[spatial_a, shared_beta_no_ab, shared_beta_no_ab, x]
-                        )
-            # non selected (spin orbital) x, spin of a, b = 0
-            if spin_a == spin_b == 0:
-                if y in shared_alpha:
-                    coulomb += self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb += self.two_int[x, spatial_b, y, spatial_a]
-                    exchange -= self.two_int[x, spatial_a, spatial_b, y]
-                    exchange -= self.two_int[x, spatial_b, spatial_a, y]
-                if y in shared_beta:
-                    coulomb += self.two_int[spatial_a, x, spatial_b, y]
-                    coulomb += self.two_int[spatial_b, x, spatial_a, y]
-            # non selected (spin orbital) x, spin of a, b = 1
-            elif spin_a == spin_b == 1:
-                if y in shared_beta:
-                    coulomb += self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb += self.two_int[x, spatial_b, y, spatial_a]
-                    exchange -= self.two_int[x, spatial_a, spatial_b, y]
-                    exchange -= self.two_int[x, spatial_b, spatial_a, y]
-                if y in shared_alpha:
-                    coulomb += self.two_int[x, spatial_a, y, spatial_b]
-                    coulomb += self.two_int[x, spatial_b, y, spatial_a]
+        """
+        # pylint:disable=R0912,R0915
+        one_electron, coulomb, exchange = 0, 0, 0
 
-        # two sd's are different by double excitation
+        # remove orbitals x and y from the shared indices
+        shared_alpha_no_x = shared_alpha[shared_alpha != x]
+        shared_alpha_no_y = shared_alpha[shared_alpha != y]
+        shared_beta_no_x = shared_beta[shared_beta != x]
+        shared_beta_no_y = shared_beta[shared_beta != y]
+
+        if x in shared_alpha:
+            one_electron -= 2 * np.real(self.one_int[x, y])
+            if shared_beta.size != 0:
+                coulomb -= 2 * np.sum(np.real(self.two_int[x, shared_beta, y, shared_beta]))
+            if shared_alpha_no_x.size != 0:
+                coulomb -= 2 * np.sum(
+                    np.real(self.two_int[x, shared_alpha_no_x, y, shared_alpha_no_x])
+                )
+                exchange += 2 * np.sum(
+                    np.real(self.two_int[x, shared_alpha_no_x, shared_alpha_no_x, y])
+                )
+        if x in shared_beta:
+            one_electron -= 2 * np.real(self.one_int[x, y])
+            if shared_alpha.size != 0:
+                coulomb -= 2 * np.sum(np.real(self.two_int[shared_alpha, x, shared_alpha, y]))
+            if shared_beta_no_x.size != 0:
+                coulomb -= 2 * np.sum(
+                    np.real(self.two_int[x, shared_beta_no_x, y, shared_beta_no_x])
+                )
+                exchange += 2 * np.sum(
+                    np.real(self.two_int[x, shared_beta_no_x, shared_beta_no_x, y])
+                )
+
+        if y in shared_alpha:
+            one_electron += 2 * np.real(self.one_int[x, y])
+            if shared_beta.size != 0:
+                coulomb += 2 * np.sum(np.real(self.two_int[x, shared_beta, y, shared_beta]))
+            if shared_alpha_no_y.size != 0:
+                coulomb += 2 * np.sum(
+                    np.real(self.two_int[x, shared_alpha_no_y, y, shared_alpha_no_y])
+                )
+                exchange -= 2 * np.sum(
+                    np.real(self.two_int[x, shared_alpha_no_y, shared_alpha_no_y, y])
+                )
+        if y in shared_beta:
+            one_electron += 2 * np.real(self.one_int[x, y])
+            if shared_alpha.size != 0:
+                coulomb += 2 * np.sum(np.real(self.two_int[shared_alpha, x, shared_alpha, y]))
+            if shared_beta_no_y.size != 0:
+                coulomb += 2 * np.sum(
+                    np.real(self.two_int[x, shared_beta_no_y, y, shared_beta_no_y])
+                )
+                exchange -= 2 * np.sum(
+                    np.real(self.two_int[x, shared_beta_no_y, shared_beta_no_y, y])
+                )
+
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_deriv_one(self, diff_sd1, diff_sd2, x, y, shared_alpha, shared_beta):
+        """Return derivative of integrals of given Slater determinant with its first excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 1-tuple of int
+            Index of the orbital that is occupied in the first Slater determinant and not occupied
+            in the second.
+        diff_sd2 : 1-tuple of int
+            Index of the orbital that is occupied in the second Slater determinant and not occupied
+            in the first.
+        x : int
+            Row of the antihermitian matrix at which the integral will be derivatized.
+        y : int
+            Column of the antihermitian matrix at which the integral will be derivatized.
+        shared_alpha : np.ndarray
+            Integer indices of the alpha orbitals that are shared between the first and second
+            Slater determinant.
+            Dtype must be int.
+        shared_beta : np.ndarray
+            Integer indices of the beta orbitals that are shared between the first and second Slater
+            Dtype must be int.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The derivatives (with respect to the given parameter) of the one-electron (first
+            element), coulomb (second element), and exchange (third element) integrals of the given
+            Slater determinant with its first order excitation.
+
+        """
+        # pylint:disable=C0103,R0912,R0915
+        one_electron, coulomb, exchange = 0, 0, 0
+        nspatial = self.nspin // 2
+
+        a, = diff_sd1
+        b, = diff_sd2
+        spatial_a, spatial_b = map(lambda i: slater.spatial_index(i, nspatial), [a, b])
+        spin_a, spin_b = map(lambda i: int(not slater.is_alpha(i, nspatial)), [a, b])
+
+        if spin_a == 0 and spin_b == 0:
+            shared_alpha_no_ab = shared_alpha[~np.in1d(shared_alpha, [a, b])]
+            shared_beta_no_ab = shared_beta
+        elif spin_a == 0 and spin_b == 1:
+            shared_alpha_no_ab = shared_alpha[shared_alpha != a]
+            shared_beta_no_ab = shared_beta[shared_beta != b]
+        elif spin_a == 1 and spin_b == 0:
+            shared_alpha_no_ab = shared_alpha[shared_alpha != b]
+            shared_beta_no_ab = shared_beta[shared_beta != a]
         else:
-            a, b = diff_sd1
-            c, d = diff_sd2
-            (spatial_a, spatial_b, spatial_c, spatial_d) = map(
-                lambda i: slater.spatial_index(i, nspatial), [a, b, c, d]
-            )
-            spin_a, spin_b, spin_c, spin_d = map(
-                lambda i: int(not slater.is_alpha(i, nspatial)), [a, b, c, d]
-            )
+            shared_alpha_no_ab = shared_alpha
+            shared_beta_no_ab = shared_beta[~np.in1d(shared_beta, [a, b])]
 
-            if x == spatial_a:
-                if spin_a == spin_c == spin_b == spin_d == 0:
-                    coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
-                    exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
-                elif spin_a == spin_c == 0 and spin_b == spin_d == 1:
-                    coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: d will not be alpha if c is beta
-                # elif spin_a == spin_c == 1 and spin_b == spin_d == 0:
-                #     coulomb -= self.two_int[spatial_b, y, spatial_d, spatial_c]
-                # elif spin_a == spin_d == 0 and spin_b == spin_c == 1:
-                #     exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
-                # NOTE: b will not be alpha if a is beta (spin of x = spin of a)
-                # elif spin_a == spin_d == 1 and spin_b == spin_c == 0:
-                #     exchange += self.two_int[spatial_b, y, spatial_c, spatial_d]
-                elif spin_a == spin_c == spin_b == spin_d == 1:
-                    coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
-                    exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
-            if x == spatial_b:
-                if spin_b == spin_c == spin_a == spin_d == 0:
-                    exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
-                    coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
-                # elif spin_b == spin_c == 0 and spin_a == spin_d == 1:
-                #     exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
-                # NOTE: d will not be alpha if c is beta
-                # elif spin_b == spin_c == 1 and spin_a == spin_d == 0:
-                #     exchange += self.two_int[spatial_a, y, spatial_d, spatial_c]
-                # elif spin_b == spin_d == 0 and spin_a == spin_c == 1:
-                #     coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
-                elif spin_b == spin_d == 1 and spin_a == spin_c == 0:
-                    coulomb -= self.two_int[spatial_a, y, spatial_c, spatial_d]
-                elif spin_b == spin_c == spin_a == spin_d == 1:
-                    exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
-                    coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
-            if x == spatial_c:
-                if spin_c == spin_a == spin_b == spin_d == 0:
-                    coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
-                    exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
-                elif spin_c == spin_a == 0 and spin_b == spin_d == 1:
-                    coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # elif spin_c == spin_a == 1 and spin_b == spin_d == 0:
-                #     coulomb -= self.two_int[spatial_b, spatial_a, spatial_d, y]
-                # elif spin_c == spin_b == 0 and spin_a == spin_d == 1:
-                #     exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
-                # NOTE: b will not be alpha if a is beta
-                # elif spin_c == spin_b == 1 and spin_a == spin_d == 0:
-                #     exchange += self.two_int[spatial_a, spatial_b, spatial_d, y]
-                elif spin_c == spin_a == spin_b == spin_d == 1:
-                    coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
-                    exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
-            if x == spatial_d:
-                if spin_d == spin_a == spin_b == spin_c == 0:
-                    exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
-                    coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
-                # elif spin_d == spin_a == 0 and spin_b == spin_c == 1:
-                #     exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
-                # NOTE: b will not be alpha if a is beta
-                # elif spin_d == spin_a == 1 and spin_b == spin_c == 0:
-                #     exchange += self.two_int[spatial_b, spatial_a, spatial_c, y]
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
-                # elif spin_d == spin_b == 0 and spin_a == spin_c == 1:
-                #     coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
-                elif spin_d == spin_b == 1 and spin_a == spin_c == 0:
-                    coulomb -= self.two_int[spatial_a, spatial_b, spatial_c, y]
-                elif spin_d == spin_a == spin_b == spin_c == 1:
-                    exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
-                    coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
+        # selected (spin orbital) x = a
+        if x == spatial_a and spin_a == spin_b:
+            one_electron -= self.one_int[y, spatial_b]
+            # spin of a, b = alpha
+            if spin_b == 0:
+                if shared_beta_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[y, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
+                    )
+                if shared_alpha_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[y, shared_alpha_no_ab, spatial_b, shared_alpha_no_ab]
+                    )
+                    exchange += np.sum(
+                        self.two_int[y, shared_alpha_no_ab, shared_alpha_no_ab, spatial_b]
+                    )
+            # spin of a, b = beta
+            else:
+                if shared_alpha_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[shared_alpha_no_ab, y, shared_alpha_no_ab, spatial_b]
+                    )
+                if shared_beta_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[y, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
+                    )
+                    exchange += np.sum(
+                        self.two_int[y, shared_beta_no_ab, shared_beta_no_ab, spatial_b]
+                    )
+        # selected (spin orbital) x = b
+        elif x == spatial_b and spin_a == spin_b:
+            one_electron -= self.one_int[spatial_a, y]
+            # spin of a, b = alpha
+            if spin_a == 0:
+                if shared_beta_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, y, shared_beta_no_ab]
+                    )
+                if shared_alpha_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[spatial_a, shared_alpha_no_ab, y, shared_alpha_no_ab]
+                    )
+                    exchange += np.sum(
+                        self.two_int[spatial_a, shared_alpha_no_ab, shared_alpha_no_ab, y]
+                    )
+            # spin of a, b = beta
+            else:
+                if shared_alpha_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[shared_alpha_no_ab, spatial_a, shared_alpha_no_ab, y]
+                    )
+                if shared_beta_no_ab.size != 0:
+                    coulomb -= np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, y, shared_beta_no_ab]
+                    )
+                    exchange += np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, shared_beta_no_ab, y]
+                    )
+        # non selected (spin orbital) x, spin of a, b = 0
+        if spin_a == spin_b == 0:
+            if x in shared_alpha:
+                coulomb -= self.two_int[x, spatial_a, y, spatial_b]
+                coulomb -= self.two_int[x, spatial_b, y, spatial_a]
+                exchange += self.two_int[x, spatial_b, spatial_a, y]
+                exchange += self.two_int[x, spatial_a, spatial_b, y]
+            if x in shared_beta:
+                coulomb -= self.two_int[spatial_a, x, spatial_b, y]
+                coulomb -= self.two_int[spatial_b, x, spatial_a, y]
+        # non selected (spin orbital) x, spin of a, b = 1
+        elif spin_a == spin_b == 1:
+            if x in shared_beta:
+                coulomb -= self.two_int[x, spatial_a, y, spatial_b]
+                coulomb -= self.two_int[x, spatial_b, y, spatial_a]
+                exchange += self.two_int[x, spatial_b, spatial_a, y]
+                exchange += self.two_int[x, spatial_a, spatial_b, y]
+            if x in shared_alpha:
+                coulomb -= self.two_int[x, spatial_a, y, spatial_b]
+                coulomb -= self.two_int[x, spatial_b, y, spatial_a]
 
-            if y == spatial_a:
-                if spin_a == spin_c == spin_b == spin_d == 0:
-                    coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
-                    exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
-                elif spin_a == spin_c == 0 and spin_b == spin_d == 1:
-                    coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: d will not be alpha if c is beta
-                # elif spin_a == spin_c == 1 and spin_b == spin_d == 0:
-                #     coulomb += self.two_int[spatial_b, x, spatial_d, spatial_c]
-                # elif spin_a == spin_d == 0 and spin_b == spin_c == 1:
-                #     exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
-                # NOTE: b will not be alpha if a is beta (spin of x = spin of a)
-                # elif spin_a == spin_d == 1 and spin_b == spin_c == 0:
-                #     exchange -= self.two_int[spatial_b, x, spatial_c, spatial_d]
-                elif spin_a == spin_c == spin_b == spin_d == 1:
-                    coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
-                    exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
-            if y == spatial_b:
-                if spin_b == spin_c == spin_a == spin_d == 0:
-                    exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
-                    coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
-                # elif spin_b == spin_c == 0 and spin_a == spin_d == 1:
-                #     exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
-                # NOTE: d will not be alpha if c is beta
-                # elif spin_b == spin_c == 1 and spin_a == spin_d == 0:
-                #     exchange -= self.two_int[spatial_a, x, spatial_d, spatial_c]
-                # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
-                # elif spin_b == spin_d == 0 and spin_a == spin_c == 1:
-                #     coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
-                elif spin_b == spin_d == 1 and spin_a == spin_c == 0:
-                    coulomb += self.two_int[spatial_a, x, spatial_c, spatial_d]
-                elif spin_b == spin_c == spin_a == spin_d == 1:
-                    exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
-                    coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
-            if y == spatial_c:
-                if spin_c == spin_a == spin_b == spin_d == 0:
-                    coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
-                    exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
-                elif spin_c == spin_a == 0 and spin_b == spin_d == 1:
-                    coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of c)
-                # elif spin_c == spin_a == 1 and spin_b == spin_d == 0:
-                #     coulomb += self.two_int[spatial_b, spatial_a, spatial_d, x]
-                # NOTE: a will not be alpha if b is beta
-                # elif spin_c == spin_b == 0 and spin_a == spin_d == 1:
-                #     exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of c)
-                # elif spin_c == spin_b == 1 and spin_a == spin_d == 0:
-                #     exchange -= self.two_int[spatial_a, spatial_b, spatial_d, x]
-                elif spin_c == spin_a == spin_b == spin_d == 1:
-                    coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
-                    exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
-            if y == spatial_d:
-                if spin_d == spin_a == spin_b == spin_c == 0:
-                    exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
-                    coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
-                # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
-                # returns orbitals in increasing order (which means second index cannot be alpha if
-                # the first is beta)
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
-                # elif spin_d == spin_a == 0 and spin_b == spin_c == 1:
-                #     exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
-                # NOTE: b will not be alpha if a is beta
-                # elif spin_d == spin_a == 1 and spin_b == spin_c == 0:
-                #     exchange -= self.two_int[spatial_b, spatial_a, spatial_c, x]
-                # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
-                # elif spin_d == spin_b == 0 and spin_a == spin_c == 1:
-                #     coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
-                elif spin_d == spin_b == 1 and spin_a == spin_c == 0:
-                    coulomb += self.two_int[spatial_a, spatial_b, spatial_c, x]
-                elif spin_d == spin_a == spin_b == spin_c == 1:
-                    exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
-                    coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
+        # selected (spin orbital) y = a
+        if y == spatial_a and spin_a == spin_b:
+            one_electron += self.one_int[x, spatial_b]
+            # spin of a, b = alpha
+            if spin_b == 0:
+                if shared_beta_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[x, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
+                    )
+                if shared_alpha_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[x, shared_alpha_no_ab, spatial_b, shared_alpha_no_ab]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[x, shared_alpha_no_ab, shared_alpha_no_ab, spatial_b]
+                    )
+            # spin of a, b = beta
+            else:
+                if shared_alpha_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[shared_alpha_no_ab, x, shared_alpha_no_ab, spatial_b]
+                    )
+                if shared_beta_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[x, shared_beta_no_ab, spatial_b, shared_beta_no_ab]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[x, shared_beta_no_ab, shared_beta_no_ab, spatial_b]
+                    )
+        # selected (spin orbital) x = b
+        elif y == spatial_b and spin_a == spin_b:
+            one_electron += self.one_int[spatial_a, x]
+            # spin of a, b = alpha
+            if spin_a == 0:
+                if shared_beta_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, x, shared_beta_no_ab]
+                    )
+                if shared_alpha_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[spatial_a, shared_alpha_no_ab, x, shared_alpha_no_ab]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[spatial_a, shared_alpha_no_ab, shared_alpha_no_ab, x]
+                    )
+            # spin of a, b = beta
+            else:
+                if shared_alpha_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[shared_alpha_no_ab, spatial_a, shared_alpha_no_ab, x]
+                    )
+                if shared_beta_no_ab.size != 0:
+                    coulomb += np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, x, shared_beta_no_ab]
+                    )
+                    exchange -= np.sum(
+                        self.two_int[spatial_a, shared_beta_no_ab, shared_beta_no_ab, x]
+                    )
+        # non selected (spin orbital) x, spin of a, b = 0
+        if spin_a == spin_b == 0:
+            if y in shared_alpha:
+                coulomb += self.two_int[x, spatial_a, y, spatial_b]
+                coulomb += self.two_int[x, spatial_b, y, spatial_a]
+                exchange -= self.two_int[x, spatial_a, spatial_b, y]
+                exchange -= self.two_int[x, spatial_b, spatial_a, y]
+            if y in shared_beta:
+                coulomb += self.two_int[spatial_a, x, spatial_b, y]
+                coulomb += self.two_int[spatial_b, x, spatial_a, y]
+        # non selected (spin orbital) x, spin of a, b = 1
+        elif spin_a == spin_b == 1:
+            if y in shared_beta:
+                coulomb += self.two_int[x, spatial_a, y, spatial_b]
+                coulomb += self.two_int[x, spatial_b, y, spatial_a]
+                exchange -= self.two_int[x, spatial_a, spatial_b, y]
+                exchange -= self.two_int[x, spatial_b, spatial_a, y]
+            if y in shared_alpha:
+                coulomb += self.two_int[x, spatial_a, y, spatial_b]
+                coulomb += self.two_int[x, spatial_b, y, spatial_a]
 
-        return sign * one_electron, sign * coulomb, sign * exchange
+        return one_electron, coulomb, exchange
+
+    def _integrate_sd_sd_deriv_two(self, diff_sd1, diff_sd2, x, y):
+        """Return derivative of integrals of given Slater determinant with its second excitation.
+
+        Parameters
+        ----------
+        diff_sd1 : 2-tuple of int
+            Indices of the orbitals that are occupied in the first Slater determinant and not
+            occupied in the second.
+        diff_sd2 : 2-tuple of int
+            Indices of the orbitals that are occupied in the second Slater determinant and not
+            occupied in the first.
+        x : int
+            Row of the antihermitian matrix at which the integral will be derivatized.
+        y : int
+            Column of the antihermitian matrix at which the integral will be derivatized.
+
+        Returns
+        -------
+        integrals : 3-tuple of float
+            The derivatives (with respect to the given parameter) of the one-electron (first
+            element), coulomb (second element), and exchange (third element) integrals of the given
+            Slater determinant with its first order excitation.
+
+        """
+        # pylint: disable=C0103,R0912,R0915
+        one_electron, coulomb, exchange = 0, 0, 0
+        nspatial = self.nspin // 2
+
+        a, b = diff_sd1
+        c, d = diff_sd2
+        (spatial_a, spatial_b, spatial_c, spatial_d) = map(
+            lambda i: slater.spatial_index(i, nspatial), [a, b, c, d]
+        )
+        spin_a, spin_b, spin_c, spin_d = map(
+            lambda i: int(not slater.is_alpha(i, nspatial)), [a, b, c, d]
+        )
+
+        if x == spatial_a:
+            if spin_a == spin_c == spin_b == spin_d == 0:
+                coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
+                exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
+            elif spin_a == spin_c == 0 and spin_b == spin_d == 1:
+                coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: d will not be alpha if c is beta
+            # elif spin_a == spin_c == 1 and spin_b == spin_d == 0:
+            #     coulomb -= self.two_int[spatial_b, y, spatial_d, spatial_c]
+            # elif spin_a == spin_d == 0 and spin_b == spin_c == 1:
+            #     exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
+            # NOTE: b will not be alpha if a is beta (spin of x = spin of a)
+            # elif spin_a == spin_d == 1 and spin_b == spin_c == 0:
+            #     exchange += self.two_int[spatial_b, y, spatial_c, spatial_d]
+            elif spin_a == spin_c == spin_b == spin_d == 1:
+                coulomb -= self.two_int[y, spatial_b, spatial_c, spatial_d]
+                exchange += self.two_int[y, spatial_b, spatial_d, spatial_c]
+        if x == spatial_b:
+            if spin_b == spin_c == spin_a == spin_d == 0:
+                exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
+                coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
+            # elif spin_b == spin_c == 0 and spin_a == spin_d == 1:
+            #     exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
+            # NOTE: d will not be alpha if c is beta
+            # elif spin_b == spin_c == 1 and spin_a == spin_d == 0:
+            #     exchange += self.two_int[spatial_a, y, spatial_d, spatial_c]
+            # elif spin_b == spin_d == 0 and spin_a == spin_c == 1:
+            #     coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
+            elif spin_b == spin_d == 1 and spin_a == spin_c == 0:
+                coulomb -= self.two_int[spatial_a, y, spatial_c, spatial_d]
+            elif spin_b == spin_c == spin_a == spin_d == 1:
+                exchange += self.two_int[y, spatial_a, spatial_c, spatial_d]
+                coulomb -= self.two_int[y, spatial_a, spatial_d, spatial_c]
+        if x == spatial_c:
+            if spin_c == spin_a == spin_b == spin_d == 0:
+                coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
+                exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
+            elif spin_c == spin_a == 0 and spin_b == spin_d == 1:
+                coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # elif spin_c == spin_a == 1 and spin_b == spin_d == 0:
+            #     coulomb -= self.two_int[spatial_b, spatial_a, spatial_d, y]
+            # elif spin_c == spin_b == 0 and spin_a == spin_d == 1:
+            #     exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
+            # NOTE: b will not be alpha if a is beta
+            # elif spin_c == spin_b == 1 and spin_a == spin_d == 0:
+            #     exchange += self.two_int[spatial_a, spatial_b, spatial_d, y]
+            elif spin_c == spin_a == spin_b == spin_d == 1:
+                coulomb -= self.two_int[spatial_a, spatial_b, y, spatial_d]
+                exchange += self.two_int[spatial_b, spatial_a, y, spatial_d]
+        if x == spatial_d:
+            if spin_d == spin_a == spin_b == spin_c == 0:
+                exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
+                coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
+            # elif spin_d == spin_a == 0 and spin_b == spin_c == 1:
+            #     exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
+            # NOTE: b will not be alpha if a is beta
+            # elif spin_d == spin_a == 1 and spin_b == spin_c == 0:
+            #     exchange += self.two_int[spatial_b, spatial_a, spatial_c, y]
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
+            # elif spin_d == spin_b == 0 and spin_a == spin_c == 1:
+            #     coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
+            elif spin_d == spin_b == 1 and spin_a == spin_c == 0:
+                coulomb -= self.two_int[spatial_a, spatial_b, spatial_c, y]
+            elif spin_d == spin_a == spin_b == spin_c == 1:
+                exchange += self.two_int[spatial_a, spatial_b, y, spatial_c]
+                coulomb -= self.two_int[spatial_b, spatial_a, y, spatial_c]
+
+        if y == spatial_a:
+            if spin_a == spin_c == spin_b == spin_d == 0:
+                coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
+                exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
+            elif spin_a == spin_c == 0 and spin_b == spin_d == 1:
+                coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: d will not be alpha if c is beta
+            # elif spin_a == spin_c == 1 and spin_b == spin_d == 0:
+            #     coulomb += self.two_int[spatial_b, x, spatial_d, spatial_c]
+            # elif spin_a == spin_d == 0 and spin_b == spin_c == 1:
+            #     exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
+            # NOTE: b will not be alpha if a is beta (spin of x = spin of a)
+            # elif spin_a == spin_d == 1 and spin_b == spin_c == 0:
+            #     exchange -= self.two_int[spatial_b, x, spatial_c, spatial_d]
+            elif spin_a == spin_c == spin_b == spin_d == 1:
+                coulomb += self.two_int[x, spatial_b, spatial_c, spatial_d]
+                exchange -= self.two_int[x, spatial_b, spatial_d, spatial_c]
+        if y == spatial_b:
+            if spin_b == spin_c == spin_a == spin_d == 0:
+                exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
+                coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
+            # elif spin_b == spin_c == 0 and spin_a == spin_d == 1:
+            #     exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
+            # NOTE: d will not be alpha if c is beta
+            # elif spin_b == spin_c == 1 and spin_a == spin_d == 0:
+            #     exchange -= self.two_int[spatial_a, x, spatial_d, spatial_c]
+            # NOTE: b will not be alpha if a is beta (spin of x = spin of b)
+            # elif spin_b == spin_d == 0 and spin_a == spin_c == 1:
+            #     coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
+            elif spin_b == spin_d == 1 and spin_a == spin_c == 0:
+                coulomb += self.two_int[spatial_a, x, spatial_c, spatial_d]
+            elif spin_b == spin_c == spin_a == spin_d == 1:
+                exchange -= self.two_int[x, spatial_a, spatial_c, spatial_d]
+                coulomb += self.two_int[x, spatial_a, spatial_d, spatial_c]
+        if y == spatial_c:
+            if spin_c == spin_a == spin_b == spin_d == 0:
+                coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
+                exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
+            elif spin_c == spin_a == 0 and spin_b == spin_d == 1:
+                coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of c)
+            # elif spin_c == spin_a == 1 and spin_b == spin_d == 0:
+            #     coulomb += self.two_int[spatial_b, spatial_a, spatial_d, x]
+            # NOTE: a will not be alpha if b is beta
+            # elif spin_c == spin_b == 0 and spin_a == spin_d == 1:
+            #     exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of c)
+            # elif spin_c == spin_b == 1 and spin_a == spin_d == 0:
+            #     exchange -= self.two_int[spatial_a, spatial_b, spatial_d, x]
+            elif spin_c == spin_a == spin_b == spin_d == 1:
+                coulomb += self.two_int[spatial_a, spatial_b, x, spatial_d]
+                exchange -= self.two_int[spatial_b, spatial_a, x, spatial_d]
+        if y == spatial_d:
+            if spin_d == spin_a == spin_b == spin_c == 0:
+                exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
+                coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
+            # NOTE: alpha orbitals are ordered before the beta orbitals and slater.diff_orbs
+            # returns orbitals in increasing order (which means second index cannot be alpha if
+            # the first is beta)
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
+            # elif spin_d == spin_a == 0 and spin_b == spin_c == 1:
+            #     exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
+            # NOTE: b will not be alpha if a is beta
+            # elif spin_d == spin_a == 1 and spin_b == spin_c == 0:
+            #     exchange -= self.two_int[spatial_b, spatial_a, spatial_c, x]
+            # NOTE: d will not be alpha if c is beta (spin of x = spin of d)
+            # elif spin_d == spin_b == 0 and spin_a == spin_c == 1:
+            #     coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
+            elif spin_d == spin_b == 1 and spin_a == spin_c == 0:
+                coulomb += self.two_int[spatial_a, spatial_b, spatial_c, x]
+            elif spin_d == spin_a == spin_b == spin_c == 1:
+                exchange -= self.two_int[spatial_a, spatial_b, x, spatial_c]
+                coulomb += self.two_int[spatial_b, spatial_a, x, spatial_c]
+
+        return one_electron, coulomb, exchange
+
+
