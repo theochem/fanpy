@@ -221,7 +221,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.one_int.shape[0]
         # ind = i
         for k in range(nspatial + 1):  # pragma: no branch
             x = k
@@ -271,7 +271,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.one_int.shape[0]
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
