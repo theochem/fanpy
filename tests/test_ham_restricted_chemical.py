@@ -1,7 +1,10 @@
 """Test wfns.ham.restricted_chemical."""
+import itertools as it
+
 import numpy as np
 import pytest
 from utils import find_datafile
+from wfns.backend import slater
 from wfns.backend.sd_list import sd_list
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 
@@ -299,3 +302,188 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
                 ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
+
+
+def test_integrate_sd_sds_zero():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_zero(occ_alpha, occ_beta),
+        np.array(test_ham._integrate_sd_sd_zero(occ_alpha, occ_beta)).reshape(3, 1),
+    )
+
+
+def test_integrate_sd_sds_one_alpha():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_one_alpha.
+
+    Compared against RestrictedChemicalHamiltonian._integrate_sd_sd_one.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_alpha = np.array([1, 2, 5])
+
+    assert np.allclose(
+        test_ham._integrate_sd_sds_one_alpha(occ_alpha, occ_beta, vir_alpha),
+        np.array(
+            [
+                np.array(
+                    test_ham._integrate_sd_sd_one((i,), (j,), occ_alpha[occ_alpha != i], occ_beta)
+                )
+                * slater.sign_excite(0b101101011001, [i], [j])
+                for i in occ_alpha.tolist()
+                for j in vir_alpha.tolist()
+            ]
+        ).T,
+    )
+
+
+def test_integrate_sd_sds_one_beta():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_one_beta.
+
+    Compared against RestrictedChemicalHamiltonian._integrate_sd_sd_one.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_beta = np.array([1, 4])
+
+    assert np.allclose(
+        test_ham._integrate_sd_sds_one_beta(occ_alpha, occ_beta, vir_beta),
+        np.array(
+            [
+                np.array(
+                    test_ham._integrate_sd_sd_one(
+                        (i + 6,), (j + 6,), occ_alpha, occ_beta[occ_beta != i]
+                    )
+                )
+                * slater.sign_excite(0b101101011001, [i + 6], [j + 6])
+                for i in occ_beta.tolist()
+                for j in vir_beta.tolist()
+            ]
+        ).T,
+    )
+
+
+def test_integrate_sd_sds_two_aa():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_two_aa.
+
+    Compared against RestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_alpha = np.array([1, 2, 5])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_two_aa(occ_alpha, occ_beta, vir_alpha),
+        np.array(
+            [
+                np.array(test_ham._integrate_sd_sd_two(diff1, diff2))
+                * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
+                for diff1 in it.combinations(occ_alpha.tolist(), 2)
+                for diff2 in it.combinations(vir_alpha.tolist(), 2)
+            ]
+        ).T[[1, 2]],
+    )
+
+
+def test_integrate_sd_sds_two_ab():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_two_ab.
+
+    Compared against RestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_alpha = np.array([1, 2, 5])
+    vir_beta = np.array([1, 4])
+
+    assert np.allclose(
+        test_ham._integrate_sd_sds_two_ab(occ_alpha, occ_beta, vir_alpha, vir_beta),
+        np.array(
+            [
+                np.array(test_ham._integrate_sd_sd_two(diff1, diff2))
+                * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
+                for diff1 in it.product(occ_alpha.tolist(), (occ_beta + 6).tolist())
+                for diff2 in it.product(vir_alpha.tolist(), (vir_beta + 6).tolist())
+            ]
+        ).T[1],
+    )
+
+
+def test_integrate_sd_sds_two_bb():
+    """Test RestrictedChemicalHamiltonian._integrate_sd_sds_two_bb.
+
+    Compared against RestrictedChemicalHamiltonian._integrate_sd_sd_two.
+
+    """
+    one_int = np.random.rand(6, 6)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(6, 6, 6, 6)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3, 5])
+    vir_beta = np.array([1, 4])
+
+    assert np.allclose(
+        test_ham._integrate_sd_sds_two_bb(occ_alpha, occ_beta, vir_beta),
+        np.array(
+            [
+                np.array(test_ham._integrate_sd_sd_two(diff1, diff2))
+                * slater.sign_excite(0b101101011001, diff1, reversed(diff2))
+                for diff1 in it.combinations((occ_beta + 6).tolist(), 2)
+                for diff2 in it.combinations((vir_beta + 6).tolist(), 2)
+            ]
+        ).T[[1, 2]],
+    )
