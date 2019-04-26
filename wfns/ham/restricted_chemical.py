@@ -3316,3 +3316,267 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 exchange_bb[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1),
             ]
         )
+
+    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None):
+        r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
+
+        .. math::
+
+            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S_\Phi}
+              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
+
+        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
+        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
+        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
+        not zero, which are the :math:`\Phi` and its first and second order excitations for a
+        chemical Hamiltonian.
+
+        Parameters
+        ----------
+        sd : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        wfn : Wavefunction
+            Wavefunction against which the Hamiltonian is integrated.
+            Needs to have the following in `__dict__`: `get_overlap`.
+        wfn_deriv : {int, None}
+            Index of the wavefunction parameter against which the integral is derivatized.
+            Default is no derivatization.
+
+        Returns
+        -------
+        integrals : np.ndarray(3,)
+            Integrals of the given Slater determinant and the wavefunction.
+            First element corresponds to the one-electron energy, second to the coulomb energy, and
+            third to the exchange energy.
+
+        """
+        # pylint: disable=C0103
+        nspatial = self.nspin // 2
+        sd = slater.internal_sd(sd)
+        occ_indices = np.array(slater.occ_indices(sd))
+        vir_indices = np.array(slater.vir_indices(sd, self.nspin))
+        # FIXME: hardcode slater determinant structure
+        occ_alpha = occ_indices[occ_indices < nspatial]
+        vir_alpha = vir_indices[vir_indices < nspatial]
+        occ_beta = occ_indices[occ_indices >= nspatial]
+        vir_beta = vir_indices[vir_indices >= nspatial]
+
+        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]])
+
+        overlaps_one_alpha = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                for occ in it.combinations(occ_alpha.tolist(), 1)
+                for vir in it.combinations(vir_alpha.tolist(), 1)
+            ]
+        )
+        overlaps_one_beta = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                for occ in it.combinations(occ_beta.tolist(), 1)
+                for vir in it.combinations(vir_beta.tolist(), 1)
+            ]
+        )
+
+        overlaps_two_aa = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                for occ in it.combinations(occ_alpha.tolist(), 2)
+                for vir in it.combinations(vir_alpha.tolist(), 2)
+            ]
+        )
+        overlaps_two_ab = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
+                for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
+            ]
+        )
+        overlaps_two_bb = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                for occ in it.combinations(occ_beta.tolist(), 2)
+                for vir in it.combinations(vir_beta.tolist(), 2)
+            ]
+        )
+
+        # FIXME: hardcode slater determinant structure
+        occ_beta -= nspatial
+        vir_beta -= nspatial
+
+        output = np.zeros(3)
+
+        output += np.sum(self._integrate_sd_sds_zero(occ_alpha, occ_beta) * overlaps_zero, axis=1)
+
+        integrals_one_alpha = self._integrate_sd_sds_one_alpha(occ_alpha, occ_beta, vir_alpha)
+        integrals_one_beta = self._integrate_sd_sds_one_beta(occ_alpha, occ_beta, vir_beta)
+        output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1) + np.sum(
+            integrals_one_beta * overlaps_one_beta, axis=1
+        )
+        if occ_alpha.size > 1 and vir_alpha.size > 1:
+            integrals_two_aa = self._integrate_sd_sds_two_aa(occ_alpha, occ_beta, vir_alpha)
+            output[1:] += np.sum(integrals_two_aa * overlaps_two_aa, axis=1)
+        if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
+            integrals_two_ab = self._integrate_sd_sds_two_ab(
+                occ_alpha, occ_beta, vir_alpha, vir_beta
+            )
+            output[1] += np.sum(integrals_two_ab * overlaps_two_ab)
+        if occ_beta.size > 1 and vir_beta.size > 1:
+            integrals_two_bb = self._integrate_sd_sds_two_bb(occ_alpha, occ_beta, vir_beta)
+            output[1:] += np.sum(integrals_two_bb * overlaps_two_bb, axis=1)
+
+        return output
+
+    def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs):
+        r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
+
+        .. math::
+
+            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S_\Phi}
+              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
+
+        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
+        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
+        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
+        chemical Hamiltonian.
+
+        Parameters
+        ----------
+        sd : int
+            Slater Determinant against which the Hamiltonian is integrated.
+        wfn : Wavefunction
+            Wavefunction against which the Hamiltonian is integrated.
+        ham_derivs : np.ndarray(N_derivs)
+            Indices of the Hamiltonian parameter against which the integrals are derivatized.
+
+        Returns
+        -------
+        integrals : np.ndarray(3, N_params)
+            Integrals of the given Slater determinant and the wavefunction.
+            First element corresponds to the one-electron energy, second to the coulomb energy, and
+            third to the exchange energy.
+
+        """
+        # pylint: disable=C0103
+        nspatial = self.nspin // 2
+        sd = slater.internal_sd(sd)
+        occ_indices = np.array(slater.occ_indices(sd))
+        vir_indices = np.array(slater.vir_indices(sd, self.nspin))
+
+        param_indices = np.arange(self.nparams)
+
+        # FIXME: hardcode slater determinant structure
+        occ_alpha = occ_indices[occ_indices < nspatial]
+        vir_alpha = vir_indices[vir_indices < nspatial]
+        occ_beta = occ_indices[occ_indices >= nspatial]
+        vir_beta = vir_indices[vir_indices >= nspatial]
+
+        overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
+
+        overlaps_one_alpha = np.array(
+            [
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
+                    for occ in it.combinations(occ_alpha.tolist(), 1)
+                    for vir in it.combinations(vir_alpha.tolist(), 1)
+                ]
+            ]
+        )
+        overlaps_one_beta = np.array(
+            [
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
+                    for occ in it.combinations(occ_beta.tolist(), 1)
+                    for vir in it.combinations(vir_beta.tolist(), 1)
+                ]
+            ]
+        )
+
+        overlaps_two_aa = np.array(
+            [
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
+                    for occ in it.combinations(occ_alpha.tolist(), 2)
+                    for vir in it.combinations(vir_alpha.tolist(), 2)
+                ]
+            ]
+        )
+        overlaps_two_ab = np.array(
+            [
+                wfn.get_overlap(slater.excite(sd, *occ, *vir))
+                for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
+                for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
+            ]
+        )
+        overlaps_two_bb = np.array(
+            [
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
+                    for occ in it.combinations(occ_beta.tolist(), 2)
+                    for vir in it.combinations(vir_beta.tolist(), 2)
+                ]
+            ]
+        )
+
+        # FIXME: hardcode slater determinant structure
+        occ_beta -= nspatial
+        vir_beta -= nspatial
+
+        output = np.zeros((3, self.nparams))
+
+        output[:, param_indices] += np.squeeze(
+            self._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha) * overlaps_zero,
+            axis=2,
+        )
+        output[:, param_indices] += np.squeeze(
+            self._integrate_sd_sds_deriv_zero_beta(occ_alpha, occ_beta, vir_beta) * overlaps_zero,
+            axis=2,
+        )
+
+        output[:, param_indices] += np.sum(
+            self._integrate_sd_sds_deriv_one_aa(occ_alpha, occ_beta, vir_alpha)
+            * overlaps_one_alpha,
+            axis=2,
+        )
+        output[1, param_indices] += np.sum(
+            self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta)
+            * overlaps_one_beta[0],
+            axis=1,
+        )
+        output[1, param_indices] += np.sum(
+            self._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha)
+            * overlaps_one_alpha[0],
+            axis=1,
+        )
+        output[:, param_indices] += np.sum(
+            self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta) * overlaps_one_beta,
+            axis=2,
+        )
+
+        if occ_alpha.size > 1 and vir_alpha.size > 1:
+            output[1:, param_indices] += np.sum(
+                self._integrate_sd_sds_deriv_two_aaa(occ_alpha, occ_beta, vir_alpha)
+                * overlaps_two_aa,
+                axis=2,
+            )
+        if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
+            output[1, param_indices] += np.sum(
+                self._integrate_sd_sds_deriv_two_aab(occ_alpha, occ_beta, vir_alpha, vir_beta)
+                * overlaps_two_ab,
+                axis=1,
+            )
+            output[1, param_indices] += np.sum(
+                self._integrate_sd_sds_deriv_two_bab(occ_alpha, occ_beta, vir_alpha, vir_beta)
+                * overlaps_two_ab,
+                axis=1,
+            )
+        if occ_beta.size > 1 and vir_beta.size > 1:
+            output[1:, param_indices] += np.sum(
+                self._integrate_sd_sds_deriv_two_bbb(occ_alpha, occ_beta, vir_beta)
+                * overlaps_two_bb,
+                axis=2,
+            )
+
+        return output[:, ham_derivs]
