@@ -2667,9 +2667,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # rotation
         # the second index corresponds to the column index of the antihermitian matrix for orbital
         # rotation
-        # the third index corresponds to the occupied orbital that will be annihilated in the
+        # the third index corresponds to the occupied orbitals that will be annihilated in the
         # excitation
-        # the fourth index corresponds to the occupied orbital that will be created in the
+        # the fourth index corresponds to the virtual orbitals that will be created in the
         # excitation
         coulomb_aa = np.zeros((nspatial, nspatial, a.size, c.size))
         exchange_aa = np.zeros((nspatial, nspatial, a.size, c.size))
@@ -2929,9 +2929,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # rotation
         # the second index corresponds to the column index of the antihermitian matrix for orbital
         # rotation
-        # the third index corresponds to the occupied orbital that will be annihilated in the
+        # the third index corresponds to the occupied orbitals that will be annihilated in the
         # excitation
-        # the fourth index corresponds to the occupied orbital that will be created in the
+        # the fourth index corresponds to the virtual orbitals that will be created in the
         # excitation
         coulomb_ab = np.zeros((nspatial, nspatial, a.size, c.size))
 
@@ -3059,9 +3059,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # rotation
         # the second index corresponds to the column index of the antihermitian matrix for orbital
         # rotation
-        # the third index corresponds to the occupied orbital that will be annihilated in the
+        # the third index corresponds to the occupied orbitals that will be annihilated in the
         # excitation
-        # the fourth index corresponds to the occupied orbital that will be created in the
+        # the fourth index corresponds to the virtual orbitals that will be created in the
         # excitation
         coulomb_ba = np.zeros((nspatial, nspatial, b.size, d.size))
 
@@ -3196,9 +3196,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # rotation of the beta orbitals
         # the second index corresponds to the column index of the antihermitian matrix for orbital
         # rotation of the beta orbitals
-        # the third index corresponds to the beta occupied orbitals that will be annihilated in the
+        # the third index corresponds to the occupied orbitals that will be annihilated in the
         # excitation
-        # the fourth index corresponds to the alpha occupied orbitals that will be created in the
+        # the fourth index corresponds to the virtual orbitals that will be created in the
         # excitation
         coulomb_bb = np.zeros((nspatial, nspatial, a.size, c.size))
         exchange_bb = np.zeros((nspatial, nspatial, a.size, c.size))
@@ -3544,6 +3544,12 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             If ham_derivs is not a one-dimensional numpy array of integers.
         ValueError
             If ham_derivs has any indices than is less than 0 or greater than or equal to nparams.
+
+        Notes
+        -----
+        Providing only some of the Hamiltonian parameter indices will not make the code any faster.
+        The integrals are derivatized with respect to all of Hamiltonian parameters and the
+        appropriate derivatives are selected afterwards.
 
         """
         # pylint: disable=C0103

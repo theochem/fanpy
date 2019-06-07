@@ -922,8 +922,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # rotation
         # the third index corresponds to the occupied orbital that will be annihilated in the
         # excitation
-        # the fourth index corresponds to the occupied orbital that will be created in the
-        # excitation
+        # the fourth index corresponds to the virtual orbital that will be created in the excitation
         one_electron = np.zeros((self.nspin, self.nspin, occ_indices.size, vir_indices.size))
         coulomb = np.zeros((self.nspin, self.nspin, occ_indices.size, vir_indices.size))
         exchange = np.zeros((self.nspin, self.nspin, occ_indices.size, vir_indices.size))
@@ -1540,6 +1539,12 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             If ham_derivs is not a one-dimensional numpy array of integers.
         ValueError
             If ham_derivs has any indices than is less than 0 or greater than or equal to nparams.
+
+        Notes
+        -----
+        Providing only some of the Hamiltonian parameter indices will not make the code any faster.
+        The integrals are derivatized with respect to all of Hamiltonian parameters and the
+        appropriate derivatives are selected afterwards.
 
         """
         # pylint: disable=C0103
