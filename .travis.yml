@@ -22,7 +22,7 @@ matrix:
     - python: 3.6
       env: TOXENV=keras
       before_script:
-        - pip install --user keras
+        - pip install keras
   fast_finish: true
   allow_failures:
     - python: 3.4
