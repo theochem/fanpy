@@ -1534,8 +1534,28 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             First element corresponds to the one-electron energy, second to the coulomb energy, and
             third to the exchange energy.
 
+        Raises
+        ------
+        TypeError
+            If ham_derivs is not a one-dimensional numpy array of integers.
+        ValueError
+            If ham_derivs has any indices than is less than 0 or greater than or equal to nparams.
+
         """
         # pylint: disable=C0103
+        if not (
+            isinstance(ham_derivs, np.ndarray) and ham_derivs.ndim == 1 and ham_derivs.dtype == int
+        ):
+            raise TypeError(
+                "Derivative indices for the Hamiltonian parameters must be given as a "
+                "one-dimensional numpy array of integers."
+            )
+        if np.any(ham_derivs < 0) or np.any(ham_derivs >= self.nparams):
+            raise ValueError(
+                "Derivative indices for the Hamiltonian parameters must be greater than or equal to"
+                " 0 and be less than the number of parameters."
+            )
+
         sd = slater.internal_sd(sd)
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))

@@ -716,3 +716,18 @@ def test_integrate_sd_wfn_deriv():
                     ]
                 ).T,
             )
+
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(28).tolist())
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(28).astype(float))
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(28).reshape(2, 14))
+    with pytest.raises(ValueError):
+        bad_indices = np.arange(28)
+        bad_indices[0] = -1
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
+    with pytest.raises(ValueError):
+        bad_indices = np.arange(28)
+        bad_indices[0] = 28
+        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
