@@ -359,7 +359,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # pylint: disable=C0103
         # ind = i
         n = self.nspin
-        for k in range(n + 1):  # pragma: no cover
+        for k in range(n + 1):  # pragma: no branch
             x = k
             if param_ind - n * (x + 1) + (x + 1) * (x + 2) / 2 < 0:
                 break
