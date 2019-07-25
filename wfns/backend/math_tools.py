@@ -16,7 +16,7 @@ permanent_borchardt(matrix)
 """
 from itertools import permutations, combinations
 import numpy as np
-from scipy.misc import comb
+from scipy.special import comb
 
 
 def binomial(n, k):
