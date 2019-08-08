@@ -46,6 +46,10 @@ def test_rank2_geminal_params_from_full():
                        atol=0.1, rtol=0)
 
 
+# FIXME: THIS TEST FAILS SOMETIMES. The random seed cannot be removed because random numbers are
+#        generated within the property template_params and is immediately processed afterwards
+#        i.e. we cannot manually insert the "random" numbers that was chosen beforehand.
+#        This may be solved by simplifying/refactoring the template_params property
 @np.testing.dec.skipif(True, 'Test does not always pass (depends on random noise).')
 def test_rank2_geminal_template_params():
     """Test RankTwoGeminal.template_params."""
