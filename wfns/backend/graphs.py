@@ -12,6 +12,8 @@ int_partition_recursive(coins, num_coin_types, total)
     Generates the combination of coins that results in the given total.
 
 """
+import numpy as np
+
 from wfns.backend.slater import sign_perm
 
 
@@ -294,3 +296,44 @@ def int_partition_recursive(coins, num_coin_types, total):
         yield [coins[num_coin_types - 1]] + partition
     # exclude last coin
     yield from int_partition_recursive(coins, num_coin_types - 1, total)
+
+
+def generate_general_pmatch(indices, connectivity_matrix):
+    """
+
+    Parameters
+    ----------
+    indices : np.array(N)
+        List of indices of the vertices used to create the complete graph.
+    connectivity_matrix : np.ndarray(N, N)
+        Boolean connectivity matrix indicating which vertices form an edge.
+        Each row/column corresponds to the vertex in the indices.
+
+    Yields
+    ------
+    pairing_scheme : tuple of tuple of 2 ints
+        Contains the edges needed to make a perfect match.
+    sign : {1, -1}
+        Signature of the transpositions required to shuffle the `pairing_scheme` back into the
+        original order in `indices`.
+
+    """
+    if isinstance(indices, (list, tuple)):
+        indices = np.array(indices)
+    if len(indices) == 2:
+        yield [(indices[0], indices[1])], 1
+    elif indices.size > 2:
+        ind_one = indices[0]
+        for j in np.where(connectivity_matrix[0, 1:])[0]:
+            sign = (-1) ** j
+            j += 1
+            ind_two = indices[j]
+            # filter out indices that are not used
+            mask_bool = ~np.isin(indices, [ind_one, ind_two])
+            mask_ind = np.where(mask_bool)[0]
+            mask_ind = mask_ind[mask_ind > 0]
+
+            for scheme, inner_sign in generate_general_pmatch(
+                indices[mask_ind], connectivity_matrix[mask_ind[:, None], mask_ind[None, :]]
+            ):
+                yield [(ind_one, ind_two)] + scheme, sign * inner_sign

@@ -1,7 +1,10 @@
 """Test fors wfn.graphs."""
+import numpy as np
+
 from wfns.backend.graphs import (
     generate_biclique_pmatch,
     generate_complete_pmatch,
+    generate_general_pmatch,
     generate_unordered_partition,
     int_partition_recursive,
 )
@@ -286,4 +289,41 @@ def test_int_partition_recursive():
         [1, 3],
         [2, 2],
         [4],
+    ]
+
+
+def test_generate_general_pmatch():
+    """Test wfn.backend.graphs.generate_general_pmatch."""
+    # bad input
+    assert list(generate_general_pmatch([], np.ones((0, 0)))) == []
+    assert list(generate_general_pmatch([1], np.ones((1, 1)))) == []
+    assert list(generate_general_pmatch([1, 2, 3], np.ones((3, 3)))) == []
+
+    # 4 vertices
+    occ_indices = [0, 1, 3, 4]
+    answer = [([(0, 1), (3, 4)], 1), ([(0, 3), (1, 4)], -1), ([(0, 4), (1, 3)], 1)]
+    assert answer == list(generate_general_pmatch(occ_indices, np.ones((4, 4))))
+
+    # 6 vertices
+    occ_indices = [0, 1, 3, 4, 6, 7]
+    answer = [
+        (((0, 1), (3, 4), (6, 7)), 1),
+        (((0, 1), (3, 6), (4, 7)), -1),
+        (((0, 1), (3, 7), (4, 6)), 1),
+        (((0, 3), (1, 4), (6, 7)), -1),
+        (((0, 3), (1, 6), (4, 7)), 1),
+        (((0, 3), (1, 7), (4, 6)), -1),
+        (((0, 4), (1, 3), (6, 7)), 1),
+        (((0, 4), (1, 6), (3, 7)), -1),
+        (((0, 4), (1, 7), (3, 6)), 1),
+        (((0, 6), (1, 7), (3, 4)), -1),
+        (((0, 6), (1, 4), (3, 7)), 1),
+        (((0, 6), (1, 3), (4, 7)), -1),
+        (((0, 7), (1, 6), (3, 4)), 1),
+        (((0, 7), (1, 4), (3, 6)), -1),
+        (((0, 7), (1, 3), (4, 6)), 1),
+    ]
+    assert answer == [
+        (tuple(sorted(i, key=lambda x: x[0])), sign)
+        for i, sign in sorted(generate_complete_pmatch(occ_indices), key=lambda x: x[0])
     ]
