@@ -294,7 +294,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         # check deriv
-        if not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
+        if not (isinstance(deriv, (int, np.int64)) and 0 <= deriv < self.nparams):
             raise ValueError(
                 "Given derivative index must be an integer greater than or equal to "
                 "zero and less than the number of parameters, "
