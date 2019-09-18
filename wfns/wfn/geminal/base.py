@@ -485,7 +485,11 @@ class BaseGeminal(BaseWavefunction):
         occ_indices = slater.occ_indices(sd)
 
         val = 0.0
-        for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
+        if hasattr(self, "temp_generator"):
+            orbpair_generator = self.temp_generator
+        else:
+            orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+        for orbpairs, sign in orbpair_generator:
             if len(orbpairs) == 0:
                 continue
 
@@ -513,7 +517,11 @@ class BaseGeminal(BaseWavefunction):
         occ_indices = slater.occ_indices(sd)
 
         val = 0.0
-        for orbpairs, sign in self.generate_possible_orbpairs(occ_indices):
+        if hasattr(self, "temp_generator"):
+            orbpair_generator = self.temp_generator
+        else:
+            orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+        for orbpairs, sign in orbpair_generator:
             # ASSUMES: permanent evaluation is much more expensive than the lookup
             if len(orbpairs) == 0:
                 continue
