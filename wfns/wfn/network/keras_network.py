@@ -61,7 +61,7 @@ class KerasNetwork(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None):
+    def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None, num_layers=2):
         """Initialize the wavefunction.
 
         Parameters
@@ -82,6 +82,7 @@ class KerasNetwork(BaseWavefunction):
 
         """
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        self.num_layers = num_layers
         self.assign_model(model=model)
         self._template_params = None
         self.assign_params(params=params)
@@ -131,22 +132,15 @@ class KerasNetwork(BaseWavefunction):
         """
         if model is None:
             model = keras.engine.sequential.Sequential()
-            model.add(
-                keras.layers.core.Dense(
-                    self.nspin,
-                    activation=keras.activations.relu,
-                    input_dim=self.nspin,
-                    use_bias=False,
+            for _ in range(self.num_layers):
+                model.add(
+                    keras.layers.core.Dense(
+                        self.nspin,
+                        activation=keras.activations.relu,
+                        input_dim=self.nspin,
+                        use_bias=False,
+                    )
                 )
-            )
-            model.add(
-                keras.layers.core.Dense(
-                    self.nspin,
-                    activation=keras.activations.relu,
-                    input_dim=self.nspin,
-                    use_bias=False,
-                )
-            )
             model.add(
                 keras.layers.core.Dense(
                     1, activation=keras.activations.relu, input_dim=self.nspin, use_bias=False
