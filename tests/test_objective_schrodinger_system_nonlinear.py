@@ -190,10 +190,14 @@ def test_num_eqns():
 def test_system_objective():
     """Test SystemEquation.objective."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
-        np.arange(1, 5, dtype=float).reshape(2, 2),
-        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
-    )
+
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
     weights = np.random.rand(7)
     # check assignment
     test = SystemEquations(wfn, ham, eqn_weights=weights)
@@ -263,10 +267,14 @@ def test_system_objective():
 def test_system_jacobian():
     """Test SystemEquation.jacobian with only wavefunction parameters active."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
-        np.arange(1, 5, dtype=float).reshape(2, 2),
-        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
-    )
+
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
     weights = np.random.rand(7)
 
     # check assignment
