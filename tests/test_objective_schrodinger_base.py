@@ -59,9 +59,14 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     """Test BaseSchrodinger.wrapped_integrate_wfn_sd."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = RestrictedChemicalHamiltonian(
-        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
-    )
+
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
     )
@@ -101,9 +106,14 @@ def test_baseschrodinger_get_energy_one_proj():
     """Test BaseSchrodinger.get_energy_one_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = RestrictedChemicalHamiltonian(
-        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
-    )
+
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
     sds = [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010]

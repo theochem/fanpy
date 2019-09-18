@@ -158,7 +158,7 @@ class BaseSchrodinger(BaseObjective):
         ----------
         sd : {int, np.int64, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : {int, None}
+        deriv : {int, np.ndarray, None}
             Index of the objective parameters with respect to which the overlap is derivatized.
             Default is no derivatization.
 
@@ -175,16 +175,39 @@ class BaseSchrodinger(BaseObjective):
         """
         # pylint: disable=C0103
         if deriv is None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd))
+            return np.sum(self.ham.integrate_sd_wfn(sd, self.wfn))
 
         # change derivative index
-        wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
-        ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
-        if wfn_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv))
-        # b/c the integral cannot be derivatized wrt both wfn and ham
-        if ham_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv))
+        if isinstance(deriv, np.ndarray):
+            wfn_deriv = [self.param_selection.derivative_index(self.wfn, i) for i in deriv]
+            wfn_mask = np.array([i is not None for i in wfn_deriv])
+            wfn_deriv = np.array([i for i in wfn_deriv if i is not None])
+
+            ham_deriv = [self.param_selection.derivative_index(self.ham, i) for i in deriv]
+            ham_mask = np.array([i is not None for i in ham_deriv])
+            ham_deriv = np.array([i for i in ham_deriv if i is not None])
+            ham_deriv = ham_deriv.astype(int)
+
+            results = np.zeros(deriv.size)
+            if wfn_deriv is not None:
+                results[wfn_mask] = np.array(
+                    [sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=i)) for i in wfn_deriv]
+                )
+            if ham_deriv is not None:
+                results[ham_mask] = np.sum(
+                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_deriv), axis=0
+                )
+            return results
+        else:
+            wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
+            ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
+            if wfn_deriv is not None:
+                return sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv))
+            # b/c the integral cannot be derivatized wrt both wfn and ham
+            if ham_deriv is not None:
+                return sum(
+                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_derivs=np.array([ham_deriv]))
+                )
         return 0.0
 
     # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
