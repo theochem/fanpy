@@ -61,7 +61,7 @@ def least_squares(objective, save_file="", **kwargs):
         }
 
     output = wrap_scipy(solver)(objective, save_file=save_file, verbose=2, **kwargs)
-    output["energy"] = objective.energy.params
+    output["energy"] = objective.energy.params[0]
     output["residuals"] = output["internal"].fun
     output["cost"] = output["internal"].cost
     return output
