@@ -183,6 +183,12 @@ def check_inputs(
         "apig",
         "apsetg",
         "apg",
+        "apg2",
+        "apg3",
+        "apg4",
+        "apg5",
+        "apg6",
+        "apg7",
     ]
     if wfn_type not in wfn_list:
         raise ValueError(

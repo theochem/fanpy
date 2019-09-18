@@ -198,6 +198,36 @@ def make_script(
         wfn_name = "APG"
         if wfn_kwargs is None:
             wfn_kwargs = "ngem=None"
+    elif wfn_type == "apg2":
+        from_imports.append(("wfns.wfn.geminal.apg2", "APG2"))
+        wfn_name = "APG2"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4"
+    elif wfn_type == "apg3":
+        from_imports.append(("wfns.wfn.geminal.apg3", "APG3"))
+        wfn_name = "APG3"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=1"
+    elif wfn_type == "apg4":
+        from_imports.append(("wfns.wfn.geminal.apg4", "APG4"))
+        wfn_name = "APG4"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg5":
+        from_imports.append(("wfns.wfn.geminal.apg5", "APG5"))
+        wfn_name = "APG5"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg6":
+        from_imports.append(("wfns.wfn.geminal.apg6", "APG6"))
+        wfn_name = "APG6"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg7":
+        from_imports.append(("wfns.wfn.geminal.apg7", "APG7"))
+        wfn_name = "APG7"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4"
 
     if wfn_name == "DOCI":
         from_imports.append(("wfns.ham.senzero", "SeniorityZeroHamiltonian"))
