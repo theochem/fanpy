@@ -163,6 +163,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         elif sign not in [1, -1]:
             raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
 
+        one_electron, coulomb, exchange = 0, 0, 0
         # two sd's are the same
         if diff_order == 0:
             one_electron, coulomb, exchange = self._integrate_sd_sd_zero(shared_alpha, shared_beta)
@@ -176,7 +177,6 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         # two sd's are different by double excitation
         else:
             one_electron, coulomb, exchange = self._integrate_sd_sd_two(diff_sd1, diff_sd2)
-
         return sign * one_electron, sign * coulomb, sign * exchange
 
     def param_ind_to_rowcol_ind(self, param_ind):
@@ -3567,12 +3567,12 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         )
         output[1, param_indices] += np.sum(
             self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta)
-            * overlaps_one_beta[0],
+            * overlaps_one_beta,
             axis=1,
         )
         output[1, param_indices] += np.sum(
             self._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha)
-            * overlaps_one_alpha[0],
+            * overlaps_one_alpha,
             axis=1,
         )
         output[:, param_indices] += np.sum(
