@@ -29,6 +29,7 @@ def make_script(
     save_wfn=None,
     save_chk=None,
     filename=None,
+    outname=None,
     memory=None,
 ):
     """Make a script for running calculations.
@@ -115,10 +116,12 @@ def make_script(
     save_chk : str
         Name of the Numpy file that will store the chkpoint of the objective.
     filename : {str, -1, None}
-        Name of the file that will store the output.
+        Name of the script.
         By default, the script is printed.
         If `-1` is given, then the script is returned as a string.
         Otherwise, the given string is treated as the name of the file.
+    outname : {str, None}
+        Name of the file that will store the output.
     memory : str
         Memory available to run the calculation.
 
@@ -151,7 +154,7 @@ def make_script(
         wfn_noise=wfn_noise,
     )
 
-    imports = ["numpy as np", "os"]
+    imports = ["numpy as np", "os", "sys"]
     from_imports = []
 
     wfn_type = wfn_type.lower()
@@ -163,6 +166,8 @@ def make_script(
     elif wfn_type == "doci":
         from_imports.append(("wfns.wfn.ci.doci", "DOCI"))
         wfn_name = "DOCI"
+        if wfn_kwargs is None:
+            wfn_kwargs = ""
     elif wfn_type == "mps":
         from_imports.append(("wfns.wfn.network.mps", "MatrixProductState"))
         wfn_name = "MatrixProductState"
@@ -244,6 +249,8 @@ def make_script(
         from_imports.append(("wfns.objective.schrodinger.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
         from_imports.append(("wfns.objective.schrodinger.twosided_energy", "TwoSidedEnergy"))
+    elif objective == "one_energy":
+        from_imports.append(("wfns.objective.schrodinger.onesided_energy", "OneSidedEnergy"))
 
     if solver == "cma":
         from_imports.append(("wfns.solver.equation", "cma"))
@@ -251,7 +258,7 @@ def make_script(
         if solver_kwargs is None:
             solver_kwargs = (
                 "sigma0=0.01, options={'ftarget': None, 'timeout': np.inf, "
-                "'tolfun': 1e-11, 'verb_filenameprefix': 'outcmaes', 'verb_log': 0}"
+                "'tolfun': 1e-11, 'verb_filenameprefix': 'outcmaes', 'verb_log': 1}"
             )
     elif solver == "diag":
         from_imports.append(("wfns.solver.ci", "brute"))
@@ -288,21 +295,27 @@ def make_script(
         output += "from {} import {}\n".format(key, val)
     output += "\n\n"
 
+    if outname:
+        output += f"output = open('{outname}', 'w')"
+    else:
+        output += "output = sys.stdout"
+    output += "\n\n"
+
     output += "# Number of electrons\n"
     output += "nelec = {:d}\n".format(nelec)
-    output += "print('Number of Electrons: {}'.format(nelec))\n"
+    output += "print('Number of Electrons: {}'.format(nelec), file=output)\n"
     output += "\n"
 
     output += "# Number of spin orbitals\n"
     output += "nspin = {:d}\n".format(nspin)
-    output += "print('Number of Spin Orbitals: {}'.format(nspin))\n"
+    output += "print('Number of Spin Orbitals: {}'.format(nspin), file=output)\n"
     output += "\n"
 
     output += "# One-electron integrals\n"
     output += "one_int_file = '{}'\n".format(one_int_file)
     output += "one_int = np.load(one_int_file)\n"
     output += (
-        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))\n"
+        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)), file=output)\n"
         "".format(one_int_file)
     )
     output += "\n"
@@ -311,14 +324,14 @@ def make_script(
     output += "two_int_file = '{}'\n".format(two_int_file)
     output += "two_int = np.load(two_int_file)\n"
     output += (
-        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))\n"
+        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)), file=output)\n"
         "".format(two_int_file)
     )
     output += "\n"
 
     output += "# Nuclear-nuclear repulsion\n"
     output += "nuc_nuc = {}\n".format(nuc_nuc)
-    output += "print('Nuclear-nuclear repulsion: {}'.format(nuc_nuc))\n"
+    output += "print('Nuclear-nuclear repulsion: {}'.format(nuc_nuc), file=output)\n"
     output += "\n"
 
     if load_wfn is not None:
@@ -326,7 +339,7 @@ def make_script(
         output += "wfn_params_file = '{}'\n".format(load_wfn)
         output += "wfn_params = np.load(wfn_params_file)\n"
         output += "print('Load wavefunction parameters: {}'"
-        output += ".format(os.path.abspath(wfn_params_file)))\n"
+        output += ".format(os.path.abspath(wfn_params_file)), file=output)\n"
         output += "\n"
         wfn_params = "wfn_params"
     else:
@@ -344,7 +357,7 @@ def make_script(
             "wfn.assign_params(wfn.params + "
             "{} * 2 * (np.random.rand(*wfn.params.shape) - 0.5))\n".format(wfn_noise)
         )
-    output += "print('Wavefunction: {}')\n".format(wfn_name)
+    output += "print('Wavefunction: {}', file=output)\n".format(wfn_name)
     output += "\n"
 
     if load_ham is not None:
@@ -352,7 +365,7 @@ def make_script(
         output += "ham_params_file = '{}'\n".format(load_ham)
         output += "ham_params = np.load(ham_params_file)\n"
         output += "print('Load Hamiltonian parameters: {}'"
-        output += ".format(os.path.abspath(ham_params_file)))\n"
+        output += ".format(os.path.abspath(ham_params_file)), file=output)\n"
         output += "\n"
         ham_params = "ham_params"
     else:
@@ -370,7 +383,7 @@ def make_script(
             "ham.assign_params(ham.params + "
             "{} * 2 * (np.random.rand(*ham.params.shape) - 0.5))\n".format(ham_noise)
         )
-    output += "print('Hamiltonian: {}')\n".format(ham_name)
+    output += "print('Hamiltonian: {}', file=output)\n".format(ham_name)
     output += "\n"
 
     if load_orbs:
@@ -378,7 +391,7 @@ def make_script(
         output += "orb_matrix_file = '{}'\n".format(load_orbs)
         output += "orb_matrix = np.load(orb_matrix_file)\n"
         output += "ham.orb_rotate_matrix(orb_matrix)\n"
-        output += "print('Rotate orbitals from {}'.format(os.path.abspath(orb_matrix_file)))\n"
+        output += "print('Rotate orbitals from {}'.format(os.path.abspath(orb_matrix_file)), file=output)\n"
         output += "\n"
 
     if pspace_exc is None:
@@ -395,7 +408,7 @@ def make_script(
         textwrap.wrap(pspace1 + pspace2, width=100, subsequent_indent=" " * len(pspace1))
     )
     output += "\n"
-    output += "print('Projection space (orders of excitations): {}')\n".format(pspace)
+    output += "print('Projection space (orders of excitations): {}', file=output)\n".format(pspace)
     output += "\n"
 
     output += "# Select parameters that will be optimized\n"
@@ -433,6 +446,13 @@ def make_script(
             "tmpfile='{}', pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
             "".format(save_chk)
         )
+    elif objective == "one_energy":
+        objective1 = "objective = OneSidedEnergy("
+        objective2 = (
+            "wfn, ham, param_selection=param_selection, "
+            "tmpfile='{}', refwfn=pspace)\n"
+            "".format(save_chk)
+        )
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )
@@ -443,7 +463,7 @@ def make_script(
         output += "chk_point_file = '{}'\n".format(load_chk)
         output += "chk_point = np.load(chk_point_file)\n"
         output += "objective.assign_params(chk_point)\n"
-        output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
+        output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)), file=output)\n"
         output += "\n"
 
     if save_chk is None:
@@ -451,11 +471,11 @@ def make_script(
     output += "# Solve\n"
     if solver_name == "brute":
         output += "results = brute(wfn, ham, save_file='')\n"
-        output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix')\n"
+        output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix', file=output)\n"
     else:
         results1 = "results = {}(".format(solver_name)
         results2 = "objective, save_file='{}', {})\n".format(save_chk, solver_kwargs)
-        output += "print('Optimizing wavefunction: {} solver')\n".format(solver_name)
+        output += "print('Optimizing wavefunction: {} solver', file=output)\n".format(solver_name)
         output += "\n".join(
             textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
         )
@@ -464,13 +484,13 @@ def make_script(
 
     output += "# Results\n"
     output += "if results['success']:\n"
-    output += "    print('Optimization was successful')\n"
+    output += "    print('Optimization was successful', file=output)\n"
     output += "else:\n"
-    output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
-    output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
-    output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
+    output += "    print('Optimization was not successful: {}'.format(results['message']), file=output)\n"
+    output += "print('Final Electronic Energy: {}'.format(results['energy']), file=output)\n"
+    output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc), file=output)\n"
     if objective == "system":
-        output += "print('Cost: {}'.format(results['cost']))\n"
+        output += "print('Cost: {}'.format(results['cost']), file=output)\n"
 
     if not all(save is None for save in [save_orbs, save_ham, save_wfn]):
         output += "\n"
@@ -535,5 +555,6 @@ def main():
         save_wfn=args.save_wfn,
         save_chk=args.save_chk,
         filename=args.filename,
+        outname=args.outname,
         memory=args.memory,
     )

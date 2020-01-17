@@ -210,7 +210,7 @@ def check_inputs(
         )
 
     # check objective
-    if objective not in [None, "system", "least_squares", "variational"]:
+    if objective not in [None, "system", "least_squares", "variational", "one_energy"]:
         raise ValueError("Objective must be one of `system`, `least_squares`, or `variational`.")
 
     # check solver
@@ -220,7 +220,7 @@ def check_inputs(
         )
 
     # check compatibility b/w objective and solver
-    if solver in ["cma", "minimize"] and objective not in ["least_squares", "variational"]:
+    if solver in ["cma", "minimize"] and objective not in ["least_squares", "variational", "one_energy"]:
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation "
             "(objective) that consists of one equation (`least_squares` and "
@@ -346,7 +346,7 @@ def parser_add_arguments():
         required=False,
         help=(
             "Type of the objective that will be used. Must be one of `system`, `least_squares`, "
-            "and `variational`. Default is `least_squares`"
+            "and `variational`, or `one_energy`. Default is `least_squares`"
         ),
     )
     parser.add_argument(
@@ -468,4 +468,11 @@ def parser_add_arguments():
         default=None,
         required=False,
         help="Memory available to run the calculation.",
+    )
+    parser.add_argument(
+        "--outname",
+        type=str,
+        default=None,
+        required=False,
+        help="Name of the file that stores the output of the calculation.",
     )
