@@ -2,8 +2,10 @@
 import abc
 
 import numpy as np
-from wfns.backend import math_tools, slater
+from wfns.backend import slater
+from permanent.permanent import permanent
 from wfns.wfn.base import BaseWavefunction
+from wfns.wfn.geminal.cext import get_col_inds
 
 
 # FIXME: define some function to get the column indices of the parameters from the orbital pairs
@@ -203,8 +205,13 @@ class BaseGeminal(BaseWavefunction):
 
         """
         params = np.zeros(self.params_shape, dtype=self.dtype)
+
+        # orbpairs = np.array([(i, i + self.nspatial) for i in range(self.ngem)])
+        # col_inds = self.get_col_ind(orbpairs)
+        # params[np.arange(self.ngem), col_inds] = 1
+
         for i in range(self.ngem):
-            col_ind = self.get_col_ind((i, i + self.nspatial))
+            col_ind = int(self.get_col_ind((i, i + self.nspatial)))
             params[i, col_ind] += 1
         return params
 
@@ -383,12 +390,16 @@ class BaseGeminal(BaseWavefunction):
             If given orbital pair is not valid.
 
         """
-        try:
-            return self.dict_orbpair_ind[orbpair]
-        except (KeyError, TypeError):
-            raise ValueError(
-                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
-            )
+        return self.dict_orbpair_ind[orbpair]
+        # try:
+        #     return self.dict_orbpair_ind[orbpair]
+        # except (KeyError, TypeError):
+        #     raise ValueError(
+        #         "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+        #     )
+
+    def get_col_inds(self, orbpairs):
+        return get_col_inds(orbpairs, self.nspin)
 
     def get_orbpair(self, col_ind):
         """Get the orbital pair that corresponds to the given column index.
@@ -438,20 +449,23 @@ class BaseGeminal(BaseWavefunction):
             Permanent of the selected submatrix.
 
         """
-        if row_inds is None:
-            row_inds = np.arange(self.ngem)
-        else:
-            row_inds = np.array(row_inds)
-        col_inds = np.array(col_inds)
+        # if row_inds is None:
+        #     row_inds = np.arange(self.ngem)
+        # else:
+        #     row_inds = np.array(row_inds)
+        # col_inds = np.array(col_inds)
         # select function that evaluates the permanent
         # Ryser algorithm is faster if the number of rows and columns are greater than 3
-        if col_inds.size <= 3 >= row_inds.size:
-            permanent = math_tools.permanent_ryser
-        else:
-            permanent = math_tools.permanent_combinatoric
+        # if col_inds.size <= 3 >= row_inds.size:
+        #     permanent = math_tools.permanent_ryser
+        # else:
+        #     permanent = math_tools.permanent_combinatoric
 
         if deriv is None:
-            return permanent(self.params[row_inds, :][:, col_inds])
+            return permanent(self.params[:, col_inds])
+
+        if row_inds is None:
+            row_inds = np.arange(self.ngem)
 
         row_removed = deriv // self.norbpair
         col_removed = deriv % self.norbpair
@@ -465,7 +479,7 @@ class BaseGeminal(BaseWavefunction):
         elif row_inds_trunc.size == col_inds_trunc.size == 0:
             return 1.0
         else:
-            return permanent(self.params[row_inds_trunc, :][:, col_inds_trunc])
+            return permanent(self.params[:, col_inds_trunc])
 
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
@@ -493,7 +507,9 @@ class BaseGeminal(BaseWavefunction):
             if len(orbpairs) == 0:
                 continue
 
-            col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs])
+            col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
+            # FIXME: converting all orbpairs is slow for some reason
+            # col_inds = self.get_col_inds(np.array(orbpairs))
             val += sign * self.compute_permanent(col_inds)
         return val
 
@@ -525,7 +541,9 @@ class BaseGeminal(BaseWavefunction):
             # ASSUMES: permanent evaluation is much more expensive than the lookup
             if len(orbpairs) == 0:
                 continue
-            col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs])
+            col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
+            # FIXME: converting all orbpairs is slow for some reason
+            # col_inds = self.get_col_inds(np.array(orbpairs))
             val += sign * self.compute_permanent(col_inds, deriv=deriv)
         return val
 
