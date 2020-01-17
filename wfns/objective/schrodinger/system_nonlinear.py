@@ -427,10 +427,10 @@ class SystemEquations(BaseSchrodinger):
                 ref_coeffs = np.array([get_overlap(i) for i in ref_sds])
 
             norm = np.sum(ref_coeffs * np.array([get_overlap(i) for i in ref_sds]))
-            energy = self.get_energy_one_proj(self.refwfn)
+            # energy = self.get_energy_one_proj(self.refwfn)
             energy = np.sum(ref_coeffs * np.array([integrate_wfn_sd(i) for i in ref_sds])) / norm
             # can be replaced with
-            energy = self.get_energy_one_proj(self.refwfn)
+            # energy = self.get_energy_one_proj(self.refwfn)
             self.energy.assign_params(energy)
 
         # objective

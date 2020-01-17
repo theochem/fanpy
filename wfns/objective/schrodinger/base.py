@@ -7,6 +7,8 @@ from wfns.param import ParamMask
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 
+from wfns.objective.schrodinger.cext import get_energy_one_proj, get_energy_one_proj_deriv
+
 
 class BaseSchrodinger(BaseObjective):
     """Base class for objectives related to solving the Schrodinger equation.
@@ -205,7 +207,7 @@ class BaseSchrodinger(BaseObjective):
                 return sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv))
             # b/c the integral cannot be derivatized wrt both wfn and ham
             if ham_deriv is not None:
-                return sum(
+                return np.sum(
                     self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_derivs=np.array([ham_deriv]))
                 )
         return 0.0
@@ -304,6 +306,44 @@ class BaseSchrodinger(BaseObjective):
             If `refwfn` is not a CIWavefunction, int, or list/tuple of int.
 
         """
+        # define reference
+        if isinstance(refwfn, CIWavefunction):
+            # ref_sds = refwfn.sd_vec
+            # ref_coeffs = refwfn.params
+            # if deriv is not None:
+            #     ref_deriv = self.param_selection.derivative_index(refwfn, deriv)
+            #     if ref_deriv is None:
+            #         d_ref_coeffs = 0.0
+            #     else:
+            #         d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
+            #         d_ref_coeffs[ref_deriv] = 1
+            raise ValueError("CI wavefunction as a reference wavefunction is not supported.")
+        elif isinstance(refwfn, int):
+            refwfn = [refwfn]
+
+        refwfn = np.array(refwfn)
+        # if deriv is None:
+        #     return get_energy_one_proj(self.wfn, self.ham, refwfn)
+
+        if isinstance(deriv, np.ndarray):
+            wfn_deriv = [self.param_selection.derivative_index(self.wfn, i) for i in deriv]
+            wfn_mask = np.array([i is not None for i in wfn_deriv])
+            wfn_deriv = np.array([i for i in wfn_deriv if i is not None])
+
+            ham_deriv = [self.param_selection.derivative_index(self.ham, i) for i in deriv]
+            ham_mask = np.array([i is not None for i in ham_deriv])
+            ham_deriv = np.array([i for i in ham_deriv if i is not None])
+            ham_deriv = ham_deriv.astype(int)
+
+            all_derivs = get_energy_one_proj_deriv(self.wfn, self.ham, refwfn)[1]
+            results = np.zeros(deriv.size)
+            if wfn_deriv is not None:
+                results[wfn_mask] = all_derivs[wfn_deriv]
+            if ham_deriv is not None:
+                results[ham_mask] = all_derivs[ham_deriv + self.wfn.nparams]
+            return results
+
+        # old code
         get_overlap = self.wrapped_get_overlap
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
@@ -319,7 +359,7 @@ class BaseSchrodinger(BaseObjective):
                     d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
                     d_ref_coeffs[ref_deriv] = 1
         elif slater.is_sd_compatible(refwfn) or (
-            isinstance(refwfn, (list, tuple)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
+            isinstance(refwfn, (list, tuple, np.ndarray)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
         ):
             if slater.is_sd_compatible(refwfn):
                 refwfn = [refwfn]

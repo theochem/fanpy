@@ -272,4 +272,4 @@ class OneSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return np.array([self.get_energy_one_proj(self.refwfn, i) for i in range(params.size)])
+        return np.array(self.get_energy_one_proj(self.refwfn, np.arange(params.size, dtype=int)))
