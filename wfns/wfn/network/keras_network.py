@@ -147,8 +147,8 @@ class KerasNetwork(BaseWavefunction):
                 )
             )
 
-        if not isinstance(model, keras.engine.training.Model):
-            raise TypeError("Given model must be an instance of keras.engine.network.Network.")
+        #if not isinstance(model, keras.engine.training.Model):
+        #    raise TypeError("Given model must be an instance of keras.engine.network.Network.")
         if len(model.inputs) != 1:
             raise ValueError(
                 "Given model must only have one set of inputs (for the occupations of "
