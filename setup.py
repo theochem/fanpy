@@ -9,6 +9,8 @@ https://github.com/pypa/sampleproject
 from os import path
 
 from setuptools import find_packages, setup
+from setuptools.extension import Extension
+from Cython.Build import cythonize
 
 here = path.abspath(path.dirname(__file__))
 
@@ -88,6 +90,7 @@ setup(
         "console_scripts": [
             "wfns_make_script=wfns.scripts.make_script:main",
             "wfns_run_calc=wfns.scripts.run_calc:main",
+            "wfns_make_nn_script=wfns.scripts.make_nn_script:main",
         ]
     },
     # List additional URLs that are relevant to your project as a dict.
@@ -96,4 +99,17 @@ setup(
         "Organization": "https://github.com/quantumelephant/",
         "Source": "https://github.com/theochem/gbasis/",
     },
+    ext_modules= cythonize(
+            [
+        Extension(
+            "wfns.objective.schrodinger.cext",
+            ["wfns/objective/schrodinger/cext.pyx"],
+        ),
+        Extension(
+            "wfns.wfn.geminal.cext",
+            ["wfns/wfn/geminal/cext.pyx"],
+        ),
+        ]
+    ),
+    zip_safe=False,
 )
