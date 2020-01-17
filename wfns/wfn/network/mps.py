@@ -22,6 +22,7 @@ class MatrixProductState(BaseWavefunction):
     memory : float
         Memory available for the wavefunction.
 
+
     Properties
     ----------
     nparams : int
@@ -437,6 +438,55 @@ class MatrixProductState(BaseWavefunction):
 
         return (left_temp * right_temp).item()
 
+    def _olp_deriv_block(self, sd, ind_spatial):
+        """Calculate the derivative of the overlap with the Slater determinant.
+
+        Parameters
+        ----------
+        sd : int
+            Occupation vector of a Slater determinant given as a bitstring.
+            Assumed to have the same number of electrons as the wavefunction.
+        deriv : int
+            Index of the parameter with respect to which the overlap is derivatized.
+            Assumed to correspond to the matrix elements that correspond to the given Slater
+            determinant.
+
+        Returns
+        -------
+        olp : {float, complex}
+            Derivative of the overlap with respect to the given parameter.
+
+        """
+        occ_indices = self.get_occupation_indices(sd)
+
+        left_temp, right_temp = 1.0, 1.0
+
+        # if selected matrix is not the right most matrix
+        if ind_spatial < occ_indices.size - 1:
+            # index of the matrix to the right of the given matrix
+            index_right = ind_spatial + 1
+
+            # multiply matrix towards the right (from the derivatized matrix)
+            right_temp = self.get_matrix(index_right)[occ_indices[index_right], :, :]
+            for i in range(index_right + 1, occ_indices.size):
+                right_temp = right_temp.dot(self.get_matrix(i)[occ_indices[i], :, :])
+            # right_temp is a column vector now, where each entry corresponds to the column index of
+            # the chosen matrix with which the overlap is derivatized
+
+        # if selected matrix is not the left most matrix
+        if ind_spatial > 0:
+            # index of the matrix to the left of the given matrix
+            index_left = ind_spatial - 1
+
+            # multiply matrix towards the left (from the derivatized matrix)
+            left_temp = self.get_matrix(index_left)[occ_indices[index_left], :, :]
+            for i in reversed(range(index_left)):
+                left_temp = self.get_matrix(i)[occ_indices[i], :, :].dot(left_temp)
+            # left_temp is a row vector now, where each entry corresponds to the row index of
+            # the chosen matrix with which the overlap is derivatized
+
+        return (left_temp * right_temp).T
+
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
@@ -469,13 +519,33 @@ class MatrixProductState(BaseWavefunction):
         if deriv is None:
             return self._cache_fns["overlap"](sd)
         # if derivatization
+        if isinstance(deriv, np.ndarray):
+            occ_indices = self.get_occupation_indices(sd)
+            output = np.zeros(self.nparams)
+
+            D = self.dimension
+            K = self.nspatial
+            for k in range(self.nspatial):
+                for n in occ_indices:
+                    deriv_block = self._olp_deriv_block(sd, k, n)
+
+                    if k == 0:
+                        start_index = D * n
+                        end_index = start_index + D
+                    elif k < K - 1:
+                        start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
+                        end_index = start_index + D**2
+                    else:
+                        start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
+                        end_index = start_index + D
+                    output[start_index : end_index] = np.ravel(deriv_block)
+            return output[deriv]
+
         if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Given derivatization index must be an integer.")
 
         if not 0 <= deriv < self.nparams:
             return 0.0
-
-        occ_indices = self.get_occupation_indices(sd)
         deriv_matrix, deriv_occ, *_ = self.decompose_index(deriv)
         if deriv_occ != occ_indices[deriv_matrix]:
             return 0.0
