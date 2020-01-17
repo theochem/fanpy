@@ -70,18 +70,18 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
     )
-    assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
-    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=0) == sum(
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101), sum(ham.integrate_wfn_sd(wfn, 0b0101)))
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=0), sum(
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=0)
-    )
-    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=1) == sum(
+    ))
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=1), sum(
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=3)
-    )
-    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=2) == sum(
+    ))
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=2), sum(
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=5)
-    )
+    ))
     # FIXME: no tests for ham_deriv b/c there are no hamiltonians with parameters
-    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=3) == 0.0
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=3), 0.0)
 
 
 def test_baseschrodinger_wrapped_integrate_sd_sd():
@@ -375,3 +375,21 @@ def test_baseschrodinger_get_energy_two_proj():
                     / (olp_n1 ** 2 + olp_n2 ** 2) ** 2
                 ),
             )
+
+
+def test_baseschrodinger_get_energy_one_two_proj():
+    wfn = CIWavefunction(4, 10)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+
+    one_int = np.random.rand(5, 5)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(5, 5, 5, 5)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+
+    from wfns.backend.sd_list import sd_list
+    sds = sd_list(4, 5)
+    assert np.allclose(test.get_energy_one_proj(sds), test.get_energy_two_proj(sds))
