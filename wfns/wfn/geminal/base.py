@@ -462,7 +462,10 @@ class BaseGeminal(BaseWavefunction):
         #     permanent = math_tools.permanent_combinatoric
 
         if deriv is None:
-            return permanent(self.params[:, col_inds])
+            if row_inds is None:
+                return permanent(self.params[:, col_inds])
+            else:
+                return permanent(self.params[row_inds[:, None], col_inds[None, :]])
 
         if row_inds is None:
             row_inds = np.arange(self.ngem)
@@ -479,7 +482,7 @@ class BaseGeminal(BaseWavefunction):
         elif row_inds_trunc.size == col_inds_trunc.size == 0:
             return 1.0
         else:
-            return permanent(self.params[:, col_inds_trunc])
+            return permanent(self.params[row_inds_trunc[:, None], col_inds_trunc[None, :]])
 
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
