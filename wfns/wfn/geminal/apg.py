@@ -119,7 +119,7 @@ class APG(BaseGeminal):
                 "possible orbital pairs will be used."
             )
         orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
-        self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
+        self.dict_orbpair_ind = {orbpair: i for i, orbpair in enumerate(orbpairs)}
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
     def get_col_ind(self, orbpair):
