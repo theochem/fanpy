@@ -204,10 +204,11 @@ class APIG(BaseGeminal):
                 orbpairs.append(self.dict_ind_orbpair[ind])
 
         # signature to turn orbpairs into strictly INCREASING order.
-        sign = sign_perm([orb for orbpair in orbpairs for orb in orbpair])
+        constructed_occ_indices = [orb for orbpair in orbpairs for orb in orbpair]
+        sign = sign_perm(constructed_occ_indices)
 
         # if Slater determinant cannot be constructed from the orbital pairing scheme
-        if len(occ_indices) != 2 * len(orbpairs):
+        if set(occ_indices) != set(constructed_occ_indices):
             yield [], 1
         else:
             yield tuple(orbpairs), sign
