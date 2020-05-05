@@ -62,7 +62,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
     """
 
-    def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
+    def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None, update_prev_params=False):
         """Initialize the Hamiltonian.
 
         Parameters
@@ -79,6 +79,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
         self.cache_two_ints()
+        self._prev_params = None
+        self.update_prev_params = update_prev_params
         self.assign_params(params=params)
 
     def set_ref_ints(self):
@@ -132,15 +134,26 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # assign parameters
         self.params = params
+        if self._prev_params is None:
+            self._prev_params = np.zeros(params.size)
+            self._prev_unitary = math_tools.unitary_matrix(self._prev_params)
+        params_prev = self._prev_params
+        params_diff = params - params_prev
+        unitary_prev = self._prev_unitary
 
         # revert integrals back to original
         self.assign_integrals(np.copy(self._ref_one_int), np.copy(self._ref_two_int))
 
         # convert antihermitian part to unitary matrix.
-        unitary = math_tools.unitary_matrix(params)
+        unitary_diff = math_tools.unitary_matrix(params_diff)
+        unitary = unitary_prev.dot(unitary_diff)
 
         # transform integrals
         self.orb_rotate_matrix(unitary)
+
+        if self.update_prev_params:
+            self._prev_params = params.copy()
+            self._prev_unitary = unitary
 
         # cache two electron integrals
         self.cache_two_ints()
