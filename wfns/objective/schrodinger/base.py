@@ -1,4 +1,5 @@
 """Base class for objectives related to solving the Schrodinger equation."""
+import os
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
@@ -516,3 +517,14 @@ class BaseSchrodinger(BaseObjective):
         )
         d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
         return d_energy
+
+    def save_params(self):
+        """Save all of the parameters in the `param_selection` to the temporary file.
+
+        All of the parameters are saved, even if it was frozen in the objective.
+
+        """
+        if self.tmpfile != "":
+            np.save(self.tmpfile, self.param_selection.all_params)
+            if self.ham.update_prev_params:
+                np.save('{}_um{}'.format(*os.path.splitext(self.tmpfile)), self.ham._prev_unitary)
