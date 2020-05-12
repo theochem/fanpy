@@ -145,7 +145,7 @@ class AP1roG(APIG):
 
         """
         # pylint: disable=W0233,W0231
-        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype)
+        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)

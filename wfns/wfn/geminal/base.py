@@ -145,7 +145,7 @@ class BaseGeminal(BaseWavefunction):
             Geminal coefficient matrix.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype)
+        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
