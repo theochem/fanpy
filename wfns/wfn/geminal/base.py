@@ -622,3 +622,8 @@ class BaseGeminal(BaseWavefunction):
             original order in `occ_indices`.
 
         """
+
+    def normalize(self, pspace):
+        norm = sum(self.get_overlap(i)**2 for i in pspace)
+        self.assign_params(self.params * norm ** (- 1 / 2 / self.ngem))
+        self.clear_cache()
