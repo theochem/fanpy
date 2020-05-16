@@ -2,6 +2,8 @@
 import abc
 import numpy as np
 import itertools as it
+
+import cachetools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wfn.base import BaseWavefunction
@@ -484,6 +486,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         return col_inds, bosons, fermions
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -500,6 +503,7 @@ class BaseQuasiparticle(BaseWavefunction):
         """
         return self._olp_deriv(sd, None)
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -575,7 +579,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._olp(sd)
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
             raise ValueError('Index for derivatization must be in integer.')
@@ -591,7 +595,7 @@ class BaseQuasiparticle(BaseWavefunction):
         if not all(slater.occ(sd, orb) for orb in orbs):
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._olp_deriv(sd, deriv)
 
     @abc.abstractmethod
     def generate_possible_orbsubsets(self, occ_indices):

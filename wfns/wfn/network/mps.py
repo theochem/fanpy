@@ -1,4 +1,5 @@
 """Hard-coded Matrix Product State wavefunction."""
+import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -369,6 +370,7 @@ class MatrixProductState(BaseWavefunction):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -438,6 +440,7 @@ class MatrixProductState(BaseWavefunction):
 
         return (left_temp * right_temp).item()
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv_block(self, sd, ind_spatial):
         """Calculate the derivative of the overlap with the Slater determinant.
 

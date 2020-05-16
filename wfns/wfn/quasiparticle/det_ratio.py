@@ -1,4 +1,5 @@
 """Hard-coded determinant-ratio wavefunction."""
+import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -323,6 +324,7 @@ class DeterminantRatio(BaseWavefunction):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -345,6 +347,7 @@ class DeterminantRatio(BaseWavefunction):
         denominator = np.prod(determinants[np.logical_not(self.numerator_mask)])
         return numerator / denominator
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -436,7 +439,7 @@ class DeterminantRatio(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns['overlap'](sd)
+            return self._olp(sd)
 
         # if derivatization
         elif not isinstance(deriv, (int, np.int64)):
@@ -450,4 +453,4 @@ class DeterminantRatio(BaseWavefunction):
         if deriv_col not in columns[deriv_matrix]:
             return 0.0
 
-        return self._cache_fns['overlap derivative'](sd, deriv)
+        return self._olp_deriv(sd, deriv)

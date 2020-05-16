@@ -1,4 +1,5 @@
 """Rank-2 approximation to geminal wavefunction."""
+import cachetools
 import numpy as np
 from wfns.backend import math_tools, slater
 from wfns.wfn.geminal.base import BaseGeminal
@@ -293,7 +294,7 @@ class RankTwoApprox:
         sd = slater.internal_sd(sd)
 
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         if isinstance(deriv, (int, np.int64)):
             if deriv >= self.nparams:
                 return 0.0
@@ -305,7 +306,7 @@ class RankTwoApprox:
                 if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
                     return 0.0
 
-            return self._cache_fns["overlap derivative"](sd, deriv)
+            return self._olp_deriv(sd, deriv)
 
 
 def full_to_rank2(params, rmsd=0.1, method="least squares"):

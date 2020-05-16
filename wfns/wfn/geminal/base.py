@@ -1,6 +1,7 @@
 """Base class for Geminal wavefunctions."""
 import abc
 
+import cachetools
 import numpy as np
 from wfns.backend import slater
 from permanent.permanent import permanent
@@ -484,6 +485,7 @@ class BaseGeminal(BaseWavefunction):
         else:
             return permanent(self.params[row_inds_trunc[:, None], col_inds_trunc[None, :]])
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -516,6 +518,7 @@ class BaseGeminal(BaseWavefunction):
             val += sign * self.compute_permanent(col_inds)
         return val
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -584,7 +587,7 @@ class BaseGeminal(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
@@ -600,7 +603,7 @@ class BaseGeminal(BaseWavefunction):
         if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
             return 0.0
 
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):

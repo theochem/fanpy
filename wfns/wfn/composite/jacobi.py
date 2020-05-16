@@ -1,4 +1,5 @@
 r"""Wavefunction with orbitals rotated by Jacobi matrix."""
+import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
@@ -341,6 +342,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         self.jacobi_indices = tuple(jacobi_indices)
 
     # FIXME: too many return statements, too many branches
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -512,6 +514,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             )
 
     # FIXME: too many return statements, too many branches
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -719,8 +722,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         """
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not (isinstance(deriv, int) and deriv >= 0):
             raise ValueError("Index for derivatization must be a non-negative integer.")
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)
