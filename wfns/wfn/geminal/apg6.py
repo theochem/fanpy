@@ -54,3 +54,8 @@ class APG6(APG):
             for orbpair in pmatch:
                 full_adjacency[orbpair[0], orbpair[1]] = 0
                 full_adjacency[orbpair[1], orbpair[0]] = 0
+
+    def clear_cache(self, key=None):
+        super().clear_cache(key=key)
+        self.adjacency = None
+        self.weights = None

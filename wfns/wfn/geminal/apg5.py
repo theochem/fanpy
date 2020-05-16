@@ -55,3 +55,8 @@ class APG5(APG):
             min_edge = pmatch[np.argmax(edge_weights)]
             full_adjacency[min_edge[0], min_edge[1]] = 0
             full_adjacency[min_edge[1], min_edge[0]] = 0
+
+    def clear_cache(self, key=None):
+        super().clear_cache(key=key)
+        self.adjacency = None
+        self.weights = None

@@ -39,3 +39,8 @@ class APG3(APG):
             reverse=True,
         )
         yield from pmatch_sign[:self.num_matchings]
+
+    def clear_cache(self, key=None):
+        super().clear_cache(key=key)
+        self.connectivity = None
+        self.weights = None

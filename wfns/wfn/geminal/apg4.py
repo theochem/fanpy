@@ -56,6 +56,11 @@ class APG4(APG):
             full_adjacency[min_edge[0], min_edge[1]] = 0
             full_adjacency[min_edge[1], min_edge[0]] = 0
 
+    def clear_cache(self, key=None):
+        super().clear_cache(key=key)
+        self.adjacency = None
+        self.weights = None
+
 
 def test_something():
     test = APG4(2, 6, tol=0.1, num_matchings=3)

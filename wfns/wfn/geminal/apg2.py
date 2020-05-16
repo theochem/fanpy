@@ -30,6 +30,10 @@ class APG2(APG):
         ):
             yield pmatch, sign
 
+    def clear_cache(self, key=None):
+        super().clear_cache(key=key)
+        self.connectivity = None
+
 
 def test_something():
     test = APG2(2, 6, tol=1)
