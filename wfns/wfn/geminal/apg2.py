@@ -11,17 +11,22 @@ class APG2(APG):
         super().__init__(nelec, nspin, dtype=dtype, memory=memory, ngem=ngem, orbpairs=orbpairs,
                          params=params)
         self.tol = tol
+        self.connectivity = None
 
     def generate_possible_orbpairs(self, occ_indices):
-        dead_indices = np.where(np.sum(np.abs(self.params), axis=0) < self.tol)[0]
-        dead_orbpairs = np.array([self.get_orbpair(ind) for ind in dead_indices])
-        all_connectivity = np.ones((self.nspin, self.nspin))
-        if dead_orbpairs.size > 0:
-            all_connectivity[dead_orbpairs[:, 0], dead_orbpairs[:, 1]] = 0
-            all_connectivity[dead_orbpairs[:, 1], dead_orbpairs[:, 0]] = 0
+        if self.connectivity is None:
+            dead_indices = np.where(np.sum(np.abs(self.params), axis=0) < self.tol)[0]
+            dead_orbpairs = np.array([self.get_orbpair(ind) for ind in dead_indices])
+            connectivity = np.ones((self.nspin, self.nspin))
+            if dead_orbpairs.size > 0:
+                connectivity[dead_orbpairs[:, 0], dead_orbpairs[:, 1]] = 0
+                connectivity[dead_orbpairs[:, 1], dead_orbpairs[:, 0]] = 0
+            self.connectivity = connectivity
+        else:
+            connectivity = self.connectivity
         occ_indices = np.array(occ_indices)
         for pmatch, sign in generate_general_pmatch(
-            occ_indices, all_connectivity[occ_indices[:, None], occ_indices[None, :]]
+            occ_indices, connectivity[occ_indices[:, None], occ_indices[None, :]]
         ):
             yield pmatch, sign
 

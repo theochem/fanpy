@@ -13,17 +13,25 @@ class APG3(APG):
                          params=params)
         self.tol = tol
         self.num_matchings = num_matchings
+        self.connectivity = None
+        self.weights = None
 
     def generate_possible_orbpairs(self, occ_indices):
-        weights = np.sum(np.abs(self.params), axis=0)
-        dead_indices = np.where(weights < self.tol)[0]
-        dead_orbpairs = np.array([self.get_orbpair(ind) for ind in dead_indices])
-        all_connectivity = np.ones((self.nspin, self.nspin))
-        if dead_orbpairs.size > 0:
-            all_connectivity[dead_orbpairs[:, 0], dead_orbpairs[:, 1]] = 0
-            all_connectivity[dead_orbpairs[:, 1], dead_orbpairs[:, 0]] = 0
+        if self.connectivity is None:
+            weights = np.sum(np.abs(self.params), axis=0)
+            dead_indices = np.where(weights < self.tol)[0]
+            dead_orbpairs = np.array([self.get_orbpair(ind) for ind in dead_indices])
+            connectivity = np.ones((self.nspin, self.nspin))
+            if dead_orbpairs.size > 0:
+                connectivity[dead_orbpairs[:, 0], dead_orbpairs[:, 1]] = 0
+                connectivity[dead_orbpairs[:, 1], dead_orbpairs[:, 0]] = 0
+            self.connectivity = connectivity
+            self.weights = weights
+        else:
+            connectivity = self.connectivity
+            weights = self.weights
         occ_indices = np.array(occ_indices)
-        connectivity = all_connectivity[occ_indices[:, None], occ_indices[None, :]]
+        connectivity = connectivity[occ_indices[:, None], occ_indices[None, :]]
 
         pmatch_sign = sorted(
             list(generate_general_pmatch(occ_indices, connectivity)),
