@@ -3,6 +3,7 @@ import numpy as np
 from wfns.backend import sd_list, slater
 from wfns.objective.base import BaseObjective
 from wfns.objective.constraints.norm import NormConstraint
+from wfns.objective.constraints.energy import EnergyConstraint
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.param import ParamContainer
 from wfns.wfn.ci.base import CIWavefunction
@@ -201,6 +202,10 @@ class SystemEquations(BaseSchrodinger):
         if energy_type in ["fixed", "variable"]:
             self.param_selection.load_mask_container_params(self.energy, energy_type == "variable")
             self.param_selection.load_masks_objective_params()
+            for i in constraints:
+                if isinstance(i, EnergyConstraint):
+                    i.param_selection = self.param_selection
+                    i.energy_variable = self.energy
 
         self.assign_constraints(constraints)
         self.assign_eqn_weights(eqn_weights)
