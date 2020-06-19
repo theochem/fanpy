@@ -90,6 +90,8 @@ class BaseWavefunction(ParamContainer):
         self.assign_memory(memory)
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
+        self.probable_sds = {}
+        self.olp_threshold = 42
 
     @property
     def nspatial(self):
@@ -441,6 +443,7 @@ class BaseWavefunction(ParamContainer):
             raise AttributeError(
                 "Given cached function does not have decorator " "`functools.lru_cache`"
             ) from error
+        self.probable_sds = {}
 
     @abc.abstractproperty
     def params_shape(self):
