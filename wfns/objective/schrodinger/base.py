@@ -526,5 +526,4 @@ class BaseSchrodinger(BaseObjective):
         """
         if self.tmpfile != "":
             np.save(self.tmpfile, self.param_selection.all_params)
-            if self.ham.update_prev_params:
-                np.save('{}_um{}'.format(*os.path.splitext(self.tmpfile)), self.ham._prev_unitary)
+            np.save('{}_um{}'.format(*os.path.splitext(self.tmpfile)), self.ham._prev_unitary)
