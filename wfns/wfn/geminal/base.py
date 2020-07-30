@@ -149,9 +149,9 @@ class BaseGeminal(BaseWavefunction):
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
-        self.assign_params(params=params)
         self._cache_fns = {}
         self.load_cache()
+        self.assign_params(params=params)
 
     @property
     def npair(self):
@@ -370,6 +370,7 @@ class BaseGeminal(BaseWavefunction):
                         " be ignored."
                     )
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     def get_col_ind(self, orbpair):
         """Get the column index that corresponds to the given orbital pair.
