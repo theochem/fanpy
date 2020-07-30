@@ -19,6 +19,7 @@ from itertools import combinations, permutations
 
 import numpy as np
 from scipy.special import comb
+from scipy.linalg import expm
 
 
 def binomial(n, k):
@@ -360,7 +361,7 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
         n += 1
         cache = cache.dot(antiherm) / n
         norm = np.linalg.norm(cache, ord="fro")
-        if norm > 1e6:
-            raise ValueError("The norm of the matrix got too big (greater than 1e6).")
+        if norm > 1e10:
+            return expm(antiherm)
 
     return unitary

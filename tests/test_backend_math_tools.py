@@ -210,5 +210,5 @@ def test_unitary_matrix():
     assert np.allclose(matrix.T.dot(matrix), np.identity(4))
 
     antiherm_elements = np.random.rand(6) * 14
-    with pytest.raises(ValueError):
-        unitary_matrix(antiherm_elements)
+    assert np.allclose(matrix.dot(matrix.T), np.identity(4))
+    assert np.allclose(matrix.T.dot(matrix), np.identity(4))
