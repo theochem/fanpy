@@ -46,11 +46,6 @@ def test_assign_wfns():
     test.nelec = 4
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(5, 10)))
-    test.dtype = np.float64
-    with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(
-            test, (test_wfn, TempWavefunction(4, 10, dtype=complex))
-        )
     test.memory = np.inf
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(

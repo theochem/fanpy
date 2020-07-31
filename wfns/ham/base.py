@@ -24,8 +24,6 @@ class BaseHamiltonian(ParamContainer):
 
     Abstract Properties
     -------------------
-    dtype : {np.float64, np.complex128}
-        Data type of the Hamiltonian.
     nspin : int
         Number of spin orbitals.
 
@@ -74,16 +72,6 @@ class BaseHamiltonian(ParamContainer):
             raise TypeError("Nuclear-nuclear repulsion must be given as a int, float, or None.")
         self.energy_nuc_nuc = energy_nuc_nuc
 
-    @abc.abstractproperty
-    def dtype(self):
-        """Return the data type of the integrals.
-
-        Returns
-        -------
-        dtype : {np.float64, np.complex128}
-            Data type of the integrals.
-
-        """
 
     @abc.abstractproperty
     def nspin(self):

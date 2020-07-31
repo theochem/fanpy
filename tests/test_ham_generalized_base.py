@@ -25,19 +25,6 @@ def test_assign_integrals():
         BaseGeneralizedHamiltonian.assign_integrals(
             test, [[1, 2], [3, 4]], np.random.rand(2, 2, 2, 2)
         )
-    with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(
-            test, np.random.rand(4, 4).astype(int), np.random.rand(4, 4, 4, 4)
-        )
-    with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(
-            test, np.random.rand(4, 4), np.random.rand(4, 4, 4, 4).astype(int)
-        )
-
-    with pytest.raises(TypeError):
-        BaseGeneralizedHamiltonian.assign_integrals(
-            test, np.random.rand(4, 4).astype(float), np.random.rand(4, 4, 4, 4).astype(complex)
-        )
 
     with pytest.raises(ValueError):
         BaseGeneralizedHamiltonian.assign_integrals(
@@ -61,19 +48,6 @@ def test_nspin():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
     assert test.nspin == 2
-
-
-def test_dtype():
-    """Test BaseGeneralizedHamiltonian.dtype."""
-    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
-    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
-    assert test.dtype == float
-
-    one_int = np.arange(1, 5, dtype=complex).reshape(2, 2)
-    two_int = np.arange(5, 21, dtype=complex).reshape(2, 2, 2, 2)
-    test = disable_abstract(BaseGeneralizedHamiltonian)(one_int, two_int)
-    assert test.dtype == complex
 
 
 def test_orb_rotate_jacobi():

@@ -18,8 +18,6 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
     Properties
     ----------
-    dtype : {np.float64, np.complex128}
-        Data type of the Hamiltonian.
     nspin : int
         Number of spin orbitals.
 
@@ -62,18 +60,6 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         """
         super().__init__(energy_nuc_nuc=energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
-
-    @property
-    def dtype(self):
-        """Return the data type of the integrals.
-
-        Returns
-        -------
-        dtype : {np.float64, np.complex128}
-            Data type of the integrals.
-
-        """
-        return self.one_int[0].dtype
 
     @property
     def nspin(self):

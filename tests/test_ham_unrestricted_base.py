@@ -41,20 +41,7 @@ def test_assign_integrals():
         BaseUnrestrictedHamiltonian.assign_integrals(test, [one_int] * 2, [two_int])
     with pytest.raises(TypeError):
         BaseUnrestrictedHamiltonian.assign_integrals(
-            test, [one_int] * 2, [two_int, two_int, two_int.astype(int)]
-        )
-    with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(
             test, [one_int] * 2, [two_int, two_int, two_int.tolist()]
-        )
-
-    with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(
-            test, [one_int, one_int], [two_int, two_int, two_int.astype(complex)]
-        )
-    with pytest.raises(TypeError):
-        BaseUnrestrictedHamiltonian.assign_integrals(
-            test, [one_int, one_int.astype(complex)], [two_int, two_int, two_int]
         )
 
     with pytest.raises(ValueError):
@@ -95,14 +82,6 @@ def test_nspin():
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test = disable_abstract(BaseUnrestrictedHamiltonian)(2 * [one_int], 3 * [two_int])
     assert test.nspin == 4
-
-
-def test_dtype():
-    """Test BaseUnrestrictedHamiltonian.dtype."""
-    one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
-    two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = disable_abstract(BaseUnrestrictedHamiltonian)(2 * [one_int], 3 * [two_int])
-    assert test.dtype == float
 
 
 def test_orb_rotate_jacobi():

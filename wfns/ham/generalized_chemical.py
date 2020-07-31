@@ -32,8 +32,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
     Properties
     ----------
-    dtype : {np.float64, np.complex128}
-        Data type of the Hamiltonian.
     nspin : int
         Number of spin orbitals.
     nparams : int

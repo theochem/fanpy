@@ -130,7 +130,7 @@ def test_assign_params():
             },
         )
     )
-    test.assign_params(add_noise=True)
+    test.assign_params(params=np.identity(10).astype(complex), add_noise=True)
     assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1 / 100)
     assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01 * 0.1 / 100)
     assert not np.allclose(np.real(test.params), np.identity(10))

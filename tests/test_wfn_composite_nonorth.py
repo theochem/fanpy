@@ -70,8 +70,6 @@ def test_nonorth_assign_params():
         test.assign_params([test_params.tolist()])
     with pytest.raises(TypeError):
         test.assign_params([np.random.rand(5, 6, 1)])
-    with pytest.raises(TypeError):
-        test.assign_params([test_params.astype(complex)])
     with pytest.raises(ValueError):
         test.assign_params([np.random.rand(6, 5)])
     with pytest.raises(ValueError):

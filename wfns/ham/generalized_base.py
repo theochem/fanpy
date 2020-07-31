@@ -18,8 +18,6 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
     Properties
     ----------
-    dtype : {np.float64, np.complex128}
-        Data type of the Hamiltonian.
     nspin : int
         Number of spin orbitals.
 
@@ -64,18 +62,6 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         self.assign_integrals(one_int, two_int)
 
     @property
-    def dtype(self):
-        """Return the data type of the integrals.
-
-        Returns
-        -------
-        dtype : {np.float64, np.complex128}
-            Data type of the integrals.
-
-        """
-        return self.one_int.dtype
-
-    @property
     def nspin(self):
         """Return the number of spin orbitals.
 
@@ -101,8 +87,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         Raises
         ------
         TypeError
-            If integrals are not provided as a numpy array of dtype float/complex.
-            If one- and two-electron integrals do not have the same data type.
+            If integrals are not provided as a numpy array.
         ValueError
             If one-electron integrals are not given as a (two-dimensional) square matrix.
             If two-electron integrals are not given as a four-dimensional tensor with same
@@ -113,14 +98,8 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         if not (
             isinstance(one_int, np.ndarray)
             and isinstance(two_int, np.ndarray)
-            and one_int.dtype in [float, complex]
-            and two_int.dtype in [float, complex]
         ):
-            raise TypeError(
-                "Integrals must be given as a numpy array with dtype of float or " "complex."
-            )
-        if one_int.dtype != two_int.dtype:
-            raise TypeError("One- and two-electron integrals must have the same data type.")
+            raise TypeError("Integrals must be given as a numpy array")
         if not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
             raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
         if not (

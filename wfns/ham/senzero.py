@@ -56,8 +56,6 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         Number of spin orbitals.
     nspatial : int
         Number of spatial orbitals.
-    dtype : {'restricted', 'unrestricted', 'generalized'}
-        Number of spin orbitals.
 
     Methods
     -------
