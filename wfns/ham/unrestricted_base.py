@@ -20,6 +20,8 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
     ----------
     nspin : int
         Number of spin orbitals.
+    nspatial : int
+        Number of spatial orbitals.
 
     Methods
     -------

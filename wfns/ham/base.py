@@ -12,6 +12,11 @@ class BaseHamiltonian:
     energy_nuc_nuc : float
         Nuclear-nuclear repulsion energy.
 
+    Properties
+    ----------
+    nspatial : int
+        Number of spatial orbitals.
+
     Methods
     -------
     __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
@@ -82,6 +87,18 @@ class BaseHamiltonian:
             Number of spin orbitals.
 
         """
+
+    @property
+    def nspatial(self):
+        """Return the number of spatial orbitals.
+
+        Returns
+        -------
+        nspatial : int
+            Number of spatial orbitals.
+
+        """
+        return self.nspin // 2
 
     def assign_integrals(self, one_int, two_int):
         """Assign the one- and two-electron integrals.

@@ -102,7 +102,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
                 "wavefunction and Hamiltonian parameters."
             )
 
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         sd = slater.internal_sd(sd)
         if slater.get_seniority(sd, nspatial) != 0:
             return 0.0, 0.0, 0.0
@@ -184,7 +184,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
                 "orbital rotation coefficients."
             )
 
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.nspatial
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)

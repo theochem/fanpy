@@ -34,6 +34,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
     ----------
     nspin : int
         Number of spin orbitals.
+    nspatial : int
+        Number of spatial orbitals.
     nparams : int
         Number of parameters.
 
@@ -215,7 +217,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if deriv is not None:
             return self._integrate_sd_sd_deriv(sd1, sd2, deriv)
 
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.nspatial
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
@@ -316,7 +318,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         # pylint: disable=C0103
         one_electron, coulomb, exchange = 0, 0, 0
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
 
         a, = diff_sd1
         b, = diff_sd2
@@ -366,7 +368,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         # pylint: disable=C0103
         one_electron, coulomb, exchange = 0, 0, 0
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
 
         a, b = diff_sd1
         c, d = diff_sd2
@@ -446,7 +448,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.nspatial
         if param_ind < nspatial * (nspatial - 1) / 2:
             spin_ind = 0
         else:
@@ -501,7 +503,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103,R0915,R0912
-        nspatial = self.one_int[0].shape[0]
+        nspatial = self.nspatial
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
@@ -680,7 +682,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         # pylint: disable=C0103,R0915,R0912
         one_electron, coulomb, exchange = 0, 0, 0
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
 
         a, = diff_sd1
         b, = diff_sd2
@@ -852,7 +854,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         # pylint: disable=C0103,R0915,R0912
         one_electron, coulomb, exchange = 0, 0, 0
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
 
         a, b = diff_sd1
         c, d = diff_sd2
@@ -1089,7 +1091,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
 
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -1164,7 +1166,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         """
         shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -1238,7 +1240,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -1293,7 +1295,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -1355,7 +1357,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         occ_indices = np.hstack(
             [
                 slater.spatial_to_spin_indices(occ_alpha, nspatial, to_beta=False),
@@ -1404,7 +1406,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             derivatived.
 
         """
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_alpha = np.arange(nspatial)
         shared_alpha = slater.shared_indices_remove_one_index(occ_alpha)
 
@@ -1525,7 +1527,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             derivatived.
 
         """
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_beta = np.arange(nspatial)
         shared_beta = slater.shared_indices_remove_one_index(occ_beta)
 
@@ -1652,7 +1654,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_alpha = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -2033,7 +2035,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_beta = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -2141,7 +2143,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_alpha = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -2251,7 +2253,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_beta = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -2637,7 +2639,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915,C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_alpha = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -2899,7 +2901,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915,C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_alpha = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -3029,7 +3031,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915,C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_beta = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -3159,7 +3161,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=R0915,C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         all_beta = np.arange(nspatial)
         occ_indices = np.hstack(
             [
@@ -3425,7 +3427,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         """
         # pylint: disable=C0103
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         sd = slater.internal_sd(sd)
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
@@ -3559,7 +3561,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 " 0 and be less than the number of parameters."
             )
 
-        nspatial = self.nspin // 2
+        nspatial = self.nspatial
         sd = slater.internal_sd(sd)
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))

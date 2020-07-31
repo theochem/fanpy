@@ -34,6 +34,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
     ----------
     nspin : int
         Number of spin orbitals.
+    nspatial : int
+        Number of spatial orbitals.
     nparams : int
         Number of parameters.
 
