@@ -77,7 +77,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         Rotate orbitals using a transformation matrix.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
-    integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
+    integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
@@ -140,7 +140,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         return one_electron, coulomb, exchange
 
-    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -159,12 +159,6 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
             Seniority-zero Slater Determinant.
         sd2 : int
             Seniority-zero Slater Determinant.
-        sign : {1, -1, None}
-            Sign change resulting from cancelling out the orbitals shared between the two Slater
-            determinants.
-            Computes the sign if none is provided.
-            Make sure that the provided sign is correct. It will not be checked to see if its
-            correct.
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
@@ -180,8 +174,6 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         Raises
         ------
-        ValueError
-            If `sign` is not `1`, `-1` or `None`.
         NotImplementedError
             If `deriv` is not `None`.
 
@@ -217,10 +209,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         if diff_order > 1:
             return 0.0, 0.0, 0.0
 
-        if sign is None:
-            sign = 1
-        elif sign not in [1, -1]:
-            raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
+        sign = 1
 
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
         # two sd's are the same

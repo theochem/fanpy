@@ -101,17 +101,9 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(3, 3, 3, 3)
     test = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
 
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=0, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=0.5, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=-0.5, deriv=None)
-
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b001001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
-    assert (0, two_int[0, 1, 1, 0], 0) == test.integrate_sd_sd(0b110001, 0b101010, sign=1)
-    assert (0, -two_int[0, 1, 1, 0], 0) == test.integrate_sd_sd(0b110001, 0b101010, sign=-1)
+    assert (0, two_int[0, 1, 1, 0], 0) == test.integrate_sd_sd(0b110001, 0b101010)
     assert (0, -two_int[1, 1, 1, 0] + two_int[0, 1, 0, 0], 0) == test.integrate_sd_sd(
         0b110001, 0b101010, deriv=0
     )

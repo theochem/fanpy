@@ -158,20 +158,10 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(6, 6, 6, 6)
     test = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=0, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=0.5, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b001001, 0b100100, sign=-0.5, deriv=None)
-
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b001001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
     assert (0, two_int[0, 1, 2, 3], -two_int[0, 1, 3, 2]) == test.integrate_sd_sd(
-        0b100011, 0b101100, sign=1
-    )
-    assert (0, -two_int[0, 1, 2, 3], two_int[0, 1, 3, 2]) == test.integrate_sd_sd(
-        0b100011, 0b101100, sign=-1
+        0b100011, 0b101100
     )
     assert (one_int[0, 0], 0, 0) == test.integrate_sd_sd(0b1, 0b1)
     assert (one_int[0, 1], 0, 0) == test.integrate_sd_sd(0b1, 0b10)

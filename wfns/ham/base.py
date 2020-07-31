@@ -31,7 +31,7 @@ class BaseHamiltonian(ParamContainer):
     ----------------
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
-    integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
+    integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
@@ -187,7 +187,7 @@ class BaseHamiltonian(ParamContainer):
         return one_electron, coulomb, exchange
 
     @abc.abstractmethod
-    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2, deriv=False):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -203,12 +203,6 @@ class BaseHamiltonian(ParamContainer):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        sign : {1, -1, None}
-            Sign change resulting from cancelling out the orbitals shared between the two Slater
-            determinants.
-            Computes the sign if none is provided.
-            Make sure that the provided sign is correct. It will not be checked to see if its
-            correct.
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.

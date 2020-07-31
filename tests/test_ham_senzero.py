@@ -14,20 +14,13 @@ def test_integrate_sd_sd_trivial():
     test = SeniorityZeroHamiltonian(one_int, two_int)
 
     with pytest.raises(NotImplementedError):
-        test.integrate_sd_sd(0b00010001, 0b01000100, sign=None, deriv=0)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b00010001, 0b01000100, sign=0, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b00010001, 0b01000100, sign=0.5, deriv=None)
-    with pytest.raises(ValueError):
-        test.integrate_sd_sd(0b00010001, 0b01000100, sign=-0.5, deriv=None)
+        test.integrate_sd_sd(0b00010001, 0b01000100, deriv=0)
 
     assert (0, 0, 0) == test.integrate_sd_sd(0b00010001, 0b00100001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b00100001, 0b00010001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b01010101, 0b00010001)
     assert (0, 0, 0) == test.integrate_sd_sd(0b11001100, 0b00110011)
-    assert (0, two_int[0, 0, 1, 1], 0) == test.integrate_sd_sd(0b00010001, 0b00100010, sign=1)
-    assert (0, -two_int[0, 0, 1, 1], 0) == test.integrate_sd_sd(0b00010001, 0b00100010, sign=-1)
+    assert (0, two_int[0, 0, 1, 1], 0) == test.integrate_sd_sd(0b00010001, 0b00100010)
 
 
 def test_integrate_sd_sd_h2_631gdp():

@@ -55,7 +55,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
-    integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None)
+    integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
@@ -163,7 +163,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
     # FIXME: remove sign?
     # FIXME: too many branches, too many statements
-    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -187,12 +187,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        sign : {1, -1, None}
-            Sign change resulting from cancelling out the orbitals shared between the two Slater
-            determinants.
-            Computes the sign if none is provided.
-            Make sure that the provided sign is correct. It will not be checked to see if its
-            correct.
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
@@ -206,16 +200,10 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         exchange : float
             Exchange energy.
 
-        Raises
-        ------
-        ValueError
-            If `sign` is not `1`, `-1` or `None`.
-
         """
         # pylint: disable=C0103,R0912,R0915
         if deriv is not None:
-            sign = 1 if sign is None else sign
-            return sign * self._integrate_sd_sd_deriv(sd1, sd2, deriv)
+            return self._integrate_sd_sd_deriv(sd1, sd2, deriv)
 
         nspatial = self.one_int[0].shape[0]
 
@@ -233,10 +221,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if diff_order > 2:
             return 0.0, 0.0, 0.0
 
-        if sign is None:
-            sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
-        elif sign not in [1, -1]:
-            raise ValueError("The sign associated with the integral must be either `1` or `-1`.")
+        sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         one_electron, coulomb, exchange = 0.0, 0.0, 0.0
 
