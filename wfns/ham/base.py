@@ -2,10 +2,9 @@
 import abc
 
 from wfns.backend import slater
-from wfns.param import ParamContainer
 
 
-class BaseHamiltonian(ParamContainer):
+class BaseHamiltonian:
     """Hamiltonian for a Schrodinger equation.
 
     Attributes

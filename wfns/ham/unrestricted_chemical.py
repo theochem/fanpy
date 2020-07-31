@@ -49,8 +49,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         Rotate orbitals using Jacobi matrix.
     orb_rotate_matrix(self, matrix)
         Rotate orbitals using a transformation matrix.
-    clear_cache(self)
-        Placeholder function that would clear the cache.
     assign_params(self, params)
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
@@ -77,6 +75,18 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
         self.assign_params(params=params)
+
+    @property
+    def nparams(self):
+        """Return the number of parameters.
+
+        Returns
+        -------
+        nparams : int
+            Number of parameters.
+
+        """
+        return self.params.size
 
     def set_ref_ints(self):
         """Store the current integrals as the reference from which orbitals will be rotated."""

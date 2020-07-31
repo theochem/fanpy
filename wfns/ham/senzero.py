@@ -50,19 +50,17 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
     Properties
     ----------
-    nparams : int
-        Number of parameters.
     nspin : int
         Number of spin orbitals.
     nspatial : int
         Number of spatial orbitals.
+    nparams : int
+        Number of parameters.
 
     Methods
     -------
     __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
         Initialize the Hamiltonian
-    clear_cache(self)
-        Placeholder function that would clear the cache.
     assign_orbtype(self, orbtype=None)
         Assign the orbital type.
     assign_energy_nuc_nuc(self, energy_nuc_nuc=None)

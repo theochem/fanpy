@@ -61,8 +61,6 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         Rotate orbitals using Jacobi matrix.
     orb_rotate_matrix(self, matrix)
         Rotate orbitals using a transformation matrix.
-    clear_cache(self)
-        Placeholder function that would clear the cache.
     assign_params(self, params)
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
