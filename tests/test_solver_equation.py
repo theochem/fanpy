@@ -71,7 +71,6 @@ def test_cma():
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
-    wfn.assign_dtype(float)
     wfn.assign_params()
     ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
@@ -109,7 +108,6 @@ def test_minimize():
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
-    wfn.assign_dtype(float)
     wfn.assign_params()
     ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 

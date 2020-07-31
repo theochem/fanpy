@@ -15,8 +15,6 @@ class KerasNetwork(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -34,17 +32,17 @@ class KerasNetwork(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -59,7 +57,7 @@ class KerasNetwork(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None, num_layers=2):
+    def __init__(self, nelec, nspin, model=None, params=None, memory=None, num_layers=2):
         """Initialize the wavefunction.
 
         Parameters
@@ -71,40 +69,16 @@ class KerasNetwork(BaseWavefunction):
         mode : {keras.Model, None}
             Model instance from keras.
             Default is 2 layers.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.num_layers = num_layers
         self.assign_model(model=model)
         self._default_params = None
         self.assign_params(params=params)
-
-    def assign_dtype(self, dtype=None):
-        """Assign the data type of the parameters.
-
-        Parameters
-        ----------
-        dtype : {float, complex, np.float64, np.complex128}
-            Numpy data type.
-            If None then set to np.float64.
-
-        Raises
-        ------
-        TypeError
-            If dtype is not one of float, complex, np.float64, np.complex128.
-        ValueError
-            If dtype is not np.float64.
-
-        """
-        super().assign_dtype(dtype)
-        if self.dtype != np.float64:
-            raise ValueError("Given data type must be a np.float64.")
         keras.backend.common._FLOATX = "float64"  # pylint: disable=W0212
 
     def assign_model(self, model=None):
@@ -249,14 +223,14 @@ class KerasNetwork(BaseWavefunction):
                 "Cannot generate initial guess for Keras network because the final "
                 "hidden layer does not have enough units for the number of electrons."
             )
-        hidden_units = np.zeros((len(hidden_sds), num_hidden_orbs), dtype=self.dtype)
+        hidden_units = np.zeros((len(hidden_sds), num_hidden_orbs))
         for i, hidden_sd in enumerate(hidden_sds):
             hidden_units[i, hidden_sd] = 1
         output = np.eye(1, len(hidden_sds))[0]
         # TODO: weights are not normalized
 
         params += np.linalg.lstsq(hidden_units, output)[0].tolist()
-        self._default_params = np.array(params, dtype=self.dtype)
+        self._default_params = np.array(params)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.

@@ -34,12 +34,7 @@ def test_brute():
         ci.brute(test_wfn, None, 0)
 
     test_ham = TempChemicalHamiltonian(
-        np.ones((2, 2), dtype=complex), np.ones((2, 2, 2, 2), dtype=complex)
-    )
-    with pytest.raises(ValueError):
-        ci.brute(test_wfn, test_ham, 0)
-    test_ham = TempChemicalHamiltonian(
-        np.ones((3, 3), dtype=complex), np.ones((3, 3, 3, 3), dtype=complex)
+        np.ones((3, 3), dtype=float), np.ones((3, 3, 3, 3), dtype=float)
     )
     with pytest.raises(ValueError):
         ci.brute(test_wfn, test_ham, 0)

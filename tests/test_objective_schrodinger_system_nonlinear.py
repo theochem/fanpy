@@ -133,9 +133,6 @@ def test_system_assign_eqn_weights():
     with pytest.raises(TypeError):
         test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0]))
 
-    with pytest.raises(ValueError):
-        test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0], dtype=float))
-
 
 def test_system_assign_constraints():
     """Test SystemEquations.assign_constraints."""

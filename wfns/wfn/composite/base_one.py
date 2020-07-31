@@ -11,8 +11,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -32,17 +30,17 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -60,7 +58,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None):
+    def __init__(self, nelec, nspin, wfn, memory=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -69,9 +67,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -79,7 +74,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             Wavefunction that will be modified.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_wfn(wfn)
         self.assign_params(params)
         self._cache_fns = {}
@@ -110,11 +105,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             raise ValueError(
                 "Given wavefunction does not have the same number of electrons as the"
                 " the instantiated NonorthWavefunction."
-            )
-        if wfn.dtype != self.dtype:
-            raise ValueError(
-                "Given wavefunction does not have the same data type as the "
-                "instantiated NonorthWavefunction."
             )
         if wfn.memory != self.memory:
             raise ValueError(

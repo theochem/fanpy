@@ -50,13 +50,11 @@ def test_nonorth_assign_params():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test_wfn._spin = 2
     test.assign_wfn(test_wfn)
@@ -64,7 +62,7 @@ def test_nonorth_assign_params():
     test.assign_params(None)
     assert isinstance(test.params, tuple)
     assert len(test.params) == 1
-    assert np.allclose(test.params[0], np.eye(5, 6, dtype=float))
+    assert np.allclose(test.params[0], np.eye(5, 6))
 
     test_params = np.random.rand(5, 6)
     with pytest.raises(TypeError):
@@ -112,13 +110,11 @@ def test_nonorth_spin():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test_wfn._spin = 2
     test.assign_wfn(test_wfn)
@@ -139,13 +135,11 @@ def test_nonorth_seniority():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test_wfn._seniority = 2
     test.assign_wfn(test_wfn)
@@ -166,13 +160,11 @@ def test_nonorth_default_params():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test.assign_wfn(test_wfn)
     test.assign_params()
@@ -187,13 +179,11 @@ def test_nonorth_nparams():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test.assign_wfn(test_wfn)
 
@@ -213,13 +203,11 @@ def test_nonorth_param_shape():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test.assign_wfn(test_wfn)
 
@@ -239,13 +227,11 @@ def test_nonorth_orbtype():
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
     test_wfn.nelec = 4
-    test_wfn.dtype = np.float64
     test_wfn.memory = 10
     test.assign_wfn(test_wfn)
 
@@ -269,7 +255,6 @@ def test_nonorth_olp_generalized():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -330,7 +315,6 @@ def test_nonorth_olp_unrestricted():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -391,7 +375,6 @@ def test_nonorth_olp_restricted():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -452,7 +435,6 @@ def test_nonorth_olp_deriv_generalized():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -484,7 +466,6 @@ def test_nonorth_olp_deriv_unrestricted():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -527,7 +508,6 @@ def test_nonorth_olp_deriv_restricted():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -575,7 +555,6 @@ def test_nonorth_get_overlap():
     test = skip_init(NonorthWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -684,7 +663,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == "nonorth":
             wfn = NonorthWavefunction(
-                nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory, params=transform
+                nelec, nspin, doci, memory=doci.memory, params=transform
             )
 
         norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)

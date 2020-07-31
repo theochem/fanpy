@@ -56,7 +56,6 @@ def test_ap1rog_assign_orbpairs():
 def test_ap1rog_default_params():
     """Test AP1roG.default_params."""
     test = skip_init(AP1roG)
-    test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_ngem(2)
     test.assign_nspin(6)
@@ -65,7 +64,6 @@ def test_ap1rog_default_params():
     test.assign_params()
     assert np.allclose(test.params, np.zeros((2, 1)))
     test = skip_init(AP1roG)
-    test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_ngem(3)
     test.assign_nspin(20)
@@ -78,7 +76,6 @@ def test_ap1rog_default_params():
 def test_ap1rog_get_overlap():
     """Test AP1roG.get_overlap."""
     test = skip_init(AP1roG)
-    test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_nspin(10)
     test.assign_memory()

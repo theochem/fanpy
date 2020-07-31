@@ -12,8 +12,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -33,17 +31,17 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfns, dtype=None, memory=None, params=None)
+    __init__(self, nelec, nspin, wfns, memory=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -60,7 +58,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, wfns, dtype=None, memory=None, params=None):
+    def __init__(self, nelec, nspin, wfns, memory=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -71,15 +69,12 @@ class LinearCombinationWavefunction(BaseWavefunction):
             Number of spin orbitals.
         wfns : tuple of BaseWavefunction
             Wavefunctions that will be linearly combined.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_wfns(wfns)
         self.assign_params(params=params)
 
@@ -147,7 +142,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params = np.zeros(self.params_shape)
             params[0] = 1.0
 
         super().assign_params(params=params, add_noise=add_noise)
@@ -178,11 +173,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
             raise ValueError(
                 "Given wavefunction does not have the same number of electrons as the"
                 " the instantiated NonorthWavefunction."
-            )
-        if any(wfn.dtype != self.dtype for wfn in wfns):
-            raise ValueError(
-                "Given wavefunction does not have the same data type as the "
-                "instantiated NonorthWavefunction."
             )
         if any(wfn.memory != self.memory for wfn in wfns):
             raise ValueError(

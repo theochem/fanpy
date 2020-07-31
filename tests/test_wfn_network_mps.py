@@ -105,7 +105,6 @@ def test_default_params():
     test.nelec = 4
     test.nspin = 8
     test.dimension = 10
-    test.dtype = float
 
     answer1 = np.ones(10) * 10 ** (-1 / 4)
     answer2 = np.identity(10) * 10 ** (-1 / 4)
@@ -142,7 +141,6 @@ def test_default_params():
 def test_assign_params():
     """Test MatrixProductState.assign_params."""
     test = skip_init(MatrixProductState)
-    test.dtype = float
     test.nelec = 2
     test.nspin = 6
     test.dimension = 2
@@ -153,7 +151,6 @@ def test_assign_params():
     assert np.allclose(test.params, params)
 
     test2 = skip_init(MatrixProductState)
-    test2.dtype = float
     test2.nelec = 2
     test2.nspin = 6
     test2.dimension = 2

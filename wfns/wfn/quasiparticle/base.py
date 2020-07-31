@@ -18,8 +18,6 @@ class BaseQuasiparticle(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -45,6 +43,8 @@ class BaseQuasiparticle(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
     params_shape : tuple of int
         Shape of the wavefunction parameters.
     norbsubsets : int
@@ -52,14 +52,12 @@ class BaseQuasiparticle(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -97,7 +95,7 @@ class BaseQuasiparticle(BaseWavefunction):
         determinant.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, nquasiparticle=None,
+    def __init__(self, nelec, nspin, memory=None, nquasiparticle=None,
                  orbsubsets=None, params=None):
         """Initialize the wavefunction.
 
@@ -107,9 +105,6 @@ class BaseQuasiparticle(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -124,7 +119,7 @@ class BaseQuasiparticle(BaseWavefunction):
             Default corresponds to the ground state HF wavefunction.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_nquasiparticle(nquasiparticle=nquasiparticle)
         self.assign_orbsubsets(orbsubsets=orbsubsets)
         self.assign_params(params=params)
@@ -262,7 +257,7 @@ class BaseQuasiparticle(BaseWavefunction):
             # FIXME: what happens if multiple null quasiparticle?
             # FIXME: what happens when the nquasiparticle != orbsubsets.size?
             # assign
-            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params = np.zeros(self.params_shape)
             for i, orbsubset in enumerate(orbsubsets):
                 col_ind = self.get_col_ind(orbsubset)
                 params[i, col_ind] += 1
@@ -283,7 +278,7 @@ class BaseQuasiparticle(BaseWavefunction):
                         "wavefunction."
                     )
 
-            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params = np.zeros(self.params_shape)
             for ind, orbsubset in other.dict_ind_orbsubset.items():
                 try:
                     params[:other.nquasiparticle,

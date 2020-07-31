@@ -15,8 +15,6 @@ class BaseWavefunction(ParamContainer):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -34,17 +32,17 @@ class BaseWavefunction(ParamContainer):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -61,7 +59,7 @@ class BaseWavefunction(ParamContainer):
 
     """
 
-    def __init__(self, nelec, nspin, dtype=None, memory=None, params=None):
+    def __init__(self, nelec, nspin, memory=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -70,18 +68,16 @@ class BaseWavefunction(ParamContainer):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
+        params : np.ndarray
+            Parameters of the wavefunction.
 
         """
         # pylint: disable=W0231
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
-        self.assign_dtype(dtype)
         self.assign_memory(memory)
         self.probable_sds = {}
         self.olp_threshold = 42
@@ -152,6 +148,17 @@ class BaseWavefunction(ParamContainer):
         """
         return None
 
+    @property
+    def dtype(self):
+        """Return the data type of the wavefunction.
+
+        Returns
+        -------
+        dtype
+
+        """
+        return self.params.dtype
+
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
 
@@ -199,29 +206,6 @@ class BaseWavefunction(ParamContainer):
         if nspin % 2 == 1:
             raise NotImplementedError("Odd number of spin orbitals is not supported.")
         self.nspin = nspin
-
-    # FIXME: remove? just use params.dtype?
-    def assign_dtype(self, dtype):
-        """Assign the data type of the parameters.
-
-        Parameters
-        ----------
-        dtype : {float, complex, np.float64, np.complex128}
-            Numpy data type.
-            If None then set to np.float64.
-
-        Raises
-        ------
-        TypeError
-            If dtype is not one of float, complex, np.float64, np.complex128.
-
-        """
-        if dtype is None or dtype in (float, np.float64):
-            self.dtype = np.float64
-        elif dtype in (complex, np.complex128):
-            self.dtype = np.complex128
-        else:
-            raise TypeError("dtype must be float or complex")
 
     def assign_memory(self, memory=None):
         """Assign memory available for the wavefunction.

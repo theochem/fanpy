@@ -362,11 +362,6 @@ class SystemEquations(BaseSchrodinger):
             eqn_weights[self.nproj :] *= self.nproj
         elif not isinstance(eqn_weights, np.ndarray):
             raise TypeError("Weights of the equations must be given as a numpy array.")
-        elif eqn_weights.dtype != self.wfn.dtype:
-            raise TypeError(
-                "Weights of the equations must have the same dtype as the wavefunction "
-                "and Hamiltonian."
-            )
         elif eqn_weights.shape != (self.nproj + num_constraints,):
             raise ValueError(
                 "Weights of the equations must be given as a one-dimensional array of "

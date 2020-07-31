@@ -28,7 +28,7 @@ def test_assign_sd_vec():
 
 def test_to_ap1rog():
     """Test CIPairs.to_ap1rog."""
-    test = CIPairs(2, 6, dtype=float)
+    test = CIPairs(2, 6)
     params = np.arange(9, 0, -1, dtype=float).reshape(3, 3)
     test.assign_params(params[:, 0].flatten())
     ap1rog = test.to_ap1rog()

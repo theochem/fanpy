@@ -108,8 +108,6 @@ class BaseSchrodinger(BaseObjective):
             raise TypeError(
                 "Given Hamiltonian is not an instance of BaseWavefunction (or its " "child)."
             )
-        if wfn.dtype != ham.dtype:
-            raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
         if wfn.nspin != ham.nspin:
             raise ValueError(
                 "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"

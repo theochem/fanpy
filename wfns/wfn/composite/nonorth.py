@@ -41,8 +41,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     memory : float
         Memory available for the wavefunction.
     params : tuple of np.ndarray
@@ -69,20 +67,19 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Orbital type.
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
-             jacobi_indices=None):
+    __init__(self, nelec, nspin, wfn, memory=None, params=None, orbtype=None, jacobi_indices=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -230,7 +227,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if params is None:
-            params = (np.eye(*self.params_shape, dtype=self.dtype),)
+            params = (np.eye(*self.params_shape),)
 
         if isinstance(params, np.ndarray):
             params = (params,)
@@ -246,11 +243,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             for i in params:
                 if not (isinstance(i, np.ndarray) and len(i.shape) == 2):
                     raise TypeError("Transformation matrix must be a two-dimensional numpy array.")
-                if i.dtype != self.dtype:
-                    raise TypeError(
-                        "Transformation matrix must have the same data type as the given "
-                        "wavefunction."
-                    )
 
                 if len(params) == 1 and not (
                     (i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial)

@@ -51,8 +51,6 @@ def brute(wfn, ham, save_file=""):
         raise TypeError("Given wavefunction is not an instance of BaseWavefunction (or its child).")
     if not isinstance(ham, BaseHamiltonian):
         raise TypeError("Given Hamiltonian is not an instance of BaseHamiltonian (or its child).")
-    if wfn.dtype != ham.dtype:
-        raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
     if wfn.nspin != ham.nspin:
         raise ValueError(
             "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
@@ -60,7 +58,7 @@ def brute(wfn, ham, save_file=""):
     if not isinstance(save_file, str):
         raise TypeError("The save file must be given as a string.")
 
-    ci_matrix = np.zeros((wfn.nsd, wfn.nsd), dtype=wfn.dtype)
+    ci_matrix = np.zeros((wfn.nsd, wfn.nsd))
     for i, sd1 in enumerate(wfn.sd_vec):
         for j, sd2 in enumerate(wfn.sd_vec[i:]):
             ci_matrix[i, i + j] += sum(ham.integrate_sd_sd(sd1, sd2))

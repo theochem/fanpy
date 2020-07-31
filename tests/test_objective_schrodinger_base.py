@@ -20,9 +20,6 @@ def test_baseschrodinger_init():
         disable_abstract(BaseSchrodinger)(ham, ham)
     with pytest.raises(TypeError):
         disable_abstract(BaseSchrodinger)(wfn, wfn)
-    wfn = CIWavefunction(2, 4, dtype=complex)
-    with pytest.raises(ValueError):
-        disable_abstract(BaseSchrodinger)(wfn, ham)
     wfn = CIWavefunction(2, 6)
     with pytest.raises(ValueError):
         disable_abstract(BaseSchrodinger)(wfn, ham)

@@ -197,7 +197,7 @@ def answer_apig_h2_631gdp():
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
-    apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=float))
+    apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
 
     objective = OneSidedEnergy(apig, ham)
     results = minimize(objective)

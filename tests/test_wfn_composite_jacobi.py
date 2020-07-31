@@ -90,7 +90,6 @@ def test_jacobi_jacobi_rotation():
     """Tests JacobiWavefunction.jacobi_rotation."""
     test = skip_init(JacobiWavefunction)
     theta = 2 * np.pi * (np.random.random() - 0.5)
-    test.dtype = float
     test.params = np.array(theta)
     test.nspin = 6
 
@@ -142,11 +141,9 @@ def test_jacobi_jacobi_rotation():
 def test_jacobi_assign_params():
     """Test JacobiWavefunction.assign_params."""
     test = skip_init(JacobiWavefunction)
-    test.assign_dtype(float)
     test.assign_params(0)
     assert test.params.size == 1
     assert test.params.shape == ()
-    assert test.params.dtype == float
     assert test.params == 0
 
 
@@ -155,7 +152,6 @@ def test_jacobi_assign_orbtype():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test.assign_orbtype(None)
@@ -176,7 +172,6 @@ def test_jacobi_assign_jacobi_indices():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     # not tuple or list
@@ -234,7 +229,6 @@ def test_jacobi_get_overlap():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -380,7 +374,6 @@ def test_jacobi_get_overlap_restricted():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(4, 8, memory=10))
     test._cache_fns = {}
@@ -508,7 +501,6 @@ def test_jacobi_get_overlap_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
@@ -655,7 +647,6 @@ def test_jacobi_get_overlap_restricted_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.dtype = np.float64
     test.memory = 10
     test.assign_wfn(CIWavefunction(4, 8, memory=10))
     test._cache_fns = {}
@@ -807,12 +798,11 @@ def test_jacobi_compare_nonorth():
         nelec,
         nspin,
         doci,
-        dtype=doci.dtype,
         memory=doci.memory,
         orbtype="restricted",
         jacobi_indices=(0, 1),
     )
-    nonorth = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory)
+    nonorth = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory)
 
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
@@ -836,13 +826,12 @@ def test_jacobi_compare_nonorth():
             assert np.isclose(nonorth.get_overlap(sd), jacobi.get_overlap(sd))
 
     # two rotations
-    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci)
+    nonorth = NonorthWavefunction(nelec, nspin, memory=doci.memory, wfn=doci)
     for sd in sds:
         for theta_one in np.linspace(-np.pi, np.pi, 10):
             jacobi_one = JacobiWavefunction(
                 nelec,
                 nspin,
-                dtype=doci.dtype,
                 memory=doci.memory,
                 wfn=doci,
                 orbtype="restricted",
@@ -854,7 +843,6 @@ def test_jacobi_compare_nonorth():
                 jacobi_two = JacobiWavefunction(
                     nelec,
                     nspin,
-                    dtype=doci.dtype,
                     memory=doci.memory,
                     wfn=jacobi_one,
                     orbtype="restricted",
@@ -902,7 +890,6 @@ def test_jacobi_energy():
         jacobi = JacobiWavefunction(
             nelec,
             nspin,
-            dtype=doci.dtype,
             memory=doci.memory,
             wfn=doci,
             orbtype="restricted",
@@ -934,7 +921,6 @@ def test_jacobi_energy():
                 nelec,
                 nspin,
                 doci,
-                dtype=doci.dtype,
                 memory=doci.memory,
                 params=jacobi.jacobi_rotation,
             )

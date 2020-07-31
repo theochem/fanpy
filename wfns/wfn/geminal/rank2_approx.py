@@ -124,7 +124,7 @@ class RankTwoApprox:
             #        zetas should be less than 1
             #        lambda - epsilon should be greater than 1
             #        lambda should be around 1 (epsilons should be less than 0)
-            template = np.zeros(super().params_shape, dtype=self.dtype)
+            template = np.zeros(super().params_shape)
             for i in range(self.ngem):
                 col_ind = self.get_col_ind((i, i + self.nspatial))
                 template[i, col_ind] += 1

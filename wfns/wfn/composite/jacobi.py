@@ -44,8 +44,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -67,8 +65,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
+    dtype
+        Data type of the wavefunction.
     jacobi_rotation : tuple of np.ndarray
         Rotation matrix that corresponds to the given parameter.
         If the orbitals are restricted, then the rotation matrix for the spatial orbitals is
@@ -79,15 +77,12 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
-             jacobi_indices=None):
+    __init__(self, nelec, nspin, wfn, memory=None, params=None, orbtype=None, jacobi_indices=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -110,7 +105,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         nelec,
         nspin,
         wfn,
-        dtype=None,
         memory=None,
         params=None,
         orbtype=None,
@@ -129,7 +123,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             Orbitals that will be rotated.
 
         """
-        super().__init__(nelec, nspin, wfn, dtype=dtype, memory=memory, params=params)
+        super().__init__(nelec, nspin, wfn, memory=memory, params=params)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
 
@@ -200,9 +194,9 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         """
         # pylint: disable=C0103
         if self.orbtype in ["restricted", "unrestricted"]:
-            jacobi_rotation = np.identity(self.nspatial, dtype=self.dtype)
+            jacobi_rotation = np.identity(self.nspatial)
         else:
-            jacobi_rotation = np.identity(self.nspin, dtype=self.dtype)
+            jacobi_rotation = np.identity(self.nspin)
 
         p, q = self.jacobi_indices
         # FIXME: use function that converts spin to spatial
@@ -219,9 +213,9 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if self.orbtype in ["restricted", "generalized"]:
             return (jacobi_rotation,)
         elif all(i < self.nspatial for i in self.jacobi_indices):
-            return (jacobi_rotation, np.identity(self.nspatial, dtype=self.dtype))
+            return (jacobi_rotation, np.identity(self.nspatial))
         else:
-            return (np.identity(self.nspatial, dtype=self.dtype), jacobi_rotation)
+            return (np.identity(self.nspatial), jacobi_rotation)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.

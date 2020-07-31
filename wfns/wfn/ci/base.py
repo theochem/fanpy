@@ -25,8 +25,6 @@ class CIWavefunction(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -54,18 +52,18 @@ class CIWavefunction(BaseWavefunction):
         Spin of the wavefunction
     seniority : int
         Seniority of the wavefunction
+    dtype
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
+    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
              seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -90,7 +88,6 @@ class CIWavefunction(BaseWavefunction):
         self,
         nelec,
         nspin,
-        dtype=None,
         memory=None,
         params=None,
         sd_vec=None,
@@ -105,9 +102,6 @@ class CIWavefunction(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -126,7 +120,7 @@ class CIWavefunction(BaseWavefunction):
             Default is no seniority (all seniority possible).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_spin(spin=spin)
         self.assign_seniority(seniority=seniority)
         self.assign_sd_vec(sd_vec=sd_vec)
@@ -336,7 +330,7 @@ class CIWavefunction(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params = np.zeros(self.params_shape)
             params[0] = 1
 
         super().assign_params(params=params, add_noise=add_noise)

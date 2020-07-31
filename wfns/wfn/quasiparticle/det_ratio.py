@@ -14,8 +14,6 @@ class DeterminantRatio(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     memory : float
         Memory available for the wavefunction.
     numerator_mask : np.ndarray
@@ -36,6 +34,8 @@ class DeterminantRatio(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
     matrix_shape : 2-tuple of int
         Shape of each matrix.
     matrix_size : int
@@ -45,14 +45,12 @@ class DeterminantRatio(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -65,7 +63,7 @@ class DeterminantRatio(BaseWavefunction):
         Return the overlap of the wavefunction with a Slater determinant.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, numerator_mask=None, params=None):
+    def __init__(self, nelec, nspin, memory=None, numerator_mask=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -74,9 +72,6 @@ class DeterminantRatio(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -88,7 +83,7 @@ class DeterminantRatio(BaseWavefunction):
             Each matrix is assumed to have shape, (nelec, nspin).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_numerator_mask(numerator_mask)
         self.assign_params(params)
         self._cache_fns = {}
@@ -274,7 +269,7 @@ class DeterminantRatio(BaseWavefunction):
             columns = self.get_columns(ground_sd, 0)
 
             # make matrix
-            matrix = np.zeros(self.matrix_shape, dtype=self.dtype)
+            matrix = np.zeros(self.matrix_shape)
             matrix[np.arange(self.matrix_shape[0]), columns] = 1
 
             # make denominator

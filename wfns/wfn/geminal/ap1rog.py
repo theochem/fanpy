@@ -32,8 +32,6 @@ class AP1roG(APIG):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -60,6 +58,8 @@ class AP1roG(APIG):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype
+        Data type of the wavefunction.
     npair : int
         Number of electron pairs.
     norbpair : int
@@ -67,15 +67,13 @@ class AP1roG(APIG):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, ref_sd=None,
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, ref_sd=None,
              params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_ngem(self, ngem=None)
@@ -107,7 +105,6 @@ class AP1roG(APIG):
         self,
         nelec,
         nspin,
-        dtype=None,
         memory=None,
         ngem=None,
         orbpairs=None,
@@ -122,9 +119,6 @@ class AP1roG(APIG):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -144,7 +138,7 @@ class AP1roG(APIG):
 
         """
         # pylint: disable=W0233,W0231
-        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype, memory=memory)
+        BaseWavefunction.__init__(self, nelec, nspin, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
@@ -166,7 +160,7 @@ class AP1roG(APIG):
 
         """
         if params is None:
-            params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
+            params = np.zeros((self.ngem, self.norbpair))
 
         super().assign_params(params=params, add_noise=add_noise)
 
