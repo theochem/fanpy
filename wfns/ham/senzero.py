@@ -80,7 +80,7 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
     """
 
-    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
+    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None, components=False):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::
@@ -105,26 +105,16 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         nspatial = self.nspatial
         sd = slater.internal_sd(sd)
         if slater.get_seniority(sd, nspatial) != 0:
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         sd_spatial = slater.split_spin(sd, nspatial)[0]
         occ_spatial_indices = slater.occ_indices(sd_spatial)
         vir_spatial_indices = slater.vir_indices(sd_spatial, nspatial)
 
-        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
-
-        def update_integrals(sd_m):
-            """Update the integral values."""
-            coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
-            sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
-            return (
-                one_electron + coeff * sd_energy[0],
-                coulomb + coeff * sd_energy[1],
-                exchange + coeff * sd_energy[2],
-            )
-
-        one_electron, coulomb, exchange = update_integrals(sd)
-
+        coeff = wfn.get_overlap(sd, deriv=wfn_deriv)
+        integral = coeff * self.integrate_sd_sd(sd, sd, deriv=ham_deriv, components=components)
         for i in occ_spatial_indices:
             for a in vir_spatial_indices:  # pylint: disable=C0103
                 sd_m = slater.excite(
@@ -134,11 +124,14 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
                     slater.spin_index(a, nspatial, "beta"),
                     slater.spin_index(a, nspatial, "alpha"),
                 )
-                one_electron, coulomb, exchange = update_integrals(sd_m)
+                coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
+                integral += coeff * self.integrate_sd_sd(
+                    sd, sd_m, deriv=ham_deriv, components=components
+                )
 
-        return one_electron, coulomb, exchange
+        return integral
 
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -160,15 +153,18 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
+        integral : {float, np.ndarray(3,)}
+            Values of the integrals.
+            If `components` is False, then the value of the integral is returned.
+            If `components` is True, then the value of the one electron, coulomb, and exchange
+            components are returned.
 
         Raises
         ------
@@ -191,7 +187,9 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         # if the Slater determinants are not seniority zero
         if not slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0:
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         sd1_spatial = slater.split_spin(sd1, nspatial)[0]
         sd2_spatial = slater.split_spin(sd2, nspatial)[0]
@@ -200,12 +198,16 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         diff_order = len(diff_sd1)
         # if two Slater determinants are greater than double (spatial orbital) excitation away
         if diff_order > 1:
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         sign = 1
 
@@ -229,4 +231,6 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
             coulomb = self.two_int[spatial_a, spatial_a, spatial_b, spatial_b]
 
-        return sign * one_electron, sign * coulomb, sign * exchange
+        if components:
+            return sign * np.array([one_electron, coulomb, exchange])
+        return sign * (one_electron + coulomb + exchange)

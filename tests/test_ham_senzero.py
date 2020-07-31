@@ -16,11 +16,13 @@ def test_integrate_sd_sd_trivial():
     with pytest.raises(NotImplementedError):
         test.integrate_sd_sd(0b00010001, 0b01000100, deriv=0)
 
-    assert (0, 0, 0) == test.integrate_sd_sd(0b00010001, 0b00100001)
-    assert (0, 0, 0) == test.integrate_sd_sd(0b00100001, 0b00010001)
-    assert (0, 0, 0) == test.integrate_sd_sd(0b01010101, 0b00010001)
-    assert (0, 0, 0) == test.integrate_sd_sd(0b11001100, 0b00110011)
-    assert (0, two_int[0, 0, 1, 1], 0) == test.integrate_sd_sd(0b00010001, 0b00100010)
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b00010001, 0b00100001, components=True))
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b00100001, 0b00010001, components=True))
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b01010101, 0b00010001, components=True))
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b11001100, 0b00110011, components=True))
+    assert np.allclose(
+        (0, two_int[0, 0, 1, 1], 0), test.integrate_sd_sd(0b00010001, 0b00100010, components=True)
+    )
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -86,14 +88,14 @@ def test_integrate_wfn_sd_2e():
         {"get_overlap": lambda sd, deriv=None: 1 if sd == 0b0101 else 2 if sd == 0b1010 else 0},
     )
 
-    assert (0, 0, 0) == ham.integrate_wfn_sd(test_wfn, 0b1001)
+    assert np.allclose((0, 0, 0), ham.integrate_wfn_sd(test_wfn, 0b1001, components=True))
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b0101)
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b0101, components=True)
     assert one_energy == 1 * 1 + 1 * 1
     assert coulomb == 1 * 5 + 2 * 8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b1010)
+    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b1010, components=True)
     assert one_energy == 2 * 4 + 2 * 4
     assert coulomb == 1 * 17 + 2 * 20
     assert exchange == 0

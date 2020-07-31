@@ -1,5 +1,6 @@
 """Hamiltonian that will be used to make the Schrodinger equation."""
 import abc
+import itertools as it
 
 from wfns.backend import slater
 
@@ -121,7 +122,9 @@ class BaseHamiltonian:
 
     # FIXME: need to speed up
     # TODO: change to integrate_sd_wfn
-    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None):
+    def integrate_wfn_sd(
+        self, wfn, sd, wfn_deriv=None, ham_deriv=None, orders=(1, 2), components=False
+    ):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::
@@ -149,15 +152,17 @@ class BaseHamiltonian:
         ham_deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
+        integral : {float, np.ndarray}
+            If `components` is False, then the integral is returned.
+            If `components` is True, then the one electron, coulomb, and exchange components are
+            returned.
 
         Raises
         ------
@@ -176,34 +181,21 @@ class BaseHamiltonian:
         occ_indices = slater.occ_indices(sd)
         vir_indices = slater.vir_indices(sd, self.nspin)
 
-        one_electron = 0.0
-        coulomb = 0.0
-        exchange = 0.0
+        coeff = wfn.get_overlap(sd, deriv=wfn_deriv)
+        integral = coeff * self.integrate_sd_sd(sd, sd, deriv=ham_deriv, components=components)
+        for order in orders:
+            for annihilators in it.combinations(occ_indices, order):
+                for creators in it.combinations(vir_indices, order):
+                    sd_m = slater.excite(sd, *annihilators, *creators)
+                    coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
+                    integral += coeff * self.integrate_sd_sd(
+                        sd, sd_m, deriv=ham_deriv, components=components
+                    )
 
-        def update_integrals(sd_m):
-            """Update integral values."""
-            coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
-            sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
-            return (
-                one_electron + coeff * sd_energy[0],
-                coulomb + coeff * sd_energy[1],
-                exchange + coeff * sd_energy[2],
-            )
-
-        one_electron, coulomb, exchange = update_integrals(sd)
-        for counter_i, i in enumerate(occ_indices):
-            for counter_a, a in enumerate(vir_indices):
-                sd_m = slater.excite(sd, i, a)
-                one_electron, coulomb, exchange = update_integrals(sd_m)
-                for j in occ_indices[counter_i + 1 :]:
-                    for b in vir_indices[counter_a + 1 :]:
-                        sd_m = slater.excite(sd, i, j, b, a)
-                        one_electron, coulomb, exchange = update_integrals(sd_m)
-
-        return one_electron, coulomb, exchange
+        return integral
 
     @abc.abstractmethod
-    def integrate_sd_sd(self, sd1, sd2, deriv=False):
+    def integrate_sd_sd(self, sd1, sd2, deriv=False, components=False):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -222,19 +214,16 @@ class BaseHamiltonian:
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
-
-        Raises
-        ------
-        ValueError
-            If `sign` is not `1`, `-1` or `None`.
+        integral : {float, np.ndarray}
+            If `components` is False, then the value of the integral is returned.
+            If `components` is True, then the value of the one electron, coulomb, and exchange
+            components are returned.
 
         """

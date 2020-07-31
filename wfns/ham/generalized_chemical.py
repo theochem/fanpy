@@ -168,7 +168,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # cache two electron integrals
         self.cache_two_ints()
 
-    def integrate_sd_sd(self, sd1, sd2, deriv=None):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -195,19 +195,22 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         deriv : {int, None}
             Index of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
+        components : bool
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        one_electron : float
-            One-electron energy.
-        coulomb : float
-            Coulomb energy.
-        exchange : float
-            Exchange energy.
+        integral : {float, np.ndarray(3,)}
+            Values of the integrals.
+            If `components` is False, then the value of the integral is returned.
+            If `components` is True, then the value of the one electron, coulomb, and exchange
+            components are returned.
 
         """
         if deriv is not None:
-            return self._integrate_sd_sd_deriv(sd1, sd2, deriv)
+            return self._integrate_sd_sd_deriv(sd1, sd2, deriv, components=components)
 
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
@@ -215,10 +218,14 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
         diff_order = len(diff_sd1)
         if diff_order > 2:
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
@@ -234,7 +241,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         else:
             one_electron, coulomb, exchange = self._integrate_sd_sd_two(diff_sd1, diff_sd2)
 
-        return sign * one_electron, sign * coulomb, sign * exchange
+        if components:
+            return sign * np.array([one_electron, coulomb, exchange])
+        return sign * (one_electron + coulomb + exchange)
 
     def _integrate_sd_sd_zero(self, shared_indices):
         """Return integrals of the given Slater determinant with itself.
@@ -380,7 +389,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
     # TODO: Much of the following function can be shortened by using impure functions (function with
     # a side effect) instead
     # FIXME: too many branches, too many statements
-    def _integrate_sd_sd_deriv(self, sd1, sd2, deriv):
+    def _integrate_sd_sd_deriv(self, sd1, sd2, deriv, components=False):
         r"""Return derivative of the CI matrix element with respect to the antihermitian elements.
 
         Parameters
@@ -391,15 +400,18 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Slater Determinant against which the Hamiltonian is integrated.
         deriv : int
             Index of the Hamiltonian parameter against which the integral is derivatized.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        one_electron : float
-            One-electron energy derivatized with respect to the given index.
-        coulomb : float
-            Coulomb energy derivatized with respect to the given index.
-        exchange : float
-            Exchange energy derivatized with respect to the given index.
+        d_integral : {float, np.ndarray(3,)}
+            Derivative of the integral.
+            If `components` is False, then the derivative of the integral is returned.
+            If `components` is True, then the derivative of the one electron, coulomb, and exchange
+            components are returned.
 
         Raises
         ------
@@ -422,10 +434,14 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
         diff_order = len(diff_sd1)
         if diff_order > 2:
-            return 0.0, 0.0, 0.0
+            if components:
+                return 0.0, 0.0, 0.0
+            return 0.0
 
         # get sign
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
@@ -457,7 +473,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
                 diff_sd1, diff_sd2, x, y
             )
 
-        return sign * one_electron, sign * coulomb, sign * exchange
+        if components:
+            return sign * np.array([one_electron, coulomb, exchange])
+        return sign * (one_electron + coulomb + exchange)
 
     def _integrate_sd_sd_deriv_zero(self, x, y, shared_indices):
         """Return the derivative of the integrals of the given Slater determinant with itself.
@@ -1438,7 +1456,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             ]
         )
 
-    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None):
+    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
 
         .. math::
@@ -1463,13 +1481,18 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         wfn_deriv : {int, None}
             Index of the wavefunction parameter against which the integral is derivatized.
             Default is no derivatization.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        integrals : np.ndarray(3,)
-            Integrals of the given Slater determinant and the wavefunction.
-            First element corresponds to the one-electron energy, second to the coulomb energy, and
-            third to the exchange energy.
+        d_integral : {float, np.ndarray(3,)}
+            Derivative of the integral.
+            If `components` is False, then the derivative of the integral is returned.
+            If `components` is True, then the derivative of the one electron, coulomb, and exchange
+            components are returned.
 
         """
         # pylint: disable=C0103
@@ -1508,9 +1531,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         else:
             integrals_two = 0
 
-        return integrals_zero + integrals_one + integrals_two
+        if components:
+            return integrals_zero + integrals_one + integrals_two
+        return np.sum(integrals_zero + integrals_one + integrals_two)
 
-    def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs):
+    def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
 
         .. math::
@@ -1533,13 +1558,18 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Wavefunction against which the Hamiltonian is integrated.
         ham_derivs : np.ndarray(N_derivs)
             Indices of the Hamiltonian parameter against which the integrals are derivatized.
+        components : {bool, False}
+            Option for separating the integrals into the one electron, coulomb, and exchange
+            components.
+            Default adds the three components together.
 
         Returns
         -------
-        integrals : np.ndarray(3, N_params)
-            Integrals of the given Slater determinant and the wavefunction.
-            First element corresponds to the one-electron energy, second to the coulomb energy, and
-            third to the exchange energy.
+        d_integrals : {np.ndarray(N_derivs,), np.ndarray(3, N_derivs)}
+            Derivative of the integral.
+            If `components` is False, then the derivative of the integral is returned.
+            If `components` is True, then the derivative of the one electron, coulomb, and exchange
+            components are returned.
 
         Raises
         ------
@@ -1603,4 +1633,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         else:
             integrals_two = 0
 
-        return (integrals_zero + integrals_one + integrals_two)[:, ham_derivs]
+        integrals = (integrals_zero + integrals_one + integrals_two)[:, ham_derivs]
+        if components:
+            return integrals
+        return np.sum(integrals, axis=0)

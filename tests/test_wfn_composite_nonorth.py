@@ -663,7 +663,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
         if expectation_type == "ci matrix":
             return (
                 sum(
-                    wfn.get_overlap(sd1) * sum(ham.integrate_sd_sd(sd1, sd2)) * wfn.get_overlap(sd2)
+                    wfn.get_overlap(sd1) * ham.integrate_sd_sd(sd1, sd2) * wfn.get_overlap(sd2)
                     for sd1 in sds
                     for sd2 in sds
                 )
@@ -671,7 +671,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
             )
         elif expectation_type == "projected":
             return (
-                sum(wfn.get_overlap(sd) * sum(ham.integrate_wfn_sd(wfn, sd)) for sd in sds) / norm
+                sum(wfn.get_overlap(sd) * ham.integrate_wfn_sd(wfn, sd) for sd in sds) / norm
             )
 
     assert np.allclose(get_energy("doci", "ci matrix"), get_energy("nonorth", "ci matrix"))

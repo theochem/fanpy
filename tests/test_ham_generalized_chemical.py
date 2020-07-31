@@ -128,22 +128,22 @@ def test_integrate_wfn_sd():
         },
     )
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101)
+    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101, components=True)
     assert one_energy == 1 * 1 + 1 * 1
     assert coulomb == 1 * 5 + 2 * 8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1010)
+    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1010, components=True)
     assert one_energy == 2 * 4 + 2 * 4
     assert coulomb == 1 * 17 + 2 * 20
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0110)
+    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0110, components=True)
     assert one_energy == 1 * 3 + 2 * 2
     assert coulomb == 1 * 9 + 2 * 16
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1100)
+    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1100, components=True)
     assert one_energy == 1 * 3 + 3 * 4
     assert coulomb == 3 * 10
     assert exchange == -3 * 11
@@ -158,18 +158,25 @@ def test_integrate_sd_sd_trivial():
     two_int = np.random.rand(6, 6, 6, 6)
     test = GeneralizedChemicalHamiltonian(one_int, two_int)
 
-    assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b001001)
-    assert (0, 0, 0) == test.integrate_sd_sd(0b000111, 0b111000)
-    assert (0, two_int[0, 1, 2, 3], -two_int[0, 1, 3, 2]) == test.integrate_sd_sd(
-        0b100011, 0b101100
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b001001, components=True))
+    assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b111000, components=True))
+    assert np.allclose(
+        (0, two_int[0, 1, 2, 3], -two_int[0, 1, 3, 2]),
+        test.integrate_sd_sd(0b100011, 0b101100, components=True)
     )
-    assert (one_int[0, 0], 0, 0) == test.integrate_sd_sd(0b1, 0b1)
-    assert (one_int[0, 1], 0, 0) == test.integrate_sd_sd(0b1, 0b10)
-    assert (
-        0,
-        -two_int[1, 4, 1, 3] + two_int[0, 4, 0, 3],
-        two_int[1, 4, 3, 1] - two_int[0, 4, 3, 0],
-    ) == test.integrate_sd_sd(0b110001, 0b101010, deriv=0)
+    assert two_int[0, 1, 2, 3] - two_int[0, 1, 3, 2] == test.integrate_sd_sd(
+        0b100011, 0b101100, components=False
+    )
+    assert np.allclose(
+        (one_int[0, 0], 0, 0), test.integrate_sd_sd(0b1, 0b1, components=True)
+    )
+    assert np.allclose(
+        (one_int[0, 1], 0, 0), test.integrate_sd_sd(0b1, 0b10, components=True)
+    )
+    assert np.allclose(
+        (0, -two_int[1, 4, 1, 3] + two_int[0, 4, 0, 3], two_int[1, 4, 3, 1] - two_int[0, 4, 3, 0]),
+        test.integrate_sd_sd(0b110001, 0b101010, deriv=0, components=True)
+    )
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -198,7 +205,7 @@ def test_integrate_sd_sd_h2_631gdp():
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
             sd1, sd2 = int(sd1), int(sd2)
-            assert np.allclose(sum(ham.integrate_sd_sd(sd1, sd2)), ref_ci_matrix[i, j])
+            assert np.allclose(ham.integrate_sd_sd(sd1, sd2), ref_ci_matrix[i, j])
 
 
 def test_integrate_wfn_sd_h2_631gdp():
@@ -228,10 +235,10 @@ def test_integrate_wfn_sd_h2_631gdp():
     params = np.random.rand(len(ref_pspace))
     wfn = CIWavefunction(2, 10, sd_vec=ref_pspace, params=params)
     for i, sd in enumerate(ref_pspace):
-        assert np.allclose(sum(ham.integrate_wfn_sd(wfn, sd)), ref_ci_matrix[i, :].dot(params))
+        assert np.allclose(ham.integrate_wfn_sd(wfn, sd), ref_ci_matrix[i, :].dot(params))
         assert np.allclose(
-            sum(ham.integrate_wfn_sd(wfn, sd)),
-            sum(sum(ham.integrate_sd_sd(sd, sd1)) * wfn.get_overlap(sd1) for sd1 in ref_pspace),
+            ham.integrate_wfn_sd(wfn, sd),
+            sum(ham.integrate_sd_sd(sd, sd1) * wfn.get_overlap(sd1) for sd1 in ref_pspace),
         )
 
 
@@ -264,18 +271,9 @@ def test_integrate_wfn_sd_h4_sto6g():
 
     for sd in sds:
         assert np.allclose(
-            ham.integrate_wfn_sd(wfn, sd)[0],
-            sum(ham.integrate_sd_sd(sd, sd1)[0] * wfn.get_overlap(sd1) for sd1 in sds),
+            ham.integrate_wfn_sd(wfn, sd),
+            sum(ham.integrate_sd_sd(sd, sd1) * wfn.get_overlap(sd1) for sd1 in sds),
         )
-        assert np.allclose(
-            ham.integrate_wfn_sd(wfn, sd)[1],
-            sum(ham.integrate_sd_sd(sd, sd1)[1] * wfn.get_overlap(sd1) for sd1 in sds),
-        )
-        assert np.allclose(
-            ham.integrate_wfn_sd(wfn, sd)[2],
-            sum(ham.integrate_sd_sd(sd, sd1)[2] * wfn.get_overlap(sd1) for sd1 in sds),
-        )
-
 
 def test_integrate_sd_sd_lih_631g_trial_slow():
     """Test GeneralizedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
@@ -302,7 +300,7 @@ def test_integrate_sd_sd_lih_631g_trial_slow():
     for i, sd1 in enumerate(ref_pspace):
         for j, sd2 in enumerate(ref_pspace):
             sd1, sd2 = int(sd1), int(sd2)
-            assert np.allclose(sum(ham.integrate_sd_sd(sd1, sd2)), ref_ci_matrix[i, j])
+            assert np.allclose(ham.integrate_sd_sd(sd1, sd2), ref_ci_matrix[i, j])
 
 
 def test_integrate_sd_sd_particlenum():
@@ -322,12 +320,12 @@ def test_integrate_sd_sd_particlenum():
     civec = [0b01, 0b11]
 
     # \braket{1 | h_{11} | 1}
-    assert np.allclose(sum(ham.integrate_sd_sd(civec[0], civec[0])), 1)
+    assert np.allclose(ham.integrate_sd_sd(civec[0], civec[0]), 1)
     # \braket{12 | H | 1} = 0
-    assert np.allclose(sum(ham.integrate_sd_sd(civec[1], civec[0])), 0)
-    assert np.allclose(sum(ham.integrate_sd_sd(civec[0], civec[1])), 0)
+    assert np.allclose(ham.integrate_sd_sd(civec[1], civec[0]), 0)
+    assert np.allclose(ham.integrate_sd_sd(civec[0], civec[1]), 0)
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
-    assert np.allclose(sum(ham.integrate_sd_sd(civec[1], civec[1])), 4)
+    assert np.allclose(ham.integrate_sd_sd(civec[1], civec[1]), 4)
 
 
 def test_param_ind_to_rowcol_ind():
@@ -352,8 +350,8 @@ def test_integrate_sd_sd_deriv():
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, -1)
     with pytest.raises(ValueError):
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 2)
-    assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0) == (0, 0, 0)
-    assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, 0) == (0, 0, 0)
+    assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0) == 0
+    assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, 0) == 0
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
@@ -384,10 +382,10 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                 test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
-                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=True))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i, components=True)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -421,10 +419,10 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
                 test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
-                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=True))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i, components=True)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -457,10 +455,10 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                 test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
-                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=True))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i, components=True)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -493,10 +491,10 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
                 test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
-                    np.array(test_ham2.integrate_sd_sd(sd1, sd2))
-                    - np.array(test_ham.integrate_sd_sd(sd1, sd2))
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=True))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i, components=True)
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
