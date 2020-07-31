@@ -37,16 +37,12 @@ class BaseQuasiparticle(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
     dtype
         Data type of the wavefunction.
-    params_shape : tuple of int
-        Shape of the wavefunction parameters.
     norbsubsets : int
         Number of orbital subsets.
 
@@ -138,18 +134,6 @@ class BaseQuasiparticle(BaseWavefunction):
 
         """
         return len(self.dict_ind_orbsubset)
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return (self.nquasiparticle, self.norbsubsets)
 
     def assign_nquasiparticle(self, nquasiparticle=None):
         """Assign the number of creation operators that will be used to construct the wavefunction.
@@ -257,7 +241,7 @@ class BaseQuasiparticle(BaseWavefunction):
             # FIXME: what happens if multiple null quasiparticle?
             # FIXME: what happens when the nquasiparticle != orbsubsets.size?
             # assign
-            params = np.zeros(self.params_shape)
+            params = np.zeros((self.nquasiparticle, self.norbsubsets))
             for i, orbsubset in enumerate(orbsubsets):
                 col_ind = self.get_col_ind(orbsubset)
                 params[i, col_ind] += 1
@@ -278,7 +262,7 @@ class BaseQuasiparticle(BaseWavefunction):
                         "wavefunction."
                     )
 
-            params = np.zeros(self.params_shape)
+            params = np.zeros((self.nquasiparticle, self.norbsubsets))
             for ind, orbsubset in other.dict_ind_orbsubset.items():
                 try:
                     params[:other.nquasiparticle,
@@ -407,8 +391,8 @@ class BaseQuasiparticle(BaseWavefunction):
             return output
 
         # convert index to row and column indices
-        row_removed = deriv // self.params_shape[1]
-        col_removed = deriv % self.params_shape[1]
+        row_removed = deriv // self.params.shape[1]
+        col_removed = deriv % self.params.shape[1]
         # cut out rows and columns derivatized
         row_inds_trunc = np.array([i for i in row_inds if i != row_removed])
         col_inds_trunc = np.array([i for i in col_inds if i != col_removed])
@@ -565,7 +549,7 @@ class BaseQuasiparticle(BaseWavefunction):
         if deriv >= self.nparams:
             return 0.0
         # convert parameter index to row and col index
-        col_removed = deriv % self.params_shape[1]
+        col_removed = deriv % self.params.shape[1]
         # find orbital pair that corresponds to removed column
         orbs = self.get_orbsubset(col_removed)
 

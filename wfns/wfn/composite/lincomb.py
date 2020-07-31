@@ -25,8 +25,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -116,18 +114,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         else:
             return None
 
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return (len(self.wfns),)
-
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
 
@@ -142,7 +128,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(self.params_shape)
+            params = np.zeros(len(self.wfns))
             params[0] = 1.0
 
         super().assign_params(params=params, add_noise=add_noise)

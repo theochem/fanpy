@@ -68,8 +68,6 @@ class BaseGeminal(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -169,18 +167,6 @@ class BaseGeminal(BaseWavefunction):
 
         """
         return len(self.dict_ind_orbpair)
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return (self.ngem, self.norbpair)
 
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
@@ -307,7 +293,7 @@ class BaseGeminal(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(self.params_shape)
+            params = np.zeros((self.ngem, self.norbpair))
             for i in range(self.ngem):
                 col_ind = int(self.get_col_ind((i, i + self.nspatial)))
                 params[i, col_ind] += 1
@@ -327,7 +313,7 @@ class BaseGeminal(BaseWavefunction):
                     raise ValueError(
                         "The number of geminals in the two wavefunctions must be the same."
                     )
-            params = np.zeros(self.params_shape)
+            params = np.zeros((self.ngem, self.norbpair))
             for ind, orbpair in other.dict_ind_orbpair.items():
                 try:
                     params[:, self.get_col_ind(orbpair)] = other.params[:, ind]

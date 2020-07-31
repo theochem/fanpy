@@ -335,10 +335,10 @@ def test_gem_compute_permanent_deriv():
     test.load_cache()
 
     original_params = test.params[:]
-    delta = np.zeros(test.params_shape)
+    delta = np.zeros(test.params.shape)
     step = 1e-3
-    for i in range(test.params_shape[0]):
-        for j in range(test.params_shape[1]):
+    for i in range(test.params.shape[0]):
+        for j in range(test.params.shape[1]):
             delta *= 0
             delta[i, j] = step
             test.assign_params(original_params)

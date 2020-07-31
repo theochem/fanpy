@@ -779,7 +779,7 @@ def test_integrate_sd_wfn():
 
     for i in range(1, 4):
         wfn = CIWavefunction(i, 10)
-        wfn.assign_params(np.random.rand(*wfn.params_shape))
+        wfn.assign_params(np.random.rand(*wfn.params.shape))
         for occ_indices in it.combinations(range(10), i):
             assert np.allclose(
                 test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=None),
@@ -803,7 +803,7 @@ def test_integrate_sd_wfn_deriv():
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     wfn = CIWavefunction(4, 10)
-    wfn.assign_params(np.random.rand(*wfn.params_shape))
+    wfn.assign_params(np.random.rand(*wfn.params.shape))
     assert np.allclose(
         test_ham.integrate_sd_wfn_deriv(0b0001101010, wfn, np.arange(10)),
         np.array([test_ham.integrate_wfn_sd(wfn, 0b0001101010, ham_deriv=i) for i in range(10)]).T,
@@ -812,7 +812,7 @@ def test_integrate_sd_wfn_deriv():
     ham_derivs = np.array([0, 3, 5, 7, 8])
     for i in range(1, 4):
         wfn = CIWavefunction(i, 10)
-        wfn.assign_params(np.random.rand(*wfn.params_shape))
+        wfn.assign_params(np.random.rand(*wfn.params.shape))
         for occ_indices in it.combinations(range(10), i):
             assert np.allclose(
                 test_ham.integrate_sd_wfn_deriv(slater.create(0, *occ_indices), wfn, ham_derivs),

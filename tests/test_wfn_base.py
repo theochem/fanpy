@@ -82,7 +82,6 @@ def test_assign_params():
             BaseWavefunction,
             dict_overwrite={
                 "assign_params": temp_assign_params,
-                "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
@@ -94,7 +93,6 @@ def test_assign_params():
             BaseWavefunction,
             dict_overwrite={
                 "assign_params": temp_assign_params,
-                "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
@@ -107,7 +105,6 @@ def test_assign_params():
             BaseWavefunction,
             dict_overwrite={
                 "assign_params": temp_assign_params,
-                "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
@@ -118,7 +115,6 @@ def test_assign_params():
             BaseWavefunction,
             dict_overwrite={
                 "assign_params": temp_assign_params,
-                "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
@@ -131,7 +127,6 @@ def test_assign_params():
             BaseWavefunction,
             dict_overwrite={
                 "assign_params": temp_assign_params,
-                "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
@@ -148,7 +143,6 @@ def test_assign_params():
             dict_overwrite={
                 "assign_params": lambda self, params, add_noise=False:
                 temp_assign_params(self, params, add_noise, np.zeros((1, 1, 1))),
-                "params_shape": property(lambda self: (1, 1, 1)),
             },
         )
     )
@@ -182,9 +176,7 @@ def test_olp_deriv():
 def test_load_cache():
     """Test BaseWavefunction.load_cache."""
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction, dict_overwrite={"params_shape": property(lambda self: (10, 10))}
-        )
+        disable_abstract(BaseWavefunction)
     )
     test.memory = 1000
     test.params = np.array([1, 2, 3])
@@ -249,10 +241,9 @@ def test_nspatial():
 def test_nparams():
     """Test BaseWavefunction.nparams."""
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction, dict_overwrite={"params_shape": property(lambda self: (10, 10))}
-        )
+        disable_abstract(BaseWavefunction)
     )
+    test.params = np.arange(100)
     assert test.nparams == 100
 
 

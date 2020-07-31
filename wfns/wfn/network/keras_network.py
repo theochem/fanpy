@@ -26,8 +26,6 @@ class KerasNetwork(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -163,22 +161,6 @@ class KerasNetwork(BaseWavefunction):
 
         """
         return self.model.count_params()
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        Notes
-        -----
-        Instance must have attribut `model`.
-
-        """
-        return (self.nparams,)
 
     # FIXME: not a very robust way of building an initial guess. It is not very good and requires
     # specific network structures.

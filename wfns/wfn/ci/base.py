@@ -46,8 +46,6 @@ class CIWavefunction(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction
     seniority : int
@@ -127,22 +125,6 @@ class CIWavefunction(BaseWavefunction):
         # FIXME: atleast doubling memory for faster lookup of sd coefficient
         self.dict_sd_index = {sd: i for i, sd in enumerate(self.sd_vec)}
         self.assign_params(params=params)
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        Notes
-        -----
-        `CIWavefunction` instance must contain `sd_vec` to access this property.
-
-        """
-        return (len(self.sd_vec),)
 
     @property
     def spin(self):
@@ -330,7 +312,7 @@ class CIWavefunction(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(self.params_shape)
+            params = np.zeros(len(self.sd_vec))
             params[0] = 1
 
         super().assign_params(params=params, add_noise=add_noise)

@@ -32,8 +32,6 @@ class APr2G(RankTwoApprox, APIG):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int

@@ -26,8 +26,6 @@ class BaseWavefunction(ParamContainer):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -107,7 +105,7 @@ class BaseWavefunction(ParamContainer):
             Number of parameters.
 
         """
-        return np.prod(self.params_shape)
+        return self.params.size
 
     @property
     def spin(self):
@@ -260,18 +258,14 @@ class BaseWavefunction(ParamContainer):
 
         self.params = params
 
-        # Used to reshape parameters when the parameter shape is given by a property
-        if len(params.shape) == 1:
-            self.params = params.reshape(self.params_shape)
-
         # add random noise
         if add_noise:
             # set scale
             scale = 0.2 / self.nparams
-            self.params += scale * (np.random.rand(*self.params_shape) - 0.5)
+            self.params += scale * (np.random.rand(*self.params.shape) - 0.5)
             if self.dtype in [complex, np.complex128]:
                 self.params += (
-                    0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
+                    0.01j * scale * (np.random.rand(*self.params.shape).astype(complex) - 0.5)
                 )
 
     def load_cache(self, include_derivative=True):
@@ -397,17 +391,6 @@ class BaseWavefunction(ParamContainer):
                 "Given cached function does not have decorator " "`functools.lru_cache`"
             ) from error
         self.probable_sds = {}
-
-    @abc.abstractproperty
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
 
     @abc.abstractmethod
     def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103

@@ -61,14 +61,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
     dtype
         Data type of the wavefunction.
+    param_shape : tuple of int
+        Shape of the parameters.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Orbital type.
 
@@ -133,18 +133,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return None
 
     @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return (self.nspatial, self.wfn.nspatial)
-
-    @property
     def nparams(self):
         """Return the number of wavefunction parameters.
 
@@ -156,6 +144,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         """
         return sum(i.size for i in self.params)
 
+    # FIXME: bad name
     @property
     def param_shape(self):
         """Return the shape of the wavefunction parameters.
@@ -227,7 +216,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if params is None:
-            params = (np.eye(*self.params_shape),)
+            params = (np.eye(self.nspatial, self.wfn.nspatial),)
 
         if isinstance(params, np.ndarray):
             params = (params,)

@@ -106,7 +106,7 @@ def answer_apig_h2_sto6g():
     # find exact minimum
     def min_energy(params):
         """Find minimum energy."""
-        apig.assign_params(params.reshape(apig.params_shape))
+        apig.assign_params(params.reshape(apig.params.shape))
         energy = sum(
             sum(ham.integrate_wfn_sd(apig, sd)) * apig.get_overlap(sd) for sd in (0b0101, 0b1010)
         )
@@ -120,7 +120,7 @@ def answer_apig_h2_sto6g():
     # find exact maximum
     def max_energy(params):
         """Find maximum energy."""
-        apig.assign_params(params.reshape(apig.params_shape))
+        apig.assign_params(params.reshape(apig.params.shape))
         energy = sum(
             sum(ham.integrate_wfn_sd(apig, sd)) * apig.get_overlap(sd) for sd in (0b0101, 0b1010)
         )

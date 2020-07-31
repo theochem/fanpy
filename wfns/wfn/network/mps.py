@@ -28,8 +28,6 @@ class MatrixProductState(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -272,18 +270,6 @@ class MatrixProductState(BaseWavefunction):
         matrix_shape = self.get_matrix_shape(ind_spatial)
         ind_occ, ind_row, ind_col = np.unravel_index([param_index], matrix_shape)
         return ind_spatial, ind_occ.item(), ind_row.item(), ind_col.item()
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return sum(np.prod(self.get_matrix_shape(i)) for i in range(self.nspatial))
 
     # TODO: the parameters can probably be changed to something more elegant (like a tensor object
     #       or something)

@@ -59,8 +59,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -163,18 +161,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         """
         return NonorthWavefunction.seniority.__get__(self)  # pylint: disable=E1120
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return ()
 
     @property
     def jacobi_rotation(self):

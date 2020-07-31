@@ -39,10 +39,6 @@ class TempWavefunction(BaseWavefunction):
         return self._seniority
 
     @property
-    def params_shape(self):
-        """Return the shape of the parameters."""
-        return (10, 10)
-
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction."""
         if params is None:

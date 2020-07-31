@@ -47,18 +47,6 @@ class RankTwoApprox:
     """
 
     @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return self.ngem + 2 * self.norbpair
-
-    @property
     def lambdas(self):
         r"""Return the :math:`\lambda` part of the parameters.
 
@@ -124,7 +112,8 @@ class RankTwoApprox:
             #        zetas should be less than 1
             #        lambda - epsilon should be greater than 1
             #        lambda should be around 1 (epsilons should be less than 0)
-            template = np.zeros(super().params_shape)
+
+            template = np.zeros(self.ngem + 2 * self.norbpair)
             for i in range(self.ngem):
                 col_ind = self.get_col_ind((i, i + self.nspatial))
                 template[i, col_ind] += 1

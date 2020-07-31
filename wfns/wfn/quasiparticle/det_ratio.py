@@ -28,8 +28,6 @@ class DeterminantRatio(BaseWavefunction):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
@@ -229,18 +227,6 @@ class DeterminantRatio(BaseWavefunction):
         ind_row = param_index // ncol
         ind_col = param_index % ncol
         return ind_matrix, ind_row, ind_col
-
-    @property
-    def params_shape(self):
-        """Return the shape of the wavefunction parameters.
-
-        Returns
-        -------
-        params_shape : tuple of int
-            Shape of the parameters.
-
-        """
-        return (np.prod(self.matrix_shape) * self.num_matrices, )
 
     # TODO: each matrix is assumed to have the same shape (nelec, nspin). It may need to be made
     #       more flexible (let them have different shape or let each matrix have different shapes

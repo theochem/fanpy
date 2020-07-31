@@ -33,16 +33,12 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
         Number of parameters.
     nspatial : int
         Number of spatial orbitals
-    param_shape : tuple of int
-        Shape of the parameters.
     spin : int
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
     dtype
         Data type of the wavefunction.
-    params_shape : tuple of int
-        Shape of the wavefunction parameters.
     norbsubsets : int
         Number of orbital subsets.
 

@@ -86,17 +86,6 @@ def test_keras_nparams():
     assert test.nparams == 1100 + 101
 
 
-def test_keras_params_shape():
-    """Test KerasNetwork.params_shape."""
-    test = skip_init(KerasNetwork)
-    test.nspin = 10
-    model = keras.engine.sequential.Sequential()
-    model.add(keras.layers.core.Dense(100, input_dim=10, use_bias=True))
-    model.add(keras.layers.core.Dense(1, input_dim=100, use_bias=True))
-    test.assign_model(model)
-    assert test.params_shape == (1100 + 101,)
-
-
 def test_keras_assign_default_params():
     """Test KerasNetwork.assign_default_params."""
     test = skip_init(KerasNetwork)
