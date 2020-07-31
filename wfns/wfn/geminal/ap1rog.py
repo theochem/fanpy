@@ -64,8 +64,6 @@ class AP1roG(APIG):
         Number of electron pairs.
     norbpair : int
         Number of orbital pairs used to construct the geminals.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -154,21 +152,23 @@ class AP1roG(APIG):
         self._cache_fns = {}
         self.load_cache()
 
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction.
 
-        Since part of the coefficient matrix is constrained, these parts will be removed from the
-        coefficient matrix.
-
-        Returns
-        -------
-        template_params : np.ndarray(ngem, norbpair)
-            Default parameters of the geminal wavefunction.
+        Parameters
+        ----------
+        params : {np.ndarray, None}
+            Parameters of the wavefunction.
+            Default corresponds to the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
-        params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
-        return params
+        if params is None:
+            params = np.zeros((self.ngem, self.norbpair), dtype=self.dtype)
+
+        super().assign_params(params=params, add_noise=add_noise)
 
     def assign_ref_sd(self, sd=None):
         """Assign the reference Slater determinant.

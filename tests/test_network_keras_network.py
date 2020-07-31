@@ -106,31 +106,23 @@ def test_keras_params_shape():
     assert test.params_shape == (1100 + 101,)
 
 
-def test_keras_template_params():
-    """Test KerasNetwork.template_params."""
-    test = skip_init(KerasNetwork)
-    params = np.random.rand(100)
-    test._template_params = params
-    assert np.allclose(test.template_params, params)
-
-
-def test_keras_assign_template_params():
-    """Test KerasNetwork.assign_template_params."""
+def test_keras_assign_default_params():
+    """Test KerasNetwork.assign_default_params."""
     test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
     test.dtype = np.float64
     test.assign_model()
-    test.assign_template_params()
-    assert np.allclose(np.identity(10), test._template_params[:100].reshape(10, 10))
-    assert np.allclose(np.identity(10), test._template_params[100:200].reshape(10, 10))
-    # FIXME: need a better test to check the quality of the template params/initial guess
+    test.assign_default_params()
+    assert np.allclose(np.identity(10), test._default_params[:100].reshape(10, 10))
+    assert np.allclose(np.identity(10), test._default_params[100:200].reshape(10, 10))
+    # FIXME: need a better test to check the quality of the default params/initial guess
     hidden_sds = [slater.occ_indices(sd) for sd in sd_list(4, 5, exc_orders=[1, 2])]
     hidden_units = np.zeros((len(hidden_sds), 10))
     for i, hidden_sd in enumerate(hidden_sds):
         hidden_units[i, hidden_sd] = 1
     assert all(
-        test._template_params[200:].dot(z) < test._template_params[200:].dot(hidden_units[0])
+        test._default_params[200:].dot(z) < test._default_params[200:].dot(hidden_units[0])
         for z in hidden_units[1:]
     )
     # bad model
@@ -140,7 +132,7 @@ def test_keras_assign_template_params():
     test.assign_model(model)
     test.nelec = 0
     with pytest.raises(ValueError):
-        test.assign_template_params()
+        test.assign_default_params()
     # FIXME: need to test Keras network with a layer with more than one variable for weights
 
 
@@ -151,7 +143,7 @@ def test_keras_assign_params():
     test.dtype = np.float64
     test.assign_model()
     # default
-    test._template_params = np.ones(test.nparams)
+    test._default_params = np.ones(test.nparams)
     test.assign_params()
     weights = test.model.get_weights()
     assert np.allclose(weights[0], np.ones(100).reshape(10, 10))
@@ -181,14 +173,13 @@ def test_keras_init():
     assert test.model.layers[2].weights[0].shape == (10, 1)
     assert len(test.model.outputs) == 1
     assert test.model.outputs[0].shape[1] == 1
-    # check template_params
-    assert np.allclose(np.identity(10), test._template_params[:100].reshape(10, 10))
-    assert np.allclose(np.identity(10), test._template_params[100:200].reshape(10, 10))
-    # check template_params
+    # check default_params
+    assert np.allclose(np.identity(10), test._default_params[:100].reshape(10, 10))
+    assert np.allclose(np.identity(10), test._default_params[100:200].reshape(10, 10))
     weights = test.model.get_weights()
-    assert np.allclose(weights[0], test._template_params[:100].reshape(10, 10))
-    assert np.allclose(weights[1], test._template_params[100:200].reshape(10, 10))
-    assert np.allclose(weights[2], test._template_params[200:].reshape(10, 1))
+    assert np.allclose(weights[0], test._default_params[:100].reshape(10, 10))
+    assert np.allclose(weights[1], test._default_params[100:200].reshape(10, 10))
+    assert np.allclose(weights[2], test._default_params[200:].reshape(10, 1))
 
 
 def test_keras_get_overlap():

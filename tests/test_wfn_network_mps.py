@@ -99,8 +99,8 @@ def test_decompose_index():
         assert test.decompose_index(i) == (3, ind_occ, ind_row, ind_col)
 
 
-def test_template_params():
-    """Test MatrixProductState.template_params."""
+def test_default_params():
+    """Test MatrixProductState.default_params."""
     test = skip_init(MatrixProductState)
     test.nelec = 4
     test.nspin = 8
@@ -110,27 +110,28 @@ def test_template_params():
     answer1 = np.ones(10) * 10 ** (-1 / 4)
     answer2 = np.identity(10) * 10 ** (-1 / 4)
 
-    template = test.template_params
+    test.assign_params()
+    default = test.params
 
-    tensor = template[0:40].reshape(4, 1, 10)
+    tensor = default[0:40].reshape(4, 1, 10)
     assert np.allclose(tensor[0], 0)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], answer1)
 
-    tensor = template[40:440].reshape(4, 10, 10)
+    tensor = default[40:440].reshape(4, 10, 10)
     assert np.allclose(tensor[0], 0)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], answer2)
 
-    tensor = template[440:840].reshape(4, 10, 10)
+    tensor = default[440:840].reshape(4, 10, 10)
     assert np.allclose(tensor[0], answer2)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)
     assert np.allclose(tensor[3], 0)
 
-    tensor = template[840:880].reshape(4, 10, 1)
+    tensor = default[840:880].reshape(4, 10, 1)
     assert np.allclose(tensor[0], answer1)
     assert np.allclose(tensor[1], 0)
     assert np.allclose(tensor[2], 0)

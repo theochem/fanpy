@@ -42,8 +42,6 @@ class DeterminantRatio(BaseWavefunction):
         Size of each matrix.
     num_matrices : int
         Number of matrices.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -249,44 +247,6 @@ class DeterminantRatio(BaseWavefunction):
         """
         return (np.prod(self.matrix_shape) * self.num_matrices, )
 
-    # TODO: the parameters can probably be changed to something more elegant (dimension of the
-    #       matrice to be different?)
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Default parameters for the wavefunction.
-
-        Notes
-        -----
-        Depends on attribute `numerator_mask`.
-
-        """
-        # NOTE: assume that same columns are selected for all matrices
-        # NOTE: all of the rows are assumed to be selected when the columns are selected.
-
-        # get ground slater determinant
-        ground_sd = slater.ground(*self.matrix_shape)
-        columns = self.get_columns(ground_sd, 0)
-
-        # make matrix
-        matrix = np.zeros(self.matrix_shape, dtype=self.dtype)
-        matrix[np.arange(self.matrix_shape[0]), columns] = 1
-
-        # make denominator
-        denominator = np.copy(matrix)
-        indices = [i for i in range(self.matrix_shape[1]) if i not in columns]
-        denominator[:, indices] = np.random.rand(self.matrix_shape[0], len(indices))
-        denominator /= np.linalg.norm(denominator, axis=0)
-
-        # flatten and join together
-        matrices = np.array([matrix] * self.num_matrices)
-        matrices[np.logical_not(self.numerator_mask)] = denominator
-        return matrices.flatten()
-
     # TODO: each matrix is assumed to have the same shape (nelec, nspin). It may need to be made
     #       more flexible (let them have different shape or let each matrix have different shapes
     #       from one another)
@@ -299,27 +259,34 @@ class DeterminantRatio(BaseWavefunction):
         params : {np.ndarray, DeterminantRatio, None}
             Parameters of the DeterminantRatio wavefunction.
             If DeterminantRatio instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
-        add_noise : bool
-            Flag to add noise to the given parameters.
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-            If given DeterminantRatio instance does not correspond to the provided dimension.
-
-        Notes
-        -----
-        Depends on dtype, nelec, nspin, and numerator_mask.
+            Default corresponds to the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
-        # FIXME: move this part to the base wavefunction
+        if params is None:
+            # NOTE: assume that same columns are selected for all matrices
+            # NOTE: all of the rows are assumed to be selected when the columns are selected.
+
+            # get ground slater determinant
+            ground_sd = slater.ground(*self.matrix_shape)
+            columns = self.get_columns(ground_sd, 0)
+
+            # make matrix
+            matrix = np.zeros(self.matrix_shape, dtype=self.dtype)
+            matrix[np.arange(self.matrix_shape[0]), columns] = 1
+
+            # make denominator
+            denominator = np.copy(matrix)
+            indices = [i for i in range(self.matrix_shape[1]) if i not in columns]
+            denominator[:, indices] = np.random.rand(self.matrix_shape[0], len(indices))
+            denominator /= np.linalg.norm(denominator, axis=0)
+
+            # flatten and join together
+            matrices = np.array([matrix] * self.num_matrices)
+            matrices[np.logical_not(self.numerator_mask)] = denominator
+            params = matrices.flatten()
         if isinstance(params, DeterminantRatio):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)

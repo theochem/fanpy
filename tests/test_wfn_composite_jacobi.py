@@ -43,18 +43,11 @@ class TempWavefunction(BaseWavefunction):
         """Return the shape of the parameters."""
         return (10, 10)
 
-    @property
-    def template_params(self):
-        """Return the default parameters."""
-        return np.identity(10)
-
-
-def test_jacobi_template_params():
-    """Test JacobiWavefunction.template_params."""
-    test = skip_init(JacobiWavefunction)
-    assert test.template_params.size == 1
-    assert test.template_params.shape == ()
-    assert np.allclose(test.template_params, [0])
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction."""
+        if params is None:
+            params = np.identity(10)
+        super().assign_params(params=params, add_noise=add_noise)
 
 
 def test_jacobi_spin():

@@ -52,11 +52,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
     clear_cache(self)
         Clear the cache.
 
-    Abstract Properties
-    -------------------
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
-
     Abstract Methods
     ----------------
     get_overlap(self, sd, deriv=None) : float

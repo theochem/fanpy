@@ -183,18 +183,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         return ()
 
     @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray(1)
-            Angle with which the orbitals are rotated.
-
-        """
-        return np.array(0.0)
-
-    @property
     def jacobi_rotation(self):
         """Return the rotation matrix that corresponds to the given parameter.
 
@@ -235,31 +223,22 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         else:
             return (np.identity(self.nspatial, dtype=self.dtype), jacobi_rotation)
 
-    def assign_params(self, params=None):
+    def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
 
         Parameters
         ----------
         params : {np.ndarray, None}
             Parameters of the wavefunction.
-        add_noise : bool
-            Flag to add noise to the given parameters.
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-
-        Notes
-        -----
-        Depends on dtype, template_params, and nparams.
+            Default is no rotation.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
+        if params is None:
+            params = np.array(0.0)
+
         if isinstance(params, (int, float)):
             params = np.array(params, dtype=float)
         super().assign_params(params=params)

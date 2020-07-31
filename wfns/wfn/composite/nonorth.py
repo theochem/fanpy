@@ -69,8 +69,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Orbital type.
 
@@ -150,20 +148,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return (self.nspatial, self.wfn.nspatial)
 
     @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        The orbital transformation matrix is the parameter of this (composite) wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Rotation matrix.
-
-        """
-        return (np.eye(*self.params_shape, dtype=self.dtype),)
-
-    @property
     def nparams(self):
         """Return the number of wavefunction parameters.
 
@@ -233,7 +217,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             generalized orbitals, where spin orbitals are transformed.
             If two transformation matrices are given, then the transformation corresponds to those
             of unrestricted orbitals, where the spatial orbitals are transformed.
-            Default is the template parameters.
+            Default is the no orbital transformation (unitary matrix).
 
         Raises
         ------
@@ -246,51 +230,51 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if params is None:
-            params = self.template_params
+            params = (np.eye(*self.params_shape, dtype=self.dtype),)
 
         if isinstance(params, np.ndarray):
             params = (params,)
-        elif not (isinstance(params, (tuple, list)) and len(params) in [1, 2]):
-            raise TypeError(
-                "Transformation matrix must be a two dimensional numpy array or a "
-                "1- or 2-tuple/list of two dimensional numpy arrays. Only one numpy "
-                "arrays indicate that the orbitals are restricted or generalized and "
-                "two numpy arrays indicate that the orbitals are unrestricted."
-            )
-        params = tuple(params)
 
-        for i in params:
-            if not (isinstance(i, np.ndarray) and len(i.shape) == 2):
-                raise TypeError("Transformation matrix must be a two-dimensional numpy array.")
-            if i.dtype != self.dtype:
+        if __debug__:
+            if not (isinstance(params, (tuple, list)) and len(params) in [1, 2]):
                 raise TypeError(
-                    "Transformation matrix must have the same data type as the given "
-                    "wavefunction."
+                    "Transformation matrix must be a two dimensional numpy array or a "
+                    "1- or 2-tuple/list of two dimensional numpy arrays. Only one numpy "
+                    "arrays indicate that the orbitals are restricted or generalized and "
+                    "two numpy arrays indicate that the orbitals are unrestricted."
                 )
+            for i in params:
+                if not (isinstance(i, np.ndarray) and len(i.shape) == 2):
+                    raise TypeError("Transformation matrix must be a two-dimensional numpy array.")
+                if i.dtype != self.dtype:
+                    raise TypeError(
+                        "Transformation matrix must have the same data type as the given "
+                        "wavefunction."
+                    )
 
-            if len(params) == 1 and not (
-                (i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial)
-                or (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin)
-            ):
-                raise ValueError(
-                    "Given the type of transformation, the numpy matrix has the "
-                    "wrong shape. If only one numpy array is given, the "
-                    "orbitals are transformed either from orthonormal spatial "
-                    "orbitals to nonorthonormal spatial orbitals or from "
-                    "orthonormal spin orbitals to nonorthonormal spin orbitals."
-                )
+                if len(params) == 1 and not (
+                    (i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial)
+                    or (i.shape[0] == self.nspin and i.shape[1] == self.wfn.nspin)
+                ):
+                    raise ValueError(
+                        "Given the type of transformation, the numpy matrix has the "
+                        "wrong shape. If only one numpy array is given, the "
+                        "orbitals are transformed either from orthonormal spatial "
+                        "orbitals to nonorthonormal spatial orbitals or from "
+                        "orthonormal spin orbitals to nonorthonormal spin orbitals."
+                    )
 
-            if len(params) == 2 and not (
-                i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial
-            ):
-                raise ValueError(
-                    "Given the type of transformation, the numpy matrix has the "
-                    "wrong shape. If two numpy arrays are given, the orbitals are "
-                    "transformed from orthonormal spatial orbitals to nonorthonormal "
-                    "spatial orbitals."
-                )
+                if len(params) == 2 and not (
+                    i.shape[0] == self.nspatial and i.shape[1] == self.wfn.nspatial
+                ):
+                    raise ValueError(
+                        "Given the type of transformation, the numpy matrix has the "
+                        "wrong shape. If two numpy arrays are given, the orbitals are "
+                        "transformed from orthonormal spatial orbitals to nonorthonormal "
+                        "spatial orbitals."
+                    )
 
-        self.params = params
+        self.params = tuple(params)
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):

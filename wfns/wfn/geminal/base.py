@@ -80,8 +80,6 @@ class BaseGeminal(BaseWavefunction):
         Number of electron pairs.
     norbpair : int
         Number of orbital pairs used to construct the geminals.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -188,33 +186,6 @@ class BaseGeminal(BaseWavefunction):
 
         """
         return (self.ngem, self.norbpair)
-
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Uses the spatial orbitals (alpha-beta spin orbital pairs) of HF ground state as reference.
-
-        Returns
-        -------
-        template_params : np.ndarray(ngem, norbpair)
-            Default parameters of the geminal wavefunction.
-
-        Notes
-        -----
-        Need `nelec`, `norbpair` (i.e. `dict_ind_orbpair`), and `dtype`
-
-        """
-        params = np.zeros(self.params_shape, dtype=self.dtype)
-
-        # orbpairs = np.array([(i, i + self.nspatial) for i in range(self.ngem)])
-        # col_inds = self.get_col_ind(orbpairs)
-        # params[np.arange(self.ngem), col_inds] = 1
-
-        for i in range(self.ngem):
-            col_ind = int(self.get_col_ind((i, i + self.nspatial)))
-            params[i, col_ind] += 1
-        return params
 
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
@@ -330,12 +301,11 @@ class BaseGeminal(BaseWavefunction):
         params : {np.ndarray, BaseGeminal, None}
             Parameters of the geminal wavefunction.
             If BaseGeminal instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
+            Default corresponds to the ground state HF wavefunction.
 
         Raises
         ------
         ValueError
-            If `params` does not have the same shape as the template_params.
             If given BaseGeminal instance does not have the same number of electrons.
             If given BaseGeminal instance does not have the same number of spin orbitals.
             If given BaseGeminal instance does not have the same number of geminals.
@@ -345,20 +315,27 @@ class BaseGeminal(BaseWavefunction):
         Depends on dtype, template_params, and nparams.
 
         """
+        if params is None:
+            params = np.zeros(self.params_shape, dtype=self.dtype)
+            for i in range(self.ngem):
+                col_ind = int(self.get_col_ind((i, i + self.nspatial)))
+                params[i, col_ind] += 1
+
         if isinstance(params, BaseGeminal):
             other = params
-            if self.nelec != other.nelec:
-                raise ValueError(
-                    "The number of electrons in the two wavefunctions must be the " "same."
-                )
-            if self.nspin != other.nspin:
-                raise ValueError(
-                    "The number of spin orbitals in the two wavefunctions must be the " "same."
-                )
-            if self.ngem != other.ngem:
-                raise ValueError(
-                    "The number of geminals in the two wavefunctions must be the " "same."
-                )
+            if __debug__:
+                if self.nelec != other.nelec:
+                    raise ValueError(
+                        "The number of electrons in the two wavefunctions must be the same."
+                    )
+                if self.nspin != other.nspin:
+                    raise ValueError(
+                        "The number of spin orbitals in the two wavefunctions must be the same."
+                    )
+                if self.ngem != other.ngem:
+                    raise ValueError(
+                        "The number of geminals in the two wavefunctions must be the same."
+                    )
             params = np.zeros(self.params_shape, dtype=self.dtype)
             for ind, orbpair in other.dict_ind_orbpair.items():
                 try:

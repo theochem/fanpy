@@ -108,8 +108,8 @@ def test_rank2_geminal_params_from_full():
 
 
 @pytest.mark.skip(reason="Test does not always pass (depends on random noise).")
-def test_rank2_geminal_template_params():
-    """Test RankTwoGeminal.template_params."""
+def test_rank2_geminal_default_params():
+    """Test RankTwoGeminal.default_params."""
     np.random.seed(424242)
 
     test = RankTwoGeminal()
@@ -119,7 +119,8 @@ def test_rank2_geminal_template_params():
     test.assign_nelec(2)
     # ngem 1
     test.assign_ngem(1)
-    template = test.template_params
+    test.assign_params()
+    template = test.params
     lambdas = template[:1, np.newaxis]
     epsilons = template[1:46]
     zetas = template[46:]
@@ -128,7 +129,8 @@ def test_rank2_geminal_template_params():
     assert np.allclose(zetas / (lambdas - epsilons), answer, atol=0.001, rtol=0)
     # ngem 2
     test.assign_ngem(2)
-    template = test.template_params
+    test.assign_params()
+    template = test.params
     lambdas = template[:2, np.newaxis]
     epsilons = template[2:47]
     zetas = template[47:]
@@ -138,7 +140,8 @@ def test_rank2_geminal_template_params():
     assert np.allclose(zetas / (lambdas - epsilons), answer, atol=0.001, rtol=0)
     # ngem 3
     test.assign_ngem(3)
-    template = test.template_params
+    test.assign_params()
+    template = test.params
     lambdas = template[:3, np.newaxis]
     epsilons = template[3:48]
     zetas = template[48:]

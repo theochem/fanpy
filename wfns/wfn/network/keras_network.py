@@ -34,8 +34,6 @@ class KerasNetwork(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -84,7 +82,7 @@ class KerasNetwork(BaseWavefunction):
         super().__init__(nelec, nspin, dtype=dtype, memory=memory)
         self.num_layers = num_layers
         self.assign_model(model=model)
-        self._template_params = None
+        self._default_params = None
         self.assign_params(params=params)
 
     def assign_dtype(self, dtype=None):
@@ -208,28 +206,12 @@ class KerasNetwork(BaseWavefunction):
         """
         return (self.nparams,)
 
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Default parameters of the wavefunction.
-
-        Notes
-        -----
-        May depend on params_shape and other attributes/properties.
-
-        """
-        return self._template_params
-
     # FIXME: not a very robust way of building an initial guess. It is not very good and requires
     # specific network structures.
-    def assign_template_params(self):
+    def assign_default_params(self):
         r"""Assign the intial guess for the HF ground state wavefunction.
 
-        Since the template parameters are calculated/approximated, they are computed and stored away
+        Since the default parameters are calculated/approximated, they are computed and stored away
         rather than generating each one on the fly.
 
         Raises
@@ -242,7 +224,7 @@ class KerasNetwork(BaseWavefunction):
 
         Notes
         -----
-        The template parameters can only be created for networks without bias and sufficiently large
+        The default parameters can only be created for networks without bias and sufficiently large
         final hidden layer. Additionally, the produced parameters may not be a good initial guess
         for the HF ground state.
 
@@ -274,7 +256,7 @@ class KerasNetwork(BaseWavefunction):
         # TODO: weights are not normalized
 
         params += np.linalg.lstsq(hidden_units, output)[0].tolist()
-        self._template_params = np.array(params, dtype=self.dtype)
+        self._default_params = np.array(params, dtype=self.dtype)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -283,28 +265,16 @@ class KerasNetwork(BaseWavefunction):
         ----------
         params : {np.ndarray, None}
             Parameters of the wavefunction.
-        add_noise : bool
-            Flag to add noise to the given parameters.
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-
-        Notes
-        -----
-        Depends on dtype, template_params, and nparams.
+            Default tries to approximate the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
         if params is None:
-            if self._template_params is None:
-                self.assign_template_params()
-            params = self.template_params
+            if self._default_params is None:
+                self.assign_default_params()
+            params = self._default_params
 
         # store parameters
         super().assign_params(params=params, add_noise=add_noise)

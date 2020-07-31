@@ -46,10 +46,12 @@ class TempBaseWavefunction(BaseWavefunction):
         """Return shape of parameters."""
         return (2,)
 
-    @property
-    def template_params(self):
-        """Return template parameters."""
-        return 10 * (np.random.rand(2) - 0.5)
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction."""
+        if params is None:
+            params = 10 * (np.random.rand(2) - 0.5)
+
+        super().assign_params(params=params, add_noise=add_noise)
 
 
 def check_cma():

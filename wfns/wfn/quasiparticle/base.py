@@ -47,8 +47,6 @@ class BaseQuasiparticle(BaseWavefunction):
         Seniority of the wavefunction.
     params_shape : tuple of int
         Shape of the wavefunction parameters.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
     norbsubsets : int
         Number of orbital subsets.
 
@@ -123,7 +121,7 @@ class BaseQuasiparticle(BaseWavefunction):
         params : {np.ndarray, BaseQuasiparticle, None}
             Parameters of the quasiparticle wavefunction.
             If BaseQuasiparticle instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
+            Default corresponds to the ground state HF wavefunction.
 
         """
         super().__init__(nelec, nspin, dtype=dtype)
@@ -157,34 +155,6 @@ class BaseQuasiparticle(BaseWavefunction):
 
         """
         return (self.nquasiparticle, self.norbsubsets)
-
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray(nquasiparticle, ncol)
-            Default parameters of the geminal wavefunction.
-
-        Notes
-        -----
-        Need `nelec`, `ncol` (i.e. `dict_ind_orbs`), and `dtype`
-
-        """
-        # occupied orbitals of HF ground state
-        occ_indices = slater.occ_indices(slater.ground(self.nelec, self.nspin))
-        # take the first partition
-        orbsubsets = next(self.generate_possible_orbsubsets(occ_indices))
-        # ASSUME: these operators are the most important creators
-        # FIXME: what happens if multiple null quasiparticle?
-        # FIXME: what happens when the nquasiparticle != orbsubsets.size?
-        # assign
-        params = np.zeros(self.params_shape, dtype=self.dtype)
-        for i, orbsubset in enumerate(orbsubsets):
-            col_ind = self.get_col_ind(orbsubset)
-            params[i, col_ind] += 1
-        return params
 
     def assign_nquasiparticle(self, nquasiparticle=None):
         """Assign the number of creation operators that will be used to construct the wavefunction.
@@ -274,31 +244,44 @@ class BaseQuasiparticle(BaseWavefunction):
         params : {np.ndarray, BaseQuasiparticle, None}
             Parameters of the quasiparticle wavefunction.
             If BaseQuasiparticle instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
+            Default corresponds to the ground state HF wavefunction.
 
         Raises
         ------
         ValueError
-            If `params` does not have the same shape as the template_params.
             If given BaseQuasiparticle instance does not have the same number of electrons.
             If given BaseQuasiparticle instance does not have the same number of spin orbitals.
 
-        Notes
-        -----
-        Depends on dtype, template_params, and nparams.
-
         """
+        if params is None:
+            # occupied orbitals of HF ground state
+            occ_indices = slater.occ_indices(slater.ground(self.nelec, self.nspin))
+            # take the first partition
+            orbsubsets = next(self.generate_possible_orbsubsets(occ_indices))
+            # ASSUME: these operators are the most important creators
+            # FIXME: what happens if multiple null quasiparticle?
+            # FIXME: what happens when the nquasiparticle != orbsubsets.size?
+            # assign
+            params = np.zeros(self.params_shape, dtype=self.dtype)
+            for i, orbsubset in enumerate(orbsubsets):
+                col_ind = self.get_col_ind(orbsubset)
+                params[i, col_ind] += 1
         if isinstance(params, BaseQuasiparticle):
             other = params
-            if self.nelec != other.nelec:
-                raise ValueError('The number of electrons in the two wavefunctions must be the '
-                                 'same.')
-            if self.nspin != other.nspin:
-                raise ValueError('The number of spin orbitals in the two wavefunctions must be the '
-                                 'same.')
-            if self.nquasiparticle < other.nquasiparticle:
-                raise ValueError('The number of quasiparticles must be greater than that of the '
-                                 'given wavefunction.')
+            if __debug__:
+                if self.nelec != other.nelec:
+                    raise ValueError(
+                        "The number of electrons in the two wavefunctions must be the same."
+                    )
+                if self.nspin != other.nspin:
+                    raise ValueError(
+                        "The number of spin orbitals in the two wavefunctions must be the same."
+                    )
+                if self.nquasiparticle < other.nquasiparticle:
+                    raise ValueError(
+                        "The number of quasiparticles must be greater than that of the given "
+                        "wavefunction."
+                    )
 
             params = np.zeros(self.params_shape, dtype=self.dtype)
             for ind, orbsubset in other.dict_ind_orbsubset.items():

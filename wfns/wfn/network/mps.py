@@ -36,8 +36,6 @@ class MatrixProductState(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -294,46 +292,6 @@ class MatrixProductState(BaseWavefunction):
 
     # TODO: the parameters can probably be changed to something more elegant (like a tensor object
     #       or something)
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the MPS wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Default parameters for the MPS wavefunction.
-
-        Notes
-        -----
-        Depends on attribute `dimension`.
-
-        """
-        # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
-        #       last one)
-        #       assumes that there are K matrices
-        matrices = [np.zeros(self.get_matrix_shape(0), dtype=self.dtype)]
-        matrices += [
-            np.zeros(self.get_matrix_shape(1), dtype=self.dtype) for i in range(self.nspatial - 2)
-        ]
-        matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1), dtype=self.dtype)]
-
-        ground_sd = slater.ground(self.nelec, self.nspin)
-        occ_indices = self.get_occupation_indices(ground_sd)
-
-        # adjust scale so that the overlap is 1
-        scale = self.dimension ** (-1 / occ_indices.size)
-        # set the first matrix
-        matrices[0][occ_indices[0], 0, :] = scale
-        # set the middle matrices
-        for i, ind in enumerate(occ_indices[1:-1]):
-            # select the diagonal
-            diag_indices = np.arange(self.dimension)
-            matrices[i + 1][ind, diag_indices, diag_indices] = scale
-        # set the last matrix
-        matrices[-1][occ_indices[-1], :, 0] = scale
-        # flatten and join together
-        return np.hstack([matrix.flatten() for matrix in matrices])
-
     # TODO: the MPS structure may need to become compatible with the TNS in the future (and vice
     #       versa)
     # FIXME: move to the parent class
@@ -345,27 +303,39 @@ class MatrixProductState(BaseWavefunction):
         params : {np.ndarray, MatrixProductState, None}
             Parameters of the MPS wavefunction.
             If MatrixProductState instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
-        add_noise : bool
-            Flag to add noise to the given parameters.
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-            If given MatrixProductState instance does not correspond to the provided dimension.
-
-        Notes
-        -----
-        Depends on dtype, template_params, and nparams.
+            Default corresponds to the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
-        # FIXME: move this part to the base wavefunction
+        if params is None:
+            # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
+            #       last one)
+            #       assumes that there are K matrices
+            matrices = [np.zeros(self.get_matrix_shape(0))]
+            matrices += [
+                np.zeros(self.get_matrix_shape(1)) for i in range(self.nspatial - 2)
+            ]
+            matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1))]
+
+            ground_sd = slater.ground(self.nelec, self.nspin)
+            occ_indices = self.get_occupation_indices(ground_sd)
+
+            # adjust scale so that the overlap is 1
+            scale = self.dimension ** (-1 / occ_indices.size)
+            # set the first matrix
+            matrices[0][occ_indices[0], 0, :] = scale
+            # set the middle matrices
+            for i, ind in enumerate(occ_indices[1:-1]):
+                # select the diagonal
+                diag_indices = np.arange(self.dimension)
+                matrices[i + 1][ind, diag_indices, diag_indices] = scale
+            # set the last matrix
+            matrices[-1][occ_indices[-1], :, 0] = scale
+            # flatten and join together
+            params = np.hstack([matrix.flatten() for matrix in matrices])
+
         if isinstance(params, MatrixProductState):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)

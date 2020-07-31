@@ -54,8 +54,6 @@ class CIWavefunction(BaseWavefunction):
         Spin of the wavefunction
     seniority : int
         Seniority of the wavefunction
-    template_params : np.ndarray
-        Default parameters of the CI wavefunction.
 
     Methods
     -------
@@ -151,26 +149,6 @@ class CIWavefunction(BaseWavefunction):
 
         """
         return (len(self.sd_vec),)
-
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the CI wavefunction.
-
-        First Slater determinant of `sd_vec` is used as the reference.
-
-        Returns
-        -------
-        params : np.ndarray
-            Default parameters.
-
-        Notes
-        -----
-        `CIWavefunction` instance must contain `sd_vec` to access this property.
-
-        """
-        params = np.zeros(self.params_shape, dtype=self.dtype)
-        params[0] = 1
-        return params
 
     @property
     def spin(self):
@@ -343,6 +321,25 @@ class CIWavefunction(BaseWavefunction):
             raise ValueError("No Slater determinants were provided.")
 
         self.sd_vec = tuple(sd_vec)
+
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction.
+
+        Parameters
+        ----------
+        params : {np.ndarray, None}
+            Parameters of the wavefunction.
+            Default corresponds to the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
+
+        """
+        if params is None:
+            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params[0] = 1
+
+        super().assign_params(params=params, add_noise=add_noise)
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the CI wavefunction with a Slater determinant.

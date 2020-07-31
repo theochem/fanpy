@@ -51,8 +51,6 @@ class APG(BaseGeminal):
         Number of electron pairs.
     norbpair : int
         Number of orbital pairs used to construct the geminals.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------

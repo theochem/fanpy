@@ -43,8 +43,6 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
         Seniority of the wavefunction.
     params_shape : tuple of int
         Shape of the wavefunction parameters.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
     norbsubsets : int
         Number of orbital subsets.
 

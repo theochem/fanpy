@@ -33,8 +33,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
 
     Methods
     -------
@@ -135,26 +133,24 @@ class LinearCombinationWavefunction(BaseWavefunction):
         """
         return (len(self.wfns),)
 
-    @property
-    def template_params(self):
-        """Return the template parameters of the wavefunction.
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction.
 
-        First wavefunction given is assumed to be the most important wavefunction. It will be used
-        as a reference.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Template parameters of the wavefunction.
-
-        Notes
-        -----
-        Must have `wfns` defined.
+        Parameters
+        ----------
+        params : {np.ndarray, None}
+            Parameters of the wavefunction.
+            Default is first wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
-        params = np.zeros(self.params_shape, dtype=self.dtype)
-        params[0] = 1.0
-        return params
+        if params is None:
+            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params[0] = 1.0
+
+        super().assign_params(params=params, add_noise=add_noise)
 
     def assign_wfns(self, wfns):
         """Assign the wavefunctions that will be linearly combined.

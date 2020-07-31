@@ -43,10 +43,12 @@ class TempBaseWavefunction(BaseWavefunction):
         """Return shape of the parameters."""
         return (2,)
 
-    @property
-    def template_params(self):
-        """Return default parameters."""
-        return np.array([0.0, 0.0])
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction."""
+        if params is None:
+            params = np.array([0.0, 0.0])
+
+        super().assign_params(params=params, add_noise=add_noise)
 
 
 def test_least_squares():

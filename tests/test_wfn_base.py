@@ -90,6 +90,14 @@ def test_assign_memory():
         test.assign_memory("20.1kb")
 
 
+def temp_assign_params(self, params=None, add_noise=False, default_params=np.identity(10)):
+    """Assign the parameters of the wavefunction."""
+    if params is None:
+        params = default_params
+
+    super().assign_params(params=params, add_noise=add_noise)
+
+
 def test_assign_params():
     """Test BaseWavefunction.assign_params."""
     # default
@@ -97,7 +105,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "assign_params": temp_assign_params,
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -111,7 +119,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "assign_params": temp_assign_params,
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -126,7 +134,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "assign_params": temp_assign_params,
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -150,7 +158,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "assign_params": temp_assign_params,
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -164,7 +172,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "assign_params": temp_assign_params,
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -181,7 +189,8 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.zeros((1, 1, 1))),
+                "assign_params": lambda self, params, add_noise=False:
+                temp_assign_params(self, params, add_noise, np.zeros((1, 1, 1))),
                 "params_shape": property(lambda self: (1, 1, 1)),
             },
         )

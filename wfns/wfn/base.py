@@ -54,11 +54,6 @@ class BaseWavefunction(ParamContainer):
     clear_cache(self)
         Clear the cache.
 
-    Abstract Properties
-    -------------------
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
-
     Abstract Methods
     ----------------
     get_overlap(self, sd, deriv=None) : float
@@ -66,7 +61,7 @@ class BaseWavefunction(ParamContainer):
 
     """
 
-    def __init__(self, nelec, nspin, dtype=None, memory=None):
+    def __init__(self, nelec, nspin, dtype=None, memory=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -88,10 +83,11 @@ class BaseWavefunction(ParamContainer):
         self.assign_nspin(nspin)
         self.assign_dtype(dtype)
         self.assign_memory(memory)
-        # assign_params not included because it depends on template_params, which may involve
-        # more attributes than is given above
         self.probable_sds = {}
         self.olp_threshold = 42
+        # assign_params not included because it depends on template_params, which may involve
+        # more attributes than is given above
+        # self.assign_params(params)
 
     @property
     def nspatial(self):
@@ -265,51 +261,24 @@ class BaseWavefunction(ParamContainer):
         ----------
         params : {np.ndarray, None}
             Parameters of the wavefunction.
-        add_noise : bool
-            Flag to add noise to the given parameters.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         Raises
         ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-
-        Notes
-        -----
-        Depends on dtype, template_params, and nparams.
+        NotImplementedError
+            If default parameters have not been implemented.
 
         """
         if params is None:
-            params = self.template_params
+            raise NotImplementedError("Default parameters have not been implemented.")
 
-        # check if numpy array and if dtype is one of int, float, or complex
-        super().assign_params(params)
-        params = self.params
+        self.params = params
 
-        # check shape and dtype
-        if params.size != self.nparams:
-            raise ValueError("There must be {0} parameters.".format(self.nparams))
-        if params.dtype in (complex, np.complex128) and self.dtype in (float, np.float64):
-            raise TypeError(
-                "If the parameters are `complex`, then the `dtype` of the wavefunction "
-                "must be `np.complex128`"
-            )
-        if params.dtype not in [float, np.float64, complex, np.complex128]:
-            raise TypeError("If the parameters are neither float or complex.")
-
+        # Used to reshape parameters when the parameter shape is given by a property
         if len(params.shape) == 1:
-            params = params.reshape(self.params_shape)
-        elif params.shape != self.params_shape:
-            raise ValueError(
-                "Parameters must either be flat or have the same shape as the "
-                "template, {0}.".format(self.params_shape)
-            )
-
-        self.params = params.astype(self.dtype)
+            self.params = params.reshape(self.params_shape)
 
         # add random noise
         if add_noise:
@@ -453,21 +422,6 @@ class BaseWavefunction(ParamContainer):
         -------
         params_shape : tuple of int
             Shape of the parameters.
-
-        """
-
-    @abc.abstractproperty
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Returns
-        -------
-        template_params : np.ndarray
-            Default parameters of the wavefunction.
-
-        Notes
-        -----
-        May depend on params_shape and other attributes/properties.
 
         """
 

@@ -26,8 +26,6 @@ class RankTwoApprox:
 
     Properties
     ----------
-    template_params : np.ndarray
-        Default parameters of the wavefunction.
     lambdas : np.ndarray(ngem)
         The :math:`lambda` part of the parameters.
     epsilons : np.ndarray(nspatial)
@@ -59,38 +57,6 @@ class RankTwoApprox:
 
         """
         return self.ngem + 2 * self.norbpair
-
-    # FIXME: add constraints to parameters
-    #        zetas should be less than 1
-    #        lambda - epsilon should be greater than 1
-    #        lambda should be around 1 (epsilons should be less than 0)
-    @property
-    def template_params(self):
-        """Return the template of the parameters of the given wavefunction.
-
-        Parameters are ordered as follows: lambda_1, ..., lambda_p, epsilon_1, ..., epsilon_k,
-        zeta_1, ..., zeta_k.
-
-        Returns
-        -------
-        template_params : np.ndarray(ngem, norbpair)
-            Default parameters of the geminal wavefunction.
-
-        Notes
-        -----
-        Requires calculation. May be slow.
-
-        """
-        # copied from BaseGeminal.template_params
-        # super().template_params is not called b/c BaseGeminal.template_params calls
-        # self.params_shape, which comes from RankTwoApprox
-        template = np.zeros(super().params_shape, dtype=self.dtype)
-        for i in range(self.ngem):
-            col_ind = self.get_col_ind((i, i + self.nspatial))
-            template[i, col_ind] += 1
-        template += 0.0001 * np.random.rand(*template.shape)
-        # FIXME: fails a lot
-        return full_to_rank2(template, rmsd=0.01)
 
     @property
     def lambdas(self):
@@ -140,38 +106,40 @@ class RankTwoApprox:
         """
         return self.zetas / (self.lambdas[:, np.newaxis] - self.epsilons)
 
-    def assign_params(self, params=None):
-        """Assign the parameters of the geminal wavefunction.
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction.
 
         Parameters
         ----------
-        params : {np.ndarray, BaseGeminal, None}
-            Parameters of the geminal wavefunction.
-            If BaseGeminal instance is given, then the parameters of this instance are used.
-            Default uses the template parameters.
-
-        Raises
-        ------
-        TypeError
-            If `params` is not a numpy array.
-            If `params` does not have data type of `float`, `complex`, `np.float64` and
-            `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
-        ValueError
-            If `params` does not have the same shape as the template_params.
-            If parameters create a zero in the denominator.
-        NotImplementedError
-            If BaseGeminal instance is given as the parameter.
+        params : {np.ndarray, None}
+            Parameters of the wavefunction.
+            Default corresponds to the ground state HF wavefunction.
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         """
-        if isinstance(params, BaseGeminal):
-            raise NotImplementedError(
-                "Rank 2 Wavefunction cannot assign parameters using a " "BaseGeminal instance."
-            )
-        super().assign_params(params=params)
-        # check for zeros in denominator
-        if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
-            raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
+        if params is None:
+            # FIXME: add constraints to parameters
+            #        zetas should be less than 1
+            #        lambda - epsilon should be greater than 1
+            #        lambda should be around 1 (epsilons should be less than 0)
+            template = np.zeros(super().params_shape, dtype=self.dtype)
+            for i in range(self.ngem):
+                col_ind = self.get_col_ind((i, i + self.nspatial))
+                template[i, col_ind] += 1
+            template += 0.0001 * np.random.rand(*template.shape)
+            # FIXME: fails a lot
+            self.params = full_to_rank2(template, rmsd=0.01)
+        if __debug__:
+            if isinstance(params, BaseGeminal):
+                raise NotImplementedError(
+                    "Rank 2 Wavefunction cannot assign parameters using a BaseGeminal instance."
+                )
+            # check for zeros in denominator
+            if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
+                raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
+        super().assign_params(params=self.params, add_noise=add_noise)
 
     # FIXME: too many branches
     def compute_permanent(self, col_inds, deriv=None):

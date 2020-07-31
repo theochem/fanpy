@@ -44,8 +44,6 @@ class DOCI(CIWavefunction):
         Spin of the wavefunction
     seniority : int
         Seniority of the wavefunction
-    template_params : np.ndarray
-        Default parameters of the CI wavefunction.
 
     Methods
     -------

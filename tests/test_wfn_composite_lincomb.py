@@ -33,10 +33,11 @@ class TempWavefunction(BaseWavefunction):
         """Return the shape of the parameters."""
         return (10, 10)
 
-    @property
-    def template_params(self):
-        """Return the default parameters."""
-        return np.identity(10)
+    def assign_params(self, params=None, add_noise=False):
+        """Assign the parameters of the wavefunction."""
+        if params is None:
+            params = np.identity(10)
+        super().assign_params(params=params, add_noise=add_noise)
 
 
 def test_assign_wfns():
@@ -90,14 +91,14 @@ def test_seniority():
     assert test.seniority is None
 
 
-def test_template_params():
-    """Test LinearCombinationWavefunction.template_params."""
+def test_default_params():
+    """Test LinearCombinationWavefunction.params default."""
     test_wfn = TempWavefunction(4, 10)
     test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
-    assert np.allclose(test.template_params, np.array([1, 0, 0]))
-    assert np.allclose(test.template_params, np.array([1, 0, 0]))
+    assert np.allclose(test.params, np.array([1, 0, 0]))
+    assert np.allclose(test.params, np.array([1, 0, 0]))
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
-    assert np.allclose(test.template_params, np.array([1, 0]))
+    assert np.allclose(test.params, np.array([1, 0]))
 
 
 # TODO: test deriv functionality
