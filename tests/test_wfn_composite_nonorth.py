@@ -575,31 +575,25 @@ def test_nonorth_get_overlap():
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(
-        test.get_overlap(0b0110, 0),
+        test.get_overlap(0b0110, np.array([0])),
         (5 * wfn_sd_coeff[0b0101] + 6 * wfn_sd_coeff[0b0110] + 0 * wfn_sd_coeff[0b1100]),
         rtol=0,
         atol=1e-12,
     )
-    assert test.get_overlap(0b0101, 8) == 0
-    assert test.get_overlap(0b0101, 2) == 0
+    assert test.get_overlap(0b0101, np.array([8])) == 0
+    assert test.get_overlap(0b0101, np.array([2])) == 0
 
     # unrestricted
     test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
     test.load_cache()
-    assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
+    assert np.isclose(test.get_overlap(0b0101, np.array([6])), 0, rtol=0, atol=1e-12)
 
     # generalized
     test.clear_cache()
     test.params = [np.arange(1, 17).reshape(4, 4)]
     test.load_cache()
-    assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
-
-    # trivial cases
-    with pytest.raises(ValueError):
-        test.get_overlap(0b0101, "1")
-    with pytest.raises(ValueError):
-        test.get_overlap(0b0101, -1)
+    assert np.isclose(test.get_overlap(0b0101, np.array([6])), 0, rtol=0, atol=1e-12)
 
 
 def test_nonorth_energy_unitary_transform_hamiltonian():

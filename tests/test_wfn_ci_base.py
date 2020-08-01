@@ -178,10 +178,8 @@ def test_get_overlap():
     assert test.get_overlap(0b010100, deriv=None) == 12
     assert test.get_overlap(0b110000, deriv=None) == 13
     assert test.get_overlap(0b100100, deriv=None) == 14
-    for i in range(15):
-        for j, sd in enumerate(test.sd_vec):
-            if i == j:
-                assert test.get_overlap(sd, deriv=i) == 1
-            else:
-                assert test.get_overlap(sd, deriv=i) == 0
+    for j, sd in enumerate(test.sd_vec):
+        output = np.zeros(len(test.sd_vec))
+        output[j] = 1
+        assert np.allclose(test.get_overlap(sd, deriv=np.arange(15)), output)
     assert test.get_overlap(0b111111, deriv=None) == 0

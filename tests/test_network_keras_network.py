@@ -1,5 +1,6 @@
 """Tests for wfns.wfn.network.keras_network.KerasNetwork."""
 import keras
+import numdifftools as nd
 import numpy as np
 import pytest
 from utils import skip_init
@@ -185,13 +186,11 @@ def test_keras_get_overlap():
     hidden_units[hidden_units < 0] = 0
     assert np.allclose(test.get_overlap(0b1110), hidden_units.dot(matrix2))
     # derivative
-    with pytest.raises(TypeError):
-        test.get_overlap(0b0101, 0.0)
-    assert test.get_overlap(0b0101, 20) == 0
-    input_vec = np.zeros(4)
-    input_vec[[0, 2]] = 1
-    hidden_unit = input_vec[None, :].dot(matrix1[:, 0])
-    assert np.allclose(test.get_overlap(0b0101, 16), hidden_unit if hidden_unit > 0 else 0)
-    der_activation = input_vec[None, :].dot(matrix1[:, 2])
-    der_activation = der_activation if der_activation > 0 else 0
-    assert np.allclose(test.get_overlap(0b0101, 6), input_vec[1] * matrix1[1, 2] * der_activation)
+    new_wfn = KerasNetwork(2, 4, num_layers=1)
+
+    def overlap(params):
+        new_wfn.assign_params(params)
+        return new_wfn.get_overlap(0b0101)
+
+    grad = nd.Gradient(overlap)(test.params)
+    assert np.allclose(grad, test.get_overlap(0b0101, np.arange(test.nparams)))

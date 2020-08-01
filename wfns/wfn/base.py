@@ -51,8 +51,9 @@ class BaseWavefunction:
 
     Abstract Methods
     ----------------
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -330,7 +331,7 @@ class BaseWavefunction:
         # pylint: disable=C0103
         raise NotImplementedError
 
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd):
         """Calculate the nontrivial derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -338,15 +339,11 @@ class BaseWavefunction:
         sd : int
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
-            Assumed to correspond to the matrix elements that correspond to the given Slater
-            determinant.
 
         Returns
         -------
-        olp : {float, complex}
-            Derivative of the overlap with respect to the given parameter.
+        olp_deriv : np.ndarray
+            Derivatives of the overlap with respect to each parameter.
 
         Notes
         -----
@@ -393,14 +390,15 @@ class BaseWavefunction:
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Raises
         ------

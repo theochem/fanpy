@@ -67,8 +67,9 @@ class CIPairs(DOCI):
         Assign the seniority of the wavefunction.
     assign_sd_vec(self, sd_vec=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the CI wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 

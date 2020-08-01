@@ -170,7 +170,7 @@ def test_olp_deriv():
     """Test BaseWavefunction._olp_deriv."""
     test = skip_init(disable_abstract(BaseWavefunction))
     with pytest.raises(NotImplementedError):
-        test._olp_deriv(0b0101, 0)
+        test._olp_deriv(0b0101)
 
 
 def test_load_cache():

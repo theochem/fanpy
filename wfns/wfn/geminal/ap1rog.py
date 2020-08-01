@@ -90,8 +90,9 @@ class AP1roG(APIG):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
     generate_possible_orbpairs(self, occ_indices)
         Yield the possible orbital pairs that can construct the given Slater determinant.
     assign_ref_sd(self, sd=None)
@@ -338,14 +339,15 @@ class AP1roG(APIG):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Notes
         -----
@@ -364,9 +366,13 @@ class AP1roG(APIG):
 
         # if different number of electrons
         if len(orbs_annihilated) != len(orbs_created):
+            if deriv is not None:
+                return np.zeros(self.nparams)
             return 0.0
         # if different seniority
         if slater.get_seniority(sd, self.nspatial) != 0:
+            if deriv is not None:
+                return np.zeros(self.nparams)
             return 0.0
 
         # convert to spatial orbitals
@@ -383,15 +389,9 @@ class AP1roG(APIG):
         if deriv is None:
             if inds_annihilated.size == inds_created.size == 0:
                 return 1.0
-
             return self._olp(sd)
         # if derivatization
-        if not isinstance(deriv, (int, np.int64)):
-            raise TypeError("Index for derivatization must be provided as an integer.")
-
-        if deriv >= self.nparams:
-            return 0.0
         if inds_annihilated.size == inds_created.size == 0:
-            return 0.0
+            return np.zeros(len(deriv))
 
-        return self._olp_deriv(sd, deriv)
+        return np.array([self._olp_deriv(sd, i) for i in deriv])

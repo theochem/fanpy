@@ -105,8 +105,9 @@ class BaseGeminal(BaseWavefunction):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     Abstract Methods
     ----------------
@@ -346,13 +347,12 @@ class BaseGeminal(BaseWavefunction):
             If given orbital pair is not valid.
 
         """
-        return self.dict_orbpair_ind[orbpair]
-        # try:
-        #     return self.dict_orbpair_ind[orbpair]
-        # except (KeyError, TypeError):
-        #     raise ValueError(
-        #         "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
-        #     )
+        try:
+            return self.dict_orbpair_ind[orbpair]
+        except (KeyError, TypeError):
+            raise ValueError(
+                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+            )
 
     def get_col_inds(self, orbpairs):
         return get_col_inds(orbpairs, self.nspin)
@@ -474,30 +474,29 @@ class BaseGeminal(BaseWavefunction):
         return val
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
         ----------
         sd : int
             Occupation vector of a Slater determinant given as a bitstring.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
 
         Returns
         -------
-        olp : {float, complex}
-            Derivative of the overlap with respect to the given parameter.
+        olp_deriv : np.ndarray
+            Derivatives of the overlap with respect to each parameter.
 
         """
         # NOTE: Need to recreate occ_indices, row_removed, col_removed
         occ_indices = slater.occ_indices(sd)
 
-        val = 0.0
         if hasattr(self, "temp_generator"):
             orbpair_generator = self.temp_generator
         else:
             orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+
+        output = np.zeros(self.nparams)
         for orbpairs, sign in orbpair_generator:
             # ASSUMES: permanent evaluation is much more expensive than the lookup
             if len(orbpairs) == 0:
@@ -505,8 +504,11 @@ class BaseGeminal(BaseWavefunction):
             col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
             # FIXME: converting all orbpairs is slow for some reason
             # col_inds = self.get_col_inds(np.array(orbpairs))
-            val += sign * self.compute_permanent(col_inds, deriv=deriv)
-        return val
+            for row_ind in range(self.params.shape[0]):
+                for col_ind in col_inds:
+                    i = row_ind * self.params.shape[1] + col_ind
+                    output[i] += sign * self.compute_permanent(col_inds, deriv=i)
+        return output
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
@@ -524,18 +526,15 @@ class BaseGeminal(BaseWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
-
-        Notes
-        -----
-        Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         """
         sd = slater.internal_sd(sd)
@@ -544,21 +543,7 @@ class BaseGeminal(BaseWavefunction):
         if deriv is None:
             return self._olp(sd)
         # if derivatization
-        if not isinstance(deriv, (int, np.int64)):
-            raise TypeError("Index for derivatization must be provided as an integer.")
-
-        if deriv >= self.nparams:
-            return 0.0
-        # convert parameter index to row and col index
-        col_removed = deriv % self.norbpair
-        # find orbital pair that corresponds to removed column
-        orb_1, orb_2 = self.get_orbpair(col_removed)
-
-        # if either of these orbitals are not present in the Slater determinant, skip
-        if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
-            return 0.0
-
-        return self._olp_deriv(sd, deriv)
+        return self._olp_deriv(sd)[deriv]
 
     @abc.abstractmethod
     def generate_possible_orbpairs(self, occ_indices):

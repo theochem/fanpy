@@ -93,8 +93,9 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -474,15 +475,13 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     # FIXME: too many return statements, too many branches
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
         ----------
         sd : int
             Occupation vector of a Slater determinant given as a bitstring.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
 
         Returns
         -------
@@ -665,9 +664,9 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
@@ -683,6 +682,4 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if deriv is None:
             return self._olp(sd)
         # if derivatization
-        if not (isinstance(deriv, int) and deriv >= 0):
-            raise ValueError("Index for derivatization must be a non-negative integer.")
-        return self._olp_deriv(sd, deriv)
+        return np.array([self._olp_deriv(sd)])[deriv]

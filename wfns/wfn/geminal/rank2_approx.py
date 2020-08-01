@@ -41,8 +41,9 @@ class RankTwoApprox:
         Assign the parameters of the geminal wavefunction.
     compute_permanent(self, col_inds, deriv=None) : float
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -222,48 +223,45 @@ class RankTwoApprox:
 
         raise ValueError("Invalid derivatization index.")
 
-    def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103,R1710
-        r"""Return the overlap of the wavefunction with a Slater determinant.
-
-        .. math::
-            \left| \Psi \right>
-            &= \prod_{p=1}^{N_{gem}} \sum_{ij}
-               C_{pij} a^\dagger_i a^\dagger_j \left| \theta \right>\\
-            &= \sum_{\{\mathbf{m}| m_i \in \{0,1\}, \sum_{p=1}^K m_p = P\}}
-               |C(\mathbf{m})|^+ \left| \mathbf{m} \right>
-
-        where :math:`N_{gem}` is the number of geminals, :math:`\mathbf{m}` is a Slater determinant.
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
+    def _olp_deriv(self, sd):
+        """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
         ----------
-        sd : {int, mpz}
-            Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        sd : int
+            Occupation vector of a Slater determinant given as a bitstring.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
+        olp_deriv : np.ndarray
+            Derivatives of the overlap with respect to each parameter.
 
         """
-        sd = slater.internal_sd(sd)
+        # NOTE: Need to recreate occ_indices, row_removed, col_removed
+        occ_indices = slater.occ_indices(sd)
 
-        if deriv is None:
-            return self._olp(sd)
-        if isinstance(deriv, (int, np.int64)):
-            if deriv >= self.nparams:
-                return 0.0
-            # if differentiating along column (epsilon/zeta)
-            if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
-                col_removed = (deriv - self.ngem) % self.norbpair
-                orb_1, orb_2 = self.dict_ind_orbpair[col_removed]
-                # if differentiating along column that is not used by the Slater determinant
-                if not (slater.occ(sd, orb_1) and slater.occ(sd, orb_2)):
-                    return 0.0
+        if hasattr(self, "temp_generator"):
+            orbpair_generator = self.temp_generator
+        else:
+            orbpair_generator = self.generate_possible_orbpairs(occ_indices)
 
-            return self._olp_deriv(sd, deriv)
+        output = np.zeros(self.nparams)
+        for orbpairs, sign in orbpair_generator:
+            # ASSUMES: permanent evaluation is much more expensive than the lookup
+            if len(orbpairs) == 0:
+                continue
+            col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
+            # FIXME: converting all orbpairs is slow for some reason
+            # col_inds = self.get_col_inds(np.array(orbpairs))
+            for row_ind in range(self.ngem):
+                output[row_ind] += sign * self.compute_permanent(col_inds, deriv=row_ind)
+            for col_ind in col_inds:
+                i = col_ind + self.ngem
+                output[i] += sign * self.compute_permanent(col_inds, deriv=i)
+                i = col_ind + self.ngem + self.norbpair
+                output[i] += sign * self.compute_permanent(col_inds, deriv=i)
+        return output
 
 
 def full_to_rank2(params, rmsd=0.1, method="least squares"):

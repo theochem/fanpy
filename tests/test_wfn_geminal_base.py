@@ -1,5 +1,6 @@
 """Test wfns.wavefunction.geminal.gem_wavefunction."""
 import numpy as np
+import numdifftools as nd
 import pytest
 from utils import disable_abstract, skip_init
 from wfns.wfn.geminal.base import BaseGeminal
@@ -297,20 +298,23 @@ def test_gem_compute_permanent():
         test.compute_permanent([0, 1, 2]),
         0 * (16 * 32 + 17 * 31) + 1 * (15 * 32 + 17 * 30) + 2 * (15 * 31 + 16 * 30),
     )
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=0), 16 * 32 + 17 * 31)
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=16), 0 * 32 + 2 * 30)
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=34), 0)
-    assert np.equal(test.compute_permanent((0, 1, 2), deriv=9999), 0)
+    assert np.equal(test.compute_permanent(np.array((0, 1, 2)), deriv=0), 16 * 32 + 17 * 31)
+    assert np.equal(test.compute_permanent(np.array((0, 1, 2)), deriv=16), 0 * 32 + 2 * 30)
+    assert np.equal(test.compute_permanent(np.array((0, 1, 2)), deriv=34), 0)
+    assert np.equal(test.compute_permanent(np.array((0, 1, 2)), deriv=9999), 0)
     assert np.equal(
         test.compute_permanent((3, 4, 5)),
         3 * (19 * 35 + 34 * 20) + 4 * (18 * 35 + 33 * 20) + 5 * (18 * 34 + 33 * 19),
     )
-    assert np.equal(test.compute_permanent((3, 4, 5), deriv=35), 3 * 19 + 18 * 4)
+    assert np.equal(test.compute_permanent(np.array((3, 4, 5)), deriv=35), 3 * 19 + 18 * 4)
     # row inds
-    assert np.equal(test.compute_permanent(col_inds=(1, 2), row_inds=[0, 1]), 1 * 17 + 16 * 2)
+    assert np.equal(
+        test.compute_permanent(col_inds=np.array((1, 2)), row_inds=np.array([0, 1])),
+        1 * 17 + 16 * 2
+    )
     # ryser
     assert np.equal(
-        test.compute_permanent(col_inds=(0, 1, 2, 3), row_inds=[0, 1]),
+        test.compute_permanent(col_inds=np.array((0, 1, 2, 3)), row_inds=np.array([0, 1])),
         (0 * 16 + 15 * 1)
         + (0 * 17 + 15 * 2)
         + (0 * 18 + 15 * 3)
@@ -319,7 +323,10 @@ def test_gem_compute_permanent():
         + (2 * 18 + 17 * 3),
     )
     # one by one matrix derivatized
-    assert np.equal(test.compute_permanent(col_inds=(0,), row_inds=(0,), deriv=0), 1)
+    assert np.equal(
+        test.compute_permanent(col_inds=np.array([0]), row_inds=np.array([0]), deriv=np.array([0])),
+        1
+    )
 
 
 def test_gem_compute_permanent_deriv():
@@ -334,27 +341,22 @@ def test_gem_compute_permanent_deriv():
     test._cache_fns = {}
     test.load_cache()
 
-    original_params = test.params[:]
-    delta = np.zeros(test.params.shape)
-    step = 1e-3
-    for i in range(test.params.shape[0]):
-        for j in range(test.params.shape[1]):
-            delta *= 0
-            delta[i, j] = step
-            test.assign_params(original_params)
-            test.clear_cache()
-            one = test.compute_permanent(range(15))
-            test.assign_params(test.params + delta)
-            test.clear_cache()
-            two = test.compute_permanent(range(15))
-            # FIXME: not quite sure why the difference between permanent derivative and finite
-            #        difference increases as the step size decreases
-            assert np.allclose(
-                test.compute_permanent(range(15), deriv=15 * i + j),
-                (two - one) / step,
-                rtol=0,
-                atol=1e-5,
-            )
+    # derivative
+    new_wfn = skip_init(disable_abstract(BaseGeminal))
+    new_wfn.assign_nelec(6)
+    new_wfn.assign_nspin(6)
+    new_wfn.assign_memory(1000)
+    new_wfn.assign_orbpairs()
+    new_wfn.assign_ngem(3)
+    new_wfn._cache_fns = {}
+
+    def permanent(params):
+        new_wfn.assign_params(params.reshape(3, 15))
+        return new_wfn.compute_permanent(np.arange(3))
+
+    grad = nd.Gradient(permanent)(test.params)
+    for i, der in enumerate(grad):
+        assert np.allclose(der, test.compute_permanent(np.arange(3), deriv=i))
 
 
 def test_gem_get_overlap():
@@ -381,13 +383,12 @@ def test_gem_get_overlap():
     assert test.get_overlap(0b000111) == 0
     # check derivatives
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
-    assert test.get_overlap(0b001111, deriv=0) == 24 * 1 + 39 * 1
-    assert test.get_overlap(0b001111, deriv=1) == 0
-    assert test.get_overlap(0b001111, deriv=9) == 15 * 1 + 30 * 1
-    assert test.get_overlap(0b001111, deriv=15) == 9 * 1 + 39 * 1
-    assert test.get_overlap(0b001111, deriv=39) == 0 * 1 + 15 * 1
-    assert test.get_overlap(0b000111, deriv=0) == 0
-    assert test.get_overlap(0b001111, deriv=45) == 0
-    assert test.get_overlap(0b001111, deriv=3) == 0
+    assert test.get_overlap(0b001111, deriv=np.array([0])) == 24 * 1 + 39 * 1
+    assert test.get_overlap(0b001111, deriv=np.array([1])) == 0
+    assert test.get_overlap(0b001111, deriv=np.array([9])) == 15 * 1 + 30 * 1
+    assert test.get_overlap(0b001111, deriv=np.array([15])) == 9 * 1 + 39 * 1
+    assert test.get_overlap(0b001111, deriv=np.array([39])) == 0 * 1 + 15 * 1
+    assert test.get_overlap(0b000111, deriv=np.array([0])) == 0
+    assert test.get_overlap(0b001111, deriv=np.array([3])) == 0
     with pytest.raises(TypeError):
         test.get_overlap(0b001111, "1")

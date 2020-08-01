@@ -74,8 +74,9 @@ class BaseQuasiparticle(BaseWavefunction):
         Compute the permutational sum that corespond to the given wavefunction.
         Default is th mix of permanents and determinants that are used to construct the generalized
         quasiparticle.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
     _process_subsets(self, subsets) : np.ndarray of int, list of tuple of int, list of tuple of int
         Convert the given subsetss of orbitals to the column indices, subsets of even number of
         orbitals, and subsets of odd number of orbitals.
@@ -463,26 +464,6 @@ class BaseQuasiparticle(BaseWavefunction):
             Overlap of the current instance with the given Slater determinant.
 
         """
-        return self._olp_deriv(sd, None)
-
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
-    def _olp_deriv(self, sd, deriv):
-        """Calculate the derivative of the overlap with the Slater determinant.
-
-        Parameters
-        ----------
-        sd : gmpy2.mpz
-            Occupation vector of a Slater determinant given as a bitstring.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
-
-        Returns
-        -------
-        olp : {float, complex}
-            Derivative of the overlap with respect to the given parameter.
-
-        """
-        # NOTE: Need to recreate occ_indices, row_removed, col_removed
         occ_indices = slater.occ_indices(sd)
 
         val = 0.0
@@ -497,10 +478,44 @@ class BaseQuasiparticle(BaseWavefunction):
             # ASSUMES: bosons come first
             sign = slater.sign_perm([j for i in bosons + fermions for j in i], occ_indices)
 
-            # FIXME: may compute a lot of zeros when column that corresponds to deriv is not in
-            #        col_inds. maybe incorporate deriv_subset into generate_possible_orbsubsets?
-            val += sign * self.compute_permsum(len(bosons), col_inds, deriv=deriv)
+            val += sign * self.compute_permsum(len(bosons), col_inds)
         return val
+
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
+    def _olp_deriv(self, sd):
+        """Calculate the derivative of the overlap with the Slater determinant.
+
+        Parameters
+        ----------
+        sd : gmpy2.mpz
+            Occupation vector of a Slater determinant given as a bitstring.
+
+        Returns
+        -------
+        olp_deriv : np.ndarray
+            Derivatives of the overlap with respect to each parameter.
+
+        """
+        # NOTE: Need to recreate occ_indices, row_removed, col_removed
+        occ_indices = slater.occ_indices(sd)
+
+        output = np.zeros(self.nparams)
+        for subsets in self.generate_possible_orbsubsets(occ_indices):
+            if len(subsets) == 0:
+                continue
+
+            # process subsets
+            col_inds, bosons, fermions = self._process_subsets(subsets)
+
+            # get sign
+            # ASSUMES: bosons come first
+            sign = slater.sign_perm([j for i in bosons + fermions for j in i], occ_indices)
+
+            for row_ind in range(self.params.shape[0]):
+                for col_ind in col_inds:
+                    i = row_ind * self.params.shape[1] + col_ind
+                    output[i] += sign * self.compute_permsum(len(bosons), col_inds, deriv=i)
+        return output
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
@@ -518,19 +533,15 @@ class BaseQuasiparticle(BaseWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
-
-        Raises
-        ------
-        ValueError
-            If `deriv` is not an integer.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Notes
         -----
@@ -542,20 +553,6 @@ class BaseQuasiparticle(BaseWavefunction):
         # if no derivatization
         if deriv is None:
             return self._olp(sd)
-        # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
-            raise ValueError('Index for derivatization must be in integer.')
-
-        if deriv >= self.nparams:
-            return 0.0
-        # convert parameter index to row and col index
-        col_removed = deriv % self.params.shape[1]
-        # find orbital pair that corresponds to removed column
-        orbs = self.get_orbsubset(col_removed)
-
-        # if either of these orbitals are not present in the Slater determinant, skip
-        if not all(slater.occ(sd, orb) for orb in orbs):
-            return 0.0
 
         return self._olp_deriv(sd, deriv)
 

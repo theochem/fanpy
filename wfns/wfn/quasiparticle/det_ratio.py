@@ -57,8 +57,9 @@ class DeterminantRatio(BaseWavefunction):
         Loaad the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
     def __init__(self, nelec, nspin, memory=None, numerator_mask=None, params=None):
@@ -296,7 +297,7 @@ class DeterminantRatio(BaseWavefunction):
         return numerator / denominator
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -304,10 +305,6 @@ class DeterminantRatio(BaseWavefunction):
         sd : gmpy2.mpz
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
-            Assumed to correspond to the matrix elements that correspond to the given Slater
-            determinant.
 
         Returns
         -------
@@ -315,44 +312,60 @@ class DeterminantRatio(BaseWavefunction):
             Derivative of the overlap with respect to the given parameter.
 
         """
-        deriv_matrix, deriv_row, deriv_col = self.decompose_index(deriv)
+        output = np.zeros(self.nparams)
+        for deriv_matrix in range(self.num_matrices):
+            # compute determinants of matrices that are not being derivatized
+            # NOTE: all of the rows are assumed to be selected when the columns are selected.
+            # ASSUME: selected matrix is square (i.e. has same number of electrons)
+            determinants = np.array([np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
+                                    for i in range(self.num_matrices) if i != deriv_matrix])
+            new_numerator_mask = np.delete(self.numerator_mask, deriv_matrix)
+            numerator = np.prod(determinants[new_numerator_mask])
+            denominator = np.prod(determinants[np.logical_not(new_numerator_mask)])
 
-        # compute determinants of matrices that are not being derivatized
-        # NOTE: all of the rows are assumed to be selected when the columns are selected.
-        # ASSUME: selected matrix is square (i.e. has same number of electrons)
-        determinants = np.array([np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
-                                 for i in range(self.num_matrices) if i != deriv_matrix])
-        new_numerator_mask = np.delete(self.numerator_mask, deriv_matrix)
-        numerator = np.prod(determinants[new_numerator_mask])
-        denominator = np.prod(determinants[np.logical_not(new_numerator_mask)])
+            # derivatize selected matrix
+            # NOTE: all of the rows are assumed to be selected when the columns are selected.
+            # ASSUME: deriv_row is in rows and deriv_col is in cols (i.e. selected index corresponds to
+            #         an occupied orbital of the given Slater determinant)
+            matrix = self.get_matrix(deriv_matrix)
+            rows = np.arange(matrix.shape[0])
+            cols = self.get_columns(sd, deriv_matrix)
 
-        # derivatize selected matrix
-        # NOTE: all of the rows are assumed to be selected when the columns are selected.
-        # ASSUME: deriv_row is in rows and deriv_col is in cols (i.e. selected index corresponds to
-        #         an occupied orbital of the given Slater determinant)
-        matrix = self.get_matrix(deriv_matrix)
-        rows = np.arange(matrix.shape[0])
-        cols = self.get_columns(sd, deriv_matrix)
-        # mask for finding the deriv_row and deriv_col from rows and cols, respectively
-        rows_mask = rows != deriv_row
-        cols_mask = cols != deriv_col
-        # find sign that corresponds to the derivative
-        sign_row = (-1) ** np.asscalar(np.where(np.logical_not(rows_mask))[0])
-        sign_col = (-1) ** np.asscalar(np.where(np.logical_not(cols_mask))[0])
-        # filter out the deriv_row and deriv_col
-        rows = rows[rows_mask]
-        cols = cols[cols_mask]
-
-        minor = np.linalg.det(matrix[rows[:, None], cols[None, :]])
-        deriv_determinant = sign_row * sign_col * minor
-
-        # if derivatized matrix is a numerator
-        if self.numerator_mask[deriv_matrix]:
-            return deriv_determinant * numerator / denominator
-        # if derivatized matrix is a denominator
-        else:
             old_determinant = np.linalg.det(matrix[:, self.get_columns(sd, deriv_matrix)])
-            return numerator / denominator * (-1) * old_determinant**(-2) * deriv_determinant
+            for deriv_row in range(self.matrix_shape[0]):
+                for deriv_col in range(self.matrix_shape[1]):
+                    # mask for finding the deriv_row and deriv_col from rows and cols, respectively
+                    rows_mask = rows != deriv_row
+                    cols_mask = cols != deriv_col
+                    # find sign that corresponds to the derivative
+                    sign_row = (-1) ** np.asscalar(np.where(np.logical_not(rows_mask))[0])
+                    sign_col = (-1) ** np.asscalar(np.where(np.logical_not(cols_mask))[0])
+                    # filter out the deriv_row and deriv_col
+                    rows = rows[rows_mask]
+                    cols = cols[cols_mask]
+
+                    minor = np.linalg.det(matrix[rows[:, None], cols[None, :]])
+                    deriv_determinant = sign_row * sign_col * minor
+
+                    index = (
+                        deriv_matrix *
+                        self.matrix_size +
+                        deriv_row *
+                        self.matrix_shape[1] +
+                        deriv_col
+                    )
+                    # if derivatized matrix is a numerator
+                    if self.numerator_mask[deriv_matrix]:
+                        output[index] = deriv_determinant * numerator / denominator
+                    # if derivatized matrix is a denominator
+                    else:
+                        output[index] = (
+                            numerator /
+                            denominator *
+                            (-1) *
+                            old_determinant**(-2) *
+                            deriv_determinant
+                        )
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
@@ -365,19 +378,15 @@ class DeterminantRatio(BaseWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         """
         sd = slater.internal_sd(sd)
@@ -388,17 +397,5 @@ class DeterminantRatio(BaseWavefunction):
         # if no derivatization
         if deriv is None:
             return self._olp(sd)
-
         # if derivatization
-        elif not isinstance(deriv, (int, np.int64)):
-            raise TypeError('Given derivatization index must be an integer.')
-
-        if not 0 <= deriv < self.nparams:
-            return 0.0
-
-        deriv_matrix, _, deriv_col = self.decompose_index(deriv)
-        columns = [self.get_columns(sd, i) for i in range(self.num_matrices)]
-        if deriv_col not in columns[deriv_matrix]:
-            return 0.0
-
-        return self._olp_deriv(sd, deriv)
+        return self._olp_deriv(sd)

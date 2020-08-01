@@ -72,8 +72,9 @@ class APG(BaseGeminal):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
     generate_possible_orbpairs(self, occ_indices)
         Yield all possible orbital pairs that can construct the given Slater determinant.
 

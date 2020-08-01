@@ -764,12 +764,6 @@ def test_jacobi_get_overlap_restricted_der():
         ),
     )
 
-    # error
-    with pytest.raises(ValueError):
-        test.get_overlap(0b0101, "1")
-    with pytest.raises(ValueError):
-        test.get_overlap(0b0101, -1)
-
 
 def test_jacobi_compare_nonorth():
     """Test overlap of Jacobi rotated wavefunction with that of nonorthonormal wavefunction."""

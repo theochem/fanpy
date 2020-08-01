@@ -1,5 +1,6 @@
 """Tests for the wfns.wfn.network.mps."""
 import numpy as np
+import numdifftools as nd
 import pytest
 from utils import skip_init
 from wfns.wfn.network.mps import MatrixProductState
@@ -253,16 +254,12 @@ def test_get_overlap():
 
     with pytest.raises(TypeError):
         test.get_overlap(0b0101, 0.0)
-    assert test.get_overlap(0b001001, -1) == 0
-    assert test.get_overlap(0b001001, 32) == 0
-    for i in range(32):
-        if 6 <= i < 8:
-            continue
-        elif 8 <= i < 12:
-            continue
-        elif 24 <= i < 26:
-            continue
-        assert test.get_overlap(0b001001, i) == 0
+    # derivative
+    new_wfn = MatrixProductState(2, 6, dimension=2)
 
-    assert np.allclose(test.get_overlap(0b001001), matrix1[3].dot(matrix2[0]).dot(matrix3[0]))
-    assert np.allclose(test.get_overlap(0b001001, 6), matrix2[0, 0, :].dot(matrix3[0]))
+    def overlap(params):
+        new_wfn.assign_params(params)
+        return new_wfn.get_overlap(0b001001)
+
+    grad = nd.Gradient(overlap)(test.params.copy())
+    assert np.allclose(grad, test.get_overlap(0b001001, np.arange(test.nparams)))

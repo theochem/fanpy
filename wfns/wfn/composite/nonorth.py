@@ -88,8 +88,9 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -528,36 +529,49 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         where :math:`U(\Phi_i, \mathbf{n})` is the transformation matrix with rows and columns that
         correspond to the Slater determinants :math:`\Phi_i` and :math:`\mathbf{n}`, respectively.
 
+        Parameters
+        ----------
+        sd : int
+            Slater Determinant against which the overlap is taken.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
+
+        Returns
+        -------
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
+
         """
         if deriv is None:
             return self._olp(sd)
 
         # if derivatization
-        if not (isinstance(deriv, int) and deriv >= 0):
-            raise ValueError("Index for derivatization must be a non-negative integer.")
+        output = np.zeros(len(deriv))
+        for i in deriv:
+            if i >= self.nparams:
+                continue
 
-        if deriv >= self.nparams:
-            return 0.0
+            # number of parameters for alpha orbitals (this variable will have no effect for
+            # restricted and generalized orbital types)
+            nparams_alpha = self.params[0].size
+            # get index of the transformation (if unrestricted)
+            transform_ind = i // nparams_alpha
+            # convert parameter index to row and col index
+            row_removed = (i % nparams_alpha) // self.param_shape[transform_ind][1]
 
-        # number of parameters for alpha orbitals (this variable will have no effect for
-        # restricted and generalized orbital types)
-        nparams_alpha = self.params[0].size
-        # get index of the transformation (if unrestricted)
-        transform_ind = deriv // nparams_alpha
-        # convert parameter index to row and col index
-        row_removed = (deriv % nparams_alpha) // self.param_shape[transform_ind][1]
-
-        # if either of these orbitals are not present in the Slater determinant, skip
-        # FIXME: change i+nspatial to slater.to_beta
-        if self.orbtype == "restricted" and not (
-            slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
-        ):
-            return 0.0
-        if self.orbtype == "unrestricted" and not slater.occ(
-            sd, row_removed + transform_ind * self.nspatial
-        ):
-            return 0.0
-        if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
-            return 0.0
-
-        return self._olp_deriv(sd, deriv)
+            # if either of these orbitals are not present in the Slater determinant, skip
+            # FIXME: change i+nspatial to slater.to_beta
+            if self.orbtype == "restricted" and not (
+                slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
+            ):
+                continue
+            if self.orbtype == "unrestricted" and not slater.occ(
+                sd, row_removed + transform_ind * self.nspatial
+            ):
+                continue
+            if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
+                continue
+            output[i] = self._olp_deriv(sd, i)
+        return output

@@ -92,20 +92,20 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b1010001100) == 0
     # check derivatives
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
-    assert test.get_overlap(0b0001100011, deriv=0) == 0
-    assert test.get_overlap(0b0001100011, deriv=1) == 0
-    assert test.get_overlap(0b0001100011, deriv=99) == 0
-    assert test.get_overlap(0b0011000110, deriv=0) == 1
-    assert test.get_overlap(0b0011000110, deriv=3) == 0
-    assert test.get_overlap(0b0011000110, deriv=99) == 0
-    assert test.get_overlap(0b0010100101, deriv=0) == 0
-    assert test.get_overlap(0b0010100101, deriv=3) == 1
-    assert test.get_overlap(0b0110001100, deriv=99) == 0
-    assert test.get_overlap(0b0110001100, deriv=0) == 4
-    assert test.get_overlap(0b0110001100, deriv=1) == 3
-    assert test.get_overlap(0b0110001100, deriv=3) == 1
-    assert test.get_overlap(0b0110001100, deriv=4) == 0
-    assert test.get_overlap(0b0110001100, deriv=99) == 0
+    assert test.get_overlap(0b0001100011, deriv=np.array([0])) == 0
+    assert test.get_overlap(0b0001100011, deriv=np.array([1])) == 0
+    assert test.get_overlap(0b0001100011, deriv=np.array([99])) == 0
+    assert test.get_overlap(0b0011000110, deriv=np.array([0])) == 1
+    assert test.get_overlap(0b0011000110, deriv=np.array([3])) == 0
+    assert test.get_overlap(0b0011000110, deriv=np.array([99])) == 0
+    assert test.get_overlap(0b0010100101, deriv=np.array([0])) == 0
+    assert test.get_overlap(0b0010100101, deriv=np.array([3])) == 1
+    assert test.get_overlap(0b0110001100, deriv=np.array([99])) == 0
+    assert test.get_overlap(0b0110001100, deriv=np.array([0])) == 4
+    assert test.get_overlap(0b0110001100, deriv=np.array([1])) == 3
+    assert test.get_overlap(0b0110001100, deriv=np.array([3])) == 1
+    assert test.get_overlap(0b0110001100, deriv=np.array([4])) == 0
+    assert test.get_overlap(0b0110001100, deriv=np.array([99])) == 0
     with pytest.raises(TypeError):
         test.get_overlap(0b0001100011, "0")
 

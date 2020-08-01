@@ -76,8 +76,9 @@ class CIWavefunction(BaseWavefunction):
         Assign the seniority of the wavefunction.
     assign_sd_vec(self, sd_vec=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the CI wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -333,10 +334,19 @@ class CIWavefunction(BaseWavefunction):
 
             \left| \Psi \right> = \sum_i c_i \left| \Phi_i \right>
 
+        Parameters
+        ----------
+        sd : int
+            Slater Determinant against which the overlap is taken.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
+
         Returns
         -------
-        overlap : float
-            Overlap of the CI wavefunction with the Slater determinant.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Raises
         ------
@@ -345,13 +355,16 @@ class CIWavefunction(BaseWavefunction):
 
         """
         sd = slater.internal_sd(sd)
-        try:
-            # pylint:disable=R1705
-            if deriv is None:
+        # pylint:disable=R1705
+        if deriv is None:
+            try:
                 return self.params[self.dict_sd_index[sd]]
-            elif deriv == self.dict_sd_index[sd]:
-                return 1.0
-            else:
+            except KeyError:
                 return 0.0
+
+        output = np.zeros(self.nparams)
+        try:
+            output[self.dict_sd_index[sd]] = 1.0
         except KeyError:
-            return 0.0
+            pass
+        return output[deriv]

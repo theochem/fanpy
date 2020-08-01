@@ -50,8 +50,9 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
 
     Abstract Methods
     ----------------
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 

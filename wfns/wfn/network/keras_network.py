@@ -49,8 +49,9 @@ class KerasNetwork(BaseWavefunction):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -257,19 +258,15 @@ class KerasNetwork(BaseWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Notes
         -----
@@ -285,17 +282,9 @@ class KerasNetwork(BaseWavefunction):
         if deriv is None:
             return self.model.predict(np.array([occ_vector]))[0, 0]
         # if derivatization
-        if not isinstance(deriv, (int, np.int64)):
-            raise TypeError("Index for derivatization must be provided as an integer.")
-
-        if deriv >= self.nparams:
-            return 0.0
-
         grad = keras.backend.function(
             self.model.inputs,
             self.model.optimizer.get_gradients(self.model.output, self.model.weights),
         )
-        # FIXME: this is pretty bad... gradient is computed for the complete set of parameters and
-        # only one is selected.
         grad_val = np.hstack([val.flatten() for val in grad([np.array([occ_vector])])])
         return grad_val[deriv]

@@ -50,8 +50,9 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Clear the cache.
     assign_wfns(self, wfns)
         Assign the wavefunctions that will be linearly combined.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
 
     """
 
@@ -170,8 +171,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         self.wfns = tuple(wfns)
 
-    # FIXME: derivative should be with respect to the coefficients/params
-    # FIXME: how to derivatize wrt parameters of the wavefunction?
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
 
@@ -183,20 +182,16 @@ class LinearCombinationWavefunction(BaseWavefunction):
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         """
-        wfn_contrib = np.array([wfn.get_overlap(sd, deriv=deriv) for wfn in self.wfns])
-        return np.sum(self.params * wfn_contrib)
+        wfn_contrib = np.array([wfn.get_overlap(sd, deriv=None) for wfn in self.wfns])
+        if deriv is None:
+            return np.sum(self.params * wfn_contrib)
+
+        return wfn_contrib

@@ -51,8 +51,9 @@ class MatrixProductState(BaseWavefunction):
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
-    get_overlap(self, sd, deriv=None) : float
-        Return the overlap of the wavefunction with a Slater determinant.
+    get_overlap(self, sd, deriv=None) : {float, np.ndarray}
+        Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
+        determinant.
     assign_dimension(self, dimension=None)
         Assign the dimension of the matrices.
     get_occupation_indices(self, sd) : np.ndarray
@@ -471,37 +472,25 @@ class MatrixProductState(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
-        if isinstance(deriv, np.ndarray):
-            occ_indices = self.get_occupation_indices(sd)
-            output = np.zeros(self.nparams)
+        # return np.array([self._olp_deriv(sd, i) for i in deriv])
+        occ_indices = self.get_occupation_indices(sd)
+        output = np.zeros(self.nparams)
 
-            D = self.dimension
-            K = self.nspatial
-            for k in range(self.nspatial):
-                for n in occ_indices:
-                    deriv_block = self._olp_deriv_block(sd, k, n)
-
-                    if k == 0:
-                        start_index = D * n
-                        end_index = start_index + D
-                    elif k < K - 1:
-                        start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
-                        end_index = start_index + D**2
-                    else:
-                        start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
-                        end_index = start_index + D
-                    output[start_index : end_index] = np.ravel(deriv_block)
-            return output[deriv]
-
-        if not isinstance(deriv, (int, np.int64)):
-            raise TypeError("Given derivatization index must be an integer.")
-
-        if not 0 <= deriv < self.nparams:
-            return 0.0
-        deriv_matrix, deriv_occ, *_ = self.decompose_index(deriv)
-        if deriv_occ != occ_indices[deriv_matrix]:
-            return 0.0
-
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        D = self.dimension
+        K = self.nspatial
+        for k in range(self.nspatial):
+            n = occ_indices[k]
+            deriv_block = self._olp_deriv_block(sd, k)
+            if k == 0:
+                start_index = D * n
+                end_index = start_index + D
+            elif k < K - 1:
+                start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
+                end_index = start_index + D**2
+            else:
+                start_index = 4 * D + 4 * D**2 * (k - 1) + D * n
+                end_index = start_index + D
+            output[start_index : end_index] = np.ravel(deriv_block)
+        return output[deriv]
