@@ -114,13 +114,14 @@ class RankTwoApprox:
             #        lambda - epsilon should be greater than 1
             #        lambda should be around 1 (epsilons should be less than 0)
 
-            template = np.zeros(self.ngem + 2 * self.norbpair)
+            template = np.zeros((self.ngem, self.norbpair))
             for i in range(self.ngem):
                 col_ind = self.get_col_ind((i, i + self.nspatial))
                 template[i, col_ind] += 1
             template += 0.0001 * np.random.rand(*template.shape)
             # FIXME: fails a lot
-            self.params = full_to_rank2(template, rmsd=0.01)
+            params = full_to_rank2(template, rmsd=0.01)
+        self.params = params
         if __debug__:
             if isinstance(params, BaseGeminal):
                 raise NotImplementedError(
