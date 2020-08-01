@@ -71,7 +71,7 @@ def temp_assign_params(self, params=None, add_noise=False, default_params=np.ide
     if params is None:
         params = default_params
 
-    super().assign_params(params=params, add_noise=add_noise)
+    BaseWavefunction.assign_params(self, params=params, add_noise=add_noise)
 
 
 def test_assign_params():
@@ -141,12 +141,12 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "assign_params": lambda self, params, add_noise=False:
+                "assign_params": lambda self, params=None, add_noise=False:
                 temp_assign_params(self, params, add_noise, np.zeros((1, 1, 1))),
             },
         )
     )
-    test.assign_params(2.0)
+    test.assign_params()
     assert test.params.shape == (1, 1, 1)
 
 

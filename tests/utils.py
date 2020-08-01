@@ -53,12 +53,11 @@ def disable_abstract(abclass, dict_overwrite=None):
     https://stackoverflow.com/questions/9757299/python-testing-an-abstract-base-class.
 
     """
-    if "__abstractmethods__" not in abclass.__dict__:
-        return abclass
     new_dict = abclass.__dict__.copy()
-    for abstractmethod in abclass.__abstractmethods__:
-        # replace abstract methods with a function that does nothing
-        new_dict[abstractmethod] = lambda *args: None
+    if "__abstractmethods__" in abclass.__dict__:
+        for abstractmethod in abclass.__abstractmethods__:
+            # replace abstract methods with a function that does nothing
+            new_dict[abstractmethod] = lambda *args: None
     # replace namespace
     new_dict.update(dict_overwrite if dict_overwrite is not None else {})
     # make subclass of the abstract class with
