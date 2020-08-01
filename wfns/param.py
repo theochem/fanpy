@@ -244,8 +244,6 @@ class ParamMask(abc.ABC):
         of integer and boolean indices should not be too different.
 
         """
-        if not isinstance(container, ParamContainer):
-            raise TypeError("The provided container must be a `ParamContainer` instance.")
         nparams = container.nparams
 
         if sel is None:
@@ -385,9 +383,6 @@ class ParamMask(abc.ABC):
             If the selected parameter is not part of the given container, then `None` is returned.
 
         """
-        if not isinstance(container, ParamContainer):
-            raise TypeError("Given container must be a ParamContainer instance.")
-
         try:
             is_active = self._masks_objective_params[container][index]
         except KeyError:

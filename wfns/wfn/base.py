@@ -3,10 +3,9 @@ import abc
 
 import cachetools
 import numpy as np
-from wfns.param import ParamContainer
 
 
-class BaseWavefunction(ParamContainer):
+class BaseWavefunction:
     r"""Base wavefunction class.
 
     Attributes
@@ -307,7 +306,6 @@ class BaseWavefunction(ParamContainer):
         if include_derivative:
             self._cache_fns["overlap derivative"] = cachetools.LRUCache(maxsize=maxsize)
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.
 
@@ -332,7 +330,6 @@ class BaseWavefunction(ParamContainer):
         # pylint: disable=C0103
         raise NotImplementedError
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the nontrivial derivative of the overlap with the Slater determinant.
 
@@ -378,19 +375,11 @@ class BaseWavefunction(ParamContainer):
             If cached function does not have decorator functools.lru_cache.
 
         """
-        try:
-            if key is None:
-                for func in self._cache_fns.values():
-                    func.clear()
-            else:
-                self._cache_fns[key].clear()
-        except KeyError as error:
-            raise KeyError("Given function key is not present in _cache_fns") from error
-        except AttributeError as error:
-            raise AttributeError(
-                "Given cached function does not have decorator " "`functools.lru_cache`"
-            ) from error
-        self.probable_sds = {}
+        if key is None:
+            for func in self._cache_fns.values():
+                func.clear()
+        else:
+            self._cache_fns[key].clear()
 
     @abc.abstractmethod
     def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103
