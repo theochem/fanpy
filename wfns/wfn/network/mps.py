@@ -85,9 +85,9 @@ class MatrixProductState(BaseWavefunction):
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_dimension(dimension)
-        self.assign_params(params)
         self._cache_fns = {}
         self.load_cache()
+        self.assign_params(params)
 
     # TODO: all of the auxiliary indices are fixed to be equal. This may need to be flexible
     def assign_dimension(self, dimension=None):
@@ -321,6 +321,7 @@ class MatrixProductState(BaseWavefunction):
         if isinstance(params, MatrixProductState):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):

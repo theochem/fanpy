@@ -141,9 +141,9 @@ class AP1roG(APIG):
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
-        self.assign_params(params=params)
         self._cache_fns = {}
         self.load_cache()
+        self.assign_params(params=params)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.

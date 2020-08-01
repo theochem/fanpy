@@ -110,6 +110,7 @@ def test_default_params():
     answer1 = np.ones(10) * 10 ** (-1 / 4)
     answer2 = np.identity(10) * 10 ** (-1 / 4)
 
+    test._cache_fns = {}
     test.assign_params()
     default = test.params
 
@@ -145,6 +146,7 @@ def test_assign_params():
     test.nelec = 2
     test.nspin = 6
     test.dimension = 2
+    test._cache_fns = {}
     params = np.array(
         [0, 0, 0, 0, 0, 0, 1, 1] + [1, 0, 0, 1] + 3 * [0, 0, 0, 0] + [1, 1, 0, 0, 0, 0, 0, 0]
     ) * 2 ** (-1 / 3)
@@ -155,6 +157,7 @@ def test_assign_params():
     test2.nelec = 2
     test2.nspin = 6
     test2.dimension = 2
+    test2._cache_fns = {}
     test2.assign_params(params=test, add_noise=False)
     assert np.allclose(test2.params, params)
 

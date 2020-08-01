@@ -61,6 +61,7 @@ def test_ap1rog_default_params():
     test.assign_nspin(6)
     test.assign_ref_sd()
     test.assign_orbpairs()
+    test._cache_fns = {}
     test.assign_params()
     assert np.allclose(test.params, np.zeros((2, 1)))
     test = skip_init(AP1roG)
@@ -69,6 +70,7 @@ def test_ap1rog_default_params():
     test.assign_nspin(20)
     test.assign_ref_sd()
     test.assign_orbpairs()
+    test._cache_fns = {}
     test.assign_params()
     assert np.allclose(test.params, np.zeros((3, 7)))
 
@@ -82,9 +84,9 @@ def test_ap1rog_get_overlap():
     test.assign_ngem(2)
     test.assign_ref_sd()
     test.assign_orbpairs()
-    test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
     test._cache_fns = {}
     test.load_cache()
+    test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
     assert test.get_overlap(0b0001100011) == 1.0
     assert test.get_overlap(0b0010100101) == 3.0
     assert test.get_overlap(0b0000001111) == 0.0

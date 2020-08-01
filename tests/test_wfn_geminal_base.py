@@ -167,6 +167,7 @@ def test_gem_default_params():
     test.assign_nspin(6)
     test.assign_orbpairs()
     test.assign_ngem(3)
+    test._cache_fns ={}
     test.assign_params()
     np.allclose(
         test.params,
@@ -188,6 +189,7 @@ def test_gem_assign_params():
     test.assign_orbpairs()
     test.assign_ngem(3)
     # default
+    test._cache_fns = {}
     test.assign_params()
     np.allclose(
         test.params,
@@ -216,6 +218,7 @@ def test_gem_assign_params():
     test2.assign_nelec(6)
     test2.assign_nspin(6)
     test2.assign_ngem(3)
+    test2._cache_fns = {}
     test2.dict_ind_orbpair = {0: (0, 4), 1: (1, 3)}
     test2.params = np.arange(6).reshape(3, 2)
     test.assign_params(test2)
@@ -293,6 +296,7 @@ def test_gem_compute_permanent():
     test.assign_nspin(6)
     test.assign_orbpairs()
     test.assign_ngem(3)
+    test._cache_fns = {}
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert np.equal(
         test.compute_permanent([0, 1, 2]),
@@ -337,9 +341,8 @@ def test_gem_compute_permanent_deriv():
     test.assign_memory(1000)
     test.assign_orbpairs()
     test.assign_ngem(3)
-    test.assign_params(np.random.rand(3, 15) * 10)
     test._cache_fns = {}
-    test.load_cache()
+    test.assign_params(np.random.rand(3, 15) * 10)
 
     # derivative
     new_wfn = skip_init(disable_abstract(BaseGeminal))
@@ -376,9 +379,9 @@ def test_gem_get_overlap():
     test.assign_memory()
     test.assign_orbpairs()
     test.assign_ngem(3)
-    test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     test._cache_fns = {}
     test.load_cache()
+    test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert test.get_overlap(0b001111) == 9 * (15 * 1 + 30 * 1) + 1 * (15 * 39 + 30 * 24)
     assert test.get_overlap(0b000111) == 0
     # check derivatives
