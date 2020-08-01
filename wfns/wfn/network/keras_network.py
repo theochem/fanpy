@@ -1,5 +1,5 @@
 """Wavefunction using Keras NN."""
-import keras
+from tensorflow.python import keras
 import numpy as np
 from wfns.backend.sd_list import sd_list
 import wfns.backend.slater as slater
@@ -78,7 +78,7 @@ class KerasNetwork(BaseWavefunction):
         self.assign_model(model=model)
         self._default_params = None
         self.assign_params(params=params)
-        keras.backend.common._FLOATX = "float64"  # pylint: disable=W0212
+        keras.backend.set_floatx("float64")
 
     def assign_model(self, model=None):
         """Assign the Keras model used to represent the neural network.
@@ -118,25 +118,26 @@ class KerasNetwork(BaseWavefunction):
                 )
             )
 
-        #if not isinstance(model, keras.engine.training.Model):
-        #    raise TypeError("Given model must be an instance of keras.engine.network.Network.")
-        if len(model.inputs) != 1:
-            raise ValueError(
-                "Given model must only have one set of inputs (for the occupations of "
-                "the Slater determinant)."
-            )
-        if model.inputs[0].shape[1] != self.nspin:
-            raise ValueError(
-                "Given model must have exactly the same number of input nodes as the "
-                "number of spin orbitals."
-            )
-        if len(model.outputs) != 1:
-            raise ValueError(
-                "Given model must only have one set of outputs (for the overlap of "
-                "the Slater determinant)."
-            )
-        if model.outputs[0].shape[1] != 1:
-            raise ValueError("Given model must have exactly one output.")
+        if __debug__:
+            if not isinstance(model, keras.engine.training.Model):
+                raise TypeError("Given model must be an instance of keras.engine.network.Network.")
+            if len(model.inputs) != 1:
+                raise ValueError(
+                    "Given model must only have one set of inputs (for the occupations of "
+                    "the Slater determinant)."
+                )
+            if model.inputs[0].shape[1] != self.nspin:
+                raise ValueError(
+                    "Given model must have exactly the same number of input nodes as the "
+                    "number of spin orbitals."
+                )
+            if len(model.outputs) != 1:
+                raise ValueError(
+                    "Given model must only have one set of outputs (for the overlap of "
+                    "the Slater determinant)."
+                )
+            if model.outputs[0].shape[1] != 1:
+                raise ValueError("Given model must have exactly one output.")
 
         # compile model because some of the methods/attributes do not exist until compilation
         # (e.g. get_gradient)

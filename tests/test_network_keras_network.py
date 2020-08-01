@@ -1,5 +1,5 @@
 """Tests for wfns.wfn.network.keras_network.KerasNetwork."""
-import keras
+from tensorflow.python import keras
 import numdifftools as nd
 import numpy as np
 import pytest
@@ -9,10 +9,14 @@ import wfns.backend.slater as slater
 from wfns.wfn.network.keras_network import KerasNetwork
 
 
+keras.backend.set_floatx("float64")
+
+
 def test_keras_assign_model():
     """Test KerasNetwork.assign_model."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
+    test.num_layers = 2
     # default
     test.assign_model()
     assert isinstance(test.model, keras.engine.training.Model)
@@ -92,6 +96,7 @@ def test_keras_assign_default_params():
     test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
+    test.num_layers = 2
     test.assign_model()
     test.assign_default_params()
     assert np.allclose(np.identity(10), test._default_params[:100].reshape(10, 10))
@@ -120,6 +125,7 @@ def test_keras_assign_params():
     """Test KerasNetwork.assign_params."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
+    test.num_layers = 2
     test.assign_model()
     # default
     test._default_params = np.ones(test.nparams)
