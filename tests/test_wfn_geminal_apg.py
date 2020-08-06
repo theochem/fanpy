@@ -87,7 +87,7 @@ def answer_apg_h2_sto6g():
     one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(2, 4)
     full_sds = (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)
 
@@ -116,7 +116,7 @@ def test_apg_h2_sto6g():
     one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(2, 4)
     full_sds = (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)
 
@@ -137,7 +137,7 @@ def answer_apg_h2_631gdp():
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
 
@@ -166,7 +166,7 @@ def test_apg_h2_631gdp_slow():
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
 
@@ -187,7 +187,7 @@ def answer_apg_lih_sto6g():
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(4, 12)
     full_sds = [
         1 << i | 1 << j | 1 << k | 1 << l
@@ -220,7 +220,7 @@ def test_apg_lih_sto6g_slow():
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
     apg = APG(4, 12)
     full_sds = [
         1 << i | 1 << j | 1 << k | 1 << l

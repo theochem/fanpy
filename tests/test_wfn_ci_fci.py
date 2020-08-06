@@ -47,7 +47,7 @@ def test_fci_h2_631gdp():
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(fci, ham)
@@ -74,7 +74,7 @@ def test_fci_lih_sto6g():
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(fci, ham)
@@ -101,7 +101,7 @@ def test_fci_lih_631g_slow():
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(fci, ham)

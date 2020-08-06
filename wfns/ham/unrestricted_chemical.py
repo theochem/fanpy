@@ -21,8 +21,6 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
     Attributes
     ----------
-    energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy.
     one_int : np.ndarray(K, K)
         One-electron integrals.
     two_int : np.ndarray(K, K, K, K)
@@ -41,10 +39,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int)
         Initialize the Hamiltonian
-    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion.
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
     orb_rotate_jacobi(self, jacobi_indices, theta)
@@ -60,7 +56,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
     """
 
-    def __init__(self, one_int, two_int, energy_nuc_nuc=None, params=None):
+    def __init__(self, one_int, two_int, params=None):
         """Initialize the Hamiltonian.
 
         Parameters
@@ -69,12 +65,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             One electron integrals.
         two_int : 3-tuple of np.ndarray(K, K, K, K)
             Two electron integrals.
-        energy_nuc_nuc : {float, None}
-            Nuclear nuclear repulsion energy.
-            Default is `0.0`.
 
         """
-        super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
+        super().__init__(one_int, two_int)
         self.set_ref_ints()
         self.assign_params(params=params)
 

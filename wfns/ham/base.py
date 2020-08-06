@@ -8,11 +8,6 @@ from wfns.backend import slater
 class BaseHamiltonian:
     """Hamiltonian for a Schrodinger equation.
 
-    Attributes
-    ----------
-    energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy.
-
     Properties
     ----------
     nspatial : int
@@ -20,10 +15,8 @@ class BaseHamiltonian:
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int)
         Initialize the Hamiltonian.
-    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
@@ -41,42 +34,8 @@ class BaseHamiltonian:
 
     """
 
-    def __init__(self, energy_nuc_nuc=None):
-        """Initialize the Hamiltonian.
-
-        Parameters
-        ----------
-        energy_nuc_nuc : {float, None}
-            Nuclear nuclear repulsion energy.
-            Default is `0.0`.
-
-        """
-        # pylint: disable=W0231
-        self.assign_energy_nuc_nuc(energy_nuc_nuc)
-
-    def assign_energy_nuc_nuc(self, energy_nuc_nuc=None):
-        """Assign the nuclear nuclear repulsion.
-
-        Parameters
-        ----------
-        energy_nuc_nuc : {int, float, None}
-            Nuclear-nuclear repulsion energy.
-            Default is `0.0`.
-
-        Raises
-        ------
-        TypeError
-            If `energy_nuc_nuc` is not int or float or None.
-
-        """
-        if energy_nuc_nuc is None:
-            energy_nuc_nuc = 0.0
-        elif isinstance(energy_nuc_nuc, (int, float)):
-            energy_nuc_nuc = float(energy_nuc_nuc)
-        else:
-            raise TypeError("Nuclear-nuclear repulsion must be given as a int, float, or None.")
-        self.energy_nuc_nuc = energy_nuc_nuc
-
+    def __init__(self):
+        """Initialize the Hamiltonian."""
 
     @abc.abstractproperty
     def nspin(self):

@@ -93,7 +93,7 @@ def test_doci_h4_hf_sto6g():
     # NOTE: This works with random guess for the parameters most of the times but not always.
     #       So a "good" initial guess is used to converge to a consistent result
     ham = SeniorityZeroHamiltonian(
-        one_int, two_int, energy_nuc_nuc=nuc_nuc, params=np.array([0.5, 0.0, 0.0, 0.0, 0.0, 0.5])
+        one_int, two_int, params=np.array([0.5, 0.0, 0.0, 0.0, 0.0, 0.5])
     )
 
     obj = OneSidedEnergy(
@@ -172,7 +172,7 @@ def test_doci_h2_hf_631gdp_slow():
     # two_int = np.einsum('abcl,ld->abcd', two_int, orb_rot)
 
     ham = SeniorityZeroHamiltonian(
-        one_int, two_int, energy_nuc_nuc=nuc_nuc, params=np.random.rand(45)
+        one_int, two_int, params=np.random.rand(45)
     )
     obj = OneSidedEnergy(
         doci,

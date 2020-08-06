@@ -64,7 +64,7 @@ def test_cisd_h2_631gdp():
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(cisd, ham)
@@ -97,7 +97,7 @@ def test_cisd_lih_631g():
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(cisd, ham)

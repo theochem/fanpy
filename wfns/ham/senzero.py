@@ -35,8 +35,6 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
     ----------
     params : np.ndarray
         Significant elements of the anti-Hermitian matrix.
-    energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy.
     one_int : {1- or 2-tuple np.ndarray(K, K)}
         One electron integrals for restricted, unrestricted, or generalized orbitals.
         1-tuple for spatial (restricted) and generalized orbitals.
@@ -59,12 +57,10 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int)
         Initialize the Hamiltonian
     assign_orbtype(self, orbtype=None)
         Assign the orbital type.
-    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion.
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
     assign_params(self, params)

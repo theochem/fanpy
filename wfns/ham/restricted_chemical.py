@@ -31,8 +31,6 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
     Attributes
     ----------
-    energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy.
     one_int : np.ndarray(K, K)
         One-electron integrals.
     two_int : np.ndarray(K, K, K, K)
@@ -51,10 +49,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int)
         Initialize the Hamiltonian
-    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion.
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
     orb_rotate_jacobi(self, jacobi_indices, theta)

@@ -9,8 +9,6 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
     Attributes
     ----------
-    energy_nuc_nuc : float
-        Nuclear-nuclear repulsion energy.
     one_int : 2-tuple of np.ndarray(K, K)
         One-electron integrals.
     two_int : 3-tuple of np.ndarray(K, K, K, K)
@@ -25,10 +23,8 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int)
         Initialize the Hamiltonian.
-    assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
-        Assigns the nuclear nuclear repulsion.
     assign_integrals(self, one_int, two_int)
         Assign the one- and two-electron integrals.
     orb_rotate_jacobi(self, jacobi_indices, theta)
@@ -46,7 +42,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
     """
 
     # pylint: disable=W0223
-    def __init__(self, one_int, two_int, energy_nuc_nuc=None):
+    def __init__(self, one_int, two_int):
         """Initialize the Hamiltonian.
 
         Parameters
@@ -55,12 +51,8 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             One electron integrals.
         two_int : 3-tuple of np.ndarray(K, K, K, K)
             Two electron integrals.
-        energy_nuc_nuc : {float, None}
-            Nuclear nuclear repulsion energy.
-            Default is `0.0`.
 
         """
-        super().__init__(energy_nuc_nuc=energy_nuc_nuc)
         self.assign_integrals(one_int, two_int)
 
     @property
