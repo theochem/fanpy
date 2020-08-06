@@ -324,6 +324,9 @@ class BaseGeminal(BaseWavefunction):
                         "current wavefunction. Parameters corresponding to this orbital pair will"
                         " be ignored."
                     )
+
+        params = params.reshape(self.ngem, self.norbpair)
+
         super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 

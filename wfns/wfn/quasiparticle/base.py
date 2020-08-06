@@ -272,6 +272,9 @@ class BaseQuasiparticle(BaseWavefunction):
                     print('The orbital subset of the given wavefunction, {0}, is not possible in '
                           'the current wavefunction. Parameters corresponding to this orbital '
                           'subset will be ignored.')
+
+        params = params.reshape(self.nquasiparticle, self.norbsubsets)
+
         super().assign_params(params=params, add_noise=add_noise)
 
     # FIXME: necessary?
