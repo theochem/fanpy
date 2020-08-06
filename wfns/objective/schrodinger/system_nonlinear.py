@@ -504,11 +504,11 @@ class SystemEquations(BaseSchrodinger):
         else:
             ref_sds = np.array(self.refwfn)
             ref_coeffs = np.array([[get_overlap(i)] for i in ref_sds])
-            d_ref_coeffs = np.array([[get_overlap(i, j) for j in derivs] for i in ref_sds])
+            d_ref_coeffs = np.array([get_overlap(i, derivs) for i in ref_sds])
 
         # overlaps of each Slater determinant in reference <SD_i | Psi>
         ref_sds_olps = np.array([[get_overlap(i)] for i in ref_sds])
-        d_ref_sds_olps = np.array([[get_overlap(i, j) for j in derivs] for i in ref_sds])
+        d_ref_sds_olps = np.array([get_overlap(i, derivs) for i in ref_sds])
         # NOTE: d_ref_olps and d_ref_ints are two dimensional matrices (axis 0 corresponds to the
         # reference Slater determinants and 1 to the index of the parameter with respect to which
         # the value is derivatized).
@@ -548,9 +548,7 @@ class SystemEquations(BaseSchrodinger):
         # jacobian
         jac = np.empty((self.num_eqns, params.size))
         jac[: self.nproj, :] = np.array([integrate_wfn_sd(i, derivs) for i in pspace])
-        jac[: self.nproj, :] -= energy * np.array(
-            [[get_overlap(i, j) for j in derivs] for i in pspace]
-        )
+        jac[: self.nproj, :] -= energy * np.array([get_overlap(i, derivs) for i in pspace])
         jac[: self.nproj, :] -= d_energy[np.newaxis, :] * np.array(
             [[get_overlap(i)] for i in pspace]
         )

@@ -67,16 +67,16 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
     )
-    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101), sum(ham.integrate_wfn_sd(wfn, 0b0101)))
-    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=0), sum(
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101), ham.integrate_wfn_sd(wfn, 0b0101))
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=0),
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=0)
-    ))
-    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=1), sum(
+    )
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=1),
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=3)
-    ))
-    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=2), sum(
+    )
+    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=2),
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=5)
-    ))
+    )
     # FIXME: no tests for ham_deriv b/c there are no hamiltonians with parameters
     assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101, deriv=3), 0.0)
 
@@ -91,7 +91,7 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
     )
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == ham.integrate_sd_sd(0b0101, 0b0101)
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=0) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=1) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=2) == 0.0
@@ -117,14 +117,14 @@ def test_baseschrodinger_get_energy_one_proj():
     # sd
     for sd in sds:
         olp = wfn.get_overlap(sd)
-        integral = sum(ham.integrate_wfn_sd(wfn, sd))
+        integral = (ham.integrate_wfn_sd(wfn, sd))
         # <SD | H | Psi> = E <SD | Psi>
         # E = <SD | H | Psi> / <SD | Psi>
         assert np.allclose(test.get_energy_one_proj(sd), integral / olp)
         # dE = d<SD | H | Psi> / <SD | Psi> - d<SD | Psi> <SD | H | Psi> / <SD | Psi>^2
         for i in range(4):
             d_olp = wfn.get_overlap(sd, deriv=i)
-            d_integral = sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
+            d_integral = (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
             assert np.allclose(
                 test.get_energy_one_proj(sd, deriv=i),
                 d_integral / olp - d_olp * integral / olp ** 2,
@@ -134,8 +134,8 @@ def test_baseschrodinger_get_energy_one_proj():
     for sd1, sd2 in it.combinations(sds, 2):
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = sum(ham.integrate_wfn_sd(wfn, sd1))
-        integral2 = sum(ham.integrate_wfn_sd(wfn, sd2))
+        integral1 = (ham.integrate_wfn_sd(wfn, sd1))
+        integral2 = (ham.integrate_wfn_sd(wfn, sd2))
         # ( f(SD1) <SD1| + f(SD2) <SD2| ) H |Psi> = E ( f(SD1) <SD1| + f(SD2) <SD2| ) |Psi>
         # f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi> = E ( f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi> )
         # E = (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) / (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)
@@ -162,8 +162,8 @@ def test_baseschrodinger_get_energy_one_proj():
         for i in range(4):
             d_olp1 = wfn.get_overlap(sd1, deriv=i)
             d_olp2 = wfn.get_overlap(sd2, deriv=i)
-            d_integral1 = sum(ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
-            d_integral2 = sum(ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
+            d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
+            d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
             assert np.allclose(
                 test.get_energy_one_proj([sd1, sd2], deriv=i),
                 (d_olp1 * integral1 + d_olp2 * integral2 + olp1 * d_integral1 + olp2 * d_integral2)
@@ -181,8 +181,8 @@ def test_baseschrodinger_get_energy_one_proj():
         coeff2 = ciwfn.get_overlap(sd2)
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = sum(ham.integrate_wfn_sd(wfn, sd1))
-        integral2 = sum(ham.integrate_wfn_sd(wfn, sd2))
+        integral1 = (ham.integrate_wfn_sd(wfn, sd1))
+        integral2 = (ham.integrate_wfn_sd(wfn, sd2))
         # ( c_1 <SD1| + c_2 <SD2| ) H |Psi> = E ( c_1 <SD1| + c_2 <SD2| ) |Psi>
         # c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi> = E ( c_1 <SD1|Psi> + c_2 <SD2|Psi> )
         # E = (c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi>) / (c_1 <SD1|Psi> + c_2 <SD2|Psi>)
@@ -201,8 +201,8 @@ def test_baseschrodinger_get_energy_one_proj():
             d_coeff2 = 0.0
             d_olp1 = wfn.get_overlap(sd1, deriv=i)
             d_olp2 = wfn.get_overlap(sd2, deriv=i)
-            d_integral1 = sum(ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
-            d_integral2 = sum(ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
+            d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=i))
+            d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=i))
             assert np.allclose(
                 test.get_energy_one_proj(ciwfn, deriv=i),
                 (
@@ -237,7 +237,7 @@ def test_baseschrodinger_get_energy_two_proj():
         olp_l = wfn.get_overlap(sd_l)
         olp_r = wfn.get_overlap(sd_r)
         olp_n = wfn.get_overlap(sd_n)
-        integral = sum(ham.integrate_sd_sd(sd_l, sd_r))
+        integral = (ham.integrate_sd_sd(sd_l, sd_r))
         # <Psi | SDl> <SDl | H | SDr> <SDr | Psi> = E <Psi | SDn> <SDn | Psi>
         # E = <Psi | SDl> <SDl | H | SDr> <SDr | Psi> / <Psi | SDn>^2
         assert np.allclose(
@@ -252,7 +252,7 @@ def test_baseschrodinger_get_energy_two_proj():
             d_olp_r = wfn.get_overlap(sd_r, deriv=i)
             d_olp_n = wfn.get_overlap(sd_n, deriv=i)
             # FIXME: hamiltonian does not support parameters right now, so cannot derivatize wrt it
-            # d_integral = sum(ham.integrate_sd_sd(sd_l, sd_r, deriv=i))
+            # d_integral = (ham.integrate_sd_sd(sd_l, sd_r, deriv=i))
             d_integral = 0.0
             assert np.allclose(
                 test.get_energy_two_proj(sd_l, sd_r, sd_n, deriv=i),
@@ -279,10 +279,10 @@ def test_baseschrodinger_get_energy_two_proj():
         olp_r2 = wfn.get_overlap(sd_r2)
         olp_n1 = wfn.get_overlap(sd_n1)
         olp_n2 = wfn.get_overlap(sd_n2)
-        integral11 = sum(ham.integrate_sd_sd(sd_l1, sd_r1))
-        integral12 = sum(ham.integrate_sd_sd(sd_l1, sd_r2))
-        integral21 = sum(ham.integrate_sd_sd(sd_l2, sd_r1))
-        integral22 = sum(ham.integrate_sd_sd(sd_l2, sd_r2))
+        integral11 = (ham.integrate_sd_sd(sd_l1, sd_r1))
+        integral12 = (ham.integrate_sd_sd(sd_l1, sd_r2))
+        integral21 = (ham.integrate_sd_sd(sd_l2, sd_r1))
+        integral22 = (ham.integrate_sd_sd(sd_l2, sd_r2))
         # <Psi| (|SDl1> <SDl1| + |SDl2> <SDl2| ) H (|SDr1> <SDr1| + |SDr2> <SDr2| ) |Psi>
         # = E <Psi| (|SDn1> <SDn1| + |SDn2> <SDn2|) | Psi>
         # <Psi|SDl1> <SDl1|H|SDr1> <SDr1|Psi> + <Psi|SDl2> <SDl2|H|SDr1> <SDr1|Psi> +
@@ -336,10 +336,10 @@ def test_baseschrodinger_get_energy_two_proj():
             d_olp_r2 = wfn.get_overlap(sd_r2, deriv=i)
             d_olp_n2 = wfn.get_overlap(sd_n2, deriv=i)
             # FIXME: hamiltonian does not support parameters right now, so cannot derivatize wrt it
-            # d_integral11 = sum(ham.integrate_sd_sd(sd_l1, sd_r1, deriv=i))
-            # d_integral12 = sum(ham.integrate_sd_sd(sd_l2, sd_r1, deriv=i))
-            # d_integral21 = sum(ham.integrate_sd_sd(sd_l1, sd_r2, deriv=i))
-            # d_integral22 = sum(ham.integrate_sd_sd(sd_l2, sd_r2, deriv=i))
+            # d_integral11 = (ham.integrate_sd_sd(sd_l1, sd_r1, deriv=i))
+            # d_integral12 = (ham.integrate_sd_sd(sd_l2, sd_r1, deriv=i))
+            # d_integral21 = (ham.integrate_sd_sd(sd_l1, sd_r2, deriv=i))
+            # d_integral22 = (ham.integrate_sd_sd(sd_l2, sd_r2, deriv=i))
             d_integral11 = 0.0
             d_integral21 = 0.0
             d_integral12 = 0.0

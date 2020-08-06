@@ -144,7 +144,7 @@ class BaseSchrodinger(BaseObjective):
             return self.wfn.get_overlap(sd)
 
         # change derivative index
-        deriv = self.param_selection.derivative_index(self.wfn, deriv)
+        deriv = np.array([self.param_selection.derivative_index(self.wfn, i) for i in deriv])
         if deriv is None:
             return 0.0
         return self.wfn.get_overlap(sd, deriv)
@@ -176,7 +176,7 @@ class BaseSchrodinger(BaseObjective):
         """
         # pylint: disable=C0103
         if deriv is None:
-            return np.sum(self.ham.integrate_sd_wfn(sd, self.wfn))
+            return self.ham.integrate_sd_wfn(sd, self.wfn)
 
         # change derivative index
         if isinstance(deriv, np.ndarray):
@@ -191,23 +191,19 @@ class BaseSchrodinger(BaseObjective):
 
             results = np.zeros(deriv.size)
             if wfn_deriv is not None:
-                results[wfn_mask] = np.array(
-                    [sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=i)) for i in wfn_deriv]
-                )
+                results[wfn_mask] = self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv)
             if ham_deriv is not None:
-                results[ham_mask] = np.sum(
-                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_deriv), axis=0
-                )
+                results[ham_mask] = self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_deriv)
             return results
         else:
             wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
             ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
             if wfn_deriv is not None:
-                return sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv))
+                return self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv)
             # b/c the integral cannot be derivatized wrt both wfn and ham
             if ham_deriv is not None:
-                return np.sum(
-                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_derivs=np.array([ham_deriv]))
+                return self.ham.integrate_sd_wfn_deriv(
+                    sd, self.wfn, ham_derivs=np.array([ham_deriv])
                 )
         return 0.0
 
@@ -233,13 +229,13 @@ class BaseSchrodinger(BaseObjective):
 
         """
         if deriv is None:
-            return sum(self.ham.integrate_sd_sd(sd1, sd2))
+            return self.ham.integrate_sd_sd(sd1, sd2)
 
         # change derivative index
         deriv = self.param_selection.derivative_index(self.ham, deriv)
         if deriv is None:
             return 0.0
-        return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
+        return self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv)
 
     def get_energy_one_proj(self, refwfn, deriv=None):
         r"""Return the energy of the Schrodinger equation with respect to a reference wavefunction.

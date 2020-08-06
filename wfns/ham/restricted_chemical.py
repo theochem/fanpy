@@ -3361,7 +3361,11 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
-        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]])
+        if wfn_deriv is not None:
+            shape = (-1, len(wfn_deriv))
+        else:
+            shape = (-1,)
+        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
 
         overlaps_one_alpha = np.array(
             [
@@ -3369,14 +3373,15 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 for occ in it.combinations(occ_alpha.tolist(), 1)
                 for vir in it.combinations(vir_alpha.tolist(), 1)
             ]
-        )
+        ).reshape(*shape)
+
         overlaps_one_beta = np.array(
             [
                 wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
                 for occ in it.combinations(occ_beta.tolist(), 1)
                 for vir in it.combinations(vir_beta.tolist(), 1)
             ]
-        )
+        ).reshape(*shape)
 
         overlaps_two_aa = np.array(
             [
@@ -3384,21 +3389,21 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 for occ in it.combinations(occ_alpha.tolist(), 2)
                 for vir in it.combinations(vir_alpha.tolist(), 2)
             ]
-        )
+        ).reshape(*shape)
         overlaps_two_ab = np.array(
             [
                 wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
                 for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
                 for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
             ]
-        )
+        ).reshape(*shape)
         overlaps_two_bb = np.array(
             [
                 wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
                 for occ in it.combinations(occ_beta.tolist(), 2)
                 for vir in it.combinations(vir_beta.tolist(), 2)
             ]
-        )
+        ).reshape(*shape)
 
         # FIXME: hardcode slater determinant structure
         occ_beta -= nspatial
