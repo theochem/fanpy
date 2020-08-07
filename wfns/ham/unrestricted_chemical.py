@@ -3443,59 +3443,13 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
-        overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
-
-        overlaps_one_alpha = np.array(
-            [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                    for occ in it.combinations(occ_alpha.tolist(), 1)
-                    for vir in it.combinations(vir_alpha.tolist(), 1)
-                ]
-            ]
-        )
-        overlaps_one_beta = np.array(
-            [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                    for occ in it.combinations(occ_beta.tolist(), 1)
-                    for vir in it.combinations(vir_beta.tolist(), 1)
-                ]
-            ]
-        )
-
-        overlaps_two_aa = np.array(
-            [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                    for occ in it.combinations(occ_alpha.tolist(), 2)
-                    for vir in it.combinations(vir_alpha.tolist(), 2)
-                ]
-            ]
-        )
-        overlaps_two_ab = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
-                for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
-            ]
-        )
-        overlaps_two_bb = np.array(
-            [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                    for occ in it.combinations(occ_beta.tolist(), 2)
-                    for vir in it.combinations(vir_beta.tolist(), 2)
-                ]
-            ]
-        )
-
         # FIXME: hardcode slater determinant structure
         occ_beta -= nspatial
         vir_beta -= nspatial
 
         output = np.zeros((3, self.nparams))
 
+        overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
         output[:, alpha_param_indices] += np.squeeze(
             self._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha) * overlaps_zero,
             axis=2,
@@ -3505,32 +3459,67 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             axis=2,
         )
 
+        overlaps_one_alpha = np.array(
+            [
+                [
+                    wfn.get_overlap(sd_exc)
+                    for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 1)
+                ]
+            ]
+        )
         output[:, alpha_param_indices] += np.sum(
             self._integrate_sd_sds_deriv_one_aa(occ_alpha, occ_beta, vir_alpha)
             * overlaps_one_alpha,
             axis=2,
         )
-        output[1, alpha_param_indices] += np.sum(
-            self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta)
-            * overlaps_one_beta[0],
-            axis=1,
-        )
         output[1, beta_param_indices] += np.sum(
             self._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha)
-            * overlaps_one_alpha[0],
+            * overlaps_one_alpha,
             axis=1,
+        )
+
+        overlaps_one_beta = np.array(
+            [
+                [
+                    wfn.get_overlap(sd_exc)
+                    for sd_exc in slater.excite_bulk(
+                            sd, occ_beta + nspatial, vir_beta + nspatial, 1
+                    )
+                ]
+            ]
         )
         output[:, beta_param_indices] += np.sum(
             self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta) * overlaps_one_beta,
             axis=2,
         )
+        output[1, alpha_param_indices] += np.sum(
+            self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta) * overlaps_one_beta,
+            axis=1,
+        )
 
+        overlaps_two_aa = np.array(
+            [
+                [
+                    wfn.get_overlap(sd_exc)
+                    for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 2)
+                ]
+            ]
+        )
         if occ_alpha.size > 1 and vir_alpha.size > 1:
             output[1:, alpha_param_indices] += np.sum(
                 self._integrate_sd_sds_deriv_two_aaa(occ_alpha, occ_beta, vir_alpha)
                 * overlaps_two_aa,
                 axis=2,
             )
+
+        overlaps_two_ab = np.array(
+            [
+                wfn.get_overlap(sd_exc)
+                for sd_exc in slater.excite_bulk_two_ab(
+                    sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
+                )
+            ]
+        )
         if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
             output[1, alpha_param_indices] += np.sum(
                 self._integrate_sd_sds_deriv_two_aab(occ_alpha, occ_beta, vir_alpha, vir_beta)
@@ -3542,6 +3531,17 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
                 * overlaps_two_ab,
                 axis=1,
             )
+
+        overlaps_two_bb = np.array(
+            [
+                [
+                    wfn.get_overlap(sd_exc)
+                    for sd_exc in slater.excite_bulk(
+                        sd, occ_beta + nspatial, vir_beta + nspatial, 2
+                    )
+                ]
+            ]
+        )
         if occ_beta.size > 1 and vir_beta.size > 1:
             output[1:, beta_param_indices] += np.sum(
                 self._integrate_sd_sds_deriv_two_bbb(occ_alpha, occ_beta, vir_beta)
