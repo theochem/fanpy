@@ -458,7 +458,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
 
         Returns
@@ -490,7 +490,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
 
         Returns
@@ -534,7 +534,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : int
             Slater Determinant against which the overlap is taken.
         deriv : {np.ndarray, None}
             Indices of the parameters with respect to which the overlap is derivatized.

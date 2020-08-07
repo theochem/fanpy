@@ -160,7 +160,7 @@ class DeterminantRatio(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
         index : int
             Index of the selected matrix.
@@ -279,7 +279,7 @@ class DeterminantRatio(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
 
@@ -302,7 +302,7 @@ class DeterminantRatio(BaseWavefunction):
 
         Parameters
         ----------
-        sd : gmpy2.mpz
+        sd : int
             Occupation vector of a Slater determinant given as a bitstring.
             Assumed to have the same number of electrons as the wavefunction.
 
@@ -376,7 +376,7 @@ class DeterminantRatio(BaseWavefunction):
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : int
             Slater Determinant against which the overlap is taken.
         deriv : {np.ndarray, None}
             Indices of the parameters with respect to which the overlap is derivatized.

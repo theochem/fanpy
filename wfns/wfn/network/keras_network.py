@@ -257,7 +257,7 @@ class KerasNetwork(BaseWavefunction):
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : int
             Slater Determinant against which the overlap is taken.
         deriv : {np.ndarray, None}
             Indices of the parameters with respect to which the overlap is derivatized.

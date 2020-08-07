@@ -180,7 +180,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         Parameters
         ----------
-        sd : {int, mpz}
+        sd : int
             Slater Determinant against which the overlap is taken.
 
         Returns
