@@ -184,55 +184,32 @@ def test_ground():
     assert slater.ground(3, 6) == 0b001011
 
 
-def test_is_internal_sd():
-    """Test slater.is_internal_sd."""
-    assert slater.is_internal_sd(2)
-    assert not slater.is_internal_sd([5])
-    assert not slater.is_internal_sd(None)
-    assert not slater.is_internal_sd((3,))
-
-
-def test_internal_sd():
-    """Test slater.internal_sd."""
-    # Check error
-    with pytest.raises(TypeError):
-        slater.internal_sd(None)
-    with pytest.raises(TypeError):
-        slater.internal_sd("5")
-    with pytest.raises(TypeError):
-        slater.internal_sd([0, 3])
-
-    # integer
-    assert slater.internal_sd(5) == 5
-    assert isinstance(slater.internal_sd(5), int)
-
-
 def test_occ_indices():
     """Test slater.occ_indices."""
-    assert slater.occ_indices(None) == ()
-    assert slater.occ_indices(0) == ()
-    assert slater.occ_indices(0b0) == ()
+    assert np.allclose(slater.occ_indices(None), [])
+    assert np.allclose(slater.occ_indices(0), [])
+    assert np.allclose(slater.occ_indices(0b0), [])
 
-    assert slater.occ_indices(0b1000000) == (6,)
-    assert slater.occ_indices(0b1010000) == (4, 6)
-    assert slater.occ_indices(0b1010100) == (2, 4, 6)
+    assert np.allclose(slater.occ_indices(0b1000000), (6,))
+    assert np.allclose(slater.occ_indices(0b1010000), (4, 6))
+    assert np.allclose(slater.occ_indices(0b1010100), (2, 4, 6))
 
 
 def test_vir_indices():
     """Test slater.vir_indices."""
-    assert slater.vir_indices(None, 0) == ()
+    assert np.allclose(slater.vir_indices(None, 0), ())
 
-    assert slater.vir_indices(0, 3) == (0, 1, 2)
-    assert slater.vir_indices(0b0, 4) == (0, 1, 2, 3)
+    assert np.allclose(slater.vir_indices(0, 3), (0, 1, 2))
+    assert np.allclose(slater.vir_indices(0b0, 4), (0, 1, 2, 3))
 
-    assert slater.vir_indices(0b10000, 7) == (0, 1, 2, 3, 5, 6)
-    assert slater.vir_indices(0b10000, 6) == (0, 1, 2, 3, 5)
-    assert slater.vir_indices(0b10000, 5) == (0, 1, 2, 3)
+    assert np.allclose(slater.vir_indices(0b10000, 7), (0, 1, 2, 3, 5, 6))
+    assert np.allclose(slater.vir_indices(0b10000, 6), (0, 1, 2, 3, 5))
+    assert np.allclose(slater.vir_indices(0b10000, 5), (0, 1, 2, 3))
     # FIXME: notice that number of orbitals can be less than the highest occupied index
-    assert slater.vir_indices(0b10000, 4) == (0, 1, 2, 3)
-    assert slater.vir_indices(0b10000, 3) == (0, 1, 2)
-    assert slater.vir_indices(0b10000, 2) == (0, 1)
-    assert slater.vir_indices(0b10000, 1) == (0,)
+    assert np.allclose(slater.vir_indices(0b10000, 4), (0, 1, 2, 3))
+    assert np.allclose(slater.vir_indices(0b10000, 3), (0, 1, 2))
+    assert np.allclose(slater.vir_indices(0b10000, 2), (0, 1))
+    assert np.allclose(slater.vir_indices(0b10000, 1), (0,))
 
 
 def test_shared_sd():
@@ -244,17 +221,21 @@ def test_shared_sd():
 
 def test_shared_orbs():
     """Test slater.shared_orbs."""
-    assert slater.shared_orbs(0b001, 0b000) == ()
-    assert slater.shared_orbs(0b111, 0b001) == (0,)
-    assert slater.shared_orbs(0b111, 0b101) == (0, 2)
+    assert np.allclose(slater.shared_orbs(0b001, 0b000), ())
+    assert np.allclose(slater.shared_orbs(0b111, 0b001), (0,))
+    assert np.allclose(slater.shared_orbs(0b111, 0b101), (0, 2))
 
 
 def test_diff_orbs():
     """Test slater.diff_orbs."""
-    assert slater.diff_orbs(0b001, 0b000) == ((0,), ())
-    assert slater.diff_orbs(0b001, 0b001) == ((), ())
-    assert slater.diff_orbs(0b011, 0b101) == ((1,), (2,))
-    assert slater.diff_orbs(0b101, 0b011) == ((2,), (1,))
+    assert np.allclose(slater.diff_orbs(0b001, 0b000)[0], ((0,), ())[0])
+    assert np.allclose(slater.diff_orbs(0b001, 0b001)[0], ((), ())[0])
+    assert np.allclose(slater.diff_orbs(0b011, 0b101)[0], ((1,), (2,))[0])
+    assert np.allclose(slater.diff_orbs(0b101, 0b011)[0], ((2,), (1,))[0])
+    assert np.allclose(slater.diff_orbs(0b001, 0b000)[1], ((0,), ())[1])
+    assert np.allclose(slater.diff_orbs(0b001, 0b001)[1], ((), ())[1])
+    assert np.allclose(slater.diff_orbs(0b011, 0b101)[1], ((1,), (2,))[1])
+    assert np.allclose(slater.diff_orbs(0b101, 0b011)[1], ((2,), (1,))[1])
 
 
 def test_combine_spin():

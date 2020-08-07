@@ -143,7 +143,9 @@ class MatrixProductState(BaseWavefunction):
 
         """
         # pylint: disable=C0103
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         indices = np.zeros(self.nspatial, dtype=int)
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
         alpha_occ = list(slater.occ_indices(alpha_sd))
@@ -469,7 +471,9 @@ class MatrixProductState(BaseWavefunction):
             If given Slater determinant is not compatible with the format used internally.
 
         """
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
 
         # if no derivatization
         if deriv is None:

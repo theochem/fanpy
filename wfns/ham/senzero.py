@@ -99,7 +99,9 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
             )
 
         nspatial = self.nspatial
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         if slater.get_seniority(sd, nspatial) != 0:
             if components:
                 return 0.0, 0.0, 0.0
@@ -178,8 +180,9 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         nspatial = self.nspatial
 
-        sd1 = slater.internal_sd(sd1)
-        sd2 = slater.internal_sd(sd2)
+        if __debug__:
+            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+                raise TypeError("Slater determinant must be given as an integer.")
 
         # if the Slater determinants are not seniority zero
         if not slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0:

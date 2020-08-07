@@ -154,7 +154,7 @@ def get_density_matrix(
             sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)
         )
     if slater.is_sd_compatible(refwfn):
-        refwfn = slater.internal_sd(refwfn)
+        pass
     elif isinstance(refwfn, (list, tuple)):
         for sd in refwfn:  # pylint: disable=C0103
             if slater.is_sd_compatible(sd):

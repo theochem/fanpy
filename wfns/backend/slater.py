@@ -24,12 +24,8 @@ decide to change the format of the Slater determinant, only this module needs to
 
 Functions
 ---------
-is_internal_sd(sd) : bool
-    Check if given Slater determinant is the same type as the one used internally in this module.
 is_sd_compatible(sd) : bool
     Check if given Slater determinant is compatible.
-internal_sd(identifier) : int
-    Create a Slater detrminant as a `int` object.
 occ(sd, i) : bool
     Check if a given Slater determinant has orbital `i` occupied.
 occ_indices(sd) : tuple of ints
@@ -82,23 +78,6 @@ sign_swap(sd, pos_current, pos_future) : int
 import numpy as np
 
 
-def is_internal_sd(sd):
-    """Check if given Slater determinant is an int object.
-
-    Parameters
-    ----------
-    sd : int
-        Some representation of a Slater determinant.
-
-    Returns
-    -------
-    True if it is the right type.
-    False if it is not the right type.
-
-    """
-    return isinstance(sd, int)
-
-
 def is_sd_compatible(sd):
     """Check if given Slater determinant is compatible.
 
@@ -109,38 +88,10 @@ def is_sd_compatible(sd):
 
     Returns
     -------
-    True if it is the right type.
-    False if it is not the right type.
+    bool
 
     """
-    return isinstance(sd, (int, np.int64))
-
-
-def internal_sd(identifier):
-    """Create a Slater detrminant as an int object.
-
-    Parameters
-    ----------
-    identifier : int
-        Occupation vector of a Slater determinant.
-        Binary form of the integer describes the occupation of each orbital.
-
-    Returns
-    -------
-    sd : int
-        Representation of Slater determinant within this module.
-
-    Raises
-    ------
-    TypeError
-        If `identifier` not an integer.
-
-    """
-    # pylint: disable=R1705
-    if is_sd_compatible(identifier):
-        return int(identifier)
-    else:
-        raise TypeError("Unsupported Slater determinant form, {0}".format(type(identifier)))
+    return isinstance(sd, (int, np.integer))
 
 
 def occ(sd, i):
@@ -173,13 +124,13 @@ def occ_indices(sd):
 
     Returns
     -------
-    occ_indices : tuple of int
-        Tuple of occupied orbitals indices.
+    occ_indices : np.array
+        Orbitals occupied in the given Slater determinant.
 
     """
     if sd is None:
         return ()
-    return tuple(i for i, occ in enumerate(bin(sd)[:1:-1]) if int(occ))
+    return np.array([i for i, occ in enumerate(bin(sd)[:1:-1]) if int(occ)], dtype=int)
 
 
 def vir_indices(sd, norbs):
@@ -194,8 +145,8 @@ def vir_indices(sd, norbs):
 
     Returns
     -------
-    occ_indices : tuple of int
-        Tuple of virtual orbital indices.
+    vir_indices : np.ndarray
+        Orbitals not occupied in the given Slater determinant.
 
     """
     # FIXME: there will almost always be more virtuals than occupieds (it will be faster to exclude
@@ -203,7 +154,7 @@ def vir_indices(sd, norbs):
     # FIXME: no check for the total number of orbitals (can be less than actual number)
     if sd is None or norbs <= 0:
         return ()
-    return tuple(i for i in range(norbs) if not sd & (1 << i))
+    return np.array([i for i in range(norbs) if not sd & (1 << i)], dtype=int)
 
 
 def total_occ(sd):
@@ -481,7 +432,7 @@ def shared_orbs(sd1, sd2):
 
     Returns
     -------
-    shared_orbs : tuple of ints
+    shared_orbs : np.ndarray
         Orbitals shared by the two Slater determinants
 
     """
@@ -500,7 +451,7 @@ def diff_orbs(sd1, sd2):
 
     Returns
     -------
-    diff_orbs : 2-tuple of tuple of ints
+    diff_orbs : 2-tuple of np.ndarray
         First tuple are the occupied orbital indices of `sd1` that are not occupied in `sd2`.
         Second tuple are the occupied orbital indices of `sd2` that are not occupied in `sd1`.
 
@@ -901,9 +852,9 @@ def sign_swap(sd, pos_current, pos_future):
     """
     if sd is None:
         raise ValueError("Bad Slater determinant is given.")
-    if not (isinstance(pos_current, int) and pos_current >= 0):
+    if not (isinstance(pos_current, (int, np.integer)) and pos_current >= 0):
         raise ValueError("The current orbital position must be a positive integer.")
-    if not (isinstance(pos_future, int) and pos_future >= 0):
+    if not (isinstance(pos_future, (int, np.integer)) and pos_future >= 0):
         raise ValueError("The future orbital position must be a positive integer.")
     if not occ(sd, pos_current):
         raise ValueError("Given orbital is not occupied in the given Slater determinant.")

@@ -281,10 +281,10 @@ class SystemEquations(BaseSchrodinger):
             self.refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin),)
         elif slater.is_sd_compatible(refwfn):
             self.refwfn = (refwfn,)
-        elif isinstance(refwfn, (list, tuple)) and all(
+        elif isinstance(refwfn, (list, tuple)) and not all(
             slater.is_sd_compatible(sd) for sd in refwfn
         ):
-            self.refwfn = tuple(slater.internal_sd(sd) for sd in refwfn)
+            raise TypeError("Slater determinant must be given as an integer.")
         elif isinstance(refwfn, CIWavefunction):
             self.refwfn = refwfn
         else:

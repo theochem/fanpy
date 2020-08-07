@@ -369,7 +369,8 @@ def test_gem_get_overlap():
             BaseGeminal,
             dict_overwrite={
                 "generate_possible_orbpairs": lambda self, occ_indices: [
-                    (((0, 1), (2, 3)), 1) if occ_indices == (0, 1, 2, 3) else ((), 1)
+                    (((0, 1), (2, 3)), 1) if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
+                    else ((), 1)
                 ]
             },
         )

@@ -189,7 +189,9 @@ class AP1roG(APIG):
         # pylint: disable=C0103
         if sd is None:
             sd = slater.ground(self.nelec, self.nspin)
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         if slater.total_occ(sd) != self.nelec:
             raise ValueError(
                 "Given Slater determinant does not have the correct number of " "electrons"
@@ -356,7 +358,9 @@ class AP1roG(APIG):
 
         """
         # pylint: disable=R0911
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
 
         # cut off beta part (for just the alpha/spatial part)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)

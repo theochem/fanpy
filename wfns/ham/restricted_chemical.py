@@ -127,8 +127,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         nspatial = self.nspatial
 
-        sd1 = slater.internal_sd(sd1)
-        sd2 = slater.internal_sd(sd2)
+        if __debug__:
+            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+                raise TypeError("Slater determinant must be given as an integer.")
         shared_alpha_sd, shared_beta_sd = slater.split_spin(slater.shared_sd(sd1, sd2), nspatial)
         shared_alpha = np.array(slater.occ_indices(shared_alpha_sd))
         shared_beta = np.array(slater.occ_indices(shared_beta_sd))
@@ -263,8 +264,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         # pylint: disable=C0103
         nspatial = self.nspatial
 
-        sd1 = slater.internal_sd(sd1)
-        sd2 = slater.internal_sd(sd2)
+        if __debug__:
+            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+                raise TypeError("Slater determinant must be given as an integer.")
         # NOTE: following are spatial orbital indices
         shared_alpha, shared_beta = map(
             lambda shared_sd: np.array(slater.occ_indices(shared_sd)),
@@ -3352,7 +3354,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         """
         # pylint: disable=C0103
         nspatial = self.nspatial
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
         # FIXME: hardcode slater determinant structure
@@ -3498,7 +3502,9 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             )
 
         nspatial = self.nspatial
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 

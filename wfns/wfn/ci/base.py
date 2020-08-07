@@ -275,7 +275,9 @@ class CIWavefunction(BaseWavefunction):
         sd_vec_is_empty = True
         for sd in temp:
             sd_vec_is_empty = False
-            sd = slater.internal_sd(sd)
+            if __debug__:
+                if not slater.is_sd_compatible(sd):
+                    raise TypeError("Slater determinant must be given as an integer.")
             if slater.total_occ(sd) != self.nelec:
                 raise ValueError(
                     "Slater determinant, {0}, does not have the correct number of "
@@ -348,13 +350,10 @@ class CIWavefunction(BaseWavefunction):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally.
-
         """
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         # pylint:disable=R1705
         if deriv is None:
             try:

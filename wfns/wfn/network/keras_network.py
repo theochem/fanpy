@@ -274,7 +274,9 @@ class KerasNetwork(BaseWavefunction):
         Overlaps and their derivatives are not cached.
 
         """
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         occ_vector = np.zeros(self.nspin)
         occ_vector[np.array(slater.occ_indices(sd))] = 1
         # NOTE: overlaps are not being cached

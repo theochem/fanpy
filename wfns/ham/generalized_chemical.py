@@ -205,8 +205,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         if deriv is not None:
             return self._integrate_sd_sd_deriv(sd1, sd2, deriv, components=components)
 
-        sd1 = slater.internal_sd(sd1)
-        sd2 = slater.internal_sd(sd2)
+        if __debug__:
+            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+                raise TypeError("Slater determinant must be given as an integer.")
         shared_indices = np.array(slater.shared_orbs(sd1, sd2))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
@@ -419,8 +420,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103,R0912,R0915
-        sd1 = slater.internal_sd(sd1)
-        sd2 = slater.internal_sd(sd2)
+        if __debug__:
+            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+                raise TypeError("Slater determinant must be given as an integer.")
         # NOTE: shared_indices contains spatial orbital indices
         shared_indices = np.array(slater.shared_orbs(sd1, sd2))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
@@ -1489,7 +1491,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 
@@ -1579,20 +1583,22 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        if not (
-            isinstance(ham_derivs, np.ndarray) and ham_derivs.ndim == 1 and ham_derivs.dtype == int
-        ):
-            raise TypeError(
-                "Derivative indices for the Hamiltonian parameters must be given as a "
-                "one-dimensional numpy array of integers."
-            )
-        if np.any(ham_derivs < 0) or np.any(ham_derivs >= self.nparams):
-            raise ValueError(
-                "Derivative indices for the Hamiltonian parameters must be greater than or equal to"
-                " 0 and be less than the number of parameters."
-            )
+        if __debug__:
+            if not (
+                isinstance(ham_derivs, np.ndarray) and ham_derivs.ndim == 1 and ham_derivs.dtype == int
+            ):
+                raise TypeError(
+                    "Derivative indices for the Hamiltonian parameters must be given as a "
+                    "one-dimensional numpy array of integers."
+                )
+            if np.any(ham_derivs < 0) or np.any(ham_derivs >= self.nparams):
+                raise ValueError(
+                    "Derivative indices for the Hamiltonian parameters must be greater than or equal to"
+                    " 0 and be less than the number of parameters."
+                )
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
 
-        sd = slater.internal_sd(sd)
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 

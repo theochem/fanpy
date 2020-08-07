@@ -551,12 +551,13 @@ class BaseQuasiparticle(BaseWavefunction):
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
 
         """
-        sd = slater.internal_sd(sd)
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
 
         # if no derivatization
         if deriv is None:
             return self._olp(sd)
-
         return self._olp_deriv(sd, deriv)
 
     @abc.abstractmethod
