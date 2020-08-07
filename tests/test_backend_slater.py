@@ -624,3 +624,110 @@ def test_spatial_to_spin_indices():
         slater.spatial_to_spin_indices(np.array([0, -1]), 4, False)
     with pytest.raises(ValueError):
         slater.spatial_to_spin_indices(np.array([0, 5]), 4, False)
+
+
+def test_excite_bulk():
+    """Test slater.excite_bulk."""
+    assert np.allclose(
+        slater.excite_bulk(0b111111, np.arange(6, dtype=int), np.arange(6, 20, dtype=int), 0),
+        [0b0000111111],
+    )
+    assert np.allclose(
+        slater.excite_bulk(0b111111, np.arange(6, dtype=int), np.arange(6, 20, dtype=int), 1),
+        [slater.excite(0b0000111111, i, j) for i in range(6) for j in range(6, 20)],
+    )
+    assert np.allclose(
+        slater.excite_bulk(0b111111, np.arange(6, dtype=int), np.arange(6, 20, dtype=int), 2),
+        [
+            slater.excite(0b0000111111, i1, i2, j2, j1)
+            for i1 in range(6)
+            for i2 in range(i1 + 1, 6)
+            for j1 in range(6, 20)
+            for j2 in range(j1 + 1, 20)
+        ],
+    )
+    assert np.allclose(
+        slater.excite_bulk(0b111111, np.arange(6, dtype=int), np.arange(6, 10, dtype=int), 3),
+        [
+            slater.excite(0b0000111111, i1, i2, i3, j3, j2, j1)
+            for i1 in range(6)
+            for i2 in range(i1 + 1, 6)
+            for i3 in range(i2 + 1, 6)
+            for j1 in range(6, 10)
+            for j2 in range(j1 + 1, 10)
+            for j3 in range(j2 + 1, 10)
+        ],
+    )
+
+
+def test_sign_excite_one():
+    """Test slater.sign_excite_one."""
+    assert np.allclose(
+        slater.sign_excite_one(np.arange(6), np.arange(6, 20)),
+        [slater.sign_excite(0b0000111111, [i], [j]) for i in range(6) for j in range(6, 20)],
+    )
+    occ_indices = np.array([0, 3, 6, 7, 9, 11])
+    vir_indices = np.array([1, 2, 4, 5, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19])
+    assert np.allclose(
+        slater.sign_excite_one(occ_indices, vir_indices),
+        [
+            slater.sign_excite(slater.create(0, *occ_indices), [i], [j])
+            for i in occ_indices for j in vir_indices
+        ],
+    )
+
+
+def test_sign_excite_two():
+    """Test slater.sign_excite_two."""
+    assert np.allclose(
+        slater.sign_excite_two(np.arange(6), np.arange(6, 10)),
+        [
+            slater.sign_excite(0b0000111111, [i1, i2], [j2, j1])
+            for i1 in range(6)
+            for i2 in range(i1 + 1, 6)
+            for j1 in range(6, 10)
+            for j2 in range(j1 + 1, 10)
+        ],
+    )
+    occ_indices = [0, 3, 6, 7, 9, 11]
+    vir_indices = [1, 2, 4, 5, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19]
+    assert np.allclose(
+        slater.sign_excite_two(occ_indices, vir_indices),
+        [
+            slater.sign_excite(slater.create(0, *occ_indices), [i1, i2], [j2, j1])
+            for i, i1 in enumerate(occ_indices)
+            for i2 in occ_indices[i + 1:]
+            for j, j1 in enumerate(vir_indices)
+            for j2 in vir_indices[j + 1:]
+        ],
+    )
+
+
+def test_sign_excite_two_ab():
+    """Test slater.sign_excite_two_ab."""
+    assert np.allclose(
+        slater.sign_excite_two_ab(
+            np.arange(3), np.arange(10, 13), np.arange(3, 10), np.arange(13, 20)
+        ),
+        [
+            slater.sign_excite(0b1110000000111, [i1, i2], [j2, j1])
+            for i1 in range(3)
+            for i2 in range(10, 13)
+            for j1 in range(3, 10)
+            for j2 in range(13, 20)
+        ],
+    )
+    occ_alpha = [0, 3, 6]
+    occ_beta = [11, 13]
+    vir_alpha = [1, 2, 4, 5, 7, 8, 9]
+    vir_beta = [10, 12, 14, 15, 16, 17, 18, 19]
+    assert np.allclose(
+        slater.sign_excite_two_ab(occ_alpha, occ_beta, vir_alpha, vir_beta),
+        [
+            slater.sign_excite(slater.create(0, *occ_alpha, *occ_beta), [i1, i2], [j2, j1])
+            for i1 in occ_alpha
+            for i2 in occ_beta
+            for j1 in vir_alpha
+            for j2 in vir_beta
+        ],
+    )

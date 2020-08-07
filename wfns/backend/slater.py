@@ -75,7 +75,9 @@ sign_swap(sd, pos_current, pos_future) : int
 
 """
 # pylint: disable=C0103,C0302
+import itertools as it
 import numpy as np
+import scipy.special
 
 
 def is_sd_compatible(sd):
@@ -1069,3 +1071,310 @@ def spatial_to_spin_indices(spatial_indices, nspatial, to_beta=True):
         return spatial_indices + nspatial
     else:
         return spatial_indices
+
+
+def excite_bulk(sd, occ_indices, vir_indices, excite_order):
+    """Return all possible excitations from the given occupied and virtual orbitals.
+
+    Parameters
+    ----------
+    sd : int
+        Slater determinant to which the excitation operators is applied.
+    occ_indices : np.ndarray
+        Tuple of occupied orbital indices.
+    vir_indices : np.ndarray
+        Tuple of virtual orbital indices.
+    excite_order : int
+        Order of excitation.
+
+    Returns
+    -------
+    excited_sds : np.ndarray(dtype=int)
+        Integers that describe the occupations of a excitations as a bitstring.
+
+    Raises
+    ------
+    ValueError
+        If the length of indices is not even (cannot evenly split up the indices in two).
+
+    """
+    if __debug__:
+        occ_indices = np.array(occ_indices)
+        vir_indices = np.array(vir_indices)
+        if not (isinstance(excite_order, (int, np.integer)) and excite_order >= 0):
+            raise TypeError('Order of excitation must be an integer greater than or equal to zero.')
+
+    # def fromiter(iterator, dtype, ydim, count):
+    #     return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
+
+    if excite_order == 0:
+        return np.array([sd], dtype=int)
+
+    occ_indices = np.fromiter(
+        it.chain.from_iterable(it.combinations(occ_indices.tolist(), excite_order)),
+        int,
+        count=excite_order * int(scipy.special.comb(occ_indices.size, excite_order))
+    ).reshape(-1, excite_order)
+    occ_indices = np.left_shift(1, occ_indices)
+    if excite_order >= 2:
+        occ_indices = np.bitwise_or.reduce(occ_indices.T)
+
+    vir_indices = np.fromiter(
+        it.chain.from_iterable(it.combinations(vir_indices.tolist(), excite_order)),
+        int,
+        count=excite_order * int(scipy.special.comb(vir_indices.size, excite_order))
+    ).reshape(-1, excite_order)
+    vir_indices = np.left_shift(1, vir_indices)
+    if excite_order >= 2:
+        vir_indices = np.bitwise_or.reduce(vir_indices.T)
+
+    return np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_indices)[:, None], vir_indices[None, :]))
+
+
+def excite_bulk_two_ab(sd, occ_alpha, occ_beta, vir_alpha, vir_beta):
+    """Return all possible excitations from the given occupied and virtual orbitals.
+
+    Parameters
+    ----------
+    sd : int
+        Slater determinant to which the excitation operators is applied.
+    occ_alpha : np.ndarray
+        Tuple of occupied alpha orbital indices.
+    occ_beta : np.ndarray
+        Tuple of occupied beta orbital indices.
+    vir_alpha : np.ndarray
+        Tuple of virtual alpha orbital indices.
+    vir_beta : np.ndarray
+        Tuple of virtual beta orbital indices.
+    excite_order : int
+        Order of excitation.
+
+    Returns
+    -------
+    excited_sds : np.ndarray(dtype=int)
+        Integers that describe the occupations of a excitations as a bitstring.
+
+    Raises
+    ------
+    ValueError
+        If the length of indices is not even (cannot evenly split up the indices in two).
+
+    """
+    if __debug__:
+        occ_alpha = np.array(occ_alpha)
+        occ_beta = np.array(occ_beta)
+        vir_alpha = np.array(vir_alpha)
+        vir_beta = np.array(vir_beta)
+
+    occ_indices = np.fromiter(
+        it.chain.from_iterable(it.product(occ_alpha.tolist(), occ_beta.tolist())),
+        int,
+        count=2*len(occ_alpha) * len(occ_beta)
+    ).reshape(-1, 2)
+    occ_indices = np.left_shift(1, occ_indices)
+    occ_indices = np.bitwise_or.reduce(occ_indices.T)
+
+    vir_indices = np.fromiter(
+        it.chain.from_iterable(it.product(vir_alpha.tolist(), vir_beta.tolist())),
+        int,
+        count=2*len(vir_alpha) * len(vir_beta)
+    ).reshape(-1, 2)
+    vir_indices = np.left_shift(1, vir_indices)
+    vir_indices = np.bitwise_or.reduce(vir_indices.T)
+
+    return np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_indices)[:, None], vir_indices[None, :]))
+
+
+def sign_excite_one(occ_indices, vir_indices):
+    """Return the signs of Slater determinants after first-order excitation.
+
+    Parameters
+    ----------
+    occ_indices : np.ndarray
+        Orbitals occupied in the given Slater determinant.
+    vir_indices : np.ndarray
+        Orbitals not occupied in the given Slater determinant.
+
+    Returns
+    -------
+    signs : np.ndarray
+        Signs of the Slater determinants after first-order excitations in the same order as
+        `bulk_excite`.
+
+    """
+    num_occ = occ_indices.size
+
+    bin_sizes = [0] * (num_occ + 1)
+    counter = 0
+    for a in vir_indices:
+        while counter < num_occ and a > occ_indices[counter]:
+            counter += 1
+        bin_sizes[counter] += 1
+
+    output = []
+    for i in range(num_occ):
+        # i is the position in the occ_indices
+        for j in range(num_occ + 1):
+            # j is the position of the spaces beween occ_indices
+            # 0 is the space before index 0
+            # 1 is the space between indices 0 and 1,
+            # n is the space after n-1
+            num_jumps = i + j
+            if j > i:
+                num_jumps -= 1
+            if num_jumps % 2 == 0:
+                output += [1] * bin_sizes[j]
+            else:
+                output += [-1] * bin_sizes[j]
+    return np.array(output)
+
+
+def sign_excite_two(occ_indices, vir_indices):
+    """Return the signs of Slater determinants after second-order excitation (same spin).
+
+    Parameters
+    ----------
+    occ_indices : np.ndarray
+        Orbitals occupied in the given Slater determinant.
+    vir_indices : np.ndarray
+        Orbitals not occupied in the given Slater determinant.
+
+    Returns
+    -------
+    signs : np.ndarray
+        Signs of the Slater determinants after second-order excitations in the same order as
+        `bulk_excite`.
+
+    """
+    num_occ = len(occ_indices)
+
+    bin_sizes = [0] * (num_occ + 1)
+    # cdef long[:] bin_sizes = np.zeros(num_occ + 1, dtype=int)
+    # assume occ_indices is ordered
+    # assume vir_indices is ordered
+    counter = 0
+    for a in vir_indices:
+        while counter < num_occ and a > occ_indices[counter]:
+            counter += 1
+        bin_sizes[counter] += 1
+
+    output = []
+    for i1 in range(num_occ):
+        for i2 in range(i1 + 1, num_occ):
+            # i1 and i2 are the positions in the occ_indices
+            for j1 in range(num_occ + 1):
+                # j is the position of the spaces beween occ_indices
+                # 0 is the space before index 0
+                # 1 is the space between indices 0 and 1,
+                # n is the space after n-1
+
+                if bin_sizes[j1] == 0:
+                    continue
+
+                # when j1 == j2
+                num_jumps = i1 + i2 - 1 + 2 * j1
+                # sign resulting from creations where j1 == j2
+                if num_jumps % 2 == 0:
+                    sign_j1 = 1
+                else:
+                    sign_j1 = -1
+
+                signs_j2 = []
+                for j2 in range(j1 + 1, num_occ + 1):
+                    if bin_sizes[j2] == 0:
+                        continue
+
+                    num_jumps = i1 + i2 - 1 + j2 + j1
+                    num_jumps -= sum([j2 > i1, j2 > i2, j1 > i1, j1 > i2])
+
+                    if num_jumps % 2 == 0:
+                        sign = 1
+                    else:
+                        sign = -1
+
+                    signs_j2 += [sign] * bin_sizes[j2]
+
+                for len_j1 in reversed(range(bin_sizes[j1])):
+                    output += [sign_j1] * len_j1 + signs_j2
+
+    return np.array(output)
+
+
+def sign_excite_two_ab(occ_alpha, occ_beta, vir_alpha, vir_beta):
+    """Return the signs of Slater determinants after first-order excitations (different spin).
+
+    One occupied alpha orbital and one occupied beta orbital are excited to virtual alpha and beta
+    orbitals.
+
+    Parameters
+    ----------
+    occ_alpha : np.ndarray
+        Alpha orbitals occupied in the given Slater determinant.
+    occ_beta : np.ndarray
+        Beta orbitals occupied in the given Slater determinant.
+    vir_alpha : np.ndarray
+        Alpha orbitals not occupied in the given Slater determinant.
+    vir_beta : np.ndarray
+        Beta orbitals not occupied in the given Slater determinant.
+
+    Returns
+    -------
+    signs : np.ndarray
+        Signs of the Slater determinants after second-order excitations in the same order as
+        `bulk_excite`.
+
+    """
+    num_occ_alpha = len(occ_alpha)
+    num_occ_beta = len(occ_beta)
+
+    bin_sizes_alpha = [0] * (num_occ_alpha + 1)
+    bin_sizes_beta = [0] * (num_occ_beta + 1)
+    # cdef long[:] bin_sizes_alpha = np.zeros(num_occ_alpha + 1, dtype=int)
+    # cdef long[:] bin_sizes_beta = np.zeros(num_occ_beta + 1, dtype=int)
+    # assume occ_alpha, vir_alpha, occ_beta, vir_beta are ordered
+
+    counter = 0
+    for a in vir_alpha:
+        while counter < num_occ_alpha and a > occ_alpha[counter]:
+            counter += 1
+        bin_sizes_alpha[counter] += 1
+
+    counter = 0
+    for a in vir_beta:
+        while counter < num_occ_beta and a > occ_beta[counter]:
+            counter += 1
+        bin_sizes_beta[counter] += 1
+
+    output = []
+    for i_a in range(num_occ_alpha):
+        # i_a is the position in the occ_alpha_indices
+        for i_b in range(num_occ_beta):
+            # i_b is the position in the occ_beta_indices
+            for j_a in range(num_occ_alpha + 1):
+                # j_a is the position of the spaces beween occ_alpha_indices
+                # 0 is the space before index 0
+                # 1 is the space between indices 0 and 1,
+                # n is the space after n-1
+                # if not bins_alpha[j_a]:
+                if not bin_sizes_alpha[j_a]:
+                    continue
+                output_j_b = []
+                for j_b in range(num_occ_beta + 1):
+                    # j_b is the position of the spaces beween occ_beta_indices
+                    # 0 is the space before index 0
+                    # 1 is the space between indices 0 and 1,
+                    # n is the space after n-1
+                    # if not bins_beta[j_b]:
+                    if not bin_sizes_beta[j_b]:
+                        continue
+                    num_jumps = i_a + i_b + j_b + j_a
+                    if j_a > i_a:
+                        num_jumps -= 1
+                    if j_b > i_b:
+                        num_jumps -= 1
+                    if num_jumps % 2 == 0:
+                        output_j_b += [1] * bin_sizes_beta[j_b]
+                    else:
+                        output_j_b += [-1] * bin_sizes_beta[j_b]
+                output += output_j_b * bin_sizes_alpha[j_a]
+    return np.array(output)
