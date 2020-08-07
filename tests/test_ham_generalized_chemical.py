@@ -669,8 +669,8 @@ def test_integrate_sd_wfn():
                 test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=None),
             )
             assert np.allclose(
-                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=0),
-                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=0),
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=[0]),
+                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=[0]),
             )
 
 

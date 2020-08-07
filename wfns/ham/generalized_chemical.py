@@ -1493,40 +1493,46 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 
+        if wfn_deriv is None:
+            shape = (-1,)
+            output = np.zeros(3)
+        else:
+            shape = (-1, len(wfn_deriv))
+            output = np.zeros((3, len(wfn_deriv)))
+
         # TODO: use method in slater module
-        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]])
+        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
+        integrals_zero = self._integrate_sd_sds_zero(occ_indices)
+        if wfn_deriv is not None:
+            integrals_zero = np.expand_dims(integrals_zero, 2)
+        output += np.sum(integrals_zero * overlaps_zero, axis=1)
+
         overlaps_one = np.array(
             [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                    for occ in it.combinations(occ_indices.tolist(), 1)
-                    for vir in it.combinations(vir_indices.tolist(), 1)
-                ]
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 1)
             ]
-        )
+        ).reshape(*shape)
+        integrals_one = self._integrate_sd_sds_one(occ_indices, vir_indices)
+        if wfn_deriv is not None:
+            integrals_one = np.expand_dims(integrals_one, 2)
+        output += np.sum(integrals_one * overlaps_one, axis=1)
+
         overlaps_two = np.array(
             [
-                [
-                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                    for occ in it.combinations(occ_indices.tolist(), 2)
-                    for vir in it.combinations(vir_indices.tolist(), 2)
-                ]
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 2)
             ]
-        )
-        integrals_zero = np.sum(self._integrate_sd_sds_zero(occ_indices) * overlaps_zero, axis=1)
-        integrals_one = np.sum(
-            self._integrate_sd_sds_one(occ_indices, vir_indices) * overlaps_one, axis=1
-        )
+        ).reshape(*shape)
         if occ_indices.size > 1 and vir_indices.size > 1:
-            integrals_two = np.sum(
-                self._integrate_sd_sds_two(occ_indices, vir_indices) * overlaps_two, axis=1
-            )
-        else:
-            integrals_two = 0
+            integrals_two = self._integrate_sd_sds_two(occ_indices, vir_indices)
+            if wfn_deriv is not None:
+                integrals_two = np.expand_dims(integrals_two, 2)
+            output += np.sum(integrals_two * overlaps_two, axis=1)
 
         if components:
-            return integrals_zero + integrals_one + integrals_two
-        return np.sum(integrals_zero + integrals_one + integrals_two)
+            return output
+        return np.sum(output, axis=0)
 
     def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
@@ -1598,29 +1604,27 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 
-        # TODO: use method in slater module
         overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
-        overlaps_one = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                for occ in it.combinations(occ_indices.tolist(), 1)
-                for vir in it.combinations(vir_indices.tolist(), 1)
-            ]
-        ).reshape(1, 1, -1)
-        overlaps_two = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir))
-                for occ in it.combinations(occ_indices.tolist(), 2)
-                for vir in it.combinations(vir_indices.tolist(), 2)
-            ]
-        ).reshape(1, 1, -1)
-
         integrals_zero = np.sum(
             self._integrate_sd_sds_deriv_zero(occ_indices, vir_indices) * overlaps_zero, axis=2
         )
+
+        overlaps_one = np.array(
+            [
+                wfn.get_overlap(sd_exc)
+                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 1)
+            ]
+        ).reshape(1, 1, -1)
         integrals_one = np.sum(
             self._integrate_sd_sds_deriv_one(occ_indices, vir_indices) * overlaps_one, axis=2
         )
+
+        overlaps_two = np.array(
+            [
+                wfn.get_overlap(sd_exc)
+                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 2)
+            ]
+        ).reshape(1, 1, -1)
         if occ_indices.size > 1 and vir_indices.size > 1:
             integrals_two = np.sum(
                 self._integrate_sd_sds_deriv_two(occ_indices, vir_indices) * overlaps_two, axis=2
