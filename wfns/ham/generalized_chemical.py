@@ -697,9 +697,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         """
         shared_indices = slater.shared_indices_remove_one_index(occ_indices)
 
-        sign = slater.sign_excite_array(
-            occ_indices, occ_indices[:, None], vir_indices[:, None], self.nspin
-        ).ravel()
+        sign = slater.sign_excite_one(occ_indices, vir_indices)
 
         one_electron = self.one_int[occ_indices[:, np.newaxis], vir_indices[np.newaxis, :]]
         coulomb = np.sum(
@@ -756,7 +754,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        sign = slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+        sign = slater.sign_excite_two(occ_indices, vir_indices)
 
         coulomb = self.two_int[a[:, None], b[:, None], c[None, :], d[None, :]]
         exchange = -self.two_int[a[:, None], b[:, None], d[None, :], c[None, :]]
@@ -932,9 +930,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         shared_indices = slater.shared_indices_remove_one_index(occ_indices)
         all_indices = np.arange(self.nspin)
 
-        sign = slater.sign_excite_array(
-            occ_indices, occ_indices[:, None], vir_indices[:, None], self.nspin
-        ).ravel()
+        sign = slater.sign_excite_one(occ_indices, vir_indices)
 
         # NOTE: here, we use the following convention for indices:
         # the first index corresponds to the row index of the antihermitian matrix for orbital
@@ -1238,7 +1234,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         c = creators[:, 0]
         d = creators[:, 1]
 
-        sign = slater.sign_excite_array(occ_indices, annihilators, creators, self.nspin).ravel()
+        sign = slater.sign_excite_two(occ_indices, vir_indices)
 
         occ_array_indices = np.arange(a.size)
         vir_array_indices = np.arange(c.size)
