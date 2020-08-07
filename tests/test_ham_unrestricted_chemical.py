@@ -1,10 +1,12 @@
 """Test wfns.ham.unrestricted_chemical."""
 import itertools as it
 
+import numdifftools as nd
 import numpy as np
 import pytest
 from utils import find_datafile
 from wfns.backend import slater
+from wfns.backend.math_tools import unitary_matrix
 from wfns.backend.sd_list import sd_list
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
@@ -1261,3 +1263,72 @@ def test_integrate_sd_wfn_deriv():
         bad_indices = np.arange(20)
         bad_indices[0] = 20
         test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
+
+
+def test_integrate_sd_wfn_deriv_fdiff():
+    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn_deriv with finite difference."""
+    wfn = CIWavefunction(5, 10)
+    wfn.assign_params(np.random.rand(*wfn.params.shape))
+
+    one_int_a = np.random.rand(5, 5)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(5, 5)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(5, 5, 5, 5)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(5, 5, 5, 5)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(5, 5, 5, 5)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    ham = UnrestrictedChemicalHamiltonian(
+        (one_int_a, one_int_b), (two_int_aaaa, two_int_abab, two_int_bbbb), update_prev_params=True
+    )
+    original = np.random.rand(ham.params.size)
+    step1 = np.random.rand(ham.params.size)
+    step2 = np.random.rand(ham.params.size)
+    ham.assign_params(original.copy())
+    ham.assign_params(original + step1)
+    ham.assign_params(original + step1 + step2)
+
+    nhalf = ham.nparams // 2
+    um_orig = [unitary_matrix(original[:nhalf]), unitary_matrix(original[nhalf:])]
+    um_step1 = [unitary_matrix(step1[:nhalf]), unitary_matrix(step1[nhalf:])]
+    um_step2 = [unitary_matrix(step2[:nhalf]), unitary_matrix(step2[nhalf:])]
+
+    temp_ham = UnrestrictedChemicalHamiltonian(
+        (one_int_a, one_int_b), (two_int_aaaa, two_int_abab, two_int_bbbb), update_prev_params=True
+    )
+    temp_ham.orb_rotate_matrix(
+        [
+            um_orig[0].dot(um_step1[0]).dot(um_step2[0]),
+            um_orig[1].dot(um_step1[1]).dot(um_step2[1]),
+        ]
+    )
+    assert np.allclose(ham.one_int, temp_ham.one_int)
+    assert np.allclose(ham.two_int, temp_ham.two_int)
+
+    def objective(params):
+        temp_ham = UnrestrictedChemicalHamiltonian(
+            (one_int_a, one_int_b),
+            (two_int_aaaa, two_int_abab, two_int_bbbb),
+            update_prev_params=True
+        )
+        temp_ham.orb_rotate_matrix(
+            [
+                um_orig[0].dot(um_step1[0]).dot(um_step2[0]),
+                um_orig[1].dot(um_step1[1]).dot(um_step2[1]),
+            ]
+        )
+        temp_ham.set_ref_ints()
+        temp_ham._prev_params = ham.params.copy()
+        temp_ham.assign_params(params.copy())
+        return temp_ham.integrate_sd_wfn(wfn.sd_vec[0], wfn)
+
+    assert np.allclose(
+        nd.Gradient(objective)(ham.params),
+        ham.integrate_sd_wfn_deriv(wfn.sd_vec[0], wfn, np.arange(ham.nparams)),
+    )

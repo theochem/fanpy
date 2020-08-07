@@ -1,10 +1,12 @@
 """Test wfns.ham.restricted_chemical."""
 import itertools as it
 
+import numdifftools as nd
 import numpy as np
 import pytest
 from utils import find_datafile
 from wfns.backend import slater
+from wfns.backend.math_tools import unitary_matrix
 from wfns.backend.sd_list import sd_list
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
@@ -835,3 +837,46 @@ def test_integrate_sd_wfn_deriv():
         bad_indices = np.arange(10)
         bad_indices[0] = 10
         test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
+
+
+def test_integrate_sd_wfn_deriv_fdiff():
+    """Test RestrictedChemicalHamiltonian.integrate_sd_wfn_deriv with finite difference."""
+    wfn = CIWavefunction(5, 10)
+    wfn.assign_params(np.random.rand(*wfn.params.shape))
+
+    one_int = np.random.rand(5, 5)
+    one_int = one_int + one_int.T
+
+    two_int = np.random.rand(5, 5, 5, 5)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+
+    ham = RestrictedChemicalHamiltonian(one_int, two_int, update_prev_params=True)
+    original = np.random.rand(ham.params.size)
+    step1 = np.random.rand(ham.params.size)
+    step2 = np.random.rand(ham.params.size)
+    ham.assign_params(original.copy())
+    ham.assign_params(original + step1)
+    ham.assign_params(original + step1 + step2)
+
+    temp_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    temp_ham.orb_rotate_matrix(
+        unitary_matrix(original).dot(unitary_matrix(step1)).dot(unitary_matrix(step2))
+    )
+    assert np.allclose(ham.one_int, temp_ham.one_int)
+    assert np.allclose(ham.two_int, temp_ham.two_int)
+
+    def objective(params):
+        temp_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+        temp_ham.orb_rotate_matrix(
+            unitary_matrix(original).dot(unitary_matrix(step1)).dot(unitary_matrix(step2))
+        )
+        temp_ham.set_ref_ints()
+        temp_ham._prev_params = ham.params.copy()
+        temp_ham.assign_params(params.copy())
+        return temp_ham.integrate_sd_wfn(wfn.sd_vec[0], wfn)
+
+    assert np.allclose(
+        nd.Gradient(objective)(ham.params),
+        ham.integrate_sd_wfn_deriv(wfn.sd_vec[0], wfn, np.arange(ham.nparams)),
+    )
