@@ -3278,73 +3278,91 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
-        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]])
-
-        overlaps_one_alpha = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                for occ in it.combinations(occ_alpha.tolist(), 1)
-                for vir in it.combinations(vir_alpha.tolist(), 1)
-            ]
-        )
-        overlaps_one_beta = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                for occ in it.combinations(occ_beta.tolist(), 1)
-                for vir in it.combinations(vir_beta.tolist(), 1)
-            ]
-        )
-
-        overlaps_two_aa = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                for occ in it.combinations(occ_alpha.tolist(), 2)
-                for vir in it.combinations(vir_alpha.tolist(), 2)
-            ]
-        )
-        overlaps_two_ab = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
-                for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
-            ]
-        )
-        overlaps_two_bb = np.array(
-            [
-                wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
-                for occ in it.combinations(occ_beta.tolist(), 2)
-                for vir in it.combinations(vir_beta.tolist(), 2)
-            ]
-        )
+        if wfn_deriv is None:
+            shape = (-1,)
+            output = np.zeros(3)
+        else:
+            shape = (-1, len(wfn_deriv))
+            output = np.zeros((3, len(wfn_deriv)))
 
         # FIXME: hardcode slater determinant structure
         occ_beta -= nspatial
         vir_beta -= nspatial
 
-        output = np.zeros(3)
+        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
+        integrals_zero = self._integrate_sd_sds_zero(occ_alpha, occ_beta)
+        if wfn_deriv is not None:
+            integrals_zero = np.expand_dims(integrals_zero, 2)
+        output += np.sum(integrals_zero * overlaps_zero, axis=1)
 
-        output += np.sum(self._integrate_sd_sds_zero(occ_alpha, occ_beta) * overlaps_zero, axis=1)
-
+        overlaps_one_alpha = np.array(
+            [
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 1)
+            ]
+        ).reshape(*shape)
         integrals_one_alpha = self._integrate_sd_sds_one_alpha(occ_alpha, occ_beta, vir_alpha)
+        if wfn_deriv is not None:
+            integrals_one_alpha = np.expand_dims(integrals_one_alpha, 2)
+        output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1)
+
+        # FIXME: hardcode slater determinant structure
+        overlaps_one_beta = np.array(
+            [
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_beta + nspatial, vir_beta + nspatial, 1)
+            ]
+        ).reshape(*shape)
         integrals_one_beta = self._integrate_sd_sds_one_beta(occ_alpha, occ_beta, vir_beta)
-        output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1) + np.sum(
-            integrals_one_beta * overlaps_one_beta, axis=1
-        )
+        if wfn_deriv is not None:
+            integrals_one_beta = np.expand_dims(integrals_one_beta, 2)
+        output += np.sum(integrals_one_beta * overlaps_one_beta, axis=1)
+
+        overlaps_two_aa = np.array(
+            [
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 2)
+            ]
+        ).reshape(*shape)
         if occ_alpha.size > 1 and vir_alpha.size > 1:
             integrals_two_aa = self._integrate_sd_sds_two_aa(occ_alpha, occ_beta, vir_alpha)
+            if wfn_deriv is not None:
+                integrals_two_aa = np.expand_dims(integrals_two_aa, 2)
             output[1:] += np.sum(integrals_two_aa * overlaps_two_aa, axis=1)
+
+        # FIXME: hardcode slater determinant structure
+        overlaps_two_ab = np.array(
+            [
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk_two_ab(
+                        sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
+                )
+            ]
+        ).reshape(*shape)
         if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
             integrals_two_ab = self._integrate_sd_sds_two_ab(
                 occ_alpha, occ_beta, vir_alpha, vir_beta
             )
-            output[1] += np.sum(integrals_two_ab * overlaps_two_ab)
+            if wfn_deriv is not None:
+                integrals_two_ab = np.expand_dims(integrals_two_ab, 1)
+            output[1] += np.sum(integrals_two_ab * overlaps_two_ab, axis=0)
+
+        # FIXME: hardcode slater determinant structure
+        overlaps_two_bb = np.array(
+            [
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                for sd_exc in slater.excite_bulk(sd, occ_beta + nspatial, vir_beta + nspatial, 2)
+            ]
+        ).reshape(*shape)
         if occ_beta.size > 1 and vir_beta.size > 1:
             integrals_two_bb = self._integrate_sd_sds_two_bb(occ_alpha, occ_beta, vir_beta)
+            if wfn_deriv is not None:
+                integrals_two_bb = np.expand_dims(integrals_two_bb, 2)
             output[1:] += np.sum(integrals_two_bb * overlaps_two_bb, axis=1)
 
         if components:
             return output
-        return np.sum(output)
+        return np.sum(output, axis=0)
 
     def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
