@@ -1,7 +1,6 @@
 """Schrodinger equation as a system of equations."""
 import numpy as np
 from wfns.backend import sd_list, slater
-from wfns.objective.base import BaseObjective
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.objective.constraints.energy import EnergyConstraint
 from wfns.objective.schrodinger.base import BaseSchrodinger
@@ -169,7 +168,7 @@ class SystemEquations(BaseSchrodinger):
             If not provided, energy is computed with respect to the reference.
             By default, energy is computed with respect to the reference.
             Note that this parameter is not used at all if `energy_type` is 'compute'.
-        constraints : list/tuple of BaseObjective
+        constraints : list/tuple of BaseSchrodinger
             Constraints that will be imposed on the optimization process.
             By default, the normalization constraint used.
 
@@ -299,16 +298,16 @@ class SystemEquations(BaseSchrodinger):
 
         Parameters
         ----------
-        constraints : {list/tuple of BaseObjective, BaseObjective, None}
+        constraints : {list/tuple of BaseSchrodinger, BaseSchrodinger, None}
             Constraints that will be imposed on the optimization process.
             By default, the normalization constraint used.
 
         Raises
         ------
         TypeError
-            If constraints are not given as a BaseObjective instance or list/tuple of BaseObjective
+            If constraints are not given as a BaseSchrodinger instance or list/tuple of BaseSchrodinger
             instances.
-            If a constraint is not a BaseObjective or its subclass.
+            If a constraint is not a BaseSchrodinger or its subclass.
         ValueError
             If a constraint does not have the same param_selection as the objective class.
 
@@ -317,18 +316,18 @@ class SystemEquations(BaseSchrodinger):
             constraints = [
                 NormConstraint(self.wfn, refwfn=self.refwfn, param_selection=self.param_selection)
             ]
-        elif isinstance(constraints, BaseObjective):
+        elif isinstance(constraints, BaseSchrodinger):
             constraints = [constraints]
         elif not isinstance(constraints, (list, tuple)):
             raise TypeError(
-                "Constraints must be given as a BaseObjective instance or list/tuple "
-                "of BaseObjective instances."
+                "Constraints must be given as a BaseSchrodinger instance or list/tuple "
+                "of BaseSchrodinger instances."
             )
 
         for constraint in constraints:
-            if not isinstance(constraint, BaseObjective):
+            if not isinstance(constraint, BaseSchrodinger):
                 raise TypeError(
-                    "Each constraint must be an instance of BaseObjective or its " "child."
+                    "Each constraint must be an instance of BaseSchrodinger or its " "child."
                 )
             if constraint.param_selection != self.param_selection:
                 raise ValueError(
@@ -470,7 +469,7 @@ class SystemEquations(BaseSchrodinger):
 
         Notes
         -----
-        Much of the code is copied from `BaseObjective.get_energy_one_proj` to compute the energy.
+        Much of the code is copied from `BaseSchrodinger.get_energy_one_proj` to compute the energy.
         It is not called because the norm is still needed for the constraint (meaning that much of
         the code will be copied over anyways), and the derivative of the energy uses some of the
         the same matrices.

@@ -54,7 +54,7 @@ def test_onesided_energy_objective():
     """Test OneSidedEnergy.objective.
 
     The actualy values of the objective is not checked because it is the same as
-    BaseObjective.get_energy_one_proj.
+    BaseSchrodinger.get_energy_one_proj.
 
     """
     wfn = CIWavefunction(2, 4)
@@ -72,7 +72,7 @@ def test_onesided_energy_gradient():
     """Test OneSidedEnergy.gradient.
 
     The actualy values of the gradient is not checked because it is the same as
-    BaseObjective.get_energy_one_proj with derivatization.
+    BaseSchrodinger.get_energy_one_proj with derivatization.
 
     """
     wfn = CIWavefunction(2, 4)

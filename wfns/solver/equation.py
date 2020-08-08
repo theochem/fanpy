@@ -1,6 +1,6 @@
 """Solvers for single equations."""
 import numpy as np
-from wfns.objective.base import BaseObjective
+from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
@@ -14,7 +14,7 @@ def cma(objective, save_file="", **kwargs):
 
     Parameters
     ----------
-    objective : BaseObjective
+    objective : BaseSchrodinger
         Instance that contains the function that will be optimized.
     save_file : str
         File to which the results of the optimization is saved.
@@ -53,15 +53,15 @@ def cma(objective, save_file="", **kwargs):
     Raises
     ------
     TypeError
-        If objective is not BaseObjective instance.
+        If objective is not BaseSchrodinger instance.
     ValueError
         If objective has more than one equation.
 
     """
     import cma as solver
 
-    if not isinstance(objective, BaseObjective):
-        raise TypeError("Objective must be a BaseObjective instance.")
+    if not isinstance(objective, BaseSchrodinger):
+        raise TypeError("Objective must be a BaseSchrodinger instance.")
     if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
@@ -115,7 +115,7 @@ def minimize(objective, save_file="", **kwargs):
 
     Parameters
     ----------
-    objective : BaseObjective
+    objective : BaseSchrodinger
         Instance that contains the function that will be optimized.
     save_file : str
         File to which the results of the optimization is saved.
@@ -146,15 +146,15 @@ def minimize(objective, save_file="", **kwargs):
     Raises
     ------
     TypeError
-        If objective is not BaseObjective instance.
+        If objective is not BaseSchrodinger instance.
     ValueError
         If objective has more than one equation.
 
     """
     import scipy.optimize
 
-    if not isinstance(objective, BaseObjective):
-        raise TypeError("Objective must be a BaseObjective instance.")
+    if not isinstance(objective, BaseSchrodinger):
+        raise TypeError("Objective must be a BaseSchrodinger instance.")
     if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 

@@ -46,7 +46,7 @@ def wrap_scipy(func):
 
         Parameters
         ----------
-        objective : BaseObjective
+        objective : BaseSchrodinger
             Objective.
         save_file : str
             File to which the results of the optimization is saved.
@@ -117,7 +117,7 @@ def wrap_skopt(func):
 
         Parameters
         ----------
-        objective : BaseObjective
+        objective : BaseSchrodinger
             Objective.
         save_file : str
             File to which the results of the optimization is saved.

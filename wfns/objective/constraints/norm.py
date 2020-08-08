@@ -1,14 +1,13 @@
 """Normalization constraint on the wavefunction."""
 import numpy as np
 import wfns.backend.slater as slater
-from wfns.objective.base import BaseObjective
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 
 
-class NormConstraint(BaseObjective):
+class NormConstraint(BaseSchrodinger):
     r"""Normalization constraint on the wavefunction.
 
     .. math::
@@ -85,7 +84,10 @@ class NormConstraint(BaseObjective):
             )
         self.wfn = wfn
         self.assign_refwfn(refwfn)
-        super().__init__(param_selection, tmpfile=tmpfile)
+        self.assign_param_selection(param_selection=param_selection)
+        if not isinstance(tmpfile, str):
+            raise TypeError("`tmpfile` must be a string.")
+        self.tmpfile = tmpfile
 
     # NOTE: the overlap calculation is already defined in BaseSchrodinger
     wrapped_get_overlap = BaseSchrodinger.wrapped_get_overlap
