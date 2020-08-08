@@ -82,8 +82,6 @@ class TwoSidedEnergy(BaseSchrodinger):
     -------
     __init__(self, param_selection=None, tmpfile='')
         Initialize the objective.
-    assign_param_selection(self, param_selection=None)
-        Select parameters that will be active in the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
@@ -107,8 +105,9 @@ class TwoSidedEnergy(BaseSchrodinger):
         self,
         wfn,
         ham,
-        tmpfile="",
         param_selection=None,
+        optimize_orbitals=False,
+        tmpfile="",
         pspace_l=None,
         pspace_r=None,
         pspace_n=None,
@@ -271,6 +270,4 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return self.get_energy_two_proj(
-            self.pspace_l, self.pspace_r, self.pspace_n, np.arange(params.size)
-        )
+        return self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, True)

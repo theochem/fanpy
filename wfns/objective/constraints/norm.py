@@ -3,6 +3,7 @@ import numpy as np
 import wfns.backend.slater as slater
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.objective.schrodinger.utils import ComponentParameterIndices
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 
@@ -50,7 +51,7 @@ class NormConstraint(BaseSchrodinger):
 
     """
 
-    def __init__(self, wfn, refwfn=None, param_selection=None, tmpfile=""):
+    def __init__(self, wfn, refwfn=None, param_selection=None):
         r"""Initialize the norm constraint.
 
         Parameters
@@ -84,13 +85,16 @@ class NormConstraint(BaseSchrodinger):
             )
         self.wfn = wfn
         self.assign_refwfn(refwfn)
-        self.assign_param_selection(param_selection=param_selection)
-        if not isinstance(tmpfile, str):
-            raise TypeError("`tmpfile` must be a string.")
-        self.tmpfile = tmpfile
 
-    # NOTE: the overlap calculation is already defined in BaseSchrodinger
-    wrapped_get_overlap = BaseSchrodinger.wrapped_get_overlap
+        if param_selection is None:
+            param_selection = [(self.wfn, np.arange(self.wfn.nparams))]
+
+        if isinstance(param_selection, dict):
+            self.indices_component_params = param_selection
+        else:
+            self.indices_component_params = ComponentParameterIndices()
+            for component, indices in param_selection:
+                self.indices_component_params[component] = indices
 
     # NOTE: the reference wavefunction assignment is already defined in OneSidedEnergy
     assign_refwfn = OneSidedEnergy.assign_refwfn
@@ -196,24 +200,18 @@ class NormConstraint(BaseSchrodinger):
 
         d_norm = np.zeros(params.size)
 
-        deriv = np.arange(params.size)
         # get derivatives of reference wavefunction
         if isinstance(ref, CIWavefunction):
-            ref_deriv = np.array(
-                [self.param_selection.derivative_index(ref, i) for i in deriv]
-            )
-            # remove None's
-            ref_mask = ref_deriv != None
-            ref_deriv = ref_deriv[ref_mask].astype(int)
-
-            d_ref_coeffs = np.zeros((ref.nparams, len(deriv)), dtype=float)
-            if ref_deriv.size > 0:
-                d_ref_coeffs[ref_deriv, np.where(ref_mask)[0]] = 1
+            d_ref_coeffs = np.zeros((ref.nparams, self.active_nparams), dtype=float)
+            inds_component = self.indices_component_params[ref]
+            if inds_component.size > 0:
+                inds_objective = self.indices_objective_params[ref]
+                d_ref_coeffs[inds_component, inds_objective] = 1.0
         else:
-            d_ref_coeffs = np.array([get_overlap(k, deriv) for k in ref])
+            d_ref_coeffs = np.array([get_overlap(k, True) for k in ref])
         # Compute
         d_norm = np.sum(d_ref_coeffs * overlaps[:, None], axis=0)
         d_norm += np.sum(
-            ref_coeffs[:, None] * np.array([get_overlap(i, deriv) for i in ref_sds]), axis=0
+            ref_coeffs[:, None] * np.array([get_overlap(i, True) for i in ref_sds]), axis=0
         )
         return d_norm

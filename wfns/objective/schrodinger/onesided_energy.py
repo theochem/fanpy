@@ -69,8 +69,6 @@ class OneSidedEnergy(BaseSchrodinger):
     -------
     __init__(self, param_selection=None, tmpfile='')
         Initialize the objective.
-    assign_param_selection(self, param_selection=None)
-        Select parameters that will be active in the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
@@ -94,7 +92,9 @@ class OneSidedEnergy(BaseSchrodinger):
 
     """
 
-    def __init__(self, wfn, ham, tmpfile="", param_selection=None, refwfn=None):
+    def __init__(
+        self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="", refwfn=None
+    ):
         """Initialize the objective instance.
 
         Parameters
@@ -131,8 +131,26 @@ class OneSidedEnergy(BaseSchrodinger):
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
-        super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
+        super().__init__(
+            wfn,
+            ham,
+            param_selection=param_selection,
+            optimize_orbitals=optimize_orbitals,
+            tmpfile=tmpfile,
+        )
         self.assign_refwfn(refwfn)
+
+    @property
+    def num_eqns(self):
+        """Return the number of equations in the objective.
+
+        Returns
+        -------
+        num_eqns : int
+            Number of equations in the objective.
+
+        """
+        return 1
 
     def assign_refwfn(self, refwfn=None):
         """Assign the reference wavefunction.
@@ -214,18 +232,6 @@ class OneSidedEnergy(BaseSchrodinger):
         else:
             raise TypeError("Projection space must be given as a list or a tuple.")
 
-    @property
-    def num_eqns(self):
-        """Return the number of equations in the objective.
-
-        Returns
-        -------
-        num_eqns : int
-            Number of equations in the objective.
-
-        """
-        return 1
-
     def objective(self, params):
         """Return the energy of the wavefunction integrated against the reference wavefunction.
 
@@ -272,4 +278,4 @@ class OneSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return self.get_energy_one_proj(self.refwfn, np.arange(params.size))
+        return self.get_energy_one_proj(self.refwfn, True)

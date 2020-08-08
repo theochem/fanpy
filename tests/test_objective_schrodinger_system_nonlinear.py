@@ -5,7 +5,7 @@ from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.param import ParamContainer, ParamMask
+from wfns.objective.schrodinger.utils import ParamContainer, ComponentParameterIndices
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -27,8 +27,6 @@ def test_system_init_energy():
     assert test.energy.params == 2.0
 
     with pytest.raises(TypeError):
-        SystemEquations(wfn, ham, energy=0, energy_type="compute")
-    with pytest.raises(TypeError):
         SystemEquations(wfn, ham, energy="1", energy_type="compute")
 
     with pytest.raises(ValueError):
@@ -37,18 +35,12 @@ def test_system_init_energy():
         SystemEquations(wfn, ham, energy=None, energy_type=0)
 
     test = SystemEquations(wfn, ham, energy=0.0, energy_type="variable")
-    assert np.allclose(test.param_selection._masks_container_params[test.energy], np.array([0]))
-    assert np.allclose(
-        test.param_selection._masks_objective_params[test.energy],
-        np.array([False, False, False, False, False, False, True]),
-    )
+    assert np.allclose(test.indices_component_params[test.energy], np.array([0]))
+    assert np.allclose(test.indices_objective_params[test.energy], np.array([6]))
 
     test = SystemEquations(wfn, ham, energy=0.0, energy_type="fixed")
-    assert np.allclose(test.param_selection._masks_container_params[test.energy], np.array([]))
-    assert np.allclose(
-        test.param_selection._masks_objective_params[test.energy],
-        np.array([False, False, False, False, False, False]),
-    )
+    assert np.allclose(test.indices_component_params[test.energy], np.array([]))
+    assert np.allclose(test.indices_objective_params[test.energy], np.array([]))
 
 
 def test_system_nproj():
@@ -111,7 +103,8 @@ def test_system_assign_eqn_weights():
     test.wfn = CIWavefunction(2, 4)
     test.assign_pspace()
     test.assign_refwfn()
-    test.assign_param_selection()
+    test.indices_component_params = ComponentParameterIndices()
+    test.indices_component_params[test.wfn] = np.arange(test.wfn.nparams)
     test.energy_type = 'compute'
     test.assign_constraints()
 
@@ -121,18 +114,11 @@ def test_system_assign_eqn_weights():
     test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0], dtype=float))
     assert np.allclose(test.eqn_weights, np.array([0, 0, 0, 0, 0, 0, 0]))
 
-    test.assign_param_selection(
-        ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
-    )
-    norm_constraint = NormConstraint(test.wfn, param_selection=test.param_selection)
-    test.assign_constraints([norm_constraint, norm_constraint])
-    test.assign_eqn_weights(np.zeros(8))
-
     with pytest.raises(TypeError):
         test.assign_eqn_weights([1, 1, 1, 1, 1, 1, 1])
 
     with pytest.raises(ValueError):
-        test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0]))
+        test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0, 0]))
 
 
 def test_system_assign_constraints():
@@ -140,9 +126,8 @@ def test_system_assign_constraints():
     test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn(0b0101)
-    test.assign_param_selection(
-        ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
-    )
+    test.indices_component_params = ComponentParameterIndices()
+    test.indices_component_params[test.wfn] = np.arange(test.wfn.nparams)
     test.energy_type = "compute"
 
     test.assign_constraints()
@@ -152,7 +137,7 @@ def test_system_assign_constraints():
     assert test.constraints[0].wfn == test.wfn
     assert test.constraints[0].refwfn == (0b0101,)
 
-    norm_constraint = NormConstraint(test.wfn, param_selection=test.param_selection)
+    norm_constraint = NormConstraint(test.wfn, param_selection=test.indices_component_params)
     test.assign_constraints(norm_constraint)
     assert isinstance(test.constraints, list)
     assert len(test.constraints) == 1
@@ -166,9 +151,8 @@ def test_system_assign_constraints():
         test.assign_constraints(np.array(norm_constraint))
     with pytest.raises(TypeError):
         test.assign_constraints([norm_constraint, lambda x: None])
-    norm_constraint.assign_param_selection(
-        ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
-    )
+    norm_constraint.indices_component_params = ComponentParameterIndices()
+    norm_constraint.indices_component_params[norm_constraint.wfn] = np.arange(norm_constraint.wfn.nparams - 1)
     with pytest.raises(ValueError):
         test.assign_constraints(norm_constraint)
     with pytest.raises(ValueError):
@@ -180,7 +164,8 @@ def test_num_eqns():
     test = skip_init(SystemEquations)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn()
-    test.assign_param_selection()
+    test.indices_component_params = ComponentParameterIndices()
+    test.indices_component_params[test.wfn] = np.arange(test.wfn.nparams)
     test.energy_type = "compute"
     test.assign_constraints()
     test.assign_pspace((0b0101, 0b1010))
@@ -320,7 +305,7 @@ def test_system_jacobian():
                 weight
                 * (
                     (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6)))
-                    - test.get_energy_one_proj(refwfn, deriv=np.arange(6)) * wfn.get_overlap(sd)
+                    - test.get_energy_one_proj(refwfn, deriv=True) * wfn.get_overlap(sd)
                     - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd, deriv=np.arange(6))
                 ),
             )
@@ -399,7 +384,7 @@ def test_system_jacobian_active_ciref():
     ):
         results = np.zeros(12)
         results[:6] += ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6))
-        results -= test.get_energy_one_proj(ciref, deriv=np.arange(12)) * wfn.get_overlap(sd)
+        results -= test.get_energy_one_proj(ciref, deriv=True) * wfn.get_overlap(sd)
         results[:6] -= test.get_energy_one_proj(ciref) * wfn.get_overlap(sd, deriv=np.arange(6))
 
         assert np.allclose(eqn, weight * results)

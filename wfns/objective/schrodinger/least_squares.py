@@ -86,8 +86,6 @@ class LeastSquaresEquations(SystemEquations):
     -------
     __init__(self, param_selection=None, tmpfile='')
         Initialize the objective.
-    assign_param_selection(self, param_selection=None)
-        Select parameters that will be active in the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
@@ -233,7 +231,7 @@ class LeastSquaresEquations(SystemEquations):
         # structure to differentiate between inherited and changed values, but this would require a
         # rewrite of the other parts of code. Since this problem occurs only in this module, we will
         # just patch in the fix here.
-        temp = LeastSquaresEquations.num_eqns
+        orig_num_eqns = LeastSquaresEquations.num_eqns
         LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
 
         system_eqns = super().objective(params)
@@ -244,6 +242,6 @@ class LeastSquaresEquations(SystemEquations):
         system_eqns_jac = super().jacobian(params)
 
         # patch back
-        LeastSquaresEquations.num_eqns = temp
+        LeastSquaresEquations.num_eqns = orig_num_eqns
 
         return 2 * np.sum(system_eqns * system_eqns_jac, axis=0)

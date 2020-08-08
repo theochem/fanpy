@@ -274,7 +274,7 @@ def make_script(
         if solver_kwargs is None:
             solver_kwargs = (
                 "xtol=1.0e-15, ftol=1.0e-15, gtol=1.0e-15, "
-                "max_nfev=1000*objective.params.size, jac=objective.jacobian"
+                "max_nfev=1000*objective.active_params.size, jac=objective.jacobian"
             )
     elif solver == "root":
         from_imports.append(("wfns.solver.system", "root"))

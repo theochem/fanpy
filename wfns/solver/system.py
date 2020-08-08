@@ -56,7 +56,7 @@ def least_squares(objective, save_file="", **kwargs):
             "xtol": 1.0e-15,
             "ftol": 1.0e-15,
             "gtol": 1.0e-15,
-            "max_nfev": 1000 * objective.params.size,
+            "max_nfev": 1000 * objective.active_params.size,
             "jac": objective.jacobian,
         }
 
@@ -111,7 +111,7 @@ def root(objective, save_file="", **kwargs):
 
     if not isinstance(objective, SystemEquations):
         raise TypeError("Given objective must be an instance of SystemEquations.")
-    if objective.num_eqns != objective.params.size:
+    if objective.num_eqns != objective.active_params.size:
         raise ValueError(
             "Given objective must have the same number of equations as the number of " "parameters."
         )

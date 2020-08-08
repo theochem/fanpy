@@ -4,7 +4,7 @@ from wfns.backend import sd_list, slater
 from wfns.objective.constraints.norm import NormConstraint
 from wfns.objective.constraints.energy import EnergyConstraint
 from wfns.objective.schrodinger.base import BaseSchrodinger
-from wfns.param import ParamContainer
+from wfns.objective.schrodinger.utils import ParamContainer
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -83,8 +83,6 @@ class SystemEquations(BaseSchrodinger):
     -------
     __init__(self, param_selection=None, tmpfile='')
         Initialize the objective.
-    assign_param_selection(self, param_selection=None)
-        Select parameters that will be active in the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
@@ -118,8 +116,9 @@ class SystemEquations(BaseSchrodinger):
         self,
         wfn,
         ham,
-        tmpfile="",
         param_selection=None,
+        optimize_orbitals=False,
+        tmpfile="",
         pspace=None,
         refwfn=None,
         eqn_weights=None,
@@ -185,37 +184,32 @@ class SystemEquations(BaseSchrodinger):
             If `energy_type` is not one of 'fixed', 'variable', or 'compute'.
 
         """
-        super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
+        super().__init__(
+            wfn,
+            ham,
+            param_selection=param_selection,
+            optimize_orbitals=optimize_orbitals,
+            tmpfile=tmpfile,
+        )
         self.assign_pspace(pspace)
         self.assign_refwfn(refwfn)
 
-        if energy_type not in ["fixed", "variable", "compute"]:
-            raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
         self.energy_type = energy_type
-
         if energy is None:
             energy = self.get_energy_one_proj(self.refwfn)
-        elif not isinstance(energy, (float, complex)):
-            raise TypeError("Energy must be given as a float or complex.")
+
+        if __debug__:
+            if not np.issubdtype(np.array(energy).dtype, np.number):
+                raise TypeError("Energy must be a number.")
+            if energy_type not in ["fixed", "variable", "compute"]:
+                raise ValueError("`energy_type` must be one of 'fixed', 'variable', or 'compute'.")
+
         self.energy = ParamContainer(energy)
         if energy_type in ["fixed", "variable"]:
-            self.param_selection.load_mask_container_params(self.energy, energy_type == "variable")
-            self.param_selection.load_masks_objective_params()
+            self.indices_component_params[self.energy] = [energy_type == "variable"]
 
         self.assign_constraints(constraints)
         self.assign_eqn_weights(eqn_weights)
-
-    @property
-    def nproj(self):
-        """Return the number of projected states.
-
-        Returns
-        -------
-        nproj : int
-            Number of states onto which the Schrodinger equation is projected.
-
-        """
-        return len(self.pspace)
 
     @property
     def num_eqns(self):
@@ -228,6 +222,18 @@ class SystemEquations(BaseSchrodinger):
 
         """
         return self.nproj + sum(cons.num_eqns for cons in self.constraints)
+
+    @property
+    def nproj(self):
+        """Return the size of the projection space.
+
+        Returns
+        -------
+        nproj : int
+            Number of Slater determinants onto which the Schrodinger equation is projected.
+
+        """
+        return len(self.pspace)
 
     def assign_pspace(self, pspace=None):
         """Assign the projection space.
@@ -313,7 +319,9 @@ class SystemEquations(BaseSchrodinger):
         """
         if constraints is None:
             constraints = [
-                NormConstraint(self.wfn, refwfn=self.refwfn, param_selection=self.param_selection)
+                NormConstraint(
+                    self.wfn, refwfn=self.refwfn, param_selection=self.indices_component_params
+                )
             ]
         elif isinstance(constraints, BaseSchrodinger):
             constraints = [constraints]
@@ -328,7 +336,7 @@ class SystemEquations(BaseSchrodinger):
                 raise TypeError(
                     "Each constraint must be an instance of BaseSchrodinger or its " "child."
                 )
-            if constraint.param_selection != self.param_selection:
+            if not constraint.indices_component_params == self.indices_component_params:
                 raise ValueError(
                     "The given constraint must have the same parameter selection (in "
                     "the form of ParamMask) as the objective."
@@ -337,7 +345,7 @@ class SystemEquations(BaseSchrodinger):
                 self.energy_type in ["fixed", "variable"] and
                 isinstance(constraint, EnergyConstraint)
             ):
-                constraint.param_selection = self.param_selection
+                constraint.indices_component_params = self.indices_component_params
                 constraint.energy_variable = self.energy
         self.constraints = constraints
 
@@ -489,30 +497,24 @@ class SystemEquations(BaseSchrodinger):
         get_overlap = self.wrapped_get_overlap
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
-        # indices with respect to which objective is derivatized
-        derivs = np.arange(params.size, dtype=int)
-
         # define reference
         if isinstance(self.refwfn, CIWavefunction):
             ref_sds = np.array(self.refwfn.sd_vec)
             ref_coeffs = self.refwfn.params[:, np.newaxis]
-            d_ref_coeffs = np.zeros((ref_sds.size, params.size))
-            try:
-                # pylint: disable=W0212
-                objective_indices = self.param_selection._masks_objective_params[self.refwfn]
-                container_indices = self.param_selection._masks_container_params[self.refwfn]
-            except KeyError:
-                pass
-            else:
-                d_ref_coeffs[container_indices, objective_indices] = 1.0
+
+            d_ref_coeffs = np.zeros((self.refwfn.nparams, params.size), dtype=float)
+            inds_component = self.indices_component_params[self.refwfn]
+            if inds_component.size > 0:
+                inds_objective = self.indices_objective_params[self.refwfn]
+                d_ref_coeffs[inds_component, inds_objective] = 1.0
         else:
             ref_sds = np.array(self.refwfn)
             ref_coeffs = np.array([[get_overlap(i)] for i in ref_sds])
-            d_ref_coeffs = np.array([get_overlap(i, derivs) for i in ref_sds])
+            d_ref_coeffs = np.array([get_overlap(i, True) for i in ref_sds])
 
         # overlaps of each Slater determinant in reference <SD_i | Psi>
         ref_sds_olps = np.array([[get_overlap(i)] for i in ref_sds])
-        d_ref_sds_olps = np.array([get_overlap(i, derivs) for i in ref_sds])
+        d_ref_sds_olps = np.array([get_overlap(i, True) for i in ref_sds])
         # NOTE: d_ref_olps and d_ref_ints are two dimensional matrices (axis 0 corresponds to the
         # reference Slater determinants and 1 to the index of the parameter with respect to which
         # the value is derivatized).
@@ -524,19 +526,17 @@ class SystemEquations(BaseSchrodinger):
         # energy
         if self.energy_type in ["variable", "fixed"]:
             energy = self.energy.params
-            d_energy = np.array(
-                [
-                    self.param_selection.derivative_index(self.energy, i) is not None
-                    for i in range(params.size)
-                ],
-                dtype=float,
-            )
+            d_energy = np.zeros(params.size)
+            inds_component = self.indices_component_params[self.energy]
+            if inds_component.size > 0:
+                inds_objective = self.indices_objective_params[self.energy]
+                d_energy[inds_objective] = 1.0
         elif self.energy_type == "compute":
             # norm
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>
             ref_sds_ints = np.array([[integrate_wfn_sd(i)] for i in ref_sds])
-            d_ref_sds_ints = np.array([integrate_wfn_sd(i, derivs) for i in ref_sds])
+            d_ref_sds_ints = np.array([integrate_wfn_sd(i, True) for i in ref_sds])
             # integral <ref | H | Psi>
             ref_int = np.sum(ref_coeffs * ref_sds_ints)
             d_ref_int = np.sum(d_ref_coeffs * ref_sds_ints, axis=0)
@@ -551,8 +551,8 @@ class SystemEquations(BaseSchrodinger):
 
         # jacobian
         jac = np.empty((self.num_eqns, params.size))
-        jac[: self.nproj, :] = np.array([integrate_wfn_sd(i, derivs) for i in pspace])
-        jac[: self.nproj, :] -= energy * np.array([get_overlap(i, derivs) for i in pspace])
+        jac[: self.nproj, :] = np.array([integrate_wfn_sd(i, True) for i in pspace])
+        jac[: self.nproj, :] -= energy * np.array([get_overlap(i, True) for i in pspace])
         jac[: self.nproj, :] -= d_energy[np.newaxis, :] * np.array(
             [[get_overlap(i)] for i in pspace]
         )

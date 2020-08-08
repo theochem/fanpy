@@ -77,10 +77,10 @@ def cma(objective, save_file="", **kwargs):
             },
         }
 
-    if objective.params.size == 1:
+    if objective.active_params.size == 1:
         raise ValueError("CMA solver cannot be used on objectives with only one parameter.")
 
-    results = solver.fmin(objective.objective, objective.params, **kwargs)
+    results = solver.fmin(objective.objective, objective.active_params, **kwargs)
 
     output = {}
     output["success"] = results[-3] != {}

@@ -67,7 +67,7 @@ def wrap_scipy(func):
             Returned value of the `scipy.optimize.root`.
 
         """
-        results = func(objective.objective, objective.params, **kwargs)
+        results = func(objective.objective, objective.active_params, **kwargs)
 
         output = {}
         output["success"] = results.success
@@ -139,13 +139,13 @@ def wrap_skopt(func):
 
         """
         if "dimensions" not in kwargs:
-            kwargs["dimensions"] = [(i - 0.5, i + 0.5) for i in objective.params]
+            kwargs["dimensions"] = [(i - 0.5, i + 0.5) for i in objective.active_params]
         results = func(objective.objective, **kwargs)
 
         output = {}
-        output["success"] = results.success
+        # output["success"] = results.success
         output["params"] = results.x
-        output["message"] = results.message
+        # output["message"] = results.message
         output["internal"] = results
 
         if save_file != "":

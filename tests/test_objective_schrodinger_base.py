@@ -6,7 +6,7 @@ import pytest
 from utils import disable_abstract, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.base import BaseSchrodinger
-from wfns.param import ParamContainer, ParamMask
+from wfns.objective.schrodinger.utils import ParamContainer, ComponentParameterIndices
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -31,44 +31,21 @@ def test_baseschrodinger_init():
     assert test.wfn == wfn
     assert test.ham == ham
     assert test.tmpfile == "tmpfile.npy"
-    assert np.allclose(test.param_selection.all_params, wfn.params)
-    assert np.allclose(test.param_selection.active_params, wfn.params)
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=[(wfn, [0, 1])])
+    assert np.allclose(test.all_params, wfn.params)
+    assert np.allclose(test.active_params, wfn.params[:2])
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=[(wfn, [1, 3]), (ham, [0])])
+    assert isinstance(test.indices_component_params, ComponentParameterIndices)
+    answer = ComponentParameterIndices()
+    answer[wfn] = np.array([1, 3])
+    answer[ham] = np.array([0])
+    assert test.indices_component_params == answer
 
 
-def test_baseobjective_assign_param_selection():
-    """Test BaseSchrodinger.assign_param_selection."""
-    test = skip_init(disable_abstract(BaseSchrodinger))
-
-    test.assign_param_selection(())
-    assert isinstance(test.param_selection, ParamMask)
-
-    param1 = ParamContainer(1)
-    param2 = ParamContainer(np.array([2, 3]))
-    param3 = ParamContainer(np.array([4, 5, 6, 7]))
-    param_selection = [
-        (param1, False),
-        (param2, np.array(0)),
-        (param3, np.array([True, False, False, True])),
-    ]
-    for mask in [param_selection, ParamMask(*param_selection)]:
-        test.assign_param_selection(mask)
-        assert len(test.param_selection._masks_container_params) == 3
-        container, sel = test.param_selection._masks_container_params.popitem()
-        assert container == param3
-        assert np.allclose(sel, np.array([0, 3]))
-        container, sel = test.param_selection._masks_container_params.popitem()
-        assert container == param2
-        assert np.allclose(sel, np.array([0]))
-        container, sel = test.param_selection._masks_container_params.popitem()
-        assert container == param1
-        assert np.allclose(sel, np.array([]))
-
-    with pytest.raises(TypeError):
-        test.assign_param_selection(np.array([(param1, False)]))
-
-
-def test_baseobjective_params():
-    """Test BaseSchrodinger.params."""
+def test_baseschrodinger_active_params():
+    """Test BaseSchrodinger.active_params."""
     wfn = CIWavefunction(2, 4)
     ham = RestrictedChemicalHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
@@ -78,13 +55,13 @@ def test_baseobjective_params():
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[
-            (param1, False), (param2, np.array(0)), (param3, np.array([True, False, False, True]))
+            (param1, [False]), (param2, np.array([0])), (param3, np.array([True, False, False, True]))
         ]
     )
-    assert np.allclose(test.params, np.array([2, 4, 7]))
+    assert np.allclose(test.active_params, np.array([2, 4, 7]))
 
 
-def test_baseobjective_assign_params():
+def test_baseschrodinger_assign_params():
     """Test BaseSchrodinger.assign_params."""
     wfn = CIWavefunction(2, 4)
     ham = RestrictedChemicalHamiltonian(
@@ -95,7 +72,7 @@ def test_baseobjective_assign_params():
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[
-            (param1, False), (param2, np.array(0)), (param3, np.array([True, False, False, True]))
+            (param1, [False]), (param2, np.array([0])), (param3, np.array([True, False, False, True]))
         ]
     )
     test.assign_params(np.array([99, 98, 97]))
@@ -112,13 +89,13 @@ def test_baseschrodinger_wrapped_get_overlap():
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), [True])]
     )
-    assert test.wrapped_get_overlap(0b0101, deriv=None) == wfn.get_overlap(0b0101, deriv=None)
-    assert test.wrapped_get_overlap(0b0101, deriv=[0]) == wfn.get_overlap(0b0101, deriv=[0])
-    assert test.wrapped_get_overlap(0b0101, deriv=[1]) == wfn.get_overlap(0b0101, deriv=[3])
-    assert test.wrapped_get_overlap(0b0101, deriv=[2]) == wfn.get_overlap(0b0101, deriv=[5])
-    assert test.wrapped_get_overlap(0b0101, deriv=[3]) == 0.0
+    assert test.wrapped_get_overlap(0b0101) == wfn.get_overlap(0b0101, deriv=None)
+    assert np.allclose(
+        test.wrapped_get_overlap(0b0101, deriv=True),
+        np.hstack([wfn.get_overlap(0b0101, deriv=np.array([0, 3, 5])), 0]),
+    )
 
 
 def test_baseschrodinger_wrapped_integrate_wfn_sd():
@@ -134,15 +111,15 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     ham = RestrictedChemicalHamiltonian(one_int, two_int)
 
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([0, 3, 5]))]
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([1, 2, 4]))]
     )
     assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101), ham.integrate_sd_wfn(0b0101, wfn))
     assert np.allclose(
-        test.wrapped_integrate_wfn_sd(0b0101, deriv=[0, 1, 4, 5]),
+        test.wrapped_integrate_wfn_sd(0b0101, deriv=True),
         np.hstack(
             [
-                ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=[0, 3]),
-                ham.integrate_sd_wfn_deriv(0b0101, wfn, np.array([3, 5])),
+                ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=np.array([0, 3, 5])),
+                ham.integrate_sd_wfn_deriv(0b0101, wfn, np.array([1, 2, 4])),
             ]
         )
     )
@@ -150,20 +127,26 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
 
 def test_baseschrodinger_wrapped_integrate_sd_sd():
     """Test BaseSchrodinger.wrapped_integrate_sd_sd."""
-    wfn = CIWavefunction(2, 4)
+    wfn = CIWavefunction(2, 20)
     wfn.assign_params(np.random.rand(wfn.nparams))
     ham = RestrictedChemicalHamiltonian(
-        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+        np.arange(100, dtype=float).reshape(10, 10),
+        np.arange(10000, dtype=float).reshape(10, 10, 10, 10),
     )
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), [True])]
     )
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == ham.integrate_sd_sd(0b0101, 0b0101)
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=[0]) == 0.0
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=[1]) == 0.0
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=[2]) == 0.0
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=[3]) == 0.0
-    # FIXME: no tests for derivatives wrt hamiltonian b/c there are no hamiltonians with parameters
+    assert np.allclose(test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=True), 0.0)
+
+    test = disable_abstract(BaseSchrodinger)(
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([0, 1, 2]))]
+    )
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == ham.integrate_sd_sd(0b0101, 0b0101)
+    assert np.allclose(
+        test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=True),
+        np.hstack([np.zeros(3), ham.integrate_sd_sd(0b0101, 0b0101, deriv=np.array([0, 1, 2]))])
+    )
 
 
 def test_baseschrodinger_get_energy_one_proj():
@@ -189,13 +172,12 @@ def test_baseschrodinger_get_energy_one_proj():
         # E = <SD | H | Psi> / <SD | Psi>
         assert np.allclose(test.get_energy_one_proj(sd), integral / olp)
         # dE = d<SD | H | Psi> / <SD | Psi> - d<SD | Psi> <SD | H | Psi> / <SD | Psi>^2
-        for i in range(4):
-            d_olp = wfn.get_overlap(sd, deriv=i)
-            d_integral = (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-            assert np.allclose(
-                test.get_energy_one_proj(sd, deriv=[i]),
-                d_integral / olp - d_olp * integral / olp ** 2,
-            )
+        d_olp = wfn.get_overlap(sd, deriv=np.arange(6))
+        d_integral = (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6)))
+        assert np.allclose(
+            test.get_energy_one_proj(sd, deriv=True),
+            d_integral / olp - d_olp * integral / olp ** 2,
+        )
 
     # list of sd
     for sd1, sd2 in it.combinations(sds, 2):
@@ -231,7 +213,7 @@ def test_baseschrodinger_get_energy_one_proj():
         d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=np.arange(6)))
         d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=np.arange(6)))
         assert np.allclose(
-            test.get_energy_one_proj([sd1, sd2], deriv=np.arange(6)),
+            test.get_energy_one_proj([sd1, sd2], deriv=True),
             (d_olp1 * integral1 + d_olp2 * integral2 + olp1 * d_integral1 + olp2 * d_integral2)
             / (olp1 ** 2 + olp2 ** 2)
             - (2 * d_olp1 * olp1 + 2 * d_olp2 * olp2)
@@ -269,7 +251,7 @@ def test_baseschrodinger_get_energy_one_proj():
         d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=np.arange(6)))
         d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=np.arange(6)))
         assert np.allclose(
-            test.get_energy_one_proj(ciwfn, deriv=np.arange(6)),
+            test.get_energy_one_proj(ciwfn, deriv=True),
             (
                 d_coeff1 * integral1
                 + d_coeff2 * integral2
@@ -319,7 +301,7 @@ def test_baseschrodinger_get_energy_two_proj():
         # d_integral = (ham.integrate_sd_sd(sd_l, sd_r, deriv=np.arange(6)))
         d_integral = 0.0
         assert np.allclose(
-            test.get_energy_two_proj(sd_l, sd_r, sd_n, deriv=np.arange(6)),
+            test.get_energy_two_proj(sd_l, sd_r, sd_n, deriv=True),
             (
                 d_olp_l * integral * olp_r / olp_n ** 2
                 + olp_l * d_integral * olp_r / olp_n ** 2
@@ -408,7 +390,7 @@ def test_baseschrodinger_get_energy_two_proj():
         d_integral12 = 0.0
         d_integral22 = 0.0
         assert np.allclose(
-            test.get_energy_two_proj(sds_l, sds_r, sds_n, deriv=np.arange(6)),
+            test.get_energy_two_proj(sds_l, sds_r, sds_n, deriv=True),
             (
                 (
                     d_olp_l1 * integral11 * olp_r1
