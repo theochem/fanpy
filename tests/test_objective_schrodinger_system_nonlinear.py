@@ -112,6 +112,7 @@ def test_system_assign_eqn_weights():
     test.assign_pspace()
     test.assign_refwfn()
     test.assign_param_selection()
+    test.energy_type = 'compute'
     test.assign_constraints()
 
     test.assign_eqn_weights()
@@ -130,7 +131,7 @@ def test_system_assign_eqn_weights():
     with pytest.raises(TypeError):
         test.assign_eqn_weights([1, 1, 1, 1, 1, 1, 1])
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         test.assign_eqn_weights(np.array([0, 0, 0, 0, 0, 0, 0]))
 
 
@@ -142,6 +143,7 @@ def test_system_assign_constraints():
     test.assign_param_selection(
         ParamMask((ParamContainer(test.wfn.params), np.ones(6, dtype=bool)))
     )
+    test.energy_type = "compute"
 
     test.assign_constraints()
     assert isinstance(test.constraints, list)
@@ -179,6 +181,7 @@ def test_num_eqns():
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn()
     test.assign_param_selection()
+    test.energy_type = "compute"
     test.assign_constraints()
     test.assign_pspace((0b0101, 0b1010))
     assert test.num_eqns == 3

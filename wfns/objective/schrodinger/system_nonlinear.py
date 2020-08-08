@@ -201,10 +201,6 @@ class SystemEquations(BaseSchrodinger):
         if energy_type in ["fixed", "variable"]:
             self.param_selection.load_mask_container_params(self.energy, energy_type == "variable")
             self.param_selection.load_masks_objective_params()
-            for i in constraints:
-                if isinstance(i, EnergyConstraint):
-                    i.param_selection = self.param_selection
-                    i.energy_variable = self.energy
 
         self.assign_constraints(constraints)
         self.assign_eqn_weights(eqn_weights)
@@ -277,21 +273,24 @@ class SystemEquations(BaseSchrodinger):
 
         """
         if refwfn is None:
-            self.refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin),)
+            refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin),)
         elif slater.is_sd_compatible(refwfn):
-            self.refwfn = (refwfn,)
-        elif isinstance(refwfn, (list, tuple)) and not all(
-            slater.is_sd_compatible(sd) for sd in refwfn
-        ):
-            raise TypeError("Slater determinant must be given as an integer.")
-        elif isinstance(refwfn, CIWavefunction):
-            self.refwfn = refwfn
-        else:
+            refwfn = (refwfn,)
+        elif isinstance(refwfn, list):
+            refwfn = tuple(refwfn)
+
+        if not isinstance(refwfn, (list, tuple, CIWavefunction)):
             raise TypeError(
                 "Reference state must be given as a Slater determinant, a list/tuple of"
                 " Slater determinants, or a CIWavefunction. See `backend.slater` for "
                 "compatible representations of the Slater determinants."
             )
+        if isinstance(refwfn, (list, tuple)) and not all(
+            slater.is_sd_compatible(sd) for sd in refwfn
+        ):
+            raise TypeError("Slater determinant must be given as an integer.")
+
+        self.refwfn = refwfn
 
     def assign_constraints(self, constraints=None):
         """Assign the constraints on the objective.
@@ -334,6 +333,12 @@ class SystemEquations(BaseSchrodinger):
                     "The given constraint must have the same parameter selection (in "
                     "the form of ParamMask) as the objective."
                 )
+            if (
+                self.energy_type in ["fixed", "variable"] and
+                isinstance(constraint, EnergyConstraint)
+            ):
+                constraint.param_selection = self.param_selection
+                constraint.energy_variable = self.energy
         self.constraints = constraints
 
     def assign_eqn_weights(self, eqn_weights=None):
