@@ -105,11 +105,11 @@ class BaseHamiltonian:
             Needs to have the following in `__dict__`: `get_overlap`.
         sd : int
             Slater Determinant against which the Hamiltonian is integrated.
-        wfn_deriv : {int, None}
-            Index of the wavefunction parameter against which the integral is derivatized.
+        wfn_deriv : np.ndarray
+            Indices of the wavefunction parameter against which the integral is derivatized.
             Default is no derivatization.
-        ham_deriv : {int, None}
-            Index of the Hamiltonian parameter against which the integral is derivatized.
+        ham_deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
         components : {bool, False}
             Option for separating the integrals into the one electron, coulomb, and exchange
@@ -170,8 +170,8 @@ class BaseHamiltonian:
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : {int, None}
-            Index of the Hamiltonian parameter against which the integral is derivatized.
+        deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
         components : {bool, False}
             Option for separating the integrals into the one electron, coulomb, and exchange

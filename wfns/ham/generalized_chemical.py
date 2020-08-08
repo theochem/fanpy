@@ -185,8 +185,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : {int, None}
-            Index of the Hamiltonian parameter against which the integral is derivatized.
+        deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integral is derivatized.
             Default is no derivatization.
         components : bool
             Option for separating the integrals into the one electron, coulomb, and exchange
@@ -392,8 +392,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Slater Determinant against which the Hamiltonian is integrated.
         sd2 : int
             Slater Determinant against which the Hamiltonian is integrated.
-        deriv : int
-            Index of the Hamiltonian parameter against which the integral is derivatized.
+        deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integral is derivatized.
         components : {bool, False}
             Option for separating the integrals into the one electron, coulomb, and exchange
             components.
@@ -401,8 +401,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         Returns
         -------
-        d_integral : {float, np.ndarray(3,)}
-            Derivative of the integral.
+        d_integral : {np.ndarray(3, len(deriv)), np.ndarray(len(deriv))}
+            Derivatives of the integral with respect to the given parameters.
             If `components` is False, then the derivative of the integral is returned.
             If `components` is True, then the derivative of the one electron, coulomb, and exchange
             components are returned.
@@ -430,47 +430,48 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         # if two Slater determinants do not have the same number of electrons
         if len(diff_sd1) != len(diff_sd2):
             if components:
-                return 0.0, 0.0, 0.0
-            return 0.0
+                return np.zeros((3, len(deriv)))
+            return np.zeros(len(deriv))
         diff_order = len(diff_sd1)
         if diff_order > 2:
             if components:
-                return 0.0, 0.0, 0.0
-            return 0.0
+                return np.zeros((3, len(deriv)))
+            return np.zeros(len(deriv))
 
         # get sign
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         # check deriv
-        if not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
+        if not (
+            isinstance(deriv, np.ndarray) and np.all(deriv >= 0) and np.all(deriv < self.nparams)
+        ):
             raise ValueError(
-                "Given derivative index must be an integer greater than or equal to "
-                "zero and less than the number of parameters, "
-                "nspatial * (nspatial-1)/2"
+                "Derivative indices must be given as a numpy array of integers greater than or "
+                "equal to zero and less than the number of parameters, nspatial * (nspatial-1) / 2"
             )
 
-        # turn deriv into indices of the matrix, (x, y), where x < y
-        x, y = self.param_ind_to_rowcol_ind(deriv)
+        output = np.zeros((len(deriv), 3))
+        for i, deriv_ind in enumerate(deriv):
+            # turn deriv into indices of the matrix, (x, y), where x < y
+            x, y = self.param_ind_to_rowcol_ind(deriv_ind)
 
-        one_electron, coulomb, exchange = 0.0, 0.0, 0.0
-
-        # two sd's are the same
-        if diff_order == 0:
-            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_zero(x, y, shared_indices)
-        # two sd's are different by single excitation
-        elif diff_order == 1:
-            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_one(
-                diff_sd1, diff_sd2, x, y, shared_indices
-            )
-        # two sd's are different by double excitation
-        else:
-            one_electron, coulomb, exchange = self._integrate_sd_sd_deriv_two(
-                diff_sd1, diff_sd2, x, y
-            )
+            # two sd's are the same
+            if diff_order == 0:
+                output[i] = self._integrate_sd_sd_deriv_zero(x, y, shared_indices)
+            # two sd's are different by single excitation
+            elif diff_order == 1:
+                output[i] = self._integrate_sd_sd_deriv_one(
+                    diff_sd1, diff_sd2, x, y, shared_indices
+                )
+            # two sd's are different by double excitation
+            else:
+                output[i] = self._integrate_sd_sd_deriv_two(
+                    diff_sd1, diff_sd2, x, y
+                )
 
         if components:
-            return sign * np.array([one_electron, coulomb, exchange])
-        return sign * (one_electron + coulomb + exchange)
+            return sign * output.T
+        return sign * np.sum(output, axis=1)
 
     def _integrate_sd_sd_deriv_zero(self, x, y, shared_indices):
         """Return the derivative of the integrals of the given Slater determinant with itself.

@@ -35,7 +35,7 @@ def test_integrate_sd_sd_trivial():
         0,
         -two_int[1, 1, 1, 0] - two_int[0, 1, 1, 1] + two_int[0, 0, 1, 0] + two_int[0, 1, 0, 0],
         0,
-    ), test.integrate_sd_sd(0b110001, 0b101010, deriv=0, components=True))
+    ), test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel())
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -168,7 +168,9 @@ def test_integrate_sd_sd_deriv():
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, -1)
     with pytest.raises(ValueError):
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 2)
-    assert np.allclose(test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, 0, components=True), 0)
+    assert np.allclose(
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=True), 0
+    )
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
@@ -193,7 +195,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2))
                     - np.array(test_ham.integrate_sd_sd(sd1, sd2))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, np.array([i])).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -227,7 +229,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2))
                     - np.array(test_ham.integrate_sd_sd(sd1, sd2))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, np.array([i])).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -264,7 +266,9 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
                     - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=True))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i, components=True)
+                derivative = test_ham._integrate_sd_sd_deriv(
+                    sd1, sd2, np.array([i]), components=True
+                ).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -300,7 +304,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2))
                     - np.array(test_ham.integrate_sd_sd(sd1, sd2))
                 ) / epsilon
-                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, i)
+                derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, np.array([i])).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
 
 
@@ -805,7 +809,7 @@ def test_integrate_sd_wfn_deriv():
     wfn.assign_params(np.random.rand(*wfn.params.shape))
     assert np.allclose(
         test_ham.integrate_sd_wfn_deriv(0b0001101010, wfn, np.arange(10)),
-        np.array([test_ham.integrate_wfn_sd(wfn, 0b0001101010, ham_deriv=i) for i in range(10)]).T,
+        test_ham.integrate_wfn_sd(wfn, 0b0001101010, ham_deriv=np.arange(10)),
     )
 
     ham_derivs = np.array([0, 3, 5, 7, 8])
@@ -815,12 +819,9 @@ def test_integrate_sd_wfn_deriv():
         for occ_indices in it.combinations(range(10), i):
             assert np.allclose(
                 test_ham.integrate_sd_wfn_deriv(slater.create(0, *occ_indices), wfn, ham_derivs),
-                np.array(
-                    [
-                        test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), ham_deriv=i)
-                        for i in ham_derivs.tolist()
-                    ]
-                ).T,
+                test_ham.integrate_wfn_sd(
+                    wfn, slater.create(0, *occ_indices), ham_deriv=ham_derivs
+                ),
             )
 
     with pytest.raises(TypeError):
