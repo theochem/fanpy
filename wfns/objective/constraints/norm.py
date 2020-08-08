@@ -195,20 +195,25 @@ class NormConstraint(BaseSchrodinger):
         overlaps = np.array([get_overlap(i) for i in ref_sds])
 
         d_norm = np.zeros(params.size)
-        # FIXME: there is a better way to do this, but I'm hoping that the number of parameters is
-        #        not terribly big (so it should be cheap to evaluate)
-        for i in range(params.size):
-            # get derivatives of reference wavefunction
-            if isinstance(ref, CIWavefunction):
-                ref_deriv = self.param_selection.derivative_index(ref, i)
-                if ref_deriv is None:
-                    d_ref_coeffs = 0.0
-                else:
-                    d_ref_coeffs = np.zeros(ref.nparams, dtype=float)
-                    d_ref_coeffs[ref_deriv] = 1
-            else:
-                d_ref_coeffs = np.array([get_overlap(k, i) for k in ref])
-            # Compute
-            d_norm[i] = np.sum(d_ref_coeffs * overlaps)
-            d_norm[i] += np.sum(ref_coeffs * np.array([get_overlap(k, i) for k in ref_sds]))
+
+        deriv = np.arange(params.size)
+        # get derivatives of reference wavefunction
+        if isinstance(ref, CIWavefunction):
+            ref_deriv = np.array(
+                [self.param_selection.derivative_index(ref, i) for i in deriv]
+            )
+            # remove None's
+            ref_mask = ref_deriv != None
+            ref_deriv = ref_deriv[ref_mask].astype(int)
+
+            d_ref_coeffs = np.zeros((ref.nparams, len(deriv)), dtype=float)
+            if ref_deriv.size > 0:
+                d_ref_coeffs[ref_deriv, np.where(ref_mask)[0]] = 1
+        else:
+            d_ref_coeffs = np.array([get_overlap(k, deriv) for k in ref])
+        # Compute
+        d_norm = np.sum(d_ref_coeffs * overlaps[:, None], axis=0)
+        d_norm += np.sum(
+            ref_coeffs[:, None] * np.array([get_overlap(i, deriv) for i in ref_sds]), axis=0
+        )
         return d_norm

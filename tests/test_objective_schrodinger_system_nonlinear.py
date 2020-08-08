@@ -315,16 +315,15 @@ def test_system_jacobian():
         for eqn, sd, weight in zip(
             jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
-            for i in range(6):
-                assert np.allclose(
-                    eqn[i],
-                    weight
-                    * (
-                        (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                        - test.get_energy_one_proj(refwfn, deriv=i) * wfn.get_overlap(sd)
-                        - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd, deriv=i)
-                    ),
-                )
+            assert np.allclose(
+                eqn,
+                weight
+                * (
+                    (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6)))
+                    - test.get_energy_one_proj(refwfn, deriv=np.arange(6)) * wfn.get_overlap(sd)
+                    - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd, deriv=np.arange(6))
+                ),
+            )
         assert np.allclose(jacobian[-1], norm_answer)
 
         # variable energy
@@ -371,10 +370,15 @@ def test_system_jacobian():
 def test_system_jacobian_active_ciref():
     """Test SystemEquation.jacobian with CIWavefunction reference with active parameters."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
-        np.arange(1, 5, dtype=float).reshape(2, 2),
-        np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
-    )
+    wfn.assign_params(np.random.rand(wfn.nparams))
+
+    one_int = np.random.rand(2, 2)
+    one_int = one_int + one_int.T
+    two_int = np.random.rand(2, 2, 2, 2)
+    two_int = np.einsum("ijkl->jilk", two_int) + two_int
+    two_int = np.einsum("ijkl->klij", two_int) + two_int
+    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+
     weights = np.random.rand(7)
 
     ciref = CIWavefunction(2, 4)
@@ -393,16 +397,12 @@ def test_system_jacobian_active_ciref():
     for eqn, sd, weight in zip(
         jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
     ):
-        for i in range(12):
-            assert np.allclose(
-                eqn[i],
-                weight
-                * (
-                    (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                    - test.get_energy_one_proj(ciref, deriv=i) * wfn.get_overlap(sd)
-                    - test.get_energy_one_proj(ciref) * wfn.get_overlap(sd, deriv=i)
-                ),
-            )
+        results = np.zeros(12)
+        results[:6] += ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6))
+        results -= test.get_energy_one_proj(ciref, deriv=np.arange(12)) * wfn.get_overlap(sd)
+        results[:6] -= test.get_energy_one_proj(ciref) * wfn.get_overlap(sd, deriv=np.arange(6))
+
+        assert np.allclose(eqn, weight * results)
     assert np.allclose(
         jacobian[-1],
         [

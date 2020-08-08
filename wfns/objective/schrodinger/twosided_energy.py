@@ -271,9 +271,6 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return np.array(
-            [
-                self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, i)
-                for i in range(params.size)
-            ]
+        return self.get_energy_two_proj(
+            self.pspace_l, self.pspace_r, self.pspace_n, np.arange(params.size)
         )

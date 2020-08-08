@@ -272,6 +272,4 @@ class OneSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        # FIXME: numpy array derivatization is wrong
-        # return np.array(self.get_energy_one_proj(self.refwfn, np.arange(params.size, dtype=int)))
-        return np.array([self.get_energy_one_proj(self.refwfn, i) for i in range(params.size)])
+        return self.get_energy_one_proj(self.refwfn, np.arange(params.size))
