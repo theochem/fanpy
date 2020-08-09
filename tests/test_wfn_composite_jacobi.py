@@ -137,7 +137,10 @@ def test_jacobi_jacobi_rotation():
 def test_jacobi_assign_params():
     """Test JacobiWavefunction.assign_params."""
     test = skip_init(JacobiWavefunction)
+    test.memory = 10
+    test._cache_fns = {}
     test.assign_params(0)
+    test.load_cache()
     assert test.params.size == 1
     assert test.params.shape == ()
     assert test.params == 0

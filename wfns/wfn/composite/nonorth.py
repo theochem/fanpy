@@ -257,6 +257,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     )
 
         self.params = tuple(params)
+        self.clear_cache()
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):

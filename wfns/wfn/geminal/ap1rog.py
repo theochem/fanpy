@@ -142,8 +142,8 @@ class AP1roG(APIG):
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
         self._cache_fns = {}
-        self.load_cache()
         self.assign_params(params=params)
+        self.load_cache()
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -162,6 +162,7 @@ class AP1roG(APIG):
             params = np.zeros((self.ngem, self.norbpair))
 
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     def assign_ref_sd(self, sd=None):
         """Assign the reference Slater determinant.

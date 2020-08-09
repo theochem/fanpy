@@ -223,6 +223,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if isinstance(params, (int, float)):
             params = np.array(params, dtype=float)
         super().assign_params(params=params)
+        self.clear_cache()
 
     def assign_orbtype(self, orbtype=None):
         """Assign the orbital type of the orbital rotation.

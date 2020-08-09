@@ -46,6 +46,7 @@ def test_nonorth_assign_params():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -104,6 +105,7 @@ def test_nonorth_spin():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -129,6 +131,7 @@ def test_nonorth_seniority():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -154,6 +157,7 @@ def test_nonorth_default_params():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -173,6 +177,7 @@ def test_nonorth_nparams():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -197,6 +202,7 @@ def test_nonorth_param_shape():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -221,6 +227,7 @@ def test_nonorth_orbtype():
     test.nelec = 4
     test.nspin = 10
     test.memory = 10
+    test._cache_fns = {}
 
     test_wfn = TempWavefunction()
     test_wfn.nspin = 12
@@ -539,7 +546,6 @@ def test_nonorth_olp_deriv_restricted():
     # check trivial
     assert test._olp_deriv(0b1010, 0) == 0
     assert test._olp_deriv(0b1111, 0) == 0
-    print("x" * 99)
     assert test._olp_deriv(0b1111, 2) == 0
 
 

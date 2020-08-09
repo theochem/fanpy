@@ -84,8 +84,8 @@ class DeterminantRatio(BaseWavefunction):
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_numerator_mask(numerator_mask)
-        self.assign_params(params)
         self._cache_fns = {}
+        self.assign_params(params)
         self.load_cache()
 
     def assign_numerator_mask(self, numerator_mask=None):
@@ -272,6 +272,7 @@ class DeterminantRatio(BaseWavefunction):
         if isinstance(params, DeterminantRatio):
             params = params.params
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):

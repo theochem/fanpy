@@ -2,6 +2,7 @@
 import cachetools
 import numpy as np
 from wfns.backend import math_tools, slater
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.geminal.base import BaseGeminal
 
 
@@ -130,7 +131,8 @@ class RankTwoApprox:
             # check for zeros in denominator
             if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
                 raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
-        super().assign_params(params=self.params, add_noise=add_noise)
+        BaseWavefunction.assign_params(self, params=params, add_noise=add_noise)
+        self.clear_cache()
 
     # FIXME: too many branches
     def compute_permanent(self, col_inds, deriv=None):

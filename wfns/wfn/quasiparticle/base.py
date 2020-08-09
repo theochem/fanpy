@@ -119,8 +119,8 @@ class BaseQuasiparticle(BaseWavefunction):
         super().__init__(nelec, nspin, memory=memory)
         self.assign_nquasiparticle(nquasiparticle=nquasiparticle)
         self.assign_orbsubsets(orbsubsets=orbsubsets)
-        self.assign_params(params=params)
         self._cache_fns = {}
+        self.assign_params(params=params)
         self.load_cache()
 
     @property
@@ -276,6 +276,7 @@ class BaseQuasiparticle(BaseWavefunction):
         params = params.reshape(self.nquasiparticle, self.norbsubsets)
 
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     # FIXME: necessary?
     # FIXME: convert orbsubset into a tuple?

@@ -75,8 +75,8 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_wfn(wfn)
-        self.assign_params(params)
         self._cache_fns = {}
+        self.assign_params(params)
         self.load_cache()
 
     def assign_wfn(self, wfn):
