@@ -268,6 +268,16 @@ class BaseWavefunction:
                     0.01j * scale * (np.random.rand(*self.params.shape).astype(complex) - 0.5)
                 )
 
+    def save_params(self, filename):
+        """Save parameters associated with the wavefunction.
+
+        Parameters
+        ----------
+        filename : str
+
+        """
+        np.save(filename, self.params)
+
     def load_cache(self, include_derivative=True):
         """Load the functions whose values will be cached.
 

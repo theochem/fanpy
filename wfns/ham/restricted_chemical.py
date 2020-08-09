@@ -59,6 +59,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         Rotate orbitals using a transformation matrix.
     assign_params(self, params)
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
+    save_params(self, filename)
+        Save the parameters associated with the Hamiltonian.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)

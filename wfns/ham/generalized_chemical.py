@@ -1,5 +1,6 @@
 r"""Hamiltonian used to describe a chemical system expressed wrt generalized orbitals."""
 import itertools as it
+import os
 
 import numpy as np
 from wfns.backend import math_tools, slater
@@ -49,6 +50,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         Rotate orbitals using a transformation matrix.
     assign_params(self, params)
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
+    save_params(self, filename)
+        Save the parameters associated with the Hamiltonian.
     integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)
@@ -160,6 +163,23 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         # cache two electron integrals
         self.cache_two_ints()
+
+    def save_params(self, filename):
+        """Save parameters associated with the Hamiltonian.
+
+        Since both the parameters and the corresponding unitary matrix are needed to obtain the one-
+        and two-electron integrals (i.e. Hamiltonian), they are saved as separate files, using the
+        given filename as the root (removing the extension). The unitary matrix is saved by
+        appending "_um" to the end of the root.
+
+        Parameters
+        ----------
+        filename : str
+
+        """
+        root, ext = os.path.splitext(filename)
+        np.save(filename, self.params)
+        np.save(f"{root}_um{ext}", self._prev_unitary)
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
         r"""Integrate the Hamiltonian with against two Slater determinants.

@@ -86,6 +86,16 @@ class ParamContainer:
 
         self.params = params
 
+    def save_params(self, filename):
+        """Save parameters.
+
+        Parameters
+        ----------
+        filename : str
+
+        """
+        np.save(filename, self.params)
+
 
 class ComponentParameterIndices(OrderedDict):
     """Ordered dictionary modified for `indices_component_params` in BaseSchrodinger.

@@ -235,15 +235,30 @@ class BaseSchrodinger:
         """
         return sum(indices.size for indices in self.indices_component_params.values())
 
+    # FIXME: long filenames due to long class names used to identify each component
     def save_params(self):
-        """Save all of the parameters to the temporary file.
+        """Save the parameters associated with the Schrodinger equation.
 
         All of the parameters are saved, even if it was frozen in the objective.
 
+        The parameters of each component of the Schrodinger equation is saved separately using the
+        name in the `tmpfile` as the root (removing the extension). The class name of each component
+        and a counter are used to differentiate the files associated with each component.
+
         """
         if self.tmpfile != "":
-            np.save(self.tmpfile, self.all_params)
-            np.save('{}_um{}'.format(*os.path.splitext(self.tmpfile)), self.ham._prev_unitary)
+            root, ext = os.path.splitext(self.tmpfile)
+            names = [type(component).__name__ for component in self.indices_component_params]
+            names_totalcount = {name: names.count(name) for name in set(names)}
+            names_count = {name: 0 for name in set(names)}
+
+            for component in self.indices_component_params:
+                name = type(component).__name__
+                if names_totalcount[name] > 1:
+                    names_count[name] += 1
+                    name = f"{name}{names_count[name]}"
+
+                component.save_params(f"{root}_{name}{ext}")
 
     def assign_params(self, params):
         """Assign the parameters to the wavefunction and/or Hamiltonian.

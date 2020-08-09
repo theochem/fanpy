@@ -1,4 +1,6 @@
 """Base class for composite wavefunctions that modifies one wavefunction."""
+import os
+import numpy as np
 from wfns.wfn.base import BaseWavefunction
 
 
@@ -111,3 +113,21 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
                 "instantiated NonorthWavefunction."
             )
         self.wfn = wfn
+
+    def save_params(self, filename):
+        """Save parameters associated with the wavefunction.
+
+        Since both the parameters of the composite wavefunction and the underlying wavefunction are
+        needed to replicated the overlaps, they are saved as separate files, using the
+        given filename as the root (removing the extension). The parameters of the underlying
+        wavefunction are saved by appending the name of the wavefunction to the end of the root.
+
+        Parameters
+        ----------
+        filename : str
+
+        """
+        root, ext = os.path.splitext(filename)
+        np.save(filename, self.params)
+        name = type(self.wfn).__name__
+        self.wfn.save_params(f"{root}_{name}{ext}")

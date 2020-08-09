@@ -1,5 +1,6 @@
 """Linear combination of different wavefunctions."""
 import numpy as np
+import os
 from wfns.wfn.base import BaseWavefunction
 
 
@@ -133,6 +134,35 @@ class LinearCombinationWavefunction(BaseWavefunction):
             params[0] = 1.0
 
         super().assign_params(params=params, add_noise=add_noise)
+
+    # FIXME: long filenames due to long class names used to identify each component
+    def save_params(self, filename):
+        """Save parameters associated with the wavefunction.
+
+        Since the parameters of the composite wavefunction and the parameters of the underlying
+        wavefunctions are needed to replicated the overlaps, they are saved as separate files, using
+        the given filename as the root (removing the extension). The class names of each underlying
+        wavefunction and a counter are used to differentiate the files associated with each
+        wavefunction.
+
+        Parameters
+        ----------
+        filename : str
+
+        """
+        root, ext = os.path.splitext(filename)
+        np.save(filename, self.params)
+        names = [type(wfn).__name__ for wfn in self.wfns]
+        names_totalcount = {name: names.count(name) for name in set(names)}
+        names_count = {name: 0 for name in set(names)}
+
+        for wfn in self.wfns:
+            name = type(wfn).__name__
+            if names_totalcount[name] > 1:
+                names_count[name] += 1
+                name = f"{name}{names_count[name]}"
+
+            wfn.save_file(f"{root}_{name}{ext}")
 
     def assign_wfns(self, wfns):
         """Assign the wavefunctions that will be linearly combined.
