@@ -13,32 +13,16 @@ class NormConstraint(BaseSchrodinger):
 
     .. math::
 
-        \left< \Psi \middle| \Psi \right> - 1 = 0
-
-    However, this may be difficult to evaluate because :math:`\Psi` contains too many Slater
-    determinants. Normalization with respect to a reference wavefunction (intermediate
-    normalization) can be used in these cases:
-
-    .. math::
-
         \left<\Phi \middle| \Psi\right> - 1 = 0
 
     where :math:`\Phi` is some reference wavefunction.
 
     Attributes
     ----------
-    tmpfile : str
-        Name of the file that will store the parameters used by the objective method.
-        By default, the parameter values are not stored.
-        If a file name is provided, then parameters are stored upon execution of the objective
-        method.
-    param_selection : ParamMask
-        Selection of parameters that will be used in the objective.
-        Default selects the wavefunction parameters.
-        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
-        selected.
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited state).
+        Wavefunction that defines the state of the system.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     refwfn : {tuple of int, CIWavefunction}
         Wavefunction against which the Schrodinger equation is integrated.
         Tuple of Slater determinants will be interpreted as a projection space, and the reference
@@ -46,8 +30,24 @@ class NormConstraint(BaseSchrodinger):
 
     Properties
     ----------
-    params : {np.ndarray(K, )}
-        Parameters of the objective at the current state.
+    indices_objective_params : dict
+        Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
+
+    Methods
+    -------
+    __init__(self, wfn, ham, param_selection=None, tmpfile="")
+        Initialize the objective.
+    assign_params(self, params)
+        Assign the parameters to the wavefunction and/or Hamiltonian.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
 
     """
 
@@ -66,17 +66,13 @@ class NormConstraint(BaseSchrodinger):
             space.
             By default, the given wavefunction is used as the reference by using a complete
             projection space.
-        param_selection : {list, tuple, ParamMask, None}
-            Selection of parameters that will be used to construct the objective.
-            For use as a constraint, the same `param_selection` should be provided as the objective
-            instance that will be constrained.
-            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
-            indexing array for the active parameters. See `ParamMask.__init__` for details.
-        tmpfile : str
-            Name of the file that will store the parameters used by the objective method.
-            By default, the parameter values are not stored.
-            If a file name is provided, then parameters are stored upon execution of the objective
-            method.
+        param_selection : tuple/list of 2-tuple/list
+            Selection of the parameters that will be used in the objective.
+            First element of each entry is a component of the objective: a wavefunction,
+            Hamiltonian, or `ParamContainer` instance.
+            Second element of each entry is a numpy index array (boolean or indices) that will
+            select the parameters from each component that will be used in the objective.
+            Default selects the wavefunction parameters.
 
         """
         if not isinstance(wfn, BaseWavefunction):

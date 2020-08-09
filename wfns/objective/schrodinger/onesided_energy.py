@@ -6,16 +6,7 @@ from wfns.wfn.ci.base import CIWavefunction
 
 
 class OneSidedEnergy(BaseSchrodinger):
-    r"""Energy of the Schrodinger equation integrated against a reference wavefunction.
-
-    .. math::
-
-        E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
-                 {\left< \Psi \middle| \Psi \right>}
-
-    Since this equation may be expensive (wavefunction will probably require too many Slater
-    determinants for a complete description), we use a reference wavefunction on one side of the
-    integral.
+    r"""Energy evaluated by projecting against a reference wavefunction.
 
     .. math::
 
@@ -43,16 +34,13 @@ class OneSidedEnergy(BaseSchrodinger):
         Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
         By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    param_selection : ParamMask
-        Selection of parameters that will be used in the objective.
-        Default selects the wavefunction parameters.
-        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
-        selected.
     refwfn : {tuple of int, CIWavefunction, None}
         Wavefunction against which the Schrodinger equation is integrated.
         Tuple of Slater determinants will be interpreted as a projection space, and the reference
@@ -60,35 +48,42 @@ class OneSidedEnergy(BaseSchrodinger):
 
     Properties
     ----------
-    params : {np.ndarray(K, )}
-        Parameters of the objective at the current state.
+    indices_objective_params : dict
+        Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
     num_eqns : int
         Number of equations in the objective.
 
     Methods
     -------
-    __init__(self, param_selection=None, tmpfile='')
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="", refwfn=None)
         Initialize the objective.
     assign_params(self, params)
-        Assign the parameters to the wavefunction and/or hamiltonian.
+        Assign the parameters to the wavefunction and/or Hamiltonian.
     save_params(self)
-        Save all of the parameters in the `param_selection` to the temporary file.
-    wrapped_get_overlap(self, sd, deriv=None)
-        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=None)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
-    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
-        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
+        Save all of the parameters to the temporary file.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=False)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
+        Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=False)
+        Return the energy with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False)
+        Return the energy after projecting out both sides.
     assign_refwfn(self, refwfn=None)
         Assign the reference wavefunction.
     objective(self, params) : float
-        Return the energy of the wavefunction integrated against the reference wavefunction.
+        Return the energy integrated against the reference wavefunction.
     gradient(self, params) : np.ndarray
-        Return the gradient of the objective.
+        Return the gradient of the energy integrated against the reference wavefunction.
 
     """
 
@@ -103,15 +98,24 @@ class OneSidedEnergy(BaseSchrodinger):
             Wavefunction.
         ham : BaseHamiltonian
             Hamiltonian that defines the system under study.
+        param_selection : tuple/list of 2-tuple/list
+            Selection of the parameters that will be used in the objective.
+            First element of each entry is a component of the objective: a wavefunction,
+            Hamiltonian, or `ParamContainer` instance.
+            Second element of each entry is a numpy index array (boolean or indices) that will
+            select the parameters from each component that will be used in the objective.
+            Default selects the wavefunction parameters.
+        optimize_orbitals : bool
+            Option to optimize orbitals.
+            If Hamiltonian parameters are not selected, all of the orbital optimization parameters
+            are optimized.
+            If Hamiltonian parameters are selected, then only optimize the selected parameters.
+            Default is no orbital optimization.
         tmpfile : str
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
             If a file name is provided, then parameters are stored upon execution of the objective
             method.
-        param_selection : {list, tuple, ParamMask, None}
-            Selection of parameters that will be used to construct the objective.
-            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
-            indexing array for the active parameters. See `ParamMask.__init__` for details.
         refwfn : {tuple/list of int, tuple/list of CIWavefunction, None}
             Wavefunction against which the Schrodinger equation is integrated.
             Tuple of Slater determinants will be interpreted as a projection space, and the
@@ -233,7 +237,7 @@ class OneSidedEnergy(BaseSchrodinger):
             raise TypeError("Projection space must be given as a list or a tuple.")
 
     def objective(self, params):
-        """Return the energy of the wavefunction integrated against the reference wavefunction.
+        """Return the energy integrated against the reference wavefunction.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
 
@@ -245,7 +249,7 @@ class OneSidedEnergy(BaseSchrodinger):
         Returns
         -------
         objective : float
-            Value of the objective.
+            Energy with respect to the reference.
 
         """
         params = np.array(params)
@@ -257,7 +261,7 @@ class OneSidedEnergy(BaseSchrodinger):
         return self.get_energy_one_proj(self.refwfn)
 
     def gradient(self, params):
-        """Return the gradient of the objective.
+        """Return the gradient of the energy integrated against the reference wavefunction.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
 
@@ -269,7 +273,7 @@ class OneSidedEnergy(BaseSchrodinger):
         Returns
         -------
         gradient : np.array(N,)
-            Derivative of the objective with respect to each of the parameters.
+            Derivative of the energy with respect to the reference.
 
         """
         params = np.array(params)

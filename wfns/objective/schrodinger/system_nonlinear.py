@@ -13,41 +13,56 @@ class SystemEquations(BaseSchrodinger):
 
     .. math::
 
-        \left< \Phi_1 \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_1 \middle| \Psi \right>
-        &= 0\\
-        \left< \Phi_2 \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_2 \middle| \Psi \right>
-        &= 0\\
+        w_1 \left(
+            \left< \mathbf{m}_1 \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_1 \middle| \Psi \right>
+        \right) &= 0\\
+        w_2 \left(
+            \left< \mathbf{m}_2 \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_2 \middle| \Psi \right>
+        \right) &= 0\\
         &\vdots\\
-        \left< \Phi_K \middle| \hat{H} \middle| \Psi \right> - E \left< \Phi_K \middle| \Psi \right>
-        &= 0\\
-        f_{constraint}(\Psi, \hat{H}) &= 0
+        w_M \left(
+            \left< \mathbf{m}_M \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_M \middle| \Psi \right>
+        \right) &= 0\\
+        w_{M+1} f_{\mathrm{constraint}_1} &= 0\\
+        &\vdots
 
-    Energy can be a constant, a parameter that gets optimized, or a function of the wavefunction and
-    hamiltonian parameters.
+    where :math:`M` is the number of Slater determinant onto which the wavefunction is
+    projected.
+
+    The energy can be a fixed constant, a variable parameter, or computed from the given
+    wavefunction and Hamiltonian according to the following equation:
 
     .. math::
 
-        E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
-                 {\left< \Phi_{ref} \middle| \Psi \right>}
+        E = \frac{\left< \Phi_\mathrm{ref} \middle| \hat{H} \middle| \Psi \right>}
+                    {\left< \Phi_\mathrm{ref} \middle| \Psi \right>}
+
+    where :math:`\Phi_{\mathrm{ref}}` is a linear combination of Slater determinants,
+    :math:`\sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>` or
+    the wavefunction truncated to a given set of Slater determinants,
+    :math:`\sum_{\mathbf{m} \in S} \left< \mathbf{m} \middle| \Psi \right> \left|\mathbf{m}\right>`.
 
     Additionally, the normalization constraint is added with respect to the reference state.
+
+    .. math::
+
+        f_{\mathrm{constraint}} = \left< \Phi_\mathrm{ref} \middle| \Psi \right> - 1
 
     Attributes
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited state).
+        Wavefunction that defines the state of the system.
     ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
-        By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    param_selection : ParamMask
-        Selection of parameters that will be used in the objective.
-        Default selects the wavefunction parameters.
-        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
-        selected.
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
@@ -72,31 +87,40 @@ class SystemEquations(BaseSchrodinger):
 
     Properties
     ----------
+    indices_objective_params : dict
+        Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
+    num_eqns : int
+        Number of equations in the objective.
     params : {np.ndarray(K, )}
         Parameters of the objective at the current state.
     nproj : int
         Number of states onto which the Schrodinger equation is projected.
-    num_eqns : int
-        Number of equations in the objective.
 
     Methods
     -------
-    __init__(self, param_selection=None, tmpfile='')
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="")
         Initialize the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
-        Save all of the parameters in the `param_selection` to the temporary file.
-    wrapped_get_overlap(self, sd, deriv=None)
-        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=None)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
-    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
-        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
+        Save all of the parameters to the temporary file.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=False)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
+        Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=False)
+        Return the energy with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False)
+        Return the energy after projecting out both sides.
     assign_pspace(self, pspace=None)
         Assign the projection space.
     assign_refwfn(self, refwfn=None)
@@ -134,15 +158,24 @@ class SystemEquations(BaseSchrodinger):
             Wavefunction.
         ham : BaseHamiltonian
             Hamiltonian that defines the system under study.
-        tmpfile : str
+        param_selection : tuple/list of 2-tuple/list
+            Selection of the parameters that will be used in the objective.
+            First element of each entry is a component of the objective: a wavefunction,
+            Hamiltonian, or `ParamContainer` instance.
+            Second element of each entry is a numpy index array (boolean or indices) that will
+            select the parameters from each component that will be used in the objective.
+            Default selects the wavefunction parameters.
+        optimize_orbitals : {bool, False}
+            Option to optimize orbitals.
+            If Hamiltonian parameters are not selected, all of the orbital optimization parameters
+            are optimized.
+            If Hamiltonian parameters are selected, then only optimize the selected parameters.
+            Default is no orbital optimization.
+        tmpfile : {str, ''}
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
             If a file name is provided, then parameters are stored upon execution of the objective
             method.
-        param_selection : {list, tuple, ParamMask, None}
-            Selection of parameters that will be used to construct the objective.
-            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
-            indexing array for the active parameters. See `ParamMask.__init__` for details.
         pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
             States onto which the Schrodinger equation is projected.
             By default, the largest space is used.
@@ -177,9 +210,8 @@ class SystemEquations(BaseSchrodinger):
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If save_file is not a string.
-            If `energy` is not float, complex or None.
+            If `energy` is not a number.
         ValueError
-            If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
             If `energy_type` is not one of 'fixed', 'variable', or 'compute'.
 
@@ -242,7 +274,7 @@ class SystemEquations(BaseSchrodinger):
         ----------
         pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
             States onto which the Schrodinger equation is projected.
-            By default, the largest space is used.
+            By default, the first and second-order excitation is used.
 
         Raises
         ------
@@ -275,7 +307,7 @@ class SystemEquations(BaseSchrodinger):
             State with respect to which the energy and the norm are computed.
             If a list/tuple of Slater determinants are given, then the reference state is the given
             wavefunction truncated by the provided Slater determinants.
-            Default is ground state HF.
+            Default is ground-state Slater determinant.
 
         """
         if refwfn is None:
@@ -382,38 +414,16 @@ class SystemEquations(BaseSchrodinger):
         self.eqn_weights = eqn_weights
 
     def objective(self, params):
-        r"""Return the values of the system of equations.
-
-        .. math::
-
-            f_1(x) &= \left< \Phi_1 \middle| \hat{H} \middle| \Psi \right>
-                      - E \left< \Phi_1 \middle| \Psi \right>\\
-            &\vdots\\
-            f_K(x) &= \left< \Phi_K \middle| \hat{H} \middle| \Psi \right>
-                      - E \left< \Phi_K \middle| \Psi \right>\\
-            f_{K+1}(x) &= \left< \Phi_{ref} \middle| \Psi \right> - 1\\
-
-        where :math:`K` is the number of Slater determinant onto which the wavefunction is
-        projected. The :math:`K+1`th equation is the normalization constraint. The norm is computed
-        with respect to the reference state. The energy can be a constant, a parameter that gets
-        optimized, or a function of the wavefunction and hamiltonian parameters.
-
-        .. math::
-
-            E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
-                     {\left< \Phi_{ref} \middle| \Psi \right>}
-
-        In general, :math:`\Phi_i` can be some linear combination of Slater determinants,
-        :math:`SD_j`.
+        r"""Return the Projected Schrodinger equation evaluated at the given parameters.
 
         Parameters
         ----------
         params : np.ndarray(N,)
-            Parameters that describe the system of equations.
+            Parameters of the projected Schrodinger equation.
 
         Returns
         -------
-        objective : np.ndarray(nproj+1, )
+        objective : np.ndarray(nproj+nconstraints, )
             Output of the function that will be optimized.
 
         """
@@ -460,7 +470,7 @@ class SystemEquations(BaseSchrodinger):
         return obj
 
     def jacobian(self, params):
-        r"""Return the Jacobian of the objective function.
+        r"""Return the Jacobian of the projected Schrodinger equation evaluated at the given params.
 
         If :math:`(f_1(\vec{x}), f_2(\vec{x}), \dots)` is the objective function, the Jacobian is
 
@@ -473,11 +483,11 @@ class SystemEquations(BaseSchrodinger):
         Parameters
         ----------
         params : np.ndarray(N,)
-            Parameters that describe the system of equations.
+            Parameters of the projected Schrodinger equation.
 
         Returns
         -------
-        jac : np.ndarray(nproj+1, nparams)
+        jac : np.ndarray(nproj+nconstraints, nparams)
             Value of the Jacobian :math:`J_{ij}`.
 
         Notes

@@ -6,51 +6,60 @@ from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 # FIXME: change name
 # FIXME: inherited jacobian
 class LeastSquaresEquations(SystemEquations):
-    r"""Schrodinger equation as a system of equations represented as a least squares problem.
+    r"""Projected Schrodinger equation as a least squares problem.
 
     .. math::
 
-        \left(
-            \left< \Phi_1 \middle| \hat{H} \middle| \Psi \middle>
-             - E \middle< \Phi_1 \middle| \Psi \right>
+        0 = w_1^2 \left(
+            \left< \mathbf{m}_1 \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_1 \middle| \Psi \right>
         \right)^2 +
-        \left(
-            \left< \Phi_2 \middle| \hat{H} \middle| \Psi \middle>
-             - E \middle< \Phi_2 \middle| \Psi \right>
+        w_2^2 \left(
+            \left< \mathbf{m}_2 \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_2 \middle| \Psi \right>
         \right)^2 +
         \dots
-        \left(
-            \left< \Phi_K \middle| \hat{H} \middle| \Psi \middle>
-             - E \middle< \Phi_K \middle| \Psi \right>
+        w_M^2 \left(
+            \left< \mathbf{m}_M \middle| \hat{H} \middle| \Psi \right> -
+            E \left< \mathbf{m}_M \middle| \Psi \right>
         \right)^2 +
-        \left( f_{constraint}(\Psi, \hat{H}) \right)^2 = 0
+        w_{M+1}^2 f_{\mathrm{constraint}_1}^2
+        \dots
 
-    Energy can be a constant, a parameter that gets optimized, or a function of the wavefunction and
-    hamiltonian parameters.
+    where :math:`M` is the number of Slater determinant onto which the wavefunction is
+    projected.
+
+    The energy can be a fixed constant, a variable parameter, or computed from the given
+    wavefunction and Hamiltonian according to the following equation:
 
     .. math::
 
-        E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
-                 {\left< \Phi_{ref} \middle| \Psi \right>}
+        E = \frac{\left< \Phi_\mathrm{ref} \middle| \hat{H} \middle| \Psi \right>}
+                    {\left< \Phi_\mathrm{ref} \middle| \Psi \right>}
+
+    where :math:`\Phi_{\mathrm{ref}}` is a linear combination of Slater determinants,
+    :math:`\sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>` or
+    the wavefunction truncated to a given set of Slater determinants,
+    :math:`\sum_{\mathbf{m} \in S} \left< \mathbf{m} \middle| \Psi \right> \left|\mathbf{m}\right>`.
 
     Additionally, the normalization constraint is added with respect to the reference state.
+
+    .. math::
+
+        f_{\mathrm{constraint}} = \left< \Phi_\mathrm{ref} \middle| \Psi \right> - 1
 
     Attributes
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited state).
+        Wavefunction that defines the state of the system.
     ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
-        By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    param_selection : ParamMask
-        Selection of parameters that will be used in the objective.
-        Default selects the wavefunction parameters.
-        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
-        selected.
     pspace : {tuple/list of int, tuple/list of CIWavefunction, None}
         States onto which the Schrodinger equation is projected.
         By default, the largest space is used.
@@ -75,31 +84,40 @@ class LeastSquaresEquations(SystemEquations):
 
     Properties
     ----------
+    indices_objective_params : dict
+        Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
+    num_eqns : int
+        Number of equations in the objective.
     params : {np.ndarray(K, )}
         Parameters of the objective at the current state.
     nproj : int
         Number of states onto which the Schrodinger equation is projected.
-    num_eqns : int
-        Number of equations in the objective.
 
     Methods
     -------
-    __init__(self, param_selection=None, tmpfile='')
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="")
         Initialize the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
-        Save all of the parameters in the `param_selection` to the temporary file.
-    wrapped_get_overlap(self, sd, deriv=None)
-        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=None)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
-    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
-        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
+        Save all of the parameters to the temporary file.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=False)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
+        Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=False)
+        Return the energy with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False)
+        Return the energy after projecting out both sides.
     assign_pspace(self, pspace=None)
         Assign the projection space.
     assign_refwfn(self, refwfn=None)
@@ -128,43 +146,12 @@ class LeastSquaresEquations(SystemEquations):
         return 1
 
     def objective(self, params):
-        r"""Return the squared sum of the values of the system of equations.
-
-        .. math::
-
-            f(\vec{x}) &=
-            \left(
-                \left< \Phi_1 \middle| \hat{H} \middle| \Psi \middle>
-                - E \middle< \Phi_1 \middle| \Psi \right>
-            \right)^2 +
-            \left(
-                \left< \Phi_2 \middle| \hat{H} \middle| \Psi \middle>
-                - E \middle< \Phi_2 \middle| \Psi \right>
-            \right)^2 +
-            \dots
-            \left(
-                \left< \Phi_K \middle| \hat{H} \middle| \Psi \middle>
-                - E \middle< \Phi_K \middle| \Psi \right>
-            \right)^2 +
-            \left( f_{constraint}(\Psi, \hat{H}) \right)^2\\
-            &= f_1^2(\vec{x}) + f_2^2(\vec{x}) + \dots + f_K^2(\vec{x}) +
-            f_{constraint}(\vec{x})^2\\
-
-        where :math:`f_i` is the ith equation of the system of equations, :math:`K` is the number of
-        states onto which the wavefunction is projected. The :math:`K+1`th equation correspond to
-        constraints on the system of equations. We currently use only the normalization constraint.
-        The norm is computed with respect to the reference state. The energy can be a constant, a
-        parameter that gets optimized, or a function of the wavefunction and hamiltonian parameters.
-
-        .. math::
-
-            E = \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
-                     {\left< \Phi_{ref} \middle| \Psi \right>}
+        r"""Return the projected Schrodinger equation as a sum of squared residuals.
 
         Parameters
         ----------
         params : np.ndarray(N,)
-            Parameters that describe the system of equations.
+            Parameters of the projected Schrodinger equation.
 
         Returns
         -------
@@ -190,21 +177,21 @@ class LeastSquaresEquations(SystemEquations):
         return np.sum(system_eqns ** 2)
 
     def gradient(self, params):
-        r"""Gradient of the objective function.
+        r"""Gradient of the projected Schrodinger equation as sum of squared resduals.
 
-        If :math:`f(\vec{x})` is the objective function that corresponds to the system of equations,
-        :math:`\{f_1(\vec{x}), f_2(\vec{x}), \dots, f_K(\vec{x})\}`, i.e.
-
-        .. math::
-
-            f(\vec{x}) =
-            f_1^2(\vec{x}) + f_2^2(\vec{x}) + \dots + f_K^2(\vec{x}) + f_{constraint}(\vec{x})^2
-
-        the gradient is
+        If the system of equations, :math:`\{f_1(\vec{x}), f_2(\vec{x}), \dots, f_K(\vec{x})\}`,
+        corresponds to the projected Schrodinger equation and the corresponding sum of squared
+        residuals is
 
         .. math::
 
-            G_j(\vec{x}) &= \frac{\partial f(\vec{x})}{\partial x_j}\\
+            f(\vec{x}) = f_1(\vec{x})^2 + f_2(\vec{x})^2 + \dots + f_K(\vec{x})^2
+
+        then the gradient is
+
+        .. math::
+
+            \nabla f(\vec{x})_j &= \frac{\partial f(\vec{x})}{\partial x_j}\\
             &= 2 f_1(\vec{x}) \frac{\partial f_1(\vec{x})}{\partial x_j}
             + 2 f_2(\vec{x}) \frac{\partial f_2(\vec{x})}{\partial x_j}
             \dots
@@ -216,7 +203,7 @@ class LeastSquaresEquations(SystemEquations):
         Parameters
         ----------
         params : np.ndarray(N,)
-            Parameters that describe the system of equations.
+            Parameters of the projected Schrodinger equation.
 
         Returns
         -------

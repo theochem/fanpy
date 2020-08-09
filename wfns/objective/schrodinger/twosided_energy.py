@@ -9,33 +9,35 @@ class TwoSidedEnergy(BaseSchrodinger):
 
     .. math::
 
-        E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
-                 {\left< \Psi \middle| \Psi \right>}
-
-    Since this equation may be expensive (wavefunction may require many Slater determinants), we can
-    insert projection operators onto the wavefunction.
-
-    .. math::
-
-        E = \frac{
+        E &= \frac{
           \left< \Psi \right|
           \left(
-            \sum_{\mathbf{m}_1 \in S_{left}}
-            \left| \mathbf{m}_1 \middle> \middle< \mathbf{m}_1 \right|
+            \sum_{\mathbf{m}_{\mathrm{l}} \in S_\mathrm{left}}
+            \left| \mathbf{m}_{\mathrm{l} \middle> \middle< \mathbf{m}_{\mathrm{l} \right|
           \right)
           \hat{H}
           \left(
-            \sum_{\mathbf{m}_2 \in S_{right}}
-            \left| \mathbf{m}_2 \middle> \middle< \mathbf{m}_2 \right|
+            \sum_{\mathbf{m}_{\mathrm{r}} \in S_\mathrm{right}}
+            \left| \mathbf{m}_{\mathrm{r}} \middle> \middle< \mathbf{m}_{\mathrm{r}} \right|
           \right)
           \left| \Psi \right>
         }{
           \left< \Psi \right|
           \left(
-            \sum_{\mathbf{m}_3 \in S_{norm}}
-            \left| \mathbf{m}_3 \middle> \middle< \mathbf{m}_3 \right|
+            \sum_{\mathbf{m}_\mathrm{n} \in S_\mathrm{norm}}
+            \left| \mathbf{m}_\mathrm{n} \middle> \middle< \mathbf{m}_\mathrm{n} \right|
           \right)
           \left| \Psi \right>
+        }\\
+        &= \frac{
+          \sum_{\mathbf{m}_\mathrm{l} \in S_\mathrm{left}}
+          \sum_{\mathbf{m}_\mathrm{r} \in S_\mathrm{right}}
+          \left< \Psi \middle| \mathbf{m}_\mathrm{l} \right>
+          \left< \mathbf{m}_\mathrm{l} \middle| \hat{H} \middle| \mathbf{m}_\mathrm{r} \right>
+          \left< \mathbf{m}_\mathrm{r} \middle| \Psi \right>
+        }{
+          \sum_{\mathbf{m}_{\mathrm{n}} \in S_{\mathrm{norm}}}
+          \left< \Psi \middle| \mathbf{m}_{\mathrm{n}} \right>^2
         }
 
     where :math:`S_{left}` and  :math:`S_{right}` are the projection spaces for the left and right
@@ -49,55 +51,55 @@ class TwoSidedEnergy(BaseSchrodinger):
         Wavefunction that defines the state of the system (number of electrons and excited state).
     ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
-        By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    param_selection : ParamMask
-        Selection of parameters that will be used in the objective.
-        Default selects the wavefunction parameters.
-        Any subset of the wavefunction, composite wavefunction, and Hamiltonian parameters can be
-        selected.
-    pspace_l : {tuple of int, None}
-        States in the projection space of the left side of the integral
-        :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
-        By default, the largest space is used.
-    pspace_r : {tuple of int, None}
-        States in the projection space of the right side of the integral
-        :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
-        By default, the same space as `pspace_l` is used.
-    pspace_n : {tuple of int, None}
-        States in the projection space of the norm :math:`\left< \Psi \middle| \Psi \right>`.
-        By default, the same space as `pspace_l` is used.
+    pspace_l : {list/tuple of int, int}
+        Projection space used to truncate the numerator of the energy on the left.
+    pspace_r : {list/tuple of int, int, None}
+        Projection space used to truncate the numerator of the energy on the right.
+    pspace_norm : {list/tuple of int, int, None}
+        Projection space used to truncate the denominator of the energy.
 
     Properties
     ----------
-    params : {np.ndarray(K, )}
-        Parameters of the objective at the current state.
+    indices_objective_params : dict
+        Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
     num_eqns : int
         Number of equations in the objective.
 
     Methods
     -------
-    __init__(self, param_selection=None, tmpfile='')
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="")
         Initialize the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or hamiltonian.
     save_params(self)
         Save all of the parameters in the `param_selection` to the temporary file.
-    wrapped_get_overlap(self, sd, deriv=None)
-        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=None)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
-    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
-        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
-    objective(self, params) : float
-        Return the value of the objective for the given parameters.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=False)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
+        Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=False)
+        Return the energy with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False)
+        Return the energy after projecting out both sides.
+    objective(self, params)
+        Return the energy after inserting projection operators.
+    gradient(self, params)
+        Return the gradient of the energy after inserting projection operators.
 
     """
 
@@ -120,15 +122,24 @@ class TwoSidedEnergy(BaseSchrodinger):
             Wavefunction.
         ham : BaseHamiltonian
             Hamiltonian that defines the system under study.
+        param_selection : tuple/list of 2-tuple/list
+            Selection of the parameters that will be used in the objective.
+            First element of each entry is a component of the objective: a wavefunction,
+            Hamiltonian, or `ParamContainer` instance.
+            Second element of each entry is a numpy index array (boolean or indices) that will
+            select the parameters from each component that will be used in the objective.
+            Default selects the wavefunction parameters.
+        optimize_orbitals : bool
+            Option to optimize orbitals.
+            If Hamiltonian parameters are not selected, all of the orbital optimization parameters
+            are optimized.
+            If Hamiltonian parameters are selected, then only optimize the selected parameters.
+            Default is no orbital optimization.
         tmpfile : str
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
             If a file name is provided, then parameters are stored upon execution of the objective
             method.
-        param_selection : {list, tuple, ParamMask, None}
-            Selection of parameters that will be used to construct the objective.
-            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
-            indexing array for the active parameters. See `ParamMask.__init__` for details.
         pspace_l : {tuple/list of int, None}
             States in the projection space of the left side of the integral
             :math:`\left< \Psi \middle| \hat{H} \middle| \Psi \right>`.
@@ -227,7 +238,7 @@ class TwoSidedEnergy(BaseSchrodinger):
         return 1
 
     def objective(self, params):
-        """Return the energy of the wavefunction integrated against the projection spaces.
+        """Return the energy after inserting projection operators.
 
         See `BaseSchrodinger.get_energy_two_proj` for details.
 
@@ -239,7 +250,7 @@ class TwoSidedEnergy(BaseSchrodinger):
         Returns
         -------
         objective : float
-            Value of the objective.
+            Energy after inserting projection operators.
 
         """
         params = np.array(params)
@@ -251,7 +262,7 @@ class TwoSidedEnergy(BaseSchrodinger):
         return self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n)
 
     def gradient(self, params):
-        """Return the gradient of the objective.
+        """Return the gradient of the energy after inserting projection operators.
 
         Parameters
         ----------
@@ -260,8 +271,8 @@ class TwoSidedEnergy(BaseSchrodinger):
 
         Returns
         -------
-        gradient : np.array(N,)
-            Derivative of the objective with respect to each of the parameters.
+        gradient : np.array(active_nparams, )
+            Derivative of the energy after inserting projection operators.
 
         """
         params = np.array(params)

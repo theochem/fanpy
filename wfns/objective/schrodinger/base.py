@@ -24,44 +24,46 @@ class BaseSchrodinger:
     Attributes
     ----------
     wfn : BaseWavefunction
-        Wavefunction that defines the state of the system (number of electrons and excited state).
+        Wavefunction that defines the state of the system.
     ham : BaseHamiltonian
         Hamiltonian that defines the system under study.
+    indices_component_params : ComponentParameterIndices
+        Indices of the component parameters that are active in the objective.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
-        By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    indices_component_params : dict
-        Indices of the component parameters that are active in the objective.
 
     Properties
     ----------
-    active_params : np.ndarray
-        Parameters that are selected for optimization.
-    all_params : np.ndarray
-        All of the parameters associated with the objective.
     indices_objective_params : dict
         Indices of the (active) objective parameters that corresponds to each component.
+    all_params : np.ndarray
+        All of the parameters associated with the objective.
+    active_params : np.ndarray
+        Parameters that are selected for optimization.
+    active_nparams : int
+        Number of active parameters in the objective.
 
     Methods
     -------
-    __init__(self, wfn, ham, tmpfile="", param_selection=None)
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="")
         Initialize the objective.
     assign_params(self, params)
-        Assign the parameters to the wavefunction and/or hamiltonian.
+        Assign the parameters to the wavefunction and/or Hamiltonian.
     save_params(self)
         Save all of the parameters to the temporary file.
-    wrapped_get_overlap(self, sd, deriv=None)
-        Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=None)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
-    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
-        Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
+    wrapped_get_overlap(self, sd, deriv=False)
+        Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
+        objective.
+    wrapped_integrate_wfn_sd(self, sd, deriv=False)
+        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
+        Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
+    get_energy_one_proj(self, refwfn, deriv=False)
+        Return the energy with respect to a reference wavefunction.
+    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False)
+        Return the energy after projecting out both sides.
 
     Abstract Properties
     -------------------
@@ -72,6 +74,12 @@ class BaseSchrodinger:
     ----------------
     objective(self, params) : float
         Return the value of the objective for the given parameters.
+    gradient(self, params) : np.ndarray(K)
+        Return the values of the gradient of the objective with respect to the (active) parameters,
+        evaluated at the given parameters.
+    jacobian(self, params) : np.ndarray(M, K)
+        Return the values of the Jacobian of the objective equations with respect to the (active)
+        parameters, evaluated at the given parameters.
 
     """
 
@@ -85,11 +93,6 @@ class BaseSchrodinger:
             Wavefunction.
         ham : BaseHamiltonian
             Hamiltonian that defines the system under study.
-        tmpfile : str
-            Name of the file that will store the parameters used by the objective method.
-            By default, the parameter values are not stored.
-            If a file name is provided, then parameters are stored upon execution of the objective
-            method.
         param_selection : tuple/list of 2-tuple/list
             Selection of the parameters that will be used in the objective.
             First element of each entry is a component of the objective: a wavefunction,
@@ -103,6 +106,11 @@ class BaseSchrodinger:
             are optimized.
             If Hamiltonian parameters are selected, then only optimize the selected parameters.
             Default is no orbital optimization.
+        tmpfile : str
+            Name of the file that will store the parameters used by the objective method.
+            By default, the parameter values are not stored.
+            If a file name is provided, then parameters are stored upon execution of the objective
+            method.
 
         Raises
         ------
@@ -118,22 +126,21 @@ class BaseSchrodinger:
         if __debug__:
             if not isinstance(wfn, BaseWavefunction):
                 raise TypeError(
-                    "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
+                    "Given wavefunction is not an instance of BaseWavefunction (or its child)."
                 )
             if not isinstance(ham, BaseHamiltonian):
                 raise TypeError(
-                    "Given Hamiltonian is not an instance of BaseWavefunction (or its " "child)."
+                    "Given Hamiltonian is not an instance of BaseWavefunction (or its child)."
                 )
             if wfn.nspin != ham.nspin:
                 raise ValueError(
-                    "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
+                    "Wavefunction and Hamiltonian do not have the same number of spin orbitals."
                 )
         self.wfn = wfn
         self.ham = ham
 
         if param_selection is None:
             param_selection = [(self.wfn, np.arange(self.wfn.nparams))]
-
         if isinstance(param_selection, ComponentParameterIndices):
             self.indices_component_params = param_selection
         else:
@@ -153,7 +160,12 @@ class BaseSchrodinger:
 
     @property
     def indices_objective_params(self):
-        """Return the indices
+        """Return the indices of the active objective parameters for each component.
+
+        Returns
+        -------
+        indices_objctive_params : dict
+            Indices of the (active) objective parameters associated with each component.
 
         """
         output = {}
@@ -213,7 +225,14 @@ class BaseSchrodinger:
 
     @property
     def active_nparams(self):
-        """Return the number of active parameters."""
+        """Return the number of active parameters in the objective.
+
+        Returns
+        -------
+        active_nparams : int
+            Number of active parameters in the objective.
+
+        """
         return sum(indices.size for indices in self.indices_component_params.values())
 
     def save_params(self):
@@ -227,12 +246,12 @@ class BaseSchrodinger:
             np.save('{}_um{}'.format(*os.path.splitext(self.tmpfile)), self.ham._prev_unitary)
 
     def assign_params(self, params):
-        """Assign the parameters to the wavefunction and/or hamiltonian.
+        """Assign the parameters to the wavefunction and/or Hamiltonian.
 
         Parameters
         ----------
         params : {np.ndarray(K, )}
-            Parameters used by the objective method.
+            Parameters that are active in the objective function.
 
         Raises
         ------
@@ -271,8 +290,10 @@ class BaseSchrodinger:
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
+        overlap : {float, np.ndarray(active_nparams, )}
+            Overlap of the wavefunction with the given Slater determinant if `deriv` is False.
+            Derivative of the overlap of the wavefunction with the given Slater determinant if
+            `deriv` is True.
 
         """
         if __debug__:
@@ -307,13 +328,10 @@ class BaseSchrodinger:
 
         Returns
         -------
-        integral : float
-            Value of the integral :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>`.
-
-        Notes
-        -----
-        Since `integrate_wfn_sd` depends on both the Hamiltonian and the wavefunction, it can be
-        derivatized with respect to the paramters of the hamiltonian and of the wavefunction.
+        integral : {float, np.ndarray(active_nparams, )}
+            Integral :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` if `deriv` is False.
+            Derivative of the integral :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` if
+            `deriv` is True.
 
         """
         if __debug__:
@@ -358,8 +376,11 @@ class BaseSchrodinger:
 
         Returns
         -------
-        integral : float
-            Value of the integral :math:`\left< \Phi_i \middle| \hat{H} \middle| \Phi_j \right>`.
+        integral : {float, np.ndarray(active_nparams, )}
+            Integral :math:`\left< \mathbf{m}_i \middle| \hat{H} \middle| \mathbf{m}_j \right>` if
+            `deriv` is False.
+            Derivative of the integral :math:`\left< \mathbf{m}_i \middle| \hat{H} \middle|
+            \mathbf{m}_j \right>` if `deriv` is True.
 
         """
         if __debug__:
@@ -407,22 +428,26 @@ class BaseSchrodinger:
             \left< \Phi_{ref} \middle| \Psi \right> =
             \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right>
 
-        Ideally, we want to use the actual wavefunction as the reference, but, without further
-        simplifications, :math:`\Psi` uses too many Slater determinants to be computationally
-        tractible. Then, we can truncate the Slater determinants as a subset, :math:`S`, such that
-        the most significant Slater determinants are included, while the energy can be tractibly
-        computed. This is equivalent to inserting a projection operator on one side of the integral
+        Ideally, we want to use the actual wavefunction as the reference, but :math:`\Psi` often
+        uses too many Slater determinants to be computationally tractible. Instead, a CI
+        wavefunction
 
         .. math::
 
-            \left< \Psi \right| \sum_{\mathbf{m} \in S}
-            \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
-            = \sum_{\mathbf{m} \in S}
-              f^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
+            \left| \Phi \right> = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>
+
+        or a projected form of the wavefunction :math:`\Psi`
+
+        .. math::
+
+            \left| \Phi \right> = \sum_{\mathbf{m} \in S}
+                                \left< \Psi \middle| \mathbf{m} \middle> \left| \mathbf{m} \right>
+
+        can be used as a reference wavefunction.
 
         Parameters
         ----------
-        refwfn : {CIWavefunction, list/tuple of int}
+        refwfn : {CIWavefunction, list/tuple of int, int}
             Reference wavefunction used to calculate the energy.
             If list/tuple of Slater determinants are given, then the reference wavefunction will be
             the truncated form (according to the given Slater determinants) of the provided
@@ -433,8 +458,9 @@ class BaseSchrodinger:
 
         Returns
         -------
-        energy : float
-            Energy of the wavefunction with the given Hamiltonian.
+        energy : {float, np.ndarray(active_nparams, )}
+            Energy with respect to the reference if `deriv` is False.
+            Derivatives of the energy with respect to the reference if `deriv` is True.
 
         Raises
         ------
@@ -498,23 +524,27 @@ class BaseSchrodinger:
         return d_energy
 
     def get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=False):
-        r"""Return the energy of the Schrodinger equation after projecting out both sides.
+        r"""Return the energy after projecting out both sides.
+
+        The variational form of the energy,
 
         .. math::
 
-            E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
+            E = \frac{\left< \Phi \middle| \hat{H} \middle| \Psi \right>}
                      {\left< \Psi \middle| \Psi \right>}
 
-        Then, the numerator can be approximated by inserting projection operators:
+        can be approximated by inserting projection operators to the numerator:
 
         .. math::
 
-            \left< \Psi \middle| \hat{H} \middle| \Psi \right> &\approx \left< \Psi \right|
-            \sum_{\mathbf{m} \in S_l} \left| \mathbf{m} \middle> \middle< \mathbf{m} \right|
+            \left< \Psi \middle| \hat{H} \middle| \Psi \right>
+            &\approx \left< \Psi \right|
+            \sum_{\mathbf{m} \in S_\mathrm{left}}
+            \left| \mathbf{m} \middle> \middle< \mathbf{m} \right|
             \hat{H}
-            \sum_{\mathbf{n} \in S_r}
+            \sum_{\mathbf{n} \in S_\mathrm{right}}
             \left| \mathbf{n} \middle> \middle< \mathbf{n} \middle| \Psi_\mathbf{n} \right>\\
-            &\approx \sum_{\mathbf{m} \in S_l} \sum_{\mathbf{n} \in S_r}
+            &\approx \sum_{\mathbf{m} \in S_\mathrm{left}} \sum_{\mathbf{n} \in S_\mathrm{right}}
             \left< \Psi \middle| \mathbf{m} \right>
             \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
             \left< \mathbf{n} \middle| \Psi \right>\\
@@ -523,20 +553,22 @@ class BaseSchrodinger:
 
         .. math::
 
-            \left< \Psi \middle| \Psi \right> &\approx \left< \Psi \right|
+            \left< \Psi \middle| \Psi \right>
+            &\approx \left< \Psi \right|
             \sum_{\mathbf{m} \in S_{norm}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle|
             \middle| \Psi \right>\\
-            &\approx \sum_{\mathbf{m} \in S_{norm}} \left< \Psi \middle| \mathbf{m} \right>^2
+            &\approx \sum_{\mathbf{m} \in S_{\mathrm{norm}}}
+            \left< \Psi \middle| \mathbf{m} \right>^2
 
         Parameters
         ----------
-        pspace_l : list/tuple of int
-            Projection space used to truncate the numerator of the energy evaluation from the left.
-        pspace_r : {list/tuple of int, None}
-            Projection space used to truncate the numerator of the energy evaluation from the right.
+        pspace_l : {list/tuple of int, int}
+            Projection space used to truncate the numerator of the energy on the left.
+        pspace_r : {list/tuple of int, int, None}
+            Projection space used to truncate the numerator of the energy on the right.
             By default, the same space as `l_pspace` is used.
-        pspace_norm : {list/tuple of int, None}
-            Projection space used to truncate the denominator of the energy evaluation
+        pspace_norm : {list/tuple of int, int, None}
+            Projection space used to truncate the denominator of the energy.
             By default, the same space as `l_pspace` is used.
         deriv : bool
             Option for derivatizing the energy with respect to the active objective parameters.
@@ -544,8 +576,9 @@ class BaseSchrodinger:
 
         Returns
         -------
-        energy : float
-            Energy of the wavefunction with the given Hamiltonian.
+        energy : {float, np.ndarray(active_nparams, )}
+            Energy by inserting projection operators if `deriv` is False.
+            Derivative of the energy by inserting projection operators if `deriv` is True.
 
         Raises
         ------
