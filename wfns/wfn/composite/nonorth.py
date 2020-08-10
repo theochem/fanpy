@@ -1,7 +1,6 @@
 """Wavefunction with nonorthonormal orbitals."""
 import itertools as it
 
-import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -85,7 +84,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign the orbital transformation matrix.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -277,7 +276,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         self.params = tuple(params)
         self.clear_cache()
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -337,7 +335,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return output
 
     # FIXME: too many branches, too many statements
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 

@@ -1,5 +1,4 @@
 r"""Wavefunction with orbitals rotated by Jacobi matrix."""
-import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -90,7 +89,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Assign the orbital type of the orbital rotation.
     assign_jacobi_indices(self, jacobi_indices)
         Assign the indices of the orbitals that will be rotated.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -304,7 +303,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         self.jacobi_indices = tuple(jacobi_indices)
 
     # FIXME: too many return statements, too many branches
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -476,7 +474,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             )
 
     # FIXME: too many return statements, too many branches
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 

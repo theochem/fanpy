@@ -47,7 +47,7 @@ class MatrixProductState(BaseWavefunction):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -87,7 +87,7 @@ class MatrixProductState(BaseWavefunction):
         self.assign_dimension(dimension)
         self._cache_fns = {}
         self.assign_params(params)
-        self.load_cache()
+        self.enable_cache()
 
     # TODO: all of the auxiliary indices are fixed to be equal. This may need to be flexible
     def assign_dimension(self, dimension=None):
@@ -325,7 +325,6 @@ class MatrixProductState(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -395,7 +394,6 @@ class MatrixProductState(BaseWavefunction):
 
         return (left_temp * right_temp).item()
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv_block(self, sd, ind_spatial):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -499,3 +497,31 @@ class MatrixProductState(BaseWavefunction):
                 end_index = start_index + D
             output[start_index : end_index] = np.ravel(deriv_block)
         return output[deriv]
+
+    def enable_cache(self, include_derivative=True):
+        """Enable cache for the `_olp` and possibly `_olp_deriv_block` functions.
+
+        The methods `_olp` and `_olp_deriv_block` are cached instead of `get_overlap` because it is
+        assumed that `_olp` and `_olp_deriv_block` do not compute "trivial" results which can be
+        obtained very quickly. These results are computed in `get_overlap` and the more complicated
+        results are obtained via `_olp` and `_olp_deriv_block`.
+
+        Parameters
+        ----------
+        include_deriv_blockative : bool
+            Option to cached `_olp_deriv_block`.
+            By default, `_olp_deriv_block` is cached alongside `_olp`.
+
+        Notes
+        -----
+        Needs to access `memory` and `params`.
+
+        """
+        super().enable_cache(include_derivative=True)
+        if include_derivative:
+            self._cache_fns["overlap derivative"] = cachetools.LRUCache(
+                maxsize=self._cache_fns["overlap"].maxsize
+            )
+            self._olp_deriv_block = cachetools.cached(cache=self._cache_fns["overlap derivative"])(
+                self._olp_deriv_block
+            )

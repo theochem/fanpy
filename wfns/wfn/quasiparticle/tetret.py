@@ -54,7 +54,7 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.

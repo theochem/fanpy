@@ -1,5 +1,4 @@
 """Rank-2 approximation to geminal wavefunction."""
-import cachetools
 import numpy as np
 from wfns.backend import math_tools, slater
 from wfns.wfn.base import BaseWavefunction
@@ -226,7 +225,6 @@ class RankTwoApprox:
 
         raise ValueError("Invalid derivatization index.")
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 

@@ -44,7 +44,7 @@ class BaseWavefunction:
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -278,24 +278,19 @@ class BaseWavefunction:
         """
         np.save(filename, self.params)
 
-    def load_cache(self, include_derivative=True):
-        """Load the functions whose values will be cached.
+    def enable_cache(self, include_derivative=True):
+        """Enable cache for the `_olp` and possibly `_olp_deriv` functions.
 
-        To minimize the cache size, the input is made as small as possible. Therefore, the cached
-        function is not a method of an instance (because the instance is an input) and the smallest
-        representation of the Slater determinant (an integer) is used as the only input. However,
-        the functions must access other properties/methods of the instance, so they are defined
-        within this method so that the instance is available within the namespace w/o use of
-        `global` or `local`.
+        The methods `_olp` and `_olp_deriv` are cached instead of `get_overlap` because it is
+        assumed that `_olp` and `_olp_deriv` do not compute "trivial" results which can be obtained
+        very quickly. These results are computed in `get_overlap` and the more complicated results
+        are obtained via `_olp` and `_olp_deriv`.
 
-        Since the bitstring is used to represent the Slater determinant, they need to be processed,
-        which may result in repeated processing depending on when the cached function is accessed.
-
-        It is assumed that the cached functions will not be used to calculate redundant results. All
-        simplifications that can be made is assumed to have already been made. For example, it is
-        assumed that the overlap derivatized with respect to a parameter that is not associated with
-        the given Slater determinant will never need to be evaluated because these conditions are
-        caught before calling the cached functions.
+        Parameters
+        ----------
+        include_derivative : bool
+            Option to cached `_olp_deriv`.
+            By default, `_olp_deriv` is cached alongside `_olp`.
 
         Notes
         -----
@@ -316,6 +311,12 @@ class BaseWavefunction:
         self._cache_fns["overlap"] = cachetools.LRUCache(maxsize=maxsize)
         if include_derivative:
             self._cache_fns["overlap derivative"] = cachetools.LRUCache(maxsize=maxsize)
+
+        self._olp = cachetools.cached(cache=self._cache_fns["overlap"])(self._olp)
+        if include_derivative:
+            self._olp_deriv = cachetools.cached(cache=self._cache_fns["overlap derivative"])(
+                self._olp_deriv
+            )
 
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.

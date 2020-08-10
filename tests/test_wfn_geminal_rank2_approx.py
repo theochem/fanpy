@@ -383,7 +383,7 @@ def test_rank2_geminal_get_overlap():
     test.assign_ngem(2)
     test.assign_orbpairs([(0, 4), (1, 5), (2, 6), (3, 7)])
     test.assign_params(np.arange(1, 11, dtype=float))
-    test.load_cache()
+    test.enable_cache()
     # check overlap
     assert np.allclose(
         -test.get_overlap(0b00110011),

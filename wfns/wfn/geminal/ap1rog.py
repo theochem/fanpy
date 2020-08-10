@@ -1,5 +1,4 @@
 """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals wavefunction."""
-import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -86,7 +85,7 @@ class AP1roG(APIG):
         Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -143,7 +142,7 @@ class AP1roG(APIG):
         self.assign_orbpairs(orbpairs=orbpairs)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.load_cache()
+        self.enable_cache()
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -274,7 +273,6 @@ class AP1roG(APIG):
         self.dict_reforbpair_ind = dict_reforbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -303,7 +301,6 @@ class AP1roG(APIG):
         # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
         return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 

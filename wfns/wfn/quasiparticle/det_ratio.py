@@ -1,5 +1,4 @@
 """Hard-coded determinant-ratio wavefunction."""
-import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -53,7 +52,7 @@ class DeterminantRatio(BaseWavefunction):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Loaad the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -86,7 +85,7 @@ class DeterminantRatio(BaseWavefunction):
         self.assign_numerator_mask(numerator_mask)
         self._cache_fns = {}
         self.assign_params(params)
-        self.load_cache()
+        self.enable_cache()
 
     def assign_numerator_mask(self, numerator_mask=None):
         """Assign the mask for selecting matrices that correspond to the numerator.
@@ -274,7 +273,6 @@ class DeterminantRatio(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -297,7 +295,6 @@ class DeterminantRatio(BaseWavefunction):
         denominator = np.prod(determinants[np.logical_not(self.numerator_mask)])
         return numerator / denominator
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 

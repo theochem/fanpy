@@ -85,7 +85,7 @@ def test_ap1rog_get_overlap():
     test.assign_ref_sd()
     test.assign_orbpairs()
     test._cache_fns = {}
-    test.load_cache()
+    test.enable_cache()
     test.assign_params(np.arange(6, dtype=float).reshape(2, 3))
     assert test.get_overlap(0b0001100011) == 1.0
     assert test.get_overlap(0b0010100101) == 3.0

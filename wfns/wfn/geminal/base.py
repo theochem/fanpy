@@ -1,10 +1,10 @@
 """Base class for Geminal wavefunctions."""
 import abc
 
-import cachetools
 import numpy as np
 from wfns.backend import slater
-from permanent.permanent import permanent
+# from permanent.permanent import permanent
+from wfns.backend.math_tools import permanent_ryser as permanent
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.geminal.cext import get_col_inds
 
@@ -101,7 +101,7 @@ class BaseGeminal(BaseWavefunction):
         Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -143,7 +143,7 @@ class BaseGeminal(BaseWavefunction):
         self.assign_orbpairs(orbpairs=orbpairs)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.load_cache()
+        self.enable_cache()
 
     @property
     def npair(self):
@@ -443,7 +443,6 @@ class BaseGeminal(BaseWavefunction):
         else:
             return permanent(self.params[row_inds_trunc[:, None], col_inds_trunc[None, :]])
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -476,7 +475,6 @@ class BaseGeminal(BaseWavefunction):
             val += sign * self.compute_permanent(col_inds)
         return val
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 

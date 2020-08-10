@@ -381,7 +381,7 @@ def test_gem_get_overlap():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test._cache_fns = {}
-    test.load_cache()
+    test.enable_cache()
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
     assert test.get_overlap(0b001111) == 9 * (15 * 1 + 30 * 1) + 1 * (15 * 39 + 30 * 24)
     assert test.get_overlap(0b000111) == 0

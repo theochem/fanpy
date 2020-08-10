@@ -3,7 +3,6 @@ import abc
 import numpy as np
 import itertools as it
 
-import cachetools
 from wfns.backend import slater
 from wfns.backend import math_tools
 from wfns.wfn.base import BaseWavefunction
@@ -58,7 +57,7 @@ class BaseQuasiparticle(BaseWavefunction):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -121,7 +120,7 @@ class BaseQuasiparticle(BaseWavefunction):
         self.assign_orbsubsets(orbsubsets=orbsubsets)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.load_cache()
+        self.enable_cache()
 
     @property
     def norbsubsets(self):
@@ -453,7 +452,6 @@ class BaseQuasiparticle(BaseWavefunction):
 
         return col_inds, bosons, fermions
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -485,7 +483,6 @@ class BaseQuasiparticle(BaseWavefunction):
             val += sign * self.compute_permsum(len(bosons), col_inds)
         return val
 
-    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 

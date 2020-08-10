@@ -65,7 +65,7 @@ class APr2G(RankTwoApprox, APIG):
         Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.

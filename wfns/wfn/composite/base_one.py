@@ -45,7 +45,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         Assign memory available for the wavefunction.
     assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
-    load_cache(self)
+    enable_cache(self)
         Load the functions whose values will be cached.
     clear_cache(self)
         Clear the cache.
@@ -79,7 +79,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         self.assign_wfn(wfn)
         self._cache_fns = {}
         self.assign_params(params)
-        self.load_cache()
+        self.enable_cache()
 
     def assign_wfn(self, wfn):
         """Assign the wavefunction.
