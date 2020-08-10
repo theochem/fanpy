@@ -97,7 +97,7 @@ class CISD(CIWavefunction):
             super().assign_sd_vec(
                 sd_list(
                     self.nelec,
-                    self.nspatial,
+                    self.nspin,
                     num_limit=None,
                     exc_orders=[1, 2],
                     spin=self.spin,

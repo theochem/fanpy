@@ -212,7 +212,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     assert np.allclose(one_int, one_int.T)
     assert np.allclose(np.einsum("ijkl->jilk", two_int), two_int)
@@ -253,7 +253,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
-    sds = sd_list(3, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(3, 8, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -291,7 +291,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
 
     test_ham = RestrictedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
-    sds = sd_list(1, 2, num_limit=None, exc_orders=None)
+    sds = sd_list(1, 4, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:

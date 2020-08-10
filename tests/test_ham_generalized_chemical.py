@@ -253,7 +253,7 @@ def test_integrate_wfn_sd_h4_sto6g():
     """
     nelec = 4
     nspin = 8
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
     wfn = CIWavefunction(nelec, nspin, sd_vec=sds)
     np.random.seed(1000)
     wfn.assign_params(np.random.rand(len(sds)))
@@ -413,7 +413,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
     test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -451,7 +451,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
 
     test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
-    sds = sd_list(3, 3, num_limit=None, exc_orders=None)
+    sds = sd_list(3, 6, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -489,7 +489,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
 
     test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
     epsilon = 1e-8
-    sds = sd_list(1, 1, num_limit=None, exc_orders=None)
+    sds = sd_list(1, 2, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:

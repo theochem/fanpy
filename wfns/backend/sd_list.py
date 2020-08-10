@@ -45,15 +45,15 @@ def satisfies_conditions(sd, nspatial, spin, seniority):
     )
 
 
-def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniority=None):
+def sd_list(nelec, nspin, num_limit=None, exc_orders=None, spin=None, seniority=None):
     r"""Return a list of Slater determinants.
 
     Parameters
     ----------
     nelec : int
         Number of electrons.
-    nspatial : int
-        Number of spatial orbitals.
+    nspin : int
+        Number of spin orbitals.
     num_limit : {int, None}
         Maximum number of Slater determinants to be generated.
         Default is infinite.
@@ -79,7 +79,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
     Raises
     ------
     TypeError
-        If nspatial is not an integer.
+        If nspin is not an integer.
         If nelec is not an integer.
         If num_limit is not an integer.
         If exc_orders is not a iterable of integers.
@@ -90,16 +90,17 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
 
     """
     # pylint: disable=C0103,R0912
-    if not isinstance(nspatial, int):
-        raise TypeError("Number of spatial orbitals should be an integer")
+    if not isinstance(nspin, int):
+        raise TypeError("Number of spin orbitals should be an integer")
 
     if not isinstance(nelec, int):
         raise TypeError("Number of electrons should be an integer")
 
-    if num_limit is None:
-        num_limit = -1
-    elif not isinstance(num_limit, int):
-        raise TypeError("Number of Slater determinants should be an integer")
+    if num_limit is not None:
+        if not isinstance(num_limit, int):
+            raise TypeError("Number of Slater determinants should be an integer")
+        if num_limit is not None and num_limit <= 0:
+            raise ValueError("Number of Slater determinants must be greater than 0.")
 
     if exc_orders is None:
         exc_orders = range(1, nelec + 1)
@@ -114,19 +115,24 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
     if None not in [spin, seniority] and seniority < abs(2 * spin):
         raise ValueError("Cannot have spin, {0}, with seniority, {1}.".format(spin, seniority))
 
+    nspatial = nspin // 2
+
     sd_vec = []
     # ASSUME: spin orbitals are ordered by increasing energy
-    ground = slater.ground(nelec, 2 * nspatial)
+    ground = slater.ground(nelec, nspin)
     if satisfies_conditions(ground, nspatial, spin, seniority):
         sd_vec.append(ground)
 
     occ_indices = slater.occ_indices(ground)
-    vir_indices = slater.vir_indices(ground, 2 * nspatial)
+    vir_indices = slater.vir_indices(ground, nspin)
     # order by energy
     occ_indices = sorted(
         occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True
     )
     vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
+
+    if num_limit is not None and 1 == num_limit:
+        return sd_vec
 
     count = 1
     for nexc in exc_orders:
@@ -138,6 +144,6 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
                 continue
             sd_vec.append(sd)
             count += 1
-            if count >= num_limit >= 0:
-                return sd_vec[:num_limit]
+            if num_limit is not None and count == num_limit:
+                return sd_vec
     return sd_vec

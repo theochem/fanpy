@@ -285,7 +285,10 @@ class SystemEquations(BaseSchrodinger):
         """
         if pspace is None:
             pspace = sd_list.sd_list(
-                self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin, seniority=self.wfn.seniority
+                self.wfn.nelec,
+                self.wfn.nspin,
+                spin=self.wfn.spin,
+                seniority=self.wfn.seniority,
             )
         elif isinstance(pspace, (list, tuple)) and all(
             slater.is_sd_compatible(state) or isinstance(state, CIWavefunction) for state in pspace

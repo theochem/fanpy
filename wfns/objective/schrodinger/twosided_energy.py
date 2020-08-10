@@ -197,7 +197,7 @@ class TwoSidedEnergy(BaseSchrodinger):
         """
         if pspace_l is None:
             pspace_l = sd_list.sd_list(
-                self.wfn.nelec, self.wfn.nspatial, spin=self.wfn.spin, seniority=self.wfn.seniority
+                self.wfn.nelec, self.wfn.nspin, spin=self.wfn.spin, seniority=self.wfn.seniority
             )
 
         for pspace in [pspace_l, pspace_r, pspace_n]:

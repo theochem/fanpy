@@ -200,7 +200,7 @@ class KerasNetwork(BaseWavefunction):
         num_hidden_orbs = int(self.model.layers[-1].weights[0].shape[0])
         hidden_sds = [
             slater.occ_indices(sd)
-            for sd in sd_list(self.nelec, num_hidden_orbs // 2, exc_orders=[1, 2])
+            for sd in sd_list(self.nelec, num_hidden_orbs, exc_orders=[1, 2])
         ]
         if len(hidden_sds) < num_hidden_orbs:
             raise ValueError(

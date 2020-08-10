@@ -797,7 +797,7 @@ def test_jacobi_compare_nonorth():
     )
     nonorth = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory)
 
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     for sd in sds:
         for theta in np.linspace(-np.pi, np.pi, 100):
@@ -865,7 +865,7 @@ def test_jacobi_energy():
     """Test energy of Jacobi rotated wavefunction with that of rotated Hamiltonian."""
     nelec = 4
     nspin = 8
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     # NOTE: we need to be a little careful with the hamiltonian construction because the integrals
     #       are stored by reference and using the same hamiltonian while transforming it will cause

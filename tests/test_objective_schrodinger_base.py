@@ -433,5 +433,5 @@ def test_baseschrodinger_get_energy_one_two_proj():
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
     from wfns.backend.sd_list import sd_list
-    sds = sd_list(4, 5)
+    sds = sd_list(4, 10)
     assert np.allclose(test.get_energy_one_proj(sds), test.get_energy_two_proj(sds))

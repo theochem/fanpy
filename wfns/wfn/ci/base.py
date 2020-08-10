@@ -261,7 +261,7 @@ class CIWavefunction(BaseWavefunction):
         if sd_vec is None:
             sd_vec = sd_list(
                 self.nelec,
-                self.nspatial,
+                self.nspin,
                 num_limit=None,
                 exc_orders=None,
                 spin=self.spin,

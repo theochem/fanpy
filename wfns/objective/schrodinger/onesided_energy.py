@@ -190,7 +190,7 @@ class OneSidedEnergy(BaseSchrodinger):
             self.refwfn = tuple(
                 sd_list.sd_list(
                     self.wfn.nelec,
-                    self.wfn.nspatial,
+                    self.wfn.nspin,
                     spin=self.wfn.spin,
                     seniority=self.wfn.seniority,
                 )

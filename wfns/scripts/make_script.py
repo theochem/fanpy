@@ -401,7 +401,7 @@ def make_script(
     output += "# Projection space\n"
     pspace1 = "pspace = sd_list("
     pspace2 = (
-        "nelec, nspin//2, num_limit=None, exc_orders={}, spin=None, "
+        "nelec, nspin, num_limit=None, exc_orders={}, spin=None, "
         "seniority=wfn.seniority)\n".format(pspace)
     )
     output += "\n".join(

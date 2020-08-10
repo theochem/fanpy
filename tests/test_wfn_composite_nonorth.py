@@ -612,7 +612,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
     nelec = 4
     nspin = 8
 
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     # transformed hamiltonian
     transform = np.array(

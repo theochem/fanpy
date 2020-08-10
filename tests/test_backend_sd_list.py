@@ -31,11 +31,11 @@ def test_satisfies_conditions():
 def test_ci_sd_list():
     """Test sd_list.sd_list."""
     with pytest.raises(TypeError):
-        sd_list.sd_list(4.0, 3)
+        sd_list.sd_list(4.0, 6)
     with pytest.raises(TypeError):
-        sd_list.sd_list(None, 3)
+        sd_list.sd_list(None, 6)
     with pytest.raises(TypeError):
-        sd_list.sd_list("4", 3)
+        sd_list.sd_list("4", 6)
     with pytest.raises(TypeError):
         sd_list.sd_list(3, 4.0)
     with pytest.raises(TypeError):
@@ -43,26 +43,27 @@ def test_ci_sd_list():
     with pytest.raises(TypeError):
         sd_list.sd_list(3, "4")
     with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, num_limit=3.0)
+        sd_list.sd_list(4, 6, num_limit=3.0)
     with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, num_limit="3")
-    with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, exc_orders=3)
-    with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, exc_orders=[3.0])
-    with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, spin="3")
-    with pytest.raises(TypeError):
-        sd_list.sd_list(4, 3, seniority="3")
+        sd_list.sd_list(4, 6, num_limit="3")
     with pytest.raises(ValueError):
-        sd_list.sd_list(4, 3, spin=0.5, seniority=0)
+        sd_list.sd_list(4, 6, num_limit=0)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 6, exc_orders=3)
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 6, exc_orders=[3.0])
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 6, spin="3")
+    with pytest.raises(TypeError):
+        sd_list.sd_list(4, 6, seniority="3")
     with pytest.raises(ValueError):
-        sd_list.sd_list(4, 3, spin=-1, seniority=1)
+        sd_list.sd_list(4, 6, spin=0.5, seniority=0)
+    with pytest.raises(ValueError):
+        sd_list.sd_list(4, 6, spin=-1, seniority=1)
 
-    assert sd_list.sd_list(4, 3, num_limit=0) == []
-    assert sd_list.sd_list(4, 3, num_limit=1) == [0b011011]
-    assert sd_list.sd_list(4, 3, num_limit=2) == [0b011011, 0b011101]
-    assert sd_list.sd_list(4, 3, num_limit=10, exc_orders=[1]) == [
+    assert sd_list.sd_list(4, 6, num_limit=1) == [0b011011]
+    assert sd_list.sd_list(4, 6, num_limit=2) == [0b011011, 0b011101]
+    assert sd_list.sd_list(4, 6, num_limit=10, exc_orders=[1]) == [
         0b011011,
         0b011101,
         0b111001,
@@ -73,7 +74,7 @@ def test_ci_sd_list():
         0b010111,
         0b110011,
     ]
-    assert sd_list.sd_list(4, 3, num_limit=10, exc_orders=[2]) == [
+    assert sd_list.sd_list(4, 6, num_limit=10, exc_orders=[2]) == [
         0b011011,
         0b101101,
         0b111100,
@@ -82,7 +83,7 @@ def test_ci_sd_list():
         0b100111,
         0b110110,
     ]
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2]) == [
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2]) == [
         0b011011,
         0b011101,
         0b111001,
@@ -99,7 +100,7 @@ def test_ci_sd_list():
         0b100111,
         0b110110,
     ]
-    assert sd_list.sd_list(4, 3, exc_orders=[2, 1]) == [
+    assert sd_list.sd_list(4, 6, exc_orders=[2, 1]) == [
         0b011011,
         0b101101,
         0b111100,
@@ -116,7 +117,7 @@ def test_ci_sd_list():
         0b010111,
         0b110011,
     ]
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0) == [
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2], spin=0) == [
         0b011011,
         0b011101,
         0b101011,
@@ -127,26 +128,25 @@ def test_ci_sd_list():
         0b101110,
         0b110110,
     ]
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=0.5) == []
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-0.5) == []
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=1) == [0b001111, 0b010111, 0b100111]
-    assert sd_list.sd_list(4, 3, exc_orders=[1, 2], spin=-1) == [0b111001, 0b111010, 0b111100]
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2], spin=0.5) == []
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2], spin=-0.5) == []
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2], spin=1) == [0b001111, 0b010111, 0b100111]
+    assert sd_list.sd_list(4, 6, exc_orders=[1, 2], spin=-1) == [0b111001, 0b111010, 0b111100]
 
 
 def test_doci_sd_list():
     """Test sd_list.doci_sd_list."""
-    assert sd_list.sd_list(4, 4, num_limit=0, seniority=0) == []
-    assert sd_list.sd_list(4, 4, num_limit=1, seniority=0) == [0b00110011]
-    assert sd_list.sd_list(4, 4, num_limit=2, seniority=0) == [0b00110011, 0b01010101]
-    assert sd_list.sd_list(4, 4, exc_orders=[2], seniority=0) == [
+    assert sd_list.sd_list(4, 8, num_limit=1, seniority=0) == [0b00110011]
+    assert sd_list.sd_list(4, 8, num_limit=2, seniority=0) == [0b00110011, 0b01010101]
+    assert sd_list.sd_list(4, 8, exc_orders=[2], seniority=0) == [
         0b00110011,
         0b01010101,
         0b10011001,
         0b01100110,
         0b10101010,
     ]
-    assert sd_list.sd_list(4, 4, exc_orders=[4], seniority=0) == [0b00110011, 0b11001100]
-    assert sd_list.sd_list(4, 4, exc_orders=[2, 4], seniority=0) == [
+    assert sd_list.sd_list(4, 8, exc_orders=[4], seniority=0) == [0b00110011, 0b11001100]
+    assert sd_list.sd_list(4, 8, exc_orders=[2, 4], seniority=0) == [
         0b00110011,
         0b01010101,
         0b10011001,
@@ -154,7 +154,7 @@ def test_doci_sd_list():
         0b10101010,
         0b11001100,
     ]
-    assert sd_list.sd_list(4, 4, exc_orders=[4, 2], seniority=0) == [
+    assert sd_list.sd_list(4, 8, exc_orders=[4, 2], seniority=0) == [
         0b00110011,
         0b11001100,
         0b01010101,

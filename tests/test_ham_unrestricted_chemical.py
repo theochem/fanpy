@@ -312,7 +312,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
 
     test_ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
     epsilon = 1e-8
-    sds = sd_list(4, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -364,7 +364,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
     epsilon = 1e-8
-    sds = sd_list(2, 4, num_limit=None, exc_orders=None)
+    sds = sd_list(2, 8, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -418,7 +418,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
     epsilon = 1e-8
-    sds = sd_list(1, 2, num_limit=None, exc_orders=None)
+    sds = sd_list(1, 4, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:

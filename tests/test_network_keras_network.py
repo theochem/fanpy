@@ -102,7 +102,7 @@ def test_keras_assign_default_params():
     assert np.allclose(np.identity(10), test._default_params[:100].reshape(10, 10))
     assert np.allclose(np.identity(10), test._default_params[100:200].reshape(10, 10))
     # FIXME: need a better test to check the quality of the default params/initial guess
-    hidden_sds = [slater.occ_indices(sd) for sd in sd_list(4, 5, exc_orders=[1, 2])]
+    hidden_sds = [slater.occ_indices(sd) for sd in sd_list(4, 10, exc_orders=[1, 2])]
     hidden_units = np.zeros((len(hidden_sds), 10))
     for i, hidden_sd in enumerate(hidden_sds):
         hidden_units[i, hidden_sd] = 1

@@ -4,7 +4,6 @@ import itertools as it
 import numpy as np
 import pytest
 from wfns.objective.constraints.norm import NormConstraint
-from wfns.param import ParamContainer
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -12,8 +11,6 @@ def test_norm_init():
     """Test NormConstraint.__init__."""
     with pytest.raises(TypeError):
         NormConstraint(2)
-    with pytest.raises(TypeError):
-        NormConstraint(ParamContainer(4))
     wfn = CIWavefunction(2, 4)
     test = NormConstraint(wfn)
     assert test.wfn == wfn
