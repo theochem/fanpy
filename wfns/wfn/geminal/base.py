@@ -117,7 +117,7 @@ class BaseGeminal(BaseWavefunction):
     """
 
     def __init__(
-        self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None
+        self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None, enable_cache=True
     ):
         """Initialize the wavefunction.
 
@@ -136,6 +136,9 @@ class BaseGeminal(BaseWavefunction):
             Indices of the orbital pairs that will be used to construct each geminal.
         params : np.ndarray
             Geminal coefficient matrix.
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         """
         super().__init__(nelec, nspin, memory=memory)
@@ -143,7 +146,8 @@ class BaseGeminal(BaseWavefunction):
         self.assign_orbpairs(orbpairs=orbpairs)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     @property
     def npair(self):

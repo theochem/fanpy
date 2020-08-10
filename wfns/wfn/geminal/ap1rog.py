@@ -108,6 +108,7 @@ class AP1roG(APIG):
         orbpairs=None,
         ref_sd=None,
         params=None,
+        enable_cache=True,
     ):
         """Initialize the wavefunction.
 
@@ -129,6 +130,9 @@ class AP1roG(APIG):
         ref_sd : {int, None}
             Reference Slater determinant.
             Default is the HF ground state.
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         Notes
         -----
@@ -142,7 +146,8 @@ class AP1roG(APIG):
         self.assign_orbpairs(orbpairs=orbpairs)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.

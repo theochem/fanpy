@@ -61,7 +61,9 @@ class DeterminantRatio(BaseWavefunction):
         determinant.
 
     """
-    def __init__(self, nelec, nspin, memory=None, numerator_mask=None, params=None):
+    def __init__(
+        self, nelec, nspin, memory=None, numerator_mask=None, params=None, enable_cache=True
+    ):
         """Initialize the wavefunction.
 
         Parameters
@@ -79,13 +81,17 @@ class DeterminantRatio(BaseWavefunction):
         params : {np.ndarray, None}
             Parameters for each matrix have been flattened, and joined together.
             Each matrix is assumed to have shape, (nelec, nspin).
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_numerator_mask(numerator_mask)
         self._cache_fns = {}
         self.assign_params(params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     def assign_numerator_mask(self, numerator_mask=None):
         """Assign the mask for selecting matrices that correspond to the numerator.

@@ -59,7 +59,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, wfn, memory=None, params=None):
+    def __init__(self, nelec, nspin, wfn, memory=None, params=None, enable_cache=True):
         """Initialize the wavefunction.
 
         Parameters
@@ -73,13 +73,17 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             Default does not limit memory usage (i.e. infinite).
         wfn : BaseWavefunction
             Wavefunction that will be modified.
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_wfn(wfn)
         self._cache_fns = {}
         self.assign_params(params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     def assign_wfn(self, wfn):
         """Assign the wavefunction.

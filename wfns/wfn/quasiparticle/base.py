@@ -92,7 +92,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
     """
     def __init__(self, nelec, nspin, memory=None, nquasiparticle=None,
-                 orbsubsets=None, params=None):
+                 orbsubsets=None, params=None, enable_cache=True):
         """Initialize the wavefunction.
 
         Parameters
@@ -113,6 +113,9 @@ class BaseQuasiparticle(BaseWavefunction):
             Parameters of the quasiparticle wavefunction.
             If BaseQuasiparticle instance is given, then the parameters of this instance are used.
             Default corresponds to the ground state HF wavefunction.
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         """
         super().__init__(nelec, nspin, memory=memory)
@@ -120,7 +123,8 @@ class BaseQuasiparticle(BaseWavefunction):
         self.assign_orbsubsets(orbsubsets=orbsubsets)
         self._cache_fns = {}
         self.assign_params(params=params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     @property
     def norbsubsets(self):

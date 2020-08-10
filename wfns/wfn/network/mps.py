@@ -69,7 +69,7 @@ class MatrixProductState(BaseWavefunction):
 
     """
 
-    def __init__(self, nelec, nspin, memory=None, params=None, dimension=None):
+    def __init__(self, nelec, nspin, memory=None, params=None, dimension=None, enable_cache=True):
         """Initialize the wavefunction.
 
         Parameters
@@ -81,13 +81,17 @@ class MatrixProductState(BaseWavefunction):
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
+        enable_cache : bool
+            Option to cache the results of `_olp` and `_olp_deriv`.
+            By default, `_olp` and `_olp_deriv` are cached.
 
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_dimension(dimension)
         self._cache_fns = {}
         self.assign_params(params)
-        self.enable_cache()
+        if enable_cache:
+            self.enable_cache()
 
     # TODO: all of the auxiliary indices are fixed to be equal. This may need to be flexible
     def assign_dimension(self, dimension=None):
