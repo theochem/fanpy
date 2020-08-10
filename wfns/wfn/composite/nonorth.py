@@ -394,6 +394,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
             # alpha block includes derivatized column
             for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds)):
+                alpha_col_inds = np.array(alpha_col_inds, dtype=int)
                 if len(alpha_col_inds) == 0:
                     der_alpha_coeff = 1.0
                 else:
@@ -403,13 +404,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     )
                 # FIXME: use broadcasting
                 alpha_coeff = np.linalg.det(
-                    self.params[0][alpha_row_inds + (row_removed,), :][
-                        :, alpha_col_inds + (col_removed,)
+                    self.params[0][np.hstack([alpha_row_inds, row_removed]), :][
+                        :, np.hstack([alpha_col_inds, col_removed])
                     ]
                 )
                 # beta block includes derivatized column
                 # FIXME: change i+nspatial to slater.to_beta
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
+                    beta_col_inds = np.array(beta_col_inds, dtype=int)
                     nonorth_sd = slater.create(
                         0,
                         col_removed,
@@ -427,8 +429,8 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                         )
                     # FIXME: use broadcasting
                     beta_coeff = np.linalg.det(
-                        self.params[0][beta_row_inds + (row_removed,), :][
-                            :, beta_col_inds + (col_removed,)
+                        self.params[0][np.hstack([beta_row_inds, row_removed]), :][
+                            :, np.hstack([beta_col_inds, col_removed])
                         ]
                     )
                     output += wfn_coeff * (
@@ -443,14 +445,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     wfn_coeff = self.wfn.get_overlap(nonorth_sd, deriv=None)
                     # FIXME: use broadcasting
                     beta_coeff = np.linalg.det(
-                        self.params[0][beta_row_inds + (row_removed,), :][:, beta_col_inds]
+                        self.params[0][np.hstack([beta_row_inds, row_removed]), :][:, beta_col_inds]
                     )
                     output += wfn_coeff * der_alpha_coeff * beta_coeff
             # alpha block does not include the derivatized column
             for alpha_col_inds in it.combinations(all_col_inds, len(alpha_row_inds) + 1):
                 # FIXME: use broadcasting
                 alpha_coeff = np.linalg.det(
-                    self.params[0][alpha_row_inds + (row_removed,), :][:, alpha_col_inds]
+                    self.params[0][np.hstack([alpha_row_inds, row_removed]), :][:, alpha_col_inds]
                 )
                 # beta block includes derivatized column
                 for beta_col_inds in it.combinations(all_col_inds, len(beta_row_inds)):
