@@ -383,11 +383,12 @@ class BaseWavefunction:
             If cached function does not have decorator functools.lru_cache.
 
         """
-        if key is None:
-            for func in self._cache_fns.values():
-                func.clear()
-        else:
-            self._cache_fns[key].clear()
+        if hasattr(self, "_cache_fns"):
+            if key is None:
+                for func in self._cache_fns.values():
+                    func.clear()
+            else:
+                self._cache_fns[key].clear()
 
     @abc.abstractmethod
     def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103

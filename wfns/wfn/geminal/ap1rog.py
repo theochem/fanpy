@@ -144,7 +144,6 @@ class AP1roG(APIG):
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
-        self._cache_fns = {}
         self.assign_params(params=params)
         if enable_cache:
             self.enable_cache()

@@ -121,7 +121,6 @@ class BaseQuasiparticle(BaseWavefunction):
         super().__init__(nelec, nspin, memory=memory)
         self.assign_nquasiparticle(nquasiparticle=nquasiparticle)
         self.assign_orbsubsets(orbsubsets=orbsubsets)
-        self._cache_fns = {}
         self.assign_params(params=params)
         if enable_cache:
             self.enable_cache()

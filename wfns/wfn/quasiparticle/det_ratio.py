@@ -88,7 +88,6 @@ class DeterminantRatio(BaseWavefunction):
         """
         super().__init__(nelec, nspin, memory=memory)
         self.assign_numerator_mask(numerator_mask)
-        self._cache_fns = {}
         self.assign_params(params)
         if enable_cache:
             self.enable_cache()

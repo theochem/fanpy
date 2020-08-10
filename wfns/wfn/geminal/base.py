@@ -144,7 +144,6 @@ class BaseGeminal(BaseWavefunction):
         super().__init__(nelec, nspin, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
-        self._cache_fns = {}
         self.assign_params(params=params)
         if enable_cache:
             self.enable_cache()
