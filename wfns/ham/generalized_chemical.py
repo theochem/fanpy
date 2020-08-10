@@ -52,7 +52,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
     save_params(self, filename)
         Save the parameters associated with the Hamiltonian.
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+    integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
@@ -1468,7 +1468,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             ]
         )
 
-    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, components=False):
+    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
 
         .. math::
@@ -1490,8 +1490,11 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
             Needs to have the following in `__dict__`: `get_overlap`.
-        wfn_deriv : {int, None}
-            Index of the wavefunction parameter against which the integral is derivatized.
+        wfn_deriv : np.ndarray
+            Indices of the wavefunction parameter against which the integrals are derivatized.
+            Default is no derivatization.
+        ham_deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integrals are derivatized.
             Default is no derivatization.
         components : {bool, False}
             Option for separating the integrals into the one electron, coulomb, and exchange
@@ -1500,160 +1503,107 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         Returns
         -------
-        d_integral : {float, np.ndarray(3,)}
-            Derivative of the integral.
-            If `components` is False, then the derivative of the integral is returned.
-            If `components` is True, then the derivative of the one electron, coulomb, and exchange
-            components are returned.
-
-        """
-        # pylint: disable=C0103
-        if __debug__:
-            if not slater.is_sd_compatible(sd):
-                raise TypeError("Slater determinant must be given as an integer.")
-        occ_indices = np.array(slater.occ_indices(sd))
-        vir_indices = np.array(slater.vir_indices(sd, self.nspin))
-
-        if wfn_deriv is None:
-            shape = (-1,)
-            output = np.zeros(3)
-        else:
-            shape = (-1, len(wfn_deriv))
-            output = np.zeros((3, len(wfn_deriv)))
-
-        # TODO: use method in slater module
-        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
-        integrals_zero = self._integrate_sd_sds_zero(occ_indices)
-        if wfn_deriv is not None:
-            integrals_zero = np.expand_dims(integrals_zero, 2)
-        output += np.sum(integrals_zero * overlaps_zero, axis=1)
-
-        overlaps_one = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 1)
-            ]
-        ).reshape(*shape)
-        integrals_one = self._integrate_sd_sds_one(occ_indices, vir_indices)
-        if wfn_deriv is not None:
-            integrals_one = np.expand_dims(integrals_one, 2)
-        output += np.sum(integrals_one * overlaps_one, axis=1)
-
-        overlaps_two = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 2)
-            ]
-        ).reshape(*shape)
-        if occ_indices.size > 1 and vir_indices.size > 1:
-            integrals_two = self._integrate_sd_sds_two(occ_indices, vir_indices)
-            if wfn_deriv is not None:
-                integrals_two = np.expand_dims(integrals_two, 2)
-            output += np.sum(integrals_two * overlaps_two, axis=1)
-
-        if components:
-            return output
-        return np.sum(output, axis=0)
-
-    def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs, components=False):
-        r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
-
-        .. math::
-
-            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
-            = \sum_{\mathbf{m} \in S_\Phi}
-              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
-
-        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
-        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
-
-        chemical Hamiltonian.
-
-        Parameters
-        ----------
-        sd : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        wfn : Wavefunction
-            Wavefunction against which the Hamiltonian is integrated.
-        ham_derivs : np.ndarray(N_derivs)
-            Indices of the Hamiltonian parameter against which the integrals are derivatized.
-        components : {bool, False}
-            Option for separating the integrals into the one electron, coulomb, and exchange
-            components.
-            Default adds the three components together.
-
-        Returns
-        -------
-        d_integrals : {np.ndarray(N_derivs,), np.ndarray(3, N_derivs)}
-            Derivative of the integral.
-            If `components` is False, then the derivative of the integral is returned.
-            If `components` is True, then the derivative of the one electron, coulomb, and exchange
-            components are returned.
+        integrals : {float, np.ndarray(3,), np.ndarray(N_derivs,), np.ndarray(3, N_derivs)}
+            Integrals or derivative of integrals.
+            If `wfn_deriv` or `ham_deriv` is provided, then the derivatives of the integral are
+            returned.
+            If `components` is False, then the integral is returned.
+            If `components` is True, then the one electron, coulomb, and exchange components are
+            returned.
 
         Raises
         ------
         TypeError
-            If ham_derivs is not a one-dimensional numpy array of integers.
+            If ham_deriv is not a one-dimensional numpy array of integers.
         ValueError
-            If ham_derivs has any indices than is less than 0 or greater than or equal to nparams.
+            If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
         Notes
         -----
-        Providing only some of the Hamiltonian parameter indices will not make the code any faster.
-        The integrals are derivatized with respect to all of Hamiltonian parameters and the
-        appropriate derivatives are selected afterwards.
+        Selecting only some of the parameter indices will not make the code any faster. The
+        integrals are derivatized with respect to all of parameters first and then appropriate
+        derivatives are selected afterwards.
 
         """
         # pylint: disable=C0103
         if __debug__:
-            if not (
-                isinstance(ham_derivs, np.ndarray) and ham_derivs.ndim == 1 and ham_derivs.dtype == int
-            ):
-                raise TypeError(
-                    "Derivative indices for the Hamiltonian parameters must be given as a "
-                    "one-dimensional numpy array of integers."
-                )
-            if np.any(ham_derivs < 0) or np.any(ham_derivs >= self.nparams):
-                raise ValueError(
-                    "Derivative indices for the Hamiltonian parameters must be greater than or equal to"
-                    " 0 and be less than the number of parameters."
-                )
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if wfn_deriv is not None and ham_deriv is not None:
+                raise ValueError(
+                    "Integral can be derivatized with respect to at most one out of the "
+                    " wavefunction and Hamiltonian parameters."
+                )
+            if ham_deriv is not None:
+                if not (
+                    isinstance(ham_deriv, np.ndarray) and
+                    ham_deriv.ndim == 1 and
+                    ham_deriv.dtype == int
+                ):
+                    raise TypeError(
+                        "Derivative indices for the Hamiltonian parameters must be given as a "
+                        "one-dimensional numpy array of integers."
+                    )
+                if np.any(ham_deriv < 0) or np.any(ham_deriv >= self.nparams):
+                    raise ValueError(
+                        "Derivative indices for the Hamiltonian parameters must be greater than or "
+                        "equal to 0 and be less than the number of parameters."
+                    )
 
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
 
-        overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
-        integrals_zero = np.sum(
-            self._integrate_sd_sds_deriv_zero(occ_indices, vir_indices) * overlaps_zero, axis=2
-        )
+        if wfn_deriv is None and ham_deriv is None:
+            shape = (-1,)
+            output = np.zeros(3)
+        elif wfn_deriv is not None:
+            shape = (-1, len(wfn_deriv))
+            output = np.zeros((3, len(wfn_deriv)))
+        else:  # ham_deriv is not None
+            shape = (-1,)
+            output = np.zeros((3, len(ham_deriv)))
+
+        overlaps_zero = np.array([wfn.get_overlap(sd, deriv=wfn_deriv)]).reshape(*shape)
+        if ham_deriv is not None:
+            integrals_zero = self._integrate_sd_sds_deriv_zero(occ_indices, vir_indices)
+            output += np.sum(integrals_zero * overlaps_zero, axis=2)[:, ham_deriv]
+        else:
+            integrals_zero = self._integrate_sd_sds_zero(occ_indices)
+            if wfn_deriv is not None:
+                integrals_zero = np.expand_dims(integrals_zero, 2)
+            output += np.sum(integrals_zero * overlaps_zero, axis=1)
 
         overlaps_one = np.array(
             [
-                wfn.get_overlap(sd_exc)
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
                 for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 1)
             ]
-        ).reshape(1, 1, -1)
-        integrals_one = np.sum(
-            self._integrate_sd_sds_deriv_one(occ_indices, vir_indices) * overlaps_one, axis=2
-        )
+        ).reshape(*shape)
+        if ham_deriv is not None:
+            integrals_one = self._integrate_sd_sds_deriv_one(occ_indices, vir_indices)
+            output += np.sum(integrals_one * overlaps_one, axis=2)[:, ham_deriv]
+        else:
+            integrals_one = self._integrate_sd_sds_one(occ_indices, vir_indices)
+            if wfn_deriv is not None:
+                integrals_one = np.expand_dims(integrals_one, 2)
+            output += np.sum(integrals_one * overlaps_one, axis=1)
 
         overlaps_two = np.array(
             [
-                wfn.get_overlap(sd_exc)
+                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
                 for sd_exc in slater.excite_bulk(sd, occ_indices, vir_indices, 2)
             ]
-        ).reshape(1, 1, -1)
+        ).reshape(*shape)
         if occ_indices.size > 1 and vir_indices.size > 1:
-            integrals_two = np.sum(
-                self._integrate_sd_sds_deriv_two(occ_indices, vir_indices) * overlaps_two, axis=2
-            )
-        else:
-            integrals_two = 0
+            if ham_deriv is not None:
+                integrals_two = self._integrate_sd_sds_deriv_two(occ_indices, vir_indices)
+                output += np.sum(integrals_two * overlaps_two, axis=2)[:, ham_deriv]
+            else:
+                integrals_two = self._integrate_sd_sds_two(occ_indices, vir_indices)
+                if wfn_deriv is not None:
+                    integrals_two = np.expand_dims(integrals_two, 2)
+                output += np.sum(integrals_two * overlaps_two, axis=1)
 
-        integrals = (integrals_zero + integrals_one + integrals_two)[:, ham_derivs]
         if components:
-            return integrals
-        return np.sum(integrals, axis=0)
+            return output
+        return np.sum(output, axis=0)
