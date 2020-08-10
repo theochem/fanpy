@@ -83,7 +83,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Assign the number of spin orbitals.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
-    assign_params(self, params)
+    assign_params(self, params=None, add_noise=False)
         Assign the orbital transformation matrix.
     load_cache(self)
         Load the functions whose values will be cached.
@@ -193,7 +193,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         else:
             raise NotImplementedError("Unsupported orbital type.")
 
-    def assign_params(self, params=None):
+    def assign_params(self, params=None, add_noise=False):
         """Assign the orbital transformation matrix.
 
         Parameters
@@ -206,6 +206,9 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             If two transformation matrices are given, then the transformation corresponds to those
             of unrestricted orbitals, where the spatial orbitals are transformed.
             Default is the no orbital transformation (unitary matrix).
+        add_noise : {bool, False}
+            Option to add noise to the given parameters.
+            Default is False.
 
         Raises
         ------
@@ -256,6 +259,20 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                         "transformed from orthonormal spatial orbitals to nonorthonormal "
                         "spatial orbitals."
                     )
+
+        # add random noise
+        if add_noise:
+            # set scale
+            scale = 0.2 / self.nparams
+            new_params = []
+            for old_params in params:
+                old_params += scale * (np.random.rand(*old_params.shape) - 0.5)
+                if self.dtype in [complex, np.complex128]:
+                    old_params += (
+                        0.01j * scale * (np.random.rand(*old_params.shape).astype(complex) - 0.5)
+                    )
+                new_params.append(old_params)
+            params = new_params
 
         self.params = tuple(params)
         self.clear_cache()

@@ -38,7 +38,7 @@ class RankTwoApprox:
 
     Methods
     -------
-    assign_params(self, params=None)
+    assign_params(self, params=None, add_noise=False)
         Assign the parameters of the geminal wavefunction.
     compute_permanent(self, col_inds, deriv=None) : float
         Compute the permanent of the matrix that corresponds to the given orbital pairs.

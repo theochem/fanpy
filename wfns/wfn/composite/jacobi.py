@@ -84,7 +84,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Assign the number of spin orbitals.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
-    assign_params(self, params)
+    assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
     assign_orbtype(self, orbtype=None)
         Assign the orbital type of the orbital rotation.
@@ -223,7 +223,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         if isinstance(params, (int, float)):
             params = np.array(params, dtype=float)
-        super().assign_params(params=params)
+        super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 
     def assign_orbtype(self, orbtype=None):

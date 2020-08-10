@@ -51,7 +51,7 @@ class DeterminantRatio(BaseWavefunction):
         Assign the number of spin orbitals.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
-    assign_params(self, params)
+    assign_params(self, params=None, add_noise=False)
         Assign parameters of the wavefunction.
     load_cache(self)
         Loaad the functions whose values will be cached.
