@@ -65,17 +65,17 @@ def cma(objective, save_file="", **kwargs):
     if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
-    if kwargs == {}:
-        kwargs = {
-            "sigma0": 0.01,
-            "options": {
-                "ftarget": None,
-                "timeout": np.inf,
-                "tolfun": 1e-11,
-                "verb_filenameprefix": "outcmaes",
-                "verb_log": 0,
-            },
-        }
+    # disable hamiltonian update because algorithm is stochastic
+    objective.ham.update_prev_params = False
+    # disable print with each iteration b/c solver prints
+    objective.step_print = False
+
+    kwargs.setdefault("sigma0", 0.01)
+    kwargs.setdefault("options", {})
+    kwargs["options"].setdefault("ftarget", None)
+    kwargs["options"].setdefault("timeout", np.inf)
+    kwargs["options"].setdefault("tolfun", 1e-11)
+    kwargs["options"].setdefault("verb_log", 0)
 
     if objective.active_params.size == 1:
         raise ValueError("CMA solver cannot be used on objectives with only one parameter.")
@@ -158,11 +158,34 @@ def minimize(objective, save_file="", **kwargs):
     if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
-    if kwargs == {}:
-        if hasattr(objective, "gradient"):
-            kwargs = {"method": "BFGS", "jac": objective.gradient, "options": {"gtol": 1e-8}}
-        else:
-            kwargs = {"method": "Powell", "options": {"xtol": 1e-9, "ftol": 1e-9}}
+    if hasattr(objective, "gradient"):
+        kwargs.setdefault("method", "BFGS")
+        kwargs.setdefault("jac", objective.gradient)
+        kwargs.setdefault("options", {})
+        kwargs["options"].setdefault("gtol", 1e-8)
+    else:
+        kwargs.setdefault("method", "Powell")
+        kwargs.setdefault("options", {})
+        kwargs["options"].setdefault("xtol", 1e-9)
+        kwargs["options"].setdefault("ftol", 1e-9)
+
+    ham = objective.ham
+    ham.update_prev_params = False
+
+    def update_iteration(*args):
+        """Clean up at the end of each iteration."""
+        # update hamiltonian
+        if objective.indices_component_params[ham].size > 0:
+            ham.update_prev_prams = True
+            ham.assign_params(ham.params)
+            ham.update_prev_prams = False
+        # save parameters
+        objective.save_params()
+        # print
+        for key, value in objective.print_queue.items():
+            print("(Mid Optimization) {}: {}".format(key, value))
+
+    kwargs.setdefault("callback", update_iteration)
 
     output = wrap_scipy(scipy.optimize.minimize)(objective, save_file=save_file, **kwargs)
     output["function"] = output["internal"].fun

@@ -138,8 +138,7 @@ def wrap_skopt(func):
             Returned value of the `scipy.optimize.root`.
 
         """
-        if "dimensions" not in kwargs:
-            kwargs["dimensions"] = [(i - 0.5, i + 0.5) for i in objective.active_params]
+        kwargs.setdefault("dimensions", [(i - 0.5, i + 0.5) for i in objective.active_params])
         results = func(objective.objective, **kwargs)
 
         output = {}

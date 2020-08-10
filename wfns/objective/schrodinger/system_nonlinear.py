@@ -59,6 +59,10 @@ class SystemEquations(BaseSchrodinger):
         Hamiltonian that defines the system under study.
     indices_component_params : ComponentParameterIndices
         Indices of the component parameters that are active in the objective.
+    step_print : bool
+        Option to print relevant information when the objective is evaluated.
+    step_save : bool
+        Option to save parameters when the objective is evaluated.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
         If a file name is provided, then parameters are stored upon execution of the objective
@@ -142,6 +146,8 @@ class SystemEquations(BaseSchrodinger):
         ham,
         param_selection=None,
         optimize_orbitals=False,
+        step_print=True,
+        step_save=True,
         tmpfile="",
         pspace=None,
         refwfn=None,
@@ -171,6 +177,12 @@ class SystemEquations(BaseSchrodinger):
             are optimized.
             If Hamiltonian parameters are selected, then only optimize the selected parameters.
             Default is no orbital optimization.
+        step_print : bool
+            Option to print relevant information when the objective is evaluated.
+            Default is True.
+        step_save : bool
+            Option to save parameters with every evaluation of the objective.
+            Default is True
         tmpfile : {str, ''}
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
@@ -209,7 +221,7 @@ class SystemEquations(BaseSchrodinger):
         TypeError
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
-            If save_file is not a string.
+            If tmpfile is not a string.
             If `energy` is not a number.
         ValueError
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
@@ -221,6 +233,8 @@ class SystemEquations(BaseSchrodinger):
             ham,
             param_selection=param_selection,
             optimize_orbitals=optimize_orbitals,
+            step_print=step_print,
+            step_save=step_save,
             tmpfile=tmpfile,
         )
         self.assign_pspace(pspace)
@@ -434,7 +448,8 @@ class SystemEquations(BaseSchrodinger):
         # Assign params to wavefunction, hamiltonian, and other involved objects.
         self.assign_params(params)
         # Save params
-        self.save_params()
+        if self.step_save:
+            self.save_params()
 
         get_overlap = self.wrapped_get_overlap
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
@@ -470,6 +485,19 @@ class SystemEquations(BaseSchrodinger):
         # weigh equations
         obj *= self.eqn_weights
 
+        residuals = obj ** 2
+        cost = np.sum(residuals)
+        cost_constraints = np.sum(residuals[self.nproj:])
+        if self.step_print:
+            print("(Mid Optimization) Electronic energy: {}".format(energy))
+            print("(Mid Optimization) Cost: {}".format(cost))
+            if self.constraints:
+                print("(Mid Optimization) Cost from constraints: {}".format(cost_constraints))
+        else:
+            self.print_queue["Electronic energy"] = energy
+            self.print_queue["Cost"] = cost
+            self.print_queue["Cost from constraints"] = cost_constraints
+
         return obj
 
     def jacobian(self, params):
@@ -504,8 +532,6 @@ class SystemEquations(BaseSchrodinger):
         params = np.array(params)
         # Assign params
         self.assign_params(params)
-        # Save params
-        self.save_params()
 
         get_overlap = self.wrapped_get_overlap
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
@@ -574,5 +600,11 @@ class SystemEquations(BaseSchrodinger):
             jac[self.nproj :] = np.vstack([cons.gradient(params) for cons in self.constraints])
         # weigh equations
         jac *= self.eqn_weights[:, np.newaxis]
+
+        jac_norm = np.linalg.norm(jac)
+        if self.step_print:
+            print("(Mid Optimization) Norm of the Jacobian: {}".format(jac_norm))
+        else:
+            self.print_queue["Norm of the Jacobian"] = jac_norm
 
         return jac

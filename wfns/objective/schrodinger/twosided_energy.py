@@ -53,6 +53,10 @@ class TwoSidedEnergy(BaseSchrodinger):
         Hamiltonian that defines the system under study.
     indices_component_params : ComponentParameterIndices
         Indices of the component parameters that are active in the objective.
+    step_print : bool
+        Option to print relevant information when the objective is evaluated.
+    step_save : bool
+        Option to save parameters when the objective is evaluated.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
         If a file name is provided, then parameters are stored upon execution of the objective
@@ -109,6 +113,8 @@ class TwoSidedEnergy(BaseSchrodinger):
         ham,
         param_selection=None,
         optimize_orbitals=False,
+        step_print=True,
+        step_save=True,
         tmpfile="",
         pspace_l=None,
         pspace_r=None,
@@ -135,6 +141,12 @@ class TwoSidedEnergy(BaseSchrodinger):
             are optimized.
             If Hamiltonian parameters are selected, then only optimize the selected parameters.
             Default is no orbital optimization.
+        step_print : bool
+            Option to print relevant information when the objective is evaluated.
+            Default is True.
+        step_save : bool
+            Option to save parameters with every evaluation of the objective.
+            Default is True
         tmpfile : str
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
@@ -157,13 +169,21 @@ class TwoSidedEnergy(BaseSchrodinger):
         TypeError
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
-            If save_file is not a string.
+            If tmpfile is not a string.
         ValueError
             If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
-        super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
+        super().__init__(
+            wfn,
+            ham,
+            param_selection=param_selection,
+            optimize_orbitals=optimize_orbitals,
+            step_print=step_print,
+            step_save=step_save,
+            tmpfile=tmpfile,
+        )
         self.assign_pspaces(pspace_l, pspace_r, pspace_n)
 
     def assign_pspaces(self, pspace_l=None, pspace_r=None, pspace_n=None):
@@ -257,9 +277,17 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Assign params
         self.assign_params(params)
         # Save params
-        self.save_params()
+        if self.step_save:
+            self.save_params()
 
-        return self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n)
+        energy = self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n)
+
+        if self.step_print:
+            print("(Mid Optimization) Electronic energy: {}".format(energy))
+        else:
+            self.print_queue["Electronic energy"] = energy
+
+        return energy
 
     def gradient(self, params):
         """Return the gradient of the energy after inserting projection operators.
@@ -278,7 +306,13 @@ class TwoSidedEnergy(BaseSchrodinger):
         params = np.array(params)
         # Assign params
         self.assign_params(params)
-        # Save params
-        self.save_params()
 
-        return self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, True)
+        grad = self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, True)
+
+        grad_norm = np.linalg.norm(grad)
+        if self.step_print:
+            print("(Mid Optimization) Norm of the gradient of the energy: {}".format(grad_norm))
+        else:
+            self.print_queue["Norm of the gradient of the energy"] = grad_norm
+
+        return grad

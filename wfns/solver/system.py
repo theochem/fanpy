@@ -51,14 +51,35 @@ def least_squares(objective, save_file="", **kwargs):
     if not isinstance(objective, SystemEquations):
         raise TypeError("Given objective must be an instance of SystemEquations.")
 
-    if kwargs == {}:
-        kwargs = {
-            "xtol": 1.0e-15,
-            "ftol": 1.0e-15,
-            "gtol": 1.0e-15,
-            "max_nfev": 1000 * objective.active_params.size,
-            "jac": objective.jacobian,
-        }
+    kwargs.setdefault("xtol", 1.0e-15)
+    kwargs.setdefault("ftol", 1.0e-15)
+    kwargs.setdefault("gtol", 1.0e-15)
+    kwargs.setdefault("max_nfev", 1000 * objective.active_params.size)
+
+    ham = objective.ham
+    ham.update_prev_params = False
+
+    def hacked_jacobian(params):
+        """Clean up at the end of each iteration and return Jacobian afterwards.
+
+        Since `scipy.optimize.least_squares` does not have a callback option, clean up process is
+        performed via Jacobian, which is evaluated at the end of each iteration.
+
+        """
+        # update hamiltonian
+        if objective.indices_component_params[ham].size > 0:
+            ham.update_prev_prams = True
+            ham.assign_params(ham.params)
+            ham.update_prev_prams = False
+        # save parameters
+        objective.save_params()
+        # print
+        for key, value in objective.print_queue.items():
+            print("(Mid Optimization) {}: {}".format(key, value))
+
+        return objective.jacobian(params)
+
+    kwargs.setdefault("jac", hacked_jacobian)
 
     output = wrap_scipy(solver)(objective, save_file=save_file, verbose=2, **kwargs)
     output["energy"] = objective.energy.params[0]
@@ -116,8 +137,28 @@ def root(objective, save_file="", **kwargs):
             "Given objective must have the same number of equations as the number of " "parameters."
         )
 
-    if kwargs == {}:
-        kwargs = {"method": "hybr", "jac": objective.jacobian, "options": {"xtol": 1.0e-9}}
+    kwargs.setdefault("method", "hybr")
+    kwargs.setdefault("jac", objective.jacobian)
+    kwargs.setdefault("options", {})
+    kwargs["options"].setdefault("xtol", 1.0e-9)
+
+    ham = objective.ham
+    ham.update_prev_params = False
+
+    def update_iteration(*args):
+        """Clean up at the end of each iteration."""
+        # update hamiltonian
+        if objective.indices_component_params[ham].size > 0:
+            ham.update_prev_prams = True
+            ham.assign_params(ham.params)
+            ham.update_prev_prams = False
+        # save parameters
+        objective.save_params()
+        # print
+        for key, value in objective.print_queue.items():
+            print("(Mid Optimization) {}: {}".format(key, value))
+
+    kwargs["callback"] = update_iteration
 
     output = wrap_scipy(solver)(objective, save_file=save_file, **kwargs)
     output["energy"] = objective.energy.params

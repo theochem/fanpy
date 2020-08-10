@@ -1,30 +1,17 @@
-"""Energy of the Schrodinger equation integrated against a reference wavefunction."""
+"""Local energy used in orbital space variational quantum Monte Carlo."""
 import numpy as np
-from wfns.backend import sd_list, slater
-from wfns.objective.schrodinger.base import BaseSchrodinger
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.tools import slater
+from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
 
 
-class OneSidedEnergy(BaseSchrodinger):
-    r"""Energy evaluated by projecting against a reference wavefunction.
-
-    .. math::
-
-        E = \frac{\left< \Phi \middle| \hat{H} \middle| \Psi \right>}
-                 {\left< \Phi \middle| \Psi \right>}
-
-    where :math:`\Phi` is some reference wavefunction that can be a CI wavefunction
+class LocalEnergy(OneSidedEnergy):
+    r"""Local energy used in orbital space variational quantum Monte Carlo.
 
     .. math::
 
-        \left| \Phi \right> = \sum_{\mathbf{m} \in S} c_{\mathbf{m}} \left| \mathbf{m} \right>
-
-    or a projected form of wavefunction :math:`\Psi`
-
-    .. math::
-
-        \left| \Phi \right> = \sum_{\mathbf{m} \in S}
-                              \left< \Psi \middle| \mathbf{m} \middle> \middle| \mathbf{m} \right>
+        E_{\mathrm{L}} = \sum_{\mathbf{m} \in S}
+        \frac{\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>}
+        {\left< \mathbf{m} \middle| \Psi \right>}
 
     where :math:`S` is the projection space.
 
@@ -45,10 +32,8 @@ class OneSidedEnergy(BaseSchrodinger):
         By default, the parameter values are not stored.
         If a file name is provided, then parameters are stored upon execution of the objective
         method.
-    refwfn : {tuple of int, CIWavefunction, None}
-        Wavefunction against which the Schrodinger equation is integrated.
-        Tuple of Slater determinants will be interpreted as a projection space, and the reference
-        wavefunction will be the given wavefunction truncated to the given projection space.
+    pspace : {tuple of int, None}
+        Slater determinants from which the energy is calculated.
 
     Properties
     ----------
@@ -65,7 +50,7 @@ class OneSidedEnergy(BaseSchrodinger):
 
     Methods
     -------
-    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="", refwfn=None)
+    __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile="", pspace=None)
         Initialize the objective.
     assign_params(self, params)
         Assign the parameters to the wavefunction and/or Hamiltonian.
@@ -74,8 +59,8 @@ class OneSidedEnergy(BaseSchrodinger):
     wrapped_get_overlap(self, sd, deriv=False)
         Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
         objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=False)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_wfn(self, sd, deriv=False)
+        Wrap `integrate_sd_wfn` to be derivatized wrt the (active) parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
         Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
     get_energy_one_proj(self, refwfn, deriv=False)
@@ -85,12 +70,11 @@ class OneSidedEnergy(BaseSchrodinger):
     assign_refwfn(self, refwfn=None)
         Assign the reference wavefunction.
     objective(self, params) : float
-        Return the energy integrated against the reference wavefunction.
+        Return the local energy.
     gradient(self, params) : np.ndarray
-        Return the gradient of the energy integrated against the reference wavefunction.
+        Return the gradient of the local energy.
 
     """
-
     def __init__(
         self,
         wfn,
@@ -100,9 +84,9 @@ class OneSidedEnergy(BaseSchrodinger):
         step_print=True,
         step_save=True,
         tmpfile="",
-        refwfn=None,
+        pspace=None,
     ):
-        """Initialize the objective instance.
+        r"""Initialize the objective instance.
 
         Parameters
         ----------
@@ -134,13 +118,9 @@ class OneSidedEnergy(BaseSchrodinger):
             By default, the parameter values are not stored.
             If a file name is provided, then parameters are stored upon execution of the objective
             method.
-        refwfn : {tuple/list of int, tuple/list of CIWavefunction, None}
-            Wavefunction against which the Schrodinger equation is integrated.
-            Tuple of Slater determinants will be interpreted as a projection space, and the
-            reference wavefunction will be the given wavefunction truncated to the given projection
-            space.
-            By default, the given wavefunction is used as the reference by using a complete
-            projection space.
+        pspace : {tuple/list of int, None}
+            Projection space in terms of which the wavefunction is expressed.
+            By default, the largest projection space is used.
 
         Raises
         ------
@@ -149,7 +129,6 @@ class OneSidedEnergy(BaseSchrodinger):
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If tmpfile is not a string.
         ValueError
-            If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
@@ -162,102 +141,37 @@ class OneSidedEnergy(BaseSchrodinger):
             step_save=step_save,
             tmpfile=tmpfile,
         )
-        self.assign_refwfn(refwfn)
+        self.assign_pspace(pspace)
 
-    @property
-    def num_eqns(self):
-        """Return the number of equations in the objective.
-
-        Returns
-        -------
-        num_eqns : int
-            Number of equations in the objective.
-
-        """
-        return 1
-
-    def assign_refwfn(self, refwfn=None):
-        """Assign the reference wavefunction.
+    def assign_pspace(self, pspace=None):
+        r"""Assign the projection space.
 
         Parameters
         ----------
-        refwfn : {tuple/list of int, tuple/list of CIWavefunction, None}
-            Wavefunction against which the Schrodinger equation is integrated.
-            Tuple of Slater determinants will be interpreted as a projection space, and the
-            reference wavefunction will be the given wavefunction truncated to the given projection
-            space.
-            By default, the given wavefunction is used as the reference by using a complete
-            projection space.
+        pspace : {tuple/list of int, None}
+            Projection space with respect to which the wavefunction is expressed.
+            By default, the largest space is used.
 
         Raises
         ------
         TypeError
-            If reference wavefunction is not a list or a tuple.
-            If projection space (for the reference wavefunction) must be given as a list/tuple of
-            Slater determinants.
+            If projection space is not a list or a tuple of integers.
         ValueError
-            If given Slater determinant in projection space (for the reference wavefunction) does
-            not have the same number of electrons as the wavefunction.
-            If given Slater determinant in projection space (for the reference wavefunction) does
-            not have the same number of spin orbitals as the wavefunction.
-            If given reference wavefunction does not have the same number of electrons as the
+            If given state in projection space does not have the same number of electrons as the
             wavefunction.
-            If given reference wavefunction does not have the same number of spin orbitals as the
+            If given state in projection space does not have the same number of spin orbitals as the
             wavefunction.
 
         """
-        if refwfn is None:
-            self.refwfn = tuple(
-                sd_list.sd_list(
-                    self.wfn.nelec,
-                    self.wfn.nspin,
-                    spin=self.wfn.spin,
-                    seniority=self.wfn.seniority,
-                )
-            )
-            # break out of function
-            return
-
-        if slater.is_sd_compatible(refwfn):
-            refwfn = [refwfn]
-
-        if isinstance(refwfn, (list, tuple)):
-            for sd in refwfn:  # pylint: disable=C0103
-                if slater.is_sd_compatible(sd):
-                    occs = slater.occ_indices(sd)
-                    if len(occs) != self.wfn.nelec:
-                        raise ValueError(
-                            "Given Slater determinant does not have the same number of"
-                            " electrons as the given wavefunction."
-                        )
-                    if any(i >= self.wfn.nspin for i in occs):
-                        raise ValueError(
-                            "Given Slater determinant does not have the same number of"
-                            " spin orbitals as the given wavefunction."
-                        )
-                else:
-                    raise TypeError(
-                        "Projection space (for the reference wavefunction) must only "
-                        "contain Slater determinants."
-                    )
-            self.refwfn = tuple(refwfn)
-        elif isinstance(refwfn, CIWavefunction):
-            if refwfn.nelec != self.wfn.nelec:
-                raise ValueError(
-                    "Given reference wavefunction does not have the same number of "
-                    "electrons as the given wavefunction."
-                )
-            if refwfn.nspin != self.wfn.nspin:
-                raise ValueError(
-                    "Given reference wavefunction does not have the same number of "
-                    "spin orbitals as the given wavefunction."
-                )
-            self.refwfn = refwfn
-        else:
-            raise TypeError("Projection space must be given as a list or a tuple.")
+        if __debug__ and not (
+            isinstance(pspace, (list, tuple)) and all(slater.is_sd_compatible(sd) for sd in pspace)
+        ):
+            raise TypeError("Projection space must be given as a list/tuple of integers.")
+        super().assign_refwfn(pspace)
+        self.pspace = self.refwfn
 
     def objective(self, params):
-        """Return the energy integrated against the reference wavefunction.
+        """Return the energy of the wavefunction integrated against the reference wavefunction.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
 
@@ -269,7 +183,7 @@ class OneSidedEnergy(BaseSchrodinger):
         Returns
         -------
         objective : float
-            Energy with respect to the reference.
+            Value of the objective.
 
         """
         params = np.array(params)
@@ -279,7 +193,13 @@ class OneSidedEnergy(BaseSchrodinger):
         if self.step_save:
             self.save_params()
 
-        energy = self.get_energy_one_proj(self.refwfn)
+        overlaps = np.fromiter(
+            (self.wrapped_get_overlap(sd) for sd in self.pspace), float, count=len(self.pspace)
+        )
+        integrals = np.fromiter(
+            (self.wrapped_integrate_wfn_sd(sd) for sd in self.pspace), float, count=len(self.pspace)
+        )
+        energy = np.sum(integrals / overlaps)
 
         if self.step_print:
             print("(Mid Optimization) Electronic energy: {}".format(energy))
@@ -289,7 +209,7 @@ class OneSidedEnergy(BaseSchrodinger):
         return energy
 
     def gradient(self, params):
-        """Return the gradient of the energy integrated against the reference wavefunction.
+        """Return the gradient of the objective.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
 
@@ -301,7 +221,7 @@ class OneSidedEnergy(BaseSchrodinger):
         Returns
         -------
         gradient : np.array(N,)
-            Derivative of the energy with respect to the reference.
+            Derivative of the objective with respect to each of the parameters.
 
         """
         params = np.array(params)
@@ -309,6 +229,22 @@ class OneSidedEnergy(BaseSchrodinger):
         self.assign_params(params)
 
         grad = self.get_energy_one_proj(self.refwfn, True)
+        num_sd = len(self.pspace)
+        overlaps = np.fromiter(
+            (self.wrapped_get_overlap(sd) for sd in self.pspace), float, count=num_sd
+        )
+        integrals = np.fromiter(
+            (self.wrapped_integrate_wfn_sd(sd) for sd in self.pspace), float, count=num_sd
+        )
+        d_overlaps = np.fromiter(
+            (self.wrapped_get_overlap(sd, True) for sd in self.pspace), float, count=num_sd
+        )
+        d_integrals = np.fromiter(
+            (self.wrapped_integrate_wfn_sd(sd, True) for sd in self.pspace), float, count=num_sd
+        )
+        grad = d_integrals / overlaps[:, None]
+        grad -= integrals[:, None] / overlaps[:, None] ** 2 * d_overlaps
+        grad = np.sum(grad, axis=0)
 
         grad_norm = np.linalg.norm(grad)
         if self.step_print:

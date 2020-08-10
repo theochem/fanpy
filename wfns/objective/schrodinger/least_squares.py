@@ -56,6 +56,10 @@ class LeastSquaresEquations(SystemEquations):
         Hamiltonian that defines the system under study.
     indices_component_params : ComponentParameterIndices
         Indices of the component parameters that are active in the objective.
+    step_print : bool
+        Option to print relevant information when the objective is evaluated.
+    step_save : bool
+        Option to save parameters when the objective is evaluated.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
         If a file name is provided, then parameters are stored upon execution of the objective
@@ -221,6 +225,9 @@ class LeastSquaresEquations(SystemEquations):
         orig_num_eqns = LeastSquaresEquations.num_eqns
         LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
 
+        orig_step_print = self.step_print
+        self.step_print = False
+
         system_eqns = super().objective(params)
         # FIXME: There is probably a better way to implement this. In jacobian method, all of the
         # integrals needed to create the system_eqns is already available. This implementation would
@@ -230,5 +237,14 @@ class LeastSquaresEquations(SystemEquations):
 
         # patch back
         LeastSquaresEquations.num_eqns = orig_num_eqns
+        self.step_print = orig_step_print
 
-        return 2 * np.sum(system_eqns * system_eqns_jac, axis=0)
+        grad = 2 * np.sum(system_eqns * system_eqns_jac, axis=0)
+
+        grad_norm = np.linalg.norm(grad)
+        if self.step_print:
+            print("(Mid Optimization) Norm of the gradient: {}".format(grad_norm))
+        else:
+            self.print_queue["Norm of the gradient"] = grad_norm
+
+        return grad

@@ -31,6 +31,10 @@ class BaseSchrodinger:
         Hamiltonian that defines the system under study.
     indices_component_params : ComponentParameterIndices
         Indices of the component parameters that are active in the objective.
+    step_print : bool
+        Option to print relevant information when the objective is evaluated.
+    step_save : bool
+        Option to save parameters when the objective is evaluated.
     tmpfile : str
         Name of the file that will store the parameters used by the objective method.
         If a file name is provided, then parameters are stored upon execution of the objective
@@ -86,7 +90,16 @@ class BaseSchrodinger:
     """
 
     # pylint: disable=W0223
-    def __init__(self, wfn, ham, param_selection=None, optimize_orbitals=False, tmpfile=""):
+    def __init__(
+        self,
+        wfn,
+        ham,
+        param_selection=None,
+        optimize_orbitals=False,
+        step_print=True,
+        step_save=True,
+        tmpfile="",
+    ):
         """Initialize the objective instance.
 
         Parameters
@@ -108,6 +121,12 @@ class BaseSchrodinger:
             are optimized.
             If Hamiltonian parameters are selected, then only optimize the selected parameters.
             Default is no orbital optimization.
+        step_print : bool
+            Option to print relevant information when the objective is evaluated.
+            Default is True.
+        step_save : bool
+            Option to save parameters with every evaluation of the objective.
+            Default is True
         tmpfile : str
             Name of the file that will store the parameters used by the objective method.
             By default, the parameter values are not stored.
@@ -119,7 +138,7 @@ class BaseSchrodinger:
         TypeError
             If wavefunction is not an instance (or instance of a child) of BaseWavefunction.
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
-            If save_file is not a string.
+            If tmpfile is not a string.
         ValueError
             If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
@@ -159,6 +178,10 @@ class BaseSchrodinger:
         if not isinstance(tmpfile, str):
             raise TypeError("`tmpfile` must be a string.")
         self.tmpfile = tmpfile
+
+        self.step_print = step_print
+        self.step_save = step_save
+        self.print_queue = {}
 
     @property
     def indices_objective_params(self):
