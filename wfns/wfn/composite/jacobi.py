@@ -2,6 +2,7 @@ r"""Wavefunction with orbitals rotated by Jacobi matrix."""
 import cachetools
 import numpy as np
 from wfns.backend import slater
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 from wfns.wfn.composite.nonorth import NonorthWavefunction
 
@@ -661,18 +662,27 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
             \left< \mathbf{m} \middle| \Psi \right>
 
+        Since the overlap can be drivatized with respect to the parameters of the composite
+        wavefunction and the underlying wavefunction, the API of this method is different from the
+        rest.
+
         Parameters
         ----------
         sd : {int, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : {np.ndarray, None}
-            Indices of the parameters with respect to which the overlap is derivatized.
+        deriv : {2-tuple, None}
+            Wavefunction and the indices of the parameters with respect to which the overlap is
+            derivatized.
+            First element of the tuple is the wavefunction. Second element of the tuple is the
+            indices of the parameters of the corresponding wavefunction. The overlap will be
+            derivatized with respect to the selected parameters of this wavefunction.
             Default returns the overlap without derivatization.
 
         Returns
         -------
-        overlap : float
-            Overlap of the wavefunction.
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
 
         Raises
         ------
@@ -683,4 +693,36 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if deriv is None:
             return self._olp(sd)
         # if derivatization
-        return np.array([self._olp_deriv(sd)])[deriv]
+        if __debug__:
+            if not (
+                isinstance(deriv, tuple) and
+                len(deriv) == 2 and
+                isinstance(deriv[0], BaseWavefunction) and
+                isinstance(deriv[1], np.ndarray) and
+                deriv[1].ndim == 1 and
+                np.issubdtype(deriv[1].dtype, np.integer)
+            ):
+                raise TypeError(
+                    "Derivative indices must be given as a 2-tuple whose first element is the "
+                    "wavefunction and the second elment is the one-dimensional numpy array of "
+                    "integer indices."
+                )
+            if deriv[0] not in (self, self.wfn):
+                raise ValueError(
+                    "Selected wavefunction (for derivatization) is not one of the composite "
+                    "wavefunction or its underlying wavefunction."
+                )
+            if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= self.nparams)):
+                raise ValueError(
+                    "Provided indices must be greater than or equal to zero and less than the "
+                    "number of parameters."
+                )
+
+        wfn, indices = deriv
+        if wfn == self:
+            return np.array([self._olp_deriv(sd)])[indices]
+        else:
+            raise NotImplementedError(
+                "To implement this, the derivative indices must be passed to the "
+                "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
+            )

@@ -198,6 +198,8 @@ class LinearCombinationWavefunction(BaseWavefunction):
             )
         if len(wfns) == 1:
             raise ValueError("Only one wavefunction is given.")
+        if len(set(wfns)) != len(wfns):
+            raise ValueError("Same wavefunction was provided multiple times.")
 
         self.wfns = tuple(wfns)
 
@@ -208,10 +210,21 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
             \left< \mathbf{m} \middle| \Psi \right>
 
+        Since the overlap can be drivatized with respect to the parameters of the composite
+        wavefunction and the underlying wavefunctions, the API of this method is different from the
+        rest.
+
         Parameters
         ----------
         sd : int
             Slater Determinant against which the overlap is taken.
+        deriv : {2-tuple, None}
+            Wavefunction and the indices of the parameters with respect to which the overlap is
+            derivatized.
+            First element of the tuple is the wavefunction. Second element of the tuple is the
+            indices of the parameters of the corresponding wavefunction. The overlap will be
+            derivatized with respect to the selected parameters of this wavefunction.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
@@ -224,4 +237,33 @@ class LinearCombinationWavefunction(BaseWavefunction):
         if deriv is None:
             return np.sum(self.params * wfn_contrib)
 
-        return wfn_contrib
+        if __debug__:
+            if not (
+                isinstance(deriv, tuple) and
+                len(deriv) == 2 and
+                isinstance(deriv[0], BaseWavefunction) and
+                isinstance(deriv[1], np.ndarray) and
+                deriv[1].ndim == 1 and
+                np.issubdtype(deriv[1].dtype, np.integer)
+            ):
+                raise TypeError(
+                    "Derivative indices must be given as a 2-tuple whose first element is the "
+                    "wavefunction and the second elment is the one-dimensional numpy array of "
+                    "integer indices."
+                )
+            if deriv[0] not in (self, ) + self.wfns:
+                raise ValueError(
+                    "Selected wavefunction (for derivatization) is not one of the composite "
+                    "wavefunction or its underlying wavefunctions."
+                )
+            if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= self.nparams)):
+                raise ValueError(
+                    "Provided indices must be greater than or equal to zero and less than the "
+                    "number of parameters."
+                )
+
+        wfn, indices = deriv
+        if wfn == self:
+            return wfn_contrib
+        else:
+            return self.params[self.wfns.index(wfn)] * wfn.get_overlap(sd, deriv=indices)

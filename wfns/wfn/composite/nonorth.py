@@ -4,6 +4,7 @@ import itertools as it
 import cachetools
 import numpy as np
 from wfns.backend import slater
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 
 
@@ -534,8 +535,12 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         ----------
         sd : int
             Slater Determinant against which the overlap is taken.
-        deriv : {np.ndarray, None}
-            Indices of the parameters with respect to which the overlap is derivatized.
+        deriv : {2-tuple, None}
+            Wavefunction and the indices of the parameters with respect to which the overlap is
+            derivatized.
+            First element of the tuple is the wavefunction. Second element of the tuple is the
+            indices of the parameters of the corresponding wavefunction. The overlap will be
+            derivatized with respect to the selected parameters of this wavefunction.
             Default returns the overlap without derivatization.
 
         Returns
@@ -549,30 +554,62 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             return self._olp(sd)
 
         # if derivatization
-        output = np.zeros(len(deriv))
-        for i in deriv:
-            if i >= self.nparams:
-                continue
-
-            # number of parameters for alpha orbitals (this variable will have no effect for
-            # restricted and generalized orbital types)
-            nparams_alpha = self.params[0].size
-            # get index of the transformation (if unrestricted)
-            transform_ind = i // nparams_alpha
-            # convert parameter index to row and col index
-            row_removed = (i % nparams_alpha) // self.param_shape[transform_ind][1]
-
-            # if either of these orbitals are not present in the Slater determinant, skip
-            # FIXME: change i+nspatial to slater.to_beta
-            if self.orbtype == "restricted" and not (
-                slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
+        if __debug__:
+            if not (
+                isinstance(deriv, tuple) and
+                len(deriv) == 2 and
+                isinstance(deriv[0], BaseWavefunction) and
+                isinstance(deriv[1], np.ndarray) and
+                deriv[1].ndim == 1 and
+                np.issubdtype(deriv[1].dtype, np.integer)
             ):
-                continue
-            if self.orbtype == "unrestricted" and not slater.occ(
-                sd, row_removed + transform_ind * self.nspatial
-            ):
-                continue
-            if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
-                continue
-            output[i] = self._olp_deriv(sd, i)
-        return output
+                raise TypeError(
+                    "Derivative indices must be given as a 2-tuple whose first element is the "
+                    "wavefunction and the second elment is the one-dimensional numpy array of "
+                    "integer indices."
+                )
+            if deriv[0] not in (self, self.wfn):
+                raise ValueError(
+                    "Selected wavefunction (for derivatization) is not one of the composite "
+                    "wavefunction or its underlying wavefunction."
+                )
+            if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= self.nparams)):
+                raise ValueError(
+                    "Provided indices must be greater than or equal to zero and less than the "
+                    "number of parameters."
+                )
+
+        wfn, indices = deriv
+        if wfn == self:
+            output = np.zeros(len(indices))
+            for i in indices:
+                if i >= self.nparams:
+                    continue
+
+                # number of parameters for alpha orbitals (this variable will have no effect for
+                # restricted and generalized orbital types)
+                nparams_alpha = self.params[0].size
+                # get index of the transformation (if unrestricted)
+                transform_ind = i // nparams_alpha
+                # convert parameter index to row and col index
+                row_removed = (i % nparams_alpha) // self.param_shape[transform_ind][1]
+
+                # if either of these orbitals are not present in the Slater determinant, skip
+                # FIXME: change i+nspatial to slater.to_beta
+                if self.orbtype == "restricted" and not (
+                    slater.occ(sd, row_removed) or slater.occ(sd, row_removed + self.nspatial)
+                ):
+                    continue
+                if self.orbtype == "unrestricted" and not slater.occ(
+                    sd, row_removed + transform_ind * self.nspatial
+                ):
+                    continue
+                if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
+                    continue
+                output[i] = self._olp_deriv(sd, i)
+            return output
+        else:
+            raise NotImplementedError(
+                "To implement this, the derivative indices must be passed to the "
+                "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
+            )

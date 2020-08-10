@@ -53,6 +53,9 @@ def test_assign_wfns():
         )
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn,))
+
+    with pytest.raises(ValueError):
+        LinearCombinationWavefunction.assign_wfns(test, (test_wfn, test_wfn))
     # NOTE: wavefunctions with different numbers of spin orbitals are allowed
     LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(4, 12)))
     assert test.wfns[0].nelec == 4
@@ -65,7 +68,9 @@ def test_spin():
     """Test LinearCombinationWavefunction.spin."""
     test_wfn = TempWavefunction(4, 10)
     test_wfn._spin = 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
+    test_wfn2 = TempWavefunction(4, 10)
+    test_wfn2._spin = 3
+    test = LinearCombinationWavefunction(4, 10, (test_wfn, test_wfn2))
     assert test.spin == 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.spin is None
@@ -75,7 +80,9 @@ def test_seniority():
     """Test LinearCombinationWavefunction.seniority."""
     test_wfn = TempWavefunction(4, 10)
     test_wfn._seniority = 3
-    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
+    test_wfn2 = TempWavefunction(4, 10)
+    test_wfn2._seniority = 3
+    test = LinearCombinationWavefunction(4, 10, (test_wfn, test_wfn2))
     assert test.seniority == 3
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert test.seniority is None
@@ -84,11 +91,12 @@ def test_seniority():
 def test_default_params():
     """Test LinearCombinationWavefunction.params default."""
     test_wfn = TempWavefunction(4, 10)
-    test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
-    assert np.allclose(test.params, np.array([1, 0, 0]))
-    assert np.allclose(test.params, np.array([1, 0, 0]))
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
     assert np.allclose(test.params, np.array([1, 0]))
+    test = LinearCombinationWavefunction(
+        4, 10, (test_wfn, TempWavefunction(4, 10), TempWavefunction(4, 10))
+    )
+    assert np.allclose(test.params, np.array([1, 0, 0]))
 
 
 # TODO: test deriv functionality

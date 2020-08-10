@@ -520,31 +520,31 @@ def test_jacobi_get_overlap_der():
 
     # 0b1001 uses [[cos, 0, 0, sin],
     #              [-sin, 0, 0, cos]]
-    assert np.isclose(test.get_overlap(0b1001, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b1001, deriv=(test, np.array([0]))), 0.0)
     # 0b1001 uses [[0, 1, 0, 0],
     #              [0, 0, 1, 0]]
-    assert np.isclose(test.get_overlap(0b0110, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b0110, deriv=(test, np.array([0]))), 0.0)
     # 0b0101 uses [[cos, 0, 0, sin],
     #              [0, 0, 1, 0]]
     assert np.isclose(
-        test.get_overlap(0b0101, deriv=0),
+        test.get_overlap(0b0101, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b0101] - cos * wfn_sd_coeff[0b1100]),
     )
     # 0b0011 uses [[cos, 0, 0, sin],
     #              [0, 1, 0, 0]]
     assert np.isclose(
-        test.get_overlap(0b0011, deriv=0),
+        test.get_overlap(0b0011, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b0011] - cos * wfn_sd_coeff[0b1010]),
     )
     # 0b0101 uses [[0, 0, 1, 0],
     #              [-sin, 0, 0, cos]]
     assert np.isclose(
-        test.get_overlap(0b1100, deriv=0), (cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b1100])
+        test.get_overlap(0b1100, deriv=(test, np.array([0]))), (cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b1100])
     )
     # 0b0011 uses [[0, 1, 0, 0]],
     #              [-sin, 0, 0, cos]]
     assert np.isclose(
-        test.get_overlap(0b1010, deriv=0), (cos * wfn_sd_coeff[0b0011] - sin * wfn_sd_coeff[0b1010])
+        test.get_overlap(0b1010, deriv=(test, np.array([0]))), (cos * wfn_sd_coeff[0b0011] - sin * wfn_sd_coeff[0b1010])
     )
 
     test.assign_jacobi_indices((0, 2))
@@ -555,13 +555,13 @@ def test_jacobi_get_overlap_der():
     # 0b1001 uses [[cos, 0, sin, 0],
     #              [0, 0, 0, 1]]
     assert np.isclose(
-        test.get_overlap(0b1001, deriv=0),
+        test.get_overlap(0b1001, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b1001] + cos * wfn_sd_coeff[0b1100]),
     )
     # 0b0011 uses [[cos, 0, sin, 0],
     #              [0, 1, 0, 0]]
     assert np.isclose(
-        test.get_overlap(0b0011, deriv=0),
+        test.get_overlap(0b0011, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b0011] - cos * wfn_sd_coeff[0b0110]),
     )
 
@@ -575,20 +575,20 @@ def test_jacobi_get_overlap_der():
     #                [0, 0, 0, 1]]
     # 0b0011 uses [[cos, sin, 0, 0],
     #              [-sin, cos, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b0011, deriv=(test, np.array([0]))), 0.0)
     # 0b1100 uses [[0, 0, 1, 0],
     #              [0, 0, 0, 1]]
-    assert np.isclose(test.get_overlap(0b1100, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b1100, deriv=(test, np.array([0]))), 0.0)
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, 1, 0]]
     assert np.isclose(
-        test.get_overlap(0b0101, deriv=0),
+        test.get_overlap(0b0101, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b0101] + cos * wfn_sd_coeff[0b0110]),
     )
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, 1, 0]]
     assert np.isclose(
-        test.get_overlap(0b0110, deriv=0),
+        test.get_overlap(0b0110, deriv=(test, np.array([0]))),
         (-cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b0110]),
     )
 
@@ -602,14 +602,14 @@ def test_jacobi_get_overlap_der():
     #                [0, 0, -sin, cos]]
     # 0b0011 uses [[cos, sin, 0, 0],
     #              [-sin, cos, 0, 0]]
-    assert np.isclose(test.get_overlap(0b0011, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b0011, deriv=(test, np.array([0]))), 0.0)
     # 0b1100 uses [[0, 0, cos, sin],
     #              [0, 0, -sin, cos]]
-    assert np.isclose(test.get_overlap(0b1100, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b1100, deriv=(test, np.array([0]))), 0.0)
     # 0b0101 uses [[cos, sin, 0, 0],
     #              [0, 0, cos, sin]]
     assert np.isclose(
-        test.get_overlap(0b0101, deriv=0),
+        test.get_overlap(0b0101, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b0101]
             + 2 * sin * cos * wfn_sd_coeff[0b1010]
@@ -620,7 +620,7 @@ def test_jacobi_get_overlap_der():
     # 0b1001 uses [[cos, sin, 0, 0],
     #              [0, 0, -sin, cos]]
     assert np.isclose(
-        test.get_overlap(0b1001, deriv=0),
+        test.get_overlap(0b1001, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b1001]
             - 2 * sin * cos * wfn_sd_coeff[0b0110]
@@ -631,7 +631,7 @@ def test_jacobi_get_overlap_der():
     # 0b0110 uses [[-sin, cos, 0, 0],
     #              [0, 0, cos, sin]]
     assert np.isclose(
-        test.get_overlap(0b0110, deriv=0),
+        test.get_overlap(0b0110, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b0110]
             - 2 * sin * cos * wfn_sd_coeff[0b1001]
@@ -671,23 +671,23 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 1, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 1, 0, 0, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00001111, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b00001111, deriv=(test, np.array([0]))), 0.0)
     # 0b00100111 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [0, 1, 0, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
-    assert np.isclose(test.get_overlap(0b00100111, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b00100111, deriv=(test, np.array([0]))), 0.0)
     # 0b01010101 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
-    assert np.isclose(test.get_overlap(0b01010101, deriv=0), 0.0)
+    assert np.isclose(test.get_overlap(0b01010101, deriv=(test, np.array([0]))), 0.0)
     # 0b00100111 uses [[cos, 0, sin, 0, 0, 0, 0, 0]
     #                  [0, 1, 0, 0, 0, 0, 0, 0, 0],
     #                  [-sin, 0, cos, 0, 0, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
     assert np.isclose(
-        test.get_overlap(0b00010111, deriv=0),
+        test.get_overlap(0b00010111, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b00010111] + cos * wfn_sd_coeff[0b01000111]),
     )
     # 0b01101010 uses [[0, 1, 0, 0, 0, 0, 0, 0],
@@ -695,7 +695,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
     assert np.isclose(
-        test.get_overlap(0b01101010, deriv=0),
+        test.get_overlap(0b01101010, deriv=(test, np.array([0]))),
         (cos * wfn_sd_coeff[0b00111010] - sin * wfn_sd_coeff[0b01101010]),
     )
     # 0b00101011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
@@ -703,7 +703,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
     assert np.isclose(
-        test.get_overlap(0b00101011, deriv=0),
+        test.get_overlap(0b00101011, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b00101011] - cos * wfn_sd_coeff[0b00101110]),
     )
     # 0b00110011 uses [[cos, 0, sin, 0, 0, 0, 0, 0],
@@ -711,7 +711,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 0, cos, 0, sin, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
     assert np.isclose(
-        test.get_overlap(0b00110011, deriv=0),
+        test.get_overlap(0b00110011, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b00110011]
             - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100011]
@@ -724,7 +724,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
     assert np.isclose(
-        test.get_overlap(0b01100011, deriv=0),
+        test.get_overlap(0b01100011, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b01100011]
             + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110011]
@@ -737,7 +737,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 1, 0, 0, 0, 0],
     #                  [0, 0, 0, 0, 0, 1, 0, 0]]
     assert np.isclose(
-        test.get_overlap(0b00101110, deriv=0),
+        test.get_overlap(0b00101110, deriv=(test, np.array([0]))),
         (-sin * wfn_sd_coeff[0b00101110] + cos * wfn_sd_coeff[0b00101011]),
     )
     # 0b00110110 uses [[0, 1, 0, 0, 0, 0, 0, 0],
@@ -745,7 +745,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 0, cos, 0, sin, 0]]
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     assert np.isclose(
-        test.get_overlap(0b00110110, deriv=0),
+        test.get_overlap(0b00110110, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b00110110]
             - (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b01100110]
@@ -758,7 +758,7 @@ def test_jacobi_get_overlap_restricted_der():
     #                  [0, 0, 0, 0, 0, 1, 0, 0],
     #                  [0, 0, 0, 0, -sin, 0, cos, 0]]
     assert np.isclose(
-        test.get_overlap(0b01100110, deriv=0),
+        test.get_overlap(0b01100110, deriv=(test, np.array([0]))),
         (
             -2 * cos * sin * wfn_sd_coeff[0b01100110]
             + (cos ** 2 - sin ** 2) * wfn_sd_coeff[0b00110110]

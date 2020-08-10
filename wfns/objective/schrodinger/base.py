@@ -7,6 +7,8 @@ from wfns.ham.base import BaseHamiltonian
 from wfns.objective.schrodinger.utils import ComponentParameterIndices
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
+from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
+from wfns.wfn.composite.lincomb import LinearCombinationWavefunction
 
 from wfns.objective.schrodinger.cext import get_energy_one_proj, get_energy_one_proj_deriv
 
@@ -290,8 +292,6 @@ class BaseSchrodinger:
             new_params[indices] = params[indices_objective_params[component]]
             component.assign_params(new_params)
 
-    # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
-    #        the different )
     def wrapped_get_overlap(self, sd, deriv=False):
         """Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
 
@@ -319,17 +319,26 @@ class BaseSchrodinger:
             return self.wfn.get_overlap(sd)
 
         output = np.zeros(self.active_nparams)
-
-        inds_component = self.indices_component_params[self.wfn]
-        if inds_component.size > 0:
-            inds_objective = self.indices_objective_params[self.wfn]
-            output[inds_objective] = self.wfn.get_overlap(sd, inds_component)
+        if not isinstance(self.wfn, (BaseCompositeOneWavefunction, LinearCombinationWavefunction)):
+            inds_component = self.indices_component_params[self.wfn]
+            if inds_component.size > 0:
+                inds_objective = self.indices_objective_params[self.wfn]
+                output[inds_objective] = self.wfn.get_overlap(sd, inds_component)
+        else:
+            if isinstance(self.wfn, BaseCompositeOneWavefunction):
+                wfns = [self.wfn, self.wfn.wfn]
+            else:
+                wfns = (self.wfn, ) + self.wfn.wfns
+            for wfn in wfns:
+                inds_component = self.indices_component_params[wfn]
+                if inds_component.size > 0:
+                    inds_objective = self.indices_objective_params[wfn]
+                    output[inds_objective] = self.wfn.get_overlap(sd, (wfn, inds_component))
 
         return output
 
-    # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
-    #        the different deriv's) and when ham is a composite hamiltonian (ham must distinguish
-    #        between different derivs)
+    # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
+    # different derivs)
     def wrapped_integrate_wfn_sd(self, sd, deriv=False):
         r"""Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
 
@@ -358,12 +367,25 @@ class BaseSchrodinger:
 
         output = np.zeros(self.active_nparams)
 
-        wfn_inds_component = self.indices_component_params[self.wfn]
-        if wfn_inds_component.size > 0:
-            wfn_inds_objective = self.indices_objective_params[self.wfn]
-            output[wfn_inds_objective] = self.ham.integrate_sd_wfn(
-                sd, self.wfn, wfn_deriv=wfn_inds_component
-            )
+        if not isinstance(self.wfn, (BaseCompositeOneWavefunction, LinearCombinationWavefunction)):
+            wfn_inds_component = self.indices_component_params[self.wfn]
+            if wfn_inds_component.size > 0:
+                wfn_inds_objective = self.indices_objective_params[self.wfn]
+                output[wfn_inds_objective] = self.ham.integrate_sd_wfn(
+                    sd, self.wfn, wfn_deriv=wfn_inds_component
+                )
+        else:
+            if isinstance(self.wfn, BaseCompositeOneWavefunction):
+                wfns = [self.wfn, self.wfn.wfn]
+            else:
+                wfns = (self.wfn, ) + self.wfn.wfns
+            for wfn in wfns:
+                wfn_inds_component = self.indices_component_params[wfn]
+                if wfn_inds_component.size > 0:
+                    wfn_inds_objective = self.indices_objective_params[wfn]
+                    output[wfn_inds_objective] = self.ham.integrate_sd_wfn(
+                        sd, wfn, wfn_deriv=(wfn, wfn_inds_component)
+                    )
 
         ham_inds_component = self.indices_component_params[self.ham]
         if ham_inds_component.size > 0:
