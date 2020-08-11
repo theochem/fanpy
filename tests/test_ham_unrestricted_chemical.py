@@ -4,10 +4,11 @@ import itertools as it
 import numdifftools as nd
 import numpy as np
 import pytest
-from utils import find_datafile
+from utils import disable_abstract, find_datafile
 from wfns.backend import slater
 from wfns.backend.math_tools import unitary_matrix
 from wfns.backend.sd_list import sd_list
+from wfns.ham.base import BaseHamiltonian
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
 from wfns.wfn.ci.base import CIWavefunction
 
@@ -195,11 +196,13 @@ def test_integrate_sd_sd_particlenum():
     assert np.allclose((ham.integrate_sd_sd(civec[1], civec[1])), 4)
 
 
-def test_integrate_wfn_sd():
-    """Test UnrestrictedChemicalHamiltonian.integrate_wfn_sd."""
+def test_integrate_sd_wfn():
+    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test_ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test_ham = disable_abstract(
+        UnrestrictedChemicalHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
+    )([one_int] * 2, [two_int] * 3)
     test_wfn = type(
         "Temporary wavefunction.",
         (object,),
@@ -214,23 +217,23 @@ def test_integrate_wfn_sd():
         },
     )
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0101, components=True)
+    one_energy, coulomb, exchange = test_ham.integrate_sd_wfn(0b0101, test_wfn, components=True)
     assert one_energy == 1 * 1 + 1 * 1
     assert coulomb == 1 * 5 + 2 * 8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1010, components=True)
+    one_energy, coulomb, exchange = test_ham.integrate_sd_wfn(0b1010, test_wfn, components=True)
     assert one_energy == 2 * 4 + 2 * 4
     assert coulomb == 1 * 17 + 2 * 20
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b0110, components=True)
+    one_energy, coulomb, exchange = test_ham.integrate_sd_wfn(0b0110, test_wfn, components=True)
     assert one_energy == 1 * 3 + 2 * 2
     # NOTE: results are different from the restricted results b/c integrals are not symmetric
     assert coulomb == 1 * 13 + 2 * 16
     assert exchange == 0
 
-    one_energy, coulomb, exchange = test_ham.integrate_wfn_sd(test_wfn, 0b1100, components=True)
+    one_energy, coulomb, exchange = test_ham.integrate_sd_wfn(0b1100, test_wfn, components=True)
     assert one_energy == 1 * 3 + 3 * 4
     assert coulomb == 3 * 10
     assert exchange == -3 * 11
@@ -1177,8 +1180,8 @@ def test_integrate_sd_sds_deriv_two_bbb():
     )
 
 
-def test_integrate_sd_wfn():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn with integrate_wfn_sd."""
+def test_integrate_sd_wfn_compare_basehamiltonian():
+    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn with integrate_sd_wfn."""
     one_int_a = np.random.rand(5, 5)
     one_int_a = one_int_a + one_int_a.T
     one_int_b = np.random.rand(5, 5)
@@ -1196,78 +1199,53 @@ def test_integrate_sd_wfn():
     test_ham = UnrestrictedChemicalHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
+    test_ham2 = disable_abstract(
+        UnrestrictedChemicalHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
+    )([one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
     for i in range(1, 4):
         wfn = CIWavefunction(i, 10)
         wfn.assign_params(np.random.rand(*wfn.params.shape))
         for occ_indices in it.combinations(range(10), i):
             assert np.allclose(
-                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=None),
-                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=None),
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn),
+                test_ham2.integrate_sd_wfn(slater.create(0, *occ_indices), wfn),
             )
             assert np.allclose(
-                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=[0]),
-                test_ham.integrate_wfn_sd(wfn, slater.create(0, *occ_indices), wfn_deriv=[0]),
+                test_ham.integrate_sd_wfn(
+                    slater.create(0, *occ_indices), wfn, wfn_deriv=np.arange(wfn.nparams)
+                ),
+                test_ham2.integrate_sd_wfn(
+                    slater.create(0, *occ_indices), wfn, wfn_deriv=np.arange(wfn.nparams)
+                ),
             )
-
-
-def test_integrate_sd_wfn_deriv():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn_deriv with integrate_wfn_sd."""
-    one_int_a = np.random.rand(5, 5)
-    one_int_a = one_int_a + one_int_a.T
-    one_int_b = np.random.rand(5, 5)
-    one_int_b = one_int_b + one_int_b.T
-
-    two_int_aaaa = np.random.rand(5, 5, 5, 5)
-    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
-    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
-    two_int_abab = np.random.rand(5, 5, 5, 5)
-    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
-    two_int_bbbb = np.random.rand(5, 5, 5, 5)
-    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
-    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
-
-    test_ham = UnrestrictedChemicalHamiltonian(
-        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
-    )
-
-    wfn = CIWavefunction(4, 10)
-    wfn.assign_params(np.random.rand(*wfn.params.shape))
-    assert np.allclose(
-        test_ham.integrate_sd_wfn_deriv(0b0001101010, wfn, np.arange(20)),
-        test_ham.integrate_wfn_sd(wfn, 0b0001101010, ham_deriv=np.arange(20)),
-    )
-
-    ham_derivs = np.array([0, 3, 5, 7, 8, 11, 13])
-    for i in range(1, 4):
-        wfn = CIWavefunction(i, 10)
-        wfn.assign_params(np.random.rand(*wfn.params.shape))
-        for occ_indices in it.combinations(range(10), i):
             assert np.allclose(
-                test_ham.integrate_sd_wfn_deriv(slater.create(0, *occ_indices), wfn, ham_derivs),
-                test_ham.integrate_wfn_sd(
-                    wfn, slater.create(0, *occ_indices), ham_deriv=ham_derivs
+                test_ham.integrate_sd_wfn(
+                    slater.create(0, *occ_indices), wfn, ham_deriv=np.arange(test_ham.nparams)
+                ),
+                test_ham2.integrate_sd_wfn(
+                    slater.create(0, *occ_indices), wfn, ham_deriv=np.arange(test_ham2.nparams)
                 ),
             )
 
     with pytest.raises(TypeError):
-        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(20).tolist())
+        test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=np.arange(20).tolist())
     with pytest.raises(TypeError):
-        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(20).astype(float))
+        test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=np.arange(20).astype(float))
     with pytest.raises(TypeError):
-        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, np.arange(20).reshape(2, 10))
+        test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=np.arange(20).reshape(2, 10))
     with pytest.raises(ValueError):
         bad_indices = np.arange(20)
         bad_indices[0] = -1
-        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
+        test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=bad_indices)
     with pytest.raises(ValueError):
         bad_indices = np.arange(20)
         bad_indices[0] = 20
-        test_ham.integrate_sd_wfn_deriv(0b01101010, wfn, bad_indices)
+        test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=bad_indices)
 
 
 def test_integrate_sd_wfn_deriv_fdiff():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn_deriv with finite difference."""
+    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn with finite difference."""
     wfn = CIWavefunction(5, 10)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
@@ -1331,5 +1309,5 @@ def test_integrate_sd_wfn_deriv_fdiff():
 
     assert np.allclose(
         nd.Gradient(objective)(ham.params),
-        ham.integrate_sd_wfn_deriv(wfn.sd_vec[0], wfn, np.arange(ham.nparams)),
+        ham.integrate_sd_wfn(wfn.sd_vec[0], wfn, ham_deriv=np.arange(ham.nparams)),
     )
