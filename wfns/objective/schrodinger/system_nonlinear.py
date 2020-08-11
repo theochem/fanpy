@@ -117,8 +117,8 @@ class SystemEquations(BaseSchrodinger):
     wrapped_get_overlap(self, sd, deriv=False)
         Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
         objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=False)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_wfn(self, sd, deriv=False)
+        Wrap `integrate_sd_wfn` to be derivatized wrt the (active) parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
         Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
     get_energy_one_proj(self, refwfn, deriv=False)
@@ -452,7 +452,7 @@ class SystemEquations(BaseSchrodinger):
             self.save_params()
 
         get_overlap = self.wrapped_get_overlap
-        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
+        integrate_sd_wfn = self.wrapped_integrate_sd_wfn
 
         # reference values
         if self.energy_type in ["variable", "fixed"]:
@@ -468,7 +468,7 @@ class SystemEquations(BaseSchrodinger):
 
             norm = np.sum(ref_coeffs * np.array([get_overlap(i) for i in ref_sds]))
             # energy = self.get_energy_one_proj(self.refwfn)
-            energy = np.sum(ref_coeffs * np.array([integrate_wfn_sd(i) for i in ref_sds])) / norm
+            energy = np.sum(ref_coeffs * np.array([integrate_sd_wfn(i) for i in ref_sds])) / norm
             # can be replaced with
             # energy = self.get_energy_one_proj(self.refwfn)
             self.energy.assign_params(energy)
@@ -477,7 +477,7 @@ class SystemEquations(BaseSchrodinger):
         obj = np.empty(self.num_eqns)
         # <SD|H|Psi> - E<SD|Psi> == 0
         obj[: self.nproj] = np.array(
-            [integrate_wfn_sd(i) for i in self.pspace]
+            [integrate_sd_wfn(i) for i in self.pspace]
         ) - energy * np.array([get_overlap(i) for i in self.pspace])
         # Add constraints
         if self.nproj < self.num_eqns:
@@ -534,7 +534,7 @@ class SystemEquations(BaseSchrodinger):
         self.assign_params(params)
 
         get_overlap = self.wrapped_get_overlap
-        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
+        integrate_sd_wfn = self.wrapped_integrate_sd_wfn
 
         # define reference
         if isinstance(self.refwfn, CIWavefunction):
@@ -574,8 +574,8 @@ class SystemEquations(BaseSchrodinger):
             # norm
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>
-            ref_sds_ints = np.array([[integrate_wfn_sd(i)] for i in ref_sds])
-            d_ref_sds_ints = np.array([integrate_wfn_sd(i, True) for i in ref_sds])
+            ref_sds_ints = np.array([[integrate_sd_wfn(i)] for i in ref_sds])
+            d_ref_sds_ints = np.array([integrate_sd_wfn(i, True) for i in ref_sds])
             # integral <ref | H | Psi>
             ref_int = np.sum(ref_coeffs * ref_sds_ints)
             d_ref_int = np.sum(d_ref_coeffs * ref_sds_ints, axis=0)
@@ -590,7 +590,7 @@ class SystemEquations(BaseSchrodinger):
 
         # jacobian
         jac = np.empty((self.num_eqns, params.size))
-        jac[: self.nproj, :] = np.array([integrate_wfn_sd(i, True) for i in pspace])
+        jac[: self.nproj, :] = np.array([integrate_sd_wfn(i, True) for i in pspace])
         jac[: self.nproj, :] -= energy * np.array([get_overlap(i, True) for i in pspace])
         jac[: self.nproj, :] -= d_energy[np.newaxis, :] * np.array(
             [[get_overlap(i)] for i in pspace]

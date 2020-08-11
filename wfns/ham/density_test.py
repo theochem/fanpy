@@ -6,7 +6,7 @@ from wfns.wfn.ci.base import CIWavefunction
 
 # FIXME: create base operator class, make hamiltonian child of this class, make this module child of
 #        this class
-def integrate_wfn_sd(wfn, sd, indices, deriv=None):
+def integrate_sd_wfn(sd, wfn, indices, deriv=None):
     r"""Integrate the density operator against the wavefunction and the Slater determinant.
 
     .. math::

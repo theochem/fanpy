@@ -34,7 +34,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
     Abstract Methods
     ----------------
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+    integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.

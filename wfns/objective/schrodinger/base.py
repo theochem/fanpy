@@ -62,8 +62,8 @@ class BaseSchrodinger:
     wrapped_get_overlap(self, sd, deriv=False)
         Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
         objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=False)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_wfn(self, sd, deriv=False)
+        Wrap `integrate_sd_wfn` to be derivatized wrt the (active) parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
         Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
     get_energy_one_proj(self, refwfn, deriv=False)
@@ -362,8 +362,8 @@ class BaseSchrodinger:
 
     # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
     # different derivs)
-    def wrapped_integrate_wfn_sd(self, sd, deriv=False):
-        r"""Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
+    def wrapped_integrate_sd_wfn(self, sd, deriv=False):
+        r"""Wrap `integrate_sd_wfn` to be derivatized wrt the parameters of the objective.
 
         Parameters
         ----------
@@ -413,8 +413,8 @@ class BaseSchrodinger:
         ham_inds_component = self.indices_component_params[self.ham]
         if ham_inds_component.size > 0:
             ham_inds_objective = self.indices_objective_params[self.ham]
-            output[ham_inds_objective] = self.ham.integrate_sd_wfn_deriv(
-                sd, self.wfn, ham_inds_component
+            output[ham_inds_objective] = self.ham.integrate_sd_wfn(
+                sd, self.wfn, ham_deriv=ham_inds_component
             )
 
         return output
@@ -532,7 +532,7 @@ class BaseSchrodinger:
             if not isinstance(deriv, bool):
                 raise TypeError("`deriv` must be given as a boolean.")
         get_overlap = self.wrapped_get_overlap
-        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
+        integrate_sd_wfn = self.wrapped_integrate_sd_wfn
 
         # define reference
         if isinstance(refwfn, CIWavefunction):
@@ -563,7 +563,7 @@ class BaseSchrodinger:
 
         # overlaps and integrals
         overlaps = np.array([get_overlap(i) for i in ref_sds])
-        integrals = np.array([integrate_wfn_sd(i) for i in ref_sds])
+        integrals = np.array([integrate_sd_wfn(i) for i in ref_sds])
 
         # norm
         norm = np.sum(ref_coeffs * overlaps)
@@ -578,7 +578,7 @@ class BaseSchrodinger:
         d_norm += np.sum(ref_coeffs[:, None] * np.array([get_overlap(i, deriv) for i in ref_sds]), axis=0)
         d_energy = np.sum(d_ref_coeffs * integrals[:, None], axis=0) / norm
         d_energy += (
-            np.sum(ref_coeffs[:, None] * np.array([integrate_wfn_sd(i, deriv) for i in ref_sds]), axis=0) / norm
+            np.sum(ref_coeffs[:, None] * np.array([integrate_sd_wfn(i, deriv) for i in ref_sds]), axis=0) / norm
         )
         d_energy -= d_norm * energy / norm
         return d_energy

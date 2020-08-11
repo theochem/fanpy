@@ -216,7 +216,7 @@ def test_system_objective():
                 eqn,
                 weight
                 * (
-                    (ham.integrate_wfn_sd(wfn, sd))
+                    (ham.integrate_sd_wfn(sd, wfn))
                     - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd)
                 ),
             )
@@ -231,7 +231,7 @@ def test_system_objective():
             objective[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
             assert np.allclose(
-                eqn, weight * ((ham.integrate_wfn_sd(wfn, sd)) - guess[-1] * wfn.get_overlap(sd))
+                eqn, weight * ((ham.integrate_sd_wfn(sd, wfn)) - guess[-1] * wfn.get_overlap(sd))
             )
         assert np.allclose(objective[-1], norm_answer)
 
@@ -244,7 +244,7 @@ def test_system_objective():
             objective[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
             assert np.allclose(
-                eqn, weight * ((ham.integrate_wfn_sd(wfn, sd)) - 1.0 * wfn.get_overlap(sd))
+                eqn, weight * ((ham.integrate_sd_wfn(sd, wfn)) - 1.0 * wfn.get_overlap(sd))
             )
         assert np.allclose(objective[-1], norm_answer)
 
@@ -304,7 +304,7 @@ def test_system_jacobian():
                 eqn,
                 weight
                 * (
-                    (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6)))
+                    (ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6)))
                     - test.get_energy_one_proj(refwfn, deriv=True) * wfn.get_overlap(sd)
                     - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd, deriv=np.arange(6))
                 ),
@@ -319,15 +319,14 @@ def test_system_jacobian():
         for eqn, sd, weight in zip(
             jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
-            for i in range(6):
-                assert np.allclose(
-                    eqn[i],
-                    weight
-                    * (
-                        (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                        - guess[-1] * wfn.get_overlap(sd, deriv=i)
-                    ),
-                )
+            assert np.allclose(
+                eqn[:6],
+                weight
+                * (
+                    (ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6)))
+                    - guess[-1] * wfn.get_overlap(sd, deriv=np.arange(6))
+                ),
+            )
             assert np.allclose(eqn[6], -weight * wfn.get_overlap(sd))
         assert np.allclose(jacobian[-1], norm_answer + [0.0])
 
@@ -339,16 +338,15 @@ def test_system_jacobian():
         for eqn, sd, weight in zip(
             jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
-            for i in range(6):
-                assert np.allclose(
-                    eqn[i],
-                    weight
-                    * (
-                        (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                        - 0.0 * wfn.get_overlap(sd)
-                        - 1 * wfn.get_overlap(sd, deriv=i)
-                    ),
-                )
+            assert np.allclose(
+                eqn,
+                weight
+                * (
+                    (ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6)))
+                    - 0.0 * wfn.get_overlap(sd)
+                    - 1 * wfn.get_overlap(sd, deriv=np.arange(6))
+                ),
+            )
         assert np.allclose(jacobian[-1], norm_answer)
 
 
@@ -383,7 +381,7 @@ def test_system_jacobian_active_ciref():
         jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
     ):
         results = np.zeros(12)
-        results[:6] += ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6))
+        results[:6] += ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6))
         results -= test.get_energy_one_proj(ciref, deriv=True) * wfn.get_overlap(sd)
         results[:6] -= test.get_energy_one_proj(ciref) * wfn.get_overlap(sd, deriv=np.arange(6))
 

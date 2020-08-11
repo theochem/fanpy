@@ -98,8 +98,8 @@ def test_baseschrodinger_wrapped_get_overlap():
     )
 
 
-def test_baseschrodinger_wrapped_integrate_wfn_sd():
-    """Test BaseSchrodinger.wrapped_integrate_wfn_sd."""
+def test_baseschrodinger_wrapped_integrate_sd_wfn():
+    """Test BaseSchrodinger.wrapped_integrate_sd_wfn."""
     wfn = CIWavefunction(5, 10)
     wfn.assign_params(np.random.rand(wfn.nparams))
 
@@ -113,13 +113,13 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([1, 2, 4]))]
     )
-    assert np.allclose(test.wrapped_integrate_wfn_sd(0b0101), ham.integrate_sd_wfn(0b0101, wfn))
+    assert np.allclose(test.wrapped_integrate_sd_wfn(0b0101), ham.integrate_sd_wfn(0b0101, wfn))
     assert np.allclose(
-        test.wrapped_integrate_wfn_sd(0b0101, deriv=True),
+        test.wrapped_integrate_sd_wfn(0b0101, deriv=True),
         np.hstack(
             [
                 ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=np.array([0, 3, 5])),
-                ham.integrate_sd_wfn_deriv(0b0101, wfn, np.array([1, 2, 4])),
+                ham.integrate_sd_wfn(0b0101, wfn, ham_deriv=np.array([1, 2, 4])),
             ]
         )
     )
@@ -167,13 +167,13 @@ def test_baseschrodinger_get_energy_one_proj():
     # sd
     for sd in sds:
         olp = wfn.get_overlap(sd)
-        integral = (ham.integrate_wfn_sd(wfn, sd))
+        integral = (ham.integrate_sd_wfn(sd, wfn))
         # <SD | H | Psi> = E <SD | Psi>
         # E = <SD | H | Psi> / <SD | Psi>
         assert np.allclose(test.get_energy_one_proj(sd), integral / olp)
         # dE = d<SD | H | Psi> / <SD | Psi> - d<SD | Psi> <SD | H | Psi> / <SD | Psi>^2
         d_olp = wfn.get_overlap(sd, deriv=np.arange(6))
-        d_integral = (ham.integrate_wfn_sd(wfn, sd, wfn_deriv=np.arange(6)))
+        d_integral = (ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6)))
         assert np.allclose(
             test.get_energy_one_proj(sd, deriv=True),
             d_integral / olp - d_olp * integral / olp ** 2,
@@ -183,8 +183,8 @@ def test_baseschrodinger_get_energy_one_proj():
     for sd1, sd2 in it.combinations(sds, 2):
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = (ham.integrate_wfn_sd(wfn, sd1))
-        integral2 = (ham.integrate_wfn_sd(wfn, sd2))
+        integral1 = (ham.integrate_sd_wfn(sd1, wfn))
+        integral2 = (ham.integrate_sd_wfn(sd2, wfn))
         # ( f(SD1) <SD1| + f(SD2) <SD2| ) H |Psi> = E ( f(SD1) <SD1| + f(SD2) <SD2| ) |Psi>
         # f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi> = E ( f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi> )
         # E = (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) / (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)
@@ -210,8 +210,8 @@ def test_baseschrodinger_get_energy_one_proj():
         #       (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)**2
         d_olp1 = wfn.get_overlap(sd1, deriv=np.arange(6))
         d_olp2 = wfn.get_overlap(sd2, deriv=np.arange(6))
-        d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=np.arange(6)))
-        d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=np.arange(6)))
+        d_integral1 = (ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6)))
+        d_integral2 = (ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6)))
         assert np.allclose(
             test.get_energy_one_proj([sd1, sd2], deriv=True),
             (d_olp1 * integral1 + d_olp2 * integral2 + olp1 * d_integral1 + olp2 * d_integral2)
@@ -229,8 +229,8 @@ def test_baseschrodinger_get_energy_one_proj():
         coeff2 = ciwfn.get_overlap(sd2)
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = (ham.integrate_wfn_sd(wfn, sd1))
-        integral2 = (ham.integrate_wfn_sd(wfn, sd2))
+        integral1 = (ham.integrate_sd_wfn(sd1, wfn))
+        integral2 = (ham.integrate_sd_wfn(sd2, wfn))
         # ( c_1 <SD1| + c_2 <SD2| ) H |Psi> = E ( c_1 <SD1| + c_2 <SD2| ) |Psi>
         # c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi> = E ( c_1 <SD1|Psi> + c_2 <SD2|Psi> )
         # E = (c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi>) / (c_1 <SD1|Psi> + c_2 <SD2|Psi>)
@@ -248,8 +248,8 @@ def test_baseschrodinger_get_energy_one_proj():
         d_coeff2 = 0.0
         d_olp1 = wfn.get_overlap(sd1, deriv=np.arange(6))
         d_olp2 = wfn.get_overlap(sd2, deriv=np.arange(6))
-        d_integral1 = (ham.integrate_wfn_sd(wfn, sd1, wfn_deriv=np.arange(6)))
-        d_integral2 = (ham.integrate_wfn_sd(wfn, sd2, wfn_deriv=np.arange(6)))
+        d_integral1 = (ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6)))
+        d_integral2 = (ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6)))
         assert np.allclose(
             test.get_energy_one_proj(ciwfn, deriv=True),
             (

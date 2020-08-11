@@ -929,7 +929,7 @@ def test_jacobi_energy():
             )
         elif expectation_type == "projected":
             return (
-                sum(wfn.get_overlap(sd) * ham.integrate_wfn_sd(wfn, sd) for sd in sds) / norm
+                sum(wfn.get_overlap(sd) * ham.integrate_sd_wfn(sd, wfn) for sd in sds) / norm
             )
 
     for orbpair in it.combinations(range(4), 2):

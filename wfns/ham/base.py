@@ -17,7 +17,7 @@ class BaseHamiltonian:
     -------
     __init__(self, one_int, two_int)
         Initialize the Hamiltonian.
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+    integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
     Abstract Properties
@@ -80,9 +80,8 @@ class BaseHamiltonian:
         raise NotImplementedError
 
     # FIXME: need to speed up
-    # TODO: change to integrate_sd_wfn
-    def integrate_wfn_sd(
-        self, wfn, sd, wfn_deriv=None, ham_deriv=None, orders=(1, 2), components=False
+    def integrate_sd_wfn(
+        self, sd, wfn, wfn_deriv=None, ham_deriv=None, orders=(1, 2), components=False
     ):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
@@ -100,11 +99,11 @@ class BaseHamiltonian:
 
         Parameters
         ----------
+        sd : int
+            Slater Determinant against which the Hamiltonian is integrated.
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
             Needs to have the following in `__dict__`: `get_overlap`.
-        sd : int
-            Slater Determinant against which the Hamiltonian is integrated.
         wfn_deriv : np.ndarray
             Indices of the wavefunction parameter against which the integral is derivatized.
             Default is no derivatization.

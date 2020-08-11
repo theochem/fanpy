@@ -114,8 +114,8 @@ class LeastSquaresEquations(SystemEquations):
     wrapped_get_overlap(self, sd, deriv=False)
         Wrap `get_overlap` to be derivatized with respect to the (active) parameters of the
         objective.
-    wrapped_integrate_wfn_sd(self, sd, deriv=False)
-        Wrap `integrate_wfn_sd` to be derivatized wrt the (active) parameters of the objective.
+    wrapped_integrate_sd_wfn(self, sd, deriv=False)
+        Wrap `integrate_sd_wfn` to be derivatized wrt the (active) parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=False)
         Wrap `integrate_sd_sd` to be derivatized wrt the (active) parameters of the objective.
     get_energy_one_proj(self, refwfn, deriv=False)
