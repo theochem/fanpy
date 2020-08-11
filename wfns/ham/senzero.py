@@ -69,14 +69,14 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         Rotate orbitals using Jacobi matrix.
     orb_rotate_matrix(self, matrix)
         Rotate orbitals using a transformation matrix.
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+    integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
 
-    def integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None, components=False):
+    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None, components=False):
         r"""Integrate the Hamiltonian with against a wavefunction and Slater determinant.
 
         .. math::

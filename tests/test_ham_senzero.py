@@ -77,8 +77,8 @@ def test_integrate_sd_sd_lih_631g_full():
             )
 
 
-def test_integrate_wfn_sd_2e():
-    """Test SeniorityZeroHamiltonian.integrate_wfn_sd with 2 electron wavefunction."""
+def test_integrate_sd_wfn_2e():
+    """Test SeniorityZeroHamiltonian.integrate_sd_wfn with 2 electron wavefunction."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     ham = SeniorityZeroHamiltonian(one_int, two_int)
@@ -88,24 +88,24 @@ def test_integrate_wfn_sd_2e():
         {"get_overlap": lambda sd, deriv=None: 1 if sd == 0b0101 else 2 if sd == 0b1010 else 0},
     )
 
-    assert np.allclose((0, 0, 0), ham.integrate_wfn_sd(test_wfn, 0b1001, components=True))
+    assert np.allclose((0, 0, 0), ham.integrate_sd_wfn(0b1001, test_wfn, components=True))
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b0101, components=True)
+    one_energy, coulomb, exchange = ham.integrate_sd_wfn(0b0101, test_wfn, components=True)
     assert one_energy == 1 * 1 + 1 * 1
     assert coulomb == 1 * 5 + 2 * 8
     assert exchange == 0
 
-    one_energy, coulomb, exchange = ham.integrate_wfn_sd(test_wfn, 0b1010, components=True)
+    one_energy, coulomb, exchange = ham.integrate_sd_wfn(0b1010, test_wfn, components=True)
     assert one_energy == 2 * 4 + 2 * 4
     assert coulomb == 1 * 17 + 2 * 20
     assert exchange == 0
 
     with pytest.raises(ValueError):
-        ham.integrate_wfn_sd(test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
+        ham.integrate_sd_wfn(0b0101, test_wfn, wfn_deriv=0, ham_deriv=0)
 
 
-def test_integrate_wfn_sd_4e():
-    """Test SeniorityZeroHamiltonian.integrate_wfn_sd with 4 electron wavefunction."""
+def test_integrate_sd_wfn_4e():
+    """Test SeniorityZeroHamiltonian.integrate_sd_wfn with 4 electron wavefunction."""
     one_int = np.arange(1, 10, dtype=float).reshape(3, 3)
     two_int = np.arange(1, 82, dtype=float).reshape(3, 3, 3, 3)
     ham = SeniorityZeroHamiltonian(one_int, two_int)
@@ -121,16 +121,16 @@ def test_integrate_wfn_sd_4e():
     )
 
     assert np.allclose(
-        ham.integrate_wfn_sd(test_wfn, 0b011011), ham_full.integrate_wfn_sd(test_wfn, 0b011011)
+        ham.integrate_sd_wfn(0b011011, test_wfn), ham_full.integrate_sd_wfn(0b011011, test_wfn)
     )
 
     assert np.allclose(
-        ham.integrate_wfn_sd(test_wfn, 0b101101), ham_full.integrate_wfn_sd(test_wfn, 0b101101)
+        ham.integrate_sd_wfn(0b101101, test_wfn), ham_full.integrate_sd_wfn(0b101101, test_wfn)
     )
 
     assert np.allclose(
-        ham.integrate_wfn_sd(test_wfn, 0b110110), ham_full.integrate_wfn_sd(test_wfn, 0b110110)
+        ham.integrate_sd_wfn(0b110110, test_wfn), ham_full.integrate_sd_wfn(0b110110, test_wfn)
     )
 
     with pytest.raises(ValueError):
-        ham.integrate_wfn_sd(test_wfn, 0b0101, wfn_deriv=0, ham_deriv=0)
+        ham.integrate_sd_wfn(0b0101, test_wfn, wfn_deriv=0, ham_deriv=0)
