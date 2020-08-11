@@ -61,7 +61,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         Transform the integrals with a unitary matrix that corresponds to the given parameters.
     save_params(self, filename)
         Save the parameters associated with the Hamiltonian.
-    integrate_wfn_sd(self, wfn, sd, wfn_deriv=None, ham_deriv=None)
+    integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None)
         Integrate the Hamiltonian with against a wavefunction and Slater determinant.
     integrate_sd_sd(self, sd1, sd2, deriv=None)
         Integrate the Hamiltonian with against two Slater determinants.
@@ -3138,7 +3138,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             ]
         )
 
-    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, components=False):
+    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None, components=False):
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
 
         .. math::
@@ -3160,8 +3160,11 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         wfn : Wavefunction
             Wavefunction against which the Hamiltonian is integrated.
             Needs to have the following in `__dict__`: `get_overlap`.
-        wfn_deriv : {int, None}
-            Index of the wavefunction parameter against which the integral is derivatized.
+        wfn_deriv : np.ndarray
+            Indices of the wavefunction parameter against which the integrals are derivatized.
+            Default is no derivatization.
+        ham_deriv : np.ndarray
+            Indices of the Hamiltonian parameter against which the integrals are derivatized.
             Default is no derivatization.
         components : {bool, False}
             Option for separating the integrals into the one electron, coulomb, and exchange
@@ -3170,17 +3173,53 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         Returns
         -------
-        integral : {float, np.ndarray(3,)}
-            If `components` is False, then the derivative of the integral is returned.
-            If `components` is True, then the derivative of the one electron, coulomb, and exchange
-            components are returned.
+        integrals : {float, np.ndarray(3,), np.ndarray(N_derivs,), np.ndarray(3, N_derivs)}
+            Integrals or derivative of integrals.
+            If `wfn_deriv` or `ham_deriv` is provided, then the derivatives of the integral are
+            returned.
+            If `components` is False, then the integral is returned.
+            If `components` is True, then the one electron, coulomb, and exchange components are
+            returned.
+
+        Raises
+        ------
+        TypeError
+            If ham_deriv is not a one-dimensional numpy array of integers.
+        ValueError
+            If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
+
+        Notes
+        -----
+        Selecting only some of the parameter indices will not make the code any faster. The
+        integrals are derivatized with respect to all of parameters first and then appropriate
+        derivatives are selected afterwards.
 
         """
         # pylint: disable=C0103
-        nspatial = self.nspatial
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if wfn_deriv is not None and ham_deriv is not None:
+                raise ValueError(
+                    "Integral can be derivatized with respect to at most one out of the "
+                    " wavefunction and Hamiltonian parameters."
+                )
+            if ham_deriv is not None:
+                if not (
+                    isinstance(ham_deriv, np.ndarray) and
+                    ham_deriv.ndim == 1 and
+                    ham_deriv.dtype == int
+                ):
+                    raise TypeError(
+                        "Derivative indices for the Hamiltonian parameters must be given as a "
+                        "one-dimensional numpy array of integers."
+                    )
+                if np.any(ham_deriv < 0) or np.any(ham_deriv >= self.nparams):
+                    raise ValueError(
+                        "Derivative indices for the Hamiltonian parameters must be greater than or "
+                        "equal to 0 and be less than the number of parameters."
+                    )
+        nspatial = self.nspatial
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
         # FIXME: hardcode slater determinant structure
@@ -3189,22 +3228,30 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
-        if wfn_deriv is None:
+        if wfn_deriv is None and ham_deriv is None:
             shape = (-1,)
             output = np.zeros(3)
-        else:
+        elif wfn_deriv is not None:
             shape = (-1, len(wfn_deriv))
             output = np.zeros((3, len(wfn_deriv)))
+        else:  # ham_deriv is not None
+            shape = (-1,)
+            output = np.zeros((3, len(ham_deriv)))
 
         # FIXME: hardcode slater determinant structure
         occ_beta -= nspatial
         vir_beta -= nspatial
 
         overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
-        integrals_zero = self._integrate_sd_sds_zero(occ_alpha, occ_beta)
-        if wfn_deriv is not None:
-            integrals_zero = np.expand_dims(integrals_zero, 2)
-        output += np.sum(integrals_zero * overlaps_zero, axis=1)
+        if ham_deriv is not None:
+            integrals_zero = self._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha)
+            integrals_zero += self._integrate_sd_sds_deriv_zero_beta(occ_alpha, occ_beta, vir_beta)
+            output += np.squeeze(integrals_zero * overlaps_zero, axis=2)[:, ham_deriv]
+        else:
+            integrals_zero = self._integrate_sd_sds_zero(occ_alpha, occ_beta)
+            if wfn_deriv is not None:
+                integrals_zero = np.expand_dims(integrals_zero, 2)
+            output += np.sum(integrals_zero * overlaps_zero, axis=1)
 
         overlaps_one_alpha = np.array(
             [
@@ -3212,10 +3259,16 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 1)
             ]
         ).reshape(*shape)
-        integrals_one_alpha = self._integrate_sd_sds_one_alpha(occ_alpha, occ_beta, vir_alpha)
-        if wfn_deriv is not None:
-            integrals_one_alpha = np.expand_dims(integrals_one_alpha, 2)
-        output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1)
+        if ham_deriv is not None:
+            integrals_one_aa = self._integrate_sd_sds_deriv_one_aa(occ_alpha, occ_beta, vir_alpha)
+            output += np.sum(integrals_one_aa * overlaps_one_alpha, axis=2)[:, ham_deriv]
+            integrals_one_ba = self._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha)
+            output[1, :] += np.sum(integrals_one_ba * overlaps_one_alpha, axis=1)[ham_deriv]
+        else:
+            integrals_one_alpha = self._integrate_sd_sds_one_alpha(occ_alpha, occ_beta, vir_alpha)
+            if wfn_deriv is not None:
+                integrals_one_alpha = np.expand_dims(integrals_one_alpha, 2)
+            output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1)
 
         # FIXME: hardcode slater determinant structure
         overlaps_one_beta = np.array(
@@ -3224,10 +3277,16 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 for sd_exc in slater.excite_bulk(sd, occ_beta + nspatial, vir_beta + nspatial, 1)
             ]
         ).reshape(*shape)
-        integrals_one_beta = self._integrate_sd_sds_one_beta(occ_alpha, occ_beta, vir_beta)
-        if wfn_deriv is not None:
-            integrals_one_beta = np.expand_dims(integrals_one_beta, 2)
-        output += np.sum(integrals_one_beta * overlaps_one_beta, axis=1)
+        if ham_deriv is not None:
+            integrals_one_bb = self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta)
+            output += np.sum(integrals_one_bb * overlaps_one_beta, axis=2)[:, ham_deriv]
+            integrals_one_ab = self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta)
+            output[1, :] += np.sum(integrals_one_ab * overlaps_one_beta, axis=1)[ham_deriv]
+        else:
+            integrals_one_beta = self._integrate_sd_sds_one_beta(occ_alpha, occ_beta, vir_beta)
+            if wfn_deriv is not None:
+                integrals_one_beta = np.expand_dims(integrals_one_beta, 2)
+            output += np.sum(integrals_one_beta * overlaps_one_beta, axis=1)
 
         overlaps_two_aa = np.array(
             [
@@ -3236,10 +3295,16 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             ]
         ).reshape(*shape)
         if occ_alpha.size > 1 and vir_alpha.size > 1:
-            integrals_two_aa = self._integrate_sd_sds_two_aa(occ_alpha, occ_beta, vir_alpha)
-            if wfn_deriv is not None:
-                integrals_two_aa = np.expand_dims(integrals_two_aa, 2)
-            output[1:] += np.sum(integrals_two_aa * overlaps_two_aa, axis=1)
+            if ham_deriv is not None:
+                integrals_two_aaa = self._integrate_sd_sds_deriv_two_aaa(
+                    occ_alpha, occ_beta, vir_alpha
+                )
+                output[1:, :] += np.sum(integrals_two_aaa * overlaps_two_aa, axis=2)[:, ham_deriv]
+            else:
+                integrals_two_aa = self._integrate_sd_sds_two_aa(occ_alpha, occ_beta, vir_alpha)
+                if wfn_deriv is not None:
+                    integrals_two_aa = np.expand_dims(integrals_two_aa, 2)
+                output[1:] += np.sum(integrals_two_aa * overlaps_two_aa, axis=1)
 
         # FIXME: hardcode slater determinant structure
         overlaps_two_ab = np.array(
@@ -3251,12 +3316,22 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             ]
         ).reshape(*shape)
         if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
-            integrals_two_ab = self._integrate_sd_sds_two_ab(
-                occ_alpha, occ_beta, vir_alpha, vir_beta
-            )
-            if wfn_deriv is not None:
-                integrals_two_ab = np.expand_dims(integrals_two_ab, 1)
-            output[1] += np.sum(integrals_two_ab * overlaps_two_ab, axis=0)
+            if ham_deriv is not None:
+                integrals_two_aab = self._integrate_sd_sds_deriv_two_aab(
+                    occ_alpha, occ_beta, vir_alpha, vir_beta
+                )
+                output[1, :] += np.sum(integrals_two_aab * overlaps_two_ab, axis=1)[ham_deriv]
+                integrals_two_bab = self._integrate_sd_sds_deriv_two_bab(
+                    occ_alpha, occ_beta, vir_alpha, vir_beta
+                )
+                output[1, :] += np.sum(integrals_two_bab * overlaps_two_ab, axis=1)[ham_deriv]
+            else:
+                integrals_two_ab = self._integrate_sd_sds_two_ab(
+                    occ_alpha, occ_beta, vir_alpha, vir_beta
+                )
+                if wfn_deriv is not None:
+                    integrals_two_ab = np.expand_dims(integrals_two_ab, 1)
+                output[1] += np.sum(integrals_two_ab * overlaps_two_ab, axis=0)
 
         # FIXME: hardcode slater determinant structure
         overlaps_two_bb = np.array(
@@ -3266,202 +3341,18 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             ]
         ).reshape(*shape)
         if occ_beta.size > 1 and vir_beta.size > 1:
-            integrals_two_bb = self._integrate_sd_sds_two_bb(occ_alpha, occ_beta, vir_beta)
-            if wfn_deriv is not None:
-                integrals_two_bb = np.expand_dims(integrals_two_bb, 2)
-            output[1:] += np.sum(integrals_two_bb * overlaps_two_bb, axis=1)
+            if ham_deriv is not None:
+                integrals_two_bbb = self._integrate_sd_sds_deriv_two_bbb(
+                    occ_alpha, occ_beta, vir_beta
+                )
+                output[1:, :] += np.sum(integrals_two_bbb * overlaps_two_bb, axis=2)[:, ham_deriv]
+            else:
+                integrals_two_bb = self._integrate_sd_sds_two_bb(occ_alpha, occ_beta, vir_beta)
+                if wfn_deriv is not None:
+                    integrals_two_bb = np.expand_dims(integrals_two_bb, 2)
+                output[1:] += np.sum(integrals_two_bb * overlaps_two_bb, axis=1)
 
         if components:
             return output
 
         return np.sum(output, axis=0)
-
-    def integrate_sd_wfn_deriv(self, sd, wfn, ham_derivs, components=False):
-        r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
-
-        .. math::
-
-            \left< \Phi \middle| \hat{H} \middle| \Psi \right>
-            = \sum_{\mathbf{m} \in S_\Phi}
-              f(\mathbf{m}) \left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>
-
-        where :math:`\Psi` is the wavefunction, :math:`\hat{H}` is the Hamiltonian operator, and
-        :math:`\Phi` is the Slater determinant. The :math:`S_{\Phi}` is the set of Slater
-        determinants for which :math:`\left< \Phi \middle| \hat{H} \middle| \mathbf{m} \right>` is
-        chemical Hamiltonian.
-
-        Parameters
-        ----------
-        sd : int
-            Slater Determinant against which the Hamiltonian is integrated.
-        wfn : Wavefunction
-            Wavefunction against which the Hamiltonian is integrated.
-        ham_derivs : np.ndarray(N_derivs)
-            Indices of the Hamiltonian parameter against which the integrals are derivatized.
-        components : {bool, False}
-            Option for separating the integrals into the one electron, coulomb, and exchange
-            components.
-            Default adds the three components together.
-
-        Returns
-        -------
-        d_integrals : {np.ndarray(N_derivs,), np.ndarray(3, N_derivs)}
-            Derivative of the integral.
-            If `components` is False, then the derivative of the integral is returned.
-            If `components` is True, then the derivative of the one electron, coulomb, and exchange
-            components are returned.
-
-        Raises
-        ------
-        TypeError
-            If ham_derivs is not a one-dimensional numpy array of integers.
-        ValueError
-            If ham_derivs has any indices than is less than 0 or greater than or equal to nparams.
-
-        Notes
-        -----
-        Providing only some of the Hamiltonian parameter indices will not make the code any faster.
-        The integrals are derivatized with respect to all of Hamiltonian parameters and the
-        appropriate derivatives are selected afterwards.
-
-        """
-        # pylint: disable=C0103
-        if not (
-            isinstance(ham_derivs, np.ndarray) and ham_derivs.ndim == 1 and ham_derivs.dtype == int
-        ):
-            raise TypeError(
-                "Derivative indices for the Hamiltonian parameters must be given as a "
-                "one-dimensional numpy array of integers."
-            )
-        if np.any(ham_derivs < 0) or np.any(ham_derivs >= self.nparams):
-            raise ValueError(
-                "Derivative indices for the Hamiltonian parameters must be greater than or equal to"
-                " 0 and be less than the number of parameters."
-            )
-
-        nspatial = self.nspatial
-        if __debug__:
-            if not slater.is_sd_compatible(sd):
-                raise TypeError("Slater determinant must be given as an integer.")
-        occ_indices = np.array(slater.occ_indices(sd))
-        vir_indices = np.array(slater.vir_indices(sd, self.nspin))
-
-        # FIXME: hardcode slater determinant structure
-        occ_alpha = occ_indices[occ_indices < nspatial]
-        vir_alpha = vir_indices[vir_indices < nspatial]
-        occ_beta = occ_indices[occ_indices >= nspatial]
-        vir_beta = vir_indices[vir_indices >= nspatial]
-
-        # FIXME: hardcode slater determinant structure
-        occ_beta -= nspatial
-        vir_beta -= nspatial
-
-        output = np.zeros((3, self.nparams))
-
-        overlaps_zero = np.array([[[wfn.get_overlap(sd)]]])
-        output += np.squeeze(
-            self._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha) * overlaps_zero,
-            axis=2,
-        )
-        output += np.squeeze(
-            self._integrate_sd_sds_deriv_zero_beta(occ_alpha, occ_beta, vir_beta) * overlaps_zero,
-            axis=2,
-        )
-
-        overlaps_one_alpha = np.array(
-            [
-                [
-                    wfn.get_overlap(sd_exc)
-                    for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 1)
-                ]
-            ]
-        )
-        output += np.sum(
-            self._integrate_sd_sds_deriv_one_aa(occ_alpha, occ_beta, vir_alpha)
-            * overlaps_one_alpha,
-            axis=2,
-        )
-        output[1, :] += np.sum(
-            self._integrate_sd_sds_deriv_one_ba(occ_alpha, occ_beta, vir_alpha)
-            * overlaps_one_alpha,
-            axis=1,
-        )
-
-        # FIXME: hardcode slater determinant structure
-        overlaps_one_beta = np.array(
-            [
-                [
-                    wfn.get_overlap(sd_exc)
-                    for sd_exc in slater.excite_bulk(
-                            sd, occ_beta + nspatial, vir_beta + nspatial, 1
-                    )
-                ]
-            ]
-        )
-        output += np.sum(
-            self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta) * overlaps_one_beta,
-            axis=2,
-        )
-        output[1, :] += np.sum(
-            self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta) * overlaps_one_beta,
-            axis=1,
-        )
-
-
-        overlaps_two_aa = np.array(
-            [
-                [
-                    wfn.get_overlap(sd_exc)
-                    for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 2)
-                ]
-            ]
-        )
-        if occ_alpha.size > 1 and vir_alpha.size > 1:
-            output[1:, :] += np.sum(
-                self._integrate_sd_sds_deriv_two_aaa(occ_alpha, occ_beta, vir_alpha)
-                * overlaps_two_aa,
-                axis=2,
-            )
-
-        # FIXME: hardcode slater determinant structure
-        overlaps_two_ab = np.array(
-            [
-                wfn.get_overlap(sd_exc)
-                for sd_exc in slater.excite_bulk_two_ab(
-                    sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
-                )
-            ]
-        )
-        if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
-            output[1, :] += np.sum(
-                self._integrate_sd_sds_deriv_two_aab(occ_alpha, occ_beta, vir_alpha, vir_beta)
-                * overlaps_two_ab,
-                axis=1,
-            )
-            output[1, :] += np.sum(
-                self._integrate_sd_sds_deriv_two_bab(occ_alpha, occ_beta, vir_alpha, vir_beta)
-                * overlaps_two_ab,
-                axis=1,
-            )
-
-        # FIXME: hardcode slater determinant structure
-        overlaps_two_bb = np.array(
-            [
-                [
-                    wfn.get_overlap(sd_exc)
-                    for sd_exc in slater.excite_bulk(
-                        sd, occ_beta + nspatial, vir_beta + nspatial, 2
-                    )
-                ]
-            ]
-        )
-        if occ_beta.size > 1 and vir_beta.size > 1:
-            output[1:, :] += np.sum(
-                self._integrate_sd_sds_deriv_two_bbb(occ_alpha, occ_beta, vir_beta)
-                * overlaps_two_bb,
-                axis=2,
-            )
-
-        if components:
-            return output[:, ham_derivs]
-        return np.sum(output[:, ham_derivs], axis=0)
