@@ -89,25 +89,26 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
             If one- and two-electron integrals do not have the same number of orbitals.
 
         """
-        if not (
-            isinstance(one_int, np.ndarray)
-            and isinstance(two_int, np.ndarray)
-        ):
-            raise TypeError("Integrals must be given as a numpy array")
-        if not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
-            raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
-        if not (
-            two_int.ndim == 4
-            and two_int.shape[0] == two_int.shape[1] == two_int.shape[2] == two_int.shape[3]
-        ):
-            raise ValueError(
-                "Two-electron integrals must have four-dimensional tensor with equal "
-                "number rows in each axis."
-            )
-        if one_int.shape[0] != two_int.shape[0]:
-            raise ValueError(
-                "One- and two-electron integrals must have the same number of " "orbitals."
-            )
+        if __debug__:
+            if not (
+                isinstance(one_int, np.ndarray)
+                and isinstance(two_int, np.ndarray)
+            ):
+                raise TypeError("Integrals must be given as a numpy array")
+            if not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
+                raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
+            if not (
+                two_int.ndim == 4
+                and two_int.shape[0] == two_int.shape[1] == two_int.shape[2] == two_int.shape[3]
+            ):
+                raise ValueError(
+                    "Two-electron integrals must have four-dimensional tensor with equal "
+                    "number rows in each axis."
+                )
+            if one_int.shape[0] != two_int.shape[0]:
+                raise ValueError(
+                    "One- and two-electron integrals must have the same number of " "orbitals."
+                )
 
         self.one_int = one_int
         self.two_int = two_int
@@ -133,27 +134,32 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
         """
         # pylint: disable=C0103
-        if not (
-            isinstance(jacobi_indices, (tuple, list))
-            and len(jacobi_indices) == 2
-            and isinstance(jacobi_indices[0], int)
-            and isinstance(jacobi_indices[1], int)
-        ):
-            raise TypeError("Indices must be given a tuple or list of two integers.")
-        if jacobi_indices[0] == jacobi_indices[1]:
-            raise ValueError("Indices must be different.")
-        if not (
-            0 <= jacobi_indices[0] < self.one_int.shape[0]
-            and 0 <= jacobi_indices[1] < self.one_int.shape[0]
-        ):
-            raise ValueError(
-                "Indices must be greater than or equal to 0 and less than the number of rows."
-            )
-        if not (
-            isinstance(theta, (int, float))
-            or (isinstance(theta, np.ndarray) and theta.dtype in [int, float] and theta.size == 1)
-        ):
-            raise TypeError("Angle `theta` must be a float or numpy array of one float.")
+        if __debug__:
+            if not (
+                isinstance(jacobi_indices, (tuple, list))
+                and len(jacobi_indices) == 2
+                and isinstance(jacobi_indices[0], int)
+                and isinstance(jacobi_indices[1], int)
+            ):
+                raise TypeError("Indices must be given a tuple or list of two integers.")
+            if jacobi_indices[0] == jacobi_indices[1]:
+                raise ValueError("Indices must be different.")
+            if not (
+                0 <= jacobi_indices[0] < self.one_int.shape[0]
+                and 0 <= jacobi_indices[1] < self.one_int.shape[0]
+            ):
+                raise ValueError(
+                    "Indices must be greater than or equal to 0 and less than the number of rows."
+                )
+            if not (
+                isinstance(theta, (int, float))
+                or (
+                    isinstance(theta, np.ndarray) and
+                    theta.dtype in [int, float] and
+                    theta.size == 1
+                )
+            ):
+                raise TypeError("Angle `theta` must be a float or numpy array of one float.")
 
         p, q = jacobi_indices
         if p > q:
@@ -219,19 +225,20 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
         Raises
         ------
         TypeError
-            If matrix is not a numpy array.
+            If matrix is not a two-dimensional numpy array.
         ValueError
             If shape of matrix does not match up with the shape of the integrals.
 
         """
-        if not isinstance(matrix, np.ndarray):
-            raise TypeError("Transformation matrix must be given as a numpy array.")
-        if matrix.ndim != 2:
-            raise ValueError("Transformation matrix must be two-dimensional.")
-        if matrix.shape[0] != self.one_int.shape[0]:
-            raise ValueError(
-                "Shape of the transformation matrix must match with the shape of the " "integrals."
-            )
+        if __debug__:
+            if not (isinstance(matrix, np.ndarray) and matrix.ndim == 2):
+                raise TypeError(
+                    "Transformation matrix must be given as a 2-dimensional numpy array."
+                )
+            if matrix.shape[0] != self.one_int.shape[0]:
+                raise ValueError(
+                    "Shape of the transformation matrix must match with the shape of the integrals."
+                )
         # NOTE: don't need to check that matrix matches up with two_int b/c one_int and two_int have
         #       the same number of rows/columns
 

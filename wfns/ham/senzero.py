@@ -91,17 +91,41 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
         not zero, which are the :math:`\Phi` and its first order orbital-pair excitations for a
         chemical Hamiltonian.
 
-        """
-        if wfn_deriv is not None and ham_deriv is not None:
-            raise ValueError(
-                "Integral can be derivatized with respect to at most one out of the "
-                "wavefunction and Hamiltonian parameters."
-            )
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+            If ham_deriv is not a one-dimensional numpy array of integers.
+        ValueError
+            If both ham_deriv and wfn_deriv is not None.
+            If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
+        """
         nspatial = self.nspatial
+
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if wfn_deriv is not None and ham_deriv is not None:
+                raise ValueError(
+                    "Integral can be derivatized with respect to the wavefunction or Hamiltonian "
+                    "parameters, but not both."
+                )
+            if ham_deriv is not None:
+                if not (
+                    isinstance(ham_deriv, np.ndarray) and
+                    ham_deriv.ndim == 1 and
+                    ham_deriv.dtype == int
+                ):
+                    raise TypeError(
+                        "Derivative indices for the Hamiltonian parameters must be given as a "
+                        "one-dimensional numpy array of integers."
+                    )
+                if np.any(ham_deriv < 0) or np.any(ham_deriv >= self.nparams):
+                    raise ValueError(
+                        "Derivative indices for the Hamiltonian parameters must be greater than or "
+                        "equal to 0 and be less than the number of parameters."
+                    )
         if slater.get_seniority(sd, nspatial) != 0:
             if components:
                 return 0.0, 0.0, 0.0
@@ -166,6 +190,8 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         Raises
         ------
+        TypeError
+            If Slater determinant is not an integer.
         NotImplementedError
             If `deriv` is not `None`.
 
@@ -180,9 +206,8 @@ class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
 
         nspatial = self.nspatial
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
 
         # if the Slater determinants are not seniority zero
         if not slater.get_seniority(sd1, nspatial) == slater.get_seniority(sd2, nspatial) == 0:

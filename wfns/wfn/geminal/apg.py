@@ -1,4 +1,5 @@
 """Antisymmeterized Product of Geminals (APG) Wavefunction."""
+import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
 from wfns.wfn.geminal.base import BaseGeminal
 from wfns.wfn.geminal.cext import get_col_inds
@@ -93,15 +94,8 @@ class APG(BaseGeminal):
 
         Raises
         ------
-        TypeError
-            If `orbpairs` is not an iterable.
-            If an orbital pair is not given as a list or a tuple.
-            If an orbital pair does not contain exactly two elements.
-            If an orbital index is not an integer.
         ValueError
-            If an orbital pair has the same integer.
-            If an orbital pair occurs more than once.
-            If orbital pairs are given.
+            If orbpairs is not None.
 
         Notes
         -----
@@ -110,8 +104,8 @@ class APG(BaseGeminal):
         """
         if orbpairs is not None:
             raise ValueError(
-                "Cannot specify the orbital pairs for the APG wavefunction. All "
-                "possible orbital pairs will be used."
+                "Cannot specify the orbital pairs for the APG wavefunction. All possible orbital "
+                "pairs will be used."
             )
         orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
         self.dict_orbpair_ind = {orbpair: i for i, orbpair in enumerate(orbpairs)}
@@ -122,7 +116,7 @@ class APG(BaseGeminal):
 
         Parameters
         ----------
-        orbpair : 2-tuple of int, np.array(2, P)
+        orbpair : 2-tuple of int
             Indices of the orbital pairs that will be used to construct each geminal.
             Default is all possible orbital pairs.
 
@@ -133,17 +127,27 @@ class APG(BaseGeminal):
 
         Raises
         ------
+        TyperError
+            If orbital pair is not a tuple of two integers.
         ValueError
-            If given orbital pair is not valid.
+            If any of the indices are less than 0 or greater than or equal to the number of spin
+            orbitals.
+            If the two indices are equal.
 
         """
+        if __debug__ and not (
+            isinstance(orbpair, tuple) and
+            len(orbpair) == 2 and
+            all(isinstance(orb, int) or np.issubdtype(orb, np.integer) for orb in orbpair)
+        ):
+            raise TypeError("Orbital pair must be given as a tuple of two integers.")
         i, j = orbpair
         if i > j:
             i, j = j, i
-        # if not 0 <= i < j < self.nspin:
-        #     raise ValueError(
-        #         "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
-        #     )
+        if __debug__ and not all(0 <= i < j < self.nspin for orb in orbpair):
+            raise ValueError(
+                "Given orbital pair, {0}, is not included in the wavefunction.".format(orbpair)
+            )
         # col_ind = (iK - i(i+1)/2) + (j - i)
         return self.nspin * i - i * (i + 1) // 2 + (j - i - 1)
 
@@ -169,17 +173,17 @@ class APG(BaseGeminal):
         Raises
         ------
         ValueError
-            If given orbital pair is not valid.
+            If column index is less than zero or greater than the number of columns.
 
         """
         # pylint: disable=C0103
-        if not 0 <= col_ind < self.nspin * (self.nspin - 1) / 2:
+        if __debug__ and not (0 <= col_ind < self.nspin * (self.nspin - 1) / 2):
             raise ValueError(
-                "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)
+                "Column index, {0}, is less than 0 or greater than or the number of columns."
+                "".format(col_ind)
             )
-        x = (2 * self.nspin - 1 - ((1 - 2 * self.nspin) ** 2 - 8 * col_ind) ** 0.5) / 2
-        i = int(x)
-        j = int(col_ind - (i * self.nspin - i * (i + 1) / 2 - i - 1))
+        i = (2 * self.nspin - 1 - ((1 - 2 * self.nspin) ** 2 - 8 * col_ind) ** 0.5) // 2
+        j = col_ind - (i * self.nspin - i * (i + 1) // 2 - i - 1)
         return (i, j)
 
     def generate_possible_orbpairs(self, occ_indices):

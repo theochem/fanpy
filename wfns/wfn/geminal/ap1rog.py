@@ -179,9 +179,9 @@ class AP1roG(APIG):
         Raises
         ------
         TypeError
-            If given `sd` cannot be turned into a Slater determinant (i.e. not integer or list of
-            integers).
+            If given `sd` is not an integer.
         ValueError
+            If given `sd` does not have the correct number of electrons.
             If given `sd` does not have the correct spin.
             If given `sd` does not have the correct seniority.
 
@@ -196,14 +196,14 @@ class AP1roG(APIG):
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
-        if slater.total_occ(sd) != self.nelec:
-            raise ValueError(
-                "Given Slater determinant does not have the correct number of " "electrons"
-            )
-        if self.spin is not None and slater.get_spin(sd, self.nspatial):
-            raise ValueError("Given Slater determinant does not have the correct spin.")
-        if self.seniority is not None and slater.get_seniority(sd, self.nspatial):
-            raise ValueError("Given Slater determinant does not have the correct seniority.")
+            if slater.total_occ(sd) != self.nelec:
+                raise ValueError(
+                    "Given Slater determinant does not have the correct number of " "electrons"
+                )
+            if self.spin is not None and slater.get_spin(sd, self.nspatial):
+                raise ValueError("Given Slater determinant does not have the correct spin.")
+            if self.seniority is not None and slater.get_seniority(sd, self.nspatial):
+                raise ValueError("Given Slater determinant does not have the correct seniority.")
         self.ref_sd = sd
 
     def assign_ngem(self, ngem=None):
@@ -255,6 +255,7 @@ class AP1roG(APIG):
         ValueError
             If an orbital pair has the same integer.
             If an orbital pair occurs more than once.
+            If orbital pair is not an alpha-beta spin orbital of a spatial orbital.
 
         Notes
         -----
@@ -262,6 +263,13 @@ class AP1roG(APIG):
 
         """
         super().assign_orbpairs(orbpairs=orbpairs)
+        if __debug__ and not (
+            set(self.dict_orbpair_ind.keys()) <=
+            set((i, i + self.nspatial) for i in range(self.nspatial))
+        ):
+            raise ValueError(
+                "Only the alpha-beta spin orbital pair of each spatial orbital is allowed."
+            )
         # removing orbital indices that correspond to the reference Slater determinant
         dict_orbpair_ind = {}
         dict_reforbpair_ind = {}
@@ -353,16 +361,26 @@ class AP1roG(APIG):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+            If deriv is not a one dimensional numpy array of integers.
+
         Notes
         -----
         Pairing scheme is assumed to be the alpha-beta spin orbital pair of each spatial orbital.
-        This code will fail if another pairing scheme is used.
+        This method will fail if another pairing scheme is used.
 
         """
         # pylint: disable=R0911
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if deriv is not None and not (
+                isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
+            ):
+                raise TypeError("deriv must be given as a one dimensional numpy array of integers.")
 
         # cut off beta part (for just the alpha/spatial part)
         spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)

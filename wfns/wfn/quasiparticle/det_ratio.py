@@ -111,10 +111,14 @@ class DeterminantRatio(BaseWavefunction):
         if numerator_mask is None:
             numerator_mask = np.array([True, False])
 
-        if not (isinstance(numerator_mask, np.ndarray) and
-                numerator_mask.dtype == bool and numerator_mask.size > 0):
-            raise TypeError('Mask for the numerator must be given as a boolean numpy array with '
-                            'one or more element.')
+        if __debug__ and not (
+            isinstance(numerator_mask, np.ndarray) and
+            numerator_mask.dtype == bool and numerator_mask.size > 0
+        ):
+            raise TypeError(
+                "Mask for the numerator must be given as a boolean numpy array with one or more "
+                "element."
+            )
 
         self.numerator_mask = numerator_mask
 
@@ -199,11 +203,14 @@ class DeterminantRatio(BaseWavefunction):
             If given index is not greater than or equal to zero and less than number of matrices.
 
         """
-        if not isinstance(index, int):
-            raise TypeError('index must be given as an integer.')
-        if not 0 <= index < self.num_matrices:
-            raise ValueError('index must be greater than or equal to zero and less than the number '
-                             'of matrices.')
+        if __debug__:
+            if not isinstance(index, int):
+                raise TypeError("index must be given as an integer.")
+            if not 0 <= index < self.num_matrices:
+                raise ValueError(
+                    "index must be greater than or equal to zero and less than the number of "
+                    "matrices."
+                )
 
         flat_matrix = self.params[index * self.matrix_size: (index + 1) * self.matrix_size]
         return flat_matrix.reshape(self.matrix_shape)
@@ -391,10 +398,14 @@ class DeterminantRatio(BaseWavefunction):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
-        if __debug__:
-            if not slater.is_sd_compatible(sd):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not slater.is_sd_compatible(sd):
+            raise TypeError("Slater determinant must be given as an integer.")
 
         if slater.total_occ(sd) != self.nelec:
             return 0.0

@@ -140,7 +140,6 @@ class BaseSchrodinger:
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If tmpfile is not a string.
         ValueError
-            If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
@@ -157,6 +156,9 @@ class BaseSchrodinger:
                 raise ValueError(
                     "Wavefunction and Hamiltonian do not have the same number of spin orbitals."
                 )
+            if not isinstance(tmpfile, str):
+                raise TypeError("`tmpfile` must be a string.")
+
         self.wfn = wfn
         self.ham = ham
 
@@ -175,8 +177,6 @@ class BaseSchrodinger:
         ):
             self.indices_component_params[self.ham] = np.arange(self.ham.nparams)
 
-        if not isinstance(tmpfile, str):
-            raise TypeError("`tmpfile` must be a string.")
         self.tmpfile = tmpfile
 
         self.step_print = step_print
@@ -297,6 +297,8 @@ class BaseSchrodinger:
         ------
         TypeError
             If `params` is not a one-dimensional numpy array.
+        ValueError
+            If number of parameters must be equal to the number of active parameters.
 
         """
         indices_objective_params = self.indices_objective_params
@@ -333,10 +335,14 @@ class BaseSchrodinger:
             Derivative of the overlap of the wavefunction with the given Slater determinant if
             `deriv` is True.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
-        if __debug__:
-            if not isinstance(deriv, bool):
-                raise TypeError("`deriv` must be given as a boolean.")
+        if __debug__ and not isinstance(deriv, bool):
+            raise TypeError("`deriv` must be given as a boolean.")
         # pylint: disable=C0103
         if not deriv:
             return self.wfn.get_overlap(sd)
@@ -380,10 +386,14 @@ class BaseSchrodinger:
             Derivative of the integral :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` if
             `deriv` is True.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
-        if __debug__:
-            if not isinstance(deriv, bool):
-                raise TypeError("`deriv` must be given as a boolean.")
+        if __debug__ and not isinstance(deriv, bool):
+            raise TypeError("`deriv` must be given as a boolean.")
         # pylint: disable=C0103
         if not deriv:
             return self.ham.integrate_sd_wfn(sd, self.wfn)
@@ -442,10 +452,14 @@ class BaseSchrodinger:
             Derivative of the integral :math:`\left< \mathbf{m}_i \middle| \hat{H} \middle|
             \mathbf{m}_j \right>` if `deriv` is True.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
-        if __debug__:
-            if not isinstance(deriv, bool):
-                raise TypeError("`deriv` must be given as a boolean.")
+        if __debug__ and not isinstance(deriv, bool):
+            raise TypeError("`deriv` must be given as a boolean.")
         if not deriv:
             return self.ham.integrate_sd_sd(sd1, sd2)
 
@@ -525,12 +539,12 @@ class BaseSchrodinger:
         Raises
         ------
         TypeError
+            If `deriv` is not a boolean.
             If `refwfn` is not a CIWavefunction, int, or list/tuple of int.
 
         """
-        if __debug__:
-            if not isinstance(deriv, bool):
-                raise TypeError("`deriv` must be given as a boolean.")
+        if __debug__ and not isinstance(deriv, bool):
+            raise TypeError("`deriv` must be given as a boolean.")
         get_overlap = self.wrapped_get_overlap
         integrate_sd_wfn = self.wrapped_integrate_sd_wfn
 
@@ -643,30 +657,31 @@ class BaseSchrodinger:
         Raises
         ------
         TypeError
+            If deriv is not a boolean.
             If projection space is not a list/tuple of int.
 
         """
-        if __debug__:
-            if not isinstance(deriv, bool):
-                raise TypeError("`deriv` must be given as a boolean.")
         if pspace_r is None:
             pspace_r = pspace_l
         if pspace_norm is None:
             pspace_norm = pspace_l
 
-        for pspace in [pspace_l, pspace_r, pspace_norm]:
-            if not (
-                slater.is_sd_compatible(pspace)
-                or (
-                    isinstance(pspace, (list, tuple))
-                    and all(slater.is_sd_compatible(sd) for sd in pspace)
-                )
-            ):
-                raise TypeError(
-                    "Projection space must be given as a Slater determinant or a "
-                    "list/tuple of Slater determinants. See `backend.slater` for "
-                    "compatible representations of the Slater determinants."
-                )
+        if __debug__:
+            if not isinstance(deriv, bool):
+                raise TypeError("`deriv` must be given as a boolean.")
+            for pspace in [pspace_l, pspace_r, pspace_norm]:
+                if not (
+                    slater.is_sd_compatible(pspace)
+                    or (
+                        isinstance(pspace, (list, tuple))
+                        and all(slater.is_sd_compatible(sd) for sd in pspace)
+                    )
+                ):
+                    raise TypeError(
+                        "Projection space must be given as a Slater determinant or a "
+                        "list/tuple of Slater determinants. See `backend.slater` for "
+                        "compatible representations of the Slater determinants."
+                    )
 
         if slater.is_sd_compatible(pspace_l):
             pspace_l = [pspace_l]
@@ -765,6 +780,10 @@ class BaseSchrodinger:
             Values of the gradient of the objective with respect to the (active) parameters.
             Evaluated at the given parameters.
 
+        Raises
+        ------
+        NotImplementedError
+
         """
         raise NotImplementedError(
             "Gradient is not implemented. May need to use a derivative-free optimization algorithm"
@@ -785,6 +804,10 @@ class BaseSchrodinger:
             Values of the Jacobian of the objective equations with respect to the (active)
             parameters.
             Evaluated at the given parameters.
+
+        Raises
+        ------
+        NotImplementedError
 
         """
         raise NotImplementedError(

@@ -173,10 +173,11 @@ class BaseWavefunction:
             If number of electrons is not a positive number.
 
         """
-        if not isinstance(nelec, int):
-            raise TypeError("Number of electrons must be an integer")
-        if nelec <= 0:
-            raise ValueError("Number of electrons must be a positive integer")
+        if __debug__:
+            if not isinstance(nelec, int):
+                raise TypeError("Number of electrons must be an integer.")
+            if nelec <= 0:
+                raise ValueError("Number of electrons must be a positive integer.")
         self.nelec = nelec
 
     def assign_nspin(self, nspin):
@@ -193,16 +194,16 @@ class BaseWavefunction:
             If number of spin orbitals is not an integer.
         ValueError
             If number of spin orbitals is not a positive number.
-        NotImplementedError
             If number of spin orbitals is odd.
 
         """
-        if not isinstance(nspin, int):
-            raise TypeError("Number of spin orbitals must be an integer.")
-        if nspin <= 0:
-            raise ValueError("Number of spin orbitals must be a positive integer.")
-        if nspin % 2 == 1:
-            raise NotImplementedError("Odd number of spin orbitals is not supported.")
+        if __debug__:
+            if not isinstance(nspin, int):
+                raise TypeError("Number of spin orbitals must be an integer.")
+            if nspin <= 0:
+                raise ValueError("Number of spin orbitals must be a positive integer.")
+            if nspin % 2 == 1:
+                raise ValueError("Number of spin orbitals must be even.")
         self.nspin = nspin
 
     def assign_memory(self, memory=None):
@@ -230,10 +231,13 @@ class BaseWavefunction:
                 memory = 1e6 * float(memory.rstrip("mb ."))
             elif "gb" in memory.lower():
                 memory = 1e9 * float(memory.rstrip("gb ."))
-            else:
+
+        if __debug__:
+            if isinstance(memory, str):
                 raise ValueError('Memory given as a string should end with either "mb" or "gb".')
-        else:
-            raise TypeError("Memory should be given as a `None`, int, float, or string.")
+            if not isinstance(memory, (int, float, str)):
+                raise TypeError("Memory should be given as a `None`, int, float, or string.")
+
         self.memory = memory
 
     def assign_params(self, params=None, add_noise=False):
@@ -250,7 +254,7 @@ class BaseWavefunction:
         Raises
         ------
         NotImplementedError
-            If default parameters have not been implemented.
+            If `params` is None.
 
         """
         if params is None:
@@ -340,7 +344,7 @@ class BaseWavefunction:
 
         """
         # pylint: disable=C0103
-        raise NotImplementedError
+        raise NotImplementedError("Overlap (for caching) has not been implemented.")
 
     def _olp_deriv(self, sd):
         """Calculate the nontrivial derivative of the overlap with the Slater determinant.
@@ -364,7 +368,7 @@ class BaseWavefunction:
 
         """
         # pylint: disable=C0103
-        raise NotImplementedError
+        raise NotImplementedError("Derivative of overlap (for caching) has not been implemented.")
 
     def clear_cache(self, key=None):
         """Clear the cache.
@@ -374,13 +378,6 @@ class BaseWavefunction:
         key : str
             Key to the cached function in _cache_fns.
             Default clears all cached functions.
-
-        Raises
-        ------
-        KeyError
-            If given key is not present in the _cache_fns.
-        ValueError
-            If cached function does not have decorator functools.lru_cache.
 
         """
         if hasattr(self, "_cache_fns"):
@@ -411,11 +408,6 @@ class BaseWavefunction:
         overlap : {float, np.ndarray}
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
-
-        Raises
-        ------
-        TypeError
-            If given Slater determinant is not compatible with the format used internally.
 
         Notes
         -----

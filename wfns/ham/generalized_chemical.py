@@ -131,7 +131,9 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         if params is None:
             params = np.zeros(num_params)
 
-        if not (isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
+        if __debug__ and not (
+            isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params
+        ):
             raise ValueError(
                 "Parameters for orbital rotation must be a one-dimension numpy array "
                 "with {0}=K*(K-1)/2 elements, where K is the number of "
@@ -221,13 +223,17 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             If `components` is True, then the value of the one electron, coulomb, and exchange
             components are returned.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
         if deriv is not None:
             return self._integrate_sd_sd_deriv(sd1, sd2, deriv, components=components)
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         shared_indices = np.array(slater.shared_orbs(sd1, sd2))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
         # if two Slater determinants do not have the same number of electrons
@@ -382,10 +388,6 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             Indices of row and column of the antihermitian matrix that corresponds to the given
             parameter index.
 
-        Raises
-        ------
-        ValueError
-
         """
         # pylint: disable=C0103
         # ind = i
@@ -429,8 +431,10 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         Raises
         ------
+        TypeError
+            If Slater determinant is not an integer.
         ValueError
-            If the given `deriv` is not an integer greater than or equal to 0 and less than the
+            If the given `deriv` contains an integer greater than or equal to 0 and less than the
             number of parameters.
 
         Notes
@@ -440,9 +444,8 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103,R0912,R0915
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         # NOTE: shared_indices contains spatial orbital indices
         shared_indices = np.array(slater.shared_orbs(sd1, sd2))
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
@@ -462,7 +465,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         # check deriv
-        if not (
+        if __debug__ and not (
             isinstance(deriv, np.ndarray) and np.all(deriv >= 0) and np.all(deriv < self.nparams)
         ):
             raise ValueError(
@@ -1514,8 +1517,10 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         Raises
         ------
         TypeError
+            If Slater determinant is not an integer.
             If ham_deriv is not a one-dimensional numpy array of integers.
         ValueError
+            If both ham_deriv and wfn_deriv is not None.
             If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
         Notes

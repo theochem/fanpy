@@ -38,9 +38,9 @@ def test_gem_assign_nelec():
         test.assign_nelec(0)
     with pytest.raises(ValueError):
         test.assign_nelec(-2)
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         test.assign_nelec(1)
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         test.assign_nelec(3)
 
 

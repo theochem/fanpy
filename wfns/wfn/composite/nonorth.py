@@ -172,11 +172,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             'restricted' if only one transformation matrix is given and the number of rows
             corresponds to the number of spin orbitals.
 
-        Raises
-        ------
-        NotImplementedError
-            If unsupported transformation matrices are given.
-
         """
         # pylint: disable=R1705
         if len(self.params) == 1 and self.params[0].shape[0] == self.nspatial:
@@ -189,8 +184,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             return "unrestricted"
         elif len(self.params) == 1 and self.params[0].shape[0] == self.nspin:
             return "generalized"
-        else:
-            raise NotImplementedError("Unsupported orbital type.")
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the orbital transformation matrix.
@@ -564,6 +557,21 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         overlap : {float, np.ndarray}
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not an integer.
+            If `deriv` is not a 2-tuple where the first element is a BaseWavefunction instance and
+            the second element is a one-dimensional numpy array of integers.
+        ValueError
+            If first element of `deriv` is not the composite wavefunction or the underlying
+            waefunction.
+            If the provided indices is less than zero or greater than or equal to the number of the
+            corresponding parameters.
+        NotImplementedError
+            If the overlap is derivatized with respect to the parameters of the underlying
+            wavefunction.
 
         """
         if deriv is None:

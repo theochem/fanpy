@@ -149,7 +149,6 @@ class OneSidedEnergy(BaseSchrodinger):
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If tmpfile is not a string.
         ValueError
-            If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
@@ -221,40 +220,42 @@ class OneSidedEnergy(BaseSchrodinger):
         if slater.is_sd_compatible(refwfn):
             refwfn = [refwfn]
 
-        if isinstance(refwfn, (list, tuple)):
-            for sd in refwfn:  # pylint: disable=C0103
-                if slater.is_sd_compatible(sd):
-                    occs = slater.occ_indices(sd)
-                    if len(occs) != self.wfn.nelec:
-                        raise ValueError(
-                            "Given Slater determinant does not have the same number of"
-                            " electrons as the given wavefunction."
+        if __debug__:
+            if isinstance(refwfn, (list, tuple)):
+                for sd in refwfn:  # pylint: disable=C0103
+                    if slater.is_sd_compatible(sd):
+                        occs = slater.occ_indices(sd)
+                        if len(occs) != self.wfn.nelec:
+                            raise ValueError(
+                                "Given Slater determinant does not have the same number of"
+                                " electrons as the given wavefunction."
+                            )
+                        if any(i >= self.wfn.nspin for i in occs):
+                            raise ValueError(
+                                "Given Slater determinant does not have the same number of"
+                                " spin orbitals as the given wavefunction."
+                            )
+                    else:
+                        raise TypeError(
+                            "Projection space (for the reference wavefunction) must only "
+                            "contain Slater determinants."
                         )
-                    if any(i >= self.wfn.nspin for i in occs):
-                        raise ValueError(
-                            "Given Slater determinant does not have the same number of"
-                            " spin orbitals as the given wavefunction."
-                        )
-                else:
-                    raise TypeError(
-                        "Projection space (for the reference wavefunction) must only "
-                        "contain Slater determinants."
+                refwfn = tuple(refwfn)
+            elif isinstance(refwfn, CIWavefunction):
+                if refwfn.nelec != self.wfn.nelec:
+                    raise ValueError(
+                        "Given reference wavefunction does not have the same number of "
+                        "electrons as the given wavefunction."
                     )
-            self.refwfn = tuple(refwfn)
-        elif isinstance(refwfn, CIWavefunction):
-            if refwfn.nelec != self.wfn.nelec:
-                raise ValueError(
-                    "Given reference wavefunction does not have the same number of "
-                    "electrons as the given wavefunction."
-                )
-            if refwfn.nspin != self.wfn.nspin:
-                raise ValueError(
-                    "Given reference wavefunction does not have the same number of "
-                    "spin orbitals as the given wavefunction."
-                )
-            self.refwfn = refwfn
-        else:
-            raise TypeError("Projection space must be given as a list or a tuple.")
+                if refwfn.nspin != self.wfn.nspin:
+                    raise ValueError(
+                        "Given reference wavefunction does not have the same number of "
+                        "spin orbitals as the given wavefunction."
+                    )
+            else:
+                raise TypeError("Projection space must be given as a list or a tuple.")
+
+        self.refwfn = refwfn
 
     def objective(self, params):
         """Return the energy integrated against the reference wavefunction.

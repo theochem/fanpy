@@ -151,17 +151,18 @@ class BaseQuasiparticle(BaseWavefunction):
         TypeError
             If the number of quasiparticles is not an integer.
         ValueError
-            If the number of quasiparticle is not greater than zero.
+            If the number of quasiparticles is not greater than zero.
+        NotImplementedError
+            If the number of quasiparticles is not given.
 
         """
-        if nquasiparticle is None:
-            raise NotImplementedError('Number of quasiparticles should depend on the types of '
-                                      'partitions available.')
-
-        if not isinstance(nquasiparticle, int):
-            raise TypeError('Number of quasiparticles must be given as an integer.')
-        if nquasiparticle <= 0:
-            raise ValueError('Number of quasiparticles must be greater than zero.')
+        if __debug__:
+            if nquasiparticle is None:
+                raise NotImplementedError("There is no default for the number quasiparticles.")
+            if not isinstance(nquasiparticle, int):
+                raise TypeError("Number of quasiparticles must be given as an integer.")
+            if nquasiparticle <= 0:
+                raise ValueError("Number of quasiparticles must be greater than zero.")
         self.nquasiparticle = nquasiparticle
 
     def assign_orbsubsets(self, orbsubsets=None):
@@ -182,33 +183,35 @@ class BaseQuasiparticle(BaseWavefunction):
         ValueError
             If an orbital subset has the same integer more than once.
             If an orbital subset occurs more than once.
-
-        Notes
-        -----
-        Must have `nspin` defined for the default option.
+        NotImplementedError
+            If the orbital subsets is not given.
 
         """
-        if orbsubsets is None:
-            raise NotImplementedError('Default value has not been set up yet.')
-
-        if not hasattr(orbsubsets, '__iter__'):
-            raise TypeError('`orbsubsets` must iterable.')
+        if __debug__:
+            if orbsubsets is None:
+                raise NotImplementedError(
+                    "Default value for the orbital subsets is not set up yet."
+                )
+            if not hasattr(orbsubsets, "__iter__"):
+                raise TypeError("`orbsubsets` must iterable.")
 
         dict_orbsubset_ind = {}
         orbsubset_sizes = []
         for i, orbsubset in enumerate(orbsubsets):
-            if not isinstance(orbsubset, (list, tuple)):
-                raise TypeError('Each orbital subset must be a list or a tuple')
-            if not all(isinstance(i, int) for i in orbsubset):
-                raise TypeError('Each orbital must be given as an integer')
-            if len(orbsubset) != len(set(orbsubset)):
-                raise ValueError('Orbital subset cannot have the same orbital occuring more than '
-                                 'once')
+            if __debug__:
+                if not isinstance(orbsubset, (list, tuple)):
+                    raise TypeError("Each orbital subset must be a list or a tuple")
+                if not all(isinstance(i, int) for i in orbsubset):
+                    raise TypeError("Each orbital must be given as an integer")
+                if len(orbsubset) != len(set(orbsubset)):
+                    raise ValueError(
+                        "Orbital subset cannot have the same orbital occuring more than once"
+                    )
 
             orbsubset = tuple(sorted(orbsubset))
-            if orbsubset in dict_orbsubset_ind:
-                raise ValueError('The given orbital subset have multiple entries of {0}'
-                                 ''.format(orbsubset))
+            if __debug__ and orbsubset in dict_orbsubset_ind:
+                raise ValueError("The given orbital subset have multiple entries of {0}"
+                                 "".format(orbsubset))
             dict_orbsubset_ind[orbsubset] = i
 
             if len(orbsubset) not in orbsubset_sizes:
@@ -233,6 +236,7 @@ class BaseQuasiparticle(BaseWavefunction):
         ValueError
             If given BaseQuasiparticle instance does not have the same number of electrons.
             If given BaseQuasiparticle instance does not have the same number of spin orbitals.
+            If given BaseQuasiparticle instance does not have the same number of quasiparticles.
 
         """
         if params is None:
@@ -271,9 +275,11 @@ class BaseQuasiparticle(BaseWavefunction):
                     params[:other.nquasiparticle,
                            self.get_col_ind(orbsubset)] = other.params[:, ind]
                 except ValueError:
-                    print('The orbital subset of the given wavefunction, {0}, is not possible in '
-                          'the current wavefunction. Parameters corresponding to this orbital '
-                          'subset will be ignored.')
+                    print(
+                        "The orbital subset of the given wavefunction, {0}, is not possible in "
+                        "the current wavefunction. Parameters corresponding to this orbital "
+                        "subset will be ignored."
+                    )
 
         params = params.reshape(self.nquasiparticle, self.norbsubsets)
 
@@ -304,8 +310,9 @@ class BaseQuasiparticle(BaseWavefunction):
         try:
             return self.dict_orbsubset_ind[orbsubset]
         except (KeyError, TypeError):
-            raise ValueError('Given orbital subset, {0}, is not included in the '
-                             'wavefunction.'.format(orbsubset))
+            raise ValueError(
+                "Given orbital subset, {0}, is not included in the wavefunction.".format(orbsubset)
+            )
 
     # FIXME: necessary?
     def get_orbsubset(self, col_ind):
@@ -330,8 +337,9 @@ class BaseQuasiparticle(BaseWavefunction):
         try:
             return self.dict_ind_orbsubset[col_ind]
         except (KeyError, TypeError):
-            raise ValueError('Given column index, {0}, is not used in the '
-                             'wavefunction'.format(col_ind))
+            raise ValueError(
+                "Given column index, {0}, is not used in the wavefunction".format(col_ind)
+            )
 
     def compute_permsum(self, nboson, col_inds, row_inds=None, deriv=None):
         """Compute the permutational sum of the given matrix.

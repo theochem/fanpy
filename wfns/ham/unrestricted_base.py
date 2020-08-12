@@ -96,50 +96,52 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             If one- and two-electron integrals do not have the same number of orbitals.
 
         """
-        if not (
-            isinstance(one_int, (list, tuple))
-            and len(one_int) == 2
-            and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in one_int)
-        ):
-            raise TypeError(
-                "One-electron integrals must be given as a list/tuple of two numpy "
-                "arrays (with dtype float/complex)."
-            )
-        if not (
-            isinstance(two_int, (list, tuple))
-            and len(two_int) == 3
-            and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in two_int)
-        ):
-            raise TypeError(
-                "Two-electron integrals must be given as a list/tuple of three numpy "
-                "arrays (with dtype float/complex)."
-            )
-        if not (
-            one_int[0].dtype == one_int[1].dtype
-            and one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype
-        ):
-            raise TypeError(
-                "Each block of one- and two-electron integrals must have the same data" " type."
-            )
-        if not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
-            raise ValueError(
-                "Each block of one-electron integrals be a (two-dimensional) square " "matrix."
-            )
-        if not all(
-            i.ndim == 4 and i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3] for i in two_int
-        ):
-            raise ValueError(
-                "Each block of two-electron integrals must have four-dimensional "
-                "tensor with equal number rows in each axis."
-            )
-        if one_int[0].shape != one_int[1].shape:
-            raise ValueError("Each block of one-electron integrals must have the same shape.")
-        if not two_int[0].shape == two_int[1].shape == two_int[2].shape:
-            raise ValueError("Each block of two-electron integrals must have the same shape.")
-        if one_int[0].shape[0] != two_int[0].shape[0]:
-            raise ValueError(
-                "One- and two-electron integrals must have the same number of " "orbitals."
-            )
+        if __debug__:
+            if not (
+                isinstance(one_int, (list, tuple))
+                and len(one_int) == 2
+                and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in one_int)
+            ):
+                raise TypeError(
+                    "One-electron integrals must be given as a list/tuple of two numpy "
+                    "arrays (with dtype float/complex)."
+                )
+            if not (
+                isinstance(two_int, (list, tuple))
+                and len(two_int) == 3
+                and all(isinstance(i, np.ndarray) and i.dtype in [float, complex] for i in two_int)
+            ):
+                raise TypeError(
+                    "Two-electron integrals must be given as a list/tuple of three numpy "
+                    "arrays (with dtype float/complex)."
+                )
+            if not (
+                one_int[0].dtype == one_int[1].dtype
+                and one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype
+            ):
+                raise TypeError(
+                    "Each block of one- and two-electron integrals must have the same data" " type."
+                )
+            if not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
+                raise ValueError(
+                    "Each block of one-electron integrals be a (two-dimensional) square " "matrix."
+                )
+            if not all(
+                i.ndim == 4 and
+                i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3] for i in two_int
+            ):
+                raise ValueError(
+                    "Each block of two-electron integrals must have four-dimensional "
+                    "tensor with equal number rows in each axis."
+                )
+            if one_int[0].shape != one_int[1].shape:
+                raise ValueError("Each block of one-electron integrals must have the same shape.")
+            if not two_int[0].shape == two_int[1].shape == two_int[2].shape:
+                raise ValueError("Each block of two-electron integrals must have the same shape.")
+            if one_int[0].shape[0] != two_int[0].shape[0]:
+                raise ValueError(
+                    "One- and two-electron integrals must have the same number of " "orbitals."
+                )
 
         self.one_int = tuple(one_int)
         self.two_int = tuple(two_int)
@@ -168,26 +170,27 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         # pylint: disable=C0103
         num_orbs = self.one_int[0].shape[0]
 
-        if not (
-            isinstance(jacobi_indices, (tuple, list))
-            and len(jacobi_indices) == 2
-            and isinstance(jacobi_indices[0], int)
-            and isinstance(jacobi_indices[1], int)
-        ):
-            raise TypeError("Indices must be given a tuple or list of two integers.")
-        if jacobi_indices[0] == jacobi_indices[1]:
-            raise ValueError("Indices must be different.")
-        if not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
-            raise ValueError(
-                "Indices must be greater than or equal to 0 and less than the number " "of rows."
-            )
-        if jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
-            raise ValueError("Indices must select from orbitals of same spin.")
-        if not (
-            isinstance(theta, float)
-            or (isinstance(theta, np.ndarray) and theta.dtype == float and theta.size == 1)
-        ):
-            raise TypeError("Angle `theta` must be a float or numpy array of one float.")
+        if __debug__:
+            if not (
+                isinstance(jacobi_indices, (tuple, list))
+                and len(jacobi_indices) == 2
+                and isinstance(jacobi_indices[0], int)
+                and isinstance(jacobi_indices[1], int)
+            ):
+                raise TypeError("Indices must be given a tuple or list of two integers.")
+            if jacobi_indices[0] == jacobi_indices[1]:
+                raise ValueError("Indices must be different.")
+            if not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
+                raise ValueError(
+                    "Indices must be greater than or equal to 0 and less than the number " "of rows."
+                )
+            if jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
+                raise ValueError("Indices must select from orbitals of same spin.")
+            if not (
+                isinstance(theta, float)
+                or (isinstance(theta, np.ndarray) and theta.dtype == float and theta.size == 1)
+            ):
+                raise TypeError("Angle `theta` must be a float or numpy array of one float.")
 
         p, q = jacobi_indices
         if p > q:
@@ -290,33 +293,35 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
         Raises
         ------
         TypeError
-            If matrix is not a numpy array.
+            If matrix is not a two-diensional numpy array or a 2-list/tuple of two-dimensional numpy
+            arrays.
         ValueError
             If shape of matrix does not match up with the shape of the integrals.
 
         """
         if isinstance(matrix, np.ndarray):
             matrix = (matrix, matrix)
-        elif not (
-            isinstance(matrix, (list, tuple))
-            and len(matrix) == 2
-            and isinstance(matrix[0], np.ndarray)
-            and isinstance(matrix[1], np.ndarray)
-        ):
-            raise TypeError(
-                "Transformation matrix must be given as a numpy array or as list/tuple "
-                "of two numpy arrays."
-            )
 
-        if not (matrix[0].ndim == 2 and matrix[1].ndim == 2):
-            raise ValueError("Transformation matrices must be two-dimensional.")
-        if not (
-            matrix[0].shape[0] == self.one_int[0].shape[0]
-            and matrix[1].shape[0] == self.one_int[1].shape[0]
-        ):
-            raise ValueError(
-                "Shape of the transformation matrix must match with the shape of the " "integrals."
-            )
+        if __debug__:
+            if not (
+                isinstance(matrix, (list, tuple))
+                and len(matrix) == 2
+                and isinstance(matrix[0], np.ndarray)
+                and isinstance(matrix[1], np.ndarray)
+                and matrix[0].ndim == 2
+                and matrix[1].ndim == 2
+            ):
+                raise TypeError(
+                    "Transformation matrix must be given as a numpy array or as list/tuple "
+                    "of two two-dimensional numpy arrays."
+                )
+            if not (
+                matrix[0].shape[0] == self.one_int[0].shape[0]
+                and matrix[1].shape[0] == self.one_int[1].shape[0]
+            ):
+                raise ValueError(
+                    "Shape of the transformation matrix must match with the shape of the integrals."
+                )
         # NOTE: don't need to check that matrix matches up with two_int b/c one_int and two_int have
         #       the same number of rows/columns
 

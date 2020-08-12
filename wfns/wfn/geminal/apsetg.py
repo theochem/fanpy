@@ -93,25 +93,18 @@ class BasicAPsetG(BaseGeminal):
 
         Raises
         ------
-        TypeError
-            If `orbpairs` is not an iterable.
-            If an orbital pair is not given as a list or a tuple.
-            If an orbital pair does not contain exactly two elements.
-            If an orbital index is not an integer.
         ValueError
-            If an orbital pair has the same integer.
-            If an orbital pair occurs more than once.
-            If orbital pairs are given.
+            If orbpairs is not None.
 
         Notes
         -----
         Must have `nspin` defined for the default option.
 
         """
-        if orbpairs is not None:
+        if __debug__ and orbpairs is not None:
             raise ValueError(
-                "Cannot specify the orbital pairs for the APsetG wavefunction. Only "
-                "the default configuration will be used."
+                "Cannot specify the orbital pairs for the APsetG wavefunction. Only the default "
+                "configuration will be used."
             )
         orbpairs = [(i, j) for i in range(self.nspatial) for j in range(self.nspatial, self.nspin)]
         self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
@@ -139,9 +132,9 @@ class BasicAPsetG(BaseGeminal):
         """
         i, j = orbpair
         # ASSUMES: specific structure for alpha and beta orbitals (first alpha then beta)
-        if not 0 <= i < self.nspatial <= j < self.nspin:
+        if __debug__ and not 0 <= i < self.nspatial <= j < self.nspin:
             raise ValueError(
-                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+                "Given orbital pair, {0}, is not included in the wavefunction.".format(orbpair)
             )
         return int(self.nspatial * i + j - self.nspatial)
 
@@ -165,12 +158,12 @@ class BasicAPsetG(BaseGeminal):
             If given orbital pair is not valid.
 
         """
-        if not 0 <= col_ind < self.nspatial ** 2:
+        if __debug__ and not (0 <= col_ind < self.nspatial ** 2):
             raise ValueError(
-                "Given column index, {0}, is not used in the " "wavefunction".format(col_ind)
+                "Given column index, {0}, is not used in the wavefunction".format(col_ind)
             )
-        i = int(col_ind // self.nspatial)
-        j = int(col_ind - i * self.nspatial + self.nspatial)
+        i = col_ind // self.nspatial
+        j = col_ind - i * self.nspatial + self.nspatial
         return (i, j)
 
     def generate_possible_orbpairs(self, occ_indices):

@@ -122,6 +122,11 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
             If `components` is True, then the value of the one electron, coulomb, and exchange
             components are returned.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
         # pylint: disable=C0103,R0912,R0915
         if deriv is not None:
@@ -129,9 +134,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         nspatial = self.nspatial
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         shared_alpha_sd, shared_beta_sd = slater.split_spin(slater.shared_sd(sd1, sd2), nspatial)
         shared_alpha = np.array(slater.occ_indices(shared_alpha_sd))
         shared_beta = np.array(slater.occ_indices(shared_beta_sd))
@@ -252,6 +256,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
 
         Raises
         ------
+        TypeError
+            If Slater determinant is not an integer.
         ValueError
             If the given `deriv` is not an integer greater than or equal to 0 and less than the
             number of parameters.
@@ -265,9 +271,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         # pylint: disable=C0103
         nspatial = self.nspatial
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         # NOTE: following are spatial orbital indices
         shared_alpha, shared_beta = map(
             lambda shared_sd: np.array(slater.occ_indices(shared_sd)),
@@ -291,7 +296,7 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         # check deriv
-        if not (
+        if __debug__ and not (
             isinstance(deriv, np.ndarray) and np.all(deriv >= 0) and np.all(deriv < self.nparams)
         ):
             raise ValueError(
@@ -3184,8 +3189,10 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
         Raises
         ------
         TypeError
+            If Slater determinant is not an integer.
             If ham_deriv is not a one-dimensional numpy array of integers.
         ValueError
+            If both ham_deriv and wfn_deriv is not None.
             If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
         Notes
@@ -3201,8 +3208,8 @@ class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
                 raise TypeError("Slater determinant must be given as an integer.")
             if wfn_deriv is not None and ham_deriv is not None:
                 raise ValueError(
-                    "Integral can be derivatized with respect to at most one out of the "
-                    " wavefunction and Hamiltonian parameters."
+                    "Integral can be derivatized with respect to the wavefunction or Hamiltonian "
+                    "parameters, but not both."
                 )
             if ham_deriv is not None:
                 if not (

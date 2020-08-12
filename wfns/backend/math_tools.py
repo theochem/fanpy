@@ -68,11 +68,11 @@ def adjugate(matrix):
         If matrix is not two dimensional.
 
     """
-    if matrix.size == 0:
+    if __debug__ and matrix.size == 0:
         raise ValueError("Given matrix has nothing inside.")
 
     det = np.linalg.det(matrix)
-    if abs(det) <= 1e-12:
+    if __debug__ and abs(det) <= 1e-12:
         raise np.linalg.LinAlgError("Matrix is singular")
     return det * np.linalg.inv(matrix)
 
@@ -106,8 +106,8 @@ def permanent_combinatoric(matrix):
 
     """
     nrow, ncol = matrix.shape
-    if nrow == 0 or ncol == 0:
-        raise ValueError("Given matrix has no numbers")
+    if __debug__ and (nrow == 0 or ncol == 0):
+        raise ValueError("Given matrix has no numbers.")
 
     # Ensure that the number of rows is less than or equal to the number of columns
     if nrow > ncol:
@@ -169,8 +169,8 @@ def permanent_ryser(matrix):
     # pylint: disable=R0912
     # on rectangular matrices A(m, n) where m <= n.
     nrow, ncol = matrix.shape
-    if nrow == 0 or ncol == 0:
-        raise ValueError("Given matrix has no numbers")
+    if __debug__ and (nrow == 0 or ncol == 0):
+        raise ValueError("Given matrix has no numbers.")
 
     factor = 1.0
     # if rectangular
@@ -268,10 +268,11 @@ def permanent_borchardt(lambdas, epsilons, zetas, etas=None):
         If the number of etas and lambdas (number of rows) are not equal.
 
     """
-    if zetas.size != epsilons.size:
-        raise ValueError("The the number of zetas and epsilons must be equal")
-    if etas is not None and etas.size != lambdas.size:
-        raise ValueError("The number of etas and lambdas must be equal")
+    if __debug__:
+        if zetas.size != epsilons.size:
+            raise ValueError("The the number of zetas and epsilons must be equal.")
+        if etas is not None and etas.size != lambdas.size:
+            raise ValueError("The number of etas and lambdas must be equal.")
 
     num_row = lambdas.size
     num_col = epsilons.size
@@ -326,11 +327,12 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
     TypeError
         If the `antiherm_elements` is not a one-dimensional numpy array of integers, floats, or
         complex numbers.
+    ValueError
         If the number of elements in `antihermitian` does not match the number of elements in the
         upper triangular component of a square matrix.
 
     """
-    if not (
+    if __debug__ and not (
         isinstance(antiherm_elements, np.ndarray)
         and antiherm_elements.dtype in [int, float, complex]
         and antiherm_elements.ndim == 1
@@ -341,7 +343,7 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
         )
 
     dim = (1 + np.sqrt(1 + 8 * antiherm_elements.size)) / 2
-    if not dim.is_integer():
+    if __debug__ and not dim.is_integer():
         raise ValueError(
             "Number of elements is not compatible with the upper triangular part of "
             "any square matrix."

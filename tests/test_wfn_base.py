@@ -40,7 +40,7 @@ def test_nspin():
         test.assign_nspin(0)
     with pytest.raises(ValueError):
         test.assign_nspin(-2)
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         test.assign_nspin(3)
     # int
     test.assign_nspin(2)

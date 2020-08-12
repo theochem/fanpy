@@ -304,16 +304,21 @@ class SystemEquations(BaseSchrodinger):
                 spin=self.wfn.spin,
                 seniority=self.wfn.seniority,
             )
-        elif isinstance(pspace, (list, tuple)) and all(
-            slater.is_sd_compatible(state) or isinstance(state, CIWavefunction) for state in pspace
-        ):
-            pspace = tuple(pspace)
-        else:
-            raise TypeError(
-                "Projected space must be given as a list/tuple of Slater determinants. "
-                "See `backend.slater` for compatible Slater determinant formats."
+
+        if __debug__ and not (
+            isinstance(pspace, (list, tuple)) and
+            all(
+                slater.is_sd_compatible(state) or
+                isinstance(state, CIWavefunction) for state in pspace
             )
-        self.pspace = pspace
+        ):
+            raise TypeError(
+                "Projection space must be given as a list/tuple of Slater determinants or "
+                "`CIWavefunction`. See `backend.slater` for compatible Slater determinant "
+                "formats."
+            )
+
+        self.pspace = tuple(pspace)
 
     def assign_refwfn(self, refwfn=None):
         """Assign the reference wavefunction.
@@ -326,6 +331,11 @@ class SystemEquations(BaseSchrodinger):
             wavefunction truncated by the provided Slater determinants.
             Default is ground-state Slater determinant.
 
+        Raises
+        ------
+        TypeError
+            If reference wavefunction is not a CIWavefunction, int, or list/tuple of int.
+
         """
         if refwfn is None:
             refwfn = (slater.ground(self.wfn.nelec, self.wfn.nspin),)
@@ -334,16 +344,18 @@ class SystemEquations(BaseSchrodinger):
         elif isinstance(refwfn, list):
             refwfn = tuple(refwfn)
 
-        if not isinstance(refwfn, (list, tuple, CIWavefunction)):
-            raise TypeError(
-                "Reference state must be given as a Slater determinant, a list/tuple of"
-                " Slater determinants, or a CIWavefunction. See `backend.slater` for "
-                "compatible representations of the Slater determinants."
+        if __debug__ and not (
+            isinstance(refwfn, (CIWavefunction)) or
+            (
+                isinstance(refwfn, (list, tuple)) and
+                all(slater.is_sd_compatible(sd) for sd in refwfn)
             )
-        if isinstance(refwfn, (list, tuple)) and not all(
-            slater.is_sd_compatible(sd) for sd in refwfn
         ):
-            raise TypeError("Slater determinant must be given as an integer.")
+            raise TypeError(
+                "Reference wavefunction must be given as a Slater determinant, a list/tuple of"
+                " Slater determinants, or a CIWavefunction. See `backend.slater` for compatible"
+                " representations of the Slater determinants."
+            )
 
         self.refwfn = refwfn
 
@@ -359,9 +371,8 @@ class SystemEquations(BaseSchrodinger):
         Raises
         ------
         TypeError
-            If constraints are not given as a BaseSchrodinger instance or list/tuple of BaseSchrodinger
-            instances.
-            If a constraint is not a BaseSchrodinger or its subclass.
+            If constraints are not given as a BaseSchrodinger instance or list/tuple of
+            BaseSchrodinger instances.
         ValueError
             If a constraint does not have the same param_selection as the objective class.
 
@@ -374,28 +385,24 @@ class SystemEquations(BaseSchrodinger):
             ]
         elif isinstance(constraints, BaseSchrodinger):
             constraints = [constraints]
-        elif not isinstance(constraints, (list, tuple)):
-            raise TypeError(
-                "Constraints must be given as a BaseSchrodinger instance or list/tuple "
-                "of BaseSchrodinger instances."
-            )
 
-        for constraint in constraints:
-            if not isinstance(constraint, BaseSchrodinger):
-                raise TypeError(
-                    "Each constraint must be an instance of BaseSchrodinger or its " "child."
-                )
-            if not constraint.indices_component_params == self.indices_component_params:
-                raise ValueError(
-                    "The given constraint must have the same parameter selection (in "
-                    "the form of ParamMask) as the objective."
-                )
-            if (
-                self.energy_type in ["fixed", "variable"] and
-                isinstance(constraint, EnergyConstraint)
+        if __debug__:
+            if not (
+                    isinstance(constraints, (list, tuple)) and
+                    all(isinstance(constraint, BaseSchrodinger) for constraint in constraints)
             ):
-                constraint.indices_component_params = self.indices_component_params
-                constraint.energy_variable = self.energy
+                raise TypeError(
+                    "Constraints must be given as a BaseSchrodinger instance or list/tuple of "
+                    "BaseSchrodinger instances."
+                )
+            if not all(
+                constraint.indices_component_params == self.indices_component_params
+                for constraint in constraints
+            ):
+                raise ValueError(
+                    "Constraint must have the same active parameters as the objective."
+                )
+
         self.constraints = constraints
 
     def assign_eqn_weights(self, eqn_weights=None):
@@ -410,9 +417,8 @@ class SystemEquations(BaseSchrodinger):
 
         Raises
         ------
-        Type Error
+        TypeError
             If eqn_weights is not a numpy array.
-            If eqn_weights do not have the same data type as wavefunction and Hamiltonian.
         ValueError
             If eqn_weights do not have the correct shape.
 
@@ -421,13 +427,14 @@ class SystemEquations(BaseSchrodinger):
         if eqn_weights is None:
             eqn_weights = np.ones(self.nproj + num_constraints)
             eqn_weights[self.nproj :] *= self.nproj
-        elif not isinstance(eqn_weights, np.ndarray):
-            raise TypeError("Weights of the equations must be given as a numpy array.")
-        elif eqn_weights.shape != (self.nproj + num_constraints,):
-            raise ValueError(
-                "Weights of the equations must be given as a one-dimensional array of "
-                "shape, {0}.".format((self.nproj + num_constraints,))
-            )
+        if __debug__:
+            if not isinstance(eqn_weights, np.ndarray):
+                raise TypeError("Weights of the equations must be given as a numpy array.")
+            if eqn_weights.shape != (self.nproj + num_constraints,):
+                raise ValueError(
+                    "Weights of the equations must be given as a one-dimensional array of shape, "
+                    "{0}.".format((self.nproj + num_constraints,))
+                )
         self.eqn_weights = eqn_weights
 
     def objective(self, params):

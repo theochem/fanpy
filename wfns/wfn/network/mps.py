@@ -106,20 +106,23 @@ class MatrixProductState(BaseWavefunction):
         ------
         TypeError
             If dimension is not an integer or None.
+        ValueError
+            If dimension is less than or equal to zero.
 
         Note
         ----
-        Needs `nspin` attribute.
+        Needs `nspin` attribute for the default behaviour.
 
         """
         # FIXME: need a better default for dimension
         if dimension is None:
             dimension = self.nspin
 
-        if not isinstance(dimension, int):
-            raise TypeError("Provided dimension must be an integer or None.")
-        if dimension <= 0:
-            raise ValueError("Dimension of the matrices must be given as a nonnegative integer.")
+        if __debug__:
+            if not isinstance(dimension, int):
+                raise TypeError("Provided dimension must be an integer or None.")
+            if dimension <= 0:
+                raise ValueError("Dimension of the matrices must be a nonnegative integer.")
 
         self.dimension = dimension
 
@@ -139,6 +142,11 @@ class MatrixProductState(BaseWavefunction):
             Entry of 1 means that the spatial orbital is singly occupied (alpha).
             Entry of 2 means that the spatial orbital is singly occupied (beta).
             Entry of 3 means that the spatial orbital is doubly occupied.
+
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
 
         Note
         ----
@@ -182,10 +190,14 @@ class MatrixProductState(BaseWavefunction):
         Requires attributes `nspin` and `dimension`.
 
         """
-        if not isinstance(index, (int, np.int64)):
-            raise TypeError("Given index must be an integer.")
-        if not 0 <= index < self.nspatial:
-            raise ValueError("Given index must be greater than or equal to zero or less than K.")
+        if __debug__:
+            if not isinstance(index, (int, np.int64)):
+                raise TypeError("Given index must be an integer.")
+            if not 0 <= index < self.nspatial:
+                raise ValueError(
+                    "Given index must be greater than or equal to zero or less than the number of "
+                    "spatial orbitals."
+                )
 
         if index == 0:  # pylint: disable=R1705
             return (4, 1, self.dimension)
@@ -208,13 +220,6 @@ class MatrixProductState(BaseWavefunction):
             Index of the parameter that indicates the start (inclusive) of the matrix.
         end_index : int
             Index of the parameter that indicates the end (exclusive) of the matrix.
-
-        Raises
-        ------
-        TypeError
-            If index is not an integer
-        ValueError
-            If index is not greater than or equal to 0 and less than number of spatial orbitals.
 
         """
         size_matrix = np.prod(self.get_matrix_shape(index))
@@ -469,12 +474,17 @@ class MatrixProductState(BaseWavefunction):
         Raises
         ------
         TypeError
-            If given Slater determinant is not compatible with the format used internally.
+            If Slater determinant is not an integer.
+            If deriv is not a one dimensional numpy array of integers.
 
         """
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if deriv is not None and not (
+                isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
+            ):
+                raise TypeError("deriv must be given as a one dimensional numpy array of integers.")
 
         # if no derivatization
         if deriv is None:

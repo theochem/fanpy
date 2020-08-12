@@ -139,7 +139,9 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         if params is None:
             params = np.zeros(num_params)
 
-        if not (isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params):
+        if __debug__ and not (
+            isinstance(params, np.ndarray) and params.ndim == 1 and params.size == num_params
+        ):
             raise ValueError(
                 "Parameters for orbital rotation must be a one-dimension numpy array "
                 "with {0}=K*(K-1) elements, where K is the number of "
@@ -228,6 +230,11 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
             If `components` is True, then the value of the one electron, coulomb, and exchange
             components are returned.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         """
         # pylint: disable=C0103,R0912,R0915
         if deriv is not None:
@@ -235,9 +242,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         nspatial = self.nspatial
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         shared_alpha_sd, shared_beta_sd = slater.split_spin(slater.shared_sd(sd1, sd2), nspatial)
         shared_alpha = np.array(slater.occ_indices(shared_alpha_sd))
         shared_beta = np.array(slater.occ_indices(shared_beta_sd))
@@ -518,8 +524,10 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
 
         Raises
         ------
+        TypeError
+            If Slater determinant is not an integer.
         ValueError
-            If the given `deriv` is not an integer greater than or equal to 0 and less than the
+            If the given `deriv` contains an integer greater than or equal to 0 and less than the
             number of parameters.
 
         Notes
@@ -531,9 +539,8 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         # pylint: disable=C0103,R0915,R0912
         nspatial = self.nspatial
 
-        if __debug__:
-            if not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not (slater.is_sd_compatible(sd1) and slater.is_sd_compatible(sd2)):
+            raise TypeError("Slater determinant must be given as an integer.")
         # NOTE: shared_alpha and shared_beta contain spatial orbital indices
         shared_alpha, shared_beta = map(
             lambda shared_sd: np.array(slater.occ_indices(shared_sd)),
@@ -557,7 +564,7 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         sign = slater.sign_excite(sd1, diff_sd1, reversed(diff_sd2))
 
         # check deriv
-        if not (
+        if __debug__ and not (
             isinstance(deriv, np.ndarray) and np.all(deriv >= 0) and np.all(deriv < self.nparams)
         ):
             raise ValueError(
@@ -3293,8 +3300,10 @@ class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
         Raises
         ------
         TypeError
+            If Slater determinant is not an integer.
             If ham_deriv is not a one-dimensional numpy array of integers.
         ValueError
+            If both ham_deriv and wfn_deriv is not None.
             If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
         Notes

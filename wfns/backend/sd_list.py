@@ -86,34 +86,32 @@ def sd_list(nelec, nspin, num_limit=None, exc_orders=None, spin=None, seniority=
         If spin is not an integer or float.
         If seniority is not an integer.
     ValueError
+        If num_limit is not greater than 0.
         If seniority is not compatible with the spin.
 
     """
     # pylint: disable=C0103,R0912
-    if not isinstance(nspin, int):
-        raise TypeError("Number of spin orbitals should be an integer")
-
-    if not isinstance(nelec, int):
-        raise TypeError("Number of electrons should be an integer")
-
-    if num_limit is not None:
-        if not isinstance(num_limit, int):
-            raise TypeError("Number of Slater determinants should be an integer")
-        if num_limit is not None and num_limit <= 0:
-            raise ValueError("Number of Slater determinants must be greater than 0.")
-
     if exc_orders is None:
         exc_orders = range(1, nelec + 1)
-    elif not (hasattr(exc_orders, "__iter__") and all(isinstance(i, int) for i in exc_orders)):
-        raise TypeError("Orders of excitations should be given as a list or tuple of integers")
 
-    if not isinstance(spin, (int, float, type(None))):
-        raise TypeError("Spin should be given as an integer or a floating point")
-
-    if not isinstance(seniority, (int, type(None))):
-        raise TypeError("Seniority should be given as an integer")
-    if None not in [spin, seniority] and seniority < abs(2 * spin):
-        raise ValueError("Cannot have spin, {0}, with seniority, {1}.".format(spin, seniority))
+    if __debug__:
+        if not isinstance(nspin, int):
+            raise TypeError("Number of spin orbitals should be an integer")
+        if not isinstance(nelec, int):
+            raise TypeError("Number of electrons should be an integer")
+        if num_limit is not None:
+            if not isinstance(num_limit, int):
+                raise TypeError("Number of Slater determinants should be an integer")
+            if num_limit is not None and num_limit <= 0:
+                raise ValueError("Number of Slater determinants must be greater than 0.")
+        if not (hasattr(exc_orders, "__iter__") and all(isinstance(i, int) for i in exc_orders)):
+            raise TypeError("Orders of excitations should be given as a list or tuple of integers")
+        if not isinstance(spin, (int, float, type(None))):
+            raise TypeError("Spin should be given as an integer or a floating point")
+        if not isinstance(seniority, (int, type(None))):
+            raise TypeError("Seniority should be given as an integer")
+        if None not in [spin, seniority] and seniority < abs(2 * spin):
+            raise ValueError("Cannot have spin, {0}, with seniority, {1}.".format(spin, seniority))
 
     nspatial = nspin // 2
 

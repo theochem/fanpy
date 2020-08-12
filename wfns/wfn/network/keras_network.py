@@ -190,7 +190,7 @@ class KerasNetwork(BaseWavefunction):
         params = []
         for layer in self.model.layers[:-1]:
             # NOTE: it was ASSUMED that there is only one variable for weights
-            if len(layer.weights[:-1]) > 1:
+            if __debug__ and len(layer.weights[:-1]) > 1:
                 raise ValueError(
                     "Cannot generate initial guess for Keras networks that have layers with more "
                     "than one variable for weights."
@@ -202,7 +202,7 @@ class KerasNetwork(BaseWavefunction):
             slater.occ_indices(sd)
             for sd in sd_list(self.nelec, num_hidden_orbs, exc_orders=[1, 2])
         ]
-        if len(hidden_sds) < num_hidden_orbs:
+        if __debug__ and len(hidden_sds) < num_hidden_orbs:
             raise ValueError(
                 "Cannot generate initial guess for Keras network because the final "
                 "hidden layer does not have enough units for the number of electrons."
@@ -269,14 +269,18 @@ class KerasNetwork(BaseWavefunction):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+
         Notes
         -----
         Overlaps and their derivatives are not cached.
 
         """
-        if __debug__:
-            if not slater.is_sd_compatible(sd):
-                raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__ and not slater.is_sd_compatible(sd):
+            raise TypeError("Slater determinant must be given as an integer.")
         occ_vector = np.zeros(self.nspin)
         occ_vector[np.array(slater.occ_indices(sd))] = 1
         # NOTE: overlaps are not being cached

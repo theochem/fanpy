@@ -187,6 +187,7 @@ class CIWavefunction(BaseWavefunction):
         ----------
         spin : float
             Spin of each Slater determinant.
+            `None` means spin is not specified.
             Default is no spin (all spins possible).
 
         Raises
@@ -194,17 +195,17 @@ class CIWavefunction(BaseWavefunction):
         TypeError
             If the spin is not an integer, float, or None.
         ValueError
-            If the spin is not an integral multiple of `0.5`.
+            If the spin is not an integral multiple of `0.5` greater than zero.
 
         """
-        if spin is None:
-            self._spin = spin
-        elif isinstance(spin, (int, float)):
-            if (2 * spin) % 1 != 0:
-                raise ValueError("Spin should be an integral multiple of 0.5.")
-            self._spin = float(spin)
-        else:
-            raise TypeError("Spin should be provided as an integer, float or `None`.")
+        if __debug__:
+            if not isinstance(spin, (int, float, type(None))):
+                raise TypeError("Spin should be provided as an integer, float or `None`.")
+            if isinstance(spin, (int, float)) and not ((2 * spin) % 1 == 0 and spin >= 0):
+                raise ValueError("Spin should be an integral multiple of 0.5 greater than zero.")
+        if isinstance(spin, (int, float)):
+            spin = float(spin)
+        self._spin = spin
 
     def assign_seniority(self, seniority=None):
         r"""Assign the seniority of the wavefunction.
@@ -215,20 +216,22 @@ class CIWavefunction(BaseWavefunction):
         ----------
         seniority : float
             Seniority of each Slater determinant.
+            `None` means seniority is not specified.
             Default is no seniority (all seniorities possible).
 
         Raises
         ------
         TypeError
-            If the seniority is not an integer, float, or None.
+            If the seniority is not an integer or None.
         ValueError
             If the seniority is a negative integer.
 
         """
-        if not (seniority is None or isinstance(seniority, int)):
-            raise TypeError("Invalid seniority of the wavefunction")
-        if isinstance(seniority, int) and seniority < 0:
-            raise ValueError("Seniority must be a nonnegative integer.")
+        if __debug__:
+            if not (seniority is None or isinstance(seniority, int)):
+                raise TypeError("Seniority must be an integer or None.")
+            if isinstance(seniority, int) and seniority < 0:
+                raise ValueError("Seniority must be greater than or equal to zero.")
         self._seniority = seniority
 
     def assign_sd_vec(self, sd_vec=None):
@@ -243,7 +246,7 @@ class CIWavefunction(BaseWavefunction):
         ------
         TypeError
             If sd_vec is not iterable.
-            If a Slater determinant cannot be turned into the internal form.
+            If a Slater determinant is not an integer.
         ValueError
             If an empty iterator was provided.
             If a Slater determinant does not have the correct number of electrons.
@@ -252,12 +255,12 @@ class CIWavefunction(BaseWavefunction):
 
         Notes
         -----
-        Needs to have `nelec`, `nspin`, `spin`, `seniority`.
+        Must have `nelec`, `nspin`, `spin` and `seniority` defined for default behaviour and type
+        checking.
 
         """
         # pylint: disable=C0103
         # FIXME: terrible memory usage
-        # FIXME: no check for repeated entries
         if sd_vec is None:
             sd_vec = sd_list(
                 self.nelec,
@@ -268,36 +271,38 @@ class CIWavefunction(BaseWavefunction):
                 seniority=self.seniority,
             )
 
-        if not hasattr(sd_vec, "__iter__"):
-            raise TypeError("Slater determinants must be given as an iterable")
-
-        sd_vec, temp = itertools.tee(sd_vec, 2)
-        sd_vec_is_empty = True
-        for sd in temp:
-            sd_vec_is_empty = False
-            if __debug__:
+        if __debug__:
+            # FIXME: no check for repeated entries
+            if not hasattr(sd_vec, "__iter__"):
+                raise TypeError("Slater determinants must be given as an iterable")
+            sd_vec, temp = itertools.tee(sd_vec, 2)
+            sd_vec_is_empty = True
+            for sd in temp:
+                sd_vec_is_empty = False
                 if not slater.is_sd_compatible(sd):
                     raise TypeError("Slater determinant must be given as an integer.")
-            if slater.total_occ(sd) != self.nelec:
-                raise ValueError(
-                    "Slater determinant, {0}, does not have the correct number of "
-                    "electrons, {1}".format(bin(sd), self.nelec)
-                )
-            if isinstance(self.spin, float) and slater.get_spin(sd, self.nspatial) != self.spin:
-                raise ValueError(
-                    "Slater determinant, {0}, does not have the correct spin, {1}"
-                    "".format(bin(sd), self.spin)
-                )
-            if (
-                isinstance(self.seniority, int)
-                and slater.get_seniority(sd, self.nspatial) != self.seniority
-            ):
-                raise ValueError(
-                    "Slater determinant, {0}, does not have the correct seniority, {1}"
-                    "".format(bin(sd), self.seniority)
-                )
-        if sd_vec_is_empty:
-            raise ValueError("No Slater determinants were provided.")
+                if slater.total_occ(sd) != self.nelec:
+                    raise ValueError(
+                        "Slater determinant, {0}, does not have the correct number of "
+                        "electrons, {1}".format(bin(sd), self.nelec)
+                    )
+                if isinstance(self.spin, float) and slater.get_spin(sd, self.nspatial) != self.spin:
+                    raise ValueError(
+                        "Slater determinant, {0}, does not have the correct spin, {1}".format(
+                            bin(sd), self.spin
+                        )
+                    )
+                if (
+                    isinstance(self.seniority, int)
+                    and slater.get_seniority(sd, self.nspatial) != self.seniority
+                ):
+                    raise ValueError(
+                        "Slater determinant, {0}, does not have the correct seniority, {1}".format(
+                            bin(sd), self.seniority
+                        )
+                    )
+            if sd_vec_is_empty:
+                raise ValueError("No Slater determinants were provided.")
 
         self.sd_vec = tuple(sd_vec)
 
@@ -349,6 +354,11 @@ class CIWavefunction(BaseWavefunction):
         overlap : {float, np.ndarray}
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
+
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
 
         """
         if __debug__:

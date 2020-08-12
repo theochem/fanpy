@@ -50,24 +50,30 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         If orbital type is not one of 'restricted', 'unrestricted', 'generalized'.
 
     """
-    if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
-        raise TypeError("Matrices must be given as a list of numpy arrays")
+    if __debug__:
+        if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
+            raise TypeError("Matrices must be given as a list of numpy arrays")
 
-    if any(len(i.shape) != 2 for i in matrices):
-        raise TypeError("All matrices must be two dimensional")
-    if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
-        raise TypeError("All matrices must be square")
+        if any(len(i.shape) != 2 for i in matrices):
+            raise TypeError("All matrices must be two dimensional")
+        if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
+            raise TypeError("All matrices must be square")
 
-    if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
-        raise ValueError(
-            "Density matrix must be given as a list of one numpy array for"
-            " restricted and generalized orbitals"
-        )
-    if orbtype in ["unrestricted"] and len(matrices) != 2:
-        raise ValueError(
-            "Density matrix must be given as a list of two numpy arrays for"
-            " unrestricted orbitals"
-        )
+        if orbtype not in ["restricted", "unrestricted", "generalized"]:
+            raise ValueError(
+                "Orbital type must be one of 'restricted', 'unrestricted', and 'generalized'."
+            )
+
+        if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
+            raise ValueError(
+                "Density matrix must be given as a list of one numpy array for"
+                " restricted and generalized orbitals"
+            )
+        if orbtype in ["unrestricted"] and len(matrices) != 2:
+            raise ValueError(
+                "Density matrix must be given as a list of two numpy arrays for"
+                " unrestricted orbitals"
+            )
 
     if orbtype == "restricted":
         nspatial = matrices[0].shape[0]
@@ -91,8 +97,6 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
     elif orbtype == "generalized":
         matrices[0][spin_i, spin_j] += val
 
-    else:
-        raise ValueError("Unsupported orbital type")
 
 
 # FIXME: too many branches
@@ -138,24 +142,30 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
 
     """
     # pylint: disable=R0912
-    if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
-        raise TypeError("Matrices must be given as a list of numpy arrays")
+    if __debug__:
+        if not (isinstance(matrices, list) and all(isinstance(i, np.ndarray) for i in matrices)):
+            raise TypeError("Matrices must be given as a list of numpy arrays")
 
-    if any(len(i.shape) != 4 for i in matrices):
-        raise TypeError("All matrices must be four dimensional")
-    if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
-        raise TypeError("All matrices should have the same dimension along all of the axes")
+        if any(len(i.shape) != 4 for i in matrices):
+            raise TypeError("All matrices must be four dimensional")
+        if any(j != matrices[0].shape[0] for i in matrices for j in i.shape):
+            raise TypeError("All matrices should have the same dimension along all of the axes")
 
-    if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
-        raise ValueError(
-            "Density matrix must be given as a list of one numpy array for"
-            " restricted and generalized orbitals"
-        )
-    if orbtype in ["unrestricted"] and len(matrices) != 3:
-        raise ValueError(
-            "Density matrix must be given as a list of three numpy arrays for"
-            " unrestricted orbitals"
-        )
+        if orbtype not in ["restricted", "unrestricted", "generalized"]:
+            raise ValueError(
+                "Orbital type must be one of 'restricted', 'unrestricted', and 'generalized'."
+            )
+
+        if orbtype in ["restricted", "generalized"] and len(matrices) != 1:
+            raise ValueError(
+                "Density matrix must be given as a list of one numpy array for"
+                " restricted and generalized orbitals"
+            )
+        if orbtype in ["unrestricted"] and len(matrices) != 3:
+            raise ValueError(
+                "Density matrix must be given as a list of three numpy arrays for"
+                " unrestricted orbitals"
+            )
 
     if orbtype == "restricted":
         nspatial = matrices[0].shape[0]
@@ -203,8 +213,6 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
     elif orbtype == "generalized":
         matrices[0][spin_i, spin_j, spin_k, spin_l] += val
 
-    else:
-        raise ValueError("Unsupported orbital type")
 
 
 # FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
@@ -269,6 +277,11 @@ def density_matrix(
     sorted_x, sorted_sd = zip(*sorted(zip(sd_coeffs, civec), key=lambda x: abs(x[0]), reverse=True))
     num_sds = len(sorted_sd)
 
+    if __debug__ and orbtype not in ["restricted", "unrestricted", "generalized"]:
+        raise ValueError(
+            "Orbital type must be one of 'restricted', 'unrestricted', and 'generalized'."
+        )
+
     # initiate output
     one_densities = []
     two_densities = []
@@ -281,8 +294,6 @@ def density_matrix(
     elif orbtype == "generalized":
         one_densities = [np.zeros((2 * nspatial,) * 2)]
         two_densities = [np.zeros((2 * nspatial,) * 4)]
-    else:
-        raise TypeError("Unsupported orbital type")
 
     for count1, sd1 in enumerate(sorted_sd):
         # truncation condition

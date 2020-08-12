@@ -150,7 +150,7 @@ class APIG(BaseGeminal):
             If an orbital pair has the same integer.
             If an orbital pair occurs more than once.
             If any two orbital pair shares an orbital.
-            If any orbital is not included in any orbital pair.
+            If there is an orbital missing from the orbital pairs.
 
         Notes
         -----
@@ -161,11 +161,12 @@ class APIG(BaseGeminal):
             orbpairs = ((i, i + self.nspatial) for i in range(self.nspatial))
         super().assign_orbpairs(orbpairs)
 
-        all_orbs = [j for i in self.dict_orbpair_ind for j in i]
-        if len(all_orbs) != len(set(all_orbs)):
-            raise ValueError("At least two orbital pairs share an orbital")
-        if len(all_orbs) != self.nspin:
-            raise ValueError("Not all of the orbitals are included in orbital pairs")
+        if __debug__:
+            all_orbs = [j for i in self.dict_orbpair_ind for j in i]
+            if len(all_orbs) != len(set(all_orbs)):
+                raise ValueError("At least two orbital pairs share an orbital")
+            if len(all_orbs) != self.nspin:
+                raise ValueError("Not all of the orbitals are included in orbital pairs")
 
     def generate_possible_orbpairs(self, occ_indices):
         """Yield the possible orbital pairs that can construct the given Slater determinant.
@@ -174,15 +175,29 @@ class APIG(BaseGeminal):
         no two orbital pairs share the orbital). By default, the alpha and beta spin orbitals that
         correspond to the same spatial orbital will be paired up.
 
+        Parameters
+        ----------
+        occ_indices : N-tuple of int
+            Indices of the orbitals from which the Slater determinant is constructed.
+            Must be strictly increasing.
+
+        Yields
+        ------
+        orbpairs : P-tuple of 2-tuple of ints
+            Indices of the creation operators (grouped by orbital pairs) that construct the Slater
+            determinant.
+        sign : int
+            Signature of the transpositions required to shuffle the `orbpairs` back into the
+            original order in `occ_indices`.
+
         Raises
         ------
         ValueError
             If the number of electrons in the Slater determinant does not match up with the number
             of electrons in the wavefunction.
-            If the Slater determinant cannot be constructed using the APIG pairing scheme.
 
         """
-        if len(occ_indices) != self.nelec:
+        if __debug__ and len(occ_indices) != self.nelec:
             raise ValueError(
                 "The number of electrons in the Slater determinant does not match up "
                 "with the number of electrons in the wavefunction."

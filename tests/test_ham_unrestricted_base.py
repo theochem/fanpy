@@ -264,7 +264,7 @@ def test_orb_rotate_matrix():
     with pytest.raises(TypeError):
         ham.orb_rotate_matrix([np.random.rand(4, 4), np.random.rand(4, 4).tolist()])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ham.orb_rotate_matrix(np.random.rand(4, 4, 4))
 
     with pytest.raises(ValueError):

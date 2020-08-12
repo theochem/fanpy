@@ -68,11 +68,13 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
+        wfn : BaseWavefunction
+            Wavefunction that will be modified.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
-        wfn : BaseWavefunction
-            Wavefunction that will be modified.
+        params : np.ndarray
+            Parameters of the wavefunction.
         enable_cache : bool
             Option to cache the results of `_olp` and `_olp_deriv`.
             By default, `_olp` and `_olp_deriv` are cached.
@@ -103,18 +105,19 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
             If the given wavefunction does not have the same memory as the initialized value.
 
         """
-        if not isinstance(wfn, BaseWavefunction):
-            raise TypeError("Given wavefunction must be an instance of BaseWavefunction.")
-        if wfn.nelec != self.nelec:
-            raise ValueError(
-                "Given wavefunction does not have the same number of electrons as the"
-                " the instantiated NonorthWavefunction."
-            )
-        if wfn.memory != self.memory:
-            raise ValueError(
-                "Given wavefunction does not have the same memory as the "
-                "instantiated NonorthWavefunction."
-            )
+        if __debug__:
+            if not isinstance(wfn, BaseWavefunction):
+                raise TypeError("Given wavefunction must be an instance of BaseWavefunction.")
+            if wfn.nelec != self.nelec:
+                raise ValueError(
+                    "Given wavefunction does not have the same number of electrons as the"
+                    " the instantiated NonorthWavefunction."
+                )
+            if wfn.memory != self.memory:
+                raise ValueError(
+                    "Given wavefunction does not have the same memory as the "
+                    "instantiated NonorthWavefunction."
+                )
         self.wfn = wfn
 
     def save_params(self, filename):

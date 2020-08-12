@@ -182,24 +182,26 @@ class LinearCombinationWavefunction(BaseWavefunction):
             If the given wavefunction does not have the same data type as the initialized value.
             If the given wavefunction does not have the same memory as the initialized value.
             If only one wavefunction is given.
+            If a wavefunction is given multiple times.
 
         """
-        if any(not isinstance(wfn, BaseWavefunction) for wfn in wfns):
-            raise TypeError("Each wavefunction must be a instance of `BaseWavefunction`.")
-        if any(wfn.nelec != self.nelec for wfn in wfns):
-            raise ValueError(
-                "Given wavefunction does not have the same number of electrons as the"
-                " the instantiated NonorthWavefunction."
-            )
-        if any(wfn.memory != self.memory for wfn in wfns):
-            raise ValueError(
-                "Given wavefunction does not have the same memory as the "
-                "instantiated NonorthWavefunction."
-            )
-        if len(wfns) == 1:
-            raise ValueError("Only one wavefunction is given.")
-        if len(set(wfns)) != len(wfns):
-            raise ValueError("Same wavefunction was provided multiple times.")
+        if __debug__:
+            if any(not isinstance(wfn, BaseWavefunction) for wfn in wfns):
+                raise TypeError("Each wavefunction must be a instance of `BaseWavefunction`.")
+            if any(wfn.nelec != self.nelec for wfn in wfns):
+                raise ValueError(
+                    "Given wavefunction does not have the same number of electrons as the"
+                    " the instantiated NonorthWavefunction."
+                )
+            if any(wfn.memory != self.memory for wfn in wfns):
+                raise ValueError(
+                    "Given wavefunction does not have the same memory as the "
+                    "instantiated NonorthWavefunction."
+                )
+            if len(wfns) == 1:
+                raise ValueError("Only one wavefunction is given.")
+            if len(set(wfns)) != len(wfns):
+                raise ValueError("Same wavefunction was provided multiple times.")
 
         self.wfns = tuple(wfns)
 
@@ -231,6 +233,18 @@ class LinearCombinationWavefunction(BaseWavefunction):
         overlap : {float, np.ndarray}
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not an integer.
+            If `deriv` is not a 2-tuple where the first element is a BaseWavefunction instance and
+            the second element is a one-dimensional numpy array of integers.
+        ValueError
+            If first element of `deriv` is not the composite wavefunction or the underlying
+            waefunctions.
+            If the provided indices is less than zero or greater than or equal to the number of the
+            corresponding parameters.
 
         """
         wfn_contrib = np.array([wfn.get_overlap(sd, deriv=None) for wfn in self.wfns])

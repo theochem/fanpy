@@ -65,6 +65,8 @@ class ParamContainer:
         ------
         TypeError
             If given parameters are not given as a numpy array (or list or tuple) of numbers.
+        ValueError
+            If number of parameters is zero.
 
         """
         if isinstance(params, (list, tuple)):

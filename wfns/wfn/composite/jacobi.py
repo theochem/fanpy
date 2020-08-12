@@ -238,9 +238,9 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if orbtype is None:
             orbtype = "restricted"
 
-        if orbtype not in ["restricted", "unrestricted", "generalized"]:
+        if __debug__ and orbtype not in ["restricted", "unrestricted", "generalized"]:
             raise ValueError(
-                "Orbital type must be one of 'restricted', 'unrestricted', and " "'generalized'."
+                "Orbital type must be one of 'restricted', 'unrestricted', and 'generalized'."
             )
         self.orbtype = orbtype
 
@@ -270,33 +270,34 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         `orbtype` is used in this method.
 
         """
-        if not isinstance(jacobi_indices, (tuple, list)):
-            raise TypeError("Indices `jacobi_indices` must be a tuple or list.")
-        if len(jacobi_indices) != 2:
-            raise TypeError("Indices `jacobi_indices` must be have two elements.")
-        if not all(isinstance(i, int) for i in jacobi_indices):
-            raise TypeError("Indices `jacobi_indices` must only contain integers.")
+        if __debug__:
+            if not isinstance(jacobi_indices, (tuple, list)):
+                raise TypeError("Indices `jacobi_indices` must be a tuple or list.")
+            if len(jacobi_indices) != 2:
+                raise TypeError("Indices `jacobi_indices` must be have two elements.")
+            if not all(isinstance(i, int) for i in jacobi_indices):
+                raise TypeError("Indices `jacobi_indices` must only contain integers.")
 
-        if not all(i >= 0 for i in jacobi_indices):
-            raise ValueError("Indices cannot be negative.")
-        if jacobi_indices[0] == jacobi_indices[1]:
-            raise ValueError("Two indices are the same.")
-        if self.orbtype == "generalized" and not all(i < self.nspin for i in jacobi_indices):
-            raise ValueError(
-                "If the orbitals are generalized, their indices must be less than the "
-                "number of spin orbitals."
-            )
-        if self.orbtype == "restricted" and not all(i < self.nspatial for i in jacobi_indices):
-            raise ValueError(
-                "If the orbitals are restricted, their indices must be less than the "
-                "number of spatial orbitals."
-            )
-        if self.orbtype == "unrestricted" and (jacobi_indices[0] < self.nspatial) != (
-            jacobi_indices[1] < self.nspatial
-        ):
-            raise ValueError(
-                "If the orbitals are unrestricted, the alpha and beta orbitals cannot " "be mixed."
-            )
+            if not all(i >= 0 for i in jacobi_indices):
+                raise ValueError("Indices cannot be negative.")
+            if jacobi_indices[0] == jacobi_indices[1]:
+                raise ValueError("Two indices are the same.")
+            if self.orbtype == "generalized" and not all(i < self.nspin for i in jacobi_indices):
+                raise ValueError(
+                    "If the orbitals are generalized, their indices must be less than the "
+                    "number of spin orbitals."
+                )
+            if self.orbtype == "restricted" and not all(i < self.nspatial for i in jacobi_indices):
+                raise ValueError(
+                    "If the orbitals are restricted, their indices must be less than the "
+                    "number of spatial orbitals."
+                )
+            if self.orbtype == "unrestricted" and (jacobi_indices[0] < self.nspatial) != (
+                jacobi_indices[1] < self.nspatial
+            ):
+                raise ValueError(
+                    "If the orbitals are unrestricted, the alpha and beta orbitals cannot " "be mixed."
+                )
 
         if jacobi_indices[0] > jacobi_indices[1]:
             jacobi_indices = jacobi_indices[::-1]
@@ -684,13 +685,25 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Raises
         ------
         TypeError
-            If given Slater determinant is not compatible with the format used internally.
+            If given Slater determinant is not an integer.
+            If `deriv` is not a 2-tuple where the first element is a BaseWavefunction instance and
+            the second element is a one-dimensional numpy array of integers.
+        ValueError
+            If first element of `deriv` is not the composite wavefunction or the underlying
+            waefunction.
+            If the provided indices is less than zero or greater than or equal to the number of the
+            corresponding parameters.
+        NotImplementedError
+            If the overlap is derivatized with respect to the parameters of the underlying
+            wavefunction.
 
         """
         if deriv is None:
             return self._olp(sd)
         # if derivatization
         if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
             if not (
                 isinstance(deriv, tuple) and
                 len(deriv) == 2 and

@@ -92,8 +92,9 @@ class DOCI(CIWavefunction):
 
         """
         super().assign_nelec(nelec)
-        if self.nelec % 2 != 0:
-            raise ValueError("`nelec` must be an even number")
+        if __debug__:
+            if self.nelec % 2 != 0:
+                raise ValueError("`nelec` must be an even number")
 
     def assign_spin(self, spin=None):
         r"""Assign the spin of the wavefunction.
@@ -114,15 +115,15 @@ class DOCI(CIWavefunction):
         TypeError
             If the spin is not an integer, float, or None.
         ValueError
-            If the spin is not an integral multiple of `0.5`.
-            If spin is not zero (singlet).
+            If the spin is not an integral multiple of `0.5` greater than zero.
+            If the spin is not 0.
 
         """
         if spin is None:
             spin = 0
         super().assign_spin(spin)
-        if self.spin != 0:
-            raise ValueError("DOCI wavefunction can only be singlet")
+        if __debug__ and self.spin != 0:
+            raise ValueError("spin must be zero for DOCI wavefunction.")
 
     def assign_seniority(self, seniority=None):
         r"""Assign the seniority of the wavefunction.
@@ -147,5 +148,5 @@ class DOCI(CIWavefunction):
         if seniority is None:
             seniority = 0
         super().assign_seniority(seniority)
-        if self.seniority != 0:
-            raise ValueError("DOCI wavefunction can only be seniority 0")
+        if __debug__ and self.seniority != 0:
+            raise ValueError("seniority must be zero for DOCI wavefunction.")

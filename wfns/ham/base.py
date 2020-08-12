@@ -2,6 +2,7 @@
 import abc
 import itertools as it
 
+import numpy as np
 from wfns.backend import slater
 
 
@@ -61,7 +62,7 @@ class BaseHamiltonian:
         return self.nspin // 2
 
     def assign_integrals(self, one_int, two_int):
-        """Assign the one- and two-electron integrals.
+        """Assign the basis set representations of the Hamiltonian (integrals).
 
         Parameters
         ----------
@@ -74,7 +75,6 @@ class BaseHamiltonian:
         Raises
         ------
         NotImplementedError
-            If called.
 
         """
         raise NotImplementedError
@@ -124,18 +124,39 @@ class BaseHamiltonian:
 
         Raises
         ------
+        TypeError
+            If Slater determinant is not an integer.
+            If ham_deriv is not a one-dimensional numpy array of integers.
         ValueError
-            If integral is derivatized to both wavefunction and Hamiltonian parameters.
+            If both ham_deriv and wfn_deriv is not None.
+            If ham_deriv has any indices than is less than 0 or greater than or equal to nparams.
 
         """
         # pylint: disable=C0103
-        if wfn_deriv is not None and ham_deriv is not None:
-            raise ValueError(
-                "Integral can be derivatized with respect to at most one out of the "
-                "wavefunction and Hamiltonian parameters."
-            )
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
+            if wfn_deriv is not None and ham_deriv is not None:
+                raise ValueError(
+                    "Integral can be derivatized with respect to the wavefunction or Hamiltonian "
+                    "parameters, but not both."
+                )
+            if ham_deriv is not None:
+                if not (
+                    isinstance(ham_deriv, np.ndarray) and
+                    ham_deriv.ndim == 1 and
+                    ham_deriv.dtype == int
+                ):
+                    raise TypeError(
+                        "Derivative indices for the Hamiltonian parameters must be given as a "
+                        "one-dimensional numpy array of integers."
+                    )
+                if np.any(ham_deriv < 0) or np.any(ham_deriv >= self.nparams):
+                    raise ValueError(
+                        "Derivative indices for the Hamiltonian parameters must be greater than or "
+                        "equal to 0 and be less than the number of parameters."
+                    )
 
-        sd = slater.internal_sd(sd)
         occ_indices = slater.occ_indices(sd)
         vir_indices = slater.vir_indices(sd, self.nspin)
 

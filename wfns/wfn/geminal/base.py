@@ -186,12 +186,13 @@ class BaseGeminal(BaseWavefunction):
             If number of electrons is not an integer.
         ValueError
             If number of electrons is not a positive number.
+        NotImplementedError
             If number of electrons is odd.
 
         """
         super().assign_nelec(nelec)
         if self.nelec % 2 != 0:
-            raise ValueError("Odd number of electrons is not supported")
+            raise NotImplementedError("Odd number of electrons is not supported.")
 
     def assign_ngem(self, ngem=None):
         """Assign the number of geminals.
@@ -211,15 +212,18 @@ class BaseGeminal(BaseWavefunction):
 
         Notes
         -----
-        Needs to have `npair` defined (i.e. `nelec` must be defined).
+        Needs to have `nelec` defined.
 
         """
         if ngem is None:
             ngem = self.npair
-        if not isinstance(ngem, int):
-            raise TypeError("`ngem` must be an integer.")
-        if ngem < self.npair:
-            raise ValueError("`ngem` must be greater than the number of electron pairs.")
+
+        if __debug__:
+            if not isinstance(ngem, int):
+                raise TypeError("`ngem` must be an integer.")
+            if ngem < self.npair:
+                raise ValueError("`ngem` must be greater than the number of electron pairs.")
+
         self.ngem = ngem
 
     def assign_orbpairs(self, orbpairs=None):
@@ -235,9 +239,7 @@ class BaseGeminal(BaseWavefunction):
         ------
         TypeError
             If `orbpairs` is not an iterable.
-            If an orbital pair is not given as a list or a tuple.
-            If an orbital pair does not contain exactly two elements.
-            If an orbital index is not an integer.
+            If an orbital pair is not given as a 2-tuple/list of integers.
         ValueError
             If an orbital pair has the same integer.
             If an orbital pair occurs more than once.
@@ -247,31 +249,31 @@ class BaseGeminal(BaseWavefunction):
         Must have `nspin` defined for the default option.
 
         """
-        # FIXME: terrible memory usage
         if orbpairs is None:
             orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
 
-        if not hasattr(orbpairs, "__iter__"):
+        if __debug__ and not hasattr(orbpairs, "__iter__"):
             raise TypeError("`orbpairs` must iterable.")
 
         dict_orbpair_ind = {}
         for i, orbpair in enumerate(orbpairs):
-            if not isinstance(orbpair, (list, tuple)):
-                raise TypeError("Each orbital pair must be a list or a tuple")
-            if len(orbpair) != 2:
-                raise TypeError("Each orbital pair must contain two elements")
-            if not (isinstance(orbpair[0], int) and isinstance(orbpair[1], int)):
-                raise TypeError("Each orbital index must be given as an integer")
-            if orbpair[0] == orbpair[1]:
-                raise ValueError("Orbital pair of the same orbital is invalid")
+            if __debug__:
+                if not (
+                    isinstance(orbpair, (list, tuple)) and
+                    len(orbpair) == 2 and
+                    all(isinstance(ind, int) for ind in orbpair)
+                ):
+                    raise TypeError("Each orbital pair must be a 2-tuple/list of integers.")
+                if orbpair[0] == orbpair[1]:
+                    raise ValueError("Orbital pair of the same orbital is invalid")
 
             orbpair = tuple(orbpair)
             # sort orbitals within the pair
             if orbpair[0] > orbpair[1]:
                 orbpair = orbpair[::-1]
-            if orbpair in dict_orbpair_ind:
+            if __debug__ and orbpair in dict_orbpair_ind:
                 raise ValueError(
-                    "The given orbital pairs have multiple entries of {0}" "".format(orbpair)
+                    "The given orbital pairs have multiple entries of {0}.".format(orbpair)
                 )
             dict_orbpair_ind[orbpair] = i
 
@@ -357,7 +359,7 @@ class BaseGeminal(BaseWavefunction):
             return self.dict_orbpair_ind[orbpair]
         except (KeyError, TypeError):
             raise ValueError(
-                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+                "Given orbital pair, {0}, is not included in the wavefunction.".format(orbpair)
             )
 
     def get_col_inds(self, orbpairs):
@@ -540,10 +542,20 @@ class BaseGeminal(BaseWavefunction):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+            If deriv is not a one dimensional numpy array of integers.
+
         """
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if deriv is not None and not (
+                isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
+            ):
+                raise TypeError("deriv must be given as a one dimensional numpy array of integers.")
 
         # if no derivatization
         if deriv is None:

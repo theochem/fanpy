@@ -91,23 +91,22 @@ class CIPairs(DOCI):
             If the sd_vec is not `None` (default value).
 
         """
-        if sd_vec is None:
-            super().assign_sd_vec(
-                sd_list(
-                    self.nelec,
-                    self.nspin,
-                    num_limit=None,
-                    exc_orders=[2],
-                    spin=self.spin,
-                    seniority=self.seniority,
-                )
-            )
-        else:
+        if __debug__ and sd_vec is not None:
             raise ValueError(
                 "Only the default list of Slater determinants is allowed. i.e. sd_vec "
                 "is `None`. If you would like to customize your CI wavefunction, use "
                 "CIWavefunction instead."
             )
+        super().assign_sd_vec(
+            sd_list(
+                self.nelec,
+                self.nspin,
+                num_limit=None,
+                exc_orders=[2],
+                spin=self.spin,
+                seniority=self.seniority,
+            )
+        )
 
     def to_ap1rog(self):
         """Return the AP1roG wavefunction that corresponds to the CIPairs wavefunction.

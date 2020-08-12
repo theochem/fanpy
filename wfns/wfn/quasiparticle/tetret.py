@@ -102,8 +102,8 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
 
         """
         super().assign_nelec(nelec)
-        if nelec % 4 != 0:
-            raise ValueError('Number of electrons must be a multiple of four.')
+        if __debug__ and self.nelec % 4 != 0:
+            raise ValueError("Number of electrons must be a multiple of four.")
 
     def assign_nquasiparticle(self, nquasiparticle=None):
         """Assign the number of creation operators that will be used to construct the wavefunction.
@@ -118,18 +118,20 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
         TypeError
             If the number of quasiparticles is not an integer.
         ValueError
-            If the number of quasiparticle is not greater than zero.
+            If the number of quasiparticle is not exactly N/4.
 
         Notes
         -----
         Must have attribute `nelec`.
+
         """
         if nquasiparticle is None:
             nquasiparticle = self.nelec // 4
-        if nquasiparticle * 4 != self.nelec:
-            raise ValueError('Number of quasiparticles must be exactly N/4 where N is the number of'
-                             ' electrons')
         super().assign_nquasiparticle(nquasiparticle)
+        if __debug__ and self.nquasiparticle * 4 != self.nelec:
+            raise ValueError(
+                "Number of quasiparticles must be exactly N/4 where N is the number of electrons"
+            )
 
     # TODO: do we need to make sure that all orbitals indices are included by the subsets?
     # NOTE: what happens if the given subsets cannot be usd to build the given Slater determinant?
@@ -144,14 +146,6 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
 
         Raises
         ------
-        TypeError
-            If `orbsubsets` is not an iterable.
-            If an orbital subset is not given as a list or a tuple.
-            If an orbital index is not an integer.
-        ValueError
-            If an orbital subset has the same integer more than once.
-            If an orbital subset occurs more than once.
-            If an orbital subset does not have exactly 4 orbital indices.
         NotImplementedError
             If a non-default (`None`) orbsubsets is provided.
 
@@ -165,12 +159,9 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
                                for i in range(self.nspin) for j in range(i+1, self.nspin)
                                for k in range(j+1, self.nspin) for l in range(k+1, self.nspin))
         else:
-            raise NotImplementedError('User provided orbital subsets is not yet supported.')
+            raise NotImplementedError("User provided orbital subsets is not yet supported.")
 
         super().assign_orbsubsets(orbsubsets)
-        # FIXME: following code can be used when user provided orbital subsets is supported
-        # if self.orbsubset_sizes != (4, ):
-        #     raise ValueError('Each orbital subset must have exactly 4 orbitals.')
 
     # TODO: this function can be generalized and moved to the parent class
     def generate_possible_orbsubsets(self, occ_indices):
@@ -194,7 +185,7 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
             If the number of occupied orbital indices is not a multiple of four.
 
         """
-        if len(occ_indices) % 4 != 0:
+        if __debug__ and len(occ_indices) % 4 != 0:
             raise ValueError("The number of orbital indices must be a multiple of four.")
         nsubsets = len(occ_indices) // 4
         for orbsubsets in generate_unordered_partition(occ_indices, [(4, nsubsets)]):

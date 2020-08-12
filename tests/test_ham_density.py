@@ -304,7 +304,7 @@ def test_add_two_density():
 def test_density_matrix():
     """Test density.density_matrix."""
     # check type
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         density_matrix(
             np.arange(1, 5),
             [0b0101, 0b1001, 0b0110, 0b1010],

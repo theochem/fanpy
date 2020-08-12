@@ -107,6 +107,13 @@ class RankTwoApprox:
             Option to add noise to the given parameters.
             Default is False.
 
+        Raises
+        ------
+        NotImplementedError
+            If BaseGeminal is given as a parameter.
+        ValueError
+            If there are any lambdas that are equal to epsilons (i.e. zero in denominator).
+
         """
         if params is None:
             # FIXME: add constraints to parameters
@@ -121,12 +128,14 @@ class RankTwoApprox:
             template += 0.0001 * np.random.rand(*template.shape)
             # FIXME: fails a lot
             params = full_to_rank2(template, rmsd=0.01)
+
+        if isinstance(params, BaseGeminal):
+            raise NotImplementedError(
+                "Rank 2 Wavefunction cannot assign parameters using a BaseGeminal instance."
+            )
+
         self.params = params
         if __debug__:
-            if isinstance(params, BaseGeminal):
-                raise NotImplementedError(
-                    "Rank 2 Wavefunction cannot assign parameters using a BaseGeminal instance."
-                )
             # check for zeros in denominator
             if np.any(np.abs(self.lambdas[:, np.newaxis] - self.epsilons) < 1e-9):
                 raise ValueError("Corresponding geminal coefficient matrix has a division by zero")
@@ -153,8 +162,10 @@ class RankTwoApprox:
 
         Raises
         ------
+        TypeError
+            If deriv is not an integer.
         ValueError
-            If index with respect to which the permanent is derivatized is invalid.
+            If deriv is less than zero or greater than or equal to the number of parameters.
 
         """
         # pylint: disable=R0912
@@ -166,6 +177,14 @@ class RankTwoApprox:
                 self.lambdas[row_inds], self.epsilons[col_inds], self.zetas[col_inds]
             )
         # if differentiating along row (lambda)
+        if __debug__:
+            if not (isinstance(deriv, int) or np.issubdtype(deriv, np.integer)):
+                raise TypeError("deriv must be an integer.")
+            if not (0 <= deriv < self.nparams):
+                raise ValueError(
+                    "deriv must be greater than or equal to zero and less than the number of "
+                    "parameters"
+                )
         # FIXME: not the best way of evaluating
         if 0 <= deriv < self.npair:
             row_to_remove = deriv
@@ -222,8 +241,6 @@ class RankTwoApprox:
                         self.zetas[col_inds_trunc],
                     )
             return val
-
-        raise ValueError("Invalid derivatization index.")
 
     def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.

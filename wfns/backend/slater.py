@@ -203,7 +203,7 @@ def is_alpha(i, nspatial):
         If `i > 2*nspatial`.
 
     """
-    if nspatial <= 0 or i < 0 or i > 2 * nspatial:
+    if __debug__ and (nspatial <= 0 or i < 0 or i > 2 * nspatial):
         raise ValueError("If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.")
     return i < nspatial
 
@@ -226,12 +226,10 @@ def spatial_index(i, nspatial):
     Raises
     ------
     ValueError
-        If `nspatial <= 0`.
-        If `i < 0`.
-        If `i > 2*nspatial`.
+        If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.
 
     """
-    if nspatial <= 0 or i < 0 or i > 2 * nspatial:
+    if __debug__ and (nspatial <= 0 or i < 0 or i > 2 * nspatial):
         raise ValueError("If `nspatial <= 0` or `i < 0` or `i > 2*nspatial`.")
 
     if is_alpha(i, nspatial):  # pylint: disable=R1705
@@ -262,22 +260,24 @@ def spin_index(i, nspatial, spin="beta"):
     ValueError
         If `nspatial <= 0`.
         If `spin` is not 'alpha' or 'beta'.
+        If `i` is less than 0 or greater than or euqal to the number of spatial orbitals.
 
     """
-    if not nspatial > 0:
-        raise ValueError("Number of spatial orbitals must be greater than zero.")
-    if not 0 <= i < nspatial:
-        raise ValueError(
-            "Spatial orbital index must be greater than or equal to 0 and less than "
-            "the number of spatial orbitals."
-        )
+    if __debug__:
+        if nspatial <= 0:
+            raise ValueError("Number of spatial orbitals must be greater than zero.")
+        if not 0 <= i < nspatial:
+            raise ValueError(
+                "Spatial orbital index must be greater than or equal to 0 and less than "
+                "the number of spatial orbitals."
+            )
+        if spin not in ["alpha", "beta"]:
+            raise ValueError("Spin of the orbital must be either alpha or beta.")
 
     if spin == "alpha":  # pylint: disable=R1705
         return i
-    elif spin == "beta":
-        return i + nspatial
     else:
-        raise ValueError("Spin of the orbital must be either alpha or beta.")
+        return i + nspatial
 
 
 def annihilate(sd, *indices):
@@ -355,7 +355,7 @@ def excite(sd, *indices):
         If the length of indices is not even (cannot evenly split up the indices in two).
 
     """
-    if (len(indices) % 2) != 0:
+    if __debug__ and (len(indices) % 2) != 0:
         raise ValueError("Unqual number of creators and annihilators")
     sd = annihilate(sd, *indices[: len(indices) // 2])
     sd = create(sd, *indices[len(indices) // 2 :])
@@ -391,13 +391,14 @@ def ground(nocc, norbs):
     assumed to have the alpha block frist, then the beta block.
 
     """
-    if nocc > norbs:
-        raise ValueError(
-            "Number of occupied spin-orbitals must be less than the total number of"
-            " spin-orbitals"
-        )
-    if norbs % 2 != 0:
-        raise ValueError("Total number of spin-orbitals must be even")
+    if __debug__:
+        if nocc > norbs:
+            raise ValueError(
+                "Number of occupied spin-orbitals must be less than the total number of"
+                " spin-orbitals"
+            )
+        if norbs % 2 != 0:
+            raise ValueError("Total number of spin-orbitals must be even")
     return int("0b" + "1" * (nocc // 2 + nocc % 2), 2) + int(
         "0b" + "1" * (nocc // 2) + "0" * (norbs // 2), 2
     )
@@ -495,7 +496,7 @@ def combine_spin(alpha_bits, beta_bits, nspatial):
 
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if nspatial <= 0:
+    if __debug__ and nspatial <= 0:
         raise ValueError("Number of spatial orbitals must be greater than 0.")
     return alpha_bits | (beta_bits << nspatial)
 
@@ -531,7 +532,7 @@ def split_spin(block_sd, nspatial):
 
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if nspatial <= 0:
+    if __debug__ and nspatial <= 0:
         raise ValueError("Number of spatial orbitals must be greater than 0")
     alpha_bits = block_sd & int("0b" + "1" * nspatial, 2)
     beta_bits = block_sd >> nspatial
@@ -560,10 +561,11 @@ def interleave_index(i, nspatial):
         If the index is greater than or equal to the number of spin orbitals.
 
     """
-    if i < 0:
-        raise ValueError("Index must be greater than or equal to zero.")
-    if i >= 2 * nspatial:
-        raise ValueError("Index must be less than the number of spin orbitals.")
+    if __debug__:
+        if i < 0:
+            raise ValueError("Index must be greater than or equal to zero.")
+        if i >= 2 * nspatial:
+            raise ValueError("Index must be less than the number of spin orbitals.")
 
     if i < nspatial:  # pylint: disable=R1705
         return 2 * i
@@ -593,10 +595,11 @@ def deinterleave_index(i, nspatial):
         If the index is greater than or equal to the number of spin orbitals.
 
     """
-    if i < 0:
-        raise ValueError("Index must be greater than or equal to zero.")
-    if i >= 2 * nspatial:
-        raise ValueError("Index must be less than the number of spin orbitals.")
+    if __debug__:
+        if i < 0:
+            raise ValueError("Index must be greater than or equal to zero.")
+        if i >= 2 * nspatial:
+            raise ValueError("Index must be less than the number of spin orbitals.")
 
     if i % 2 == 0:  # pylint: disable=R1705
         return i // 2
@@ -639,7 +642,7 @@ def interleave(block_sd, nspatial):
 
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if nspatial <= 0:
+    if __debug__ and nspatial <= 0:
         raise ValueError("Number of spatial orbitals must be greater than 0")
 
     # OPTION 1
@@ -701,7 +704,7 @@ def deinterleave(shuffled_sd, nspatial):
 
     """
     # FIXME: no check for the total number of orbitals (can be less than actual number)
-    if nspatial <= 0:
+    if __debug__ and nspatial <= 0:
         raise ValueError("Number of spatial orbitals must be greater than 0")
 
     # OPTION 1
@@ -744,11 +747,6 @@ def get_spin(sd, nspatial):
     spin : float
         Spin of the given Slater determinant.
 
-    Raises
-    ------
-    ValueError
-        If `nspatial <= 0`.
-
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
     return (0.5) * (total_occ(alpha_bits) - total_occ(beta_bits))
@@ -768,11 +766,6 @@ def get_seniority(sd, nspatial):
     -------
     seniority : int
         Seniority of the given Slater determinant.
-
-    Raises
-    ------
-    ValueError
-        If `nspatial <= 0`.
 
     """
     alpha_bits, beta_bits = split_spin(sd, nspatial)
@@ -811,7 +804,7 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
     # get ordered set
     if ordered_set is None:
         ordered_set = sorted(jumbled_set)
-    elif not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
+    elif __debug__ and not all(i < j for i, j in zip(ordered_set, ordered_set[1:])):
         raise ValueError("ordered_set must be strictly increasing.")
 
     sign = 1
@@ -852,14 +845,15 @@ def sign_swap(sd, pos_current, pos_future):
         If current orbital position is not occupied.
 
     """
-    if sd is None:
-        raise ValueError("Bad Slater determinant is given.")
-    if not (isinstance(pos_current, (int, np.integer)) and pos_current >= 0):
-        raise ValueError("The current orbital position must be a positive integer.")
-    if not (isinstance(pos_future, (int, np.integer)) and pos_future >= 0):
-        raise ValueError("The future orbital position must be a positive integer.")
-    if not occ(sd, pos_current):
-        raise ValueError("Given orbital is not occupied in the given Slater determinant.")
+    if __debug__:
+        if sd is None:
+            raise ValueError("Bad Slater determinant is given.")
+        if not (isinstance(pos_current, (int, np.integer)) and pos_current >= 0):
+            raise ValueError("The current orbital position must be a positive integer.")
+        if not (isinstance(pos_future, (int, np.integer)) and pos_future >= 0):
+            raise ValueError("The future orbital position must be a positive integer.")
+        if not occ(sd, pos_current):
+            raise ValueError("Given orbital is not occupied in the given Slater determinant.")
 
     # sd = gmpy2.mpz(sd)
     if pos_current < pos_future:
@@ -914,7 +908,7 @@ def sign_excite(sd, annihilators, creators):
     """
     sign = 1
     for i in annihilators:
-        if not occ(sd, i):
+        if __debug__ and not occ(sd, i):
             raise ValueError(
                 "Given Slater determinant cannot be excited using the given creators "
                 "and annihilators."
@@ -925,7 +919,7 @@ def sign_excite(sd, annihilators, creators):
 
     for i in creators:
         sd = create(sd, i)
-        if sd is None:
+        if __debug__ and sd is None:
             raise ValueError(
                 "Given Slater determinant cannot be excited using the given creators "
                 "and annihilators."
@@ -1060,13 +1054,14 @@ def spatial_to_spin_indices(spatial_indices, nspatial, to_beta=True):
 
     """
     # pylint: disable=R1705
-    if not nspatial > 0:
-        raise ValueError("Number of spatial orbitals must be greater than zero.")
-    if not np.all(np.logical_and(spatial_indices >= 0, spatial_indices < nspatial)):
-        raise ValueError(
-            "Spatial orbital index must be greater than or equal to 0 and less than "
-            "the number of spatial orbitals."
-        )
+    if __debug__:
+        if not nspatial > 0:
+            raise ValueError("Number of spatial orbitals must be greater than zero.")
+        if not np.all(np.logical_and(spatial_indices >= 0, spatial_indices < nspatial)):
+            raise ValueError(
+                "Spatial orbital index must be greater than or equal to 0 and less than "
+                "the number of spatial orbitals."
+            )
     if to_beta:
         return spatial_indices + nspatial
     else:
