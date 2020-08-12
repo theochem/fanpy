@@ -4,7 +4,7 @@ import os
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
-from wfns.objective.utils import ComponentParameterIndices
+from wfns.eqn.utils import ComponentParameterIndices
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction

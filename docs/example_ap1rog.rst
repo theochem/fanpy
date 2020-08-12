@@ -40,7 +40,7 @@ Optimizer
     from wfns.wfn.geminal.ap1rog import AP1roG
     from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
     from wfns.backend.sd_list import sd_list
-    from wfns.objective.least_squares import LeastSquaresEquations
+    from wfns.eqn.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
 
 

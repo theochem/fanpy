@@ -1,12 +1,12 @@
-"""Test wfns.objective.base."""
+"""Test wfns.eqn.base."""
 import itertools as it
 
 import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.base import BaseSchrodinger
-from wfns.objective.utils import ParamContainer, ComponentParameterIndices
+from wfns.eqn.base import BaseSchrodinger
+from wfns.eqn.utils import ParamContainer, ComponentParameterIndices
 from wfns.wfn.ci.base import CIWavefunction
 
 

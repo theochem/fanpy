@@ -32,7 +32,7 @@ Optimizer
     from wfns.wfn.network.keras_network import KerasNetwork
     from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
     from wfns.backend.sd_list import sd_list
-    from wfns.objective.onesided_energy import OneSidedEnergy
+    from wfns.eqn.onesided_energy import OneSidedEnergy
     from wfns.solver.equation import cma
 
 

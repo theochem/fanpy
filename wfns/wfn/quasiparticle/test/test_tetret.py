@@ -4,7 +4,7 @@ from numpy.testing import assert_raises
 from wfns.wfn.quasiparticle.tetret import AntisymmeterizedProductTetrets
 from wfns.tools import find_datafile
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.system_nonlinear import SystemEquations
 from wfns.solver.system import least_squares
 
 

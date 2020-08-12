@@ -4,8 +4,8 @@ import pytest
 import scipy
 from utils import find_datafile, skip_init
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.objective.onesided_energy import OneSidedEnergy
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.onesided_energy import OneSidedEnergy
+from wfns.eqn.system_nonlinear import SystemEquations
 from wfns.solver.equation import minimize
 from wfns.solver.system import least_squares
 from wfns.wfn.geminal.apig import APIG

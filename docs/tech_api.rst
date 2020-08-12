@@ -55,18 +55,18 @@ Wavefunctions
 Objectives
 ==========
 
-* :class:`Base Objective <wfns.objective.base.BaseObjective>`
+* :class:`Base Objective <wfns.eqn.base.BaseObjective>`
 * Constraints
 
-  * :class:`Normalization Constraint <wfns.objective.constraints.norm.NormConstraint>`
+  * :class:`Normalization Constraint <wfns.eqn.constraints.norm.NormConstraint>`
 
 * Schrödinger Equation
 
-  * :class:`Base Schrodinger Equation <wfns.objective.base.BaseSchrodinger>`
-  * :class:`System of Equations <wfns.objective.system_nonlinear.SystemEquations>`
-  * :class:`Least Squared Sum of Equations <wfns.objective.least_squares.LeastSquaresEquations>`
-  * :class:`One Sided Energy <wfns.objective.onesided_energy.OneSidedEnergy>`
-  * :class:`Two Sided Energy <wfns.objective.twosided_energy.TwoSidedEnergy>`
+  * :class:`Base Schrodinger Equation <wfns.eqn.base.BaseSchrodinger>`
+  * :class:`System of Equations <wfns.eqn.system_nonlinear.SystemEquations>`
+  * :class:`Least Squared Sum of Equations <wfns.eqn.least_squares.LeastSquaresEquations>`
+  * :class:`One Sided Energy <wfns.eqn.onesided_energy.OneSidedEnergy>`
+  * :class:`Two Sided Energy <wfns.eqn.twosided_energy.TwoSidedEnergy>`
 
 Solvers
 =======
@@ -157,13 +157,13 @@ Scripts
       wfns.solver.wrappers.wrap_scipy
       wfns.solver.wrappers.wrap_skopt
 
-      wfns.objective.base.BaseObjective
-      wfns.objective.constraints.norm.NormConstraint
-      wfns.objective.base.BaseSchrodinger
-      wfns.objective.system_nonlinear.SystemEquations
-      wfns.objective.least_squares.LeastSquaresEquations
-      wfns.objective.onesided_energy.OneSidedEnergy
-      wfns.objective.twosided_energy.TwoSidedEnergy
+      wfns.eqn.base.BaseObjective
+      wfns.eqn.constraints.norm.NormConstraint
+      wfns.eqn.base.BaseSchrodinger
+      wfns.eqn.system_nonlinear.SystemEquations
+      wfns.eqn.least_squares.LeastSquaresEquations
+      wfns.eqn.onesided_energy.OneSidedEnergy
+      wfns.eqn.twosided_energy.TwoSidedEnergy
 
       wfns.wfn.base.BaseWavefunction
       wfns.wfn.ci.base.CIWavefunction

@@ -1,6 +1,6 @@
 """Schrodinger equation as a least-squares problem."""
 import numpy as np
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.system_nonlinear import SystemEquations
 
 
 # FIXME: change name

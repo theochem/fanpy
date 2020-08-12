@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.onesided_energy import OneSidedEnergy
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.onesided_energy import OneSidedEnergy
+from wfns.eqn.system_nonlinear import SystemEquations
 import wfns.solver.system as system
 from wfns.wfn.base import BaseWavefunction
 

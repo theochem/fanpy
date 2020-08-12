@@ -4,9 +4,9 @@ import os
 import numpy as np
 import pytest
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.least_squares import LeastSquaresEquations
-from wfns.objective.onesided_energy import OneSidedEnergy
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.least_squares import LeastSquaresEquations
+from wfns.eqn.onesided_energy import OneSidedEnergy
+from wfns.eqn.system_nonlinear import SystemEquations
 import wfns.solver.equation as equation
 from wfns.wfn.base import BaseWavefunction
 

@@ -17,7 +17,7 @@ arguments. The output typically includes the state of the optimization, optimize
 the value of the objective at the optimized parameters. Since there are variations of the input and
 output between different modules, a wrapper can be used to standardize the API of the different
 solvers. In the FANCI module, the standard input for a solver includes an argument of
-:class:`BaseObjective <wfns.objective.base.BaseObjective>` instance and a keyword argument of
+:class:`BaseObjective <wfns.eqn.base.BaseObjective>` instance and a keyword argument of
 `save_file` for storing the final results. Additional keyword arguments are passed directly to the
 solver. The (minimal) standardized output is a dictionary with keys `success` (for success of the
 optimization), `params` (for parameters at the end of the optimization), `message` (for message

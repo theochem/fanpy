@@ -1,7 +1,7 @@
 """Energy of the Schrodinger equation integrated against projected forms of the wavefunction."""
 import numpy as np
 from wfns.backend import sd_list, slater
-from wfns.objective.base import BaseSchrodinger
+from wfns.eqn.base import BaseSchrodinger
 
 
 class TwoSidedEnergy(BaseSchrodinger):

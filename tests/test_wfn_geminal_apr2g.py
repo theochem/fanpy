@@ -2,8 +2,8 @@
 import numpy as np
 from utils import find_datafile
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.objective.onesided_energy import OneSidedEnergy
-from wfns.objective.system_nonlinear import SystemEquations
+from wfns.eqn.onesided_energy import OneSidedEnergy
+from wfns.eqn.system_nonlinear import SystemEquations
 from wfns.solver.equation import cma, minimize
 from wfns.solver.system import least_squares
 from wfns.wfn.geminal.apr2g import APr2G

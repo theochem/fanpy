@@ -1,9 +1,9 @@
-"""Test wfns.objective.onesided_energy."""
+"""Test wfns.eqn.onesided_energy."""
 import numpy as np
 import pytest
 from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.onesided_energy import OneSidedEnergy
+from wfns.eqn.onesided_energy import OneSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
 
 

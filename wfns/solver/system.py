@@ -1,5 +1,5 @@
 """Solvers for system of Schrodinger equations."""
-from wfns.objective.least_squares import SystemEquations
+from wfns.eqn.least_squares import SystemEquations
 from wfns.solver.wrappers import wrap_scipy
 
 
