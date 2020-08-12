@@ -6,7 +6,7 @@ import pytest
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.equation as equation
 from fanpy.wfn.base import BaseWavefunction
 
@@ -77,7 +77,7 @@ def test_cma():
     with pytest.raises(TypeError):
         equation.cma(lambda x, y: (x - 3) * (y - 2) + x ** 3 + y ** 2)
     with pytest.raises(ValueError):
-        equation.cma(SystemEquations(wfn, ham, refwfn=0b0011))
+        equation.cma(ProjectedSchrodinger(wfn, ham, refwfn=0b0011))
     with pytest.raises(ValueError):
         equation.cma(OneSidedEnergy(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
@@ -111,4 +111,4 @@ def test_minimize():
     with pytest.raises(TypeError):
         equation.minimize(lambda x, y: (x - 3) * (y - 2) + x ** 3 + y ** 2)
     with pytest.raises(ValueError):
-        equation.minimize(SystemEquations(wfn, ham, refwfn=0b0011))
+        equation.minimize(ProjectedSchrodinger(wfn, ham, refwfn=0b0011))

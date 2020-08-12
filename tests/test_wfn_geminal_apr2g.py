@@ -3,7 +3,7 @@ import numpy as np
 from utils import find_datafile
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
 from fanpy.wfn.geminal.apr2g import APr2G
@@ -104,7 +104,7 @@ def test_apr2g_apr2g_h2_631gdp_slow():
     )
 
     # Solve system of equations
-    objective = SystemEquations(apr2g, ham, refwfn=full_sds)
+    objective = ProjectedSchrodinger(apr2g, ham, refwfn=full_sds)
     results = least_squares(objective)
     assert np.allclose(results["energy"], -1.86968286083049)
 
@@ -217,6 +217,6 @@ def test_apr2g_apr2g_lih_sto6g_slow():
     )
 
     # Solve system of equations
-    objective = SystemEquations(apr2g, ham, refwfn=full_sds)
+    objective = ProjectedSchrodinger(apr2g, ham, refwfn=full_sds)
     results = least_squares(objective)
     assert np.allclose(results["energy"], -8.96353110958190)

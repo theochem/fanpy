@@ -8,7 +8,7 @@ from fanpy.eqn.utils import ParamContainer
 from fanpy.wfn.ci.base import CIWavefunction
 
 
-class SystemEquations(BaseSchrodinger):
+class ProjectedSchrodinger(BaseSchrodinger):
     r"""Schrodinger equation as a system of equations.
 
     .. math::

@@ -1,5 +1,5 @@
 """Solvers for system of Schrodinger equations."""
-from fanpy.eqn.least_squares import SystemEquations
+from fanpy.eqn.least_squares import ProjectedSchrodinger
 from fanpy.solver.wrappers import wrap_scipy
 
 
@@ -10,7 +10,7 @@ def least_squares(objective, save_file="", **kwargs):
 
     Parameters
     ----------
-    objective : SystemEquations
+    objective : ProjectedSchrodinger
         Objective that describes the system of equations.
     save_file : str
         File to which the results of the optimization is saved.
@@ -43,13 +43,13 @@ def least_squares(objective, save_file="", **kwargs):
     Raises
     ------
     TypeError
-        If objective is not SystemEquations instance.
+        If objective is not ProjectedSchrodinger instance.
 
     """
     from scipy.optimize import least_squares as solver
 
-    if not isinstance(objective, SystemEquations):
-        raise TypeError("Given objective must be an instance of SystemEquations.")
+    if not isinstance(objective, ProjectedSchrodinger):
+        raise TypeError("Given objective must be an instance of ProjectedSchrodinger.")
 
     kwargs.setdefault("xtol", 1.0e-15)
     kwargs.setdefault("ftol", 1.0e-15)
@@ -95,7 +95,7 @@ def root(objective, save_file="", **kwargs):
 
     Parameters
     ----------
-    objective : SystemEquations
+    objective : ProjectedSchrodinger
         Objective that describes the system of equations.
     save_file : str
         File to which the results of the optimization is saved.
@@ -125,13 +125,13 @@ def root(objective, save_file="", **kwargs):
     Raises
     ------
     TypeError
-        If objective is not SystemEquations instance.
+        If objective is not ProjectedSchrodinger instance.
 
     """
     from scipy.optimize import root as solver
 
-    if not isinstance(objective, SystemEquations):
-        raise TypeError("Given objective must be an instance of SystemEquations.")
+    if not isinstance(objective, ProjectedSchrodinger):
+        raise TypeError("Given objective must be an instance of ProjectedSchrodinger.")
     if objective.num_eqns != objective.active_params.size:
         raise ValueError(
             "Given objective must have the same number of equations as the number of " "parameters."

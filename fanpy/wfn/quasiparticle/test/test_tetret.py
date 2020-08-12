@@ -4,7 +4,7 @@ from numpy.testing import assert_raises
 from fanpy.wfn.quasiparticle.tetret import AntisymmeterizedProductTetrets
 from fanpy.tools import find_datafile
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.system import least_squares
 
 
@@ -121,6 +121,6 @@ def test_run():
     apg = AntisymmeterizedProductTetrets(4, 8, nquasiparticle=2)
 
     # Solve system of equations
-    objective = SystemEquations(apg, ham)
+    objective = ProjectedSchrodinger(apg, ham)
     results = least_squares(objective)
     print(results)

@@ -2,7 +2,7 @@
 import numpy as np
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.wfn.ci.base import CIWavefunction
 
 
@@ -31,7 +31,7 @@ def test_leastsquares_objective():
     np.allclose(wfn.params, np.arange(1, 7))
 
     guess = np.random.rand(6)
-    system = SystemEquations(wfn, ham, eqn_weights=weights)
+    system = ProjectedSchrodinger(wfn, ham, eqn_weights=weights)
     system_eqns = system.objective(guess)
     test = LeastSquaresEquations(wfn, ham, eqn_weights=weights)
     assert np.allclose(test.objective(guess), sum([eqn ** 2 for eqn in system_eqns]))
@@ -51,7 +51,7 @@ def test_leastsquares_gradient():
     np.allclose(wfn.params, np.arange(1, 7))
 
     guess = np.random.rand(6)
-    system = SystemEquations(wfn, ham, eqn_weights=weights)
+    system = ProjectedSchrodinger(wfn, ham, eqn_weights=weights)
     system_eqns = system.objective(guess)
     d_system_eqns = system.jacobian(guess)
     test = LeastSquaresEquations(wfn, ham, eqn_weights=weights)

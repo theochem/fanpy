@@ -4,7 +4,7 @@ import pytest
 from utils import find_datafile, skip_init
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import minimize
 from fanpy.solver.system import least_squares
 from fanpy.wfn.geminal.ap1rog import AP1roG
@@ -194,7 +194,7 @@ def test_ap1rog_h2_sto6g_ground():
     ap1rog = AP1roG(2, 4)
 
     # Solve system of equations
-    objective = SystemEquations(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
+    objective = ProjectedSchrodinger(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
     results = least_squares(objective)
     assert np.allclose(results["energy"], -1.8590898441488894)
 
@@ -221,7 +221,7 @@ def test_ap1rog_h2_sto6g_excited():
     ap1rog = AP1roG(2, 4, ref_sd=0b1010)
 
     # Solve system of equations
-    objective = SystemEquations(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
+    objective = ProjectedSchrodinger(ap1rog, ham, refwfn=[0b0101, 0b1010], constraints=[])
     results = least_squares(objective)
     assert np.allclose(results["energy"], -0.24166486974216012)
 
@@ -280,7 +280,7 @@ def test_ap1rog_h2_631gdp():
     )
 
     # Solve system of equations
-    objective = SystemEquations(ap1rog, ham, refwfn=full_sds, constraints=[])
+    objective = ProjectedSchrodinger(ap1rog, ham, refwfn=full_sds, constraints=[])
     results = least_squares(objective)
     assert np.allclose(results["energy"], -1.8696828608304892)
 
@@ -344,6 +344,6 @@ def test_ap1rog_lih_sto6g():
     )
 
     # Solve system of equations
-    objective = SystemEquations(ap1rog, ham, refwfn=full_sds, constraints=[])
+    objective = ProjectedSchrodinger(ap1rog, ham, refwfn=full_sds, constraints=[])
     results = least_squares(objective)
     assert np.allclose(results["energy"], -8.963531105243506)

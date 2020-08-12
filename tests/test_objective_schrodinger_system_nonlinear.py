@@ -4,48 +4,48 @@ import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.constraints.norm import NormConstraint
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_system_init_energy():
-    """Test energy initialization in SystemEquations.__init__."""
+    """Test energy initialization in ProjectedSchrodinger.__init__."""
     wfn = CIWavefunction(2, 4)
     ham = RestrictedChemicalHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
 
-    test = SystemEquations(wfn, ham, energy=None, energy_type="compute")
+    test = ProjectedSchrodinger(wfn, ham, energy=None, energy_type="compute")
     assert isinstance(test.energy, ParamContainer)
     assert test.energy.params == test.get_energy_one_proj(0b0101)
 
-    test = SystemEquations(wfn, ham, energy=2.0, energy_type="compute")
+    test = ProjectedSchrodinger(wfn, ham, energy=2.0, energy_type="compute")
     assert test.energy.params == 2.0
 
-    test = SystemEquations(wfn, ham, energy=np.complex128(2.0), energy_type="compute")
+    test = ProjectedSchrodinger(wfn, ham, energy=np.complex128(2.0), energy_type="compute")
     assert test.energy.params == 2.0
 
     with pytest.raises(TypeError):
-        SystemEquations(wfn, ham, energy="1", energy_type="compute")
+        ProjectedSchrodinger(wfn, ham, energy="1", energy_type="compute")
 
     with pytest.raises(ValueError):
-        SystemEquations(wfn, ham, energy=None, energy_type="something else")
+        ProjectedSchrodinger(wfn, ham, energy=None, energy_type="something else")
     with pytest.raises(ValueError):
-        SystemEquations(wfn, ham, energy=None, energy_type=0)
+        ProjectedSchrodinger(wfn, ham, energy=None, energy_type=0)
 
-    test = SystemEquations(wfn, ham, energy=0.0, energy_type="variable")
+    test = ProjectedSchrodinger(wfn, ham, energy=0.0, energy_type="variable")
     assert np.allclose(test.indices_component_params[test.energy], np.array([0]))
     assert np.allclose(test.indices_objective_params[test.energy], np.array([6]))
 
-    test = SystemEquations(wfn, ham, energy=0.0, energy_type="fixed")
+    test = ProjectedSchrodinger(wfn, ham, energy=0.0, energy_type="fixed")
     assert np.allclose(test.indices_component_params[test.energy], np.array([]))
     assert np.allclose(test.indices_objective_params[test.energy], np.array([]))
 
 
 def test_system_nproj():
     """Test SystemEquation.nproj."""
-    test = skip_init(SystemEquations)
+    test = skip_init(ProjectedSchrodinger)
     test.assign_pspace([0b0101, 0b1010])
     assert test.nproj == 2
     test.assign_pspace([0b0101, 0b1010, 0b0110])
@@ -53,8 +53,8 @@ def test_system_nproj():
 
 
 def test_system_assign_pspace():
-    """Test SystemEquations.assign_pspace."""
-    test = skip_init(SystemEquations)
+    """Test ProjectedSchrodinger.assign_pspace."""
+    test = skip_init(ProjectedSchrodinger)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_pspace()
@@ -72,8 +72,8 @@ def test_system_assign_pspace():
 
 
 def test_system_assign_refwfn():
-    """Test SystemEquations.assign_refwfn."""
-    test = skip_init(SystemEquations)
+    """Test ProjectedSchrodinger.assign_refwfn."""
+    test = skip_init(ProjectedSchrodinger)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_refwfn()
@@ -98,8 +98,8 @@ def test_system_assign_refwfn():
 
 
 def test_system_assign_eqn_weights():
-    """Test SystemEquations.assign_eqn_weights."""
-    test = skip_init(SystemEquations)
+    """Test ProjectedSchrodinger.assign_eqn_weights."""
+    test = skip_init(ProjectedSchrodinger)
     test.wfn = CIWavefunction(2, 4)
     test.assign_pspace()
     test.assign_refwfn()
@@ -122,8 +122,8 @@ def test_system_assign_eqn_weights():
 
 
 def test_system_assign_constraints():
-    """Test SystemEquations.assign_constraints."""
-    test = skip_init(SystemEquations)
+    """Test ProjectedSchrodinger.assign_constraints."""
+    test = skip_init(ProjectedSchrodinger)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn(0b0101)
     test.indices_component_params = ComponentParameterIndices()
@@ -161,7 +161,7 @@ def test_system_assign_constraints():
 
 def test_num_eqns():
     """Test SystemEquation.num_eqns."""
-    test = skip_init(SystemEquations)
+    test = skip_init(ProjectedSchrodinger)
     test.wfn = CIWavefunction(2, 4)
     test.assign_refwfn()
     test.indices_component_params = ComponentParameterIndices()
@@ -185,7 +185,7 @@ def test_system_objective():
 
     weights = np.random.rand(7)
     # check assignment
-    test = SystemEquations(wfn, ham, eqn_weights=weights)
+    test = ProjectedSchrodinger(wfn, ham, eqn_weights=weights)
     test.objective(np.arange(1, 7, dtype=float))
     np.allclose(wfn.params, np.arange(1, 7))
 
@@ -195,7 +195,7 @@ def test_system_objective():
     for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
         guess = np.random.rand(7)
         # computed energy
-        test = SystemEquations(wfn, ham, eqn_weights=weights, refwfn=refwfn)
+        test = ProjectedSchrodinger(wfn, ham, eqn_weights=weights, refwfn=refwfn)
         wfn.assign_params(guess[:6])
         if refwfn == 0b0101:
             norm_answer = weights[-1] * (wfn.get_overlap(0b0101) ** 2 - 1)
@@ -223,7 +223,7 @@ def test_system_objective():
         assert np.allclose(objective[-1], norm_answer)
 
         # variable energy
-        test = SystemEquations(
+        test = ProjectedSchrodinger(
             wfn, ham, energy=1.0, energy_type="variable", eqn_weights=weights, refwfn=refwfn
         )
         objective = test.objective(guess)
@@ -236,7 +236,7 @@ def test_system_objective():
         assert np.allclose(objective[-1], norm_answer)
 
         # fixed energy
-        test = SystemEquations(
+        test = ProjectedSchrodinger(
             wfn, ham, energy=1.0, energy_type="fixed", eqn_weights=weights, refwfn=refwfn
         )
         objective = test.objective(guess[:6])
@@ -263,7 +263,7 @@ def test_system_jacobian():
     weights = np.random.rand(7)
 
     # check assignment
-    test = SystemEquations(wfn, ham, eqn_weights=weights)
+    test = ProjectedSchrodinger(wfn, ham, eqn_weights=weights)
     test.jacobian(np.arange(1, 7, dtype=float))
     np.allclose(wfn.params, np.arange(1, 7))
 
@@ -273,7 +273,7 @@ def test_system_jacobian():
     for refwfn in [0b0101, [0b0101, 0b1010], ciref]:
         guess = np.random.rand(7)
         # computed energy
-        test = SystemEquations(wfn, ham, eqn_weights=weights, refwfn=refwfn)
+        test = ProjectedSchrodinger(wfn, ham, eqn_weights=weights, refwfn=refwfn)
         wfn.assign_params(guess[:6])
         if refwfn == 0b0101:
             norm_answer = [
@@ -312,7 +312,7 @@ def test_system_jacobian():
         assert np.allclose(jacobian[-1], norm_answer)
 
         # variable energy
-        test = SystemEquations(
+        test = ProjectedSchrodinger(
             wfn, ham, energy=3.0, energy_type="variable", eqn_weights=weights, refwfn=refwfn
         )
         jacobian = test.jacobian(guess)
@@ -331,7 +331,7 @@ def test_system_jacobian():
         assert np.allclose(jacobian[-1], norm_answer + [0.0])
 
         # fixed energy
-        test = SystemEquations(
+        test = ProjectedSchrodinger(
             wfn, ham, energy=1.0, energy_type="fixed", eqn_weights=weights, refwfn=refwfn
         )
         jacobian = test.jacobian(guess[:6])
@@ -368,7 +368,7 @@ def test_system_jacobian_active_ciref():
     ciref.assign_params(np.random.rand(6))
 
     # computed energy
-    test = SystemEquations(
+    test = ProjectedSchrodinger(
         wfn,
         ham,
         eqn_weights=weights,

@@ -7,7 +7,7 @@ from utils import find_datafile, skip_init
 from fanpy.tools import graphs
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
 from fanpy.wfn.geminal.apsetg import BasicAPsetG
@@ -118,7 +118,7 @@ def test_apsetg_h2_sto6g():
     full_sds = (0b0101, 0b1001, 0b0110, 0b1010)
 
     # Solve system of equations
-    objective = SystemEquations(apsetg, ham, refwfn=full_sds)
+    objective = ProjectedSchrodinger(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
     assert np.allclose(results["energy"], -1.8590898441488932)
 
@@ -156,7 +156,7 @@ def test_apsetg_h2_631gdp_slow():
     full_sds = [1 << i | 1 << j for i in range(10) for j in range(10, 20)]
 
     # Solve system of equations
-    objective = SystemEquations(apsetg, ham, refwfn=full_sds)
+    objective = ProjectedSchrodinger(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
     assert np.allclose(results["energy"], 0.0)
 
@@ -210,6 +210,6 @@ def test_apsetg_lih_sto6g_slow():
     ]
 
     # Solve system of equations
-    objective = SystemEquations(apsetg, ham, refwfn=full_sds)
+    objective = ProjectedSchrodinger(apsetg, ham, refwfn=full_sds)
     results = least_squares(objective)
     assert np.allclose(results["energy"], 0.0)

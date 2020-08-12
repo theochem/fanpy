@@ -244,7 +244,7 @@ def make_script(
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 
     if objective == "system":
-        from_imports.append(("fanpy.eqn.projected", "SystemEquations"))
+        from_imports.append(("fanpy.eqn.projected", "ProjectedSchrodinger"))
     elif objective == "least_squares":
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
@@ -426,7 +426,7 @@ def make_script(
 
     output += "# Initialize objective\n"
     if objective == "system":
-        objective1 = "objective = SystemEquations("
+        objective1 = "objective = ProjectedSchrodinger("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
             "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "

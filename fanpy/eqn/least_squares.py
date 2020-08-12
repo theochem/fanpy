@@ -1,11 +1,11 @@
 """Schrodinger equation as a least-squares problem."""
 import numpy as np
-from fanpy.eqn.projected import SystemEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
 
 
 # FIXME: change name
 # FIXME: inherited jacobian
-class LeastSquaresEquations(SystemEquations):
+class LeastSquaresEquations(ProjectedSchrodinger):
     r"""Projected Schrodinger equation as a least squares problem.
 
     .. math::
@@ -164,14 +164,14 @@ class LeastSquaresEquations(SystemEquations):
 
         """
         # FIXME: monkey patched property
-        # The property num_eqns need to be that of SystemEquations rather than the
-        # LeastSquaresEquations for SystemEquations.objective to function properly. This occurs
+        # The property num_eqns need to be that of ProjectedSchrodinger rather than the
+        # LeastSquaresEquations for ProjectedSchrodinger.objective to function properly. This occurs
         # because the number of equations goes to 1 in LeastSquaresEquations. We can add more
         # structure to differentiate between inherited and changed values, but this would require a
         # rewrite of the other parts of code. Since this problem occurs only in this module, we will
         # just patch in the fix here.
         orig_num_eqns = LeastSquaresEquations.num_eqns
-        LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
+        LeastSquaresEquations.num_eqns = ProjectedSchrodinger.num_eqns
 
         system_eqns = super().objective(params)
 
@@ -216,14 +216,14 @@ class LeastSquaresEquations(SystemEquations):
 
         """
         # FIXME: monkey patched property
-        # The property num_eqns need to be that of SystemEquations rather than the
-        # LeastSquaresEquations for SystemEquations.objective to function properly. This occurs
+        # The property num_eqns need to be that of ProjectedSchrodinger rather than the
+        # LeastSquaresEquations for ProjectedSchrodinger.objective to function properly. This occurs
         # because the number of equations goes to 1 in LeastSquaresEquations. We can add more
         # structure to differentiate between inherited and changed values, but this would require a
         # rewrite of the other parts of code. Since this problem occurs only in this module, we will
         # just patch in the fix here.
         orig_num_eqns = LeastSquaresEquations.num_eqns
-        LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
+        LeastSquaresEquations.num_eqns = ProjectedSchrodinger.num_eqns
 
         orig_step_print = self.step_print
         self.step_print = False

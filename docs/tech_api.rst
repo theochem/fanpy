@@ -63,7 +63,7 @@ Objectives
 * Schrödinger Equation
 
   * :class:`Base Schrodinger Equation <wfns.eqn.base.BaseSchrodinger>`
-  * :class:`System of Equations <wfns.eqn.projected.SystemEquations>`
+  * :class:`System of Equations <wfns.eqn.projected.ProjectedSchrodinger>`
   * :class:`Least Squared Sum of Equations <wfns.eqn.least_squares.LeastSquaresEquations>`
   * :class:`One Sided Energy <wfns.eqn.onesided_energy.OneSidedEnergy>`
   * :class:`Two Sided Energy <wfns.eqn.twosided_energy.TwoSidedEnergy>`
@@ -160,7 +160,7 @@ Scripts
       wfns.eqn.base.BaseObjective
       wfns.eqn.constraints.norm.NormConstraint
       wfns.eqn.base.BaseSchrodinger
-      wfns.eqn.projected.SystemEquations
+      wfns.eqn.projected.ProjectedSchrodinger
       wfns.eqn.least_squares.LeastSquaresEquations
       wfns.eqn.onesided_energy.OneSidedEnergy
       wfns.eqn.twosided_energy.TwoSidedEnergy
