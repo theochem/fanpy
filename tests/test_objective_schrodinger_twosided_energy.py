@@ -1,13 +1,13 @@
-"""Test fanpy.eqn.twosided_energy."""
+"""Test fanpy.eqn.energy_twoside."""
 import numpy as np
 import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.twosided_energy import TwoSidedEnergy
+from fanpy.eqn.energy_twoside import TwoSidedEnergy
 from fanpy.wfn.ci.base import CIWavefunction
 
 
-def test_twosided_energy_assign_pspaces():
+def test_energy_twoside_assign_pspaces():
     """Test TwoSidedEnergy.assign_pspaces."""
     test = skip_init(TwoSidedEnergy)
     test.wfn = CIWavefunction(2, 4)
@@ -50,7 +50,7 @@ def test_num_eqns():
         test.assign_pspaces(pspace_n=["0101"])
 
 
-def test_twosided_energy_objective():
+def test_energy_twoside_objective():
     """Test TwoSidedEnergy.objective.
 
     The actualy values of the objective is not checked because it is the same as
@@ -68,7 +68,7 @@ def test_twosided_energy_objective():
     assert np.allclose(wfn.params, guess)
 
 
-def test_twosided_energy_gradient():
+def test_energy_twoside_gradient():
     """Test TwoSidedEnergy.gradient.
 
     The actualy values of the gradient is not checked because it is the same as

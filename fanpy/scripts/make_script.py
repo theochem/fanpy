@@ -248,7 +248,7 @@ def make_script(
     elif objective == "least_squares":
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
-        from_imports.append(("fanpy.eqn.twosided_energy", "TwoSidedEnergy"))
+        from_imports.append(("fanpy.eqn.energy_twoside", "TwoSidedEnergy"))
     elif objective == "one_energy":
         from_imports.append(("fanpy.eqn.energy_oneside", "EnergyOneSideProjection"))
 

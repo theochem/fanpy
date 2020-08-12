@@ -130,7 +130,7 @@ We can sum over a subset of the Slater determinants to reduce the number of eval
     }
 
 This objective is implemented in class
-:class:`TwoSidedEnergy <wfns.eqn.twosided_energy.TwoSidedEnergy>`.
+:class:`TwoSidedEnergy <wfns.eqn.energy_twoside.TwoSidedEnergy>`.
 
 
 Projected Schrödinger Equation
