@@ -7,7 +7,7 @@ from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
 from fanpy.solver.wrappers import wrap_scipy
 
 
-def cma(objective, save_file="", **kwargs):
+def cma(objective, **kwargs):
     """Solve an equation using Covariance Matrix Adaptation Evolution Strategy.
 
     See module `cma` for details.
@@ -16,9 +16,6 @@ def cma(objective, save_file="", **kwargs):
     ----------
     objective : BaseSchrodinger
         Instance that contains the function that will be optimized.
-    save_file : str
-        File to which the results of the optimization is saved.
-        By default, the results are not saved.
     kwargs : dict
         Keyword arguments to `cma.fmin`. See its documentation for details.
         By default, 'sigma0' is set to 0.01 and 'options' to `{'ftarget': None, 'timeout': np.inf,
@@ -102,13 +99,13 @@ def cma(objective, save_file="", **kwargs):
 
     output["internal"] = results
 
-    if save_file != "":
-        np.save(save_file, output["params"])
+    objective.assign_params(results[0])
+    objective.save_params()
 
     return output
 
 
-def minimize(objective, save_file="", **kwargs):
+def minimize(objective, **kwargs):
     """Solve an equation using `scipy.optimize.minimize`.
 
     See module `scipy.optimize.minimize` for details.
@@ -117,9 +114,6 @@ def minimize(objective, save_file="", **kwargs):
     ----------
     objective : BaseSchrodinger
         Instance that contains the function that will be optimized.
-    save_file : str
-        File to which the results of the optimization is saved.
-        By default, the results are not saved.
     kwargs : dict
         Keyword arguments to `scipy.optimize.minimize`. See its documentation for details.
         By default, if the objective has a gradient,  'method' is 'BFGS', 'jac' is the gradient
@@ -187,7 +181,7 @@ def minimize(objective, save_file="", **kwargs):
 
     kwargs.setdefault("callback", update_iteration)
 
-    output = wrap_scipy(scipy.optimize.minimize)(objective, save_file=save_file, **kwargs)
+    output = wrap_scipy(scipy.optimize.minimize)(objective, **kwargs)
     output["function"] = output["internal"].fun
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params

@@ -50,7 +50,7 @@ def check_cma():
 
 
 @pytest.mark.skipif(not check_cma(), reason="The module `cma` is unavailable.")
-def test_cma():
+def test_cma(tmp_path):
     """Test fanpy.solver.equation.cma."""
     wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
@@ -81,12 +81,14 @@ def test_cma():
     with pytest.raises(ValueError):
         equation.cma(EnergyOneSideProjection(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
+    path = str(tmp_path / "temp.npy")
     results = equation.cma(
-        EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100]), save_file="temp.npy"
+        EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100], tmpfile=path)
     )
-    test = np.load("temp.npy")
+    path = str(tmp_path / "temp_TempBaseWavefunction.npy")
+    test = np.load(path)
     assert np.allclose(results["params"], test)
-    os.remove("temp.npy")
+    os.remove(path)
 
 
 def test_minimize():

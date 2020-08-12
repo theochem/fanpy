@@ -1,4 +1,5 @@
 """Solver for CI wavefunctions."""
+import os
 import numpy as np
 import scipy.linalg
 from fanpy.ham.base import BaseHamiltonian
@@ -70,7 +71,9 @@ def brute(wfn, ham, save_file=""):
     del ci_matrix
 
     if save_file != "":
-        np.save(save_file, np.vstack(eigval, eigvec))
+        root, ext = os.path.splitext(save_file)
+        wfn.save_params("{}_wfn{}".format(root, ext))
+        ham.save_params("{}_ham{}".format(root, ext))
 
     output = {
         "success": True,

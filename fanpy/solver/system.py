@@ -3,7 +3,7 @@ from fanpy.eqn.least_squares import ProjectedSchrodinger
 from fanpy.solver.wrappers import wrap_scipy
 
 
-def least_squares(objective, save_file="", **kwargs):
+def least_squares(objective, **kwargs):
     """Solve the system of Schrodinger equations as a least squares problem.
 
     This function wraps around `scipy.optimize.least_squares`.
@@ -12,9 +12,6 @@ def least_squares(objective, save_file="", **kwargs):
     ----------
     objective : ProjectedSchrodinger
         Objective that describes the system of equations.
-    save_file : str
-        File to which the results of the optimization is saved.
-        By default, the results are not saved.
     kwargs : dict
         Keyword arguments to `scipy.optimize.least_squares`. See its documentation for details.
         By default, 'xtol', 'ftol', and 'gtol' are set to `1e-15`, 'max_nfev' is 1000 times the
@@ -81,14 +78,14 @@ def least_squares(objective, save_file="", **kwargs):
 
     kwargs.setdefault("jac", hacked_jacobian)
 
-    output = wrap_scipy(solver)(objective, save_file=save_file, verbose=2, **kwargs)
+    output = wrap_scipy(solver)(objective, verbose=2, **kwargs)
     output["energy"] = objective.energy.params[0]
     output["residuals"] = output["internal"].fun
     output["cost"] = output["internal"].cost
     return output
 
 
-def root(objective, save_file="", **kwargs):
+def root(objective, **kwargs):
     """Solve the system of Schrodinger equations by finding its root.
 
     This function wraps around `scipy.optimize.root`.
@@ -97,9 +94,6 @@ def root(objective, save_file="", **kwargs):
     ----------
     objective : ProjectedSchrodinger
         Objective that describes the system of equations.
-    save_file : str
-        File to which the results of the optimization is saved.
-        By default, the results are not saved.
     kwargs : dict
         Keyword arguments to `scipy.optimize.least_squares`. See its documentation for details.
         By default, 'method' is 'hybr', 'jac' is the Jacobian provided, and 'options' is set to
@@ -160,6 +154,6 @@ def root(objective, save_file="", **kwargs):
 
     kwargs["callback"] = update_iteration
 
-    output = wrap_scipy(solver)(objective, save_file=save_file, **kwargs)
+    output = wrap_scipy(solver)(objective, **kwargs)
     output["energy"] = objective.energy.params
     return output

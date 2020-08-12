@@ -6,8 +6,6 @@ wrapped such that they all have the same API within the `fanpy.solver` module.
 """
 from functools import wraps
 
-import numpy as np
-
 
 def wrap_scipy(func):
     """Convert solvers from `scipy.optimize` to a consistent format.
@@ -27,10 +25,9 @@ def wrap_scipy(func):
 
     Returns
     -------
-    new_func(objective, save_file='', **kwargs) : function
+    new_func(objective, **kwargs) : function
         Wrapped scipy function.
         Output is a dictionary that is consistent with other solvers.
-        'save_file' is the name of the file that will be saved.
 
     Examples
     --------
@@ -39,7 +36,7 @@ def wrap_scipy(func):
     """
 
     @wraps(func)
-    def new_func(objective, save_file="", **kwargs):
+    def new_func(objective, **kwargs):
         """Solve the objective using the given function.
 
         This function wraps around `func`.
@@ -48,9 +45,6 @@ def wrap_scipy(func):
         ----------
         objective : BaseSchrodinger
             Objective.
-        save_file : str
-            File to which the results of the optimization is saved.
-            By default, the results are not saved.
         kwargs : dict
             Keyword arguments to the solver. See its documentation for details.
 
@@ -75,9 +69,6 @@ def wrap_scipy(func):
         output["message"] = results.message
         output["internal"] = results
 
-        if save_file != "":
-            np.save(save_file, output["params"])
-
         return output
 
     return new_func
@@ -98,10 +89,9 @@ def wrap_skopt(func):
 
     Returns
     -------
-    new_func(objective, save_file='', **kwargs) : function
+    new_func(objective, **kwargs) : function
         Wrapped scikit-optimize function.
         Output is a dictionary that is consistent with other solvers.
-        'save_file' is the name of the file that will be saved.
 
     Examples
     --------
@@ -110,7 +100,7 @@ def wrap_skopt(func):
     """
 
     @wraps(func)
-    def new_func(objective, save_file="", **kwargs):
+    def new_func(objective, **kwargs):
         """Solve the objective using the given function.
 
         This function wraps around `func`.
@@ -119,9 +109,6 @@ def wrap_skopt(func):
         ----------
         objective : BaseSchrodinger
             Objective.
-        save_file : str
-            File to which the results of the optimization is saved.
-            By default, the results are not saved.
         kwargs : dict
             Keyword arguments to the solver. See its documentation for details.
 
@@ -146,9 +133,6 @@ def wrap_skopt(func):
         output["params"] = results.x
         # output["message"] = results.message
         output["internal"] = results
-
-        if save_file != "":
-            np.save(save_file, output["params"])
 
         return output
 

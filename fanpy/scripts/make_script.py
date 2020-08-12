@@ -474,7 +474,7 @@ def make_script(
         output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix', file=output)\n"
     else:
         results1 = "results = {}(".format(solver_name)
-        results2 = "objective, save_file='{}', {})\n".format(save_chk, solver_kwargs)
+        results2 = "objective, {})\n".format(save_chk, solver_kwargs)
         output += "print('Optimizing wavefunction: {} solver', file=output)\n".format(solver_name)
         output += "\n".join(
             textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
