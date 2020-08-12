@@ -62,11 +62,11 @@ Objectives
 
 * Schrödinger Equation
 
-  * :class:`Base Schrodinger Equation <wfns.objective.schrodinger.base.BaseSchrodinger>`
-  * :class:`System of Equations <wfns.objective.schrodinger.system_nonlinear.SystemEquations>`
-  * :class:`Least Squared Sum of Equations <wfns.objective.schrodinger.least_squares.LeastSquaresEquations>`
-  * :class:`One Sided Energy <wfns.objective.schrodinger.onesided_energy.OneSidedEnergy>`
-  * :class:`Two Sided Energy <wfns.objective.schrodinger.twosided_energy.TwoSidedEnergy>`
+  * :class:`Base Schrodinger Equation <wfns.objective.base.BaseSchrodinger>`
+  * :class:`System of Equations <wfns.objective.system_nonlinear.SystemEquations>`
+  * :class:`Least Squared Sum of Equations <wfns.objective.least_squares.LeastSquaresEquations>`
+  * :class:`One Sided Energy <wfns.objective.onesided_energy.OneSidedEnergy>`
+  * :class:`Two Sided Energy <wfns.objective.twosided_energy.TwoSidedEnergy>`
 
 Solvers
 =======
@@ -159,11 +159,11 @@ Scripts
 
       wfns.objective.base.BaseObjective
       wfns.objective.constraints.norm.NormConstraint
-      wfns.objective.schrodinger.base.BaseSchrodinger
-      wfns.objective.schrodinger.system_nonlinear.SystemEquations
-      wfns.objective.schrodinger.least_squares.LeastSquaresEquations
-      wfns.objective.schrodinger.onesided_energy.OneSidedEnergy
-      wfns.objective.schrodinger.twosided_energy.TwoSidedEnergy
+      wfns.objective.base.BaseSchrodinger
+      wfns.objective.system_nonlinear.SystemEquations
+      wfns.objective.least_squares.LeastSquaresEquations
+      wfns.objective.onesided_energy.OneSidedEnergy
+      wfns.objective.twosided_energy.TwoSidedEnergy
 
       wfns.wfn.base.BaseWavefunction
       wfns.wfn.ci.base.CIWavefunction

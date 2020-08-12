@@ -1,1 +1,1 @@
-"""Module for constructing the equation that will be solved."""
+"""Module for objectives for solving the Schrodinger equation."""

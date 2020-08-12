@@ -84,7 +84,7 @@ In the FANCI module, only the following reference wavefunctions are supported:
     }
 
 This objective is implemented in class
-:class:`OneSidedEnergy <wfns.objective.schrodinger.onesided_energy.OneSidedEnergy>`.
+:class:`OneSidedEnergy <wfns.objective.onesided_energy.OneSidedEnergy>`.
 
 Projecting Out Slater Determinants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,7 +130,7 @@ We can sum over a subset of the Slater determinants to reduce the number of eval
     }
 
 This objective is implemented in class
-:class:`TwoSidedEnergy <wfns.objective.schrodinger.twosided_energy.TwoSidedEnergy>`.
+:class:`TwoSidedEnergy <wfns.objective.twosided_energy.TwoSidedEnergy>`.
 
 
 Projected Schrödinger Equation
@@ -167,7 +167,7 @@ satisfied. Then, we can ignore Slater determinants where both
 :math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right> \approx 0`.
 
 The objective for the projected Schrödinger equation is implemented in class
-:class:`SystemEquations <wfns.objective.schrodinger.system_nonlinear.SystemEquations>`.
+:class:`SystemEquations <wfns.objective.system_nonlinear.SystemEquations>`.
 
 Projection Space
 ~~~~~~~~~~~~~~~~

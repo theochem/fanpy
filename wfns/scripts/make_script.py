@@ -244,13 +244,13 @@ def make_script(
     from_imports.append(("wfns.backend.sd_list", "sd_list"))
 
     if objective == "system":
-        from_imports.append(("wfns.objective.schrodinger.system_nonlinear", "SystemEquations"))
+        from_imports.append(("wfns.objective.system_nonlinear", "SystemEquations"))
     elif objective == "least_squares":
-        from_imports.append(("wfns.objective.schrodinger.least_squares", "LeastSquaresEquations"))
+        from_imports.append(("wfns.objective.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
-        from_imports.append(("wfns.objective.schrodinger.twosided_energy", "TwoSidedEnergy"))
+        from_imports.append(("wfns.objective.twosided_energy", "TwoSidedEnergy"))
     elif objective == "one_energy":
-        from_imports.append(("wfns.objective.schrodinger.onesided_energy", "OneSidedEnergy"))
+        from_imports.append(("wfns.objective.onesided_energy", "OneSidedEnergy"))
 
     if solver == "cma":
         from_imports.append(("wfns.solver.equation", "cma"))

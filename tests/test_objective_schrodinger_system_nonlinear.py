@@ -4,8 +4,8 @@ import pytest
 from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.constraints.norm import NormConstraint
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
-from wfns.objective.schrodinger.utils import ParamContainer, ComponentParameterIndices
+from wfns.objective.system_nonlinear import SystemEquations
+from wfns.objective.utils import ParamContainer, ComponentParameterIndices
 from wfns.wfn.ci.base import CIWavefunction
 
 

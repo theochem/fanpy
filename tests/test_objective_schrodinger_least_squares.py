@@ -1,8 +1,8 @@
 """Test wfns.objective.least_squares."""
 import numpy as np
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
+from wfns.objective.least_squares import LeastSquaresEquations
+from wfns.objective.system_nonlinear import SystemEquations
 from wfns.wfn.ci.base import CIWavefunction
 
 

@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.objective.onesided_energy import OneSidedEnergy
 
 
 class EnergyConstraint(OneSidedEnergy):

@@ -4,13 +4,11 @@ import os
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
-from wfns.objective.schrodinger.utils import ComponentParameterIndices
+from wfns.objective.utils import ComponentParameterIndices
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 from wfns.wfn.composite.lincomb import LinearCombinationWavefunction
-
-from wfns.objective.schrodinger.cext import get_energy_one_proj, get_energy_one_proj_deriv
 
 
 class BaseSchrodinger:

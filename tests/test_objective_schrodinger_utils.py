@@ -1,10 +1,10 @@
-"""Test wfns.objective.schrodinger.utils."""
+"""Test wfns.objective.utils."""
 import collections
 
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.objective.schrodinger.utils import ParamContainer, ComponentParameterIndices
+from wfns.objective.utils import ParamContainer, ComponentParameterIndices
 
 
 def test_assign_param():

@@ -1,9 +1,9 @@
 """Solvers for single equations."""
 import numpy as np
-from wfns.objective.schrodinger.base import BaseSchrodinger
-from wfns.objective.schrodinger.least_squares import LeastSquaresEquations
-from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.objective.schrodinger.twosided_energy import TwoSidedEnergy
+from wfns.objective.base import BaseSchrodinger
+from wfns.objective.least_squares import LeastSquaresEquations
+from wfns.objective.onesided_energy import OneSidedEnergy
+from wfns.objective.twosided_energy import TwoSidedEnergy
 from wfns.solver.wrappers import wrap_scipy
 
 
