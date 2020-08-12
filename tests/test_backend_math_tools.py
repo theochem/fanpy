@@ -1,7 +1,7 @@
-"""Test for wfns.tools.math_tools."""
+"""Test for fanpy.tools.math_tools."""
 import numpy as np
 import pytest
-from wfns.tools.math_tools import (
+from fanpy.tools.math_tools import (
     adjugate,
     binomial,
     permanent_borchardt,

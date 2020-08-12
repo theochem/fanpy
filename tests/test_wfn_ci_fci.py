@@ -1,10 +1,10 @@
-"""Test wfns.wavefunction.fci."""
+"""Test fanpy.wavefunction.fci."""
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.solver.ci import brute
-from wfns.wfn.ci.fci import FCI
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.solver.ci import brute
+from fanpy.wfn.ci.fci import FCI
 
 
 def test_fci_assign_seniority():

@@ -1,9 +1,9 @@
-"""Test wfns.slater."""
+"""Test fanpy.slater."""
 import itertools as it
 
 import numpy as np
 import pytest
-from wfns.tools import slater
+from fanpy.tools import slater
 
 
 def test_occ():

@@ -1,10 +1,10 @@
-"""Test wfns.wavefunction.wavefunctions."""
+"""Test fanpy.wavefunction.wavefunctions."""
 import cachetools
 
 import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
-from wfns.wfn.base import BaseWavefunction
+from fanpy.wfn.base import BaseWavefunction
 
 
 def test_assign_nelec():

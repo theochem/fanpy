@@ -1,7 +1,7 @@
-"""Test wfns.ham.base."""
+"""Test fanpy.ham.base."""
 import numpy as np
 import pytest
-from wfns.ham.base import BaseHamiltonian
+from fanpy.ham.base import BaseHamiltonian
 
 
 class Empty:

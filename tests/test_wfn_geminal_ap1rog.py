@@ -1,13 +1,13 @@
-"""Test wfns.wavefunction.geminals.ap1rog.AP1roG."""
+"""Test fanpy.wavefunction.geminals.ap1rog.AP1roG."""
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.solver.equation import minimize
-from wfns.solver.system import least_squares
-from wfns.wfn.geminal.ap1rog import AP1roG
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.solver.equation import minimize
+from fanpy.solver.system import least_squares
+from fanpy.wfn.geminal.ap1rog import AP1roG
 
 
 def test_ap1rog_assign_ref_sd():

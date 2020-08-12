@@ -1,11 +1,11 @@
-"""Test wfns.solver.system."""
+"""Test fanpy.solver.system."""
 import numpy as np
 import pytest
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-import wfns.solver.system as system
-from wfns.wfn.base import BaseWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+import fanpy.solver.system as system
+from fanpy.wfn.base import BaseWavefunction
 
 
 class TempBaseWavefunction(BaseWavefunction):
@@ -37,7 +37,7 @@ class TempBaseWavefunction(BaseWavefunction):
 
 
 def test_least_squares():
-    """Test wfns.solver.least_squares."""
+    """Test fanpy.solver.least_squares."""
     wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
@@ -57,7 +57,7 @@ def test_least_squares():
 
 
 def test_root():
-    """Test wfns.solver.root."""
+    """Test fanpy.solver.root."""
     wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)

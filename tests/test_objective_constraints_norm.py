@@ -1,10 +1,10 @@
-"""Test wfns.eqn.constraints.norm."""
+"""Test fanpy.eqn.constraints.norm."""
 import itertools as it
 
 import numpy as np
 import pytest
-from wfns.eqn.constraints.norm import NormConstraint
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.eqn.constraints.norm import NormConstraint
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_norm_init():

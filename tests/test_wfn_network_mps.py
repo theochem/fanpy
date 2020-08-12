@@ -1,9 +1,9 @@
-"""Tests for the wfns.wfn.network.mps."""
+"""Tests for the fanpy.wfn.network.mps."""
 import numpy as np
 import numdifftools as nd
 import pytest
 from utils import skip_init
-from wfns.wfn.network.mps import MatrixProductState
+from fanpy.wfn.network.mps import MatrixProductState
 
 
 def test_assign_dimension():

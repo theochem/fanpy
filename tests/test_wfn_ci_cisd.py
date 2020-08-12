@@ -1,10 +1,10 @@
-"""Test wfns.wavefunction.cisd."""
+"""Test fanpy.wavefunction.cisd."""
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.solver.ci import brute
-from wfns.wfn.ci.cisd import CISD
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.solver.ci import brute
+from fanpy.wfn.ci.cisd import CISD
 
 
 def test_cisd_assign_sd_vec():

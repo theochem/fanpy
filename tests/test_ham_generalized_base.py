@@ -1,11 +1,11 @@
-"""Test wfns.ham.generalized_base."""
+"""Test fanpy.ham.generalized_base."""
 # pylint: disable=abstract-class-instantiated
 import itertools as it
 
 import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
-from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
+from fanpy.ham.generalized_base import BaseGeneralizedHamiltonian
 
 
 def test_assign_integrals():

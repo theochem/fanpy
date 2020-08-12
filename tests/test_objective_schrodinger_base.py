@@ -1,13 +1,13 @@
-"""Test wfns.eqn.base."""
+"""Test fanpy.eqn.base."""
 import itertools as it
 
 import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.base import BaseSchrodinger
-from wfns.eqn.utils import ParamContainer, ComponentParameterIndices
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.base import BaseSchrodinger
+from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_baseschrodinger_init():
@@ -432,6 +432,6 @@ def test_baseschrodinger_get_energy_one_two_proj():
 
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
-    from wfns.tools.sd_list import sd_list
+    from fanpy.tools.sd_list import sd_list
     sds = sd_list(4, 10)
     assert np.allclose(test.get_energy_one_proj(sds), test.get_energy_two_proj(sds))

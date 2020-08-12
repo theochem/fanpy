@@ -1,12 +1,12 @@
-"""Tests for wfns.wfn.network.keras_network.KerasNetwork."""
+"""Tests for fanpy.wfn.network.keras_network.KerasNetwork."""
 from tensorflow.python import keras
 import numdifftools as nd
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.tools.sd_list import sd_list
-import wfns.tools.slater as slater
-from wfns.wfn.network.keras_network import KerasNetwork
+from fanpy.tools.sd_list import sd_list
+import fanpy.tools.slater as slater
+from fanpy.wfn.network.keras_network import KerasNetwork
 
 
 keras.backend.set_floatx("float64")

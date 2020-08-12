@@ -1,9 +1,9 @@
-"""Test wfns.eqn.least_squares."""
+"""Test fanpy.eqn.least_squares."""
 import numpy as np
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.least_squares import LeastSquaresEquations
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.least_squares import LeastSquaresEquations
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_num_eqns():

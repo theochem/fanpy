@@ -1,8 +1,8 @@
-"""Test wfns.wavefunction.ci_pairs."""
+"""Test fanpy.wavefunction.ci_pairs."""
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.wfn.ci.ci_pairs import CIPairs
+from fanpy.wfn.ci.ci_pairs import CIPairs
 
 
 def test_assign_sd_vec():
@@ -43,7 +43,7 @@ def test_to_ap1rog():
 
 @pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_h2_sto6g_ground():
-    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals."""
+    """Test fanpy.wavefunction.ci_pairs.CIPairs.to_ap1rog using H2 with HF/STO6G orbitals."""
     # nelec = 2
     # nspin = 4
     # cipairs = CIPairs(nelec, nspin)
@@ -60,7 +60,7 @@ def test_to_ap1rog_h2_sto6g_ground():
 
 @pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_lih_sto6g():
-    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals."""
+    """Test fanpy.wavefunction.ci_pairs.CIPairs.to_ap1rog with LiH with HF/STO6G orbitals."""
     # nelec = 4
     # nspin = 12
     # cipairs = CIPairs(nelec, nspin)
@@ -77,7 +77,7 @@ def test_to_ap1rog_lih_sto6g():
 
 @pytest.mark.skip(reason="No reference to compare against.")
 def test_to_ap1rog_h4_sto6g():
-    """Test wfns.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals."""
+    """Test fanpy.wavefunction.ci_pairs.CIPairs.to_ap1rog with H4 with HF/STO6G orbitals."""
     # nelec = 4
     # nspin = 8
     # cipairs = CIPairs(nelec, nspin)

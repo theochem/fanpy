@@ -1,14 +1,14 @@
 """Test fors wfn.graphs."""
 import numpy as np
 
-from wfns.tools.graphs import (
+from fanpy.tools.graphs import (
     generate_biclique_pmatch,
     generate_complete_pmatch,
     generate_general_pmatch,
     generate_unordered_partition,
     int_partition_recursive,
 )
-from wfns.tools.slater import sign_perm
+from fanpy.tools.slater import sign_perm
 
 
 def test_generate_complete_pmatch():

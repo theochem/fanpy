@@ -1,12 +1,12 @@
-"""Test wfns.eqn.system_nonlinear."""
+"""Test fanpy.eqn.system_nonlinear."""
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.constraints.norm import NormConstraint
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.eqn.utils import ParamContainer, ComponentParameterIndices
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.constraints.norm import NormConstraint
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_system_init_energy():

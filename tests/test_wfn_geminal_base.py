@@ -1,9 +1,9 @@
-"""Test wfns.wavefunction.geminal.gem_wavefunction."""
+"""Test fanpy.wavefunction.geminal.gem_wavefunction."""
 import numpy as np
 import numdifftools as nd
 import pytest
 from utils import disable_abstract, skip_init
-from wfns.wfn.geminal.base import BaseGeminal
+from fanpy.wfn.geminal.base import BaseGeminal
 
 
 class TempBaseGeminal(BaseGeminal):

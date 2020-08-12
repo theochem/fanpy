@@ -1,6 +1,6 @@
-"""Test wfns.sd_list."""
+"""Test fanpy.sd_list."""
 import pytest
-from wfns.tools import sd_list
+from fanpy.tools import sd_list
 
 
 def test_satisfies_conditions():

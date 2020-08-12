@@ -1,14 +1,14 @@
-"""Test wfns.wavefunction.geminals.apig."""
+"""Test fanpy.wavefunction.geminals.apig."""
 import numpy as np
 import pytest
 import scipy
 from utils import find_datafile, skip_init
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.solver.equation import minimize
-from wfns.solver.system import least_squares
-from wfns.wfn.geminal.apig import APIG
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.solver.equation import minimize
+from fanpy.solver.system import least_squares
+from fanpy.wfn.geminal.apig import APIG
 
 
 def test_apig_spin():

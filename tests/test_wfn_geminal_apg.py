@@ -1,16 +1,16 @@
-"""Test wfns.wavefunction.geminals.apg."""
+"""Test fanpy.wavefunction.geminals.apg."""
 import types
 
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.tools.graphs import generate_complete_pmatch
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.solver.equation import cma, minimize
-from wfns.solver.system import least_squares
-from wfns.wfn.geminal.apg import APG
+from fanpy.tools.graphs import generate_complete_pmatch
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.solver.equation import cma, minimize
+from fanpy.solver.system import least_squares
+from fanpy.wfn.geminal.apg import APG
 
 
 def test_apg_assign_orbpairs():

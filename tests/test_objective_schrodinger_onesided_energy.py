@@ -1,10 +1,10 @@
-"""Test wfns.eqn.onesided_energy."""
+"""Test fanpy.eqn.onesided_energy."""
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_onesided_energy_assign_refwfn():

@@ -1,17 +1,17 @@
-"""Test wfns.wavefunction.composite.jacobi."""
+"""Test fanpy.wavefunction.composite.jacobi."""
 import itertools as it
 
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.tools.sd_list import sd_list
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.solver.ci import brute
-from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.ci.base import CIWavefunction
-from wfns.wfn.ci.doci import DOCI
-from wfns.wfn.composite.jacobi import JacobiWavefunction
-from wfns.wfn.composite.nonorth import NonorthWavefunction
+from fanpy.tools.sd_list import sd_list
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.solver.ci import brute
+from fanpy.wfn.base import BaseWavefunction
+from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.ci.doci import DOCI
+from fanpy.wfn.composite.jacobi import JacobiWavefunction
+from fanpy.wfn.composite.nonorth import NonorthWavefunction
 
 
 class TempWavefunction(BaseWavefunction):

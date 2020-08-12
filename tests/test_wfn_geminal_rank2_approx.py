@@ -1,9 +1,9 @@
-"""Test wfns.wavefunction.geminals.rank2_geminal.RankTwoGeminal."""
+"""Test fanpy.wavefunction.geminals.rank2_geminal.RankTwoGeminal."""
 import numpy as np
 import pytest
-from wfns.wfn.geminal.apig import APIG
-from wfns.wfn.geminal.base import BaseGeminal
-from wfns.wfn.geminal.rank2_approx import full_to_rank2, RankTwoApprox
+from fanpy.wfn.geminal.apig import APIG
+from fanpy.wfn.geminal.base import BaseGeminal
+from fanpy.wfn.geminal.rank2_approx import full_to_rank2, RankTwoApprox
 
 
 class RankTwoGeminal(RankTwoApprox, BaseGeminal):

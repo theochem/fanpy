@@ -1,16 +1,16 @@
-"""Test wfns.ham.unrestricted_chemical."""
+"""Test fanpy.ham.unrestricted_chemical."""
 import itertools as it
 
 import numdifftools as nd
 import numpy as np
 import pytest
 from utils import disable_abstract, find_datafile
-from wfns.tools import slater
-from wfns.tools.math_tools import unitary_matrix
-from wfns.tools.sd_list import sd_list
-from wfns.ham.base import BaseHamiltonian
-from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.tools import slater
+from fanpy.tools.math_tools import unitary_matrix
+from fanpy.tools.sd_list import sd_list
+from fanpy.ham.base import BaseHamiltonian
+from fanpy.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_set_ref_ints():

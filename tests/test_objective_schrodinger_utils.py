@@ -1,10 +1,10 @@
-"""Test wfns.eqn.utils."""
+"""Test fanpy.eqn.utils."""
 import collections
 
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.eqn.utils import ParamContainer, ComponentParameterIndices
+from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 
 
 def test_assign_param():

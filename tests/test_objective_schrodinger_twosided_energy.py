@@ -1,10 +1,10 @@
-"""Test wfns.eqn.twosided_energy."""
+"""Test fanpy.eqn.twosided_energy."""
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.twosided_energy import TwoSidedEnergy
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.twosided_energy import TwoSidedEnergy
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_twosided_energy_assign_pspaces():

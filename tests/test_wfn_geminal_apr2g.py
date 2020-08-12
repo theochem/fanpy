@@ -1,13 +1,13 @@
-"""Test wfns.wavefunction.geminals.apr2g.APr2G."""
+"""Test fanpy.wavefunction.geminals.apr2g.APr2G."""
 import numpy as np
 from utils import find_datafile
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-from wfns.solver.equation import cma, minimize
-from wfns.solver.system import least_squares
-from wfns.wfn.geminal.apr2g import APr2G
-from wfns.wfn.geminal.rank2_approx import full_to_rank2
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.solver.equation import cma, minimize
+from fanpy.solver.system import least_squares
+from fanpy.wfn.geminal.apr2g import APr2G
+from fanpy.wfn.geminal.rank2_approx import full_to_rank2
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)

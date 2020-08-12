@@ -1,8 +1,8 @@
-"""Test wfns.wavefunction.base."""
+"""Test fanpy.wavefunction.base."""
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.wfn.ci.base import CIWavefunction
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_assign_spin():

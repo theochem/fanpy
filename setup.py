@@ -88,9 +88,9 @@ setup(
     # platform.
     entry_points={
         "console_scripts": [
-            "wfns_make_script=wfns.scripts.make_script:main",
-            "wfns_run_calc=wfns.scripts.run_calc:main",
-            "wfns_make_nn_script=wfns.scripts.make_nn_script:main",
+            "fanpy_make_script=wfns.scripts.make_script:main",
+            "fanpy_run_calc=wfns.scripts.run_calc:main",
+            "fanpy_make_nn_script=wfns.scripts.make_nn_script:main",
         ]
     },
     # List additional URLs that are relevant to your project as a dict.
@@ -102,12 +102,12 @@ setup(
     ext_modules= cythonize(
             [
         Extension(
-            "wfns.objective.schrodinger.cext",
-            ["wfns/objective/schrodinger/cext.pyx"],
+            "fanpy.objective.schrodinger.cext",
+            ["fanpy/objective/schrodinger/cext.pyx"],
         ),
         Extension(
-            "wfns.wfn.geminal.cext",
-            ["wfns/wfn/geminal/cext.pyx"],
+            "fanpy.wfn.geminal.cext",
+            ["fanpy/wfn/geminal/cext.pyx"],
         ),
         ]
     ),

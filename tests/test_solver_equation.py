@@ -1,14 +1,14 @@
-"""Test wfns.solver.equation."""
+"""Test fanpy.solver.equation."""
 import os
 
 import numpy as np
 import pytest
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.eqn.least_squares import LeastSquaresEquations
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.eqn.system_nonlinear import SystemEquations
-import wfns.solver.equation as equation
-from wfns.wfn.base import BaseWavefunction
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.eqn.least_squares import LeastSquaresEquations
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.system_nonlinear import SystemEquations
+import fanpy.solver.equation as equation
+from fanpy.wfn.base import BaseWavefunction
 
 
 class TempBaseWavefunction(BaseWavefunction):
@@ -51,7 +51,7 @@ def check_cma():
 
 @pytest.mark.skipif(not check_cma(), reason="The module `cma` is unavailable.")
 def test_cma():
-    """Test wnfs.solver.equation.cma."""
+    """Test fanpy.solver.equation.cma."""
     wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)

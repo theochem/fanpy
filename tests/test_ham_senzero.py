@@ -1,10 +1,10 @@
-"""Test wfns.ham.senzero."""
+"""Test fanpy.ham.senzero."""
 import numpy as np
 import pytest
 from utils import find_datafile
-from wfns.tools.slater import get_seniority
-from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.tools.slater import get_seniority
+from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
 
 
 def test_integrate_sd_sd_trivial():

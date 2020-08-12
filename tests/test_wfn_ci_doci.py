@@ -1,11 +1,11 @@
-"""Test wfns.wavefunction.doci."""
+"""Test fanpy.wavefunction.doci."""
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.eqn.onesided_energy import OneSidedEnergy
-from wfns.solver.equation import cma
-from wfns.wfn.ci.doci import DOCI
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.solver.equation import cma
+from fanpy.wfn.ci.doci import DOCI
 
 
 def test_assign_nelec():
