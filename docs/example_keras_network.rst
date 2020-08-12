@@ -63,7 +63,7 @@ Optimizer
     print('Wavefunction: KerasNetwork')
 
     # Initialize Hamiltonian
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, energy_nuc_nuc=nuc_nuc, params=None)
+    ham = RestrictedChemicalHamiltonian(one_int, two_int, params=None)
     print('Hamiltonian: RestrictedChemicalHamiltonian')
 
     # Projection space

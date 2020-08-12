@@ -373,7 +373,7 @@ def make_script(
 
     output += "# Initialize Hamiltonian\n"
     ham_init1 = "ham = {}(".format(ham_name)
-    ham_init2 = "one_int, two_int, energy_nuc_nuc=nuc_nuc, params={})\n".format(ham_params)
+    ham_init2 = "one_int, two_int, params={})\n".format(ham_params)
     output += "\n".join(
         textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
     )
