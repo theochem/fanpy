@@ -3,7 +3,7 @@ import numpy as np
 from fanpy.ham.base import BaseHamiltonian
 
 
-# FIXME: ordering of the words is not consistent with the GeneralizedChemicalHamiltonian
+# FIXME: ordering of the words is not consistent with the GeneralizedMolecularHamiltonian
 class BaseGeneralizedHamiltonian(BaseHamiltonian):
     """Base class for Hamiltonian with generalized orbitals.
 

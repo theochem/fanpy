@@ -1,10 +1,10 @@
 """Seniority-zero Hamiltonian object that interacts with the wavefunction."""
 import numpy as np
 from fanpy.tools import slater
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 
 
-class SeniorityZeroHamiltonian(RestrictedChemicalHamiltonian):
+class SeniorityZeroHamiltonian(RestrictedMolecularHamiltonian):
     r"""Hamiltonian that involves only the zero-seniority terms.
 
     # FIXME: fix up eqns

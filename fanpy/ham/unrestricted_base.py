@@ -3,7 +3,7 @@ import numpy as np
 from fanpy.ham.base import BaseHamiltonian
 
 
-# FIXME: ordering of the words is not consistent with the UnrestrictedChemicalHamiltonian
+# FIXME: ordering of the words is not consistent with the UnrestrictedMolecularHamiltonian
 class BaseUnrestrictedHamiltonian(BaseHamiltonian):
     """Base class for Hamiltonian with unrestricted orbitals.
 

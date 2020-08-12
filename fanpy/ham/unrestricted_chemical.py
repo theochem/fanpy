@@ -9,7 +9,7 @@ from fanpy.ham.unrestricted_base import BaseUnrestrictedHamiltonian
 # pylint: disable=C0302
 
 
-class UnrestrictedChemicalHamiltonian(BaseUnrestrictedHamiltonian):
+class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system expressed wrt unrestricted orbitals.
 
     .. math::

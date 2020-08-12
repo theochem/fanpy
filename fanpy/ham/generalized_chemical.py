@@ -9,7 +9,7 @@ from fanpy.ham.generalized_base import BaseGeneralizedHamiltonian
 # pylint: disable=C0302
 
 
-class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
+class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system expressed wrt generalized orbitals.
 
     .. math::
@@ -121,7 +121,7 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
             the number of orbitals.
 
         """
-        # NOTE: nspin is not used here because RestrictedChemicalHamiltonian inherits this method
+        # NOTE: nspin is not used here because RestrictedMolecularHamiltonian inherits this method
         # and it would need to use the number of spatial orbitals instead of the spin orbitals
         # FIXME: this is too hacky. should the dimension of the antihermitian matrix be stored
         # somewhere?

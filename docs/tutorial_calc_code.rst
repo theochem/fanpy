@@ -28,7 +28,7 @@ we generate the following script
     import numpy as np
     import os
     from wfns.wfn.geminal.ap1rog import AP1roG
-    from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+    from wfns.ham.restricted_chemical import RestrictedMolecularHamiltonian
     from wfns.tools.sd_list import sd_list
     from wfns.eqn.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
@@ -61,8 +61,8 @@ we generate the following script
     print('Wavefunction: AP1roG')
 
     # Initialize Hamiltonian
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, params=None)
-    print('Hamiltonian: RestrictedChemicalHamiltonian')
+    ham = RestrictedMolecularHamiltonian(one_int, two_int, params=None)
+    print('Hamiltonian: RestrictedMolecularHamiltonian')
 
     # Projection space
     pspace = sd_list(nelec, nspin//2, num_limit=None, exc_orders=[1, 2], spin=None,
@@ -99,7 +99,7 @@ The script can be read as a sequence of steps:
 3. Hamiltonian is initialized. To customize the Hamiltonian, the Hamiltonian variable, :code:`ham`,
    can be assigned to a different Hamiltonian or be initialized with different parameters. Note that
    the integrals may be required to have specialized structures (e.g.
-   UnrestrictedChemicalHamiltonian). For more information, go to the :code:`__init__` method of the
+   UnrestrictedMolecularHamiltonian). For more information, go to the :code:`__init__` method of the
    Hamiltonian in the API documentation.
 4. Select the projection space. The projection space must be provided as a list (or any other
    iterable) of integers whose binary correspond to the occupation vector of the Slater determinant.

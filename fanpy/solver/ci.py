@@ -40,7 +40,7 @@ def brute(wfn, ham, save_file=""):
     ------
     TypeError
         If wavefunction is not an instance (or instance of a child) of CIWavefunction.
-        If Hamiltonian is not an instance (or instance of a child) of ChemicalHamiltonian.
+        If Hamiltonian is not an instance (or instance of a child) of MolecularHamiltonian.
     ValueError
         If wavefunction and Hamiltonian do not have the same data type.
         If wavefunction and Hamiltonian do not have the same number of spin orbitals.

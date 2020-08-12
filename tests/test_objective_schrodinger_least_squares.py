@@ -1,6 +1,6 @@
 """Test fanpy.eqn.least_squares."""
 import numpy as np
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.wfn.ci.base import CIWavefunction
@@ -9,7 +9,7 @@ from fanpy.wfn.ci.base import CIWavefunction
 def test_num_eqns():
     """Test LeastSquaresEquation.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )
@@ -20,7 +20,7 @@ def test_num_eqns():
 def test_leastsquares_objective():
     """Test LeastSquaresEquations.objective."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )
@@ -40,7 +40,7 @@ def test_leastsquares_objective():
 def test_leastsquares_gradient():
     """Test LeastSquaresEquations.gradient."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )

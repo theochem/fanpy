@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from fanpy.tools.sd_list import sd_list
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.nonorth import NonorthWavefunction
@@ -640,7 +640,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
             )
         )
 
-        ham = RestrictedChemicalHamiltonian(
+        ham = RestrictedMolecularHamiltonian(
             np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy")),
             np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy")),
         )

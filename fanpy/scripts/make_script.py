@@ -238,8 +238,8 @@ def make_script(
         from_imports.append(("fanpy.ham.senzero", "SeniorityZeroHamiltonian"))
         ham_name = "SeniorityZeroHamiltonian"
     else:
-        from_imports.append(("fanpy.ham.restricted_chemical", "RestrictedChemicalHamiltonian"))
-        ham_name = "RestrictedChemicalHamiltonian"
+        from_imports.append(("fanpy.ham.restricted_chemical", "RestrictedMolecularHamiltonian"))
+        ham_name = "RestrictedMolecularHamiltonian"
 
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 

@@ -22,7 +22,7 @@ Default MPS Configuration
 Wavefunction
    MPS
 Hamiltonian
-   Restricted Chemical Hamiltonian
+   Restricted Molecular Hamiltonian
 Optimized Parameters
    Orbitals are optimized
    MPS parameters are optimized
@@ -38,7 +38,7 @@ Optimizer
     import numpy as np
     import os
     from wfns.wfn.network.mps import MatrixProductState
-    from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+    from wfns.ham.restricted_chemical import RestrictedMolecularHamiltonian
     from wfns.tools.sd_list import sd_list
     from wfns.eqn.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
@@ -71,8 +71,8 @@ Optimizer
     print('Wavefunction: MatrixProductState')
 
     # Initialize Hamiltonian
-    ham = RestrictedChemicalHamiltonian(one_int, two_int, params=None)
-    print('Hamiltonian: RestrictedChemicalHamiltonian')
+    ham = RestrictedMolecularHamiltonian(one_int, two_int, params=None)
+    print('Hamiltonian: RestrictedMolecularHamiltonian')
 
     # Projection space
     pspace = sd_list(nelec, nspin//2, num_limit=None, exc_orders=[1, 2], spin=None,

@@ -1,12 +1,12 @@
 """Test wfn.solver.ci."""
 import numpy as np
 import pytest
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver import ci
 from fanpy.wfn.ci.base import CIWavefunction
 
 
-class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):
+class TempMolecularHamiltonian(RestrictedMolecularHamiltonian):
     """Class that overwrite integrate_sd_sd for simplicity."""
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None):
@@ -24,7 +24,7 @@ class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):
 def test_brute():
     """Test wfn.solver.ci.brute."""
     test_wfn = CIWavefunction(2, 4, sds=[0b0011, 0b1100])
-    test_ham = TempChemicalHamiltonian(
+    test_ham = TempMolecularHamiltonian(
         np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
     )
     # check type
@@ -33,14 +33,14 @@ def test_brute():
     with pytest.raises(TypeError):
         ci.brute(test_wfn, None, 0)
 
-    test_ham = TempChemicalHamiltonian(
+    test_ham = TempMolecularHamiltonian(
         np.ones((3, 3), dtype=float), np.ones((3, 3, 3, 3), dtype=float)
     )
     with pytest.raises(ValueError):
         ci.brute(test_wfn, test_ham, 0)
 
     test_wfn = CIWavefunction(2, 4, sds=[0b0011, 0b1100])
-    test_ham = TempChemicalHamiltonian(
+    test_ham = TempMolecularHamiltonian(
         np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
     )
     with pytest.raises(TypeError):

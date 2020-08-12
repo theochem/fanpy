@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver.ci import brute
 from fanpy.wfn.ci.cisd import CISD
 
@@ -64,7 +64,7 @@ def test_cisd_h2_631gdp():
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
     nuc_nuc = 0.71317683129
-    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(cisd, ham)
@@ -97,7 +97,7 @@ def test_cisd_lih_631g():
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
     nuc_nuc = 0.995317634356
-    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
 
     # optimize
     results = brute(cisd, ham)

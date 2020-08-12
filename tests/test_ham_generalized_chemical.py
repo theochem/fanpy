@@ -9,25 +9,25 @@ from fanpy.tools import slater
 from fanpy.tools.math_tools import unitary_matrix
 from fanpy.tools.sd_list import sd_list
 from fanpy.ham.base import BaseHamiltonian
-from fanpy.ham.generalized_chemical import GeneralizedChemicalHamiltonian
+from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_init():
-    """Test GeneralizedChemicalHamiltonian.__init__."""
+    """Test GeneralizedMolecularHamiltonian.__init__."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test = GeneralizedMolecularHamiltonian(one_int, two_int)
     assert np.allclose(test.params, np.zeros(6))
     assert np.allclose(test._ref_one_int, one_int)
     assert np.allclose(test._ref_two_int, two_int)
 
 
 def test_set_ref_ints():
-    """Test GeneralizedChemicalHamiltonian.set_ref_ints."""
+    """Test GeneralizedMolecularHamiltonian.set_ref_ints."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test = GeneralizedMolecularHamiltonian(one_int, two_int)
     assert np.allclose(test._ref_one_int, one_int)
     assert np.allclose(test._ref_two_int, two_int)
 
@@ -43,13 +43,13 @@ def test_set_ref_ints():
 
 
 def test_cache_two_ints():
-    """Test GeneralizedChemicalHamiltonian.cache_two_ints."""
+    """Test GeneralizedMolecularHamiltonian.cache_two_ints."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     two_int_ijij = np.array([[5, 10], [15, 20]])
     two_int_ijji = np.array([[5, 11], [14, 20]])
 
-    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test = GeneralizedMolecularHamiltonian(one_int, two_int)
     assert np.allclose(test._cached_two_int_ijij, two_int_ijij)
     assert np.allclose(test._cached_two_int_ijji, two_int_ijji)
 
@@ -65,11 +65,11 @@ def test_cache_two_ints():
 
 
 def test_assign_params():
-    """Test GeneralizedChemicalHamiltonian.assign_params."""
+    """Test GeneralizedMolecularHamiltonian.assign_params."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
 
-    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test = GeneralizedMolecularHamiltonian(one_int, two_int)
     with pytest.raises(ValueError):
         test.assign_params([0])
     with pytest.raises(ValueError):
@@ -100,7 +100,7 @@ def test_assign_params():
 
 
 def test_integrate_sd_wfn():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn.
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn.
 
     Integrals that correspond to restricted orbitals were used.
 
@@ -116,7 +116,7 @@ def test_integrate_sd_wfn():
     two_int[2:, :2, 2:, :2] = restricted_two_int
     two_int[2:, 2:, 2:, 2:] = restricted_two_int
 
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     test_wfn = type(
         "Temporary wavefunction.",
         (object,),
@@ -170,10 +170,10 @@ def test_integrate_sd_wfn():
 
 
 def test_integrate_sd_sd_trivial():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_sd for trivial cases."""
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_sd for trivial cases."""
     one_int = np.random.rand(6, 6)
     two_int = np.random.rand(6, 6, 6, 6)
-    test = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b001001, components=True))
     assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b111000, components=True))
@@ -197,7 +197,7 @@ def test_integrate_sd_sd_trivial():
 
 
 def test_integrate_sd_sd_h2_631gdp():
-    """Test GenrealizedChemicalHamiltonian.integrate_sd_sd using H2 HF/6-31G** orbitals.
+    """Test GenrealizedMolecularHamiltonian.integrate_sd_sd using H2 HF/6-31G** orbitals.
 
     Compare CI matrix with the PySCF result.
     Integrals that correspond to restricted orbitals were used.
@@ -214,7 +214,7 @@ def test_integrate_sd_sd_h2_631gdp():
     two_int[10:, :10, 10:, :10] = restricted_two_int
     two_int[10:, 10:, 10:, 10:] = restricted_two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     ref_ci_matrix = np.load(find_datafile("data_h2_hf_631gdp_cimatrix.npy"))
     ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy"))
@@ -226,7 +226,7 @@ def test_integrate_sd_sd_h2_631gdp():
 
 
 def test_integrate_sd_wfn_h2_631gdp():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn using H2 HF/6-31G** orbitals.
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn using H2 HF/6-31G** orbitals.
 
     Compare projected energy with the transformed CI matrix from PySCF.
     Compare projected energy with the transformed integrate_sd_sd.
@@ -244,7 +244,7 @@ def test_integrate_sd_wfn_h2_631gdp():
     two_int[10:, :10, 10:, :10] = restricted_two_int
     two_int[10:, 10:, 10:, 10:] = restricted_two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     ref_ci_matrix = np.load(find_datafile("data_h2_hf_631gdp_cimatrix.npy"))
     ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy")).tolist()
@@ -260,7 +260,7 @@ def test_integrate_sd_wfn_h2_631gdp():
 
 
 def test_integrate_sd_wfn_h4_sto6g():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn using H4 HF/STO6G orbitals.
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn using H4 HF/STO6G orbitals.
 
     Compare projected energy with the transformed integrate_sd_sd.
     Integrals that correspond to restricted orbitals were used.
@@ -284,7 +284,7 @@ def test_integrate_sd_wfn_h4_sto6g():
     two_int[4:, :4, 4:, :4] = restricted_two_int
     two_int[4:, 4:, 4:, 4:] = restricted_two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     for sd in sds:
         assert np.allclose(
@@ -294,7 +294,7 @@ def test_integrate_sd_wfn_h4_sto6g():
 
 
 def test_integrate_sd_sd_lih_631g_trial_slow():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
     Integrals that correspond to restricted orbitals were used.
 
@@ -310,7 +310,7 @@ def test_integrate_sd_sd_lih_631g_trial_slow():
     two_int[11:, :11, 11:, :11] = restricted_two_int
     two_int[11:, 11:, 11:, 11:] = restricted_two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     ref_ci_matrix = np.load(find_datafile("data_lih_hf_631g_cimatrix.npy"))
     ref_pspace = np.load(find_datafile("data_lih_hf_631g_civec.npy"))
@@ -322,7 +322,7 @@ def test_integrate_sd_sd_lih_631g_trial_slow():
 
 
 def test_integrate_sd_sd_particlenum():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_sd and break particle number symmetery."""
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_sd and break particle number symmetery."""
     restricted_one_int = np.arange(1, 17, dtype=float).reshape(4, 4)
     restricted_two_int = np.arange(1, 257, dtype=float).reshape(4, 4, 4, 4)
     one_int = np.zeros((8, 8))
@@ -334,7 +334,7 @@ def test_integrate_sd_sd_particlenum():
     two_int[4:, :4, 4:, :4] = restricted_two_int
     two_int[4:, 4:, 4:, 4:] = restricted_two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     civec = [0b01, 0b11]
 
     # \braket{1 | h_{11} | 1}
@@ -347,9 +347,9 @@ def test_integrate_sd_sd_particlenum():
 
 
 def test_param_ind_to_rowcol_ind():
-    """Test GeneralizedChemicalHamiltonian.param_ind_to_rowcol_ind."""
+    """Test GeneralizedMolecularHamiltonian.param_ind_to_rowcol_ind."""
     for n in range(1, 40):
-        ham = GeneralizedChemicalHamiltonian(np.random.rand(n, n), np.random.rand(n, n, n, n))
+        ham = GeneralizedMolecularHamiltonian(np.random.rand(n, n), np.random.rand(n, n, n, n))
         for row_ind in range(n):
             for col_ind in range(row_ind + 1, n):
                 param_ind = row_ind * n - row_ind * (row_ind + 1) / 2 + col_ind - row_ind - 1
@@ -357,10 +357,10 @@ def test_param_ind_to_rowcol_ind():
 
 
 def test_integrate_sd_sd_deriv():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv for trivial cases."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sd_deriv for trivial cases."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     with pytest.raises(ValueError):
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 0.0)
@@ -373,7 +373,7 @@ def test_integrate_sd_sd_deriv():
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using H2/STO6G.
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sd_deriv using H2/STO6G.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -389,7 +389,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
     two_int[4:, :4, 4:, :4] = restricted_two_int
     two_int[4:, 4:, 4:, 4:] = restricted_two_int
 
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
     for sd1 in [0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100]:
@@ -397,7 +397,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+                test_ham2 = GeneralizedMolecularHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
@@ -410,7 +410,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
 
 
 def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using H4-STO6G integrals.
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sd_deriv using H4-STO6G integrals.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -426,7 +426,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
     two_int[4:, :4, 4:, :4] = restricted_two_int
     two_int[4:, 4:, 4:, 4:] = restricted_two_int
 
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     epsilon = 1e-8
 
     sds = sd_list(4, 8, num_limit=None, exc_orders=None)
@@ -436,7 +436,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+                test_ham2 = GeneralizedMolecularHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
@@ -449,7 +449,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_trial_slow():
 
 
 def test_integrate_sd_sd_deriv_fdiff_random():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using random integrals.
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sd_deriv using random integrals.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -465,7 +465,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     assert np.allclose(two_int, np.einsum("ijkl->jilk", two_int))
     assert np.allclose(two_int, np.einsum("ijkl->klij", two_int))
 
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     epsilon = 1e-8
     sds = sd_list(3, 6, num_limit=None, exc_orders=None)
 
@@ -474,7 +474,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+                test_ham2 = GeneralizedMolecularHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
@@ -487,7 +487,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sd_deriv using random 1e system.
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sd_deriv using random 1e system.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -503,7 +503,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
     assert np.allclose(two_int, np.einsum("ijkl->jilk", two_int))
     assert np.allclose(two_int, np.einsum("ijkl->klij", two_int))
 
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     epsilon = 1e-8
     sds = sd_list(1, 2, num_limit=None, exc_orders=None)
 
@@ -512,7 +512,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = GeneralizedChemicalHamiltonian(one_int, two_int, params=addition)
+                test_ham2 = GeneralizedMolecularHamiltonian(one_int, two_int, params=addition)
 
                 finite_diff = (
                     np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=True))
@@ -525,13 +525,13 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
 
 
 def test_integrate_sd_sds_zero():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     assert np.allclose(
@@ -541,13 +541,13 @@ def test_integrate_sd_sds_zero():
 
 
 def test_integrate_sd_sds_one():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_one against _integrate_sd_sd_one."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_one against _integrate_sd_sd_one."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     vir_indices = np.array([2, 5, 6, 7])
@@ -565,13 +565,13 @@ def test_integrate_sd_sds_one():
 
 
 def test_integrate_sd_sds_two():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_two against _integrate_sd_sd_two."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_two against _integrate_sd_sd_two."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     vir_indices = np.array([2, 5, 6, 7])
@@ -589,13 +589,15 @@ def test_integrate_sd_sds_two():
 
 
 def test_integrate_sd_sds_deriv_zero():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_zero w/ _integrate_sd_sd_zero."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_zero w/ _integrate_sd_sd_zero.
+
+    """
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     vir_indices = np.array([2, 5, 6, 7])
@@ -614,13 +616,15 @@ def test_integrate_sd_sds_deriv_zero():
 
 
 def test_integrate_sd_sds_deriv_one():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_one with _integrate_sd_sd_one."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_one with _integrate_sd_sd_one.
+
+    """
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     vir_indices = np.array([2, 5, 6, 7])
@@ -648,13 +652,15 @@ def test_integrate_sd_sds_deriv_one():
 
 
 def test_integrate_sd_sds_deriv_two():
-    """Test GeneralizedChemicalHamiltonian._integrate_sd_sds_deriv_two with _integrate_sd_sd_two."""
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_two with _integrate_sd_sd_two.
+
+    """
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
 
     occ_indices = np.array([0, 1, 3, 4])
     vir_indices = np.array([2, 5, 6, 7])
@@ -678,15 +684,15 @@ def test_integrate_sd_sds_deriv_two():
 
 
 def test_integrate_sd_wfn_compare_basehamiltonian():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn by comparing with BaseHamiltonian."""
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn by comparing with BaseHamiltonian."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    test_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    test_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     test_ham2 = disable_abstract(
-        GeneralizedChemicalHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
+        GeneralizedMolecularHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
     )(one_int, two_int)
 
     for n in range(1, 8):
@@ -716,7 +722,7 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
 
 
 def test_integrate_sd_wfn_deriv_fdiff():
-    """Test GeneralizedChemicalHamiltonian.integrate_sd_wfn_deriv with finite difference."""
+    """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn_deriv with finite difference."""
     wfn = CIWavefunction(5, 10)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
@@ -727,7 +733,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
 
-    ham = GeneralizedChemicalHamiltonian(one_int, two_int, update_prev_params=True)
+    ham = GeneralizedMolecularHamiltonian(one_int, two_int, update_prev_params=True)
     original = np.random.rand(ham.params.size)
     step1 = np.random.rand(ham.params.size)
     step2 = np.random.rand(ham.params.size)
@@ -735,7 +741,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     ham.assign_params(original + step1)
     ham.assign_params(original + step1 + step2)
 
-    temp_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+    temp_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
     temp_ham.orb_rotate_matrix(
         unitary_matrix(original).dot(unitary_matrix(step1)).dot(unitary_matrix(step2))
     )
@@ -743,7 +749,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     assert np.allclose(ham.two_int, temp_ham.two_int)
 
     def objective(params):
-        temp_ham = GeneralizedChemicalHamiltonian(one_int, two_int)
+        temp_ham = GeneralizedMolecularHamiltonian(one_int, two_int)
         temp_ham.orb_rotate_matrix(
             unitary_matrix(original).dot(unitary_matrix(step1)).dot(unitary_matrix(step2))
         )

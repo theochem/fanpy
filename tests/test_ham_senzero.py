@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile
 from fanpy.tools.slater import get_seniority
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
 
 
@@ -33,7 +33,7 @@ def test_integrate_sd_sd_h2_631gdp():
     """
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    full_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    full_ham = RestrictedMolecularHamiltonian(one_int, two_int)
     test_ham = SeniorityZeroHamiltonian(one_int, two_int)
 
     ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy"))
@@ -59,7 +59,7 @@ def test_integrate_sd_sd_lih_631g_full():
     """
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
-    full_ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    full_ham = RestrictedMolecularHamiltonian(one_int, two_int)
     test_ham = SeniorityZeroHamiltonian(one_int, two_int)
 
     ref_pspace = np.load(find_datafile("data_lih_hf_631g_civec.npy"))
@@ -109,7 +109,7 @@ def test_integrate_sd_wfn_4e():
     one_int = np.arange(1, 10, dtype=float).reshape(3, 3)
     two_int = np.arange(1, 82, dtype=float).reshape(3, 3, 3, 3)
     ham = SeniorityZeroHamiltonian(one_int, two_int)
-    ham_full = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham_full = RestrictedMolecularHamiltonian(one_int, two_int)
     test_wfn = type(
         "Temporary class with desired overlap",
         (object,),

@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from utils import skip_init
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
 from fanpy.wfn.ci.base import CIWavefunction
 
@@ -42,7 +42,7 @@ def test_onesided_energy_assign_refwfn():
 def test_num_eqns():
     """Test OneSidedEnergy.num_eqns."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )
@@ -58,7 +58,7 @@ def test_onesided_energy_objective():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = OneSidedEnergy(wfn, ham)
@@ -76,7 +76,7 @@ def test_onesided_energy_gradient():
 
     """
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = OneSidedEnergy(wfn, ham)

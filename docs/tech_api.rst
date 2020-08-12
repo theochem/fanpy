@@ -11,9 +11,9 @@ Hamiltonians
 * :class:`Generalized Base Hamiltonian <wfns.ham.generalized_base.BaseGeneralizedHamiltonian>`
 * :class:`Unrestricted Base Hamiltonian <wfns.ham.unrestricted_base.BaseUnrestrictedHamiltonian>`
 * :class:`Restricted Base Hamiltonian <wfns.ham.restricted_base.BaseRestrictedHamiltonian>`
-* :class:`Generalized Chemical Hamiltonian <wfns.ham.generalized_chemical.GeneralizedChemicalHamiltonian>`
-* :class:`Unrestricted Chemical Hamiltonian <wfns.ham.unrestricted_chemical.UnrestrictedChemicalHamiltonian>`
-* :class:`Restricted Chemical Hamiltonian <wfns.ham.restricted_chemical.RestrictedChemicalHamiltonian>`
+* :class:`Generalized Molecular Hamiltonian <wfns.ham.generalized_chemical.GeneralizedChemicalHamiltonian>`
+* :class:`Unrestricted Molecular Hamiltonian <wfns.ham.unrestricted_chemical.UnrestrictedChemicalHamiltonian>`
+* :class:`Restricted Molecular Hamiltonian <wfns.ham.restricted_chemical.RestrictedChemicalHamiltonian>`
 * :class:`Seniority Zero Hamiltonian <wfns.ham.senzero.SeniorityZeroHamiltonian>`
 
 Wavefunctions
@@ -143,9 +143,9 @@ Scripts
       wfns.ham.generalized_base.BaseGeneralizedHamiltonian
       wfns.ham.unrestricted_base.BaseUnrestrictedHamiltonian
       wfns.ham.restricted_base.BaseRestrictedHamiltonian
-      wfns.ham.generalized_chemical.GeneralizedChemicalHamiltonian
-      wfns.ham.unrestricted_chemical.UnrestrictedChemicalHamiltonian
-      wfns.ham.restricted_chemical.RestrictedChemicalHamiltonian
+      wfns.ham.generalized_chemical.GeneralizedMolecularHamiltonian
+      wfns.ham.unrestricted_chemical.UnrestrictedMolecularHamiltonian
+      wfns.ham.restricted_chemical.RestrictedMolecularHamiltonian
       wfns.ham.senzero.SeniorityZeroHamiltonian
 
       wfns.solver.ci.brute

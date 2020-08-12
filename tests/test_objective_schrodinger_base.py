@@ -4,7 +4,7 @@ import itertools as it
 import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 from fanpy.wfn.ci.base import CIWavefunction
@@ -13,7 +13,7 @@ from fanpy.wfn.ci.base import CIWavefunction
 def test_baseschrodinger_init():
     """Test BaseSchrodinger.__init__."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     with pytest.raises(TypeError):
@@ -47,7 +47,7 @@ def test_baseschrodinger_init():
 def test_baseschrodinger_active_params():
     """Test BaseSchrodinger.active_params."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     param1 = ParamContainer(1)
@@ -64,7 +64,7 @@ def test_baseschrodinger_active_params():
 def test_baseschrodinger_assign_params():
     """Test BaseSchrodinger.assign_params."""
     wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     param1 = ParamContainer(1)
@@ -85,7 +85,7 @@ def test_baseschrodinger_wrapped_get_overlap():
     """Test BaseSchrodinger.wrapped_get_overlap."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = disable_abstract(BaseSchrodinger)(
@@ -108,7 +108,7 @@ def test_baseschrodinger_wrapped_integrate_sd_wfn():
     two_int = np.random.rand(5, 5, 5, 5)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
 
     test = disable_abstract(BaseSchrodinger)(
         wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([1, 2, 4]))]
@@ -129,7 +129,7 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     """Test BaseSchrodinger.wrapped_integrate_sd_sd."""
     wfn = CIWavefunction(2, 20)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(100, dtype=float).reshape(10, 10),
         np.arange(10000, dtype=float).reshape(10, 10, 10, 10),
     )
@@ -159,7 +159,7 @@ def test_baseschrodinger_get_energy_one_proj():
     two_int = np.random.rand(2, 2, 2, 2)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
 
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
@@ -273,7 +273,7 @@ def test_baseschrodinger_get_energy_two_proj():
     """Test BaseSchrodinger.get_energy_two_proj."""
     wfn = CIWavefunction(2, 4)
     wfn.assign_params(np.random.rand(wfn.nparams))
-    ham = RestrictedChemicalHamiltonian(
+    ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
@@ -428,7 +428,7 @@ def test_baseschrodinger_get_energy_one_two_proj():
     two_int = np.random.rand(5, 5, 5, 5)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
-    ham = RestrictedChemicalHamiltonian(one_int, two_int)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
 
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 

@@ -9,15 +9,15 @@ from fanpy.tools import slater
 from fanpy.tools.math_tools import unitary_matrix
 from fanpy.tools.sd_list import sd_list
 from fanpy.ham.base import BaseHamiltonian
-from fanpy.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
+from fanpy.ham.unrestricted_chemical import UnrestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_set_ref_ints():
-    """Test UnrestrictedChemicalHamiltonian.set_ref_ints."""
+    """Test UnrestrictedMolecularHamiltonian.set_ref_ints."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
     assert np.allclose(test._ref_one_int, [one_int] * 2)
     assert np.allclose(test._ref_two_int, [two_int] * 3)
 
@@ -33,13 +33,13 @@ def test_set_ref_ints():
 
 
 def test_cache_two_ints():
-    """Test UnrestrictedChemicalHamiltonian.cache_two_ints."""
+    """Test UnrestrictedMolecularHamiltonian.cache_two_ints."""
     one_int = [np.arange(1, 5, dtype=float).reshape(2, 2)] * 2
     two_int = [np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)] * 3
     two_int_ijij = np.array([[5, 10], [15, 20]])
     two_int_ijji = np.array([[5, 11], [14, 20]])
 
-    test = UnrestrictedChemicalHamiltonian(one_int, two_int)
+    test = UnrestrictedMolecularHamiltonian(one_int, two_int)
     assert np.allclose(test._cached_two_int_0_ijij, two_int_ijij)
     assert np.allclose(test._cached_two_int_1_ijij, two_int_ijij)
     assert np.allclose(test._cached_two_int_2_ijij, two_int_ijij)
@@ -64,11 +64,11 @@ def test_cache_two_ints():
 
 
 def test_assign_params():
-    """Test UnrestrictedChemicalHamiltonian.assign_params."""
+    """Test UnrestrictedMolecularHamiltonian.assign_params."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
 
-    test = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
     with pytest.raises(ValueError):
         test.assign_params([0, 0])
     with pytest.raises(ValueError):
@@ -99,10 +99,10 @@ def test_assign_params():
 
 
 def test_integrate_sd_sd_trivial():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd for trivial cases."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd for trivial cases."""
     one_int = np.random.rand(3, 3)
     two_int = np.random.rand(3, 3, 3, 3)
-    test = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
 
     assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b001001, components=True))
     assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b111000, components=True))
@@ -116,7 +116,7 @@ def test_integrate_sd_sd_trivial():
 
 
 def test_integrate_sd_sd_h2_631gdp():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd using H2 HF/6-31G** orbitals.
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd using H2 HF/6-31G** orbitals.
 
     Compare CI matrix with the PySCF result.
     Integrals that correspond to restricted orbitals were used.
@@ -124,7 +124,7 @@ def test_integrate_sd_sd_h2_631gdp():
     """
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
 
     ref_ci_matrix = np.load(find_datafile("data_h2_hf_631gdp_cimatrix.npy"))
     ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy"))
@@ -136,10 +136,10 @@ def test_integrate_sd_sd_h2_631gdp():
 
 
 def test_integrate_sd_sd_lih_631g_case():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd using sd's of LiH HF/6-31G orbitals."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd using sd's of LiH HF/6-31G orbitals."""
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
-    ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
 
     sd1 = 0b0000000001100000000111
     sd2 = 0b0000000001100100001001
@@ -162,14 +162,14 @@ def test_integrate_sd_sd_lih_631g_case():
 
 
 def test_integrate_sd_sd_lih_631g_slow():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
     Integrals that correspond to restricted orbitals were used.
 
     """
     one_int = np.load(find_datafile("data_lih_hf_631g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_631g_twoint.npy"))
-    ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
 
     ref_ci_matrix = np.load(find_datafile("data_lih_hf_631g_cimatrix.npy"))
     ref_pspace = np.load(find_datafile("data_lih_hf_631g_civec.npy"))
@@ -181,10 +181,10 @@ def test_integrate_sd_sd_lih_631g_slow():
 
 
 def test_integrate_sd_sd_particlenum():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd and break particle number symmetery."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd and break particle number symmetery."""
     one_int = np.arange(1, 17, dtype=float).reshape(4, 4)
     two_int = np.arange(1, 257, dtype=float).reshape(4, 4, 4, 4)
-    ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
     civec = [0b01, 0b11]
 
     # \braket{1 | h_{11} | 1}
@@ -197,11 +197,11 @@ def test_integrate_sd_sd_particlenum():
 
 
 def test_integrate_sd_wfn():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
     test_ham = disable_abstract(
-        UnrestrictedChemicalHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
+        UnrestrictedMolecularHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
     )([one_int] * 2, [two_int] * 3)
     test_wfn = type(
         "Temporary wavefunction.",
@@ -240,9 +240,9 @@ def test_integrate_sd_wfn():
 
 
 def test_param_ind_to_rowcol_ind():
-    """Test UnrestrictedChemicalHamiltonian.param_ind_to_rowcol_ind."""
+    """Test UnrestrictedMolecularHamiltonian.param_ind_to_rowcol_ind."""
     for n in range(1, 20):
-        ham = UnrestrictedChemicalHamiltonian(
+        ham = UnrestrictedMolecularHamiltonian(
             [np.random.rand(n, n)] * 2, [np.random.rand(n, n, n, n)] * 3
         )
         for row_ind in range(n):
@@ -257,10 +257,10 @@ def test_param_ind_to_rowcol_ind():
 
 
 def test_integrate_sd_sd_deriv():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv."""
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sd_deriv."""
     one_int = np.arange(1, 5, dtype=float).reshape(2, 2)
     two_int = np.arange(5, 21, dtype=float).reshape(2, 2, 2, 2)
-    test_ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test_ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
 
     with pytest.raises(ValueError):
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 0.0)
@@ -277,14 +277,14 @@ def test_integrate_sd_sd_deriv():
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv using H2/STO6G.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sd_deriv using H2/STO6G.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
     one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
-    test_ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test_ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
     epsilon = 1e-8
 
     for sd1 in [0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100]:
@@ -292,7 +292,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
             for i in range(2):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = UnrestrictedChemicalHamiltonian(
+                test_ham2 = UnrestrictedMolecularHamiltonian(
                     [one_int] * 2, [two_int] * 3, params=addition
                 )
 
@@ -305,7 +305,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
 
 
 def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv with using H4/STO6G.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sd_deriv with using H4/STO6G.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -313,7 +313,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     one_int = np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy"))
 
-    test_ham = UnrestrictedChemicalHamiltonian([one_int] * 2, [two_int] * 3)
+    test_ham = UnrestrictedMolecularHamiltonian([one_int] * 2, [two_int] * 3)
     epsilon = 1e-8
     sds = sd_list(4, 8, num_limit=None, exc_orders=None)
 
@@ -322,7 +322,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = UnrestrictedChemicalHamiltonian(
+                test_ham2 = UnrestrictedMolecularHamiltonian(
                     [one_int] * 2, [two_int] * 3, params=addition
                 )
 
@@ -335,7 +335,7 @@ def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
 
 
 def test_integrate_sd_sd_deriv_fdiff_random():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv using random integrals.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sd_deriv using random integrals.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -363,7 +363,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     assert np.allclose(two_int_bbbb, np.einsum("ijkl->jilk", two_int_bbbb))
     assert np.allclose(two_int_bbbb, np.einsum("ijkl->klij", two_int_bbbb))
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
     epsilon = 1e-8
@@ -374,7 +374,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = UnrestrictedChemicalHamiltonian(
+                test_ham2 = UnrestrictedMolecularHamiltonian(
                     [one_int_a, one_int_b],
                     [two_int_aaaa, two_int_abab, two_int_bbbb],
                     params=addition,
@@ -389,7 +389,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv using random 1e system.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sd_deriv using random 1e system.
 
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
@@ -417,7 +417,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
     assert np.allclose(two_int_bbbb, np.einsum("ijkl->jilk", two_int_bbbb))
     assert np.allclose(two_int_bbbb, np.einsum("ijkl->klij", two_int_bbbb))
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
     epsilon = 1e-8
@@ -428,7 +428,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
             for i in range(test_ham.nparams):
                 addition = np.zeros(test_ham.nparams)
                 addition[i] = epsilon
-                test_ham2 = UnrestrictedChemicalHamiltonian(
+                test_ham2 = UnrestrictedMolecularHamiltonian(
                     [one_int_a, one_int_b],
                     [two_int_aaaa, two_int_abab, two_int_bbbb],
                     params=addition,
@@ -443,37 +443,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
 
 
 def test_integrate_sd_sds_zero():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
-    one_int_a = np.random.rand(6, 6)
-    one_int_a = one_int_a + one_int_a.T
-    one_int_b = np.random.rand(6, 6)
-    one_int_b = one_int_b + one_int_b.T
-
-    two_int_aaaa = np.random.rand(6, 6, 6, 6)
-    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
-    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
-    two_int_abab = np.random.rand(6, 6, 6, 6)
-    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
-    two_int_bbbb = np.random.rand(6, 6, 6, 6)
-    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
-    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
-
-    test_ham = UnrestrictedChemicalHamiltonian(
-        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
-    )
-
-    occ_alpha = np.array([0, 3, 4])
-    occ_beta = np.array([0, 2, 3])
-    assert np.allclose(
-        test_ham._integrate_sd_sds_zero(occ_alpha, occ_beta),
-        np.array(test_ham._integrate_sd_sd_zero(occ_alpha, occ_beta)).reshape(3, 1),
-    )
-
-
-def test_integrate_sd_sds_one_alpha():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_one_alpha.
-
-    Compared against UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -490,7 +460,39 @@ def test_integrate_sd_sds_one_alpha():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
+        [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
+    )
+
+    occ_alpha = np.array([0, 3, 4])
+    occ_beta = np.array([0, 2, 3])
+    assert np.allclose(
+        test_ham._integrate_sd_sds_zero(occ_alpha, occ_beta),
+        np.array(test_ham._integrate_sd_sd_zero(occ_alpha, occ_beta)).reshape(3, 1),
+    )
+
+
+def test_integrate_sd_sds_one_alpha():
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_one_alpha.
+
+    Compared against UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
+
+    """
+    one_int_a = np.random.rand(6, 6)
+    one_int_a = one_int_a + one_int_a.T
+    one_int_b = np.random.rand(6, 6)
+    one_int_b = one_int_b + one_int_b.T
+
+    two_int_aaaa = np.random.rand(6, 6, 6, 6)
+    two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
+    two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
+    two_int_abab = np.random.rand(6, 6, 6, 6)
+    two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
+    two_int_bbbb = np.random.rand(6, 6, 6, 6)
+    two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
+    two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
+
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -514,9 +516,9 @@ def test_integrate_sd_sds_one_alpha():
 
 
 def test_integrate_sd_sds_one_beta():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_one_beta.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_one_beta.
 
-    Compared against UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    Compared against UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -533,7 +535,7 @@ def test_integrate_sd_sds_one_beta():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -559,9 +561,9 @@ def test_integrate_sd_sds_one_beta():
 
 
 def test_integrate_sd_sds_two_aa():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_two_aa.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_two_aa.
 
-    Compared against UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared against UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -578,7 +580,7 @@ def test_integrate_sd_sds_two_aa():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -599,9 +601,9 @@ def test_integrate_sd_sds_two_aa():
 
 
 def test_integrate_sd_sds_two_ab():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_two_ab.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_two_ab.
 
-    Compared against UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared against UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -618,7 +620,7 @@ def test_integrate_sd_sds_two_ab():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -641,9 +643,9 @@ def test_integrate_sd_sds_two_ab():
 
 
 def test_integrate_sd_sds_two_bb():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_two_bb.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_two_bb.
 
-    Compared against UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared against UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -660,7 +662,7 @@ def test_integrate_sd_sds_two_bb():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -682,9 +684,9 @@ def test_integrate_sd_sds_two_bb():
 
 
 def test_integrate_sd_sds_deriv_zero_alpha():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_zero_alpha.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_zero_alpha.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_zero.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_zero.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -701,7 +703,7 @@ def test_integrate_sd_sds_deriv_zero_alpha():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -723,9 +725,9 @@ def test_integrate_sd_sds_deriv_zero_alpha():
 
 
 def test_integrate_sd_sds_deriv_zero_beta():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_zero_beta.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_zero_beta.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_zero.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_zero.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -742,7 +744,7 @@ def test_integrate_sd_sds_deriv_zero_beta():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -764,9 +766,9 @@ def test_integrate_sd_sds_deriv_zero_beta():
 
 
 def test_integrate_sd_sds_deriv_one_aa():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_one_aa.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_one_aa.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -783,7 +785,7 @@ def test_integrate_sd_sds_deriv_one_aa():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -813,9 +815,9 @@ def test_integrate_sd_sds_deriv_one_aa():
 
 
 def test_integrate_sd_sds_deriv_one_ab():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_one_ab.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_one_ab.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -832,7 +834,7 @@ def test_integrate_sd_sds_deriv_one_ab():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -884,9 +886,9 @@ def test_integrate_sd_sds_deriv_one_ab():
 
 
 def test_integrate_sd_sds_deriv_one_ba():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_one_ba.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_one_ba.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -903,7 +905,7 @@ def test_integrate_sd_sds_deriv_one_ba():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -955,9 +957,9 @@ def test_integrate_sd_sds_deriv_one_ba():
 
 
 def test_integrate_sd_sds_deriv_one_bb():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_one_bb.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_one_bb.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_one.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_one.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -974,7 +976,7 @@ def test_integrate_sd_sds_deriv_one_bb():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -1003,9 +1005,9 @@ def test_integrate_sd_sds_deriv_one_bb():
 
 
 def test_integrate_sd_sds_deriv_two_aaa():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_aaa.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_two_aaa.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -1022,7 +1024,7 @@ def test_integrate_sd_sds_deriv_two_aaa():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -1047,9 +1049,9 @@ def test_integrate_sd_sds_deriv_two_aaa():
 
 
 def test_integrate_sd_sds_deriv_two_aab():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_aab.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_two_aab.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -1066,7 +1068,7 @@ def test_integrate_sd_sds_deriv_two_aab():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -1092,9 +1094,9 @@ def test_integrate_sd_sds_deriv_two_aab():
 
 
 def test_integrate_sd_sds_deriv_two_bab():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_bab.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_two_bab.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -1111,7 +1113,7 @@ def test_integrate_sd_sds_deriv_two_bab():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -1137,9 +1139,9 @@ def test_integrate_sd_sds_deriv_two_bab():
 
 
 def test_integrate_sd_sds_deriv_two_bbb():
-    """Test UnrestrictedChemicalHamiltonian._integrate_sd_sds_deriv_two_bbb.
+    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_deriv_two_bbb.
 
-    Compared with UnrestrictedChemicalHamiltonian._integrate_sd_sd_two.
+    Compared with UnrestrictedMolecularHamiltonian._integrate_sd_sd_two.
 
     """
     one_int_a = np.random.rand(6, 6)
@@ -1156,7 +1158,7 @@ def test_integrate_sd_sds_deriv_two_bbb():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
 
@@ -1181,7 +1183,7 @@ def test_integrate_sd_sds_deriv_two_bbb():
 
 
 def test_integrate_sd_wfn_compare_basehamiltonian():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn with integrate_sd_wfn."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn with integrate_sd_wfn."""
     one_int_a = np.random.rand(5, 5)
     one_int_a = one_int_a + one_int_a.T
     one_int_b = np.random.rand(5, 5)
@@ -1196,11 +1198,11 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    test_ham = UnrestrictedChemicalHamiltonian(
+    test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
     test_ham2 = disable_abstract(
-        UnrestrictedChemicalHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
+        UnrestrictedMolecularHamiltonian, {"integrate_sd_wfn": BaseHamiltonian.integrate_sd_wfn}
     )([one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
     for i in range(1, 4):
@@ -1245,7 +1247,7 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
 
 
 def test_integrate_sd_wfn_deriv_fdiff():
-    """Test UnrestrictedChemicalHamiltonian.integrate_sd_wfn with finite difference."""
+    """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn with finite difference."""
     wfn = CIWavefunction(5, 10)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
@@ -1263,7 +1265,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
-    ham = UnrestrictedChemicalHamiltonian(
+    ham = UnrestrictedMolecularHamiltonian(
         (one_int_a, one_int_b), (two_int_aaaa, two_int_abab, two_int_bbbb), update_prev_params=True
     )
     original = np.random.rand(ham.params.size)
@@ -1278,7 +1280,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     um_step1 = [unitary_matrix(step1[:nhalf]), unitary_matrix(step1[nhalf:])]
     um_step2 = [unitary_matrix(step2[:nhalf]), unitary_matrix(step2[nhalf:])]
 
-    temp_ham = UnrestrictedChemicalHamiltonian(
+    temp_ham = UnrestrictedMolecularHamiltonian(
         (one_int_a, one_int_b), (two_int_aaaa, two_int_abab, two_int_bbbb), update_prev_params=True
     )
     temp_ham.orb_rotate_matrix(
@@ -1291,7 +1293,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     assert np.allclose(ham.two_int, temp_ham.two_int)
 
     def objective(params):
-        temp_ham = UnrestrictedChemicalHamiltonian(
+        temp_ham = UnrestrictedMolecularHamiltonian(
             (one_int_a, one_int_b),
             (two_int_aaaa, two_int_abab, two_int_bbbb),
             update_prev_params=True

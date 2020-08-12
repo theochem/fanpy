@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from fanpy.tools.sd_list import sd_list
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver.ci import brute
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
@@ -873,7 +873,7 @@ def test_jacobi_energy():
     def get_energy(theta, orbpair, wfn_type, expectation_type):
         """Get energy that correspond to the rotation of the given orbitals."""
         doci = DOCI(nelec, nspin)
-        ham = RestrictedChemicalHamiltonian(
+        ham = RestrictedMolecularHamiltonian(
             np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy")),
             np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy")),
         )

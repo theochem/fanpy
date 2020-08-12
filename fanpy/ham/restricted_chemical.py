@@ -3,7 +3,7 @@ import itertools as it
 
 import numpy as np
 from fanpy.tools import slater
-from fanpy.ham.generalized_chemical import GeneralizedChemicalHamiltonian
+from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 
 # pylint: disable=C0302
 
@@ -14,11 +14,11 @@ from fanpy.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 # _integrate_sd_sds_deriv_one_aa, _integrate_sd_sds_deriv_one_ab, _integrate_sd_sds_deriv_one_ba,
 # _integrate_sd_sds_deriv_one_bb, _integrate_sd_sds_deriv_two_aaa, _integrate_sd_sds_deriv_two_aab,
 # _integrate_sd_sds_deriv_two_bab, _integrate_sd_sds_deriv_two_bbb are practically copied from
-# UnrestrictedChemicalHamiltonian. The only difference is that the indices of the one_int, two_int,
+# UnrestrictedMolecularHamiltonian. The only difference is that the indices of the one_int, two_int,
 # and the _cached_two_int_'s have been removed. We can replace these functions by building the
 # appropriate UnrestrictedchemicalHamiltonian, but this class will become redundant in that case.
 # Since this class is already written, we keep all of its methods
-class RestrictedChemicalHamiltonian(GeneralizedChemicalHamiltonian):
+class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
     r"""Hamiltonian used to describe a typical chemical system expressed wrt restricted orbitals.
 
     .. math::

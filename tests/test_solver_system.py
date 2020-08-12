@@ -1,7 +1,7 @@
 """Test fanpy.solver.system."""
 import numpy as np
 import pytest
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
 from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.system as system
@@ -43,7 +43,7 @@ def test_least_squares():
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params(np.array([1.0, -1.0]))
-    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100])
 
     results = system.least_squares(objective)
@@ -63,7 +63,7 @@ def test_root():
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params(np.array([1.0, -1.0]))
-    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
 
     results = system.root(objective)

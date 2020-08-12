@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import pytest
-from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.onesided_energy import OneSidedEnergy
 from fanpy.eqn.projected import ProjectedSchrodinger
@@ -57,7 +57,7 @@ def test_cma():
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params()
-    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
     results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results["success"]
@@ -94,7 +94,7 @@ def test_minimize():
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params()
-    ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
+    ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
     results = equation.minimize(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results["success"]
