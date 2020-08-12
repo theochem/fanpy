@@ -77,8 +77,6 @@ class BaseWavefunction:
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
         self.assign_memory(memory)
-        self.probable_sds = {}
-        self.olp_threshold = 42
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
         # self.assign_params(params)
