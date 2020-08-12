@@ -1,9 +1,9 @@
 from collections import deque
 import numpy as np
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 
 
-class EnergyConstraint(OneSidedEnergy):
+class EnergyConstraint(EnergyOneSideProjection):
     # def __init__(self, wfn, ham, tmpfile="", param_selection=None, refwfn=None, ref_energy=-100.0):
     #     super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection)
     #     self.assign_refwfn(refwfn)

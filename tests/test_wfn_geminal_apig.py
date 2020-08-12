@@ -4,7 +4,7 @@ import pytest
 import scipy
 from utils import find_datafile, skip_init
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import minimize
 from fanpy.solver.system import least_squares
@@ -199,7 +199,7 @@ def answer_apig_h2_631gdp():
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     apig = APIG(2, 20, params=np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
 
-    objective = OneSidedEnergy(apig, ham)
+    objective = EnergyOneSideProjection(apig, ham)
     results = minimize(objective)
     print(results)
     return apig.params
@@ -260,7 +260,7 @@ def answer_apig_lih_sto6g():
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     apig = APIG(4, 12)
 
-    objective = OneSidedEnergy(apig, ham)
+    objective = EnergyOneSideProjection(apig, ham)
     results = minimize(objective)
     print(results)
     return apig.params

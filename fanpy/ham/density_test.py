@@ -65,7 +65,7 @@ def integrate_sd_wfn(sd, wfn, indices, deriv=None):
 
 
 # FIXME: store in a subclass of BaseObjective
-# FIXME: much of the code was copied from OneSidedEnergy
+# FIXME: much of the code was copied from EnergyOneSideProjection
 # FIXME: not sure if this needs to be normalize
 # FIXME: add threshold value below which the contribution from the Slater determinant is discarded
 #        (useful for CIWavefunction and other wavefunctions where we can sort by the contribution of
@@ -148,7 +148,7 @@ def get_density_matrix(
             "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
         )
 
-    # check refwfn (copied from OneSidedEnergy.assign_refwfn)
+    # check refwfn (copied from EnergyOneSideProjection.assign_refwfn)
     if refwfn is None:
         refwfn = tuple(
             sd_list.sd_list(wfn.nelec, wfn.nspatial, spin=wfn.spin, seniority=wfn.seniority)

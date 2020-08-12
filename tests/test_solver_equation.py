@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.equation as equation
 from fanpy.wfn.base import BaseWavefunction
@@ -59,7 +59,7 @@ def test_cma():
     wfn.assign_params()
     ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
-    results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
+    results = equation.cma(EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results["success"]
     assert np.allclose(results["energy"], 2)
     assert np.allclose(results["function"], 2)
@@ -79,9 +79,11 @@ def test_cma():
     with pytest.raises(ValueError):
         equation.cma(ProjectedSchrodinger(wfn, ham, refwfn=0b0011))
     with pytest.raises(ValueError):
-        equation.cma(OneSidedEnergy(wfn, ham, param_selection=[[wfn, np.array([0])]]))
+        equation.cma(EnergyOneSideProjection(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
-    results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file="temp.npy")
+    results = equation.cma(
+        EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100]), save_file="temp.npy"
+    )
     test = np.load("temp.npy")
     assert np.allclose(results["params"], test)
     os.remove("temp.npy")
@@ -96,7 +98,7 @@ def test_minimize():
     wfn.assign_params()
     ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
-    results = equation.minimize(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
+    results = equation.minimize(EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results["success"]
     assert np.allclose(results["energy"], 2)
     assert np.allclose(results["function"], 2)

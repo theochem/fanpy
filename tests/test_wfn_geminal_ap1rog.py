@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import minimize
 from fanpy.solver.system import least_squares
@@ -125,9 +125,9 @@ def answer_ap1rog_h2_sto6g():
     ham = SeniorityZeroHamiltonian(one_int, two_int)
 
     ap1rog_ground = AP1roG(2, 4, ref_sd=0b0101)
-    objective_ground = OneSidedEnergy(ap1rog_ground, ham)
+    objective_ground = EnergyOneSideProjection(ap1rog_ground, ham)
     ap1rog_excited = AP1roG(2, 4, ref_sd=0b1010)
-    objective_excited = OneSidedEnergy(ap1rog_excited, ham)
+    objective_excited = EnergyOneSideProjection(ap1rog_excited, ham)
 
     # plot all possible values (within normalization constraint)
     xs = np.arange(-1, 1, 0.001)
@@ -240,7 +240,7 @@ def answer_ap1rog_h2_631gdp():
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     ap1rog = AP1roG(2, 20)
 
-    objective = OneSidedEnergy(ap1rog, ham)
+    objective = EnergyOneSideProjection(ap1rog, ham)
     results = minimize(objective)
     print("Minimum energy")
     print(results)
@@ -299,7 +299,7 @@ def answer_ap1rog_lih_sto6g():
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     ap1rog = AP1roG(4, 12)
 
-    objective = OneSidedEnergy(ap1rog, ham)
+    objective = EnergyOneSideProjection(ap1rog, ham)
     results = minimize(objective)
     print("Minimum energy")
     print(results)

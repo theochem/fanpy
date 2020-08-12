@@ -3,13 +3,13 @@ import numpy as np
 import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_energy_oneside_assign_refwfn():
-    """Test OneSidedEnergy.assign_refwfn."""
-    test = skip_init(OneSidedEnergy)
+    """Test EnergyOneSideProjection.assign_refwfn."""
+    test = skip_init(EnergyOneSideProjection)
     test.wfn = CIWavefunction(2, 4)
 
     test.assign_refwfn(refwfn=None)
@@ -40,18 +40,18 @@ def test_energy_oneside_assign_refwfn():
 
 
 def test_num_eqns():
-    """Test OneSidedEnergy.num_eqns."""
+    """Test EnergyOneSideProjection.num_eqns."""
     wfn = CIWavefunction(2, 4)
     ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )
-    test = OneSidedEnergy(wfn, ham)
+    test = EnergyOneSideProjection(wfn, ham)
     assert test.num_eqns == 1
 
 
 def test_energy_oneside_objective():
-    """Test OneSidedEnergy.objective.
+    """Test EnergyOneSideProjection.objective.
 
     The actualy values of the objective is not checked because it is the same as
     BaseSchrodinger.get_energy_one_proj.
@@ -61,7 +61,7 @@ def test_energy_oneside_objective():
     ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
-    test = OneSidedEnergy(wfn, ham)
+    test = EnergyOneSideProjection(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
     test.objective(guess)
@@ -69,7 +69,7 @@ def test_energy_oneside_objective():
 
 
 def test_energy_oneside_gradient():
-    """Test OneSidedEnergy.gradient.
+    """Test EnergyOneSideProjection.gradient.
 
     The actualy values of the gradient is not checked because it is the same as
     BaseSchrodinger.get_energy_one_proj with derivatization.
@@ -79,7 +79,7 @@ def test_energy_oneside_gradient():
     ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
-    test = OneSidedEnergy(wfn, ham)
+    test = EnergyOneSideProjection(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
     test.gradient(guess)

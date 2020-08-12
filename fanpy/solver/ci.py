@@ -28,7 +28,7 @@ def brute(wfn, ham, save_file=""):
         Parameters at the end of the optimization.
     energy : float
         Energy after optimization.
-        Only available for objectives that are OneSidedEnergy, TwoSidedEnergy, and
+        Only available for objectives that are EnergyOneSideProjection, TwoSidedEnergy, and
         LeastSquaresEquations instances.
     eigval : np.ndarray(K,)
         Energy of each excited state.

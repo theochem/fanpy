@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.system as system
 from fanpy.wfn.base import BaseWavefunction
@@ -53,7 +53,7 @@ def test_least_squares():
     assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
 
     with pytest.raises(TypeError):
-        system.least_squares(OneSidedEnergy(wfn, ham))
+        system.least_squares(EnergyOneSideProjection(wfn, ham))
 
 
 def test_root():
@@ -72,6 +72,6 @@ def test_root():
     assert np.allclose(objective.objective(wfn.params), 0)
 
     with pytest.raises(TypeError):
-        system.root(OneSidedEnergy(wfn, ham))
+        system.root(EnergyOneSideProjection(wfn, ham))
     with pytest.raises(ValueError):
         system.root(ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100]))

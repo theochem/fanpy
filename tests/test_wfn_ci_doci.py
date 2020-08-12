@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.solver.equation import cma
 from fanpy.wfn.ci.doci import DOCI
 
@@ -96,7 +96,7 @@ def test_doci_h4_hf_sto6g():
         one_int, two_int, params=np.array([0.5, 0.0, 0.0, 0.0, 0.0, 0.5])
     )
 
-    obj = OneSidedEnergy(
+    obj = EnergyOneSideProjection(
         doci,
         ham,
         param_selection=[
@@ -174,7 +174,7 @@ def test_doci_h2_hf_631gdp_slow():
     ham = SeniorityZeroHamiltonian(
         one_int, two_int, params=np.random.rand(45)
     )
-    obj = OneSidedEnergy(
+    obj = EnergyOneSideProjection(
         doci,
         ham,
         param_selection=[

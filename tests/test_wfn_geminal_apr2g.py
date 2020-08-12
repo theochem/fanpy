@@ -2,7 +2,7 @@
 import numpy as np
 from utils import find_datafile
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
@@ -58,7 +58,7 @@ def answer_apr2g_h2_631gdp():
             )
         ),
     )
-    objective = OneSidedEnergy(apr2g, ham, refwfn=full_sds)
+    objective = EnergyOneSideProjection(apr2g, ham, refwfn=full_sds)
     results = minimize(objective)
     print(results)
     print(apr2g.params)
@@ -167,7 +167,7 @@ def answer_apr2g_lih_sto6g():
         0b110000110000,
     )
 
-    objective = OneSidedEnergy(apr2g, ham, refwfn=full_sds)
+    objective = EnergyOneSideProjection(apr2g, ham, refwfn=full_sds)
     results = cma(objective)
     results = minimize(objective)
     print(results)

@@ -5,7 +5,7 @@ from fanpy.eqn.base import BaseSchrodinger
 from fanpy.wfn.ci.base import CIWavefunction
 
 
-class OneSidedEnergy(BaseSchrodinger):
+class EnergyOneSideProjection(BaseSchrodinger):
     r"""Energy evaluated by projecting against a reference wavefunction.
 
     .. math::

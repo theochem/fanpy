@@ -2,7 +2,7 @@
 import numpy as np
 import fanpy.tools.slater as slater
 from fanpy.eqn.base import BaseSchrodinger
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.utils import ComponentParameterIndices
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
@@ -92,8 +92,8 @@ class NormConstraint(BaseSchrodinger):
             for component, indices in param_selection:
                 self.indices_component_params[component] = indices
 
-    # NOTE: the reference wavefunction assignment is already defined in OneSidedEnergy
-    assign_refwfn = OneSidedEnergy.assign_refwfn
+    # NOTE: the reference wavefunction assignment is already defined in EnergyOneSideProjection
+    assign_refwfn = EnergyOneSideProjection.assign_refwfn
 
     @property
     def num_eqns(self):

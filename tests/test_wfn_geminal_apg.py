@@ -6,7 +6,7 @@ import pytest
 from utils import find_datafile, skip_init
 from fanpy.tools.graphs import generate_complete_pmatch
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.energy_oneside import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
@@ -91,7 +91,7 @@ def answer_apg_h2_sto6g():
     apg = APG(2, 4)
     full_sds = (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)
 
-    objective = OneSidedEnergy(apg, ham, refwfn=full_sds)
+    objective = EnergyOneSideProjection(apg, ham, refwfn=full_sds)
     results = minimize(objective)
     print(results)
     print(apg.params)
@@ -141,7 +141,7 @@ def answer_apg_h2_631gdp():
     apg = APG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
 
-    objective = OneSidedEnergy(apg, ham, refwfn=full_sds)
+    objective = EnergyOneSideProjection(apg, ham, refwfn=full_sds)
     results = cma(objective, sigma0=0.01, gradf=None, options={"tolfun": 1e-6, "verb_log": 0})
     print(results)
     results = minimize(objective)
@@ -197,7 +197,7 @@ def answer_apg_lih_sto6g():
         for l in range(k + 1, 12)
     ]
 
-    objective = OneSidedEnergy(apg, ham, refwfn=full_sds)
+    objective = EnergyOneSideProjection(apg, ham, refwfn=full_sds)
     results = minimize(objective)
     print(results)
     print(apg.params)
