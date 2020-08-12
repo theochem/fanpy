@@ -303,6 +303,7 @@ class SystemEquations(BaseSchrodinger):
                 self.wfn.nspin,
                 spin=self.wfn.spin,
                 seniority=self.wfn.seniority,
+                exc_orders=[1, 2],
             )
 
         if __debug__ and not (
