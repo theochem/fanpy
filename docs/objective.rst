@@ -84,7 +84,7 @@ In the FANCI module, only the following reference wavefunctions are supported:
     }
 
 This objective is implemented in class
-:class:`OneSidedEnergy <wfns.eqn.onesided_energy.OneSidedEnergy>`.
+:class:`OneSidedEnergy <wfns.eqn.energy_oneside.OneSidedEnergy>`.
 
 Projecting Out Slater Determinants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

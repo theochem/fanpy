@@ -6,7 +6,7 @@ import pytest
 from utils import find_datafile, skip_init
 from fanpy.tools import graphs
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares

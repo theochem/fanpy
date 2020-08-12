@@ -2,7 +2,7 @@
 import numpy as np
 from utils import find_datafile
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares

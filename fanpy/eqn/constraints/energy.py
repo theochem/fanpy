@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 
 
 class EnergyConstraint(OneSidedEnergy):

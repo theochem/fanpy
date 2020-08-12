@@ -2,7 +2,7 @@
 import numpy as np
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.least_squares import LeastSquaresEquations
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.eqn.twosided_energy import TwoSidedEnergy
 from fanpy.solver.wrappers import wrap_scipy
 

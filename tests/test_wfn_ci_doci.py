@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.solver.equation import cma
 from fanpy.wfn.ci.doci import DOCI
 

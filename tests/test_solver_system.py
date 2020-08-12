@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.system as system
 from fanpy.wfn.base import BaseWavefunction

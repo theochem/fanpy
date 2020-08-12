@@ -250,7 +250,7 @@ def make_script(
     elif objective == "variational":
         from_imports.append(("fanpy.eqn.twosided_energy", "TwoSidedEnergy"))
     elif objective == "one_energy":
-        from_imports.append(("fanpy.eqn.onesided_energy", "OneSidedEnergy"))
+        from_imports.append(("fanpy.eqn.energy_oneside", "OneSidedEnergy"))
 
     if solver == "cma":
         from_imports.append(("fanpy.solver.equation", "cma"))

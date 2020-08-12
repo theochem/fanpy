@@ -1,13 +1,13 @@
-"""Test fanpy.eqn.onesided_energy."""
+"""Test fanpy.eqn.energy_oneside."""
 import numpy as np
 import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import OneSidedEnergy
 from fanpy.wfn.ci.base import CIWavefunction
 
 
-def test_onesided_energy_assign_refwfn():
+def test_energy_oneside_assign_refwfn():
     """Test OneSidedEnergy.assign_refwfn."""
     test = skip_init(OneSidedEnergy)
     test.wfn = CIWavefunction(2, 4)
@@ -50,7 +50,7 @@ def test_num_eqns():
     assert test.num_eqns == 1
 
 
-def test_onesided_energy_objective():
+def test_energy_oneside_objective():
     """Test OneSidedEnergy.objective.
 
     The actualy values of the objective is not checked because it is the same as
@@ -68,7 +68,7 @@ def test_onesided_energy_objective():
     assert np.allclose(wfn.params, guess)
 
 
-def test_onesided_energy_gradient():
+def test_energy_oneside_gradient():
     """Test OneSidedEnergy.gradient.
 
     The actualy values of the gradient is not checked because it is the same as
