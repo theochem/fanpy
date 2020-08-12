@@ -3,8 +3,7 @@ import abc
 
 import numpy as np
 from wfns.backend import slater
-# from permanent.permanent import permanent
-from wfns.backend.math_tools import permanent_ryser as permanent
+from wfns.backend import math_tools
 from wfns.wfn.base import BaseWavefunction
 
 
@@ -409,26 +408,22 @@ class BaseGeminal(BaseWavefunction):
             Permanent of the selected submatrix.
 
         """
-        # if row_inds is None:
-        #     row_inds = np.arange(self.ngem)
-        # else:
-        #     row_inds = np.array(row_inds)
-        # col_inds = np.array(col_inds)
-        # select function that evaluates the permanent
-        # Ryser algorithm is faster if the number of rows and columns are greater than 3
-        # if col_inds.size <= 3 >= row_inds.size:
-        #     permanent = math_tools.permanent_ryser
-        # else:
-        #     permanent = math_tools.permanent_combinatoric
-
-        if deriv is None:
-            if row_inds is None:
-                return permanent(self.params[:, col_inds])
-            else:
-                return permanent(self.params[row_inds[:, None], col_inds[None, :]])
-
         if row_inds is None:
             row_inds = np.arange(self.ngem)
+
+        if __debug__:
+            row_inds = np.array(row_inds)
+            col_inds = np.array(col_inds)
+
+        # select function that evaluates the permanent
+        # Ryser algorithm is faster if the number of rows and columns are greater than 3
+        if len(col_inds) <= 3 >= len(row_inds):
+            permanent = math_tools.permanent_ryser
+        else:
+            permanent = math_tools.permanent_combinatoric
+
+        if deriv is None:
+            return permanent(self.params[row_inds[:, None], col_inds[None, :]])
 
         row_removed = deriv // self.norbpair
         col_removed = deriv % self.norbpair
