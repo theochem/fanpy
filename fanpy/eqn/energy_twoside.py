@@ -171,7 +171,6 @@ class EnergyTwoSideProjection(BaseSchrodinger):
             If Hamiltonian is not an instance (or instance of a child) of BaseHamiltonian.
             If tmpfile is not a string.
         ValueError
-            If wavefunction and Hamiltonian do not have the same data type.
             If wavefunction and Hamiltonian do not have the same number of spin orbitals.
 
         """
