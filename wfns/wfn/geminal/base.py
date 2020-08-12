@@ -6,7 +6,6 @@ from wfns.backend import slater
 # from permanent.permanent import permanent
 from wfns.backend.math_tools import permanent_ryser as permanent
 from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.geminal.cext import get_col_inds
 
 
 # FIXME: define some function to get the column indices of the parameters from the orbital pairs
@@ -362,9 +361,6 @@ class BaseGeminal(BaseWavefunction):
                 "Given orbital pair, {0}, is not included in the wavefunction.".format(orbpair)
             )
 
-    def get_col_inds(self, orbpairs):
-        return get_col_inds(orbpairs, self.nspin)
-
     def get_orbpair(self, col_ind):
         """Get the orbital pair that corresponds to the given column index.
 
@@ -475,8 +471,6 @@ class BaseGeminal(BaseWavefunction):
                 continue
 
             col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
-            # FIXME: converting all orbpairs is slow for some reason
-            # col_inds = self.get_col_inds(np.array(orbpairs))
             val += sign * self.compute_permanent(col_inds)
         return val
 
@@ -508,8 +502,6 @@ class BaseGeminal(BaseWavefunction):
             if len(orbpairs) == 0:
                 continue
             col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
-            # FIXME: converting all orbpairs is slow for some reason
-            # col_inds = self.get_col_inds(np.array(orbpairs))
             for row_ind in range(self.params.shape[0]):
                 for col_ind in col_inds:
                     i = row_ind * self.params.shape[1] + col_ind

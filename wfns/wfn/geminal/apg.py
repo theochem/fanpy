@@ -2,7 +2,6 @@
 import numpy as np
 from wfns.backend.graphs import generate_complete_pmatch
 from wfns.wfn.geminal.base import BaseGeminal
-from wfns.wfn.geminal.cext import get_col_inds
 
 
 class APG(BaseGeminal):
@@ -150,11 +149,6 @@ class APG(BaseGeminal):
             )
         # col_ind = (iK - i(i+1)/2) + (j - i)
         return self.nspin * i - i * (i + 1) // 2 + (j - i - 1)
-
-    def get_col_inds(self, orbpairs):
-        # i, j = orbpairs.T
-        # return self.nspin * i - i * (i + 1) // 2 + (j - i - 1)
-        return get_col_inds(orbpairs, self.nspin)
 
     def get_orbpair(self, col_ind):
         """Get the orbital pair that corresponds to the given column index.
