@@ -66,7 +66,7 @@ Objectives
   * :class:`System of Equations <wfns.eqn.projected.ProjectedSchrodinger>`
   * :class:`Least Squared Sum of Equations <wfns.eqn.least_squares.LeastSquaresEquations>`
   * :class:`One Sided Energy <wfns.eqn.energy_oneside.EnergyOneSideProjection>`
-  * :class:`Two Sided Energy <wfns.eqn.energy_twoside.TwoSidedEnergy>`
+  * :class:`Two Sided Energy <wfns.eqn.energy_twoside.EnergyTwoSideProjection>`
 
 Solvers
 =======
@@ -163,7 +163,7 @@ Scripts
       wfns.eqn.projected.ProjectedSchrodinger
       wfns.eqn.least_squares.LeastSquaresEquations
       wfns.eqn.energy_oneside.EnergyOneSideProjection
-      wfns.eqn.energy_twoside.TwoSidedEnergy
+      wfns.eqn.energy_twoside.EnergyTwoSideProjection
 
       wfns.wfn.base.BaseWavefunction
       wfns.wfn.ci.base.CIWavefunction

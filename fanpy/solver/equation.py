@@ -3,7 +3,7 @@ import numpy as np
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
-from fanpy.eqn.energy_twoside import TwoSidedEnergy
+from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
 from fanpy.solver.wrappers import wrap_scipy
 
 
@@ -43,7 +43,7 @@ def cma(objective, save_file="", **kwargs):
         Parameters at the end of the optimization.
     energy : float
         Energy after optimization.
-        Only available for objectives that are EnergyOneSideProjection, TwoSidedEnergy, and
+        Only available for objectives that are EnergyOneSideProjection, EnergyTwoSideProjection, and
         LeastSquaresEquations instances.
     message : str
         Termination reason.
@@ -89,7 +89,7 @@ def cma(objective, save_file="", **kwargs):
 
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (EnergyOneSideProjection, TwoSidedEnergy)):
+    elif isinstance(objective, (EnergyOneSideProjection, EnergyTwoSideProjection)):
         output["energy"] = results[1]
 
     if output["success"]:
@@ -136,7 +136,7 @@ def minimize(objective, save_file="", **kwargs):
         Parameters at the end of the optimization.
     energy : float
         Energy after optimization.
-        Only available for objectives that are EnergyOneSideProjection, TwoSidedEnergy, and
+        Only available for objectives that are EnergyOneSideProjection, EnergyTwoSideProjection, and
         LeastSquaresEquations instances.
     message : str
         Message returned by the optimizer.
@@ -191,7 +191,7 @@ def minimize(objective, save_file="", **kwargs):
     output["function"] = output["internal"].fun
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (EnergyOneSideProjection, TwoSidedEnergy)):
+    elif isinstance(objective, (EnergyOneSideProjection, EnergyTwoSideProjection)):
         output["energy"] = output["function"]
 
     return output

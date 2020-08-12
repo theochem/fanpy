@@ -248,7 +248,7 @@ def make_script(
     elif objective == "least_squares":
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
-        from_imports.append(("fanpy.eqn.energy_twoside", "TwoSidedEnergy"))
+        from_imports.append(("fanpy.eqn.energy_twoside", "EnergyTwoSideProjection"))
     elif objective == "one_energy":
         from_imports.append(("fanpy.eqn.energy_oneside", "EnergyOneSideProjection"))
 
@@ -440,7 +440,7 @@ def make_script(
             "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
         )
     elif objective == "variational":
-        objective1 = "objective = TwoSidedEnergy("
+        objective1 = "objective = EnergyTwoSideProjection("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
             "tmpfile='{}', pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"

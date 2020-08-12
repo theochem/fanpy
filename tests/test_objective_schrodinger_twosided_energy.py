@@ -3,13 +3,13 @@ import numpy as np
 import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.energy_twoside import TwoSidedEnergy
+from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
 from fanpy.wfn.ci.base import CIWavefunction
 
 
 def test_energy_twoside_assign_pspaces():
-    """Test TwoSidedEnergy.assign_pspaces."""
-    test = skip_init(TwoSidedEnergy)
+    """Test EnergyTwoSideProjection.assign_pspaces."""
+    test = skip_init(EnergyTwoSideProjection)
     test.wfn = CIWavefunction(2, 4)
     # default pspace_l
     test.assign_pspaces(pspace_l=None, pspace_r=(0b0101,), pspace_n=[0b0101])
@@ -38,20 +38,20 @@ def test_energy_twoside_assign_pspaces():
 
 
 def test_num_eqns():
-    """Test TwoSidedEnergy.num_eqns."""
+    """Test EnergyTwoSideProjection.num_eqns."""
     wfn = CIWavefunction(2, 4)
     ham = RestrictedMolecularHamiltonian(
         np.arange(1, 5, dtype=float).reshape(2, 2),
         np.arange(1, 17, dtype=float).reshape(2, 2, 2, 2),
     )
-    test = TwoSidedEnergy(wfn, ham)
+    test = EnergyTwoSideProjection(wfn, ham)
     assert test.num_eqns == 1
     with pytest.raises(TypeError):
         test.assign_pspaces(pspace_n=["0101"])
 
 
 def test_energy_twoside_objective():
-    """Test TwoSidedEnergy.objective.
+    """Test EnergyTwoSideProjection.objective.
 
     The actualy values of the objective is not checked because it is the same as
     BaseSchrodinger.get_energy_two_proj.
@@ -61,7 +61,7 @@ def test_energy_twoside_objective():
     ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
-    test = TwoSidedEnergy(wfn, ham)
+    test = EnergyTwoSideProjection(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
     test.objective(guess)
@@ -69,7 +69,7 @@ def test_energy_twoside_objective():
 
 
 def test_energy_twoside_gradient():
-    """Test TwoSidedEnergy.gradient.
+    """Test EnergyTwoSideProjection.gradient.
 
     The actualy values of the gradient is not checked because it is the same as
     BaseSchrodinger.get_energy_two_proj with derivatization.
@@ -79,7 +79,7 @@ def test_energy_twoside_gradient():
     ham = RestrictedMolecularHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
-    test = TwoSidedEnergy(wfn, ham)
+    test = EnergyTwoSideProjection(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
     test.gradient(guess)

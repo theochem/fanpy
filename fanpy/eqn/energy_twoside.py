@@ -4,7 +4,7 @@ from fanpy.tools import sd_list, slater
 from fanpy.eqn.base import BaseSchrodinger
 
 
-class TwoSidedEnergy(BaseSchrodinger):
+class EnergyTwoSideProjection(BaseSchrodinger):
     r"""Energy of the Schrodinger equations integrated against projected forms of the wavefunction.
 
     .. math::
