@@ -468,7 +468,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
         elif self.energy_type == "compute":
             # define reference
             if isinstance(self.refwfn, CIWavefunction):
-                ref_sds = self.refwfn.sd_vec
+                ref_sds = self.refwfn.sds
                 ref_coeffs = self.refwfn.params
             else:
                 ref_sds = self.refwfn
@@ -546,7 +546,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
 
         # define reference
         if isinstance(self.refwfn, CIWavefunction):
-            ref_sds = np.array(self.refwfn.sd_vec)
+            ref_sds = np.array(self.refwfn.sds)
             ref_coeffs = self.refwfn.params[:, np.newaxis]
 
             d_ref_coeffs = np.zeros((self.refwfn.nparams, params.size), dtype=float)

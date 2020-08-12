@@ -205,7 +205,7 @@ def test_system_objective():
             )
         elif refwfn == ciref:
             norm_answer = weights[-1] * (
-                sum(ciref.get_overlap(sd) * wfn.get_overlap(sd) for sd in ciref.sd_vec) - 1
+                sum(ciref.get_overlap(sd) * wfn.get_overlap(sd) for sd in ciref.sds) - 1
             )
 
         objective = test.objective(guess[:6])
@@ -292,7 +292,7 @@ def test_system_jacobian():
         elif refwfn == ciref:
             norm_answer = [
                 weights[-1]
-                * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in ciref.sd_vec))
+                * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in ciref.sds))
                 for i in range(6)
             ]
 
@@ -390,12 +390,12 @@ def test_system_jacobian_active_ciref():
         jacobian[-1],
         [
             weights[-1]
-            * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in ciref.sd_vec))
+            * (sum(ciref.get_overlap(sd) * wfn.get_overlap(sd, deriv=i) for sd in ciref.sds))
             for i in range(6)
         ]
         + [
             weights[-1]
-            * (sum(ciref.get_overlap(sd, deriv=i) * wfn.get_overlap(sd) for sd in ciref.sd_vec))
+            * (sum(ciref.get_overlap(sd, deriv=i) * wfn.get_overlap(sd) for sd in ciref.sds))
             for i in range(6)
         ],
     )

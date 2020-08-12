@@ -23,7 +23,7 @@ class TempChemicalHamiltonian(RestrictedChemicalHamiltonian):
 
 def test_brute():
     """Test wfn.solver.ci.brute."""
-    test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
+    test_wfn = CIWavefunction(2, 4, sds=[0b0011, 0b1100])
     test_ham = TempChemicalHamiltonian(
         np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
     )
@@ -39,7 +39,7 @@ def test_brute():
     with pytest.raises(ValueError):
         ci.brute(test_wfn, test_ham, 0)
 
-    test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
+    test_wfn = CIWavefunction(2, 4, sds=[0b0011, 0b1100])
     test_ham = TempChemicalHamiltonian(
         np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
     )

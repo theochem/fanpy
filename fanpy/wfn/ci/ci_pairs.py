@@ -27,10 +27,10 @@ class CIPairs(DOCI):
         Default is no spin (all spins possible).
     _seniority : int
         Number of unpaired electrons in each Slater determinant.
-    sd_vec : tuple of int
+    sds : tuple of int
         List of Slater determinants used to construct the CI wavefunction.
     dict_sd_index : dictionary of int to int
-        Dictionary from Slater determinant to its index in sd_vec.
+        Dictionary from Slater determinant to its index in sds.
 
     Properties
     ----------
@@ -47,7 +47,7 @@ class CIPairs(DOCI):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None, seniority=None):
+    __init__(self, nelec, nspin, memory=None, params=None, sds=None, spin=None, seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -65,7 +65,7 @@ class CIPairs(DOCI):
         Assign the spin of the wavefunction.
     assign_seniority(self, seniority=None)
         Assign the seniority of the wavefunction.
-    assign_sd_vec(self, sd_vec=None)
+    assign_sds(self, sds=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
     get_overlap(self, sd, deriv=None) : {float, np.ndarray}
         Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
@@ -74,7 +74,7 @@ class CIPairs(DOCI):
     """
 
     # pylint:disable=W0223
-    def assign_sd_vec(self, sd_vec=None):
+    def assign_sds(self, sds=None):
         """Assign the list of Slater determinants in the CI Pairs wavefunction.
 
         Ignores user input and uses the Slater determinants for the CI Pairs wavefunction (within
@@ -82,22 +82,22 @@ class CIPairs(DOCI):
 
         Parameters
         ----------
-        sd_vec : iterable of int
+        sds : iterable of int
             List of Slater determinants.
 
         Raises
         ------
         ValueError
-            If the sd_vec is not `None` (default value).
+            If the sds is not `None` (default value).
 
         """
-        if __debug__ and sd_vec is not None:
+        if __debug__ and sds is not None:
             raise ValueError(
-                "Only the default list of Slater determinants is allowed. i.e. sd_vec "
+                "Only the default list of Slater determinants is allowed. i.e. sds "
                 "is `None`. If you would like to customize your CI wavefunction, use "
                 "CIWavefunction instead."
             )
-        super().assign_sd_vec(
+        super().assign_sds(
             sd_list(
                 self.nelec,
                 self.nspin,
@@ -119,7 +119,7 @@ class CIPairs(DOCI):
         """
         # select Slater determinant with largest contributor as the reference Slater determinant
         ref_sd_ind = np.argsort(np.abs(self.params))[-1]
-        ref_sd = self.sd_vec[ref_sd_ind]
+        ref_sd = self.sds[ref_sd_ind]
         spatial_ref_sd, _ = slater.split_spin(ref_sd, self.nspatial)
         # use ap1rog normalization scheme
         ci_params = self.params / self.params[ref_sd_ind]

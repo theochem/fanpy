@@ -548,7 +548,7 @@ class BaseSchrodinger:
 
         # define reference
         if isinstance(refwfn, CIWavefunction):
-            ref_sds = refwfn.sd_vec
+            ref_sds = refwfn.sds
             ref_coeffs = refwfn.params
             if deriv:
                 d_ref_coeffs = np.zeros((refwfn.nparams, self.active_nparams), dtype=float)

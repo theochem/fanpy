@@ -18,15 +18,15 @@ def test_fci_assign_seniority():
     assert test.seniority is None
 
 
-def test_fci_assign_sd_vec():
-    """Test FCI.assign_sd_vec."""
+def test_fci_assign_sds():
+    """Test FCI.assign_sds."""
     test = FCI(2, 4)
     with pytest.raises(ValueError):
-        test.assign_sd_vec(1)
+        test.assign_sds(1)
     with pytest.raises(ValueError):
-        test.assign_sd_vec([0b0101])
-    test.assign_sd_vec(None)
-    assert test.sd_vec == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
+        test.assign_sds([0b0101])
+    test.assign_sds(None)
+    assert test.sds == (0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010)
 
 
 def test_fci_h2_631gdp():

@@ -25,10 +25,10 @@ class DOCI(CIWavefunction):
         Default is no spin (all spins possible).
     _seniority : int
         Number of unpaired electrons in each Slater determinant.
-    sd_vec : tuple of int
+    sds : tuple of int
         List of Slater determinants used to construct the CI wavefunction.
     dict_sd_index : dictionary of int to int
-        Dictionary from Slater determinant to its index in sd_vec.
+        Dictionary from Slater determinant to its index in sds.
 
     Properties
     ----------
@@ -45,7 +45,7 @@ class DOCI(CIWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None, seniority=None):
+    __init__(self, nelec, nspin, memory=None, params=None, sds=None, spin=None, seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -63,7 +63,7 @@ class DOCI(CIWavefunction):
         Assign the spin of the wavefunction.
     assign_seniority(self, seniority=None)
         Assign the seniority of the wavefunction.
-    assign_sd_vec(self, sd_vec=None)
+    assign_sds(self, sds=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
     get_overlap(self, sd, deriv=None) : {float, np.ndarray}
         Return the overlap (or derivative of the overlap) of the wavefunction with a Slater

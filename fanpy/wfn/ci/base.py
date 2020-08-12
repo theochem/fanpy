@@ -35,10 +35,10 @@ class CIWavefunction(BaseWavefunction):
         Default is no spin (all spins possible).
     _seniority : int
         Number of unpaired electrons in each Slater determinant.
-    sd_vec : tuple of int
+    sds : tuple of int
         List of Slater determinants used to construct the CI wavefunction.
     dict_sd_index : dictionary of int to int
-        Dictionary from Slater determinant to its index in sd_vec.
+        Dictionary from Slater determinant to its index in sds.
 
     Properties
     ----------
@@ -55,7 +55,7 @@ class CIWavefunction(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
+    __init__(self, nelec, nspin, memory=None, params=None, sds=None, spin=None,
              seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
@@ -74,7 +74,7 @@ class CIWavefunction(BaseWavefunction):
         Assign the spin of the wavefunction.
     assign_seniority(self, seniority=None)
         Assign the seniority of the wavefunction.
-    assign_sd_vec(self, sd_vec=None)
+    assign_sds(self, sds=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
     get_overlap(self, sd, deriv=None) : {float, np.ndarray}
         Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
@@ -89,7 +89,7 @@ class CIWavefunction(BaseWavefunction):
         nspin,
         memory=None,
         params=None,
-        sd_vec=None,
+        sds=None,
         spin=None,
         seniority=None,
     ):
@@ -106,7 +106,7 @@ class CIWavefunction(BaseWavefunction):
             Default does not limit memory usage (i.e. infinite).
         params : np.ndarray
             Coefficients of the Slater determinants of a CI wavefunction.
-        sd_vec : iterable of int
+        sds : iterable of int
             List of Slater determinants used to construct the CI wavefunction.
         spin : float
             Total spin of the wavefunction.
@@ -122,9 +122,9 @@ class CIWavefunction(BaseWavefunction):
         super().__init__(nelec, nspin, memory=memory)
         self.assign_spin(spin=spin)
         self.assign_seniority(seniority=seniority)
-        self.assign_sd_vec(sd_vec=sd_vec)
+        self.assign_sds(sds=sds)
         # FIXME: atleast doubling memory for faster lookup of sd coefficient
-        self.dict_sd_index = {sd: i for i, sd in enumerate(self.sd_vec)}
+        self.dict_sd_index = {sd: i for i, sd in enumerate(self.sds)}
         self.assign_params(params=params)
 
     @property
@@ -176,7 +176,7 @@ class CIWavefunction(BaseWavefunction):
             Number of Slater determinants.
 
         """
-        return len(self.sd_vec)
+        return len(self.sds)
 
     def assign_spin(self, spin=None):
         r"""Assign the spin of the wavefunction.
@@ -234,18 +234,18 @@ class CIWavefunction(BaseWavefunction):
                 raise ValueError("Seniority must be greater than or equal to zero.")
         self._seniority = seniority
 
-    def assign_sd_vec(self, sd_vec=None):
+    def assign_sds(self, sds=None):
         """Assign the list of Slater determinants from which the CI wavefunction is constructed.
 
         Parameters
         ----------
-        sd_vec : iterable of int
+        sds : iterable of int
             List of Slater determinants.
 
         Raises
         ------
         TypeError
-            If sd_vec is not iterable.
+            If sds is not iterable.
             If a Slater determinant is not an integer.
         ValueError
             If an empty iterator was provided.
@@ -261,8 +261,8 @@ class CIWavefunction(BaseWavefunction):
         """
         # pylint: disable=C0103
         # FIXME: terrible memory usage
-        if sd_vec is None:
-            sd_vec = sd_list(
+        if sds is None:
+            sds = sd_list(
                 self.nelec,
                 self.nspin,
                 num_limit=None,
@@ -273,12 +273,12 @@ class CIWavefunction(BaseWavefunction):
 
         if __debug__:
             # FIXME: no check for repeated entries
-            if not hasattr(sd_vec, "__iter__"):
+            if not hasattr(sds, "__iter__"):
                 raise TypeError("Slater determinants must be given as an iterable")
-            sd_vec, temp = itertools.tee(sd_vec, 2)
-            sd_vec_is_empty = True
+            sds, temp = itertools.tee(sds, 2)
+            sds_is_empty = True
             for sd in temp:
-                sd_vec_is_empty = False
+                sds_is_empty = False
                 if not slater.is_sd_compatible(sd):
                     raise TypeError("Slater determinant must be given as an integer.")
                 if slater.total_occ(sd) != self.nelec:
@@ -301,10 +301,10 @@ class CIWavefunction(BaseWavefunction):
                             bin(sd), self.seniority
                         )
                     )
-            if sd_vec_is_empty:
+            if sds_is_empty:
                 raise ValueError("No Slater determinants were provided.")
 
-        self.sd_vec = tuple(sd_vec)
+        self.sds = tuple(sds)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -320,7 +320,7 @@ class CIWavefunction(BaseWavefunction):
 
         """
         if params is None:
-            params = np.zeros(len(self.sd_vec))
+            params = np.zeros(len(self.sds))
             params[0] = 1
 
         super().assign_params(params=params, add_noise=add_noise)

@@ -250,7 +250,7 @@ def test_integrate_sd_wfn_h2_631gdp():
     ref_pspace = np.load(find_datafile("data_h2_hf_631gdp_civec.npy")).tolist()
 
     params = np.random.rand(len(ref_pspace))
-    wfn = CIWavefunction(2, 10, sd_vec=ref_pspace, params=params)
+    wfn = CIWavefunction(2, 10, sds=ref_pspace, params=params)
     for i, sd in enumerate(ref_pspace):
         assert np.allclose(ham.integrate_sd_wfn(sd, wfn), ref_ci_matrix[i, :].dot(params))
         assert np.allclose(
@@ -269,7 +269,7 @@ def test_integrate_sd_wfn_h4_sto6g():
     nelec = 4
     nspin = 8
     sds = sd_list(4, 8, num_limit=None, exc_orders=None)
-    wfn = CIWavefunction(nelec, nspin, sd_vec=sds)
+    wfn = CIWavefunction(nelec, nspin, sds=sds)
     np.random.seed(1000)
     wfn.assign_params(np.random.rand(len(sds)))
 
@@ -750,9 +750,9 @@ def test_integrate_sd_wfn_deriv_fdiff():
         temp_ham.set_ref_ints()
         temp_ham._prev_params = ham.params.copy()
         temp_ham.assign_params(params.copy())
-        return temp_ham.integrate_sd_wfn(wfn.sd_vec[0], wfn)
+        return temp_ham.integrate_sd_wfn(wfn.sds[0], wfn)
 
     assert np.allclose(
         nd.Gradient(objective)(ham.params),
-        ham.integrate_sd_wfn(wfn.sd_vec[0], wfn, ham_deriv=np.arange(ham.nparams)),
+        ham.integrate_sd_wfn(wfn.sds[0], wfn, ham_deriv=np.arange(ham.nparams)),
     )

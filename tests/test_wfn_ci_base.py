@@ -59,8 +59,8 @@ def test_seniority():
     assert test.seniority == 2
 
 
-def test_assign_sd_vec():
-    """Test CIWavefunction.assign_sd_vec."""
+def test_assign_sds():
+    """Test CIWavefunction.assign_sds."""
     test = skip_init(CIWavefunction)
     test.assign_nelec(2)
     test.assign_nspin(6)
@@ -69,35 +69,35 @@ def test_assign_sd_vec():
     # check error
     #  not iterable
     with pytest.raises(TypeError):
-        test.assign_sd_vec(2)
+        test.assign_sds(2)
     #  iterable of not ints
     with pytest.raises(TypeError):
-        test.assign_sd_vec((str(i) for i in range(2)))
+        test.assign_sds((str(i) for i in range(2)))
     with pytest.raises(TypeError):
-        test.assign_sd_vec([float(i) for i in range(2)])
+        test.assign_sds([float(i) for i in range(2)])
     #  bad electron number
     with pytest.raises(ValueError):
-        test.assign_sd_vec([0b1, 0b111])
+        test.assign_sds([0b1, 0b111])
     #  bad spin
     test.assign_spin(0.5)
     test.assign_seniority(None)
     with pytest.raises(ValueError):
-        test.assign_sd_vec([0b000011, 0b000110])
+        test.assign_sds([0b000011, 0b000110])
     #  bad seniority
     test.assign_spin(None)
     test.assign_seniority(0)
     with pytest.raises(ValueError):
-        test.assign_sd_vec([0b000011, 0b000110])
+        test.assign_sds([0b000011, 0b000110])
     #  bad spin and seniority
     test.assign_spin(1)
     test.assign_seniority(0)
     with pytest.raises(ValueError):
-        test.assign_sd_vec([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
+        test.assign_sds([0b000011, 0b000110, 0b110000, 0b001001, 0b000101])
     #  empty list
     test.assign_spin(None)
     test.assign_seniority(None)
     with pytest.raises(ValueError):
-        test.assign_sd_vec([])
+        test.assign_sds([])
 
     test = skip_init(CIWavefunction)
     test.assign_nelec(2)
@@ -105,8 +105,8 @@ def test_assign_sd_vec():
     test.assign_spin(None)
     test.assign_seniority(None)
     # None assigned
-    test.assign_sd_vec()
-    assert test.sd_vec == (
+    test.assign_sds()
+    assert test.sds == (
         0b001001,
         0b001010,
         0b011000,
@@ -123,9 +123,9 @@ def test_assign_sd_vec():
         0b110000,
         0b100100,
     )
-    del test.sd_vec
-    test.assign_sd_vec(None)
-    assert test.sd_vec == (
+    del test.sds
+    test.assign_sds(None)
+    assert test.sds == (
         0b001001,
         0b001010,
         0b011000,
@@ -143,21 +143,21 @@ def test_assign_sd_vec():
         0b100100,
     )
     # tuple assigned
-    del test.sd_vec
-    test.assign_sd_vec((0b0011,))
-    assert test.sd_vec == (0b0011,)
+    del test.sds
+    test.assign_sds((0b0011,))
+    assert test.sds == (0b0011,)
     # list assigned
-    del test.sd_vec
-    test.assign_sd_vec([0b1100])
-    assert test.sd_vec == (0b1100,)
+    del test.sds
+    test.assign_sds([0b1100])
+    assert test.sds == (0b1100,)
     # generator assigned
-    del test.sd_vec
-    test.assign_sd_vec((i for i in [0b1001]))
-    assert test.sd_vec == (0b1001,)
+    del test.sds
+    test.assign_sds((i for i in [0b1001]))
+    assert test.sds == (0b1001,)
     # repeated elements
-    del test.sd_vec
-    test.assign_sd_vec([0b0101] * 20)
-    assert test.sd_vec == (0b0101,) * 20
+    del test.sds
+    test.assign_sds([0b0101] * 20)
+    assert test.sds == (0b0101,) * 20
 
 
 def test_get_overlap():
@@ -178,8 +178,8 @@ def test_get_overlap():
     assert test.get_overlap(0b010100, deriv=None) == 12
     assert test.get_overlap(0b110000, deriv=None) == 13
     assert test.get_overlap(0b100100, deriv=None) == 14
-    for j, sd in enumerate(test.sd_vec):
-        output = np.zeros(len(test.sd_vec))
+    for j, sd in enumerate(test.sds):
+        output = np.zeros(len(test.sds))
         output[j] = 1
         assert np.allclose(test.get_overlap(sd, deriv=np.arange(15)), output)
     assert test.get_overlap(0b111111, deriv=None) == 0

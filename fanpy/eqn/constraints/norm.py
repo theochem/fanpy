@@ -139,7 +139,7 @@ class NormConstraint(BaseSchrodinger):
         ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
-            ref_sds = ref.sd_vec
+            ref_sds = ref.sds
             ref_coeffs = ref.params
         else:
             if slater.is_sd_compatible(ref):
@@ -185,7 +185,7 @@ class NormConstraint(BaseSchrodinger):
         ref = self.refwfn  # pylint: disable=E1101
         # Define reference
         if isinstance(ref, CIWavefunction):
-            ref_sds = ref.sd_vec
+            ref_sds = ref.sds
             ref_coeffs = ref.params
         else:
             if slater.is_sd_compatible(ref):

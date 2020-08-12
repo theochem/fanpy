@@ -24,10 +24,10 @@ class CISD(CIWavefunction):
         Default is no spin (all spins possible).
     _seniority : int
         Number of unpaired electrons in each Slater determinant.
-    sd_vec : tuple of int
+    sds : tuple of int
         List of Slater determinants used to construct the CI wavefunction.
     dict_sd_index : dictionary of int to int
-        Dictionary from Slater determinant to its index in sd_vec.
+        Dictionary from Slater determinant to its index in sds.
 
     Properties
     ----------
@@ -44,7 +44,7 @@ class CISD(CIWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None, seniority=None):
+    __init__(self, nelec, nspin, memory=None, params=None, sds=None, spin=None, seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -62,7 +62,7 @@ class CISD(CIWavefunction):
         Assign the spin of the wavefunction.
     assign_seniority(self, seniority=None)
         Assign the seniority of the wavefunction.
-    assign_sd_vec(self, sd_vec=None)
+    assign_sds(self, sds=None)
         Assign the list of Slater determinants from which the CI wavefunction is constructed.
     get_overlap(self, sd, deriv=None) : {float, np.ndarray}
         Return the overlap (or derivative of the overlap) of the wavefunction with a Slater
@@ -71,7 +71,7 @@ class CISD(CIWavefunction):
     """
 
     # pylint:disable=W0223
-    def assign_sd_vec(self, sd_vec=None):
+    def assign_sds(self, sds=None):
         """Assign the list of Slater determinants in the CISD wavefunction.
 
         Ignores user input and uses the Slater determinants for the FCI wavefunction (within the
@@ -79,27 +79,27 @@ class CISD(CIWavefunction):
 
         Parameters
         ----------
-        sd_vec : iterable of int
+        sds : iterable of int
             List of Slater determinants (in the form of integers that describe the occupation as a
             bitstring)
 
         Raises
         ------
         ValueError
-            If the sd_vec is not `None` (default value).
+            If the sds is not `None` (default value).
 
         Notes
         -----
         Needs to have `nelec`, `nspin`, `spin`, `seniority`.
 
         """
-        if __debug__ and sd_vec is not None:
+        if __debug__ and sds is not None:
             raise ValueError(
-                "Only the default list of Slater determinants is allowed. i.e. sd_vec "
+                "Only the default list of Slater determinants is allowed. i.e. sds "
                 "is `None`. If you would like to customize your CI wavefunction, use "
                 "CIWavefunction instead."
             )
-        super().assign_sd_vec(
+        super().assign_sds(
             sd_list(
                 self.nelec,
                 self.nspin,

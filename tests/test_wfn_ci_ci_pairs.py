@@ -5,15 +5,15 @@ from utils import skip_init
 from fanpy.wfn.ci.ci_pairs import CIPairs
 
 
-def test_assign_sd_vec():
-    """Test CIPairs.assign_sd_vec."""
+def test_assign_sds():
+    """Test CIPairs.assign_sds."""
     test = skip_init(CIPairs)
     test.assign_nelec(6)
     test.assign_nspin(10)
     test.assign_spin(0)
     test.assign_seniority(0)
-    test.assign_sd_vec()
-    assert test.sd_vec == (
+    test.assign_sds()
+    assert test.sds == (
         0b0011100111,
         0b0101101011,
         0b1001110011,
@@ -23,7 +23,7 @@ def test_assign_sd_vec():
         0b1011010110,
     )
     with pytest.raises(ValueError):
-        test.assign_sd_vec((0b0011100111,))
+        test.assign_sds((0b0011100111,))
 
 
 def test_to_ap1rog():

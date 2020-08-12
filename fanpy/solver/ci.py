@@ -59,8 +59,8 @@ def brute(wfn, ham, save_file=""):
         raise TypeError("The save file must be given as a string.")
 
     ci_matrix = np.zeros((wfn.nsd, wfn.nsd))
-    for i, sd1 in enumerate(wfn.sd_vec):
-        for j, sd2 in enumerate(wfn.sd_vec[i:]):
+    for i, sd1 in enumerate(wfn.sds):
+        for j, sd2 in enumerate(wfn.sds[i:]):
             ci_matrix[i, i + j] += ham.integrate_sd_sd(sd1, sd2)
     # ci_matrix += ci_matrix.T - np.diag(np.diag(ci_matrix))
 

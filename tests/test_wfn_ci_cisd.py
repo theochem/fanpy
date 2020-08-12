@@ -7,15 +7,15 @@ from fanpy.solver.ci import brute
 from fanpy.wfn.ci.cisd import CISD
 
 
-def test_cisd_assign_sd_vec():
-    """Test CISD.assign_sd_vec."""
+def test_cisd_assign_sds():
+    """Test CISD.assign_sds."""
     test = skip_init(CISD)
     test.assign_nelec(3)
     test.assign_nspin(6)
     test.assign_spin(None)
     test.assign_seniority(None)
-    test.assign_sd_vec()
-    assert test.sd_vec == (
+    test.assign_sds()
+    assert test.sds == (
         0b001011,
         0b011001,
         0b001101,
@@ -37,7 +37,7 @@ def test_cisd_assign_sd_vec():
         0b100110,
     )
     with pytest.raises(ValueError):
-        test.assign_sd_vec((0b001011, 0b011001))
+        test.assign_sds((0b001011, 0b011001))
 
 
 def test_cisd_h2_631gdp():

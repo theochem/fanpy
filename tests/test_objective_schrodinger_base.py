@@ -223,7 +223,7 @@ def test_baseschrodinger_get_energy_one_proj():
 
     # CI
     for sd1, sd2 in it.combinations(sds, 2):
-        ciwfn = CIWavefunction(2, 4, sd_vec=[sd1, sd2])
+        ciwfn = CIWavefunction(2, 4, sds=[sd1, sd2])
         ciwfn.assign_params(np.random.rand(ciwfn.nparams))
         coeff1 = ciwfn.get_overlap(sd1)
         coeff2 = ciwfn.get_overlap(sd2)

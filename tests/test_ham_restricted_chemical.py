@@ -862,9 +862,9 @@ def test_integrate_sd_wfn_deriv_fdiff():
         temp_ham.set_ref_ints()
         temp_ham._prev_params = ham.params.copy()
         temp_ham.assign_params(params.copy())
-        return temp_ham.integrate_sd_wfn(wfn.sd_vec[0], wfn)
+        return temp_ham.integrate_sd_wfn(wfn.sds[0], wfn)
 
     assert np.allclose(
         nd.Gradient(objective)(ham.params),
-        ham.integrate_sd_wfn(wfn.sd_vec[0], wfn, ham_deriv=np.arange(ham.nparams)),
+        ham.integrate_sd_wfn(wfn.sds[0], wfn, ham_deriv=np.arange(ham.nparams)),
     )
