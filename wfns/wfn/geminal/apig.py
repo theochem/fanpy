@@ -1,5 +1,5 @@
 """Antisymmeterized Product of Interacting Geminals (APIG) wavefunction."""
-from wfns.backend.slater import sign_perm
+from wfns.tools.slater import sign_perm
 from wfns.wfn.geminal.base import BaseGeminal
 
 

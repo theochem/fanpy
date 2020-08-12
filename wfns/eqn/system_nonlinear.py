@@ -1,6 +1,6 @@
 """Schrodinger equation as a system of equations."""
 import numpy as np
-from wfns.backend import sd_list, slater
+from wfns.tools import sd_list, slater
 from wfns.eqn.constraints.norm import NormConstraint
 from wfns.eqn.constraints.energy import EnergyConstraint
 from wfns.eqn.base import BaseSchrodinger
@@ -315,7 +315,7 @@ class SystemEquations(BaseSchrodinger):
         ):
             raise TypeError(
                 "Projection space must be given as a list/tuple of Slater determinants or "
-                "`CIWavefunction`. See `backend.slater` for compatible Slater determinant "
+                "`CIWavefunction`. See `tools.slater` for compatible Slater determinant "
                 "formats."
             )
 
@@ -354,7 +354,7 @@ class SystemEquations(BaseSchrodinger):
         ):
             raise TypeError(
                 "Reference wavefunction must be given as a Slater determinant, a list/tuple of"
-                " Slater determinants, or a CIWavefunction. See `backend.slater` for compatible"
+                " Slater determinants, or a CIWavefunction. See `tools.slater` for compatible"
                 " representations of the Slater determinants."
             )
 

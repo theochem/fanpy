@@ -91,44 +91,44 @@ Backend
 =======
 * General Math Tools
 
-  * :func:`Binomial Coefficient <wfns.backend.math_tools.binomial>`
-  * :func:`Adjugate <wfns.backend.math_tools.adjugate>`
-  * :func:`Permanent Using Combinatorics <wfns.backend.math_tools.permanent_combinatoric>`
-  * :func:`Permanent Using Ryser Algorithm <wfns.backend.math_tools.permanent_ryser>`
-  * :func:`Permanent Using Borchardt Theorem <wfns.backend.math_tools.permanent_borchardt>`
+  * :func:`Binomial Coefficient <wfns.tools.math_tools.binomial>`
+  * :func:`Adjugate <wfns.tools.math_tools.adjugate>`
+  * :func:`Permanent Using Combinatorics <wfns.tools.math_tools.permanent_combinatoric>`
+  * :func:`Permanent Using Ryser Algorithm <wfns.tools.math_tools.permanent_ryser>`
+  * :func:`Permanent Using Borchardt Theorem <wfns.tools.math_tools.permanent_borchardt>`
 
-* :mod:`Slater Determinant <wfns.backend.slater>`
+* :mod:`Slater Determinant <wfns.tools.slater>`
 
-  * :func:`Check if occupied <wfns.backend.slater.occ>`
-  * :func:`Check if alpha <wfns.backend.slater.is_alpha>`
-  * :func:`Convert spin to spatial <wfns.backend.slater.spatial_index>`
-  * :func:`Get occupation number <wfns.backend.slater.total_occ>`
-  * :func:`Annhilation Operator <wfns.backend.slater.annihilate>`
-  * :func:`Creation Operator <wfns.backend.slater.create>`
-  * :func:`Excitation Operator<wfns.backend.slater.excite>`
-  * :func:`Ground state Slater determinant <wfns.backend.slater.ground>`
-  * :func:`Check if internal Slater determinant <wfns.backend.slater.is_internal_sd>`
-  * :func:`Convert to internal Slater determinant <wfns.backend.slater.internal_sd>`
-  * :func:`Get occupied orbital indices <wfns.backend.slater.occ_indices>`
-  * :func:`Get virtual orbital indices <wfns.backend.slater.vir_indices>`
-  * :func:`Get orbitals shared between Slater determinants <wfns.backend.slater.shared_orbs>`
-  * :func:`Get orbitals different between Slater determinants <wfns.backend.slater.diff_orbs>`
-  * :func:`Combine alpha and beta parts <wfns.backend.slater.combine_spin>`
-  * :func:`Split a Slater determinant into alpha and beta parts <wfns.backend.slater.split_spin>`
-  * :func:`Get index after interleaving <wfns.backend.slater.interleave_index>`
-  * :func:`Get index after deinterleaving <wfns.backend.slater.deinterleave_index>`
-  * :func:`Interleave Slater determinant <wfns.backend.slater.interleave>`
-  * :func:`Deinterleave Slater determinant <wfns.backend.slater.deinterleave>`
-  * :func:`Get spin of Slater determinant <wfns.backend.slater.get_spin>`
-  * :func:`Get seniority of Slater determinant <wfns.backend.slater.get_seniority>`
-  * :func:`Get signature of the permutation that sorts a set of annihilators. <wfns.backend.slater.sign_perm>`
-  * :func:`Get signature of moving a creation operator to a specific position. <wfns.backend.slater.sign_swap>`
-  * :func:`Generate Slater determinants <wfns.backend.sd_list.sd_list>`
+  * :func:`Check if occupied <wfns.tools.slater.occ>`
+  * :func:`Check if alpha <wfns.tools.slater.is_alpha>`
+  * :func:`Convert spin to spatial <wfns.tools.slater.spatial_index>`
+  * :func:`Get occupation number <wfns.tools.slater.total_occ>`
+  * :func:`Annhilation Operator <wfns.tools.slater.annihilate>`
+  * :func:`Creation Operator <wfns.tools.slater.create>`
+  * :func:`Excitation Operator<wfns.tools.slater.excite>`
+  * :func:`Ground state Slater determinant <wfns.tools.slater.ground>`
+  * :func:`Check if internal Slater determinant <wfns.tools.slater.is_internal_sd>`
+  * :func:`Convert to internal Slater determinant <wfns.tools.slater.internal_sd>`
+  * :func:`Get occupied orbital indices <wfns.tools.slater.occ_indices>`
+  * :func:`Get virtual orbital indices <wfns.tools.slater.vir_indices>`
+  * :func:`Get orbitals shared between Slater determinants <wfns.tools.slater.shared_orbs>`
+  * :func:`Get orbitals different between Slater determinants <wfns.tools.slater.diff_orbs>`
+  * :func:`Combine alpha and beta parts <wfns.tools.slater.combine_spin>`
+  * :func:`Split a Slater determinant into alpha and beta parts <wfns.tools.slater.split_spin>`
+  * :func:`Get index after interleaving <wfns.tools.slater.interleave_index>`
+  * :func:`Get index after deinterleaving <wfns.tools.slater.deinterleave_index>`
+  * :func:`Interleave Slater determinant <wfns.tools.slater.interleave>`
+  * :func:`Deinterleave Slater determinant <wfns.tools.slater.deinterleave>`
+  * :func:`Get spin of Slater determinant <wfns.tools.slater.get_spin>`
+  * :func:`Get seniority of Slater determinant <wfns.tools.slater.get_seniority>`
+  * :func:`Get signature of the permutation that sorts a set of annihilators. <wfns.tools.slater.sign_perm>`
+  * :func:`Get signature of moving a creation operator to a specific position. <wfns.tools.slater.sign_swap>`
+  * :func:`Generate Slater determinants <wfns.tools.sd_list.sd_list>`
 
 * Perfect Matching Generator
 
-  * :func:`Complete Graph Perfect Matching Generator <wfns.backend.graphs.generate_complete_pmatch>`
-  * :func:`Bipartite Graph Perfect Matching Generator <wfns.backend.graphs.generate_biclique_pmatch>`
+  * :func:`Complete Graph Perfect Matching Generator <wfns.tools.graphs.generate_complete_pmatch>`
+  * :func:`Bipartite Graph Perfect Matching Generator <wfns.tools.graphs.generate_biclique_pmatch>`
 
 Scripts
 =======
@@ -183,41 +183,41 @@ Scripts
       wfns.wfn.composite.lincomb.LinearCombinationWavefunction
       wfns.wfn.network.keras_network.KerasNetwork
 
-      wfns.backend.math_tools.binomial
-      wfns.backend.math_tools.adjugate
-      wfns.backend.math_tools.permanent_combinatoric
-      wfns.backend.math_tools.permanent_ryser
-      wfns.backend.math_tools.permanent_borchardt
-      wfns.backend.math_tools.unitary_matrix
+      wfns.tools.math_tools.binomial
+      wfns.tools.math_tools.adjugate
+      wfns.tools.math_tools.permanent_combinatoric
+      wfns.tools.math_tools.permanent_ryser
+      wfns.tools.math_tools.permanent_borchardt
+      wfns.tools.math_tools.unitary_matrix
 
-      wfns.backend.slater
-      wfns.backend.slater.is_internal_sd
-      wfns.backend.slater.is_sd_compatible
-      wfns.backend.slater.internal_sd
-      wfns.backend.slater.occ
-      wfns.backend.slater.occ_indices
-      wfns.backend.slater.vir_indices
-      wfns.backend.slater.total_occ
-      wfns.backend.slater.is_alpha
-      wfns.backend.slater.spatial_index
-      wfns.backend.slater.annihilate
-      wfns.backend.slater.create
-      wfns.backend.slater.excite
-      wfns.backend.slater.ground
-      wfns.backend.slater.shared_orbs
-      wfns.backend.slater.diff_orbs
-      wfns.backend.slater.combine_spin
-      wfns.backend.slater.split_spin
-      wfns.backend.slater.interleave_index
-      wfns.backend.slater.deinterleave_index
-      wfns.backend.slater.interleave
-      wfns.backend.slater.deinterleave
-      wfns.backend.slater.get_spin
-      wfns.backend.slater.get_seniority
-      wfns.backend.slater.sign_perm
-      wfns.backend.slater.sign_swap
+      wfns.tools.slater
+      wfns.tools.slater.is_internal_sd
+      wfns.tools.slater.is_sd_compatible
+      wfns.tools.slater.internal_sd
+      wfns.tools.slater.occ
+      wfns.tools.slater.occ_indices
+      wfns.tools.slater.vir_indices
+      wfns.tools.slater.total_occ
+      wfns.tools.slater.is_alpha
+      wfns.tools.slater.spatial_index
+      wfns.tools.slater.annihilate
+      wfns.tools.slater.create
+      wfns.tools.slater.excite
+      wfns.tools.slater.ground
+      wfns.tools.slater.shared_orbs
+      wfns.tools.slater.diff_orbs
+      wfns.tools.slater.combine_spin
+      wfns.tools.slater.split_spin
+      wfns.tools.slater.interleave_index
+      wfns.tools.slater.deinterleave_index
+      wfns.tools.slater.interleave
+      wfns.tools.slater.deinterleave
+      wfns.tools.slater.get_spin
+      wfns.tools.slater.get_seniority
+      wfns.tools.slater.sign_perm
+      wfns.tools.slater.sign_swap
 
-      wfns.backend.sd_list.sd_list
+      wfns.tools.sd_list.sd_list
 
-      wfns.backend.graphs.generate_complete_pmatch
-      wfns.backend.graphs.generate_biclique_pmatch
+      wfns.tools.graphs.generate_complete_pmatch
+      wfns.tools.graphs.generate_biclique_pmatch

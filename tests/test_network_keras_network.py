@@ -4,8 +4,8 @@ import numdifftools as nd
 import numpy as np
 import pytest
 from utils import skip_init
-from wfns.backend.sd_list import sd_list
-import wfns.backend.slater as slater
+from wfns.tools.sd_list import sd_list
+import wfns.tools.slater as slater
 from wfns.wfn.network.keras_network import KerasNetwork
 
 

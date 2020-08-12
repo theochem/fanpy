@@ -1,5 +1,5 @@
 """CI Singles and Doubles Wavefunction."""
-from wfns.backend.sd_list import sd_list
+from wfns.tools.sd_list import sd_list
 from wfns.wfn.ci.base import CIWavefunction
 
 

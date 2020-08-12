@@ -29,7 +29,7 @@ we generate the following script
     import os
     from wfns.wfn.geminal.ap1rog import AP1roG
     from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-    from wfns.backend.sd_list import sd_list
+    from wfns.tools.sd_list import sd_list
     from wfns.eqn.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
 
@@ -104,7 +104,7 @@ The script can be read as a sequence of steps:
 4. Select the projection space. The projection space must be provided as a list (or any other
    iterable) of integers whose binary correspond to the occupation vector of the Slater determinant.
    For more information on the representation of the Slater determinant, go to the :py:mod:`slater
-   <wfns.backend.slater>` module. The method :py:func:`sd_list <wfns.backend.sd_list.sd_list>` can
+   <wfns.tools.slater>` module. The method :py:func:`sd_list <wfns.backend.sd_list.sd_list>` can
    be used instead to produce Slater determinants by the excitations of the ground state Slater
    determinant.
 5. Parameters for optimization are selected. For more complex optimization algorithms, we need

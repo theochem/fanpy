@@ -3,7 +3,7 @@ import itertools as it
 import os
 
 import numpy as np
-from wfns.backend import math_tools, slater
+from wfns.tools import math_tools, slater
 from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
 
 # pylint: disable=C0302

@@ -2,7 +2,7 @@
 import abc
 import os
 import numpy as np
-import wfns.backend.slater as slater
+import wfns.tools.slater as slater
 from wfns.ham.base import BaseHamiltonian
 from wfns.eqn.utils import ComponentParameterIndices
 from wfns.wfn.base import BaseWavefunction
@@ -569,7 +569,7 @@ class BaseSchrodinger:
             raise TypeError(
                 "Reference state must be given as a Slater determinant, a CI "
                 "Wavefunction, or a list/tuple of Slater determinants. See "
-                "`backend.slater` for compatible representations of the Slater "
+                "`tools.slater` for compatible representations of the Slater "
                 "determinants."
             )
 
@@ -677,7 +677,7 @@ class BaseSchrodinger:
                 ):
                     raise TypeError(
                         "Projection space must be given as a Slater determinant or a "
-                        "list/tuple of Slater determinants. See `backend.slater` for "
+                        "list/tuple of Slater determinants. See `tools.slater` for "
                         "compatible representations of the Slater determinants."
                     )
 

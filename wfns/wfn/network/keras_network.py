@@ -1,8 +1,8 @@
 """Wavefunction using Keras NN."""
 from tensorflow.python import keras
 import numpy as np
-from wfns.backend.sd_list import sd_list
-import wfns.backend.slater as slater
+from wfns.tools.sd_list import sd_list
+import wfns.tools.slater as slater
 from wfns.wfn.base import BaseWavefunction
 
 

@@ -1,7 +1,7 @@
-"""Test for wfns.backend.math_tools."""
+"""Test for wfns.tools.math_tools."""
 import numpy as np
 import pytest
-from wfns.backend.math_tools import (
+from wfns.tools.math_tools import (
     adjugate,
     binomial,
     permanent_borchardt,

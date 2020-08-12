@@ -1,6 +1,6 @@
 """Energy of the Schrodinger equation integrated against projected forms of the wavefunction."""
 import numpy as np
-from wfns.backend import sd_list, slater
+from wfns.tools import sd_list, slater
 from wfns.eqn.base import BaseSchrodinger
 
 

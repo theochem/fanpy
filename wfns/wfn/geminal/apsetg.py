@@ -1,5 +1,5 @@
 """Antisymmeterized Product of Set divided Geminals (APsetG) Wavefunction."""
-from wfns.backend import graphs
+from wfns.tools import graphs
 from wfns.wfn.geminal.base import BaseGeminal
 
 

@@ -14,7 +14,7 @@ int_partition_recursive(coins, num_coin_types, total)
 """
 import numpy as np
 
-from wfns.backend.slater import sign_perm
+from wfns.tools.slater import sign_perm
 
 
 def generate_complete_pmatch(indices, sign=1):

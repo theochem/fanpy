@@ -11,7 +11,7 @@ density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_thresh
     Returns the one and two electron density matrices.
 """
 import numpy as np
-from wfns.backend import slater
+from wfns.tools import slater
 
 
 # FIXME: incredibly slow/bad approach

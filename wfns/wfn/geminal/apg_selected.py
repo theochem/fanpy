@@ -1,7 +1,7 @@
 """Antisymmeterized Product of Selected Geminals (APG) Wavefunction."""
 import numpy as np
 
-from wfns.backend.graphs import generate_general_pmatch
+from wfns.tools.graphs import generate_general_pmatch
 from wfns.wfn.geminal.apg import APG
 
 

@@ -4,7 +4,7 @@ import types
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.backend.graphs import generate_complete_pmatch
+from wfns.tools.graphs import generate_complete_pmatch
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.eqn.onesided_energy import OneSidedEnergy
 from wfns.eqn.system_nonlinear import SystemEquations

@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.backend.sd_list import sd_list
+from wfns.tools.sd_list import sd_list
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction

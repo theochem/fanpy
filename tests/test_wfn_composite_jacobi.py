@@ -4,7 +4,7 @@ import itertools as it
 import numpy as np
 import pytest
 from utils import find_datafile, skip_init
-from wfns.backend.sd_list import sd_list
+from wfns.tools.sd_list import sd_list
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.solver.ci import brute
 from wfns.wfn.base import BaseWavefunction

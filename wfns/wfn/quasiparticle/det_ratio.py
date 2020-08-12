@@ -1,6 +1,6 @@
 """Hard-coded determinant-ratio wavefunction."""
 import numpy as np
-from wfns.backend import slater
+from wfns.tools import slater
 from wfns.wfn.base import BaseWavefunction
 
 

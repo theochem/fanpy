@@ -1,6 +1,6 @@
 """Test wfns.sd_list."""
 import pytest
-from wfns.backend import sd_list
+from wfns.tools import sd_list
 
 
 def test_satisfies_conditions():

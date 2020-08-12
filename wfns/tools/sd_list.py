@@ -11,7 +11,7 @@ sd_list(nspatial, nelec, num_limit=None, exc_orders=None, spin=None, seniority=N
 """
 from itertools import combinations, product
 
-from wfns.backend import slater
+from wfns.tools import slater
 
 
 def satisfies_conditions(sd, nspatial, spin, seniority):

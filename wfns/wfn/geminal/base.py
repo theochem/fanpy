@@ -2,8 +2,8 @@
 import abc
 
 import numpy as np
-from wfns.backend import slater
-from wfns.backend import math_tools
+from wfns.tools import slater
+from wfns.tools import math_tools
 from wfns.wfn.base import BaseWavefunction
 
 

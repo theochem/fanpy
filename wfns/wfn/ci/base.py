@@ -2,8 +2,8 @@
 import itertools
 
 import numpy as np
-from wfns.backend import slater
-from wfns.backend.sd_list import sd_list
+from wfns.tools import slater
+from wfns.tools.sd_list import sd_list
 from wfns.wfn.base import BaseWavefunction
 
 

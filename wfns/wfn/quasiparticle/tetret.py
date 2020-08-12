@@ -1,6 +1,6 @@
 """Antisymmeterized Product of Tetrets Wavefunctions."""
 from wfns.wfn.quasiparticle.base import BaseQuasiparticle
-from wfns.backend.graphs import generate_unordered_partition
+from wfns.tools.graphs import generate_unordered_partition
 
 
 class AntisymmeterizedProductTetrets(BaseQuasiparticle):

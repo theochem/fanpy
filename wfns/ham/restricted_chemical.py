@@ -2,7 +2,7 @@ r"""Hamiltonian used to describe a chemical system expressed wrt restricted orbi
 import itertools as it
 
 import numpy as np
-from wfns.backend import slater
+from wfns.tools import slater
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 # pylint: disable=C0302

@@ -1,18 +1,18 @@
 """Test fors wfn.graphs."""
 import numpy as np
 
-from wfns.backend.graphs import (
+from wfns.tools.graphs import (
     generate_biclique_pmatch,
     generate_complete_pmatch,
     generate_general_pmatch,
     generate_unordered_partition,
     int_partition_recursive,
 )
-from wfns.backend.slater import sign_perm
+from wfns.tools.slater import sign_perm
 
 
 def test_generate_complete_pmatch():
-    """Test wfn.backend.graphs.generate_complete_pmatch."""
+    """Test wfn.tools.graphs.generate_complete_pmatch."""
     # bad input
     assert list(generate_complete_pmatch([])) == [((), 1)]
     assert list(generate_complete_pmatch([1])) == [((), 1)]
@@ -59,7 +59,7 @@ def test_generate_complete_pmatch():
 
 
 def test_generate_biclique_pmatch():
-    """Test wfn.backend.graphs.generate_biclique_pmatch."""
+    """Test wfn.tools.graphs.generate_biclique_pmatch."""
     # bad input
     assert list(generate_biclique_pmatch([], [])) == [((), 1)]
     assert list(generate_biclique_pmatch([], [1, 2])) == [((), 1)]
@@ -129,7 +129,7 @@ def test_generate_biclique_pmatch():
 
 
 def test_unorderd_partition():
-    """Test wfn.backend.graphs.generate_unordered_partition."""
+    """Test wfn.tools.graphs.generate_unordered_partition."""
     assert list(generate_unordered_partition([1], [(1, 1)])) == [[[1]]]
 
     assert list(generate_unordered_partition([1, 2], [(2, 1)])) == [[[1, 2]]]
@@ -215,7 +215,7 @@ def test_unorderd_partition():
 
 
 def test_unorderd_partition_perfect_matching():
-    """Test wfn.backend.graphs.generate_unordered_partition for perfect matching."""
+    """Test wfn.tools.graphs.generate_unordered_partition for perfect matching."""
     # 4 vertices
     occ_indices = [0, 1, 3, 4]
     answer = [[[0, 1], [3, 4]], [[0, 3], [1, 4]], [[0, 4], [1, 3]]]
@@ -245,7 +245,7 @@ def test_unorderd_partition_perfect_matching():
 
 
 def test_int_partition_recursive():
-    """Test wfn.backend.graphs.int_partition_recursive."""
+    """Test wfn.tools.graphs.int_partition_recursive."""
     assert list(int_partition_recursive([1], 0, 1)) == []
     assert list(int_partition_recursive([1], -1, 1)) == []
 
@@ -293,7 +293,7 @@ def test_int_partition_recursive():
 
 
 def test_generate_general_pmatch():
-    """Test wfn.backend.graphs.generate_general_pmatch."""
+    """Test wfn.tools.graphs.generate_general_pmatch."""
     # bad input
     assert list(generate_general_pmatch([], np.ones((0, 0)))) == []
     assert list(generate_general_pmatch([1], np.ones((1, 1)))) == []

@@ -3,7 +3,7 @@ import abc
 import itertools as it
 
 import numpy as np
-from wfns.backend import slater
+from wfns.tools import slater
 
 
 class BaseHamiltonian:

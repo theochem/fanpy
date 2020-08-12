@@ -16,7 +16,7 @@ product of orbitals (Slater determinant) as the foundation from which the wavefu
 Then, the Hamiltonian, which operates on the wavefunction, can also be expressed with respect to
 Slater determinants. We represent Slater determinants and transformations between them using Second
 Quantization. All operations involving Slater determinants are handled by the module,
-:mod:`slater <wfns.backend.slater>`.
+:mod:`slater <wfns.tools.slater>`.
 
 Within a finite one-electron basis set and the Second Quantization framework, the Schrödinger
 equation can be decomposed into four components:
@@ -39,6 +39,6 @@ equation can be decomposed into four components:
     * The solver is an algorithm that will optimize the objective.
 
 Each component is independent of the others, except through the modules in
-:mod:`backend <wfns.backend>`. Almost all combinations of the components are possible, though
+:mod:`tools <wfns.backend>`. Almost all combinations of the components are possible, though
 special care needs to be taken to ensure that the the given combination is meaningful. Please see
 their respective sections for more details.

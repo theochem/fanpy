@@ -3,7 +3,7 @@ import itertools as it
 
 import numpy as np
 import pytest
-from wfns.backend import slater
+from wfns.tools import slater
 
 
 def test_occ():

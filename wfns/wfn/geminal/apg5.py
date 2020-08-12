@@ -1,7 +1,7 @@
 import networkx
 import numpy as np
 
-from wfns.backend.slater import sign_perm
+from wfns.tools.slater import sign_perm
 from wfns.wfn.geminal.apg import APG
 
 

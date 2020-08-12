@@ -1,5 +1,5 @@
 """Functions for obtaining the density matrices."""
-from wfns.backend import sd_list, slater
+from wfns.tools import sd_list, slater
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 

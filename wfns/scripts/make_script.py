@@ -241,7 +241,7 @@ def make_script(
         from_imports.append(("wfns.ham.restricted_chemical", "RestrictedChemicalHamiltonian"))
         ham_name = "RestrictedChemicalHamiltonian"
 
-    from_imports.append(("wfns.backend.sd_list", "sd_list"))
+    from_imports.append(("wfns.tools.sd_list", "sd_list"))
 
     if objective == "system":
         from_imports.append(("wfns.eqn.system_nonlinear", "SystemEquations"))
@@ -283,7 +283,7 @@ def make_script(
             solver_kwargs = "method='hybr', jac=objective.jacobian, options={'xtol': 1.0e-9}"
 
     if save_orbs is not None:
-        from_imports.append(("wfns.backend.math_tools", "unitary_matrix"))
+        from_imports.append(("wfns.tools.math_tools", "unitary_matrix"))
 
     if memory is not None:
         memory = "'{}'".format(memory)

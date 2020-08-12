@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from utils import find_datafile
-from wfns.backend.slater import get_seniority
+from wfns.tools.slater import get_seniority
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 

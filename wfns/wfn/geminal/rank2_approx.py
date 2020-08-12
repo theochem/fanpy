@@ -1,6 +1,6 @@
 """Rank-2 approximation to geminal wavefunction."""
 import numpy as np
-from wfns.backend import math_tools, slater
+from wfns.tools import math_tools, slater
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.geminal.base import BaseGeminal
 
