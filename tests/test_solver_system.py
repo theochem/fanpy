@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.projected import SystemEquations
 import fanpy.solver.system as system
 from fanpy.wfn.base import BaseWavefunction
 

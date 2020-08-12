@@ -6,7 +6,7 @@ import pytest
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.onesided_energy import OneSidedEnergy
-from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.projected import SystemEquations
 import fanpy.solver.equation as equation
 from fanpy.wfn.base import BaseWavefunction
 

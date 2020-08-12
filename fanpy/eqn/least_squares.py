@@ -1,6 +1,6 @@
 """Schrodinger equation as a least-squares problem."""
 import numpy as np
-from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.projected import SystemEquations
 
 
 # FIXME: change name

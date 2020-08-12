@@ -244,7 +244,7 @@ def make_script(
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 
     if objective == "system":
-        from_imports.append(("fanpy.eqn.system_nonlinear", "SystemEquations"))
+        from_imports.append(("fanpy.eqn.projected", "SystemEquations"))
     elif objective == "least_squares":
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":

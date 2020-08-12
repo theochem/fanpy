@@ -2,7 +2,7 @@
 import numpy as np
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
-from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.projected import SystemEquations
 from fanpy.wfn.ci.base import CIWavefunction
 
 

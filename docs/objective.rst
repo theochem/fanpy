@@ -167,7 +167,7 @@ satisfied. Then, we can ignore Slater determinants where both
 :math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right> \approx 0`.
 
 The objective for the projected Schrödinger equation is implemented in class
-:class:`SystemEquations <wfns.eqn.system_nonlinear.SystemEquations>`.
+:class:`SystemEquations <wfns.eqn.projected.SystemEquations>`.
 
 Projection Space
 ~~~~~~~~~~~~~~~~

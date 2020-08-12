@@ -1,10 +1,10 @@
-"""Test fanpy.eqn.system_nonlinear."""
+"""Test fanpy.eqn.projected."""
 import numpy as np
 import pytest
 from utils import skip_init
 from fanpy.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from fanpy.eqn.constraints.norm import NormConstraint
-from fanpy.eqn.system_nonlinear import SystemEquations
+from fanpy.eqn.projected import SystemEquations
 from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 from fanpy.wfn.ci.base import CIWavefunction
 
