@@ -457,10 +457,7 @@ class BaseGeminal(BaseWavefunction):
         occ_indices = slater.occ_indices(sd)
 
         val = 0.0
-        if hasattr(self, "temp_generator"):
-            orbpair_generator = self.temp_generator
-        else:
-            orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+        orbpair_generator = self.generate_possible_orbpairs(occ_indices)
         for orbpairs, sign in orbpair_generator:
             if len(orbpairs) == 0:
                 continue
@@ -486,10 +483,7 @@ class BaseGeminal(BaseWavefunction):
         # NOTE: Need to recreate occ_indices, row_removed, col_removed
         occ_indices = slater.occ_indices(sd)
 
-        if hasattr(self, "temp_generator"):
-            orbpair_generator = self.temp_generator
-        else:
-            orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+        orbpair_generator = self.generate_possible_orbpairs(occ_indices)
 
         output = np.zeros(self.nparams)
         for orbpairs, sign in orbpair_generator:
