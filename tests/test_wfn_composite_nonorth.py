@@ -196,8 +196,8 @@ def test_nonorth_nparams():
     assert test.nparams == 120
 
 
-def test_nonorth_param_shape():
-    """Test NonorthWavefunction.param_shape."""
+def test_nonorth_params_shape():
+    """Test NonorthWavefunction.params_shape."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -212,13 +212,13 @@ def test_nonorth_param_shape():
 
     # restricted
     test.assign_params(np.random.rand(5, 6))
-    assert test.param_shape == ((5, 6),)
+    assert test.params_shape == ((5, 6),)
     # unrestricted
     test.assign_params([np.random.rand(5, 6), np.random.rand(5, 6)])
-    assert test.param_shape == ((5, 6), (5, 6))
+    assert test.params_shape == ((5, 6), (5, 6))
     # generalized
     test.assign_params(np.random.rand(10, 12))
-    assert test.param_shape == ((10, 12),)
+    assert test.params_shape == ((10, 12),)
 
 
 def test_nonorth_orbtype():

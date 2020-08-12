@@ -67,7 +67,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Seniority of the wavefunction.
     dtype
         Data type of the wavefunction.
-    param_shape : tuple of int
+    params_shape : tuple of int
         Shape of the parameters.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Orbital type.
@@ -147,12 +147,12 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
     # FIXME: bad name
     @property
-    def param_shape(self):
+    def params_shape(self):
         """Return the shape of the wavefunction parameters.
 
         Returns
         -------
-        param_shape : tuple of 2-tuple of ints
+        params_shape : tuple of 2-tuple of ints
             Shape of each transformation matrix.
 
         """
@@ -350,8 +350,8 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         nparams_alpha = self.params[0].size
         # lots of repetition b/c slight variations with different orbital types
         transform_ind = deriv // nparams_alpha
-        row_removed = (deriv % nparams_alpha) // self.param_shape[transform_ind][1]
-        col_removed = (deriv % nparams_alpha) % self.param_shape[transform_ind][1]
+        row_removed = (deriv % nparams_alpha) // self.params_shape[transform_ind][1]
+        col_removed = (deriv % nparams_alpha) % self.params_shape[transform_ind][1]
 
         output = 0.0
         if self.orbtype == "generalized":
@@ -616,7 +616,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                 # get index of the transformation (if unrestricted)
                 transform_ind = i // nparams_alpha
                 # convert parameter index to row and col index
-                row_removed = (i % nparams_alpha) // self.param_shape[transform_ind][1]
+                row_removed = (i % nparams_alpha) // self.params_shape[transform_ind][1]
 
                 # if either of these orbitals are not present in the Slater determinant, skip
                 # FIXME: change i+nspatial to slater.to_beta
