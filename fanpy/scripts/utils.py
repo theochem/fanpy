@@ -16,7 +16,6 @@ parser : argparse.ArgumentParser
 
 """
 import argparse
-import os
 
 
 def check_inputs(
@@ -161,11 +160,6 @@ def check_inputs(
                 "{}-electron integrals must be provided as a numpy save file."
                 "".format(number.title())
             )
-        if not os.path.isfile(one_int_file):
-            raise ValueError(
-                "Cannot find the {}-electron integrals at {}."
-                "".format(number, os.path.abspath(one_int_file))
-            )
         if "\n" in name or ";" in name:
             raise ValueError(
                 "There can be no newline or ':' in the filename. This will hopefully prevent code "
@@ -257,8 +251,6 @@ def check_inputs(
             continue
         if not isinstance(name, str):
             raise TypeError("Name of the file must be given as a string.")
-        if "load" in varname and not os.path.isfile(name):
-            raise ValueError("Cannot find the given file, {}.".format(name))
         if "\n" in name or ";" in name:
             raise ValueError(
                 "There can be no newline or ';' in the filename. This will hopefully prevent code "
