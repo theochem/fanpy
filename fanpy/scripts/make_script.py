@@ -1,35 +1,29 @@
 """Code generating script."""
 import textwrap
 
-from fanpy.scripts.utils import check_inputs, parser, parser_add_arguments
+from fanpy.scripts.utils import check_inputs, parser
 
 
-# FIXME: not tested
 def make_script(
     nelec,
-    nspin,
     one_int_file,
     two_int_file,
     wfn_type,
-    nuc_nuc=None,
+    nuc_nuc=0.0,
     optimize_orbs=False,
-    pspace_exc=None,
-    objective=None,
-    solver=None,
+    pspace_exc=(1, 2),
+    objective="projected",
+    solver="least_squares",
     solver_kwargs=None,
     wfn_kwargs=None,
-    ham_noise=None,
-    wfn_noise=None,
+    ham_noise=0.0,
+    wfn_noise=0.0,
     load_orbs=None,
     load_ham=None,
+    load_ham_um=None,
     load_wfn=None,
-    load_chk=None,
-    save_orbs=None,
-    save_ham=None,
-    save_wfn=None,
-    save_chk=None,
+    save_chk="",
     filename=None,
-    outname=None,
     memory=None,
 ):
     """Make a script for running calculations.
@@ -38,8 +32,6 @@ def make_script(
     ----------
     nelec : int
         Number of electrons.
-    nspin : int
-        Number of spin orbitals.
     one_int_file : str
         Path to the one electron integrals (for restricted orbitals).
         One electron integrals should be stored as a numpy array of dimension (nspin/2, nspin/2).
@@ -49,11 +41,10 @@ def make_script(
         (nspin/2, nspin/2, nspin/2, nspin/2).
     wfn_type : str
         Type of wavefunction.
-        One of `fci`, `doci`, `mps`, `determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, and
-        `apg`.
+        One of `ci_pairs`, `cisd`, `fci`, `doci`, `mps`, `determinant-ratio`, `ap1rog`, `apr2g`,
+        `apig`, `apsetg`, or `apg`.
     nuc_nuc : float
         Nuclear-nuclear repulsion energy.
-        Default is `0.0`.
     optimize_orbs : bool
         If True, orbitals are optimized.
         If False, orbitals are not optimized.
@@ -61,15 +52,14 @@ def make_script(
         Not compatible with solvers that require a gradient (everything except cma).
     pspace_exc : list of int
         Orders of excitations that will be used to build the projection space.
-        Default is first and second order excitations of the HF ground state.
     objective : str
         Form of the Schrodinger equation that will be solved.
-        Use `system` to solve the Schrodinger equation as a system of equations.
+        Use `projected` to solve the Schrodinger equation as a system of equations.
         Use `least_squares` to solve the Schrodinger equation as a squared sum of the system of
         equations.
-        Use `variational` to solve the Schrodinger equation variationally.
-        Must be one of `system`, `least_squares`, and `variational`.
-        By default, the Schrodinger equation is solved as system of equations.
+        Use `variational` to solve the energy variationally.
+        Use `one_energy` to solve the energy projected on one side..
+        Must be one of `projected`, `least_squares`, `variational`, or `one_energy`.
     solver : str
         Solver that will be used to solve the Schrodinger equation.
         Keyword `cma` uses Covariance Matrix Adaptation - Evolution Strategy (CMA-ES).
@@ -79,9 +69,9 @@ def make_script(
         Keyword `root` uses the MINPACK hybrd routine.
         Must be one of `cma`, `diag`, `least_squares`, or `root`.
         Must be compatible with the objective.
-    solver_kwargs : str
+    solver_kwargs : {str, None}
         Keyword arguments for the solver.
-    wfn_kwargs : str
+    wfn_kwargs : {str, None}
         Keyword arguments for the wavefunction.
     ham_noise : float
         Scale of the noise to be applied to the Hamiltonian parameters.
@@ -99,37 +89,26 @@ def make_script(
     load_ham : str
         Numpy file of the Hamiltonian parameters that will overwrite the parameters of the initial
         Hamiltonian.
+    load_ham_um : str
+        Numpy file of the Hamiltonian parameters that will overwrite the unitary matrix of the
+        initial Hamiltonian.
     load_wfn : str
         Numpy file of the wavefunction parameters that will overwrite the parameters of the initial
         wavefunction.
-    load_chk : str
-        Numpy file of the chkpoint file for the objective.
-    save_orbs : str
-        Name of the Numpy file that will store the last orbital transformation matrix that was
-        applied to the Hamiltonian (after a successful optimization).
-    save_ham : str
-        Name of the Numpy file that will store the Hamiltonian parameters after a successful
-        optimization.
-    save_wfn : str
-        Name of the Numpy file that will store the wavefunction parameters after a successful
-        optimization.
     save_chk : str
         Name of the Numpy file that will store the chkpoint of the objective.
-    filename : {str, -1, None}
-        Name of the script.
+    filename : str
+        Name of the script
         By default, the script is printed.
         If `-1` is given, then the script is returned as a string.
         Otherwise, the given string is treated as the name of the file.
-    outname : {str, None}
-        Name of the file that will store the output.
-    memory : str
-        Memory available to run the calculation.
+    memory : None
+        Memory available to run calculations.
 
     """
     # check inputs
     check_inputs(
         nelec,
-        nspin,
         one_int_file,
         two_int_file,
         wfn_type,
@@ -140,11 +119,8 @@ def make_script(
         optimize_orbs=optimize_orbs,
         load_orbs=load_orbs,
         load_ham=load_ham,
+        load_ham_um=load_ham_um,
         load_wfn=load_wfn,
-        load_chk=load_chk,
-        save_orbs=save_orbs,
-        save_ham=save_ham,
-        save_wfn=save_wfn,
         save_chk=save_chk,
         filename=filename if filename != -1 else None,
         memory=memory,
@@ -158,7 +134,17 @@ def make_script(
     from_imports = []
 
     wfn_type = wfn_type.lower()
-    if wfn_type == "fci":
+    if wfn_type == "ci_pairs":
+        from_imports.append(("fanpy.wfn.ci.ci_pairs", "CIPairs"))
+        wfn_name = "CIPairs"
+        if wfn_kwargs is None:
+            wfn_kwargs = ""
+    elif wfn_type == "cisd":
+        from_imports.append(("fanpy.wfn.ci.cisd", "CISD"))
+        wfn_name = "CISD"
+        if wfn_kwargs is None:
+            wfn_kwargs = ""
+    elif wfn_type == "fci":
         from_imports.append(("fanpy.wfn.ci.fci", "FCI"))
         wfn_name = "FCI"
         if wfn_kwargs is None:
@@ -203,38 +189,8 @@ def make_script(
         wfn_name = "APG"
         if wfn_kwargs is None:
             wfn_kwargs = "ngem=None"
-    elif wfn_type == "apg2":
-        from_imports.append(("fanpy.wfn.geminal.apg2", "APG2"))
-        wfn_name = "APG2"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4"
-    elif wfn_type == "apg3":
-        from_imports.append(("fanpy.wfn.geminal.apg3", "APG3"))
-        wfn_name = "APG3"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4, num_matchings=1"
-    elif wfn_type == "apg4":
-        from_imports.append(("fanpy.wfn.geminal.apg4", "APG4"))
-        wfn_name = "APG4"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4, num_matchings=2"
-    elif wfn_type == "apg5":
-        from_imports.append(("fanpy.wfn.geminal.apg5", "APG5"))
-        wfn_name = "APG5"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4, num_matchings=2"
-    elif wfn_type == "apg6":
-        from_imports.append(("fanpy.wfn.geminal.apg6", "APG6"))
-        wfn_name = "APG6"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4, num_matchings=2"
-    elif wfn_type == "apg7":
-        from_imports.append(("fanpy.wfn.geminal.apg7", "APG7"))
-        wfn_name = "APG7"
-        if wfn_kwargs is None:
-            wfn_kwargs = "tol=1e-4"
 
-    if wfn_name == "DOCI":
+    if wfn_name in ["DOCI", "CIPairs"]:
         from_imports.append(("fanpy.ham.senzero", "SeniorityZeroHamiltonian"))
         ham_name = "SeniorityZeroHamiltonian"
     else:
@@ -243,7 +199,7 @@ def make_script(
 
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 
-    if objective == "system":
+    if objective == "projected":
         from_imports.append(("fanpy.eqn.projected", "ProjectedSchrodinger"))
     elif objective == "least_squares":
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
@@ -282,9 +238,6 @@ def make_script(
         if solver_kwargs is None:
             solver_kwargs = "method='hybr', jac=objective.jacobian, options={'xtol': 1.0e-9}"
 
-    if save_orbs is not None:
-        from_imports.append(("fanpy.tools.math_tools", "unitary_matrix"))
-
     if memory is not None:
         memory = "'{}'".format(memory)
 
@@ -295,27 +248,16 @@ def make_script(
         output += "from {} import {}\n".format(key, val)
     output += "\n\n"
 
-    if outname:
-        output += "output = open('{}', 'w')".format(outname)
-    else:
-        output += "output = sys.stdout"
-    output += "\n\n"
-
     output += "# Number of electrons\n"
     output += "nelec = {:d}\n".format(nelec)
-    output += "print('Number of Electrons: {}'.format(nelec), file=output)\n"
-    output += "\n"
-
-    output += "# Number of spin orbitals\n"
-    output += "nspin = {:d}\n".format(nspin)
-    output += "print('Number of Spin Orbitals: {}'.format(nspin), file=output)\n"
+    output += "print('Number of Electrons: {}'.format(nelec))\n"
     output += "\n"
 
     output += "# One-electron integrals\n"
     output += "one_int_file = '{}'\n".format(one_int_file)
     output += "one_int = np.load(one_int_file)\n"
     output += (
-        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)), file=output)\n"
+        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))\n"
         "".format(one_int_file)
     )
     output += "\n"
@@ -324,14 +266,19 @@ def make_script(
     output += "two_int_file = '{}'\n".format(two_int_file)
     output += "two_int = np.load(two_int_file)\n"
     output += (
-        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)), file=output)\n"
+        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))\n"
         "".format(two_int_file)
     )
     output += "\n"
 
+    output += "# Number of spin orbitals\n"
+    output += "nspin = one_int.shape[0] * 2\n"
+    output += "print('Number of Spin Orbitals: {}'.format(nspin))\n"
+    output += "\n"
+
     output += "# Nuclear-nuclear repulsion\n"
     output += "nuc_nuc = {}\n".format(nuc_nuc)
-    output += "print('Nuclear-nuclear repulsion: {}'.format(nuc_nuc), file=output)\n"
+    output += "print('Nuclear-nuclear repulsion: {}'.format(nuc_nuc))\n"
     output += "\n"
 
     if load_wfn is not None:
@@ -339,7 +286,7 @@ def make_script(
         output += "wfn_params_file = '{}'\n".format(load_wfn)
         output += "wfn_params = np.load(wfn_params_file)\n"
         output += "print('Load wavefunction parameters: {}'"
-        output += ".format(os.path.abspath(wfn_params_file)), file=output)\n"
+        output += ".format(os.path.abspath(wfn_params_file)))\n"
         output += "\n"
         wfn_params = "wfn_params"
     else:
@@ -357,42 +304,48 @@ def make_script(
             "wfn.assign_params(wfn.params + "
             "{} * 2 * (np.random.rand(*wfn.params.shape) - 0.5))\n".format(wfn_noise)
         )
-    output += "print('Wavefunction: {}', file=output)\n".format(wfn_name)
+    output += "print('Wavefunction: {}')\n".format(wfn_name)
     output += "\n"
+
+    output += "# Initialize Hamiltonian\n"
+    ham_init1 = "ham = {}(".format(ham_name)
+    ham_init2 = "one_int, two_int)\n"
+    output += "\n".join(
+        textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
+    )
+
+    if load_ham_um is not None:
+        output += "# Load unitary matrix of the Hamiltonian\n"
+        output += "ham_um_file = '{}'\n".format(load_ham_um)
+        output += "ham_um = np.load(ham_um_file)\n"
+        output += "print('Load unitary matrix of the Hamiltonian: {}'"
+        output += ".format(os.path.abspath(ham_um_file)))\n"
+        if ham_name == "UnrestrictedMolecularHamiltonian":
+            output += "ham._prev_unitary_alpha = ham_um[0]\n"
+            output += "ham._prev_unitary_beta = ham_um[1]\n"
+        else:
+            output += "ham._prev_unitary = ham_um\n"
+        output += "\n"
 
     if load_ham is not None:
         output += "# Load Hamiltonian parameters (orbitals)\n"
         output += "ham_params_file = '{}'\n".format(load_ham)
         output += "ham_params = np.load(ham_params_file)\n"
         output += "print('Load Hamiltonian parameters: {}'"
-        output += ".format(os.path.abspath(ham_params_file)), file=output)\n"
+        output += ".format(os.path.abspath(ham_params_file)))\n"
+        if load_ham_um:
+            output += "ham._prev_params = ham_params\n"
+        output += "ham.assign_params(ham_params)\n"
         output += "\n"
-        ham_params = "ham_params"
-    else:
-        ham_params = "None"
 
-    output += "# Initialize Hamiltonian\n"
-    ham_init1 = "ham = {}(".format(ham_name)
-    ham_init2 = "one_int, two_int, params={})\n".format(ham_params)
-    output += "\n".join(
-        textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
-    )
     output += "\n"
     if ham_noise not in [0, None]:
         output += (
             "ham.assign_params(ham.params + "
             "{} * 2 * (np.random.rand(*ham.params.shape) - 0.5))\n".format(ham_noise)
         )
-    output += "print('Hamiltonian: {}', file=output)\n".format(ham_name)
+    output += "print('Hamiltonian: {}')\n".format(ham_name)
     output += "\n"
-
-    if load_orbs:
-        output += "# Rotate orbitals\n"
-        output += "orb_matrix_file = '{}'\n".format(load_orbs)
-        output += "orb_matrix = np.load(orb_matrix_file)\n"
-        output += "ham.orb_rotate_matrix(orb_matrix)\n"
-        output += "print('Rotate orbitals from {}'.format(os.path.abspath(orb_matrix_file)), file=output)\n"
-        output += "\n"
 
     if pspace_exc is None:
         pspace = "[1, 2]"
@@ -408,7 +361,7 @@ def make_script(
         textwrap.wrap(pspace1 + pspace2, width=100, subsequent_indent=" " * len(pspace1))
     )
     output += "\n"
-    output += "print('Projection space (orders of excitations): {}', file=output)\n".format(pspace)
+    output += "print('Projection space (orders of excitations): {}')\n".format(pspace)
     output += "\n"
 
     output += "# Select parameters that will be optimized\n"
@@ -421,61 +374,48 @@ def make_script(
         output += "param_selection = [(wfn, np.ones(wfn.nparams, dtype=bool))]\n"
     output += "\n"
 
-    if save_chk is None:
-        save_chk = ""
-
     output += "# Initialize objective\n"
-    if objective == "system":
+    if objective == "projected":
         objective1 = "objective = ProjectedSchrodinger("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
+            "pspace=pspace, refwfn=None, energy_type='compute', "
+            "energy=None, constraints=None, eqn_weights=None)\n"
         )
     elif objective == "least_squares":
         objective1 = "objective = LeastSquaresEquations("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
+            "pspace=pspace, refwfn=None, energy_type='compute', "
+            "energy=None, constraints=None, eqn_weights=None)\n"
         )
     elif objective == "variational":
         objective1 = "objective = EnergyTwoSideProjection("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
-            "".format(save_chk)
+            "pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
         )
     elif objective == "one_energy":
         objective1 = "objective = EnergyOneSideProjection("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', refwfn=pspace)\n"
-            "".format(save_chk)
+            "refwfn=pspace)\n"
         )
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )
+    output += "\n"
+    output += "objective.tmpfile = '{}'".format(save_chk)
     output += "\n\n"
 
-    if load_chk is not None:
-        output += "# Load checkpoint\n"
-        output += "chk_point_file = '{}'\n".format(load_chk)
-        output += "chk_point = np.load(chk_point_file)\n"
-        output += "objective.assign_params(chk_point)\n"
-        output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)), file=output)\n"
-        output += "\n"
-
-    if save_chk is None:
-        save_chk = ""
     output += "# Solve\n"
     if solver_name == "brute":
         output += "results = brute(wfn, ham, save_file='')\n"
-        output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix', file=output)\n"
+        output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix')\n"
     else:
         results1 = "results = {}(".format(solver_name)
-        results2 = "objective, {})\n".format(save_chk, solver_kwargs)
-        output += "print('Optimizing wavefunction: {} solver', file=output)\n".format(solver_name)
+        results2 = "objective, {})\n".format(solver_kwargs)
+        output += "print('Optimizing wavefunction: {} solver')\n".format(solver_name)
         output += "\n".join(
             textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
         )
@@ -484,28 +424,13 @@ def make_script(
 
     output += "# Results\n"
     output += "if results['success']:\n"
-    output += "    print('Optimization was successful', file=output)\n"
+    output += "    print('Optimization was successful')\n"
     output += "else:\n"
-    output += "    print('Optimization was not successful: {}'.format(results['message']), file=output)\n"
-    output += "print('Final Electronic Energy: {}'.format(results['energy']), file=output)\n"
-    output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc), file=output)\n"
+    output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
+    output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
+    output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
     if objective == "system":
-        output += "print('Cost: {}'.format(results['cost']), file=output)\n"
-
-    if not all(save is None for save in [save_orbs, save_ham, save_wfn]):
-        output += "\n"
-        output += "# Save results\n"
-        output += "if results['success']:"
-    if save_orbs is not None:
-        output += "\n"
-        output += "    unitary = unitary_matrix(ham.params)\n"
-        output += "    np.save('{}', unitary)".format(save_orbs)
-    if save_ham is not None:
-        output += "\n"
-        output += "    np.save('{}', ham.params)".format(save_ham)
-    if save_wfn is not None:
-        output += "\n"
-        output += "    np.save('{}', wfn.params)".format(save_wfn)
+        output += "print('Cost: {}'.format(results['cost']))\n"
 
     if filename is None:
         print(output)
@@ -521,8 +446,6 @@ def make_script(
 def main():
     """Run script for run_calc using arguments obtained via argparse."""
     parser.description = "Optimize a wavefunction and/or Hamiltonian."
-    parser.add_argument("--nspin", type=int, required=True, help="Number of spin orbitals.")
-    parser_add_arguments()
     parser.add_argument(
         "--filename",
         type=str,
@@ -533,7 +456,6 @@ def main():
     args = parser.parse_args()
     make_script(
         args.nelec,
-        args.nspin,
         args.one_int_file,
         args.two_int_file,
         args.wfn_type,
@@ -548,13 +470,9 @@ def main():
         wfn_noise=args.wfn_noise,
         load_orbs=args.load_orbs,
         load_ham=args.load_ham,
+        load_ham_um=args.load_ham_um,
         load_wfn=args.load_wfn,
-        load_chk=args.load_chk,
-        save_orbs=args.save_orbs,
-        save_ham=args.save_ham,
-        save_wfn=args.save_wfn,
         save_chk=args.save_chk,
         filename=args.filename,
-        outname=args.outname,
         memory=args.memory,
     )

@@ -2,7 +2,7 @@
 
 Methods
 -------
-check_inputs(nelec, nspin, one_int_file, two_int_file, wfn_type, pspace_exc, objective, solver,
+check_inputs(nelec, one_int_file, two_int_file, wfn_type, pspace_exc, objective, solver,
              nuc_nuc, optimize_orbs=False,
              load_orbs=None, load_ham=None, load_wfn=None, load_chk=None,
              save_orbs=None, save_ham=None, save_wfn=None, save_chk=None, filename=None)
@@ -20,7 +20,6 @@ import argparse
 
 def check_inputs(
     nelec,
-    nspin,
     one_int_file,
     two_int_file,
     wfn_type,
@@ -33,11 +32,8 @@ def check_inputs(
     wfn_noise=None,
     load_orbs=None,
     load_ham=None,
+    load_ham_um=None,
     load_wfn=None,
-    load_chk=None,
-    save_orbs=None,
-    save_ham=None,
-    save_wfn=None,
     save_chk=None,
     filename=None,
     memory=None,
@@ -50,8 +46,6 @@ def check_inputs(
     ----------
     nelec : int
         Number of electrons.
-    nspin : int
-        Number of spin orbitals.
     one_int_file : str
         Path to the one electron integrals (for restricted orbitals).
         One electron integrals should be stored as a numpy array of dimension (nspin/2, nspin/2).
@@ -61,17 +55,18 @@ def check_inputs(
         (nspin/2, nspin/2, nspin/2, nspin/2).
     wfn_type : str
         Type of wavefunction.
-        One of `fci`, `doci`, `mps`, `determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, and
-        `apg`.
+        One of `ci_pairs`, `cisd`, `fci`, `doci`, `mps`, `determinant-ratio`, `ap1rog`, `apr2g`,
+        `apig`, `apsetg`, or `apg`.
     pspace_exc : list of int
         Orders of excitations that will be used to build the projection space.
     objective : str
         Form of the Schrodinger equation that will be solved.
-        Use `system` to solve the Schrodinger equation as a system of equations.
+        Use `projected` to solve the Schrodinger equation as a system of equations.
         Use `least_squares` to solve the Schrodinger equation as a squared sum of the system of
         equations.
-        Use `variational` to solve the Schrodinger equation variationally.
-        Must be one of `system`, `least_squares`, and `variational`.
+        Use `variational` to solve the energy variationally.
+        Use `one_energy` to solve the energy projected on one side..
+        Must be one of `projected`, `least_squares`, `variational`, or `one_energy`.
     solver : str
         Solver that will be used to solve the Schrodinger equation.
         Keyword `cma` uses Covariance Matrix Adaptation - Evolution Strategy (CMA-ES).
@@ -104,24 +99,19 @@ def check_inputs(
     load_ham : str
         Numpy file of the Hamiltonian parameters that will overwrite the parameters of the initial
         Hamiltonian.
+    load_ham_um : str
+        Numpy file of the Hamiltonian parameters that will overwrite the unitary matrix of the
+        initial Hamiltonian.
     load_wfn : str
         Numpy file of the wavefunction parameters that will overwrite the parameters of the initial
         wavefunction.
-    load_chk : str
-        Numpy file of the chkpoint file for the objective.
-    save_orbs : str
-        Name of the Numpy file that will store the last orbital transformation matrix that was
-        applied to the Hamiltonian (after a successful optimization).
-    save_ham : str
-        Name of the Numpy file that will store the Hamiltonian parameters after a successful
-        optimization.
-    save_wfn : str
-        Name of the Numpy file that will store the wavefunction parameters after a successful
-        optimization.
     save_chk : str
         Name of the Numpy file that will store the chkpoint of the objective.
     filename : str
-        Name of the file that will store the output.
+        Name of the script
+        By default, the script is printed.
+        If `-1` is given, then the script is returned as a string.
+        Otherwise, the given string is treated as the name of the file.
     memory : None
         Memory available to run calculations.
     solver_kwargs : {str, None}
@@ -133,8 +123,6 @@ def check_inputs(
     # check numbers
     if not isinstance(nelec, int):
         raise TypeError("Number of electrons must be given as an integer.")
-    if not isinstance(nspin, int):
-        raise TypeError("Number of spin orbitals must be given as an integer.")
     if not isinstance(nuc_nuc, (int, float)):
         raise TypeError("Nuclear-nuclear repulsion energy must be provided as an integer or float.")
     if not isinstance(ham_noise, (int, float, type(None))):
@@ -162,12 +150,14 @@ def check_inputs(
             )
         if "\n" in name or ";" in name:
             raise ValueError(
-                "There can be no newline or ':' in the filename. This will hopefully prevent code "
+                "There can be no newline or ';' in the filename. This will hopefully prevent code "
                 "injection."
             )
 
     # check wavefunction type
     wfn_list = [
+        "ci_pairs",
+        "cisd",
         "fci",
         "doci",
         "mps",
@@ -177,18 +167,9 @@ def check_inputs(
         "apig",
         "apsetg",
         "apg",
-        "apg2",
-        "apg3",
-        "apg4",
-        "apg5",
-        "apg6",
-        "apg7",
     ]
     if wfn_type not in wfn_list:
-        raise ValueError(
-            "Wavefunction type must be one of `fci`, `doci`, `mps`, "
-            "`determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, and `apg`."
-        )
+        raise ValueError("Wavefunction type must be one of {}.".format(', '.join(wfn_list)))
 
     # check projection space
     if pspace_exc is None:
@@ -204,28 +185,32 @@ def check_inputs(
         )
 
     # check objective
-    if objective not in [None, "system", "least_squares", "variational", "one_energy"]:
-        raise ValueError("Objective must be one of `system`, `least_squares`, or `variational`.")
+    objective_list = ["least_squares", "variational", "one_energy"]
+    if objective not in [None, "projected"] + objective_list:
+        raise ValueError(
+            "Objective must be one of `projected`, `least_squares`, `variational`, and "
+            "`one_energy`."
+        )
 
     # check solver
     if solver not in [None, "diag", "cma", "minimize", "least_squares", "root"]:
         raise ValueError(
-            "Solver must be one of `cma`, `diag`, `minimize`, `least_squares`, or " "`root`."
+            "Solver must be one of `cma`, `diag`, `minimize`, `least_squares`, or `root`."
         )
 
     # check compatibility b/w objective and solver
-    if solver in ["cma", "minimize"] and objective not in ["least_squares", "variational", "one_energy"]:
+    if solver in ["cma", "minimize"] and objective not in objective_list:
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation "
-            "(objective) that consists of one equation (`least_squares` and "
-            "`variational`)".format(solver)
+            "(objective) that consists of one equation (`least_squares`, `variational`, "
+            "`one_energy`)".format(solver)
         )
-    elif solver in ["least_squares", "root"] and objective != "system":
+    elif solver in ["least_squares", "root"] and objective != "projected":
         raise ValueError(
-            "Given solver, `{}`, is only compatible with Schrodinger equation "
-            "(objective) as a systems of equations (`system`)".format(solver)
+            "Given solver, `{}`, is only compatible with Schrodinger equation (objective) as a "
+            "systems of equations (`projected`)".format(solver)
         )
-    elif solver == "diag" and wfn_type not in ["fci", "doci"]:
+    elif solver == "diag" and wfn_type not in ["ci_pairs", "cisd", "fci", "doci"]:
         raise ValueError(
             "The diagonalization solver, `diag`, is only compatible with CI " "wavefunctions."
         )
@@ -238,11 +223,8 @@ def check_inputs(
     files = {
         "load_orbs": load_orbs,
         "load_ham": load_ham,
+        "load_ham_um": load_ham_um,
         "load_wfn": load_wfn,
-        "load_chk": load_chk,
-        "save_orbs": save_orbs,
-        "save_ham": save_ham,
-        "save_wfn": save_wfn,
         "save_chk": save_chk,
         "filename": filename,
     }
@@ -280,191 +262,153 @@ def check_inputs(
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--nelec", type=int, required=True, help="Number of electrons.")
-
-
-def parser_add_arguments():
-    """Add arguments shared by scripts `wfns_run_calc.py` and `wfns_make_script.py`."""
-    parser.add_argument(
-        "--one_int_file",
-        type=str,
-        required=True,
-        help="File name of the numpy file that contains the one electron integrals.",
-    )
-    parser.add_argument(
-        "--two_int_file",
-        type=str,
-        required=True,
-        help="File name of the numpy file that contains the two electron integrals.",
-    )
-    parser.add_argument(
-        "--wfn_type",
-        type=str,
-        required=True,
-        help=(
-            "Type of the wavefunction that will be used. Must be one of `fci`, `doci`, `mps`, "
-            "`determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, `apg`."
-        ),
-    )
-    parser.add_argument(
-        "--nuc_repulsion",
-        type=float,
-        dest="nuc_nuc",
-        default=0.0,
-        required=False,
-        help="Nuclear-nuclear repulsion.",
-    )
-    parser.add_argument(
-        "--optimize_orbs",
-        action="store_true",
-        required=False,
-        help="Flag for optimizing orbitals. Orbitals are not optimized by default.",
-    )
-    parser.add_argument(
-        "--pspace",
-        type=int,
-        dest="pspace_exc",
-        nargs="+",
-        default=[1, 2],
-        required=False,
-        help=(
-            "Orders of excitations that will be used to construct the projection space. Multiple "
-            "orders of excitations are separated by space. e.g. `--pspace 1 2 3 4`."
-        ),
-    )
-    parser.add_argument(
-        "--objective",
-        type=str,
-        default="least_squares",
-        required=False,
-        help=(
-            "Type of the objective that will be used. Must be one of `system`, `least_squares`, "
-            "and `variational`, or `one_energy`. Default is `least_squares`"
-        ),
-    )
-    parser.add_argument(
-        "--solver",
-        type=str,
-        default="cma",
-        required=False,
-        help=(
-            "Type of the solver that will be used. Must be one of `cma`, `diag`, `minimize`, "
-            "`least_squares`, and `root`. Default is `cma`."
-        ),
-    )
-    parser.add_argument(
-        "--ham_noise",
-        type=float,
-        default=0.0,
-        required=False,
-        help="Scale of the noise to be applied to the Hamiltonian parameters.",
-    )
-    parser.add_argument(
-        "--wfn_noise",
-        type=float,
-        default=0.0,
-        required=False,
-        help="Scale of the noise to be applied to the wavefunction parameters.",
-    )
-    parser.add_argument(
-        "--solver_kwargs",
-        type=str,
-        default=None,
-        required=False,
-        help=("Keyword arguments to customize the solver."),
-    )
-    parser.add_argument(
-        "--wfn_kwargs",
-        type=str,
-        default=None,
-        required=False,
-        help=("Keyword argumnets to customize the wavefunction."),
-    )
-    parser.add_argument(
-        "--load_orbs",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Numpy file of the orbital transformation matrix that will be applied to the initial "
-            "Hamiltonian. If the initial Hamiltonian parameters are provided, the orbitals will "
-            "be transformed afterwards."
-        ),
-    )
-    parser.add_argument(
-        "--load_ham",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Numpy file of the Hamiltonian parameters that will overwrite the parameters of the "
-            "initial Hamiltonian."
-        ),
-    )
-    parser.add_argument(
-        "--load_wfn",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Numpy file of the wavefunction parameters that will overwrite the parameters of the "
-            "initial wavefunction."
-        ),
-    )
-    parser.add_argument(
-        "--load_chk",
-        type=str,
-        default=None,
-        required=False,
-        help="Numpy file of the chkpoint file for the objective.",
-    )
-    parser.add_argument(
-        "--save_orbs",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Name of the Numpy file that will store the last orbital transformation matrix that "
-            "was applied to the Hamiltonian (after a successful optimization)."
-        ),
-    )
-    parser.add_argument(
-        "--save_ham",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Name of the Numpy file that will store the Hamiltonian parameters after a successful"
-            " optimization."
-        ),
-    )
-    parser.add_argument(
-        "--save_wfn",
-        type=str,
-        default=None,
-        required=False,
-        help=(
-            "Name of the Numpy file that will store the wavefunction parameters after a "
-            "successful optimization."
-        ),
-    )
-    parser.add_argument(
-        "--save_chk",
-        type=str,
-        default=None,
-        required=False,
-        help="Name of the Numpy file that will store the chkpoint of the objective.",
-    )
-    parser.add_argument(
-        "--memory",
-        type=str,
-        default=None,
-        required=False,
-        help="Memory available to run the calculation.",
-    )
-    parser.add_argument(
-        "--outname",
-        type=str,
-        default=None,
-        required=False,
-        help="Name of the file that stores the output of the calculation.",
-    )
+parser.add_argument(
+    "--one_int_file",
+    type=str,
+    required=True,
+    help="File name of the numpy file that contains the one electron integrals.",
+)
+parser.add_argument(
+    "--two_int_file",
+    type=str,
+    required=True,
+    help="File name of the numpy file that contains the two electron integrals.",
+)
+parser.add_argument(
+    "--wfn_type",
+    type=str,
+    required=True,
+    help=(
+        "Type of the wavefunction that will be used. Must be one of `ci_pairs`, `cisd`, `fci`,"
+        " `doci`, `mps`, `determinant-ratio`, `ap1rog`, `apr2g`, `apig`, `apsetg`, or `apg`."
+    ),
+)
+parser.add_argument(
+    "--nuc_repulsion",
+    type=float,
+    dest="nuc_nuc",
+    default=0.0,
+    required=False,
+    help="Nuclear-nuclear repulsion.",
+)
+parser.add_argument(
+    "--optimize_orbs",
+    action="store_true",
+    required=False,
+    help="Flag for optimizing orbitals. Orbitals are not optimized by default.",
+)
+parser.add_argument(
+    "--pspace",
+    type=int,
+    dest="pspace_exc",
+    nargs="+",
+    default=[1, 2],
+    required=False,
+    help=(
+        "Orders of excitations that will be used to construct the projection space. Multiple "
+        "orders of excitations are separated by space. e.g. `--pspace 1 2 3 4`."
+    ),
+)
+parser.add_argument(
+    "--objective",
+    type=str,
+    default="projected",
+    required=False,
+    help=(
+        "Type of the objective that will be used. Must be one of `projected`, `least_squares`, "
+        "`variational`, or `one_energy`. Default is `projected`"
+    ),
+)
+parser.add_argument(
+    "--solver",
+    type=str,
+    default="least_squares",
+    required=False,
+    help=(
+        "Type of the solver that will be used. Must be one of `cma`, `diag`, `minimize`, "
+        "`least_squares`, and `root`. Default is `least_squares`."
+    ),
+)
+parser.add_argument(
+    "--ham_noise",
+    type=float,
+    default=0.0,
+    required=False,
+    help="Scale of the noise to be applied to the Hamiltonian parameters.",
+)
+parser.add_argument(
+    "--wfn_noise",
+    type=float,
+    default=0.0,
+    required=False,
+    help="Scale of the noise to be applied to the wavefunction parameters.",
+)
+parser.add_argument(
+    "--solver_kwargs",
+    type=str,
+    default=None,
+    required=False,
+    help=("Keyword arguments to customize the solver."),
+)
+parser.add_argument(
+    "--wfn_kwargs",
+    type=str,
+    default=None,
+    required=False,
+    help=("Keyword arguments to customize the wavefunction."),
+)
+parser.add_argument(
+    "--load_orbs",
+    type=str,
+    default=None,
+    required=False,
+    help=(
+        "Numpy file of the orbital transformation matrix that will be applied to the initial "
+        "Hamiltonian. If the initial Hamiltonian parameters are provided, the orbitals will "
+        "be transformed afterwards."
+    ),
+)
+parser.add_argument(
+    "--load_ham",
+    type=str,
+    default=None,
+    required=False,
+    help=(
+        "Numpy file of the Hamiltonian parameters that will overwrite the parameters of the "
+        "initial Hamiltonian."
+    ),
+)
+parser.add_argument(
+    "--load_ham_um",
+    type=str,
+    default=None,
+    required=False,
+    help=(
+        "Numpy file of the unitary matrix that will overwrite the unitary matrix of the "
+        "initial Hamiltonian."
+    ),
+)
+parser.add_argument(
+    "--load_wfn",
+    type=str,
+    default=None,
+    required=False,
+    help=(
+        "Numpy file of the wavefunction parameters that will overwrite the parameters of the "
+        "initial wavefunction."
+    ),
+)
+parser.add_argument(
+    "--save_chk",
+    type=str,
+    default="",
+    required=False,
+    help="Name of the Numpy file that will store the chkpoint of the objective.",
+)
+parser.add_argument(
+    "--memory",
+    type=str,
+    default=None,
+    required=False,
+    help="Memory available to run the calculation.",
+)
