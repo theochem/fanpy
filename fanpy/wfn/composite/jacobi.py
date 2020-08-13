@@ -113,8 +113,19 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         Parameters
         ----------
+        nelec : int
+            Number of electrons.
+        nspin : int
+            Number of spin orbitals.
         wfn : BaseWavefunction
             Wavefunction that will be built using nonorthnormal orbitals.
+        memory : {float, int, str, None}
+            Memory available for the wavefunction.
+            If number is provided, it is the number of bytes.
+            If string is provided, it should end iwth either "mb" or "gb" to specify the units.
+            Default does not limit memory usage (i.e. infinite).
+        params : np.ndarray
+            Parameters of the wavefunction.
         orbtype : str
             Type of orbital used by the wavefunction.
             One of 'restricted', 'unrestricted', and 'generalized'.

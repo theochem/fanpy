@@ -74,6 +74,8 @@ class DeterminantRatio(BaseWavefunction):
             Number of spin orbitals.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
+            If number is provided, it is the number of bytes.
+            If string is provided, it should end iwth either "mb" or "gb" to specify the units.
             Default does not limit memory usage (i.e. infinite).
         numerator_mask : {np.ndarray, None}
             Mask for selecting the matrices that correspond to the numerator.

@@ -65,12 +65,18 @@ class KerasNetwork(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        mode : {keras.Model, None}
+        model : {keras.Model, None}
             Model instance from keras.
             Default is 2 layers.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
+            If number is provided, it is the number of bytes.
+            If string is provided, it should end iwth either "mb" or "gb" to specify the units.
             Default does not limit memory usage (i.e. infinite).
+        params : np.ndarray
+            Parameters of the wavefunction.
+        num_layers : int
+            Number of layers in the network for default model.
 
         """
         super().__init__(nelec, nspin, memory=memory)

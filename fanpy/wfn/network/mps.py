@@ -80,7 +80,13 @@ class MatrixProductState(BaseWavefunction):
             Number of spin orbitals.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
+            If number is provided, it is the number of bytes.
+            If string is provided, it should end iwth either "mb" or "gb" to specify the units.
             Default does not limit memory usage (i.e. infinite).
+        dimension : int
+            Number of rows and columns in the matrices that correspond to the non terminal orbitals.
+        params : np.ndarray
+            Parameters of the wavefunction.
         enable_cache : bool
             Option to cache the results of `_olp` and `_olp_deriv`.
             By default, `_olp` and `_olp_deriv` are cached.
