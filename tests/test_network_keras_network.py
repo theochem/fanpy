@@ -1,6 +1,5 @@
 """Tests for fanpy.wfn.network.keras_network.KerasNetwork."""
 from tensorflow.python import keras
-import numdifftools as nd
 import numpy as np
 import pytest
 from utils import skip_init
@@ -169,6 +168,7 @@ def test_keras_init():
 
 def test_keras_get_overlap():
     """Test KerasNetwork.get_overlap."""
+    nd = pytest.importorskip("numdifftools")
     test = skip_init(KerasNetwork)
     test.nspin = 4
     model = keras.engine.sequential.Sequential()

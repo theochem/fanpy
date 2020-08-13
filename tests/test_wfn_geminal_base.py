@@ -1,6 +1,5 @@
 """Test fanpy.wavefunction.geminal.gem_wavefunction."""
 import numpy as np
-import numdifftools as nd
 import pytest
 from utils import disable_abstract, skip_init
 from fanpy.wfn.geminal.base import BaseGeminal
@@ -335,6 +334,7 @@ def test_gem_compute_permanent():
 
 def test_gem_compute_permanent_deriv():
     """Test derivatives of BaseGeminal.compute_permanent using finite difference."""
+    nd = pytest.importorskip("numdifftools")
     test = skip_init(disable_abstract(BaseGeminal))
     test.assign_nelec(6)
     test.assign_nspin(6)

@@ -1,7 +1,6 @@
 """Test fanpy.ham.restricted_chemical."""
 import itertools as it
 
-import numdifftools as nd
 import numpy as np
 import pytest
 from utils import disable_abstract, find_datafile
@@ -829,6 +828,7 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
 
 def test_integrate_sd_wfn_deriv_fdiff():
     """Test RestrictedMolecularHamiltonian.integrate_sd_wfn_deriv with finite difference."""
+    nd = pytest.importorskip("numdifftools")
     wfn = CIWavefunction(5, 10)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 

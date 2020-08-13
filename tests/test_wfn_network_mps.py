@@ -1,6 +1,5 @@
 """Tests for the fanpy.wfn.network.mps."""
 import numpy as np
-import numdifftools as nd
 import pytest
 from utils import skip_init
 from fanpy.wfn.network.mps import MatrixProductState
@@ -247,6 +246,7 @@ def test_olp_deriv():
 
 def test_get_overlap():
     """Test MatrixProductState.get_overlap."""
+    nd = pytest.importorskip("numdifftools")
     matrix1 = np.random.rand(4, 1, 2)
     matrix2 = np.random.rand(4, 2, 2)
     matrix3 = np.random.rand(4, 2, 1)
