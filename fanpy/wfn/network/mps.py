@@ -1,5 +1,5 @@
 """Hard-coded Matrix Product State wavefunction."""
-import cachetools
+import functools
 import numpy as np
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
@@ -536,11 +536,18 @@ class MatrixProductState(BaseWavefunction):
         Needs to access `memory` and `params`.
 
         """
-        super().enable_cache(include_derivative=True)
+        # assign memory allocated to cache
+        if self.memory == np.inf:
+            maxsize = 2**30
+        elif include_derivative:
+            maxsize = int(self.memory / 8 / (self.dimension ** 2 + 1))
+        else:
+            maxsize = int(self.memory / 8)
+
+        # store the cached function
+        self._cache_fns = {}
+        self._olp = functools.lru_cache(maxsize)(self._olp)
+        self._cache_fns["overlap"] = self._olp
         if include_derivative:
-            self._cache_fns["overlap derivative"] = cachetools.LRUCache(
-                maxsize=self._cache_fns["overlap"].maxsize
-            )
-            self._olp_deriv_block = cachetools.cached(cache=self._cache_fns["overlap derivative"])(
-                self._olp_deriv_block
-            )
+            self._olp_deriv_block = functools.lru_cache(maxsize)(self._olp_deriv_block)
+            self._cache_fns["overlap derivative"] = self._olp_deriv_block

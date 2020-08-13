@@ -1,5 +1,5 @@
 """Test fanpy.wavefunction.wavefunctions."""
-import cachetools
+import functools
 
 import numpy as np
 import pytest
@@ -178,32 +178,39 @@ def test_enable_cache():
     test = skip_init(
         disable_abstract(BaseWavefunction)
     )
-    test.memory = 1000
+    test.memory = 16
     test.params = np.array([1, 2, 3])
-    test.enable_cache()
+    test.enable_cache(include_derivative=False)
     assert hasattr(test, "_cache_fns")
-    assert isinstance(test._cache_fns["overlap"], cachetools.LRUCache)
-    assert isinstance(test._cache_fns["overlap derivative"], cachetools.LRUCache)
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2
+
+    test.memory = 16
+    test.enable_cache(include_derivative=True)
+    assert test._cache_fns["overlap"].cache_info().maxsize == 0
+    assert test._cache_fns["overlap"].cache_info().maxsize == 0
+
+    test.memory = 4 * 8
+    test.enable_cache(include_derivative=True)
+    assert test._cache_fns["overlap"].cache_info().maxsize == 1
+    assert test._cache_fns["overlap"].cache_info().maxsize == 1
 
     test.memory = np.inf
     test.enable_cache()
-    assert test._cache_fns["overlap"].maxsize == 2**30
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2**30
 
 
 def test_clear_cache():
     """Test BaseWavefunction.clear_cache."""
     test = skip_init(disable_abstract(BaseWavefunction))
 
-    cache_one = cachetools.LRUCache(2)
-    cache_two = cachetools.LRUCache(2)
-
     def olp(sd):
         """Overlap of wavefunction."""
         return 0.0
 
-    olp = cachetools.cached(cache=cache_one)(olp)
+    olp = functools.lru_cache(2)(olp)
     test._cache_fns = {}
-    test._cache_fns["overlap"] = cache_one
+    test._cache_fns["overlap"] = olp
     with pytest.raises(KeyError):
         test.clear_cache("overlap derivative")
 
@@ -211,21 +218,21 @@ def test_clear_cache():
         """Return the derivative of the overlap of wavefunction."""
         return 0.0
 
-    olp_deriv = cachetools.cached(cache=cache_two)(olp_deriv)
-    test._cache_fns["overlap derivative"] = cache_two
+    olp_deriv = functools.lru_cache(2)(olp_deriv)
+    test._cache_fns["overlap derivative"] = olp_deriv
 
     olp(2)
     olp(3)
     olp_deriv(2, 0)
     olp_deriv(3, 0)
-    assert cache_one.currsize == 2
-    assert cache_two.currsize == 2
+    assert olp.cache_info().currsize == 2
+    assert olp_deriv.cache_info().currsize == 2
     test.clear_cache("overlap")
-    assert cache_one.currsize == 0
-    assert cache_two.currsize == 2
+    assert olp.cache_info().currsize == 0
+    assert olp_deriv.cache_info().currsize == 2
     test.clear_cache()
-    assert cache_one.currsize == 0
-    assert cache_two.currsize == 0
+    assert olp.cache_info().currsize == 0
+    assert olp_deriv.cache_info().currsize == 0
 
 
 def test_nspatial():

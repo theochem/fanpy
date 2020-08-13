@@ -1,7 +1,6 @@
 """Parent class of the wavefunctions."""
 import abc
-
-import cachetools
+import functools
 import numpy as np
 
 
@@ -314,15 +313,11 @@ class BaseWavefunction:
 
         # store the cached function
         self._cache_fns = {}
-        self._cache_fns["overlap"] = cachetools.LRUCache(maxsize=maxsize)
+        self._olp = functools.lru_cache(maxsize)(self._olp)
+        self._cache_fns["overlap"] = self._olp
         if include_derivative:
-            self._cache_fns["overlap derivative"] = cachetools.LRUCache(maxsize=maxsize)
-
-        self._olp = cachetools.cached(cache=self._cache_fns["overlap"])(self._olp)
-        if include_derivative:
-            self._olp_deriv = cachetools.cached(cache=self._cache_fns["overlap derivative"])(
-                self._olp_deriv
-            )
+            self._olp_deriv = functools.lru_cache(maxsize)(self._olp_deriv)
+            self._cache_fns["overlap derivative"] = self._olp_deriv
 
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.
@@ -385,9 +380,9 @@ class BaseWavefunction:
         if hasattr(self, "_cache_fns"):
             if key is None:
                 for func in self._cache_fns.values():
-                    func.clear()
+                    func.cache_clear()
             else:
-                self._cache_fns[key].clear()
+                self._cache_fns[key].cache_clear()
 
     @abc.abstractmethod
     def get_overlap(self, sd, deriv=None):  # pylint: disable=C0103
