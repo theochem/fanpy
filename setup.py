@@ -10,7 +10,6 @@ from os import path
 
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
-from Cython.Build import cythonize
 
 here = path.abspath(path.dirname(__file__))
 
@@ -99,17 +98,5 @@ setup(
         "Organization": "https://github.com/quantumelephant/",
         "Source": "https://github.com/theochem/gbasis/",
     },
-    ext_modules= cythonize(
-            [
-        Extension(
-            "fanpy.objective.schrodinger.cext",
-            ["fanpy/objective/schrodinger/cext.pyx"],
-        ),
-        Extension(
-            "fanpy.wfn.geminal.cext",
-            ["fanpy/wfn/geminal/cext.pyx"],
-        ),
-        ]
-    ),
     zip_safe=False,
 )
