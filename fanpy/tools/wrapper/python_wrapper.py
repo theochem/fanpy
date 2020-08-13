@@ -1,14 +1,14 @@
 """Wraps appropriate Python versions around current Python version (3.6+).
 
-Because HORTON and PySCF do not support many versions of Python, some sort of workaround is needed.
-Since only certain arrays are needed from HORTON and PySCF, these arrays are extracted and saved to
-disk as a `.npy` file. Then, user can load these files to have access to these numbers.
+Because HORTON does not support many versions of Python, some sort of workaround is needed. Since
+only certain arrays are needed from HORTON, these arrays are extracted and saved to disk as a `.npy`
+file. Then, user can load these files to have access to these numbers.
 
 Notes
 -----
-This is only a temporary solution. We can make things back-compatible to certain versions of HORTON
-and PySCF, or we can wait until these modules catch up to the latest Python versions. For now, this
-module can act as a temporary hack to access these modules.
+This is only a temporary solution. We can make things back-compatible to certain versions of HORTON,
+or we can wait until these modules catch up to the latest Python versions. For now, this module can
+act as a temporary hack to access these modules.
 
 """
 import os
@@ -32,7 +32,7 @@ def generate_hartreefock_results(
 
     Parameters
     ----------
-    calctype : {'horton_hartreefock.py', 'horton_gaussian_fchk.py', 'pyscf_hartreefock.py'}
+    calctype : {'horton_hartreefock.py', 'horton_gaussian_fchk.py'}
         Name of the python script to be used.
     energies_name : {str, 'energies.npy}
         Name of the file to be generated that contains the electronic and nuclear-nuclear repulsion
@@ -71,8 +71,7 @@ def generate_hartreefock_results(
     Raises
     ------
     ValueError
-        If calctype is not one of 'horton_hartreefock.py', 'horton_gaussian_fchk.py', or
-        'pyscf_hartreefock.py'.
+        If calctype is not one of 'horton_hartreefock.py' or 'horton_gaussian_fchk.py'
 
     Note
     ----
@@ -88,14 +87,9 @@ def generate_hartreefock_results(
     try:
         if calctype in ["horton_hartreefock.py", "horton_gaussian_fchk.py"]:
             python_name = os.environ["HORTONPYTHON"]
-        # FIXME: I think pyscf support many of the Python 3's so it doesn't have to go through this
-        # awful procedure anymore
-        elif calctype == "pyscf_hartreefock.py":
-            python_name = os.environ["PYSCFPYTHON"]
         else:
             raise ValueError(
-                "The calctype must be one of 'horton_hartreefock.py', "
-                "'horton_gaussian_fchk.py', and 'pyscf_hartreefock.py'."
+                "The calctype must be one of 'horton_hartreefock.py' or 'horton_gaussian_fchk.py'."
             )
     except KeyError:
         python_name = sys.executable
@@ -136,82 +130,3 @@ def generate_hartreefock_results(
         os.remove(twoint_name)
 
     return el_energy, nuc_nuc_energy, oneint, twoint
-
-
-# FIXME: I think pyscf support many of the Python 3's so it doesn't have to go through this awful
-# procedure anymore
-def generate_fci_results(
-    cimatrix_name="cimatrix.npy", sds_name="sds.npy", remove_npyfiles=False, **kwargs
-):
-    """Generate results of FCI calculation (from PySCF).
-
-    Parameters
-    ----------
-    cimatrix_name : {str, 'cimatrix.npy}
-        Name of the file to be generated that contains the ci matrix coefficients.
-    sds_name : {str, 'sds.npy'}
-        Name of the file to be generated that contains the binary Slater determinant values.
-    remove_npyfiles : bool
-        Option to remove generated numpy files.
-        True will remove numpy files.
-    kwargs
-        Keyword arguments for the script.
-        Key of 'h1e' corresponds to the name of the numpy file that contains the one electron
-        integrals.
-        Key of 'eri' corresponds to the name of the numpy file that contains the two electron
-        integrals.
-        Kye of 'nelec' corresponds to the number of electrons.
-
-    Returns
-    -------
-    cimatrix : np.ndarray
-        CI matrix.
-    sds : list of ints
-        List of binary Slater determinant values.
-
-    """
-    # get python interpreter
-    try:
-        python_name = os.environ["PYSCFPYTHON"]
-    except KeyError:
-        python_name = sys.executable
-    if not os.path.isfile(python_name):
-        raise FileNotFoundError(
-            "The file provided in HORTONPYTHON environment variable is not a python executable."
-        )
-    # FIXME: I can't think of a way to make sure that the python_name is a python interpreter.
-
-    # convert integrals
-    if isinstance(kwargs["h1e"], np.ndarray):
-        np.save("temp_h1e.npy", kwargs["h1e"])
-        kwargs["h1e"] = "temp_h1e.npy"
-    if isinstance(kwargs["eri"], np.ndarray):
-        np.save("temp_eri.npy", kwargs["eri"])
-        kwargs["eri"] = "temp_eri.npy"
-    # turn keywords to pair of key and value
-    kwargs = [str(i) for item in kwargs.items() for i in item]
-    # call script with appropriate python
-    # NOTE: this is a possible security risk since we don't check that python_name is actually a
-    # python interpreter. However, it is up to the user to make sure that their environment variable
-    # is set up properly. Ideally, we shouldn't even have to call a python outside the current
-    # python, but here we are.
-    call(  # nosec: B603
-        [
-            python_name,
-            os.path.join(DIRNAME, "pyscf_generate_fci_matrix.py"),
-            cimatrix_name,
-            sds_name,
-            *kwargs,
-        ]
-    )
-
-    cimatrix = np.load(cimatrix_name)
-    sds = np.load(sds_name).tolist()
-
-    if remove_npyfiles:
-        os.remove("temp_h1e.npy")
-        os.remove("temp_eri.npy")
-        os.remove(cimatrix_name)
-        os.remove(sds_name)
-
-    return cimatrix, sds

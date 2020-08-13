@@ -1,23 +1,108 @@
-"""Script for generating one- and two-electron integrals using PySCF.
+"""Script for utilizing PySCF.
 
 Functions
 ---------
-generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False)
-    Generate the FCI Hamiltonian CI matrix.
+hartreefock(xyz_file, basis, is_unrestricted=False)
+    Runs HF in PySCF and generates the corresponding one- and two-electron integrals.
 
 """
-# pylint: disable=W0212,C0103
+# pylint: disable=C0103
 import ctypes
-import sys
+import os
 
 import numpy as np
+from pyscf import ao2mo, gto, scf
 from pyscf.fci import cistring
 from pyscf.lib import hermi_triu, load_library
 
 LIBFCI = load_library("libfci")
 
 
-def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
+def hartreefock(xyz_file, basis, is_unrestricted=False):
+    """Run HF using PySCF.
+
+    Parameters
+    ----------
+    xyz_file : str
+        XYZ file location.
+        Units are in Angstrom.
+    basis : str
+        Basis set available in PySCF.
+    is_unrestricted : bool
+        Flag to run unrestricted HF.
+        Default is restricted HF.
+
+    Returns
+    -------
+    result : dict
+        "hf_energy"
+            The electronic energy.
+        "nuc_nuc"
+            The nuclear repulsion energy.
+        "one_int"
+            The tuple of the one-electron interal.
+        "two_int"
+            The tuple of the two-electron integral in Physicist's notation.
+
+    Raises
+    ------
+    ValueError
+        If given xyz file does not exist.
+    NotImplementedError
+        If calculation is unrestricted or generalized.
+
+    """
+    # check xyz file
+    cwd = os.path.dirname(__file__)
+    if os.path.isfile(xyz_file):
+        pass
+    elif os.path.isfile(os.path.join(cwd, xyz_file)):
+        xyz_file = os.path.join(cwd, xyz_file)
+    else:
+        raise ValueError("Given xyz_file does not exist")
+
+    # get coordinates
+    with open(xyz_file, "r") as f:
+        lines = [i.strip() for i in f.readlines()[2:]]
+        atoms = ";".join(lines)
+
+    # get mol
+    mol = gto.M(atom=atoms, basis=basis, parse_arg=False, unit="angstrom")
+
+    # get hf
+    if is_unrestricted:
+        raise NotImplementedError(
+            "Unrestricted or Generalized orbitals are not supported in this" " PySCF wrapper (yet)."
+        )
+    hf = scf.RHF(mol)
+    # run hf
+    hf.scf()
+    # energies
+    energy_nuc = hf.energy_nuc()
+    energy_tot = hf.kernel()  # HF is solved here
+    energy_elec = energy_tot - energy_nuc
+    # mo_coeffs
+    mo_coeff = hf.mo_coeff
+    # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
+    # get 1e integral
+    one_int_ab = mol.intor("cint1e_nuc_sph") + mol.intor("cint1e_kin_sph")
+    one_int = mo_coeff.T.dot(one_int_ab).dot(mo_coeff)
+    # get 2e integral
+    eri = ao2mo.full(mol, mo_coeff, verbose=0, intor="cint2e_sph")
+    two_int = ao2mo.restore(1, eri, mol.nao_nr())
+    # NOTE: PySCF uses Chemist's notation
+    two_int = np.einsum("ijkl->ikjl", two_int)
+    # results
+    result = {
+        "hf_energy": energy_elec,
+        "nuc_nuc": energy_nuc,
+        "one_int": one_int,
+        "two_int": two_int,
+    }
+    return result
+
+
+def fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     """Construct the FCI CI Hamiltonian matrix using PySCF.
 
     Parameters
@@ -137,21 +222,3 @@ def generate_fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
         pspace.append(alpha_bit | (beta_bit << norb))
 
     return ci_matrix, pspace
-
-
-if __name__ == "__main__":
-    # extract keyword from command line
-    kwargs = {key: val for key, val in zip(sys.argv[3::2], sys.argv[4::2])}
-    # change data types
-    if "h1e" in kwargs:
-        kwargs["h1e"] = np.load(kwargs["h1e"])
-    if "eri" in kwargs:
-        kwargs["eri"] = np.load(kwargs["eri"])
-    if "nelec" in kwargs:
-        kwargs["nelec"] = int(kwargs["nelec"])
-    if "is_chemist_notation" in kwargs:
-        kwargs["is_chemist_notation"] = kwargs["is_chemist_notation"] == "True"
-
-    output = generate_fci_cimatrix(**kwargs)
-    np.save(sys.argv[1], output[0])
-    np.save(sys.argv[2], output[1])
