@@ -39,19 +39,9 @@ class TempBaseWavefunction(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
 
 
-def check_cma():
-    """Check if cma module is available."""
-    try:
-        import cma  # noqa: F401
-    except ModuleNotFoundError:
-        return False
-    else:
-        return True
-
-
-@pytest.mark.skipif(not check_cma(), reason="The module `cma` is unavailable.")
 def test_cma(tmp_path):
     """Test fanpy.solver.equation.cma."""
+    pytest.importorskip("cma")
     wfn = TempBaseWavefunction()
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
