@@ -164,9 +164,9 @@ class LinearCombinationWavefunction(BaseWavefunction):
             name = type(wfn).__name__
             if names_totalcount[name] > 1:
                 names_count[name] += 1
-                name = f"{name}{names_count[name]}"
+                name = "{}{}".format(name, names_count[name])
 
-            wfn.save_file(f"{root}_{name}{ext}")
+            wfn.save_params("{}_{}{}".format(root, name, ext))
 
     def assign_wfns(self, wfns):
         """Assign the wavefunctions that will be linearly combined.

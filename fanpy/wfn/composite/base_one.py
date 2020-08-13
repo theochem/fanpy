@@ -138,4 +138,4 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         root, ext = os.path.splitext(filename)
         np.save(filename, self.params)
         name = type(self.wfn).__name__
-        self.wfn.save_params(f"{root}_{name}{ext}")
+        self.wfn.save_params("{}_{}{}".format(root, name, ext))

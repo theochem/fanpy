@@ -279,9 +279,9 @@ class BaseSchrodinger:
                 name = type(component).__name__
                 if names_totalcount[name] > 1:
                     names_count[name] += 1
-                    name = f"{name}{names_count[name]}"
+                    name = "{}{}".format(name, names_count[name])
 
-                component.save_params(f"{root}_{name}{ext}")
+                component.save_params("{}_{}{}".format(root, name, ext))
 
     def assign_params(self, params):
         """Assign the parameters to the wavefunction and/or Hamiltonian.

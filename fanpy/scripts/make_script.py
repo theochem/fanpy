@@ -296,7 +296,7 @@ def make_script(
     output += "\n\n"
 
     if outname:
-        output += f"output = open('{outname}', 'w')"
+        output += "output = open('{}', 'w')".format(outname)
     else:
         output += "output = sys.stdout"
     output += "\n\n"
