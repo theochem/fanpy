@@ -1,4 +1,5 @@
 """Solvers for system of Schrodinger equations."""
+import numpy as np
 from fanpy.eqn.least_squares import ProjectedSchrodinger
 from fanpy.solver.wrappers import wrap_scipy
 
@@ -126,10 +127,19 @@ def root(objective, **kwargs):
 
     if not isinstance(objective, ProjectedSchrodinger):
         raise TypeError("Given objective must be an instance of ProjectedSchrodinger.")
-    if objective.num_eqns != objective.active_params.size:
+    if objective.num_eqns < objective.active_params.size:
         raise ValueError(
-            "Given objective must have the same number of equations as the number of " "parameters."
+            "Given objective must be greater than or equal to the number of equations as the number"
+            " of parameters."
         )
+    if objective.num_eqns > objective.active_params.size:
+        print("Too many equations for root solver. Excess equations will be truncated.")
+        num_constraints = len(objective.constraints)
+        objective.pspace = objective.pspace[:objective.active_params.size - num_constraints]
+        objective.eqn_weights = np.hstack([
+            objective.eqn_weights[:objective.active_params.size - num_constraints],
+            objective.eqn_weights[-num_constraints:],
+        ])
 
     kwargs.setdefault("method", "hybr")
     kwargs.setdefault("jac", objective.jacobian)

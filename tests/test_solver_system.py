@@ -74,4 +74,4 @@ def test_root():
     with pytest.raises(TypeError):
         system.root(EnergyOneSideProjection(wfn, ham))
     with pytest.raises(ValueError):
-        system.root(ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100]))
+        system.root(ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011], constraints=[]))
