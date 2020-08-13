@@ -340,12 +340,12 @@ class DeterminantRatio(BaseWavefunction):
             # ASSUME: deriv_row is in rows and deriv_col is in cols (i.e. selected index corresponds to
             #         an occupied orbital of the given Slater determinant)
             matrix = self.get_matrix(deriv_matrix)
-            rows = np.arange(matrix.shape[0])
-            cols = self.get_columns(sd, deriv_matrix)
 
             old_determinant = np.linalg.det(matrix[:, self.get_columns(sd, deriv_matrix)])
             for deriv_row in range(self.matrix_shape[0]):
-                for deriv_col in range(self.matrix_shape[1]):
+                for deriv_col in self.get_columns(sd, deriv_matrix):
+                    rows = np.arange(matrix.shape[0])
+                    cols = self.get_columns(sd, deriv_matrix)
                     # mask for finding the deriv_row and deriv_col from rows and cols, respectively
                     rows_mask = rows != deriv_row
                     cols_mask = cols != deriv_col
@@ -378,6 +378,7 @@ class DeterminantRatio(BaseWavefunction):
                             old_determinant**(-2) *
                             deriv_determinant
                         )
+        return output
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
