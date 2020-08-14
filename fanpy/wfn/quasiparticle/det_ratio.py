@@ -350,8 +350,8 @@ class DeterminantRatio(BaseWavefunction):
                     rows_mask = rows != deriv_row
                     cols_mask = cols != deriv_col
                     # find sign that corresponds to the derivative
-                    sign_row = (-1) ** np.asscalar(np.where(np.logical_not(rows_mask))[0])
-                    sign_col = (-1) ** np.asscalar(np.where(np.logical_not(cols_mask))[0])
+                    sign_row = (-1) ** np.where(np.logical_not(rows_mask))[0][0]
+                    sign_col = (-1) ** np.where(np.logical_not(cols_mask))[0][0]
                     # filter out the deriv_row and deriv_col
                     rows = rows[rows_mask]
                     cols = cols[cols_mask]
@@ -405,10 +405,16 @@ class DeterminantRatio(BaseWavefunction):
         ------
         TypeError
             If Slater determinant is not an integer.
+            If deriv is not a one dimensional numpy array of integers.
 
         """
-        if __debug__ and not slater.is_sd_compatible(sd):
-            raise TypeError("Slater determinant must be given as an integer.")
+        if __debug__:
+            if not slater.is_sd_compatible(sd):
+                raise TypeError("Slater determinant must be given as an integer.")
+            if deriv is not None and not (
+                isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
+            ):
+                raise TypeError("deriv must be given as a one dimensional numpy array of integers.")
 
         if slater.total_occ(sd) != self.nelec:
             return 0.0
@@ -417,4 +423,4 @@ class DeterminantRatio(BaseWavefunction):
         if deriv is None:
             return self._olp(sd)
         # if derivatization
-        return self._olp_deriv(sd)
+        return self._olp_deriv(sd)[deriv]

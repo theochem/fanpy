@@ -1,5 +1,5 @@
 """Test fanpy.wfn.quasiparticle.det_ratio."""
-from nose.tools import assert_raises
+import pytest
 import numpy as np
 from fanpy.wfn.quasiparticle.det_ratio import DeterminantRatio
 
@@ -20,9 +20,12 @@ def test_assign_numerator_mask():
     test.assign_numerator_mask(np.array([True, False, True]))
     assert np.allclose(test.numerator_mask, [True, False, True])
     # check errors
-    assert_raises(TypeError, test.assign_numerator_mask, [True, False])
-    assert_raises(TypeError, test.assign_numerator_mask, np.array([0, 1]))
-    assert_raises(TypeError, test.assign_numerator_mask, np.array([], dtype=bool))
+    with pytest.raises(TypeError):
+        test.assign_numerator_mask([True, False])
+    with pytest.raises(TypeError):
+        test.assign_numerator_mask(np.array([0, 1]))
+    with pytest.raises(TypeError):
+        test.assign_numerator_mask(np.array([], dtype=bool))
 
 
 def test_matrix_shape():
@@ -64,10 +67,14 @@ def test_get_matrix():
     test.params = np.random.rand(16)
     assert np.allclose(test.get_matrix(0), test.params[:8].reshape(2, 4))
     assert np.allclose(test.get_matrix(1), test.params[8:].reshape(2, 4))
-    assert_raises(TypeError, test.get_matrix, '0')
-    assert_raises(TypeError, test.get_matrix, 0.0)
-    assert_raises(ValueError, test.get_matrix, -1)
-    assert_raises(ValueError, test.get_matrix, 16)
+    with pytest.raises(TypeError):
+        test.get_matrix('0')
+    with pytest.raises(TypeError):
+        test.get_matrix(0.0)
+    with pytest.raises(ValueError):
+        test.get_matrix(-1)
+    with pytest.raises(ValueError):
+        test.get_matrix(16)
 
 
 def test_decompose_index():
@@ -84,30 +91,9 @@ def test_decompose_index():
                         (ind_matrix, ind_row_matrix, ind_col_matrix))
 
 
-def test_template_params():
-    """Test DeterminantRatio.template_params."""
-    test = TestDeterminantRatio()
-    test.dtype = float
-    test.nelec = 2
-    test.nspin = 4
-    test.numerator_mask = np.array([True, False, False])
-
-    matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
-    indices = np.array([True, False, True, False])
-    assert np.allclose(test.template_params[:8], matrix.flat)
-
-    template_params = test.template_params
-    template_matrix = template_params[8: 16].reshape(2, 4)
-    assert np.allclose(template_matrix[:, indices], matrix[:, indices])
-    assert np.allclose(np.linalg.norm(template_matrix[:, np.logical_not(indices)], axis=0), 1)
-
-    assert np.allclose(template_params[8: 16], template_params[16:])
-
-
 def test_assign_params():
     """Test DeterminantRatio.assign_params."""
     test = TestDeterminantRatio()
-    test.dtype = float
     test.nelec = 2
     test.nspin = 4
     test.numerator_mask = np.array([True, False, False])
@@ -127,7 +113,6 @@ def test_assign_params():
     assert np.allclose(test.params, params)
 
     test2 = TestDeterminantRatio()
-    test2.dtype = float
     test2.nelec = 2
     test2.nspin = 4
     test2.numerator_mask = np.array([True, False, False])
@@ -181,114 +166,115 @@ def test_olp_deriv():
 
     test = DeterminantRatio(2, 4, numerator_mask=np.array([True, False]),
                             params=np.hstack([matrix1.flat, matrix2.flat]))
-    assert np.allclose(test._olp_deriv(0b0011, 0),
-                       matrix1[1, 1] / np.linalg.det(matrix2[:, [0, 1]]))
-    assert np.allclose(test._olp_deriv(0b0011, 1),
-                       - matrix1[1, 0] / np.linalg.det(matrix2[:, [0, 1]]))
-    assert np.allclose(test._olp_deriv(0b0011, 4),
-                       - matrix1[0, 1] / np.linalg.det(matrix2[:, [0, 1]]))
-    assert np.allclose(test._olp_deriv(0b0011, 5),
-                       matrix1[0, 0] / np.linalg.det(matrix2[:, [0, 1]]))
-    assert np.allclose(test._olp_deriv(0b0011, 8),
+    deriv = test._olp_deriv(0b0011)
+    assert np.allclose(deriv[0], matrix1[1, 1] / np.linalg.det(matrix2[:, [0, 1]]))
+    assert np.allclose(deriv[1], - matrix1[1, 0] / np.linalg.det(matrix2[:, [0, 1]]))
+    assert np.allclose(deriv[4], - matrix1[0, 1] / np.linalg.det(matrix2[:, [0, 1]]))
+    assert np.allclose(deriv[5], matrix1[0, 0] / np.linalg.det(matrix2[:, [0, 1]]))
+    assert np.allclose(deriv[8],
                        np.linalg.det(matrix1[:, [0, 1]])
                        * (-1) / np.linalg.det(matrix2[:, [0, 1]]) ** 2 * matrix2[1, 1])
-    assert np.allclose(test._olp_deriv(0b0011, 9),
+    assert np.allclose(deriv[9],
                        np.linalg.det(matrix1[:, [0, 1]])
                        * (-1) / np.linalg.det(matrix2[:, [0, 1]]) ** 2 * (-matrix2[1, 0]))
-    assert np.allclose(test._olp_deriv(0b0011, 12),
+    assert np.allclose(deriv[12],
                        np.linalg.det(matrix1[:, [0, 1]])
                        * (-1) / np.linalg.det(matrix2[:, [0, 1]]) ** 2 * (-matrix2[0, 1]))
-    assert np.allclose(test._olp_deriv(0b0011, 13),
+    assert np.allclose(deriv[13],
                        np.linalg.det(matrix1[:, [0, 1]])
                        * (-1) / np.linalg.det(matrix2[:, [0, 1]]) ** 2 * matrix2[0, 0])
 
-    assert np.allclose(test._olp_deriv(0b1010, 1),
+    deriv = test._olp_deriv(0b1010)
+    assert np.allclose(deriv[1],
                        matrix1[1, 3] / np.linalg.det(matrix2[:, [1, 3]]))
-    assert np.allclose(test._olp_deriv(0b1010, 3),
+    assert np.allclose(deriv[3],
                        - matrix1[1, 1] / np.linalg.det(matrix2[:, [1, 3]]))
-    assert np.allclose(test._olp_deriv(0b1010, 5),
+    assert np.allclose(deriv[5],
                        - matrix1[0, 3] / np.linalg.det(matrix2[:, [1, 3]]))
-    assert np.allclose(test._olp_deriv(0b1010, 7),
+    assert np.allclose(deriv[7],
                        matrix1[0, 1] / np.linalg.det(matrix2[:, [1, 3]]), matrix2[1, 3])
-    assert np.allclose(test._olp_deriv(0b1010, 9),
+    assert np.allclose(deriv[9],
                        np.linalg.det(matrix1[:, [1, 3]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 3]])**2 * matrix2[1, 3])
-    assert np.allclose(test._olp_deriv(0b1010, 11),
+    assert np.allclose(deriv[11],
                        np.linalg.det(matrix1[:, [1, 3]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 3]])**2 * (-matrix2[1, 1]))
-    assert np.allclose(test._olp_deriv(0b1010, 13),
+    assert np.allclose(deriv[13],
                        np.linalg.det(matrix1[:, [1, 3]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 3]])**2 * (-matrix2[0, 3]))
-    assert np.allclose(test._olp_deriv(0b1010, 15),
+    assert np.allclose(deriv[15],
                        np.linalg.det(matrix1[:, [1, 3]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 3]])**2 * matrix2[0, 1])
 
     test = DeterminantRatio(2, 4, numerator_mask=np.array([False, True]),
                             params=np.hstack([matrix1.flat, matrix2.flat]))
-    assert np.allclose(test._olp_deriv(0b0101, 0),
+    deriv = test._olp_deriv(0b0101)
+    assert np.allclose(deriv[0],
                        np.linalg.det(matrix2[:, [0, 2]])
                        * (-1) / np.linalg.det(matrix1[:, [0, 2]]) ** 2 * matrix1[1, 2])
-    assert np.allclose(test._olp_deriv(0b0101, 2),
+    assert np.allclose(deriv[2],
                        np.linalg.det(matrix2[:, [0, 2]])
                        * (-1) / np.linalg.det(matrix1[:, [0, 2]]) ** 2 * (-matrix1[1, 0]))
-    assert np.allclose(test._olp_deriv(0b0101, 4),
+    assert np.allclose(deriv[4],
                        np.linalg.det(matrix2[:, [0, 2]])
                        * (-1) / np.linalg.det(matrix1[:, [0, 2]]) ** 2 * (-matrix1[0, 2]))
-    assert np.allclose(test._olp_deriv(0b0101, 6),
+    assert np.allclose(deriv[6],
                        np.linalg.det(matrix2[:, [0, 2]])
                        * (-1) / np.linalg.det(matrix1[:, [0, 2]]) ** 2 * matrix1[0, 0])
-    assert np.allclose(test._olp_deriv(0b0101, 8),
+    assert np.allclose(deriv[8],
                        matrix2[1, 2] / np.linalg.det(matrix1[:, [0, 2]]))
-    assert np.allclose(test._olp_deriv(0b0101, 10),
+    assert np.allclose(deriv[10],
                        - matrix2[1, 0] / np.linalg.det(matrix1[:, [0, 2]]))
-    assert np.allclose(test._olp_deriv(0b0101, 12),
+    assert np.allclose(deriv[12],
                        - matrix2[0, 2] / np.linalg.det(matrix1[:, [0, 2]]))
-    assert np.allclose(test._olp_deriv(0b0101, 14),
+    assert np.allclose(deriv[14],
                        matrix2[0, 0] / np.linalg.det(matrix1[:, [0, 2]]))
 
     test = DeterminantRatio(2, 4, numerator_mask=np.array([True, True]),
                             params=np.hstack([matrix1.flat, matrix2.flat]))
-    assert np.allclose(test._olp_deriv(0b1001, 0),
+    deriv = test._olp_deriv(0b1001)
+    assert np.allclose(deriv[0],
                        matrix1[1, 3] * np.linalg.det(matrix2[:, [0, 3]]))
-    assert np.allclose(test._olp_deriv(0b1001, 3),
+    assert np.allclose(deriv[3],
                        -matrix1[1, 0] * np.linalg.det(matrix2[:, [0, 3]]))
-    assert np.allclose(test._olp_deriv(0b1001, 4),
+    assert np.allclose(deriv[4],
                        -matrix1[0, 3] * np.linalg.det(matrix2[:, [0, 3]]))
-    assert np.allclose(test._olp_deriv(0b1001, 7),
+    assert np.allclose(deriv[7],
                        matrix1[0, 0] * np.linalg.det(matrix2[:, [0, 3]]))
-    assert np.allclose(test._olp_deriv(0b1001, 8),
+    assert np.allclose(deriv[8],
                        np.linalg.det(matrix1[:, [0, 3]]) * matrix2[1, 3])
-    assert np.allclose(test._olp_deriv(0b1001, 11),
+    assert np.allclose(deriv[11],
                        np.linalg.det(matrix1[:, [0, 3]]) * (-matrix2[1, 0]))
-    assert np.allclose(test._olp_deriv(0b1001, 12),
+    assert np.allclose(deriv[12],
                        np.linalg.det(matrix1[:, [0, 3]]) * (-matrix2[0, 3]))
-    assert np.allclose(test._olp_deriv(0b1001, 15),
+    assert np.allclose(deriv[15],
                        np.linalg.det(matrix1[:, [0, 3]]) * matrix2[0, 0])
 
     test = DeterminantRatio(2, 4, numerator_mask=np.array([False, False]),
                             params=np.hstack([matrix1.flat, matrix2.flat]))
-    assert np.allclose(test._olp_deriv(0b0110, 1),
+    deriv = test._olp_deriv(0b0110)
+    assert np.allclose(deriv[1],
                        (-1) / np.linalg.det(matrix1[:, [1, 2]]) ** 2 * matrix1[1, 2]
                        / np.linalg.det(matrix2[:, [1, 2]]))
-    assert np.allclose(test._olp_deriv(0b0110, 2),
+    assert np.allclose(deriv[2],
                        (-1) / np.linalg.det(matrix1[:, [1, 2]]) ** 2 * (-matrix1[1, 1])
                        / np.linalg.det(matrix2[:, [1, 2]]))
-    assert np.allclose(test._olp_deriv(0b0110, 5),
+    assert np.allclose(deriv[5],
                        (-1) / np.linalg.det(matrix1[:, [1, 2]]) ** 2 * (-matrix1[0, 2])
                        / np.linalg.det(matrix2[:, [1, 2]]))
-    assert np.allclose(test._olp_deriv(0b0110, 6),
+    assert np.allclose(deriv[6],
                        (-1) / np.linalg.det(matrix1[:, [1, 2]]) ** 2 * matrix1[0, 1]
                        / np.linalg.det(matrix2[:, [1, 2]]))
-    assert np.allclose(test._olp_deriv(0b0110, 9),
+    assert np.allclose(deriv[9],
                        1 / np.linalg.det(matrix1[:, [1, 2]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 2]]) ** 2 * matrix2[1, 2])
-    assert np.allclose(test._olp_deriv(0b0110, 10),
+    assert np.allclose(deriv[10],
                        1 / np.linalg.det(matrix1[:, [1, 2]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 2]]) ** 2 * (-matrix2[1, 1]))
-    assert np.allclose(test._olp_deriv(0b0110, 13),
+    assert np.allclose(deriv[13],
                        1 / np.linalg.det(matrix1[:, [1, 2]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 2]]) ** 2 * (-matrix2[0, 2]))
-    assert np.allclose(test._olp_deriv(0b0110, 14),
+    assert np.allclose(deriv[14],
                        1 / np.linalg.det(matrix1[:, [1, 2]])
                        * (-1) / np.linalg.det(matrix2[:, [1, 2]]) ** 2 * matrix2[0, 1])
 
@@ -302,15 +288,14 @@ def test_get_overlap():
     assert test.get_overlap(0b0001) == 0
     assert test.get_overlap(0b0111) == 0
 
-    assert test.get_overlap(0b0101, -1) == 0
-    assert test.get_overlap(0b0101, 16) == 0
     for i in range(16):
         if i in [0, 2, 4, 6, 8, 10, 12, 14]:
             continue
-        assert test.get_overlap(0b0101, i) == 0
-    assert_raises(TypeError, test.get_overlap, 0b0101, 0.0)
+        assert test.get_overlap(0b0101, np.array([i])) == 0
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, 1)
 
     assert np.allclose(test.get_overlap(0b0011),
                        np.linalg.det(matrix1[:, [0, 1]]) / np.linalg.det(matrix2[:, [0, 1]]))
-    assert np.allclose(test.get_overlap(0b0011, 0),
+    assert np.allclose(test.get_overlap(0b0011, np.array([0])),
                        matrix1[1, 1] / np.linalg.det(matrix2[:, [0, 1]]))

@@ -557,19 +557,25 @@ class BaseQuasiparticle(BaseWavefunction):
             Overlap (or derivative of the overlap) of the wavefunction with the given Slater
             determinant.
 
-        Notes
-        -----
-        Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
+        Raises
+        ------
+        TypeError
+            If Slater determinant is not an integer.
+            If deriv is not a one dimensional numpy array of integers.
 
         """
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
+            if deriv is not None and not (
+                isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
+            ):
+                raise TypeError("deriv must be given as a one dimensional numpy array of integers.")
 
         # if no derivatization
         if deriv is None:
             return self._olp(sd)
-        return self._olp_deriv(sd, deriv)
+        return self._olp_deriv(sd)[deriv]
 
     @abc.abstractmethod
     def generate_possible_orbsubsets(self, occ_indices):

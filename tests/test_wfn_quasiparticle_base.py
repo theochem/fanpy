@@ -63,14 +63,6 @@ def test_norbsubsets():
     assert test.norbsubsets == 3
 
 
-def test_params_shape():
-    """Test BaseQuasiparticle.params_shape."""
-    test = TestQuasiparticle()
-    test.assign_nquasiparticle(4)
-    test.assign_orbsubsets([(0,), (0, 1), (0, 1, 2), (0, 1, 2, 3), (1,)])
-    assert test.params_shape == (4, 5)
-
-
 def test_get_col_ind():
     """Test BaseQuasiparticle.get_col_ind."""
     test = TestQuasiparticle()
@@ -97,27 +89,21 @@ def test_get_orbsubset():
     assert_raises(ValueError, test.get_orbsubset, [0])
 
 
-def test_template_params():
-    """Test BaseQuasiparticle.template_params."""
-    test = TestQuasiparticle()
-    test.assign_nelec(3)
-    test.assign_nspin(10)
-    test.assign_dtype(float)
-    test.assign_nquasiparticle(4)
-    test.assign_orbsubsets([(0, 1), (2, 3), (5, 6, 7), (4,), (1, 3, 5)])
-    assert np.allclose(test.template_params, np.eye(4, 5))
-
-
 def test_assign_params():
     """Test BaseQuasiparticle.assign_params."""
     test = TestQuasiparticle()
     test.assign_nelec(8)
     test.assign_nspin(10)
-    test.assign_dtype(float)
     test.assign_nquasiparticle(4)
     test.assign_orbsubsets([(0, 1), (2, 3), (5, 6, 7), (4,), (1, 3, 5)])
     test.assign_params()
-    assert np.allclose(test.params, test.template_params)
+    indices = [
+        test.get_col_ind((0, 1)), test.get_col_ind((2, 3)), test.get_col_ind((5, 6, 7)),
+        test.get_col_ind((4, )),
+    ]
+    assert np.allclose(test.params[np.arange(4), indices], 1)
+    other_indices = np.array([i for i in range(test.norbsubsets) if i not in indices])
+    assert np.allclose(test.params[np.arange(4)[:, None], other_indices[None, :]], 0)
 
     test2 = TestQuasiparticle()
     test2.assign_nelec(2)
@@ -230,17 +216,17 @@ def test_olp_deriv():
     test.params = np.arange(24).reshape(4, 6)
 
     test.assign_orbsubsets([(0, 1), (2, 3), (5, 6, 7), (4,), (1, 3, 5), (2, 4, 6, 8)])
-    assert np.allclose(-test._olp_deriv(0b11111111, None),
-                       test.compute_permsum(2, [0, 1, 2, 3], deriv=None))
-    assert np.allclose(-test._olp_deriv(0b11111111, 0),
-                       test.compute_permsum(2, [0, 1, 2, 3], deriv=0))
+    assert np.allclose(
+        test._olp_deriv(0b11111111),
+        -np.array([test.compute_permsum(2, [0, 1, 2, 3], deriv=i) for i in range(test.nparams)])
+    )
 
     # Note the ordering of the orbital subsets and column indices
     test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)])
-    assert np.allclose(test._olp_deriv(0b11111111, None),
-                       -test.compute_permsum(2, [0, 1, 3, 2], deriv=None))
-    assert np.allclose(-test._olp_deriv(0b11111111, 0),
-                       test.compute_permsum(2, [0, 1, 3, 2], deriv=0))
+    assert np.allclose(
+        test._olp_deriv(0b11111111),
+        -np.array([test.compute_permsum(2, [0, 1, 3, 2], deriv=i) for i in range(test.nparams)])
+    )
 
 
 def test_olp():
@@ -249,7 +235,7 @@ def test_olp():
     test.assign_nquasiparticle(4)
     test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)])
     test.params = np.arange(24).reshape(4, 6)
-    assert np.allclose(test._olp_deriv(0b11111111, None),
+    assert np.allclose(test._olp(0b11111111),
                        -test.compute_permsum(2, [0, 1, 3, 2], deriv=None))
 
 
@@ -260,12 +246,12 @@ def test_get_overlap():
     test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)])
     test.params = np.arange(24).reshape(4, 6)
     test.assign_memory()
-    test._cache_fns = {}
-    test.load_cache()
+    test.enable_cache()
     assert test.get_overlap(0b11111111) == -test.compute_permsum(2, [0, 1, 3, 2], deriv=None)
-    assert test.get_overlap(0b11111111, deriv=0) == -test.compute_permsum(2, [0, 1, 3, 2], deriv=0)
-    assert test.get_overlap(0b11111111, deriv=5) == 0
-    assert test.get_overlap(0b11111111, deriv=24) == 0
+    assert np.allclose(
+        test._olp_deriv(0b11111111),
+        -np.array([test.compute_permsum(2, [0, 1, 3, 2], deriv=i) for i in range(test.nparams)])
+    )
 
-    assert_raises(ValueError, test.get_overlap, 0b11111111, deriv='1')
-    assert_raises(ValueError, test.get_overlap, 0b11111111, deriv=1.0)
+    assert_raises(TypeError, test.get_overlap, 0b11111111, deriv='1')
+    assert_raises(TypeError, test.get_overlap, 0b11111111, deriv=1.0)

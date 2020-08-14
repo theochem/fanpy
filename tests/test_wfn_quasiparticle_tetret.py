@@ -2,7 +2,7 @@
 import numpy as np
 from numpy.testing import assert_raises
 from fanpy.wfn.quasiparticle.tetret import AntisymmeterizedProductTetrets
-from fanpy.tools import find_datafile
+from utils import find_datafile
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.solver.system import least_squares
@@ -115,12 +115,12 @@ def test_generate_possible_orbsubsets():
 # FIXME: check properly
 def test_run():
     "Check if calculation runs with APT."
-    one_int = np.load(find_datafile('test/h4_square_hf_sto6g_oneint.npy'))
-    two_int = np.load(find_datafile('test/h4_square_hf_sto6g_twoint.npy'))
+    one_int = np.load(find_datafile('data_h4_square_hf_sto6g_oneint.npy'))
+    two_int = np.load(find_datafile('data_h4_square_hf_sto6g_twoint.npy'))
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
-    apg = AntisymmeterizedProductTetrets(4, 8, nquasiparticle=2)
+    wfn = AntisymmeterizedProductTetrets(4, 8, nquasiparticle=1)
 
     # Solve system of equations
-    objective = ProjectedSchrodinger(apg, ham)
+    objective = ProjectedSchrodinger(wfn, ham)
     results = least_squares(objective)
     print(results)
