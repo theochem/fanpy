@@ -352,7 +352,7 @@ class BaseSchrodinger:
                 inds_objective = self.indices_objective_params[self.wfn]
                 output[inds_objective] = self.wfn.get_overlap(sd, inds_component)
         else:
-            if isinstance(self.wfn, BaseCompositeOneWavefunction):
+            if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
             else:
                 wfns = (self.wfn, ) + self.wfn.wfns
@@ -406,7 +406,7 @@ class BaseSchrodinger:
                     sd, self.wfn, wfn_deriv=wfn_inds_component
                 )
         else:
-            if isinstance(self.wfn, BaseCompositeOneWavefunction):
+            if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
             else:
                 wfns = (self.wfn, ) + self.wfn.wfns
@@ -415,7 +415,7 @@ class BaseSchrodinger:
                 if wfn_inds_component.size > 0:
                     wfn_inds_objective = self.indices_objective_params[wfn]
                     output[wfn_inds_objective] = self.ham.integrate_sd_wfn(
-                        sd, wfn, wfn_deriv=(wfn, wfn_inds_component)
+                        sd, self.wfn, wfn_deriv=(wfn, wfn_inds_component)
                     )
 
         ham_inds_component = self.indices_component_params[self.ham]

@@ -1,5 +1,6 @@
 """Test fanpy.eqn.base."""
 import itertools as it
+import os
 
 import numpy as np
 import pytest
@@ -8,6 +9,8 @@ from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
+from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 def test_baseschrodinger_init():
@@ -43,6 +46,16 @@ def test_baseschrodinger_init():
     answer[ham] = np.array([0])
     assert test.indices_component_params == answer
 
+    answer[wfn] = np.array([2])
+    answer[ham] = np.array([])
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, param_selection=answer)
+    assert test.indices_component_params == answer
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, optimize_orbitals=True)
+    answer[wfn] = np.arange(wfn.nparams)
+    answer[ham] = np.arange(ham.nparams)
+    assert test.indices_component_params == answer
+
 
 def test_baseschrodinger_active_params():
     """Test BaseSchrodinger.active_params."""
@@ -59,6 +72,32 @@ def test_baseschrodinger_active_params():
         ]
     )
     assert np.allclose(test.active_params, np.array([2, 4, 7]))
+
+
+def test_baseschrodinger_save_params(tmp_path):
+    """Test BaseSchrodinger.sav_params."""
+    wfn = CIWavefunction(2, 4)
+    ham = RestrictedMolecularHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    test.save_params()
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, tmpfile=str(tmp_path / "temp.npy"))
+    test.save_params()
+    assert os.path.isfile(tmp_path / "temp_CIWavefunction.npy")
+
+    test.indices_component_params[ham] = np.arange(ham.nparams)
+    test.save_params()
+    assert os.path.isfile(tmp_path / "temp_CIWavefunction.npy")
+    assert os.path.isfile(tmp_path / "temp_RestrictedMolecularHamiltonian.npy")
+
+    newwfn = CIWavefunction(2, 4)
+    test.indices_component_params[newwfn] = np.array([])
+    test.save_params()
+    assert os.path.isfile(tmp_path / "temp_CIWavefunction1.npy")
+    assert os.path.isfile(tmp_path / "temp_CIWavefunction2.npy")
+    assert os.path.isfile(tmp_path / "temp_RestrictedMolecularHamiltonian.npy")
 
 
 def test_baseschrodinger_assign_params():
@@ -79,6 +118,12 @@ def test_baseschrodinger_assign_params():
     assert np.allclose(param1.params, [1])
     assert np.allclose(param2.params, [99, 3])
     assert np.allclose(param3.params, [98, 5, 6, 97])
+    with pytest.raises(TypeError):
+        test.assign_params([0, 1, 2])
+    with pytest.raises(TypeError):
+        test.assign_params(np.array([[0, 1, 2]]))
+    with pytest.raises(ValueError):
+        test.assign_params(np.array([0, 1, 2, 3]))
 
 
 def test_baseschrodinger_wrapped_get_overlap():
@@ -95,6 +140,24 @@ def test_baseschrodinger_wrapped_get_overlap():
     assert np.allclose(
         test.wrapped_get_overlap(0b0101, deriv=True),
         np.hstack([wfn.get_overlap(0b0101, deriv=np.array([0, 3, 5])), 0]),
+    )
+
+    with pytest.raises(TypeError):
+        test.wrapped_get_overlap(0b0101, deriv=1)
+
+    test.indices_component_params[wfn] = np.array([])
+    assert test.wrapped_get_overlap(0b0101, deriv=True) == 0
+
+    wfn = LinearCombinationWavefunction(2, 4, [CIWavefunction(2, 4), CIWavefunction(2, 4)])
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    wfn.wfns[0].assign_params(np.random.rand(wfn.wfns[0].nparams))
+    wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    test.indices_component_params[wfn] = np.array([])
+    test.indices_component_params[wfn.wfns[0]] = np.arange(wfn.wfns[0].nparams)
+    assert np.allclose(
+        test.wrapped_get_overlap(0b0101, deriv=True),
+        wfn.get_overlap(0b0101, deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams)))
     )
 
 
@@ -124,6 +187,27 @@ def test_baseschrodinger_wrapped_integrate_sd_wfn():
         )
     )
 
+    with pytest.raises(TypeError):
+        test.wrapped_integrate_sd_wfn(0b0101, deriv=1)
+
+    test.indices_component_params[wfn] = np.array([])
+    assert np.allclose(
+        test.wrapped_integrate_sd_wfn(0b0101, deriv=True),
+        ham.integrate_sd_wfn(0b0101, wfn, ham_deriv=np.array([1, 2, 4])),
+    )
+
+    wfn = LinearCombinationWavefunction(5, 10, [CIWavefunction(5, 10), CIWavefunction(5, 10)])
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    wfn.wfns[0].assign_params(np.random.rand(wfn.wfns[0].nparams))
+    wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    test.indices_component_params[wfn] = np.array([])
+    test.indices_component_params[wfn.wfns[0]] = np.arange(wfn.wfns[0].nparams)
+    assert np.allclose(
+        test.wrapped_integrate_sd_wfn(0b0101, deriv=True),
+        ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams)))
+    )
+
 
 def test_baseschrodinger_wrapped_integrate_sd_sd():
     """Test BaseSchrodinger.wrapped_integrate_sd_sd."""
@@ -147,6 +231,9 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
         test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=True),
         np.hstack([np.zeros(3), ham.integrate_sd_sd(0b0101, 0b0101, deriv=np.array([0, 1, 2]))])
     )
+
+    with pytest.raises(TypeError):
+        test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=1)
 
 
 def test_baseschrodinger_get_energy_one_proj():
@@ -264,9 +351,40 @@ def test_baseschrodinger_get_energy_one_proj():
             / (coeff1 * olp1 + coeff2 * olp2) ** 2,
         )
 
-        # others
-        with pytest.raises(TypeError):
-            test.get_energy_one_proj("0b0101")
+    ciwfn = CIWavefunction(2, 4, sds=[0b0101, 0b1010])
+    test.indices_component_params[ciwfn] = np.arange(ciwfn.nparams)
+    test.indices_component_params[wfn] = np.array([])
+    test.indices_component_params[ham] = np.array([])
+    ciwfn.assign_params(np.random.rand(ciwfn.nparams))
+    coeff1 = ciwfn.get_overlap(0b0101)
+    coeff2 = ciwfn.get_overlap(0b1010)
+    olp1 = wfn.get_overlap(0b0101)
+    olp2 = wfn.get_overlap(0b1010)
+    integral1 = (ham.integrate_sd_wfn(0b0101, wfn))
+    integral2 = (ham.integrate_sd_wfn(0b1010, wfn))
+    d_coeff1 = ciwfn.get_overlap(0b0101, np.arange(2))
+    d_coeff2 = ciwfn.get_overlap(0b1010, np.arange(2))
+    d_olp1 = 0
+    d_olp2 = 0
+    d_integral1 = 0
+    d_integral2 = 0
+    assert np.allclose(
+        test.get_energy_one_proj(ciwfn, deriv=True),
+        (
+            d_coeff1 * integral1
+            + d_coeff2 * integral2
+        )
+        / (coeff1 * olp1 + coeff2 * olp2)
+        - (d_coeff1 * olp1 + d_coeff2 * olp2)
+        * (coeff1 * integral1 + coeff2 * integral2)
+        / (coeff1 * olp1 + coeff2 * olp2) ** 2,
+    )
+
+    # others
+    with pytest.raises(TypeError):
+        test.get_energy_one_proj("0b0101")
+    with pytest.raises(TypeError):
+        test.get_energy_one_proj(0b0101, deriv=1)
 
 
 def test_baseschrodinger_get_energy_two_proj():
@@ -418,6 +536,11 @@ def test_baseschrodinger_get_energy_two_proj():
             ),
         )
 
+    with pytest.raises(TypeError):
+        test.get_energy_two_proj(0b0101, deriv=1)
+    with pytest.raises(TypeError):
+        test.get_energy_two_proj(0b0101, pspace_r=set([0b0110]))
+
 
 def test_baseschrodinger_get_energy_one_two_proj():
     wfn = CIWavefunction(4, 10)
@@ -435,3 +558,25 @@ def test_baseschrodinger_get_energy_one_two_proj():
     from fanpy.tools.sd_list import sd_list
     sds = sd_list(4, 10)
     assert np.allclose(test.get_energy_one_proj(sds), test.get_energy_two_proj(sds))
+
+
+def test_baseschrodinger_gradient():
+    """Test BaseSchrodinger.gradient."""
+    wfn = CIWavefunction(4, 10)
+    one_int = np.random.rand(5, 5)
+    two_int = np.random.rand(5, 5, 5, 5)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    with pytest.raises(NotImplementedError):
+        test.gradient(0b0101)
+
+
+def test_baseschrodinger_jacobian():
+    """Test BaseSchrodinger.jacobian."""
+    wfn = CIWavefunction(4, 10)
+    one_int = np.random.rand(5, 5)
+    two_int = np.random.rand(5, 5, 5, 5)
+    ham = RestrictedMolecularHamiltonian(one_int, two_int)
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    with pytest.raises(NotImplementedError):
+        test.jacobian(0b0101)
