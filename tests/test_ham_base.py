@@ -1,9 +1,10 @@
 """Test fanpy.ham.base."""
-import numpy as np
-import pytest
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
-from utils import disable_abstract
+
+import numpy as np
+
+import pytest
 
 
 class TestBaseHamiltonian(BaseHamiltonian):
@@ -14,7 +15,7 @@ class TestBaseHamiltonian(BaseHamiltonian):
 
     @property
     def nspin(self):
-        """Number of spin orbitals."""
+        """Return number of spin orbitals."""
         return 10
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None, components=True):

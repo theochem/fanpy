@@ -1,8 +1,9 @@
 """Rank-2 approximation to geminal wavefunction."""
-import numpy as np
 from fanpy.tools import math_tools, slater
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.geminal.base import BaseGeminal
+
+import numpy as np
 
 
 # pylint: disable=E1101

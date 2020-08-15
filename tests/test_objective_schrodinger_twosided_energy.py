@@ -1,10 +1,13 @@
 """Test fanpy.eqn.energy_twoside."""
-import numpy as np
-import pytest
-from utils import skip_init
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 def test_energy_twoside_assign_pspaces():

@@ -1,12 +1,15 @@
 """Test fanpy.ham.senzero."""
-import numpy as np
-import pytest
-from utils import find_datafile
-from fanpy.tools.math_tools import unitary_matrix
-from fanpy.tools.slater import get_seniority
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.ham.senzero import SeniorityZeroHamiltonian
+from fanpy.tools.math_tools import unitary_matrix
+from fanpy.tools.slater import get_seniority
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import find_datafile
 
 
 def test_integrate_sd_sd_trivial():

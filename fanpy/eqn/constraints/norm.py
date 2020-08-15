@@ -1,11 +1,11 @@
 """Normalization constraint on the wavefunction."""
-import numpy as np
-import fanpy.tools.slater as slater
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.utils import ComponentParameterIndices
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
 
 
 class NormConstraint(BaseSchrodinger):

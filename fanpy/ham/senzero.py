@@ -1,7 +1,8 @@
 """Seniority-zero Hamiltonian object that interacts with the wavefunction."""
-import numpy as np
-from fanpy.tools import slater
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
+from fanpy.tools import slater
+
+import numpy as np
 
 
 class SeniorityZeroHamiltonian(RestrictedMolecularHamiltonian):

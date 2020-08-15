@@ -1,9 +1,11 @@
 """Wavefunction using Keras NN."""
-from tensorflow.python import keras
-import numpy as np
-from fanpy.tools.sd_list import sd_list
 import fanpy.tools.slater as slater
+from fanpy.tools.sd_list import sd_list
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
+
+from tensorflow.python import keras
 
 
 class KerasNetwork(BaseWavefunction):

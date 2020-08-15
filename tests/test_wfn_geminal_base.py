@@ -1,9 +1,11 @@
 """Test fanpy.wavefunction.geminal.gem_wavefunction."""
-import numpy as np
-import pytest
-from utils import disable_abstract, skip_init
 from fanpy.wfn.geminal.base import BaseGeminal
-from fanpy.wfn.geminal.apg import APG
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, skip_init
 
 
 class TempBaseGeminal(BaseGeminal):
@@ -418,7 +420,7 @@ def test_basegeminal_init():
 
 
 def test_normalize():
-    """Test BaseGeminal.normalize"""
+    """Test BaseGeminal.normalize."""
     test = skip_init(
         disable_abstract(
             BaseGeminal,

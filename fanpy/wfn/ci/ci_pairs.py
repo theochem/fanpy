@@ -1,9 +1,10 @@
 """CI Pairs Wavefunction."""
-import numpy as np
 from fanpy.tools import slater
 from fanpy.tools.sd_list import sd_list
 from fanpy.wfn.ci.doci import DOCI
 from fanpy.wfn.geminal.ap1rog import AP1roG
+
+import numpy as np
 
 
 class CIPairs(DOCI):

@@ -1,4 +1,5 @@
 import numpy as np
+
 import psi4
 
 
@@ -44,8 +45,8 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     mol = psi4.geometry(geometry)
     psi4.set_options({"basis": basis, "reference": "rhf", "scf_type": "direct"})
     hf_energy, hf_wfn = psi4.energy("scf", return_wfn=True)
-    C = hf_wfn.Ca()
-    npC = C.to_array()
+    C = hf_wfn.Ca()  # noqa: N806
+    npC = C.to_array()  # noqa: N806
 
     mints = psi4.core.MintsHelper(hf_wfn.basisset())
     one_int = np.asarray(mints.ao_kinetic()) + np.asarray(mints.ao_potential())

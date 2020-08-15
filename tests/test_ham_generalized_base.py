@@ -2,10 +2,13 @@
 # pylint: disable=abstract-class-instantiated
 import itertools as it
 
-import numpy as np
-import pytest
-from utils import disable_abstract, skip_init
 from fanpy.ham.generalized_base import BaseGeneralizedHamiltonian
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, skip_init
 
 
 def test_assign_integrals():

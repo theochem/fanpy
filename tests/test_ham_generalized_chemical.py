@@ -1,17 +1,19 @@
 """Test fanpy.ham.generalized_chemical."""
 import itertools as it
-import os
 
-import numpy as np
-import pytest
-from utils import disable_abstract, find_datafile
+from fanpy.ham.base import BaseHamiltonian
+from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 from fanpy.tools import slater
 from fanpy.tools.math_tools import unitary_matrix
 from fanpy.tools.sd_list import sd_list
-from fanpy.ham.base import BaseHamiltonian
-from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, find_datafile
 
 
 def test_init():
@@ -613,9 +615,7 @@ def test_integrate_sd_sds_two():
 
 
 def test_integrate_sd_sds_deriv_zero():
-    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_zero w/ _integrate_sd_sd_zero.
-
-    """
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_zero."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
@@ -640,9 +640,7 @@ def test_integrate_sd_sds_deriv_zero():
 
 
 def test_integrate_sd_sds_deriv_one():
-    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_one with _integrate_sd_sd_one.
-
-    """
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_one."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)
@@ -676,9 +674,7 @@ def test_integrate_sd_sds_deriv_one():
 
 
 def test_integrate_sd_sds_deriv_two():
-    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_two with _integrate_sd_sd_two.
-
-    """
+    """Test GeneralizedMolecularHamiltonian._integrate_sd_sds_deriv_two."""
     one_int = np.random.rand(8, 8)
     one_int = one_int + one_int.T
     two_int = np.random.rand(8, 8, 8, 8)

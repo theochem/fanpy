@@ -1,6 +1,7 @@
 """Test fanpy.sd_list."""
-import pytest
 from fanpy.tools import sd_list
+
+import pytest
 
 
 def test_satisfies_conditions():

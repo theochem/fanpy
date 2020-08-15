@@ -1,9 +1,12 @@
 """Solver for CI wavefunctions."""
 import os
-import numpy as np
-import scipy.linalg
+
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import scipy.linalg
 
 
 def brute(wfn, ham, save_file=""):

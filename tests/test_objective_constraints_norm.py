@@ -1,10 +1,12 @@
 """Test fanpy.eqn.constraints.norm."""
 import itertools as it
 
-import numpy as np
-import pytest
 from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
 
 
 def test_norm_init():

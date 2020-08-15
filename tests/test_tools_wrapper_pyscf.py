@@ -1,9 +1,12 @@
 """Test fanpy.tools.wrapper.pyscf."""
 import os
+
 import numpy as np
+
 import pytest
 
 from test_wrapper_python_wrapper import check_data_h2_rhf_sto6g, check_data_lih_rhf_sto6g
+
 from utils import find_datafile
 
 

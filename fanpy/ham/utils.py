@@ -1,5 +1,6 @@
 """Utility function for constructing Hamiltonian instances."""
 import itertools as it
+
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.tools import slater
 

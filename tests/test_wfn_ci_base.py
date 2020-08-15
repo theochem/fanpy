@@ -1,8 +1,11 @@
 """Test fanpy.wavefunction.base."""
-import numpy as np
-import pytest
-from utils import skip_init
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 def test_assign_spin():

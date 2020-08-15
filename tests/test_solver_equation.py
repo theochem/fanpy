@@ -1,14 +1,16 @@
 """Test fanpy.solver.equation."""
 import os
 
-import numpy as np
-import pytest
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.least_squares import LeastSquaresEquations
-from fanpy.eqn.energy_oneside import EnergyOneSideProjection
-from fanpy.eqn.projected import ProjectedSchrodinger
 import fanpy.solver.equation as equation
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
+from fanpy.eqn.least_squares import LeastSquaresEquations
+from fanpy.eqn.projected import ProjectedSchrodinger
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
+
+import pytest
 
 
 class TempBaseWavefunction(BaseWavefunction):

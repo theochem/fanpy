@@ -1,6 +1,4 @@
 """Test for fanpy.tools.math_tools."""
-import numpy as np
-import pytest
 from fanpy.tools.math_tools import (
     adjugate,
     binomial,
@@ -9,6 +7,10 @@ from fanpy.tools.math_tools import (
     permanent_ryser,
     unitary_matrix,
 )
+
+import numpy as np
+
+import pytest
 
 
 def test_binomial():

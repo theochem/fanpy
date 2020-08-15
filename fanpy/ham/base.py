@@ -2,8 +2,9 @@
 import abc
 import itertools as it
 
-import numpy as np
 from fanpy.tools import slater
+
+import numpy as np
 
 
 class BaseHamiltonian:

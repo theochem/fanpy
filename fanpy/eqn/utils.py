@@ -1,8 +1,10 @@
 """Tools for keeping track of active parameters in the optimization process."""
-import numpy as np
+from collections import OrderedDict
+
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.wfn.base import BaseWavefunction
-from collections import OrderedDict
+
+import numpy as np
 
 
 class ParamContainer:

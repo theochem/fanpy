@@ -1,7 +1,9 @@
 """Base class for composite wavefunctions that modifies one wavefunction."""
 import os
-import numpy as np
+
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 class BaseCompositeOneWavefunction(BaseWavefunction):

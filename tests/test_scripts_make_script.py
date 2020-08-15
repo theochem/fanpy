@@ -1,12 +1,13 @@
 """Test fanpy.script.make_script."""
-import pytest
-from fanpy.scripts.make_script import make_script
 import subprocess
+
+from fanpy.scripts.make_script import make_script
+
 from utils import find_datafile
 
 
 def test_make_script(tmp_path):
-    "Test fanpy.scripts.utils.make_script."
+    """Test fanpy.scripts.utils.make_script."""
     oneint = find_datafile("data_h2_hf_sto6g_oneint.npy")
     twoint = find_datafile("data_h2_hf_sto6g_twoint.npy")
     script_path = str(tmp_path / "script.py")

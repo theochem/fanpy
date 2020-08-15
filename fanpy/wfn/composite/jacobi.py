@@ -1,9 +1,10 @@
 r"""Wavefunction with orbitals rotated by Jacobi matrix."""
-import numpy as np
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
 from fanpy.wfn.composite.nonorth import NonorthWavefunction
+
+import numpy as np
 
 
 # FIXME: needs refactoring

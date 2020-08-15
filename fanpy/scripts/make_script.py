@@ -257,8 +257,8 @@ def make_script(
     output += "one_int_file = '{}'\n".format(one_int_file)
     output += "one_int = np.load(one_int_file)\n"
     output += (
-        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))\n"
-        "".format(one_int_file)
+        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))"  # noqa: F523
+        "\n".format(one_int_file)
     )
     output += "\n"
 
@@ -266,8 +266,8 @@ def make_script(
     output += "two_int_file = '{}'\n".format(two_int_file)
     output += "two_int = np.load(two_int_file)\n"
     output += (
-        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))\n"
-        "".format(two_int_file)
+        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))"  # noqa: F523
+        "\n".format(two_int_file)
     )
     output += "\n"
 

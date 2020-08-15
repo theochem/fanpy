@@ -12,8 +12,8 @@ act as a temporary hack to access these modules.
 
 """
 import os
-from subprocess import call  # nosec:B404
 import sys
+from subprocess import call  # nosec:B404
 
 import numpy as np
 

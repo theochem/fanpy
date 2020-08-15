@@ -1,12 +1,15 @@
 """Test fanpy.tools.wrapper.horton."""
 import os
-from subprocess import call
 import sys
+from subprocess import call
+
+from fanpy.tools.wrapper.python_wrapper import generate_hartreefock_results
 
 import numpy as np
+
 import pytest
+
 from utils import find_datafile
-from fanpy.tools.wrapper.python_wrapper import generate_hartreefock_results
 
 
 def check_data_h2_rhf_sto6g(el_energy, nuc_nuc_energy, one_int, two_int):

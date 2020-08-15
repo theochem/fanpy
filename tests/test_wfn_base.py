@@ -1,10 +1,13 @@
 """Test fanpy.wavefunction.wavefunctions."""
 import functools
 
-import numpy as np
-import pytest
-from utils import disable_abstract, skip_init
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, skip_init
 
 
 def test_assign_nelec():

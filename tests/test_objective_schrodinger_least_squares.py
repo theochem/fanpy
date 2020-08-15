@@ -1,9 +1,10 @@
 """Test fanpy.eqn.least_squares."""
-import numpy as np
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.projected import ProjectedSchrodinger
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
 
 
 def test_num_eqns():

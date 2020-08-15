@@ -1,12 +1,15 @@
 """Test fanpy.wavefunction.composite.lincomb."""
 import types
 
-import numpy as np
-import pytest
-from utils import skip_init
 from fanpy.wfn.base import BaseWavefunction
-from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 class TempWavefunction(BaseWavefunction):

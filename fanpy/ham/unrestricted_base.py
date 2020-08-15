@@ -1,6 +1,7 @@
 """Base Hamiltonian for unrestricted orbitals."""
-import numpy as np
 from fanpy.ham.base import BaseHamiltonian
+
+import numpy as np
 
 
 # FIXME: ordering of the words is not consistent with the UnrestrictedMolecularHamiltonian

@@ -1,9 +1,11 @@
 """Test fanpy.slater."""
 import itertools as it
 
-import numpy as np
-import pytest
 from fanpy.tools import slater
+
+import numpy as np
+
+import pytest
 
 
 def test_occ():

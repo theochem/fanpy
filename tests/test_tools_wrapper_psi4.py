@@ -1,10 +1,11 @@
 """Test fanpy.tools.wrapper.psi4."""
-import pytest
-
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from utils import find_datafile
 from fanpy.solver.ci import brute
 from fanpy.wfn.ci.fci import FCI
+
+import pytest
+
+from utils import find_datafile
 
 
 def test_generate_fci_cimatrix_h2_631gdp():

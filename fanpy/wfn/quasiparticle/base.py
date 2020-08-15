@@ -1,11 +1,11 @@
 """Base class for quasiparticle wavefunctions."""
 import abc
-import numpy as np
 import itertools as it
 
-from fanpy.tools import slater
-from fanpy.tools import math_tools
+from fanpy.tools import math_tools, slater
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 class BaseQuasiparticle(BaseWavefunction):

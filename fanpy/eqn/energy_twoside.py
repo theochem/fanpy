@@ -1,7 +1,8 @@
 """Energy of the Schrodinger equation integrated against projected forms of the wavefunction."""
-import numpy as np
-from fanpy.tools import sd_list, slater
 from fanpy.eqn.base import BaseSchrodinger
+from fanpy.tools import sd_list, slater
+
+import numpy as np
 
 
 class EnergyTwoSideProjection(BaseSchrodinger):

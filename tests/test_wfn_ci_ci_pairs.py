@@ -1,8 +1,11 @@
 """Test fanpy.wavefunction.ci_pairs."""
-import numpy as np
-import pytest
-from utils import skip_init
 from fanpy.wfn.ci.ci_pairs import CIPairs
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 def test_assign_sds():

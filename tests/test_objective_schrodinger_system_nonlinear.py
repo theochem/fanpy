@@ -1,12 +1,15 @@
 """Test fanpy.eqn.projected."""
-import numpy as np
-import pytest
-from utils import skip_init
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.eqn.projected import ProjectedSchrodinger
-from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
+from fanpy.eqn.utils import ComponentParameterIndices, ParamContainer
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 def test_system_init_energy():

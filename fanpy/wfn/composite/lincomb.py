@@ -1,7 +1,9 @@
 """Linear combination of different wavefunctions."""
-import numpy as np
 import os
+
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 class LinearCombinationWavefunction(BaseWavefunction):

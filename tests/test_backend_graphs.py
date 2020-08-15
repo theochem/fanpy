@@ -1,6 +1,4 @@
 """Test fors wfn.graphs."""
-import numpy as np
-
 from fanpy.tools.graphs import (
     generate_biclique_pmatch,
     generate_complete_pmatch,
@@ -9,6 +7,8 @@ from fanpy.tools.graphs import (
     int_partition_recursive,
 )
 from fanpy.tools.slater import sign_perm
+
+import numpy as np
 
 
 def test_generate_complete_pmatch():

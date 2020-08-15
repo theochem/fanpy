@@ -1,6 +1,7 @@
 """Parent class of the wavefunctions."""
 import abc
 import functools
+
 import numpy as np
 
 

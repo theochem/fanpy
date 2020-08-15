@@ -11,19 +11,20 @@ import sys
 
 from horton import (
     AufbauOccModel,
-    compute_nucnuc,
     DenseLinalgFactory,
     EDIIS2SCFSolver,
-    get_gobasis,
-    guess_core_hamiltonian,
     IOData,
     PlainSCFSolver,
     RDirectTerm,
     REffHam,
     RExchangeTerm,
     RTwoIndexTerm,
+    compute_nucnuc,
+    get_gobasis,
+    guess_core_hamiltonian,
     transform_integrals,
 )
+
 import numpy as np
 
 

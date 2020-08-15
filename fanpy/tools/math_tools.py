@@ -18,8 +18,9 @@ permanent_borchardt(matrix)
 from itertools import combinations, permutations
 
 import numpy as np
-from scipy.special import comb
+
 from scipy.linalg import expm
+from scipy.special import comb
 
 
 def binomial(n, k):

@@ -1,7 +1,8 @@
 """Local energy used in orbital space variational quantum Monte Carlo."""
-import numpy as np
-from fanpy.tools import slater
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
+from fanpy.tools import slater
+
+import numpy as np
 
 
 class LocalEnergy(EnergyOneSideProjection):

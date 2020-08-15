@@ -9,7 +9,8 @@ gaussian_fchk(fchk_file, horton_internal=False, compute_nuc=True)
 # pylint: disable=W0212,C0103
 import sys
 
-from horton import compute_nucnuc, IOData
+from horton import IOData, compute_nucnuc
+
 import numpy as np
 
 

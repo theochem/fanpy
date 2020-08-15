@@ -1,9 +1,11 @@
 """Test wfn.solver.ci."""
-import numpy as np
-import pytest
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver import ci
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
 
 
 class TempMolecularHamiltonian(RestrictedMolecularHamiltonian):

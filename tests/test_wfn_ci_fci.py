@@ -1,10 +1,13 @@
 """Test fanpy.wavefunction.fci."""
-import numpy as np
-import pytest
-from utils import find_datafile, skip_init
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver.ci import brute
 from fanpy.wfn.ci.fci import FCI
+
+import numpy as np
+
+import pytest
+
+from utils import find_datafile, skip_init
 
 
 def test_fci_assign_seniority():

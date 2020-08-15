@@ -2,10 +2,11 @@ r"""Hamiltonian used to describe a chemical system expressed wrt generalized orb
 import itertools as it
 import os
 
-import numpy as np
-from fanpy.tools import math_tools, slater
 from fanpy.ham.generalized_base import BaseGeneralizedHamiltonian
+from fanpy.tools import math_tools, slater
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
 
 # pylint: disable=C0302
 

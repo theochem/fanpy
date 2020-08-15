@@ -76,7 +76,9 @@ sign_swap(sd, pos_current, pos_future) : int
 """
 # pylint: disable=C0103,C0302
 import itertools as it
+
 import numpy as np
+
 import scipy.special
 
 
@@ -1100,7 +1102,9 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
             raise TypeError("Order of excitation must be an integer greater than or equal to zero.")
 
     # def fromiter(iterator, dtype, ydim, count):
-    #     return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
+    #     return np.fromiter(
+    #         it.chain.from_iterable(iterator), dtype, count=int(count)
+    #     ).reshape(-1, ydim)
 
     if excite_order == 0:
         return np.array([sd], dtype=int)

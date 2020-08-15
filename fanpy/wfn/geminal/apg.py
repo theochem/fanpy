@@ -1,7 +1,8 @@
 """Antisymmeterized Product of Geminals (APG) Wavefunction."""
-import numpy as np
 from fanpy.tools.graphs import generate_complete_pmatch
 from fanpy.wfn.geminal.base import BaseGeminal
+
+import numpy as np
 
 
 class APG(BaseGeminal):

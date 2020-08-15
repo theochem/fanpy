@@ -1,16 +1,19 @@
 """Test fanpy.wavefunction.geminals.apg."""
 import types
 
-import numpy as np
-import pytest
-from utils import find_datafile, skip_init
-from fanpy.tools.graphs import generate_complete_pmatch
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
+from fanpy.tools.graphs import generate_complete_pmatch
 from fanpy.wfn.geminal.apg import APG
+
+import numpy as np
+
+import pytest
+
+from utils import find_datafile, skip_init
 
 
 def test_apg_assign_orbpairs():
@@ -88,7 +91,7 @@ def answer_apg_h2_sto6g():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(2, 4)
     full_sds = (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)
@@ -117,7 +120,7 @@ def test_apg_h2_sto6g():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_h2_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(2, 4)
     full_sds = (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)
@@ -138,7 +141,7 @@ def answer_apg_h2_631gdp():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
@@ -167,7 +170,7 @@ def test_apg_h2_631gdp_slow():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(2, 20)
     full_sds = [1 << i | 1 << j for i in range(20) for j in range(i + 1, 20)]
@@ -188,7 +191,7 @@ def answer_apg_lih_sto6g():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.995317634356
+    # nuc_nuc = 0.995317634356
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(4, 12)
     full_sds = [
@@ -196,7 +199,7 @@ def answer_apg_lih_sto6g():
         for i in range(12)
         for j in range(i + 1, 12)
         for k in range(j + 1, 12)
-        for l in range(k + 1, 12)
+        for l in range(k + 1, 12)  # noqa: E741
     ]
 
     objective = EnergyOneSideProjection(apg, ham, refwfn=full_sds)
@@ -221,7 +224,7 @@ def test_apg_lih_sto6g_slow():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.995317634356
+    # nuc_nuc = 0.995317634356
     ham = RestrictedMolecularHamiltonian(one_int, two_int)
     apg = APG(4, 12)
     full_sds = [
@@ -229,7 +232,7 @@ def test_apg_lih_sto6g_slow():
         for i in range(12)
         for j in range(i + 1, 12)
         for k in range(j + 1, 12)
-        for l in range(k + 1, 12)
+        for l in range(k + 1, 12)  # noqa: E741
     ]
 
     # Solve system of equations

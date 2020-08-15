@@ -1,13 +1,16 @@
 """Test fanpy.wfn.quasiparticle.det_ratio."""
-import pytest
-import numpy as np
 from fanpy.wfn.quasiparticle.det_ratio import DeterminantRatio
+
+import numpy as np
+
+import pytest
 
 
 class TestDeterminantRatio(DeterminantRatio):
     """DeterminantRatio that skips initialization."""
 
     def __init__(self):
+        """Initialize."""
         pass
 
 

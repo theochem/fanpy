@@ -1,7 +1,8 @@
 """Solvers for system of Schrodinger equations."""
-import numpy as np
 from fanpy.eqn.least_squares import ProjectedSchrodinger
 from fanpy.solver.wrappers import wrap_scipy
+
+import numpy as np
 
 
 def least_squares(objective, **kwargs):

@@ -2,15 +2,17 @@
 import itertools as it
 import os
 
-import numpy as np
-import pytest
-from utils import disable_abstract, skip_init
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.base import BaseSchrodinger
-from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
+from fanpy.eqn.utils import ComponentParameterIndices, ParamContainer
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
-from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract
 
 
 def test_baseschrodinger_init():
@@ -546,6 +548,7 @@ def test_baseschrodinger_get_energy_two_proj():
 
 
 def test_baseschrodinger_get_energy_one_two_proj():
+    """Compare BaseSchrodinger.get_energy_one_proj and get_energy_two_proj."""
     wfn = CIWavefunction(4, 10)
     wfn.assign_params(np.random.rand(wfn.nparams))
 

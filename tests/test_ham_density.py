@@ -1,8 +1,11 @@
 """Test fanpy.ci.density."""
-import numpy as np
-import pytest
-from utils import find_datafile
 from fanpy.ham.density import add_one_density, add_two_density, density_matrix
+
+import numpy as np
+
+import pytest
+
+from utils import find_datafile
 
 
 def test_add_one_density():

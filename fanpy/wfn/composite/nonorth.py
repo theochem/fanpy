@@ -1,10 +1,11 @@
 """Wavefunction with nonorthonormal orbitals."""
 import itertools as it
 
-import numpy as np
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
+
+import numpy as np
 
 
 # FIXME: needs refactoring

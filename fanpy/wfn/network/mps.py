@@ -1,8 +1,10 @@
 """Hard-coded Matrix Product State wavefunction."""
 import functools
-import numpy as np
+
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 # TODO: make subclass of TensorNetworkState
@@ -498,8 +500,8 @@ class MatrixProductState(BaseWavefunction):
         occ_indices = self.get_occupation_indices(sd)
         output = np.zeros(self.nparams)
 
-        D = self.dimension
-        K = self.nspatial
+        D = self.dimension  # noqa: N806
+        K = self.nspatial  # noqa: N806
         for k in range(self.nspatial):
             n = occ_indices[k]
             deriv_block = self._olp_deriv_block(sd, k)

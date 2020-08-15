@@ -1,16 +1,19 @@
 """Test fanpy.ham.restricted_chemical."""
 import itertools as it
 
-import numpy as np
-import pytest
-from utils import disable_abstract, find_datafile
+from fanpy.ham.base import BaseHamiltonian
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.tools import slater
 from fanpy.tools.math_tools import unitary_matrix
 from fanpy.tools.sd_list import sd_list
-from fanpy.ham.base import BaseHamiltonian
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, find_datafile
 
 
 def test_nspin():

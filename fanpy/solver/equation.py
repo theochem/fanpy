@@ -1,10 +1,11 @@
 """Solvers for single equations."""
-import numpy as np
 from fanpy.eqn.base import BaseSchrodinger
-from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
+from fanpy.eqn.least_squares import LeastSquaresEquations
 from fanpy.solver.wrappers import wrap_scipy
+
+import numpy as np
 
 
 def cma(objective, **kwargs):

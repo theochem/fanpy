@@ -1,8 +1,11 @@
 """Tests for the fanpy.wfn.network.mps."""
-import numpy as np
-import pytest
-from utils import skip_init
 from fanpy.wfn.network.mps import MatrixProductState
+
+import numpy as np
+
+import pytest
+
+from utils import skip_init
 
 
 def test_assign_dimension():

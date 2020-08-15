@@ -1,13 +1,15 @@
 """Test fanpy.wavefunction.geminals.apr2g.APr2G."""
-import numpy as np
-from utils import find_datafile
-from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.solver.equation import cma, minimize
 from fanpy.solver.system import least_squares
 from fanpy.wfn.geminal.apr2g import APr2G
 from fanpy.wfn.geminal.rank2_approx import full_to_rank2
+
+import numpy as np
+
+from utils import find_datafile
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
@@ -21,7 +23,7 @@ def answer_apr2g_h2_631gdp():
     """
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int)
 
     full_sds = (
@@ -87,7 +89,7 @@ def test_apr2g_apr2g_h2_631gdp_slow():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_h2_hf_631gdp_oneint.npy"))
     two_int = np.load(find_datafile("data_h2_hf_631gdp_twoint.npy"))
-    nuc_nuc = 0.71317683129
+    # nuc_nuc = 0.71317683129
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     apr2g = APr2G(2, 20)
     full_sds = (
@@ -120,7 +122,7 @@ def answer_apr2g_lih_sto6g():
     """
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.995317634356
+    # nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int)
 
     apr2g = APr2G(
@@ -195,7 +197,7 @@ def test_apr2g_apr2g_lih_sto6g_slow():
     # nuc_nuc = hf_dict["nuc_nuc_energy"]
     one_int = np.load(find_datafile("data_lih_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_lih_hf_sto6g_twoint.npy"))
-    nuc_nuc = 0.995317634356
+    # nuc_nuc = 0.995317634356
     ham = SeniorityZeroHamiltonian(one_int, two_int)
     apr2g = APr2G(4, 12)
     full_sds = (

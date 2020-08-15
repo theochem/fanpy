@@ -1,15 +1,17 @@
 """Test BaseQuasiparticle.base."""
-import numpy as np
-import pytest
-from numpy.testing import assert_raises
 from fanpy.wfn.quasiparticle.base import BaseQuasiparticle
+
+import numpy as np
+from numpy.testing import assert_raises
+
+import pytest
 
 
 class TestQuasiparticle(BaseQuasiparticle):
     """Class for testing BaseQuasiparticle."""
 
     def __init__(self):
-        """Dummy initializer."""
+        """Initialize."""
 
     def generate_possible_orbsubsets(self, occ_indices):
         """Generate an orbpair.

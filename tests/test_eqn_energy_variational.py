@@ -1,9 +1,10 @@
 """Test fanpy.eqn.energy_variational."""
-import numpy as np
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.energy_variational import EnergyVariational
 from fanpy.eqn.utils import ComponentParameterIndices
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
 
 
 def test_energyvariational_init():

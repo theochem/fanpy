@@ -1,22 +1,25 @@
 """Test AntisymmeterizedProductTetrets."""
+from fanpy.eqn.projected import ProjectedSchrodinger
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
+from fanpy.solver.system import least_squares
+from fanpy.wfn.quasiparticle.tetret import AntisymmeterizedProductTetrets
+
 import numpy as np
 from numpy.testing import assert_raises
-from fanpy.wfn.quasiparticle.tetret import AntisymmeterizedProductTetrets
+
 from utils import find_datafile
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
-from fanpy.eqn.projected import ProjectedSchrodinger
-from fanpy.solver.system import least_squares
 
 
 class TestAntisymmeterizedProductTetrets(AntisymmeterizedProductTetrets):
     """AntisymmeterizedProductTetrets that skips initialization."""
 
     def __init__(self):
+        """Initialize."""
         pass
 
 
 def test_assign_nelec():
-    "Test AntisymeterizedProductTetrets.assign_nelec."
+    """Test AntisymeterizedProductTetrets.assign_nelec."""
     test = TestAntisymmeterizedProductTetrets()
     test.assign_nelec(4)
     assert test.nelec == 4
@@ -26,7 +29,7 @@ def test_assign_nelec():
 
 
 def test_assign_nquasiparticle():
-    "Test AntisymeterizedProductTetrets.assign_nquasiparticle."
+    """Test AntisymeterizedProductTetrets.assign_nquasiparticle."""
     test = TestAntisymmeterizedProductTetrets()
     test.nelec = 4
     test.assign_nquasiparticle()
@@ -37,7 +40,7 @@ def test_assign_nquasiparticle():
 
 
 def test_asign_orbsubsets():
-    "Test AntisymeterizedProductTetrets.assign_orbsubsets."
+    """Test AntisymeterizedProductTetrets.assign_orbsubsets."""
     test = TestAntisymmeterizedProductTetrets()
     test.nspin = 4
     test.assign_orbsubsets()
@@ -95,7 +98,7 @@ def test_asign_orbsubsets():
 
 
 def test_generate_possible_orbsubsets():
-    "Test AntisymeterizedProductTetrets.generate_possible_orbsubsets."
+    """Test AntisymeterizedProductTetrets.generate_possible_orbsubsets."""
     test = TestAntisymmeterizedProductTetrets()
     assert_raises(ValueError, next, test.generate_possible_orbsubsets([0, 1, 2, 3, 4]))
 
@@ -156,7 +159,7 @@ def test_generate_possible_orbsubsets():
 
 # FIXME: check properly
 def test_run():
-    "Check if calculation runs with APT."
+    """Check if calculation runs with APT."""
     one_int = np.load(find_datafile("data_h4_square_hf_sto6g_oneint.npy"))
     two_int = np.load(find_datafile("data_h4_square_hf_sto6g_twoint.npy"))
     ham = RestrictedMolecularHamiltonian(one_int, two_int)

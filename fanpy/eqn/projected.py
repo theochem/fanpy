@@ -1,10 +1,11 @@
 """Schrodinger equation as a system of equations."""
-import numpy as np
-from fanpy.tools import sd_list, slater
-from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.eqn.base import BaseSchrodinger
+from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.eqn.utils import ParamContainer
+from fanpy.tools import sd_list, slater
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
 
 
 class ProjectedSchrodinger(BaseSchrodinger):

@@ -9,7 +9,6 @@ https://github.com/pypa/sampleproject
 from os import path
 
 from setuptools import find_packages, setup
-from setuptools.extension import Extension
 
 here = path.abspath(path.dirname(__file__))
 

@@ -1,11 +1,13 @@
 """Test fanpy.eqn.local_energy."""
-import numpy as np
-import pytest
-from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.local_energy import LocalEnergy
 from fanpy.eqn.utils import ComponentParameterIndices
+from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+
+import numpy as np
+
+import pytest
 
 
 def test_localenergy_init():

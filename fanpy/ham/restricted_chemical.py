@@ -1,10 +1,11 @@
 r"""Hamiltonian used to describe a chemical system expressed wrt restricted orbitals."""
 import itertools as it
 
-import numpy as np
-from fanpy.tools import slater
 from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
+from fanpy.tools import slater
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
 
 # pylint: disable=C0302
 

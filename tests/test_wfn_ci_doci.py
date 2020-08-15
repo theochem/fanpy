@@ -1,11 +1,14 @@
 """Test fanpy.wavefunction.doci."""
-import numpy as np
-import pytest
-from utils import find_datafile, skip_init
-from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.eqn.energy_oneside import EnergyOneSideProjection
+from fanpy.ham.senzero import SeniorityZeroHamiltonian
 from fanpy.solver.equation import cma
 from fanpy.wfn.ci.doci import DOCI
+
+import numpy as np
+
+import pytest
+
+from utils import find_datafile, skip_init
 
 
 def test_assign_nelec():

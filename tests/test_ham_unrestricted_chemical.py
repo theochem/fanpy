@@ -1,16 +1,19 @@
 """Test fanpy.ham.unrestricted_chemical."""
 import itertools as it
 
-import numpy as np
-import pytest
-from utils import disable_abstract, find_datafile
+from fanpy.ham.base import BaseHamiltonian
+from fanpy.ham.unrestricted_chemical import UnrestrictedMolecularHamiltonian
 from fanpy.tools import slater
 from fanpy.tools.math_tools import unitary_matrix
 from fanpy.tools.sd_list import sd_list
-from fanpy.ham.base import BaseHamiltonian
-from fanpy.ham.unrestricted_chemical import UnrestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, find_datafile
 
 
 def test_set_ref_ints():
@@ -474,9 +477,7 @@ def test_integrate_sd_sd_deriv_fdiff_random_small():
 
 
 def test_integrate_sd_sds_zero():
-    """Test UnrestrictedMolecularHamiltonian._integrate_sd_sds_zero against _integrate_sd_sd_zero.
-
-    """
+    """Test UnrestrictedHam._integrate_sd_sds_zero against _integrate_sd_sd_zero."""
     one_int_a = np.random.rand(6, 6)
     one_int_a = one_int_a + one_int_a.T
     one_int_b = np.random.rand(6, 6)

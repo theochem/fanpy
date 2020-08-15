@@ -1,14 +1,16 @@
 """Base class for objectives related to solving the Schrodinger equation."""
 import abc
 import os
-import numpy as np
+
 import fanpy.tools.slater as slater
-from fanpy.ham.base import BaseHamiltonian
 from fanpy.eqn.utils import ComponentParameterIndices
+from fanpy.ham.base import BaseHamiltonian
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+
+import numpy as np
 
 
 class BaseSchrodinger:

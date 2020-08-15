@@ -1,6 +1,6 @@
 """Antisymmeterized Product of Tetrets Wavefunctions."""
-from fanpy.wfn.quasiparticle.base import BaseQuasiparticle
 from fanpy.tools.graphs import generate_unordered_partition
+from fanpy.wfn.quasiparticle.base import BaseQuasiparticle
 
 
 class AntisymmeterizedProductTetrets(BaseQuasiparticle):
@@ -161,7 +161,7 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
                 for i in range(self.nspin)
                 for j in range(i + 1, self.nspin)
                 for k in range(j + 1, self.nspin)
-                for l in range(k + 1, self.nspin)
+                for l in range(k + 1, self.nspin)  # noqa: E741
             )
         else:
             raise NotImplementedError("User provided orbital subsets is not yet supported.")

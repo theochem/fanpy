@@ -1,8 +1,11 @@
 """Test fanpy.eqn.utils."""
+from fanpy.eqn.utils import ComponentParameterIndices, ParamContainer
+
 import numpy as np
+
 import pytest
+
 from utils import skip_init
-from fanpy.eqn.utils import ParamContainer, ComponentParameterIndices
 
 
 def test_assign_param():

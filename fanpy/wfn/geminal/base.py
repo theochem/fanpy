@@ -1,10 +1,10 @@
 """Base class for Geminal wavefunctions."""
 import abc
 
-import numpy as np
-from fanpy.tools import slater
-from fanpy.tools import math_tools
+from fanpy.tools import math_tools, slater
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 # FIXME: define some function to get the column indices of the parameters from the orbital pairs

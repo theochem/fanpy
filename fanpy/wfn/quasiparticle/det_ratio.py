@@ -1,7 +1,8 @@
 """Hard-coded determinant-ratio wavefunction."""
-import numpy as np
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 class DeterminantRatio(BaseWavefunction):
@@ -348,8 +349,8 @@ class DeterminantRatio(BaseWavefunction):
 
             # derivatize selected matrix
             # NOTE: all of the rows are assumed to be selected when the columns are selected.
-            # ASSUME: deriv_row is in rows and deriv_col is in cols (i.e. selected index corresponds to
-            #         an occupied orbital of the given Slater determinant)
+            # ASSUME: deriv_row is in rows and deriv_col is in cols (i.e. selected index corresponds
+            # to an occupied orbital of the given Slater determinant)
             matrix = self.get_matrix(deriv_matrix)
 
             old_determinant = np.linalg.det(matrix[:, self.get_columns(sd, deriv_matrix)])

@@ -1,10 +1,11 @@
 """Parent class of CI wavefunctions."""
 import itertools
 
-import numpy as np
 from fanpy.tools import slater
 from fanpy.tools.sd_list import sd_list
 from fanpy.wfn.base import BaseWavefunction
+
+import numpy as np
 
 
 class CIWavefunction(BaseWavefunction):

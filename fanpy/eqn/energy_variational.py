@@ -1,6 +1,6 @@
 """Variational energy that corresponds to the Schrodinger equation."""
-from fanpy.tools import sd_list
 from fanpy.eqn.energy_twoside import EnergyTwoSideProjection
+from fanpy.tools import sd_list
 
 
 class EnergyVariational(EnergyTwoSideProjection):

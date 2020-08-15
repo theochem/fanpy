@@ -1,8 +1,9 @@
 """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals wavefunction."""
-import numpy as np
 from fanpy.tools import slater
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.geminal.apig import APIG
+
+import numpy as np
 
 
 class AP1roG(APIG):

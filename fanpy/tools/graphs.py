@@ -12,9 +12,9 @@ int_partition_recursive(coins, num_coin_types, total)
     Generates the combination of coins that results in the given total.
 
 """
-import numpy as np
-
 from fanpy.tools.slater import sign_perm
+
+import numpy as np
 
 
 def generate_complete_pmatch(indices, sign=1):
@@ -305,7 +305,7 @@ def int_partition_recursive(coins, num_coin_types, total):
 
 
 def generate_general_pmatch(indices, connectivity_matrix):
-    """
+    """Generate perfect matching of the given indices for the given graph.
 
     Parameters
     ----------

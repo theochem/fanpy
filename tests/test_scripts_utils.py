@@ -1,10 +1,11 @@
 """Test fanpy.script.utils."""
-import pytest
 from fanpy.scripts.utils import check_inputs, parser
+
+import pytest
 
 
 def test_check_inputs():
-    "Test fanpy.scripts.utils.check_inputs."
+    """Test fanpy.scripts.utils.check_inputs."""
     with pytest.raises(TypeError):
         check_inputs(
             2.0, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0
@@ -175,7 +176,7 @@ def test_check_inputs():
 
 
 def test_parser():
-    "Test fanpy.scripts.utils.parser."
+    """Test fanpy.scripts.utils.parser."""
     args = parser.parse_args(
         [
             "--nelec",

@@ -1,9 +1,12 @@
 """Test wfn.wavefunction.composite.base_one."""
-import numpy as np
-import pytest
-from utils import disable_abstract, skip_init
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
+
+import numpy as np
+
+import pytest
+
+from utils import disable_abstract, skip_init
 
 
 class TempWavefunction(BaseWavefunction):

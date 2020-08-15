@@ -10,8 +10,9 @@ density_matrix(sd_coeffs, civec, nspatial, is_chemist_notation=False, val_thresh
                orbtype='restricted')
     Returns the one and two electron density matrices.
 """
-import numpy as np
 from fanpy.tools import slater
+
+import numpy as np
 
 
 # FIXME: incredibly slow/bad approach

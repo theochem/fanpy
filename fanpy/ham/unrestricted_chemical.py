@@ -2,11 +2,11 @@ r"""Hamiltonian used to describe a chemical system expressed wrt unrestricted or
 import itertools as it
 import os
 
-import numpy as np
-from fanpy.tools import math_tools, slater
 from fanpy.ham.unrestricted_base import BaseUnrestrictedHamiltonian
+from fanpy.tools import math_tools, slater
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 
+import numpy as np
 # pylint: disable=C0302
 
 
