@@ -172,9 +172,7 @@ def check_inputs(
         raise ValueError("Wavefunction type must be one of {}.".format(', '.join(wfn_list)))
 
     # check projection space
-    if pspace_exc is None:
-        pass
-    elif not (
+    if not (
         isinstance(pspace_exc, (list, tuple)) and all(isinstance(i, int) for i in pspace_exc)
     ):
         raise TypeError("Project space must be given as list/tuple of integers.")

@@ -184,7 +184,7 @@ def make_script(
         wfn_name = "BasicAPsetG"
         if wfn_kwargs is None:
             wfn_kwargs = "ngem=None"
-    elif wfn_type == "apg":
+    elif wfn_type == "apg":  # pragma: no branch
         from_imports.append(("fanpy.wfn.geminal.apg", "APG"))
         wfn_name = "APG"
         if wfn_kwargs is None:
@@ -205,7 +205,7 @@ def make_script(
         from_imports.append(("fanpy.eqn.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
         from_imports.append(("fanpy.eqn.energy_twoside", "EnergyTwoSideProjection"))
-    elif objective == "one_energy":
+    elif objective == "one_energy":  # pragma: no branch
         from_imports.append(("fanpy.eqn.energy_oneside", "EnergyOneSideProjection"))
 
     if solver == "cma":
@@ -232,7 +232,7 @@ def make_script(
                 "xtol=1.0e-15, ftol=1.0e-15, gtol=1.0e-15, "
                 "max_nfev=1000*objective.active_params.size, jac=objective.jacobian"
             )
-    elif solver == "root":
+    elif solver == "root":  # pragma: no branch
         from_imports.append(("fanpy.solver.system", "root"))
         solver_name = "root"
         if solver_kwargs is None:
@@ -320,7 +320,7 @@ def make_script(
         output += "ham_um = np.load(ham_um_file)\n"
         output += "print('Load unitary matrix of the Hamiltonian: {}'"
         output += ".format(os.path.abspath(ham_um_file)))\n"
-        if ham_name == "UnrestrictedMolecularHamiltonian":
+        if ham_name == "UnrestrictedMolecularHamiltonian":  # pragma: no cover
             output += "ham._prev_unitary_alpha = ham_um[0]\n"
             output += "ham._prev_unitary_beta = ham_um[1]\n"
         else:
@@ -347,7 +347,7 @@ def make_script(
     output += "print('Hamiltonian: {}')\n".format(ham_name)
     output += "\n"
 
-    if pspace_exc is None:
+    if pspace_exc is None:  # pragma: no cover
         pspace = "[1, 2]"
     else:
         pspace = str([int(i) for i in pspace_exc])
@@ -395,7 +395,7 @@ def make_script(
             "wfn, ham, param_selection=param_selection, "
             "pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
         )
-    elif objective == "one_energy":
+    elif objective == "one_energy":  # pragma: no branch
         objective1 = "objective = EnergyOneSideProjection("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
@@ -429,10 +429,8 @@ def make_script(
     output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
     output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
     output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
-    if objective == "system":
-        output += "print('Cost: {}'.format(results['cost']))\n"
 
-    if filename is None:
+    if filename is None:  # pragma: no cover
         print(output)
     # NOTE: number was used instead of string (eg. 'return') to prevent problems arising from
     #       accidentally using the reserved string/keyword.
@@ -443,7 +441,7 @@ def make_script(
             f.write(output)
 
 
-def main():
+def main():  # pragma: no cover
     """Run script for run_calc using arguments obtained via argparse."""
     parser.description = "Optimize a wavefunction and/or Hamiltonian."
     parser.add_argument(

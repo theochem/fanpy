@@ -1,4 +1,5 @@
 """Test fanpy.script.make_script."""
+import pytest
 from fanpy.scripts.make_script import make_script
 import subprocess
 from utils import find_datafile
@@ -26,6 +27,8 @@ def test_make_script(tmp_path):
     for wfn in wfn_list:
         make_script(2, oneint, twoint, wfn, filename=script_path)
         subprocess.check_output(["python", script_path])
+        make_script(2, oneint, twoint, wfn, filename=script_path, wfn_kwargs="")
+        subprocess.check_output(["python", script_path])
 
     for objective in ["least_squares", "variational", "one_energy"]:
         make_script(
@@ -35,14 +38,30 @@ def test_make_script(tmp_path):
         subprocess.check_output(["python", script_path])
 
     make_script(
+        2, oneint, twoint, "apig", objective="projected", solver="least_squares",
+        filename=script_path, solver_kwargs=""
+    )
+    subprocess.check_output(["python", script_path])
+
+    make_script(
         2, oneint, twoint, "apig", objective="variational", solver="cma",
         filename=script_path
+    )
+    subprocess.check_output(["python", script_path])
+    make_script(
+        2, oneint, twoint, "apig", objective="variational", solver="cma",
+        filename=script_path, solver_kwargs=""
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
         2, oneint, twoint, "apig", objective="projected", solver="root",
         filename=script_path
+    )
+    subprocess.check_output(["python", script_path])
+    make_script(
+        2, oneint, twoint, "apig", objective="projected", solver="root",
+        filename=script_path, solver_kwargs=""
     )
     subprocess.check_output(["python", script_path])
 
@@ -54,7 +73,7 @@ def test_make_script(tmp_path):
 
     make_script(
         2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, memory="2gb"
+        filename=script_path, solver_kwargs=""
     )
     subprocess.check_output(["python", script_path])
 

@@ -11,6 +11,10 @@ def test_check_inputs():
         )
     with pytest.raises(TypeError):
         check_inputs(
+            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", "0"
+        )
+    with pytest.raises(TypeError):
+        check_inputs(
             2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
             ham_noise='0'
         )
@@ -59,6 +63,8 @@ def test_check_inputs():
         )
     with pytest.raises(ValueError):
         check_inputs(2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "cma", 0.0)
+    with pytest.raises(ValueError):
+        check_inputs(2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "one_energy", "root", 0.0)
     with pytest.raises(ValueError):
         check_inputs(2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "diag", 0.0)
 
