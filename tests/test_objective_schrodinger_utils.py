@@ -1,6 +1,4 @@
 """Test fanpy.eqn.utils."""
-import collections
-
 import numpy as np
 import pytest
 from utils import skip_init
@@ -22,6 +20,10 @@ def test_assign_param():
     test.assign_params(1.0j)
     assert np.array_equal(test.params, np.array([1.0j]))
     assert test.params.dtype == complex
+    # list of int
+    test.assign_params([1, 2])
+    assert np.array_equal(test.params, np.array([1, 2]))
+    assert test.params.dtype == int
     # numpy array of int
     test.assign_params(np.array([1, 2]))
     assert np.array_equal(test.params, np.array([1, 2]))
@@ -48,6 +50,13 @@ def test_nparams():
     """Test ParamContainer.nparams."""
     test = ParamContainer(np.random.rand(10))
     assert test.nparams == 10
+
+
+def test_component_save_params(tmpdir):
+    """Test ParamContainer.save_params."""
+    param = ParamContainer(np.random.rand(2))
+    param.save_params(str(tmpdir / "temp.npy"))
+    assert np.allclose(param.params, np.load(str(tmpdir / "temp.npy")))
 
 
 def test_indices_setitem():
@@ -123,5 +132,9 @@ def test_indices_eq():
     assert not test != test2
 
     test[param2] = [1]
+    assert not test == test2
+    assert test != test2
+
+    del test[param2]
     assert not test == test2
     assert test != test2

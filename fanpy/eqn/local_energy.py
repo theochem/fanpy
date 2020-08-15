@@ -1,10 +1,10 @@
 """Local energy used in orbital space variational quantum Monte Carlo."""
 import numpy as np
 from fanpy.tools import slater
-from wfns.objective.schrodinger.onesided_energy import OneSidedEnergy
+from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 
 
-class LocalEnergy(OneSidedEnergy):
+class LocalEnergy(EnergyOneSideProjection):
     r"""Local energy used in orbital space variational quantum Monte Carlo.
 
     .. math::
@@ -164,7 +164,11 @@ class LocalEnergy(OneSidedEnergy):
 
         """
         if __debug__ and not (
-            isinstance(pspace, (list, tuple)) and all(slater.is_sd_compatible(sd) for sd in pspace)
+            pspace is None or
+            (
+                isinstance(pspace, (list, tuple)) and
+                all(slater.is_sd_compatible(sd) for sd in pspace)
+            )
         ):
             raise TypeError("Projection space must be given as a list/tuple of integers.")
         super().assign_refwfn(pspace)
@@ -193,12 +197,8 @@ class LocalEnergy(OneSidedEnergy):
         if self.step_save:
             self.save_params()
 
-        overlaps = np.fromiter(
-            (self.wrapped_get_overlap(sd) for sd in self.pspace), float, count=len(self.pspace)
-        )
-        integrals = np.fromiter(
-            (self.wrapped_integrate_wfn_sd(sd) for sd in self.pspace), float, count=len(self.pspace)
-        )
+        overlaps = np.array([self.wrapped_get_overlap(sd) for sd in self.pspace])
+        integrals = np.array([self.wrapped_integrate_sd_wfn(sd) for sd in self.pspace])
         energy = np.sum(integrals / overlaps)
 
         if self.step_print:
@@ -229,19 +229,10 @@ class LocalEnergy(OneSidedEnergy):
         self.assign_params(params)
 
         grad = self.get_energy_one_proj(self.refwfn, True)
-        num_sd = len(self.pspace)
-        overlaps = np.fromiter(
-            (self.wrapped_get_overlap(sd) for sd in self.pspace), float, count=num_sd
-        )
-        integrals = np.fromiter(
-            (self.wrapped_integrate_wfn_sd(sd) for sd in self.pspace), float, count=num_sd
-        )
-        d_overlaps = np.fromiter(
-            (self.wrapped_get_overlap(sd, True) for sd in self.pspace), float, count=num_sd
-        )
-        d_integrals = np.fromiter(
-            (self.wrapped_integrate_wfn_sd(sd, True) for sd in self.pspace), float, count=num_sd
-        )
+        overlaps = np.array([self.wrapped_get_overlap(sd) for sd in self.pspace])
+        integrals = np.array([self.wrapped_integrate_sd_wfn(sd) for sd in self.pspace])
+        d_overlaps = np.array([self.wrapped_get_overlap(sd, True) for sd in self.pspace])
+        d_integrals = np.array([self.wrapped_integrate_sd_wfn(sd, True) for sd in self.pspace])
         grad = d_integrals / overlaps[:, None]
         grad -= integrals[:, None] / overlaps[:, None] ** 2 * d_overlaps
         grad = np.sum(grad, axis=0)

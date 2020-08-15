@@ -2,7 +2,6 @@
 import numpy as np
 from fanpy.tools import sd_list, slater
 from fanpy.eqn.constraints.norm import NormConstraint
-from fanpy.eqn.constraints.energy import EnergyConstraint
 from fanpy.eqn.base import BaseSchrodinger
 from fanpy.eqn.utils import ParamContainer
 from fanpy.wfn.ci.base import CIWavefunction
@@ -465,7 +464,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
         # reference values
         if self.energy_type in ["variable", "fixed"]:
             energy = self.energy.params
-        elif self.energy_type == "compute":
+        else:  # if self.energy_type == "compute":
             # define reference
             if isinstance(self.refwfn, CIWavefunction):
                 ref_sds = self.refwfn.sds
@@ -578,7 +577,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
             if inds_component.size > 0:
                 inds_objective = self.indices_objective_params[self.energy]
                 d_energy[inds_objective] = 1.0
-        elif self.energy_type == "compute":
+        else:  # if self.energy_type == "compute":
             # norm
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>

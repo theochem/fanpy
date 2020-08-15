@@ -85,19 +85,19 @@ def test_baseschrodinger_save_params(tmp_path):
 
     test = disable_abstract(BaseSchrodinger)(wfn, ham, tmpfile=str(tmp_path / "temp.npy"))
     test.save_params()
-    assert os.path.isfile(tmp_path / "temp_CIWavefunction.npy")
+    assert os.path.isfile(str(tmp_path / "temp_CIWavefunction.npy"))
 
     test.indices_component_params[ham] = np.arange(ham.nparams)
     test.save_params()
-    assert os.path.isfile(tmp_path / "temp_CIWavefunction.npy")
-    assert os.path.isfile(tmp_path / "temp_RestrictedMolecularHamiltonian.npy")
+    assert os.path.isfile(str(tmp_path / "temp_CIWavefunction.npy"))
+    assert os.path.isfile(str(tmp_path / "temp_RestrictedMolecularHamiltonian.npy"))
 
     newwfn = CIWavefunction(2, 4)
     test.indices_component_params[newwfn] = np.array([])
     test.save_params()
-    assert os.path.isfile(tmp_path / "temp_CIWavefunction1.npy")
-    assert os.path.isfile(tmp_path / "temp_CIWavefunction2.npy")
-    assert os.path.isfile(tmp_path / "temp_RestrictedMolecularHamiltonian.npy")
+    assert os.path.isfile(str(tmp_path / "temp_CIWavefunction1.npy"))
+    assert os.path.isfile(str(tmp_path / "temp_CIWavefunction2.npy"))
+    assert os.path.isfile(str(tmp_path / "temp_RestrictedMolecularHamiltonian.npy"))
 
 
 def test_baseschrodinger_assign_params():

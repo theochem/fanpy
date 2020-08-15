@@ -188,6 +188,13 @@ def test_system_objective():
     test = ProjectedSchrodinger(wfn, ham, eqn_weights=weights)
     test.objective(np.arange(1, 7, dtype=float))
     np.allclose(wfn.params, np.arange(1, 7))
+    # check save
+    test.step_save = False
+    test.objective(np.arange(1, 7, dtype=float))
+    np.allclose(wfn.params, np.arange(1, 7))
+    # check print
+    test = ProjectedSchrodinger(wfn, ham, step_print=True, constraints=[])
+    test.objective(np.arange(1, 7, dtype=float))
 
     # <SD1 | H | Psi> - E <SD | Psi>
     ciref = CIWavefunction(2, 4)

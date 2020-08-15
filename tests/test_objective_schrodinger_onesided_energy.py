@@ -66,6 +66,9 @@ def test_energy_oneside_objective():
     guess = np.random.rand(6)
     test.objective(guess)
     assert np.allclose(wfn.params, guess)
+    test.step_save = False
+    test.objective(guess)
+    assert np.allclose(wfn.params, guess)
 
 
 def test_energy_oneside_gradient():
@@ -82,5 +85,8 @@ def test_energy_oneside_gradient():
     test = EnergyOneSideProjection(wfn, ham)
     # check assignment
     guess = np.random.rand(6)
+    test.gradient(guess)
+    assert np.allclose(wfn.params, guess)
+    test.step_print = False
     test.gradient(guess)
     assert np.allclose(wfn.params, guess)

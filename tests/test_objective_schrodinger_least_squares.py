@@ -62,3 +62,11 @@ def test_leastsquares_gradient():
             for i in range(guess.size)
         ],
     )
+    test.step_print = False
+    assert np.allclose(
+        test.gradient(guess),
+        [
+            sum(2 * eqn * d_eqn for eqn, d_eqn in zip(system_eqns, d_system_eqns))
+            for i in range(guess.size)
+        ],
+    )
