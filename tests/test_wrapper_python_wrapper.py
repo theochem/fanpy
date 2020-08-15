@@ -131,6 +131,9 @@ def test_generate_hartreefock_results_error():
     """
     with pytest.raises(ValueError):
         generate_hartreefock_results("sdf")
+    os.environ["HORTONPYTHON"] = "Asfasdfsadf"
+    with pytest.raises(FileNotFoundError):
+        generate_hartreefock_results("horton_hartreefock.py")
 
 
 @pytest.mark.skipif(

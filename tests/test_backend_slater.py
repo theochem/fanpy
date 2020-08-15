@@ -70,6 +70,8 @@ def test_spin_index():
     assert slater.spin_index(3, 4, spin="beta") == 7
 
     with pytest.raises(ValueError):
+        slater.spin_index(1, 0, "alpha")
+    with pytest.raises(ValueError):
         slater.spin_index(-1, 4, "alpha")
     with pytest.raises(ValueError):
         slater.spin_index(99, 4, "alpha")
@@ -658,6 +660,8 @@ def test_excite_bulk():
             for j3 in range(j2 + 1, 10)
         ],
     )
+    with pytest.raises(TypeError):
+        slater.excite_bulk(0b111111, np.arange(6, dtype=int), np.arange(6, 20, dtype=int), -1)
 
 
 def test_sign_excite_one():

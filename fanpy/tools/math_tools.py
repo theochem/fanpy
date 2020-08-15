@@ -196,7 +196,7 @@ def permanent_ryser(matrix):
 
         # Update the Gray code
         flag = False
-        for i in range(ncol):
+        for i in range(ncol):  # pragma: no branch
             # Determine which bit will change
             if not graycode[i]:
                 graycode[i] = True

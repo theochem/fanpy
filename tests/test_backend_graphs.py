@@ -64,6 +64,7 @@ def test_generate_biclique_pmatch():
     assert list(generate_biclique_pmatch([], [])) == [((), 1)]
     assert list(generate_biclique_pmatch([], [1, 2])) == [((), 1)]
     assert list(generate_biclique_pmatch([1, 2], [2, 3])) == [((), 1)]
+    assert list(generate_biclique_pmatch([1, 2], [3])) == [((), 1)]
 
     # 4 vertices
     indices_one = [0, 1]

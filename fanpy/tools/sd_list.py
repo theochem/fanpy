@@ -97,7 +97,7 @@ def sd_list(nelec, nspin, num_limit=None, exc_orders=None, spin=None, seniority=
     if __debug__:
         if not isinstance(nspin, int):
             raise TypeError("Number of spin orbitals should be an integer")
-        if not isinstance(nelec, int):
+        if not isinstance(nelec, int):  # pragma: no cover
             raise TypeError("Number of electrons should be an integer")
         if num_limit is not None:
             if not isinstance(num_limit, int):

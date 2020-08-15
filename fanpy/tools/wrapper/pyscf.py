@@ -54,11 +54,9 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
     """
     # check xyz file
     cwd = os.path.dirname(__file__)
-    if os.path.isfile(xyz_file):
-        pass
-    elif os.path.isfile(os.path.join(cwd, xyz_file)):
+    if os.path.isfile(os.path.join(cwd, xyz_file)):
         xyz_file = os.path.join(cwd, xyz_file)
-    else:
+    elif not os.path.isfile(xyz_file):  # pragma: no branch
         raise ValueError("Given xyz_file does not exist")
 
     # get coordinates

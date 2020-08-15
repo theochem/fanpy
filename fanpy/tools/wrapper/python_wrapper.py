@@ -27,7 +27,7 @@ def generate_hartreefock_results(
     twoint_name="twoint.npy",
     remove_npyfiles=False,
     **kwargs
-):
+):  # pragma: no cover
     """Extract results from a Hartree Fock calculation.
 
     Parameters
