@@ -19,7 +19,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="fanpy",
-    version="0.0.0",
+    version="1.0.0",
     description="A module for evaluating, differentiating, and integrating Gaussian functions.",
     long_description=long_description,
     # Denotes that our long_description is in Markdown; valid values are
@@ -76,7 +76,7 @@ setup(
         "test": ["tox", "pytest", "pytest-cov"],
         "horton": ["horton"],
         "pyscf": ["pyscf"],
-        "keras": ["keras"],
+        "tensorflow": ["tensorflow"],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.
@@ -87,9 +87,9 @@ setup(
     # platform.
     entry_points={
         "console_scripts": [
-            "fanpy_make_script=wfns.scripts.make_script:main",
-            "fanpy_run_calc=wfns.scripts.run_calc:main",
-            "fanpy_make_nn_script=wfns.scripts.make_nn_script:main",
+            "fanpy_make_script=fanpy.scripts.make_script:main",
+            "fanpy_run_calc=fanpy.scripts.run_calc:main",
+            "fanpy_make_nn_script=fanpy.scripts.make_nn_script:main",
         ]
     },
     # List additional URLs that are relevant to your project as a dict.
