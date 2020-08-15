@@ -21,7 +21,7 @@ class TempMolecularHamiltonian(RestrictedMolecularHamiltonian):
             return [8]
 
 
-def test_brute():
+def test_brute(tmp_path):
     """Test wfn.solver.ci.brute."""
     test_wfn = CIWavefunction(2, 4, sds=[0b0011, 0b1100])
     test_ham = TempMolecularHamiltonian(
@@ -65,3 +65,7 @@ def test_brute():
     assert np.allclose(energies[1], (9 + 85 ** 0.5) / 2)
     matrix = np.array([[1 - energies[1], 3], [3, 8 - energies[1]]])
     assert np.allclose(matrix.dot(coeffs[:, 1]), np.zeros(2))
+
+    results = ci.brute(test_wfn, test_ham, save_file=str(tmp_path / "temp.npy"))
+    assert np.allclose(test_wfn.params, np.load(str(tmp_path / "temp_wfn.npy")))
+    assert np.allclose(test_ham.params, np.load(str(tmp_path / "temp_ham.npy")))

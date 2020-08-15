@@ -86,15 +86,17 @@ def cma(objective, **kwargs):
 
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (EnergyOneSideProjection, EnergyTwoSideProjection)):
+    elif isinstance(  # pragma: no branch
+        objective, (EnergyOneSideProjection, EnergyTwoSideProjection)
+    ):
         output["energy"] = results[1]
 
-    if output["success"]:
+    if output["success"]:  # pragma: no branch
         output["message"] = "Following termination conditions are satisfied:" + "".join(
             " {0}: {1},".format(key, val) for key, val in results[-3].items()
         )
         output["message"] = output["message"][:-1] + "."
-    else:
+    else:  # pragma: no cover
         output["message"] = "Optimization did not succeed."
 
     output["internal"] = results
@@ -105,7 +107,7 @@ def cma(objective, **kwargs):
     return output
 
 
-def minimize(objective, **kwargs):
+def minimize(objective, use_gradient=True, **kwargs):
     """Solve an equation using `scipy.optimize.minimize`.
 
     See module `scipy.optimize.minimize` for details.
@@ -114,6 +116,9 @@ def minimize(objective, **kwargs):
     ----------
     objective : BaseSchrodinger
         Instance that contains the function that will be optimized.
+    use_gradient : bool
+        Option to use gradient.
+        Default is True.
     kwargs : dict
         Keyword arguments to `scipy.optimize.minimize`. See its documentation for details.
         By default, if the objective has a gradient,  'method' is 'BFGS', 'jac' is the gradient
@@ -152,7 +157,7 @@ def minimize(objective, **kwargs):
     if objective.num_eqns != 1:
         raise ValueError("Objective must contain only one equation.")
 
-    if hasattr(objective, "gradient"):
+    if use_gradient:
         kwargs.setdefault("method", "BFGS")
         kwargs.setdefault("jac", objective.gradient)
         kwargs.setdefault("options", {})
@@ -185,7 +190,9 @@ def minimize(objective, **kwargs):
     output["function"] = output["internal"].fun
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (EnergyOneSideProjection, EnergyTwoSideProjection)):
+    elif isinstance(  # pragma: no branch
+        objective, (EnergyOneSideProjection, EnergyTwoSideProjection)
+    ):
         output["energy"] = output["function"]
 
     return output

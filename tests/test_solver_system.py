@@ -26,7 +26,9 @@ class TempBaseWavefunction(BaseWavefunction):
                 return self.params[0] ** 3 + self.params[1] ** 2
             return np.array([3 * self.params[0] ** 2, 2 * self.params[1]])
         else:
-            return 0
+            if deriv is None:
+                return 0
+            return np.array([0, 0])
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction."""
@@ -52,6 +54,13 @@ def test_least_squares():
     assert np.allclose(objective.objective(wfn.params), 0)
     assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
 
+    objective.indices_component_params[ham] = np.arange(ham.nparams)
+    results = system.least_squares(objective)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(objective.objective(objective.active_params), 0)
+    assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
+
     with pytest.raises(TypeError):
         system.least_squares(EnergyOneSideProjection(wfn, ham))
 
@@ -64,12 +73,23 @@ def test_root():
     wfn.assign_nspin(4)
     wfn.assign_params(np.array([1.0, -1.0]))
     ham = RestrictedMolecularHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
-    objective = ProjectedSchrodinger(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
+    objective = ProjectedSchrodinger(
+        wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[]
+    )
 
     results = system.root(objective)
     assert results["success"]
     assert np.allclose(results["energy"], 2)
     assert np.allclose(objective.objective(wfn.params), 0)
+
+    objective = ProjectedSchrodinger(
+        wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100, 0b0110], constraints=[]
+    )
+    objective.indices_component_params[ham] = np.arange(ham.nparams)
+    results = system.root(objective)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(objective.objective(objective.active_params), 0)
 
     with pytest.raises(TypeError):
         system.root(EnergyOneSideProjection(wfn, ham))

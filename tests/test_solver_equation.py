@@ -102,6 +102,14 @@ def test_minimize():
     assert np.allclose(results["energy"], 2)
     assert np.allclose(results["function"], 0, atol=1e-7)
 
+    del EnergyOneSideProjection.gradient
+    results = equation.minimize(EnergyOneSideProjection(
+        wfn, ham, refwfn=[0b0011, 0b1100]), use_gradient=False
+    )
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(results["function"], 2)
+
     with pytest.raises(TypeError):
         equation.minimize(lambda x, y: (x - 3) * (y - 2) + x ** 3 + y ** 2)
     with pytest.raises(ValueError):

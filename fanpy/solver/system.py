@@ -31,8 +31,6 @@ def least_squares(objective, **kwargs):
         Energy of the system after optimization
     residuals  : np.ndarray
         Value of each equation in the system.
-    cost : float
-        Least squared sum of the values of each equation in the system.
     message : str
         Message returned by the optimizer.
     internal : OptimizeResults
@@ -56,6 +54,7 @@ def least_squares(objective, **kwargs):
 
     ham = objective.ham
     ham.update_prev_params = False
+    objective.step_print = False
 
     def hacked_jacobian(params):
         """Clean up at the end of each iteration and return Jacobian afterwards.
@@ -66,9 +65,9 @@ def least_squares(objective, **kwargs):
         """
         # update hamiltonian
         if objective.indices_component_params[ham].size > 0:
-            ham.update_prev_prams = True
+            ham.update_prev_params = True
             ham.assign_params(ham.params)
-            ham.update_prev_prams = False
+            ham.update_prev_params = False
         # save parameters
         objective.save_params()
         # print
@@ -82,7 +81,6 @@ def least_squares(objective, **kwargs):
     output = wrap_scipy(solver)(objective, verbose=2, **kwargs)
     output["energy"] = objective.energy.params[0]
     output["residuals"] = output["internal"].fun
-    output["cost"] = output["internal"].cost
     return output
 
 
@@ -142,27 +140,34 @@ def root(objective, **kwargs):
         ])
 
     kwargs.setdefault("method", "hybr")
-    kwargs.setdefault("jac", objective.jacobian)
     kwargs.setdefault("options", {})
     kwargs["options"].setdefault("xtol", 1.0e-9)
 
     ham = objective.ham
     ham.update_prev_params = False
+    objective.step_print = False
 
-    def update_iteration(*args):
-        """Clean up at the end of each iteration."""
+    def hacked_jacobian(params):
+        """Clean up at the end of each iteration and return Jacobian afterwards.
+
+        Since some methods in `scipy.optimize.root` does not have a callback option, clean up
+        process is performed via Jacobian, which is evaluated at the end of each iteration.
+
+        """
         # update hamiltonian
         if objective.indices_component_params[ham].size > 0:
-            ham.update_prev_prams = True
+            ham.update_prev_params = True
             ham.assign_params(ham.params)
-            ham.update_prev_prams = False
+            ham.update_prev_params = False
         # save parameters
         objective.save_params()
         # print
         for key, value in objective.print_queue.items():
             print("(Mid Optimization) {}: {}".format(key, value))
 
-    kwargs["callback"] = update_iteration
+        return objective.jacobian(params)
+
+    kwargs.setdefault("jac", hacked_jacobian)
 
     output = wrap_scipy(solver)(objective, **kwargs)
     output["energy"] = objective.energy.params
