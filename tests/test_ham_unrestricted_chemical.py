@@ -10,6 +10,7 @@ from fanpy.tools.sd_list import sd_list
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.ham.unrestricted_chemical import UnrestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 def test_set_ref_ints():
@@ -113,6 +114,11 @@ def test_integrate_sd_sd_trivial():
         test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel(),
     )
 
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd(0b110001, "1")
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd("1", 0b101010)
+
 
 def test_integrate_sd_sd_h2_631gdp():
     """Test UnrestrictedMolecularHamiltonian.integrate_sd_sd using H2 HF/6-31G** orbitals.
@@ -194,6 +200,8 @@ def test_integrate_sd_sd_particlenum():
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
     assert np.allclose((ham.integrate_sd_sd(civec[1], civec[1])), 4)
 
+    assert np.allclose(ham.integrate_sd_sd(civec[0], civec[1], components=True), 0)
+
 
 def test_integrate_sd_wfn():
     """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn."""
@@ -237,6 +245,13 @@ def test_integrate_sd_wfn():
     assert coulomb == 3 * 10
     assert exchange == -3 * 11
 
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn("1", test_wfn)
+    with pytest.raises(ValueError):
+        test_ham.integrate_sd_wfn(
+            0b0101, test_wfn, wfn_deriv=np.array([0]), ham_deriv=np.array([0])
+        )
+
 
 def test_param_ind_to_rowcol_ind():
     """Test UnrestrictedMolecularHamiltonian.param_ind_to_rowcol_ind."""
@@ -271,8 +286,16 @@ def test_integrate_sd_sd_deriv():
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=True), 0
     )
     assert np.allclose(
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=False), 0
+    )
+    assert np.allclose(
         test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, np.array([0]), components=True), 0
     )
+
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv(0b110001, "1", np.array([0]))
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv("1", 0b101010, np.array([0]))
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
@@ -339,17 +362,17 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int_a = np.random.rand(4, 4)
+    one_int_a = np.random.rand(3, 3)
     one_int_a = one_int_a + one_int_a.T
-    one_int_b = np.random.rand(4, 4)
+    one_int_b = np.random.rand(3, 3)
     one_int_b = one_int_b + one_int_b.T
 
-    two_int_aaaa = np.random.rand(4, 4, 4, 4)
+    two_int_aaaa = np.random.rand(3, 3, 3, 3)
     two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
     two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
-    two_int_abab = np.random.rand(4, 4, 4, 4)
+    two_int_abab = np.random.rand(3, 3, 3, 3)
     two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
-    two_int_bbbb = np.random.rand(4, 4, 4, 4)
+    two_int_bbbb = np.random.rand(3, 3, 3, 3)
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
@@ -365,8 +388,8 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     test_ham = UnrestrictedMolecularHamiltonian(
         [one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb]
     )
-    epsilon = 1e-8
-    sds = sd_list(2, 8, num_limit=None, exc_orders=None)
+    epsilon = 1e-7
+    sds = sd_list(3, 6, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -385,6 +408,15 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                 ) / epsilon
                 derivative = test_ham._integrate_sd_sd_deriv(sd1, sd2, np.array([i])).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
+
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=False))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=False))
+                ) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(
+                    sd1, sd2, np.array([i]), components=False
+                ).ravel()
+                assert np.allclose(finite_diff, derivative, atol=60 * epsilon)
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
@@ -1183,17 +1215,17 @@ def test_integrate_sd_sds_deriv_two_bbb():
 
 def test_integrate_sd_wfn_compare_basehamiltonian():
     """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn with integrate_sd_wfn."""
-    one_int_a = np.random.rand(5, 5)
+    one_int_a = np.random.rand(4, 4)
     one_int_a = one_int_a + one_int_a.T
-    one_int_b = np.random.rand(5, 5)
+    one_int_b = np.random.rand(4, 4)
     one_int_b = one_int_b + one_int_b.T
 
-    two_int_aaaa = np.random.rand(5, 5, 5, 5)
+    two_int_aaaa = np.random.rand(4, 4, 4, 4)
     two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
     two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
-    two_int_abab = np.random.rand(5, 5, 5, 5)
+    two_int_abab = np.random.rand(4, 4, 4, 4)
     two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
-    two_int_bbbb = np.random.rand(5, 5, 5, 5)
+    two_int_bbbb = np.random.rand(4, 4, 4, 4)
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
@@ -1205,9 +1237,9 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
     )([one_int_a, one_int_b], [two_int_aaaa, two_int_abab, two_int_bbbb])
 
     for i in range(1, 4):
-        wfn = CIWavefunction(i, 10)
+        wfn = CIWavefunction(i, 8)
         wfn.assign_params(np.random.rand(*wfn.params.shape))
-        for occ_indices in it.combinations(range(10), i):
+        for occ_indices in it.combinations(range(8), i):
             assert np.allclose(
                 test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn),
                 test_ham2.integrate_sd_wfn(slater.create(0, *occ_indices), wfn),
@@ -1228,6 +1260,10 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
                     slater.create(0, *occ_indices), wfn, ham_deriv=np.arange(test_ham2.nparams)
                 ),
             )
+            assert np.allclose(
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, components=True),
+                test_ham2.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, components=True),
+            )
 
     with pytest.raises(TypeError):
         test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=np.arange(20).tolist())
@@ -1243,25 +1279,29 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
         bad_indices = np.arange(20)
         bad_indices[0] = 20
         test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=bad_indices)
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn("1", wfn)
+    with pytest.raises(ValueError):
+        test_ham.integrate_sd_wfn(0b00110011, wfn, wfn_deriv=np.array([0]), ham_deriv=np.array([0]))
 
 
 def test_integrate_sd_wfn_deriv_fdiff():
     """Test UnrestrictedMolecularHamiltonian.integrate_sd_wfn with finite difference."""
     nd = pytest.importorskip("numdifftools")
-    wfn = CIWavefunction(5, 10)
+    wfn = CIWavefunction(3, 6)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
-    one_int_a = np.random.rand(5, 5)
+    one_int_a = np.random.rand(3, 3)
     one_int_a = one_int_a + one_int_a.T
-    one_int_b = np.random.rand(5, 5)
+    one_int_b = np.random.rand(3, 3)
     one_int_b = one_int_b + one_int_b.T
 
-    two_int_aaaa = np.random.rand(5, 5, 5, 5)
+    two_int_aaaa = np.random.rand(3, 3, 3, 3)
     two_int_aaaa = np.einsum("ijkl->jilk", two_int_aaaa) + two_int_aaaa
     two_int_aaaa = np.einsum("ijkl->klij", two_int_aaaa) + two_int_aaaa
-    two_int_abab = np.random.rand(5, 5, 5, 5)
+    two_int_abab = np.random.rand(3, 3, 3, 3)
     two_int_abab = np.einsum("ijkl->klij", two_int_abab) + two_int_abab
-    two_int_bbbb = np.random.rand(5, 5, 5, 5)
+    two_int_bbbb = np.random.rand(3, 3, 3, 3)
     two_int_bbbb = np.einsum("ijkl->jilk", two_int_bbbb) + two_int_bbbb
     two_int_bbbb = np.einsum("ijkl->klij", two_int_bbbb) + two_int_bbbb
 
@@ -1312,4 +1352,41 @@ def test_integrate_sd_wfn_deriv_fdiff():
     assert np.allclose(
         nd.Gradient(objective)(ham.params),
         ham.integrate_sd_wfn(wfn.sds[0], wfn, ham_deriv=np.arange(ham.nparams)),
+    )
+
+    wfn = LinearCombinationWavefunction(3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)])
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    wfn.wfns[0].assign_params(np.random.rand(wfn.wfns[0].nparams))
+    wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
+
+    def objective(params):
+        temp_wfn = LinearCombinationWavefunction(
+            3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)]
+        )
+        temp_wfn.assign_params(wfn.params.copy())
+        temp_wfn.wfns[0].assign_params(params.copy())
+        temp_wfn.wfns[1].assign_params(wfn.wfns[1].params.copy())
+        return ham.integrate_sd_wfn(0b001011, temp_wfn)
+
+    assert np.allclose(
+        nd.Gradient(objective)(wfn.wfns[0].params),
+        ham.integrate_sd_wfn(
+            0b001011, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))
+        )
+    )
+
+
+def test_unrestrictedmolecularhamiltonian_save_params(tmp_path):
+    """Test UnrestrictedMolecularHamiltonian.sav_params."""
+    ham = UnrestrictedMolecularHamiltonian(
+        [np.arange(4, dtype=float).reshape(2, 2)] * 2,
+        [np.arange(16, dtype=float).reshape(2, 2, 2, 2)] * 3,
+        update_prev_params=True,
+    )
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), ham.params)
+    assert np.allclose(
+        np.load(str(tmp_path / "temp_um.npy")), [ham._prev_unitary_alpha, ham._prev_unitary_beta]
     )

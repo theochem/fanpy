@@ -10,6 +10,7 @@ from fanpy.tools.sd_list import sd_list
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.ham.restricted_chemical import RestrictedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 def test_nspin():
@@ -36,6 +37,11 @@ def test_integrate_sd_sd_trivial():
         -two_int[1, 1, 1, 0] - two_int[0, 1, 1, 1] + two_int[0, 0, 1, 0] + two_int[0, 1, 0, 0],
         0,
     ), test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel())
+
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd(0b110001, "1")
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd("1", 0b101010)
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -105,6 +111,8 @@ def test_integrate_sd_sd_particlenum():
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
     assert np.allclose((ham.integrate_sd_sd(civec[1], civec[1])), 4)
 
+    assert np.allclose(ham.integrate_sd_sd(civec[0], civec[1], components=True), 0)
+
 
 def test_integrate_sd_wfn():
     """Test RestrictedMolecularHamiltonian.integrate_sd_wfn."""
@@ -173,6 +181,14 @@ def test_integrate_sd_sd_deriv():
     assert np.allclose(
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=True), 0
     )
+    assert np.allclose(
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=False), 0
+    )
+
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv(0b110001, "1", np.array([0]))
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv("1", 0b101010, np.array([0]))
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
@@ -241,10 +257,10 @@ def test_integrate_sd_sd_deriv_fdiff_random():
     Computed derivatives are compared against finite difference of the `integrate_sd_sd`.
 
     """
-    one_int = np.random.rand(4, 4)
+    one_int = np.random.rand(3, 3)
     one_int = one_int + one_int.T
 
-    two_int = np.random.rand(4, 4, 4, 4)
+    two_int = np.random.rand(3, 3, 3, 3)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
 
@@ -255,7 +271,7 @@ def test_integrate_sd_sd_deriv_fdiff_random():
 
     test_ham = RestrictedMolecularHamiltonian(one_int, two_int)
     epsilon = 1e-8
-    sds = sd_list(3, 8, num_limit=None, exc_orders=None)
+    sds = sd_list(3, 6, num_limit=None, exc_orders=None)
 
     for sd1 in sds:
         for sd2 in sds:
@@ -272,6 +288,15 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                     sd1, sd2, np.array([i]), components=True
                 ).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
+
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=False))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=False))
+                ) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(
+                    sd1, sd2, np.array([i]), components=False
+                ).ravel()
+                assert np.allclose(finite_diff, derivative, atol=60 * epsilon)
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
@@ -773,10 +798,10 @@ def test_integrate_sd_sds_deriv_two_bbb():
 
 def test_integrate_sd_wfn_compare_basehamiltonian():
     """Test RestrictedMolecularHamiltonian.integrate_sd_wfn by comparing with BaseHamiltonian."""
-    one_int = np.random.rand(5, 5)
+    one_int = np.random.rand(4, 4)
     one_int = one_int + one_int.T
 
-    two_int = np.random.rand(5, 5, 5, 5)
+    two_int = np.random.rand(4, 4, 4, 4)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
 
@@ -786,9 +811,9 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
     )(one_int, two_int)
 
     for i in range(1, 4):
-        wfn = CIWavefunction(i, 10)
+        wfn = CIWavefunction(i, 8)
         wfn.assign_params(np.random.rand(*wfn.params.shape))
-        for occ_indices in it.combinations(range(10), i):
+        for occ_indices in it.combinations(range(8), i):
             assert np.allclose(
                 test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=None),
                 test_ham2.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, wfn_deriv=None),
@@ -809,6 +834,10 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
                     slater.create(0, *occ_indices), wfn, ham_deriv=np.arange(test_ham2.nparams)
                 ),
             )
+            assert np.allclose(
+                test_ham.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, components=True),
+                test_ham2.integrate_sd_wfn(slater.create(0, *occ_indices), wfn, components=True),
+            )
 
     with pytest.raises(TypeError):
         test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=np.arange(10).tolist())
@@ -825,17 +854,22 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
         bad_indices[0] = 10
         test_ham.integrate_sd_wfn(0b01101010, wfn, ham_deriv=bad_indices)
 
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn("1", wfn)
+    with pytest.raises(ValueError):
+        test_ham.integrate_sd_wfn(0b00110011, wfn, wfn_deriv=np.array([0]), ham_deriv=np.array([0]))
+
 
 def test_integrate_sd_wfn_deriv_fdiff():
     """Test RestrictedMolecularHamiltonian.integrate_sd_wfn_deriv with finite difference."""
     nd = pytest.importorskip("numdifftools")
-    wfn = CIWavefunction(5, 10)
+    wfn = CIWavefunction(3, 6)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
-    one_int = np.random.rand(5, 5)
+    one_int = np.random.rand(3, 3)
     one_int = one_int + one_int.T
 
-    two_int = np.random.rand(5, 5, 5, 5)
+    two_int = np.random.rand(3, 3, 3, 3)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
 
@@ -868,3 +902,38 @@ def test_integrate_sd_wfn_deriv_fdiff():
         nd.Gradient(objective)(ham.params),
         ham.integrate_sd_wfn(wfn.sds[0], wfn, ham_deriv=np.arange(ham.nparams)),
     )
+
+    wfn = LinearCombinationWavefunction(3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)])
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    wfn.wfns[0].assign_params(np.random.rand(wfn.wfns[0].nparams))
+    wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
+
+    def objective(params):
+        temp_wfn = LinearCombinationWavefunction(
+            3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)]
+        )
+        temp_wfn.assign_params(wfn.params.copy())
+        temp_wfn.wfns[0].assign_params(params.copy())
+        temp_wfn.wfns[1].assign_params(wfn.wfns[1].params.copy())
+        return ham.integrate_sd_wfn(0b001011, temp_wfn)
+
+    assert np.allclose(
+        nd.Gradient(objective)(wfn.wfns[0].params),
+        ham.integrate_sd_wfn(
+            0b001011, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))
+        )
+    )
+
+
+def test_restrictedmolecularhamiltonian_save_params(tmp_path):
+    """Test RestrictedMolecularHamiltonian.sav_params."""
+    ham = RestrictedMolecularHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2),
+        np.arange(16, dtype=float).reshape(2, 2, 2, 2),
+        update_prev_params=True,
+    )
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), ham.params)
+    assert np.allclose(np.load(str(tmp_path / "temp_um.npy")), ham._prev_unitary)

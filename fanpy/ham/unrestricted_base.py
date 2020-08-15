@@ -85,7 +85,6 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             float/complex.
             If two-electron integrals are not provided as a list/tuple of three numpy array of dtype
             float/complex.
-            If the blocks of one- and two-electron integrals do not have the same data type.
         ValueError
             If each block of one-electron integrals are not given as a (two-dimensional) square
             matrix.
@@ -114,13 +113,6 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                 raise TypeError(
                     "Two-electron integrals must be given as a list/tuple of three numpy "
                     "arrays (with dtype float/complex)."
-                )
-            if not (
-                one_int[0].dtype == one_int[1].dtype
-                and one_int[0].dtype == two_int[0].dtype == two_int[1].dtype == two_int[2].dtype
-            ):
-                raise TypeError(
-                    "Each block of one- and two-electron integrals must have the same data" " type."
                 )
             if not all(i.ndim == 2 and i.shape[0] == i.shape[1] for i in one_int):
                 raise ValueError(

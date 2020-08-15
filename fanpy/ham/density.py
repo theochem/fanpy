@@ -94,9 +94,8 @@ def add_one_density(matrices, spin_i, spin_j, val, orbtype):
         elif not slater.is_alpha(spin_i, nspatial) and not slater.is_alpha(spin_j, nspatial):
             matrices[1][spatial_i, spatial_j] += val
 
-    elif orbtype == "generalized":
+    else:  # if orbtype == "generalized":
         matrices[0][spin_i, spin_j] += val
-
 
 
 # FIXME: too many branches
@@ -210,9 +209,8 @@ def add_two_density(matrices, spin_i, spin_j, spin_k, spin_l, val, orbtype):
         ):
             matrices[2][spatial_i, spatial_j, spatial_k, spatial_l] += val
 
-    elif orbtype == "generalized":
+    else:  # if orbtype == "generalized":
         matrices[0][spin_i, spin_j, spin_k, spin_l] += val
-
 
 
 # FIXME: make input of Wavefunction and CIWavefunction instead of sd_coeffs, civec, nspatial, ...
@@ -291,7 +289,7 @@ def density_matrix(
     elif orbtype == "unrestricted":
         one_densities = [np.zeros((nspatial,) * 2) for i in range(2)]
         two_densities = [np.zeros((nspatial,) * 4) for i in range(3)]
-    elif orbtype == "generalized":
+    else:  # if orbtype == "generalized":
         one_densities = [np.zeros((2 * nspatial,) * 2)]
         two_densities = [np.zeros((2 * nspatial,) * 4)]
 

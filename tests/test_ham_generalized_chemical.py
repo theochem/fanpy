@@ -1,5 +1,6 @@
 """Test fanpy.ham.generalized_chemical."""
 import itertools as it
+import os
 
 import numpy as np
 import pytest
@@ -10,6 +11,7 @@ from fanpy.tools.sd_list import sd_list
 from fanpy.ham.base import BaseHamiltonian
 from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 from fanpy.wfn.ci.base import CIWavefunction
+from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
 
 
 def test_init():
@@ -167,6 +169,9 @@ def test_integrate_sd_wfn():
         bad_indices[0] = 28
         test_ham.integrate_sd_wfn(0b01101010, test_wfn, ham_deriv=bad_indices)
 
+    with pytest.raises(TypeError):
+        test_ham.integrate_sd_wfn("1", test_wfn)
+
 
 def test_integrate_sd_sd_trivial():
     """Test GeneralizedMolecularHamiltonian.integrate_sd_sd for trivial cases."""
@@ -193,6 +198,11 @@ def test_integrate_sd_sd_trivial():
         (0, -two_int[1, 4, 1, 3] + two_int[0, 4, 0, 3], two_int[1, 4, 3, 1] - two_int[0, 4, 3, 0]),
         test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel()
     )
+
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd(0b110001, "1")
+    with pytest.raises(TypeError):
+        test.integrate_sd_sd("1", 0b101010)
 
 
 def test_integrate_sd_sd_h2_631gdp():
@@ -344,6 +354,8 @@ def test_integrate_sd_sd_particlenum():
     # \braket{12 | h_{11} + h_{22} + g_{1212} - g_{1221} | 12}
     assert np.allclose(ham.integrate_sd_sd(civec[1], civec[1]), 4)
 
+    assert np.allclose(ham.integrate_sd_sd(civec[0], civec[1], components=True), 0)
+
 
 def test_param_ind_to_rowcol_ind():
     """Test GeneralizedMolecularHamiltonian.param_ind_to_rowcol_ind."""
@@ -368,7 +380,15 @@ def test_integrate_sd_sd_deriv():
     with pytest.raises(ValueError):
         test_ham._integrate_sd_sd_deriv(0b0101, 0b0101, 2)
     assert test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0])) == 0
+    assert np.allclose(
+        test_ham._integrate_sd_sd_deriv(0b0101, 0b0001, np.array([0]), components=True), 0
+    )
     assert test_ham._integrate_sd_sd_deriv(0b000111, 0b111000, np.array([0])) == 0
+
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv(0b110001, "1", np.array([0]))
+    with pytest.raises(TypeError):
+        test_ham._integrate_sd_sd_deriv("1", 0b101010, np.array([0]))
 
 
 def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
@@ -483,6 +503,15 @@ def test_integrate_sd_sd_deriv_fdiff_random():
                     sd1, sd2, np.array([i]), components=True
                 ).ravel()
                 assert np.allclose(finite_diff, derivative, atol=20 * epsilon)
+
+                finite_diff = (
+                    np.array(test_ham2.integrate_sd_sd(sd1, sd2, components=False))
+                    - np.array(test_ham.integrate_sd_sd(sd1, sd2, components=False))
+                ) / epsilon
+                derivative = test_ham._integrate_sd_sd_deriv(
+                    sd1, sd2, np.array([i]), components=False
+                ).ravel()
+                assert np.allclose(finite_diff, derivative, atol=60 * epsilon)
 
 
 def test_integrate_sd_sd_deriv_fdiff_random_small():
@@ -723,13 +752,13 @@ def test_integrate_sd_wfn_compare_basehamiltonian():
 def test_integrate_sd_wfn_deriv_fdiff():
     """Test GeneralizedMolecularHamiltonian.integrate_sd_wfn_deriv with finite difference."""
     nd = pytest.importorskip("numdifftools")
-    wfn = CIWavefunction(5, 10)
+    wfn = CIWavefunction(5, 6)
     wfn.assign_params(np.random.rand(*wfn.params.shape))
 
-    one_int = np.random.rand(10, 10)
+    one_int = np.random.rand(6, 6)
     one_int = one_int + one_int.T
 
-    two_int = np.random.rand(10, 10, 10, 10)
+    two_int = np.random.rand(6, 6, 6, 6)
     two_int = np.einsum("ijkl->jilk", two_int) + two_int
     two_int = np.einsum("ijkl->klij", two_int) + two_int
 
@@ -762,3 +791,38 @@ def test_integrate_sd_wfn_deriv_fdiff():
         nd.Gradient(objective)(ham.params),
         ham.integrate_sd_wfn(wfn.sds[0], wfn, ham_deriv=np.arange(ham.nparams)),
     )
+
+    wfn = LinearCombinationWavefunction(3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)])
+    wfn.assign_params(np.random.rand(wfn.nparams))
+    wfn.wfns[0].assign_params(np.random.rand(wfn.wfns[0].nparams))
+    wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
+
+    def objective(params):
+        temp_wfn = LinearCombinationWavefunction(
+            3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)]
+        )
+        temp_wfn.assign_params(wfn.params.copy())
+        temp_wfn.wfns[0].assign_params(params.copy())
+        temp_wfn.wfns[1].assign_params(wfn.wfns[1].params.copy())
+        return ham.integrate_sd_wfn(0b001011, temp_wfn)
+
+    assert np.allclose(
+        nd.Gradient(objective)(wfn.wfns[0].params),
+        ham.integrate_sd_wfn(
+            0b001011, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))
+        )
+    )
+
+
+def test_generalizedmolecularhamiltonian_save_params(tmp_path):
+    """Test GeneralizedMolecularHamiltonian.sav_params."""
+    ham = GeneralizedMolecularHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2),
+        np.arange(16, dtype=float).reshape(2, 2, 2, 2),
+        update_prev_params=True,
+    )
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.assign_params(np.random.rand(ham.nparams))
+    ham.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), ham.params)
+    assert np.allclose(np.load(str(tmp_path / "temp_um.npy")), ham._prev_unitary)
