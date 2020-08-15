@@ -98,6 +98,17 @@ def test_nonorth_assign_params():
     assert len(test.params) == 1
     assert np.allclose(test.params[0], test_params)
 
+    test_params = np.random.rand(10, 12)
+    test.assign_params(test_params.copy(), add_noise=True)
+    assert np.all(np.abs(test.params - test_params) <= 0.2 / 120)
+    assert not np.allclose(test.params[0], test_params)
+
+    test_params = np.random.rand(10, 12).astype(complex)
+    test.assign_params(test_params.copy(), add_noise=True)
+    assert np.all(np.abs(np.real(test.params - test_params)) <= 0.2 / 120)
+    assert np.all(np.abs(np.imag(test.params - test_params)) <= 0.01 * 0.1 / 120)
+    assert not np.allclose(test.params[0], test_params)
+
 
 def test_nonorth_spin():
     """Test NonorthWavefunction.spin."""
@@ -529,7 +540,6 @@ def test_nonorth_olp_deriv_restricted():
     assert np.isclose(
         test._olp_deriv(0b0101, 0),
         (
-            0 * wfn_sd_coeff[0b0011]
             + 2 * 1 * wfn_sd_coeff[0b0101]
             + 2 * wfn_sd_coeff[0b1001]
             + 2 * wfn_sd_coeff[0b0110]
@@ -543,6 +553,22 @@ def test_nonorth_olp_deriv_restricted():
     assert test._olp_deriv(0b1010, 0) == 0
     assert test._olp_deriv(0b1111, 0) == 0
     assert test._olp_deriv(0b1111, 2) == 0
+
+    test = skip_init(NonorthWavefunction)
+    test.nelec = 3
+    test.nspin = 4
+    test.assign_wfn(CIWavefunction(3, 4, memory=10))
+    test.wfn.params = np.arange(1, 4)
+    wfn_sd_coeff = {0b0111: 1, 0b1011: 2, 0b1101: 3, 0b1110: 4}
+    test.params = [np.array([[1, 2], [5, 6]])]
+
+    # restricted (two block)
+    # 0b1101 uses [[1, 2, 0, 0],
+    #              [0, 0, 1, 2]]
+    assert np.isclose(
+        test._olp_deriv(0b1101, 0),
+        3 * 6 * test.wfn.get_overlap(0b1101) + 2 * (1 * -4 + 1 * 6)
+    )
 
 
 def test_nonorth_get_overlap():
@@ -597,6 +623,23 @@ def test_nonorth_get_overlap():
     test.params = [np.arange(1, 17).reshape(4, 4)]
     test.enable_cache()
     assert np.isclose(test.get_overlap(0b0101, (test, np.array([6]))), 0, rtol=0, atol=1e-12)
+
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=np.array([0]))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([0.0])))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([[0]])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(CIWavefunction(2, 4), np.array([0])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([-1])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([test.nparams])))
+    with pytest.raises(NotImplementedError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([0])))
 
 
 def test_nonorth_energy_unitary_transform_hamiltonian():

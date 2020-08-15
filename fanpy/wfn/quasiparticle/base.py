@@ -483,9 +483,6 @@ class BaseQuasiparticle(BaseWavefunction):
 
         val = 0.0
         for subsets in self.generate_possible_orbsubsets(occ_indices):
-            if len(subsets) == 0:
-                continue
-
             # process subsets
             col_inds, bosons, fermions = self._process_subsets(subsets)
 
@@ -510,14 +507,10 @@ class BaseQuasiparticle(BaseWavefunction):
             Derivatives of the overlap with respect to each parameter.
 
         """
-        # NOTE: Need to recreate occ_indices, row_removed, col_removed
         occ_indices = slater.occ_indices(sd)
 
         output = np.zeros(self.nparams)
         for subsets in self.generate_possible_orbsubsets(occ_indices):
-            if len(subsets) == 0:
-                continue
-
             # process subsets
             col_inds, bosons, fermions = self._process_subsets(subsets)
 

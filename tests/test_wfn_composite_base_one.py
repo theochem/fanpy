@@ -45,8 +45,40 @@ def test_assign_wfn():
     with pytest.raises(ValueError):
         BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(5, 10))
     test.memory = np.inf
-    with pytest.raises(ValueError):
-        BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10, memory="2gb"))
     BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10))
     assert test.wfn.nelec == 4
     assert test.wfn.nspin == 10
+
+
+def test_init():
+    """Test BaseCompositeOneWavefunction.__init__."""
+    wfn_one = TempWavefunction(4, 10)
+    wfn = disable_abstract(BaseCompositeOneWavefunction)(
+        4, 10, wfn_one, params=np.array([0]), enable_cache=True
+    )
+    assert wfn.nelec == 4
+    assert wfn.nspin == 10
+    assert wfn.wfn == wfn_one
+    assert np.allclose(wfn.params, 0)
+    assert wfn._cache_fns["overlap"]
+    assert wfn._cache_fns["overlap derivative"]
+
+    wfn = disable_abstract(BaseCompositeOneWavefunction)(
+        4, 10, wfn_one, params=np.array([0]), enable_cache=False
+    )
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap derivative"]
+
+
+def test_save_params(tmp_path):
+    """Test BaseCompositeOneWavefunction.save_params."""
+    wfn_one = TempWavefunction(4, 10)
+    wfn_one.assign_params(np.random.rand(10))
+    wfn = disable_abstract(BaseCompositeOneWavefunction)(
+        4, 10, wfn_one, params=np.random.rand(7), enable_cache=True
+    )
+    wfn.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), wfn.params)
+    assert np.allclose(np.load(str(tmp_path / "temp_TempWavefunction.npy")), wfn.wfn.params)

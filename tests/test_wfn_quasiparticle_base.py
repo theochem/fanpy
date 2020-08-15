@@ -1,5 +1,6 @@
 """Test BaseQuasiparticle.base."""
 import numpy as np
+import pytest
 from numpy.testing import assert_raises
 from fanpy.wfn.quasiparticle.base import BaseQuasiparticle
 
@@ -215,7 +216,7 @@ def test_olp_deriv():
     test.assign_nquasiparticle(4)
     test.params = np.arange(24).reshape(4, 6)
 
-    test.assign_orbsubsets([(0, 1), (2, 3), (5, 6, 7), (4,), (1, 3, 5), (2, 4, 6, 8)])
+    test.assign_orbsubsets([(0, 1), (2, 3), (5, 6, 7), (4,), (1, 3, 5), (2, 4, 6, 8), ()])
     assert np.allclose(
         test._olp_deriv(0b11111111),
         -np.array([test.compute_permsum(2, [0, 1, 2, 3], deriv=i) for i in range(test.nparams)])
@@ -233,7 +234,7 @@ def test_olp():
     """Test BaseQuasiparticle._olp."""
     test = TestQuasiparticle()
     test.assign_nquasiparticle(4)
-    test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)])
+    test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8), ()])
     test.params = np.arange(24).reshape(4, 6)
     assert np.allclose(test._olp(0b11111111),
                        -test.compute_permsum(2, [0, 1, 3, 2], deriv=None))
@@ -255,3 +256,32 @@ def test_get_overlap():
 
     assert_raises(TypeError, test.get_overlap, 0b11111111, deriv='1')
     assert_raises(TypeError, test.get_overlap, 0b11111111, deriv=1.0)
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+
+
+def test_quasiparticle_init():
+    """Test BaseQuasiparticle.__init__."""
+    test = BaseQuasiparticle(
+        4,
+        10,
+        nquasiparticle=4,
+        orbsubsets=[(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)],
+        params=np.arange(24).reshape(4, 6),
+        enable_cache=True,
+    )
+    assert test._cache_fns["overlap"]
+    assert test._cache_fns["overlap derivative"]
+
+    test = BaseQuasiparticle(
+        4,
+        10,
+        nquasiparticle=4,
+        orbsubsets=[(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)],
+        params=np.arange(24).reshape(4, 6),
+        enable_cache=False,
+    )
+    with pytest.raises(AttributeError):
+        test._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        test._cache_fns["overlap derivative"]

@@ -200,3 +200,6 @@ def test_keras_get_overlap():
 
     grad = nd.Gradient(overlap)(test.params)
     assert np.allclose(grad, test.get_overlap(0b0101, np.arange(test.nparams)))
+
+    with pytest.raises(TypeError):
+        test.get_overlap("1")

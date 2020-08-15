@@ -103,8 +103,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         ValueError
             If the given wavefunction does not have the same number of electrons as the initialized
             value.
-            If the given wavefunction does not have the same data type as the initialized value.
-            If the given wavefunction does not have the same memory as the initialized value.
 
         """
         if __debug__:
@@ -114,11 +112,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
                 raise ValueError(
                     "Given wavefunction does not have the same number of electrons as the"
                     " the instantiated NonorthWavefunction."
-                )
-            if wfn.memory != self.memory:
-                raise ValueError(
-                    "Given wavefunction does not have the same memory as the "
-                    "instantiated NonorthWavefunction."
                 )
         self.wfn = wfn
 

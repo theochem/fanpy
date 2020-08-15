@@ -76,6 +76,8 @@ def temp_assign_params(self, params=None, add_noise=False, default_params=np.ide
 
 def test_assign_params():
     """Test BaseWavefunction.assign_params."""
+    with pytest.raises(NotImplementedError):
+        skip_init(disable_abstract(BaseWavefunction)).assign_params(None)
     # default
     test = skip_init(
         disable_abstract(
@@ -183,17 +185,18 @@ def test_enable_cache():
     test.enable_cache(include_derivative=False)
     assert hasattr(test, "_cache_fns")
     assert test._cache_fns["overlap"].cache_info().maxsize == 2
-    assert test._cache_fns["overlap"].cache_info().maxsize == 2
+    with pytest.raises(KeyError):
+        test._cache_fns["overlap derivative"]
 
     test.memory = 16
     test.enable_cache(include_derivative=True)
     assert test._cache_fns["overlap"].cache_info().maxsize == 0
-    assert test._cache_fns["overlap"].cache_info().maxsize == 0
+    assert test._cache_fns["overlap derivative"].cache_info().maxsize == 0
 
     test.memory = 4 * 8
     test.enable_cache(include_derivative=True)
     assert test._cache_fns["overlap"].cache_info().maxsize == 1
-    assert test._cache_fns["overlap"].cache_info().maxsize == 1
+    assert test._cache_fns["overlap derivative"].cache_info().maxsize == 1
 
     test.memory = np.inf
     test.enable_cache()

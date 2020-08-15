@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
 from fanpy.wfn.geminal.base import BaseGeminal
+from fanpy.wfn.geminal.apg import APG
 
 
 class TempBaseGeminal(BaseGeminal):
@@ -396,3 +397,43 @@ def test_gem_get_overlap():
     assert test.get_overlap(0b001111, deriv=np.array([3])) == 0
     with pytest.raises(TypeError):
         test.get_overlap(0b001111, "1")
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+
+
+def test_basegeminal_init():
+    """Test BaseGeminal.__init__."""
+    wfn = disable_abstract(BaseGeminal)(4, 10, enable_cache=True)
+    assert wfn.nelec == 4
+    assert wfn.nspin == 10
+    assert wfn._cache_fns["overlap"]
+    assert wfn._cache_fns["overlap derivative"]
+
+    wfn = disable_abstract(BaseGeminal)(4, 10, enable_cache=False)
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap derivative"]
+
+
+def test_normalize():
+    """Test BaseGeminal.normalize"""
+    test = skip_init(
+        disable_abstract(
+            BaseGeminal,
+            dict_overwrite={
+                "generate_possible_orbpairs": lambda self, occ_indices: [
+                    (((0, 1), (2, 3)), 1) if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
+                    else ((), 1)
+                ]
+            },
+        )
+    )
+    test.assign_nelec(4)
+    test.assign_nspin(6)
+    test.assign_orbpairs()
+    test.assign_ngem(2)
+    test.assign_params(np.random.rand(30))
+    assert not np.allclose(test.get_overlap(0b001111), 1)
+    test.normalize([0b001111])
+    assert np.allclose(test.get_overlap(0b001111), 1)

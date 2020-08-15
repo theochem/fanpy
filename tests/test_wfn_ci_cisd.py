@@ -40,7 +40,7 @@ def test_cisd_assign_sds():
         test.assign_sds((0b001011, 0b011001))
 
 
-def test_cisd_h2_631gdp():
+def test_cisd_h2_631gdp_slow():
     """Test CISD wavefunction using H2 (6-31G**).
 
     Compared to Gausssian results

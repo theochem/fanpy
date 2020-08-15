@@ -367,6 +367,25 @@ def test_jacobi_get_overlap():
         ),
     )
 
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+    with pytest.raises(TypeError):
+        test.get_overlap("1", (test.wfn, np.array([0])))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=np.array([0]))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([0.0])))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([[0]])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(DOCI(2, 4), np.array([0])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([-1])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([test.nparams])))
+    with pytest.raises(NotImplementedError):
+        test.get_overlap(0b0101, deriv=(test.wfn, np.array([0])))
+
 
 def test_jacobi_get_overlap_restricted():
     """Test JacobiWavefunction.get_overlap for a larger restricted case."""

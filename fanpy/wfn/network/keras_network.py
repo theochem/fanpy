@@ -150,7 +150,7 @@ class KerasNetwork(BaseWavefunction):
         # NOTE: Keras has a built in method for gradient but it includes the loss function. To make
         # things easier, we modify the loss function so that it does not do anything (i.e. identify
         # function)
-        def loss(y_true, y_pred):
+        def loss(y_true, y_pred):  # pragma: no cover
             """Loss function used to hack in objective into Keras."""
             return keras.backend.sum(y_true - y_pred)
 
@@ -196,7 +196,7 @@ class KerasNetwork(BaseWavefunction):
         params = []
         for layer in self.model.layers[:-1]:
             # NOTE: it was ASSUMED that there is only one variable for weights
-            if __debug__ and len(layer.weights[:-1]) > 1:
+            if __debug__ and len(layer.weights[:-1]) > 1:  # pragma: no cover
                 raise ValueError(
                     "Cannot generate initial guess for Keras networks that have layers with more "
                     "than one variable for weights."
@@ -208,7 +208,7 @@ class KerasNetwork(BaseWavefunction):
             slater.occ_indices(sd)
             for sd in sd_list(self.nelec, num_hidden_orbs, exc_orders=[1, 2])
         ]
-        if __debug__ and len(hidden_sds) < num_hidden_orbs:
+        if __debug__ and len(hidden_sds) < num_hidden_orbs:  # pragma: no cover
             raise ValueError(
                 "Cannot generate initial guess for Keras network because the final "
                 "hidden layer does not have enough units for the number of electrons."

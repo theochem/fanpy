@@ -6,6 +6,7 @@ import pytest
 from utils import skip_init
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+from fanpy.wfn.ci.base import CIWavefunction
 
 
 class TempWavefunction(BaseWavefunction):
@@ -114,8 +115,12 @@ def test_get_overlap():
     def olp_one(self, sd, deriv=None):
         """Overlap of wavefunction 1."""
         if sd == 0b0101:
+            if deriv:
+                return np.array([1])
             return self.params[0]
         else:
+            if deriv:
+                return np.array([2])
             return 0.0
 
     def olp_two(self, sd, deriv=None):
@@ -133,3 +138,48 @@ def test_get_overlap():
     )
     assert test.get_overlap(0b0101) == 0.7 * test_wfn_1.params[0] + 0.3 * 0
     assert test.get_overlap(0b1010) == 0.7 * 0 + 0.3 * test_wfn_2.params[0]
+
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=np.array([0]))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfns[0], np.array([0.0])))
+    with pytest.raises(TypeError):
+        test.get_overlap(0b0101, deriv=(test.wfns[0], np.array([[0]])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(TempWavefunction(2, 4), np.array([0])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([-1])))
+    with pytest.raises(ValueError):
+        test.get_overlap(0b0101, deriv=(test, np.array([test.nparams])))
+
+    assert np.allclose(
+        test.get_overlap(0b0101, deriv=(test.wfns[0], np.array([0]))),
+        test.get_overlap(0b0101) * np.array([1]),
+    )
+    assert np.allclose(
+        test.get_overlap(0b0101, deriv=(test, np.array([0, 1]))),
+        np.array([test.wfns[0].get_overlap(0b0101), test.wfns[1].get_overlap(0b0101)])
+    )
+
+
+def test_save_params(tmp_path):
+    """Test LinearCombinationWavefunction.save_params."""
+    test_wfn_1 = CIWavefunction(3, 6)
+    test_wfn_1.assign_params(np.random.rand(test_wfn_1.nparams))
+    test_wfn_2 = CIWavefunction(3, 6)
+    test_wfn_2.assign_params(np.random.rand(test_wfn_2.nparams))
+    wfn = LinearCombinationWavefunction(3, 6, [test_wfn_1, test_wfn_2], params=np.random.rand(2))
+    wfn.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), wfn.params)
+    assert np.allclose(np.load(str(tmp_path / "temp_CIWavefunction1.npy")), wfn.wfns[0].params)
+    assert np.allclose(np.load(str(tmp_path / "temp_CIWavefunction2.npy")), wfn.wfns[1].params)
+
+    test_wfn_1 = CIWavefunction(3, 6)
+    test_wfn_1.assign_params(np.random.rand(test_wfn_1.nparams))
+    test_wfn_2 = TempWavefunction(3, 6)
+    test_wfn_2.assign_params(np.random.rand(10))
+    wfn = LinearCombinationWavefunction(3, 6, [test_wfn_1, test_wfn_2], params=np.random.rand(2))
+    wfn.save_params(str(tmp_path / "temp.npy"))
+    assert np.allclose(np.load(str(tmp_path / "temp.npy")), wfn.params)
+    assert np.allclose(np.load(str(tmp_path / "temp_CIWavefunction.npy")), wfn.wfns[0].params)
+    assert np.allclose(np.load(str(tmp_path / "temp_TempWavefunction.npy")), wfn.wfns[1].params)

@@ -51,6 +51,8 @@ def test_ap1rog_assign_orbpairs():
     test.assign_orbpairs()
     assert test.dict_orbpair_ind == {(2, 5): 0}
     assert test.dict_ind_orbpair == {0: (2, 5)}
+    with pytest.raises(ValueError):
+        test.assign_orbpairs([(0, 3), (2, 4), (1, 5)])
 
 
 def test_ap1rog_default_params():
@@ -110,6 +112,11 @@ def test_ap1rog_get_overlap():
     assert test.get_overlap(0b0110001100, deriv=np.array([99])) == 0
     with pytest.raises(TypeError):
         test.get_overlap(0b0001100011, "0")
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+    assert np.allclose(
+        test.get_overlap(0b111, deriv=np.arange(test.nparams)), np.zeros(test.nparams)
+    )
 
 
 def answer_ap1rog_h2_sto6g():
@@ -347,3 +354,19 @@ def test_ap1rog_lih_sto6g():
     objective = ProjectedSchrodinger(ap1rog, ham, refwfn=full_sds, constraints=[])
     results = least_squares(objective)
     assert np.allclose(results["energy"], -8.963531105243506)
+
+
+def test_ap1rog_init():
+    """Test AP1roG.__init__."""
+    wfn = AP1roG(4, 10, enable_cache=True)
+    assert wfn.nelec == 4
+    assert wfn.nspin == 10
+    assert np.allclose(wfn.params, 0)
+    assert wfn._cache_fns["overlap"]
+    assert wfn._cache_fns["overlap derivative"]
+
+    wfn = AP1roG(4, 10, enable_cache=False)
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap derivative"]

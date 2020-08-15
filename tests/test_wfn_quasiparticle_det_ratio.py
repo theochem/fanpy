@@ -294,8 +294,25 @@ def test_get_overlap():
         assert test.get_overlap(0b0101, np.array([i])) == 0
     with pytest.raises(TypeError):
         test.get_overlap(0b0101, 1)
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
 
     assert np.allclose(test.get_overlap(0b0011),
                        np.linalg.det(matrix1[:, [0, 1]]) / np.linalg.det(matrix2[:, [0, 1]]))
     assert np.allclose(test.get_overlap(0b0011, np.array([0])),
                        matrix1[1, 1] / np.linalg.det(matrix2[:, [0, 1]]))
+
+
+def test_determinantratio_init():
+    """Test DeterminantRatio.__init__."""
+    wfn = DeterminantRatio(4, 10, enable_cache=True)
+    assert wfn.nelec == 4
+    assert wfn.nspin == 10
+    assert wfn._cache_fns["overlap"]
+    assert wfn._cache_fns["overlap derivative"]
+
+    wfn = DeterminantRatio(4, 10, enable_cache=False)
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap derivative"]

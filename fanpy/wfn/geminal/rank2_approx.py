@@ -178,7 +178,7 @@ class RankTwoApprox:
             )
         # if differentiating along row (lambda)
         if __debug__:
-            if not (isinstance(deriv, int) or np.issubdtype(deriv, np.integer)):
+            if not (isinstance(deriv, int) or np.issubdtype(type(deriv), np.integer)):
                 raise TypeError("deriv must be an integer.")
             if not (0 <= deriv < self.nparams):
                 raise ValueError(
@@ -193,7 +193,9 @@ class RankTwoApprox:
             for col_to_remove in col_inds:
                 col_inds_trunc = col_inds[col_inds != col_to_remove]
                 # this will never happen (but just in case)
-                if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
+                if (
+                    row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size
+                ):  # pragma: no cover
                     continue
                 # derivative of matrix element c_ij wrt lambda_i
                 der_cij_rowi = (
@@ -210,7 +212,7 @@ class RankTwoApprox:
                     )
             return val
         # if differentiating along column (epsilon or zeta)
-        if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
+        else:  # if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
             col_to_remove = (deriv - self.ngem) % self.norbpair
             col_inds_trunc = col_inds[col_inds != col_to_remove]
             if col_inds_trunc.size == col_inds.size:
@@ -424,7 +426,7 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
         not_indices = np.logical_not(indices)
         rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
     # solve by SVD
-    elif method == "svd":
+    else:  # if method == "svd":
         # pylint: disable=C0103
         _, s, vh = np.linalg.svd(matrix, full_matrices=False)
         # find null vectors

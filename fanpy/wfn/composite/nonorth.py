@@ -182,7 +182,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             and self.params[1].shape[0] == self.nspatial
         ):
             return "unrestricted"
-        elif len(self.params) == 1 and self.params[0].shape[0] == self.nspin:
+        elif len(self.params) == 1 and self.params[0].shape[0] == self.nspin:  # pragma: no branch
             return "generalized"
 
     def assign_params(self, params=None, add_noise=False):
@@ -259,7 +259,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             new_params = []
             for old_params in params:
                 old_params += scale * (np.random.rand(*old_params.shape) - 0.5)
-                if self.dtype in [complex, np.complex128]:
+                if old_params.dtype in [complex, np.complex128]:
                     old_params += (
                         0.01j * scale * (np.random.rand(*old_params.shape).astype(complex) - 0.5)
                     )
@@ -607,9 +607,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         if wfn == self:
             output = np.zeros(len(indices))
             for i in indices:
-                if i >= self.nparams:
-                    continue
-
                 # number of parameters for alpha orbitals (this variable will have no effect for
                 # restricted and generalized orbital types)
                 nparams_alpha = self.params[0].size

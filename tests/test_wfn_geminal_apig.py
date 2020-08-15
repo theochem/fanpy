@@ -247,7 +247,7 @@ def test_apig_h2_631gdp():
 
 
 # FIXME: answer should be brute force or external (should not depend on the code)
-def answer_apig_lih_sto6g():
+def answer_apig_lih_sto6g_slow():
     """Find the ground state APIG/STO-6G wavefunction for LiH by scanning for the lowest energy."""
     # Can be read in using HORTON
     # hf_dict = gaussian_fchk('test/lih_hf_sto6g.fchk')

@@ -1,7 +1,5 @@
 """Utility function for constructing Wavefunction instances."""
-import numpy as np
 from fanpy.wfn.base import BaseWavefunction
-from fanpy.tools import slater
 
 
 def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params=None):
@@ -35,13 +33,34 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
         If number is provided, it is the number of bytes.
         If string is provided, it should end iwth either "mb" or "gb" to specify the units.
         Default does not limit memory usage (i.e. infinite).
-    assign_params : function
+    assign_params(self, params) : function
         Method for assigning the parameters in the wavefunction class. First argument is `self` and
         second argument is `params`.
         Default uses `BaseWavefunction.assign_params`.
 
     """
     class GeneratedWavefunction(BaseWavefunction):
+        def __init__(self, nelec, nspin, memory=None, params=None):
+            """Initialize the wavefunction.
+
+            Parameters
+            ----------
+            nelec : int
+                Number of electrons.
+            nspin : int
+                Number of spin orbitals.
+            memory : {float, int, str, None}
+                Memory available for the wavefunction.
+                If number is provided, it is the number of bytes.
+                If string is provided, it should end iwth either "mb" or "gb" to specify the units.
+                Default does not limit memory usage (i.e. infinite).
+            params : np.ndarray
+                Parameters of the wavefunction.
+
+            """
+            super().__init__(nelec, nspin, memory=memory)
+            self.assign_params(params)
+
         def assign_params(self, params=None):
             """Assign the parameters of the wavefunction.
 
@@ -114,16 +133,6 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
                 If deriv is not a one dimensional numpy array of integers.
 
             """
-            if __debug__:
-                if not slater.is_sd_compatible(sd):
-                    raise TypeError("Slater determinant must be given as an integer.")
-                if deriv is not None and not (
-                    isinstance(deriv, np.ndarray) and deriv.ndim == 1 and deriv.dtype == int
-                ):
-                    raise TypeError(
-                        "deriv must be given as a one dimensional numpy array of integers."
-                    )
-
             # if no derivatization
             if deriv is None:
                 return self._olp(sd)

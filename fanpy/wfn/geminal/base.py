@@ -568,6 +568,14 @@ class BaseGeminal(BaseWavefunction):
         """
 
     def normalize(self, pspace):
+        """Normalize geminal wavefunction.
+
+        Parameters
+        ----------
+        pspace : list of sd
+            Slater determinant with respect to which the wavefunction is normalized.
+
+        """
         norm = sum(self.get_overlap(i)**2 for i in pspace)
-        self.assign_params(self.params * norm ** (- 1 / 2 / self.ngem))
+        self.assign_params(self.params * norm ** (- 0.5 / self.ngem))
         self.clear_cache()

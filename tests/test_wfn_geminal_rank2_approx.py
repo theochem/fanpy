@@ -105,6 +105,8 @@ def test_rank2_geminal_params_from_full():
     assert np.allclose(
         fullrank_params, test[8:14] / (test[:2, np.newaxis] - test[2:8]), atol=0.1, rtol=0
     )
+    with pytest.raises(ValueError):
+        full_to_rank2(fullrank_params, method="svd")
 
 
 @pytest.mark.skip(reason="Test does not always pass (depends on random noise).")
@@ -270,6 +272,8 @@ def test_rank2_geminal_compute_permanent():
         test.compute_permanent([0], deriv=99)
     with pytest.raises(ValueError):
         test.compute_permanent([0], deriv=-1)
+    with pytest.raises(TypeError):
+        test.compute_permanent([0], deriv=1.0)
 
     # four electrons
     test.assign_nelec(4)

@@ -183,3 +183,6 @@ def test_get_overlap():
         output[j] = 1
         assert np.allclose(test.get_overlap(sd, deriv=np.arange(15)), output)
     assert test.get_overlap(0b111111, deriv=None) == 0
+
+    with pytest.raises(TypeError):
+        test.get_overlap("1")

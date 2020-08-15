@@ -143,10 +143,7 @@ class CIPairs(DOCI):
                 # set geminal coefficient (`a` decremented b/c first npair columns are removed)
                 row_ind = ap1rog.dict_reforbpair_ind[(occ_ind, occ_ind + self.nspatial)]
                 col_ind = ap1rog.dict_orbpair_ind[(vir_ind, vir_ind + self.nspatial)]
-                try:
-                    gem_coeffs[row_ind, col_ind] = ci_params[self.dict_sd_index[sd_exc]]
-                except KeyError:
-                    gem_coeffs[row_ind, col_ind] = 0.0
+                gem_coeffs[row_ind, col_ind] = ci_params[self.dict_sd_index[sd_exc]]
         ap1rog.assign_params(gem_coeffs)
 
         return ap1rog

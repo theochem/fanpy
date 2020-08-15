@@ -49,6 +49,8 @@ def test_apg_get_col_ind():
         test.get_col_ind((0, 0))
     with pytest.raises(ValueError):
         test.get_col_ind((9, 10))
+    with pytest.raises(TypeError):
+        test.get_col_ind([1, 4])
 
 
 def test_apg_get_orbpair():

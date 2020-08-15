@@ -30,6 +30,8 @@ def test_get_occupation_indices():
     assert np.allclose(test.get_occupation_indices(0b001000), [2, 0, 0])
     assert np.allclose(test.get_occupation_indices(0b001001), [3, 0, 0])
     assert np.allclose(test.get_occupation_indices(0b011101), [3, 2, 1])
+    with pytest.raises(TypeError):
+        test.get_occupation_indices("1")
 
 
 def test_get_matrix_shape():
@@ -266,3 +268,46 @@ def test_get_overlap():
 
     grad = nd.Gradient(overlap)(test.params.copy())
     assert np.allclose(grad, test.get_overlap(0b001001, np.arange(test.nparams)))
+
+    with pytest.raises(TypeError):
+        test.get_overlap("1")
+
+
+def test_mps_init():
+    """Test MatrixProductState.__init__."""
+    wfn = MatrixProductState(4, 10, enable_cache=True)
+    assert wfn.nelec == 4
+    assert wfn.nspin == 10
+    assert wfn._cache_fns["overlap"]
+    assert wfn._cache_fns["overlap derivative"]
+
+    wfn = MatrixProductState(4, 10, enable_cache=False)
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap"]
+    with pytest.raises(AttributeError):
+        wfn._cache_fns["overlap derivative"]
+
+
+def test_enable_cache():
+    """Test MatrixProductState.enable_cache."""
+    test = MatrixProductState(4, 10)
+    test.memory = 16
+    test.enable_cache(include_derivative=False)
+    assert hasattr(test, "_cache_fns")
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2
+    with pytest.raises(KeyError):
+        test._cache_fns["overlap derivative"]
+
+    test.memory = 16
+    test.enable_cache(include_derivative=True)
+    assert test._cache_fns["overlap"].cache_info().maxsize == 0
+    assert test._cache_fns["overlap derivative"].cache_info().maxsize == 0
+
+    test.memory = 4 * 8 * 10 ** 2
+    test.enable_cache(include_derivative=True)
+    assert test._cache_fns["overlap"].cache_info().maxsize == 3
+    assert test._cache_fns["overlap derivative"].cache_info().maxsize == 3
+
+    test.memory = np.inf
+    test.enable_cache()
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2**30
