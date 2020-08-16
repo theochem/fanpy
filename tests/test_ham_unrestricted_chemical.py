@@ -150,19 +150,19 @@ def test_integrate_sd_sd_lih_631g_case():
     sd2 = 0b0000000001100100001001
     assert np.allclose(
         (0, two_int[1, 2, 3, 8], -two_int[1, 2, 8, 3]),
-        ham.integrate_sd_sd(sd1, sd2, components=True)
+        ham.integrate_sd_sd(sd1, sd2, components=True),
     )
     sd1 = 0b0000000000000000000011
     sd2 = 0b0000000000000000000101
     assert np.allclose(
         (one_int[1, 2], two_int[0, 1, 0, 2], -two_int[0, 1, 2, 0]),
-        ham.integrate_sd_sd(sd1, sd2, components=True)
+        ham.integrate_sd_sd(sd1, sd2, components=True),
     )
     sd1 = 0b0000000001100000000000
     sd2 = 0b0000000010100000000000
     assert np.allclose(
         (one_int[1, 2], two_int[0, 1, 0, 2], -two_int[0, 1, 2, 0]),
-        ham.integrate_sd_sd(sd1, sd2, components=True)
+        ham.integrate_sd_sd(sd1, sd2, components=True),
     )
 
 
@@ -1324,10 +1324,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
         (one_int_a, one_int_b), (two_int_aaaa, two_int_abab, two_int_bbbb), update_prev_params=True
     )
     temp_ham.orb_rotate_matrix(
-        [
-            um_orig[0].dot(um_step1[0]).dot(um_step2[0]),
-            um_orig[1].dot(um_step1[1]).dot(um_step2[1]),
-        ]
+        [um_orig[0].dot(um_step1[0]).dot(um_step2[0]), um_orig[1].dot(um_step1[1]).dot(um_step2[1])]
     )
     assert np.allclose(ham.one_int, temp_ham.one_int)
     assert np.allclose(ham.two_int, temp_ham.two_int)
@@ -1336,7 +1333,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
         temp_ham = UnrestrictedMolecularHamiltonian(
             (one_int_a, one_int_b),
             (two_int_aaaa, two_int_abab, two_int_bbbb),
-            update_prev_params=True
+            update_prev_params=True,
         )
         temp_ham.orb_rotate_matrix(
             [
@@ -1360,9 +1357,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
 
     def objective(params):
-        temp_wfn = LinearCombinationWavefunction(
-            3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)]
-        )
+        temp_wfn = LinearCombinationWavefunction(3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)])
         temp_wfn.assign_params(wfn.params.copy())
         temp_wfn.wfns[0].assign_params(params.copy())
         temp_wfn.wfns[1].assign_params(wfn.wfns[1].params.copy())
@@ -1372,7 +1367,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
         nd.Gradient(objective)(wfn.wfns[0].params),
         ham.integrate_sd_wfn(
             0b001011, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))
-        )
+        ),
     )
 
 

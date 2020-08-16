@@ -170,8 +170,8 @@ class BaseSchrodinger:
                 self.indices_component_params[component] = indices
 
         if optimize_orbitals and (
-            self.ham not in self.indices_component_params or
-            self.indices_component_params[self.ham].size == 0
+            self.ham not in self.indices_component_params
+            or self.indices_component_params[self.ham].size == 0
         ):
             self.indices_component_params[self.ham] = np.arange(self.ham.nparams)
 
@@ -355,7 +355,7 @@ class BaseSchrodinger:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
             else:
-                wfns = (self.wfn, ) + self.wfn.wfns
+                wfns = (self.wfn,) + self.wfn.wfns
             for wfn in wfns:
                 inds_component = self.indices_component_params[wfn]
                 if inds_component.size > 0:
@@ -409,7 +409,7 @@ class BaseSchrodinger:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
             else:
-                wfns = (self.wfn, ) + self.wfn.wfns
+                wfns = (self.wfn,) + self.wfn.wfns
             for wfn in wfns:
                 wfn_inds_component = self.indices_component_params[wfn]
                 if wfn_inds_component.size > 0:
@@ -557,7 +557,8 @@ class BaseSchrodinger:
                     inds_objective = self.indices_objective_params[refwfn]
                     d_ref_coeffs[inds_component, inds_objective] = 1.0
         elif slater.is_sd_compatible(refwfn) or (
-            isinstance(refwfn, (list, tuple, np.ndarray)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
+            isinstance(refwfn, (list, tuple, np.ndarray))
+            and all(slater.is_sd_compatible(sd) for sd in refwfn)
         ):
             if slater.is_sd_compatible(refwfn):
                 refwfn = [refwfn]
@@ -587,14 +588,16 @@ class BaseSchrodinger:
             return energy
 
         d_norm = np.sum(d_ref_coeffs * overlaps[:, None], axis=0)
-        d_norm += np.sum(ref_coeffs[:, None] * np.array(
-            [get_overlap(i, deriv) for i in ref_sds]), axis=0
+        d_norm += np.sum(
+            ref_coeffs[:, None] * np.array([get_overlap(i, deriv) for i in ref_sds]), axis=0
         )
         d_energy = np.sum(d_ref_coeffs * integrals[:, None], axis=0) / norm
         d_energy += (
-            np.sum(ref_coeffs[:, None] * np.array(
-                [integrate_sd_wfn(i, deriv) for i in ref_sds]), axis=0
-            ) / norm
+            np.sum(
+                ref_coeffs[:, None] * np.array([integrate_sd_wfn(i, deriv) for i in ref_sds]),
+                axis=0,
+            )
+            / norm
         )
         d_energy -= d_norm * energy / norm
         return d_energy
@@ -711,32 +714,33 @@ class BaseSchrodinger:
         if not deriv:
             return np.sum(overlaps_l * ci_matrix * overlaps_r) / norm
 
-        d_norm = 2 * np.sum(overlaps_norm[:, None] * np.array(
-            [get_overlap(i, deriv) for i in pspace_norm]), axis=0
+        d_norm = 2 * np.sum(
+            overlaps_norm[:, None] * np.array([get_overlap(i, deriv) for i in pspace_norm]), axis=0
         )
         d_energy = (
             np.sum(
-                np.array([[get_overlap(i, deriv)] for i in pspace_l]) *
-                ci_matrix[:, :, None] *
-                overlaps_r[:, :, None],
-                axis=(0, 1)
-            ) / norm
+                np.array([[get_overlap(i, deriv)] for i in pspace_l])
+                * ci_matrix[:, :, None]
+                * overlaps_r[:, :, None],
+                axis=(0, 1),
+            )
+            / norm
         )
         d_energy += (
             np.sum(
                 overlaps_l[:, :, None]
                 * np.array([[integrate_sd_sd(i, j, deriv) for j in pspace_r] for i in pspace_l])
                 * overlaps_r[:, :, None],
-                axis=(0, 1)
+                axis=(0, 1),
             )
             / norm
         )
         d_energy += (
             np.sum(
-                overlaps_l[:, :, None] *
-                ci_matrix[:, :, None] *
-                np.array([[get_overlap(i, deriv) for i in pspace_r]]),
-                axis=(0, 1)
+                overlaps_l[:, :, None]
+                * ci_matrix[:, :, None]
+                * np.array([[get_overlap(i, deriv) for i in pspace_r]]),
+                axis=(0, 1),
             )
             / norm
         )

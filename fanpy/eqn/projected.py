@@ -306,10 +306,10 @@ class ProjectedSchrodinger(BaseSchrodinger):
             )
 
         if __debug__ and not (
-            isinstance(pspace, (list, tuple)) and
-            all(
-                slater.is_sd_compatible(state) or
-                isinstance(state, CIWavefunction) for state in pspace
+            isinstance(pspace, (list, tuple))
+            and all(
+                slater.is_sd_compatible(state) or isinstance(state, CIWavefunction)
+                for state in pspace
             )
         ):
             raise TypeError(
@@ -345,10 +345,10 @@ class ProjectedSchrodinger(BaseSchrodinger):
             refwfn = tuple(refwfn)
 
         if __debug__ and not (
-            isinstance(refwfn, (CIWavefunction)) or
-            (
-                isinstance(refwfn, (list, tuple)) and
-                all(slater.is_sd_compatible(sd) for sd in refwfn)
+            isinstance(refwfn, (CIWavefunction))
+            or (
+                isinstance(refwfn, (list, tuple))
+                and all(slater.is_sd_compatible(sd) for sd in refwfn)
             )
         ):
             raise TypeError(
@@ -388,8 +388,8 @@ class ProjectedSchrodinger(BaseSchrodinger):
 
         if __debug__:
             if not (
-                    isinstance(constraints, (list, tuple)) and
-                    all(isinstance(constraint, BaseSchrodinger) for constraint in constraints)
+                isinstance(constraints, (list, tuple))
+                and all(isinstance(constraint, BaseSchrodinger) for constraint in constraints)
             ):
                 raise TypeError(
                     "Constraints must be given as a BaseSchrodinger instance or list/tuple of "
@@ -494,7 +494,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
 
         residuals = obj ** 2
         cost = np.sum(residuals)
-        cost_constraints = np.sum(residuals[self.nproj:])
+        cost_constraints = np.sum(residuals[self.nproj :])
         if self.step_print:
             print("(Mid Optimization) Electronic energy: {}".format(energy))
             print("(Mid Optimization) Cost: {}".format(cost))

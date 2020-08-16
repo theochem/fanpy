@@ -4,9 +4,7 @@ from fanpy.ham.base import BaseHamiltonian
 from fanpy.tools import slater
 
 
-def ham_factory(
-        integrate_sd_sd, integrals, nspin, orders=(1, 2), integrate_sd_wfn=None
-):
+def ham_factory(integrate_sd_sd, integrals, nspin, orders=(1, 2), integrate_sd_wfn=None):
     r"""Return the instance of the Hamiltonian class with the given integrals.
 
     Parameters
@@ -32,6 +30,7 @@ def ham_factory(
         to which the integral is derivatized.
 
     """
+
     class GeneratedHamiltonian(BaseHamiltonian):
         def __init__(self, integrals, nspin):
             """Initialize the Hamiltonian.

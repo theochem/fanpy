@@ -69,7 +69,7 @@ def test_indices_setitem():
     assert isinstance(test[param1], np.ndarray)
     assert test[param1].size == 0
     assert test[param1].dtype == int
-    test[param2] = (0, )
+    test[param2] = (0,)
     assert np.allclose(test[param2], np.array([0]))
     test[param3] = np.array([2, 1])
     assert np.allclose(test[param3], np.array([1, 2]))
@@ -116,7 +116,7 @@ def test_indices_eq():
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test[param1] = []
-    test[param2] = (0, )
+    test[param2] = (0,)
     test[param3] = np.array([True, False, False, True])
 
     test2 = ComponentParameterIndices()

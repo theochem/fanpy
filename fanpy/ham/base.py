@@ -143,9 +143,9 @@ class BaseHamiltonian:
                 )
             if ham_deriv is not None:
                 if not (
-                    isinstance(ham_deriv, np.ndarray) and
-                    ham_deriv.ndim == 1 and
-                    ham_deriv.dtype == int
+                    isinstance(ham_deriv, np.ndarray)
+                    and ham_deriv.ndim == 1
+                    and ham_deriv.dtype == int
                 ):
                     raise TypeError(
                         "Derivative indices for the Hamiltonian parameters must be given as a "

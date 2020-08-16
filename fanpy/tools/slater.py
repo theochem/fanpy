@@ -1097,7 +1097,7 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
         occ_indices = np.array(occ_indices)
         vir_indices = np.array(vir_indices)
         if not (isinstance(excite_order, (int, np.integer)) and excite_order >= 0):
-            raise TypeError('Order of excitation must be an integer greater than or equal to zero.')
+            raise TypeError("Order of excitation must be an integer greater than or equal to zero.")
 
     # def fromiter(iterator, dtype, ydim, count):
     #     return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
@@ -1108,7 +1108,7 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
     occ_indices = np.fromiter(
         it.chain.from_iterable(it.combinations(occ_indices.tolist(), excite_order)),
         int,
-        count=excite_order * int(scipy.special.comb(occ_indices.size, excite_order))
+        count=excite_order * int(scipy.special.comb(occ_indices.size, excite_order)),
     ).reshape(-1, excite_order)
     occ_indices = np.left_shift(1, occ_indices)
     if excite_order >= 2:
@@ -1117,7 +1117,7 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
     vir_indices = np.fromiter(
         it.chain.from_iterable(it.combinations(vir_indices.tolist(), excite_order)),
         int,
-        count=excite_order * int(scipy.special.comb(vir_indices.size, excite_order))
+        count=excite_order * int(scipy.special.comb(vir_indices.size, excite_order)),
     ).reshape(-1, excite_order)
     vir_indices = np.left_shift(1, vir_indices)
     if excite_order >= 2:
@@ -1164,7 +1164,7 @@ def excite_bulk_two_ab(sd, occ_alpha, occ_beta, vir_alpha, vir_beta):
     occ_indices = np.fromiter(
         it.chain.from_iterable(it.product(occ_alpha.tolist(), occ_beta.tolist())),
         int,
-        count=2*len(occ_alpha) * len(occ_beta)
+        count=2 * len(occ_alpha) * len(occ_beta),
     ).reshape(-1, 2)
     occ_indices = np.left_shift(1, occ_indices)
     occ_indices = np.bitwise_or.reduce(occ_indices.T)
@@ -1172,7 +1172,7 @@ def excite_bulk_two_ab(sd, occ_alpha, occ_beta, vir_alpha, vir_beta):
     vir_indices = np.fromiter(
         it.chain.from_iterable(it.product(vir_alpha.tolist(), vir_beta.tolist())),
         int,
-        count=2*len(vir_alpha) * len(vir_beta)
+        count=2 * len(vir_alpha) * len(vir_beta),
     ).reshape(-1, 2)
     vir_indices = np.left_shift(1, vir_indices)
     vir_indices = np.bitwise_or.reduce(vir_indices.T)

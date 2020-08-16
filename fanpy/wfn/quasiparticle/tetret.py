@@ -84,6 +84,7 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
         determinant.
 
     """
+
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
 
@@ -155,9 +156,13 @@ class AntisymmeterizedProductTetrets(BaseQuasiparticle):
 
         """
         if orbsubsets is None:
-            orbsubsets = tuple((i, j, k, l)
-                               for i in range(self.nspin) for j in range(i+1, self.nspin)
-                               for k in range(j+1, self.nspin) for l in range(k+1, self.nspin))
+            orbsubsets = tuple(
+                (i, j, k, l)
+                for i in range(self.nspin)
+                for j in range(i + 1, self.nspin)
+                for k in range(j + 1, self.nspin)
+                for l in range(k + 1, self.nspin)
+            )
         else:
             raise NotImplementedError("User provided orbital subsets is not yet supported.")
 

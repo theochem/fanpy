@@ -397,10 +397,7 @@ def make_script(
         )
     elif objective == "one_energy":  # pragma: no branch
         objective1 = "objective = EnergyOneSideProjection("
-        objective2 = (
-            "wfn, ham, param_selection=param_selection, "
-            "refwfn=pspace)\n"
-        )
+        objective2 = "wfn, ham, param_selection=param_selection, " "refwfn=pspace)\n"
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )

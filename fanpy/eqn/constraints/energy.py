@@ -19,8 +19,19 @@ class EnergyConstraint(EnergyOneSideProjection):
     #         self.ref_energy -= 2 * abs(energy_diff)
 
     #     return energy_diff
-    def __init__(self, wfn, ham, tmpfile="", param_selection=None, refwfn=None, ref_energy=-100.0,
-                 queue_size=4, base=np.e, min_diff=1e-1, simple=False):
+    def __init__(
+        self,
+        wfn,
+        ham,
+        tmpfile="",
+        param_selection=None,
+        refwfn=None,
+        ref_energy=-100.0,
+        queue_size=4,
+        base=np.e,
+        min_diff=1e-1,
+        simple=False,
+    ):
         super().__init__(wfn, ham, tmpfile=tmpfile, param_selection=param_selection, refwfn=refwfn)
         self.assign_refwfn(refwfn)
         self.ref_energy = ref_energy
@@ -42,8 +53,10 @@ class EnergyConstraint(EnergyOneSideProjection):
 
         # if calculated energy is lower than the reference, bring down reference energy
         if energy_diff <= 0:
-            print("Energy lower than reference. Adjusting reference energy: {}"
-                  "".format(self.ref_energy))
+            print(
+                "Energy lower than reference. Adjusting reference energy: {}"
+                "".format(self.ref_energy)
+            )
             self.ref_energy += self.base * energy_diff
             return energy_diff
 
@@ -51,9 +64,8 @@ class EnergyConstraint(EnergyOneSideProjection):
         if len(self.energy_diff_history) > self.queue_size:
             self.energy_diff_history.popleft()
 
-        if (
-            len(self.energy_diff_history) != self.queue_size or
-            any(i <= 0 for i in self.energy_diff_history)
+        if len(self.energy_diff_history) != self.queue_size or any(
+            i <= 0 for i in self.energy_diff_history
         ):
             return energy_diff
 
@@ -63,14 +75,18 @@ class EnergyConstraint(EnergyOneSideProjection):
         # if energy difference does not change significantly with "many" calls, adjust ref_energy
         # if energy differences are all within one order of magnitude of each other
         # keep adjusting reference until the energy difference is not within one order of magnitude
-        if np.all(np.logical_and(
-            energy_diff_order[0] - 1 < energy_diff_order,
-            energy_diff_order < energy_diff_order[0] + 1,
-        )):
+        if np.all(
+            np.logical_and(
+                energy_diff_order[0] - 1 < energy_diff_order,
+                energy_diff_order < energy_diff_order[0] + 1,
+            )
+        ):
             # bring reference closer (i.e. decrease energy difference)
             self.ref_energy = energy - self.base ** (energy_diff_order[0] - 1)
-            print("Changes to energy is much smaller than the reference energy. "
-                  "Adjusting reference energy: {}".format(self.ref_energy))
+            print(
+                "Changes to energy is much smaller than the reference energy. "
+                "Adjusting reference energy: {}".format(self.ref_energy)
+            )
             self.energy_diff_history = deque([])
 
         # if all(abs(energy - i) < 1e-3 for i in self.energy_history):

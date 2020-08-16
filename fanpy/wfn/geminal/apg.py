@@ -135,9 +135,9 @@ class APG(BaseGeminal):
 
         """
         if __debug__ and not (
-            isinstance(orbpair, tuple) and
-            len(orbpair) == 2 and
-            all(isinstance(orb, int) or np.issubdtype(orb, np.integer) for orb in orbpair)
+            isinstance(orbpair, tuple)
+            and len(orbpair) == 2
+            and all(isinstance(orb, int) or np.issubdtype(orb, np.integer) for orb in orbpair)
         ):
             raise TypeError("Orbital pair must be given as a tuple of two integers.")
         i, j = orbpair

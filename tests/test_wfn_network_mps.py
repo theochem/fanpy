@@ -310,4 +310,4 @@ def test_enable_cache():
 
     test.memory = np.inf
     test.enable_cache()
-    assert test._cache_fns["overlap"].cache_info().maxsize == 2**30
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2 ** 30

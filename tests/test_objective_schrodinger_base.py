@@ -67,9 +67,13 @@ def test_baseschrodinger_active_params():
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[
-            (param1, [False]), (param2, np.array([0])), (param3, np.array([True, False, False, True]))
-        ]
+        wfn,
+        ham,
+        param_selection=[
+            (param1, [False]),
+            (param2, np.array([0])),
+            (param3, np.array([True, False, False, True])),
+        ],
     )
     assert np.allclose(test.active_params, np.array([2, 4, 7]))
 
@@ -110,9 +114,13 @@ def test_baseschrodinger_assign_params():
     param2 = ParamContainer(np.array([2, 3]))
     param3 = ParamContainer(np.array([4, 5, 6, 7]))
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[
-            (param1, [False]), (param2, np.array([0])), (param3, np.array([True, False, False, True]))
-        ]
+        wfn,
+        ham,
+        param_selection=[
+            (param1, [False]),
+            (param2, np.array([0])),
+            (param3, np.array([True, False, False, True])),
+        ],
     )
     test.assign_params(np.array([99, 98, 97]))
     assert np.allclose(param1.params, [1])
@@ -157,7 +165,7 @@ def test_baseschrodinger_wrapped_get_overlap():
     test.indices_component_params[wfn.wfns[0]] = np.arange(wfn.wfns[0].nparams)
     assert np.allclose(
         test.wrapped_get_overlap(0b0101, deriv=True),
-        wfn.get_overlap(0b0101, deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams)))
+        wfn.get_overlap(0b0101, deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))),
     )
 
 
@@ -184,7 +192,7 @@ def test_baseschrodinger_wrapped_integrate_sd_wfn():
                 ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=np.array([0, 3, 5])),
                 ham.integrate_sd_wfn(0b0101, wfn, ham_deriv=np.array([1, 2, 4])),
             ]
-        )
+        ),
     )
 
     with pytest.raises(TypeError):
@@ -205,7 +213,7 @@ def test_baseschrodinger_wrapped_integrate_sd_wfn():
     test.indices_component_params[wfn.wfns[0]] = np.arange(wfn.wfns[0].nparams)
     assert np.allclose(
         test.wrapped_integrate_sd_wfn(0b0101, deriv=True),
-        ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams)))
+        ham.integrate_sd_wfn(0b0101, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))),
     )
 
 
@@ -229,7 +237,7 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == ham.integrate_sd_sd(0b0101, 0b0101)
     assert np.allclose(
         test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=True),
-        np.hstack([np.zeros(3), ham.integrate_sd_sd(0b0101, 0b0101, deriv=np.array([0, 1, 2]))])
+        np.hstack([np.zeros(3), ham.integrate_sd_sd(0b0101, 0b0101, deriv=np.array([0, 1, 2]))]),
     )
 
     with pytest.raises(TypeError):
@@ -254,24 +262,23 @@ def test_baseschrodinger_get_energy_one_proj():
     # sd
     for sd in sds:
         olp = wfn.get_overlap(sd)
-        integral = (ham.integrate_sd_wfn(sd, wfn))
+        integral = ham.integrate_sd_wfn(sd, wfn)
         # <SD | H | Psi> = E <SD | Psi>
         # E = <SD | H | Psi> / <SD | Psi>
         assert np.allclose(test.get_energy_one_proj(sd), integral / olp)
         # dE = d<SD | H | Psi> / <SD | Psi> - d<SD | Psi> <SD | H | Psi> / <SD | Psi>^2
         d_olp = wfn.get_overlap(sd, deriv=np.arange(6))
-        d_integral = (ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6)))
+        d_integral = ham.integrate_sd_wfn(sd, wfn, wfn_deriv=np.arange(6))
         assert np.allclose(
-            test.get_energy_one_proj(sd, deriv=True),
-            d_integral / olp - d_olp * integral / olp ** 2,
+            test.get_energy_one_proj(sd, deriv=True), d_integral / olp - d_olp * integral / olp ** 2
         )
 
     # list of sd
     for sd1, sd2 in it.combinations(sds, 2):
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = (ham.integrate_sd_wfn(sd1, wfn))
-        integral2 = (ham.integrate_sd_wfn(sd2, wfn))
+        integral1 = ham.integrate_sd_wfn(sd1, wfn)
+        integral2 = ham.integrate_sd_wfn(sd2, wfn)
         # ( f(SD1) <SD1| + f(SD2) <SD2| ) H |Psi> = E ( f(SD1) <SD1| + f(SD2) <SD2| ) |Psi>
         # f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi> = E ( f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi> )
         # E = (f(SD1) <SD1| H |Psi> + f(SD2) <SD2| H |Psi>) / (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)
@@ -297,8 +304,8 @@ def test_baseschrodinger_get_energy_one_proj():
         #       (f(SD1) <SD1|Psi> + f(SD2) <SD2|Psi>)**2
         d_olp1 = wfn.get_overlap(sd1, deriv=np.arange(6))
         d_olp2 = wfn.get_overlap(sd2, deriv=np.arange(6))
-        d_integral1 = (ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6)))
-        d_integral2 = (ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6)))
+        d_integral1 = ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6))
+        d_integral2 = ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6))
         assert np.allclose(
             test.get_energy_one_proj([sd1, sd2], deriv=True),
             (d_olp1 * integral1 + d_olp2 * integral2 + olp1 * d_integral1 + olp2 * d_integral2)
@@ -316,8 +323,8 @@ def test_baseschrodinger_get_energy_one_proj():
         coeff2 = ciwfn.get_overlap(sd2)
         olp1 = wfn.get_overlap(sd1)
         olp2 = wfn.get_overlap(sd2)
-        integral1 = (ham.integrate_sd_wfn(sd1, wfn))
-        integral2 = (ham.integrate_sd_wfn(sd2, wfn))
+        integral1 = ham.integrate_sd_wfn(sd1, wfn)
+        integral2 = ham.integrate_sd_wfn(sd2, wfn)
         # ( c_1 <SD1| + c_2 <SD2| ) H |Psi> = E ( c_1 <SD1| + c_2 <SD2| ) |Psi>
         # c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi> = E ( c_1 <SD1|Psi> + c_2 <SD2|Psi> )
         # E = (c_1 <SD1| H |Psi> + c_2 <SD2| H |Psi>) / (c_1 <SD1|Psi> + c_2 <SD2|Psi>)
@@ -335,8 +342,8 @@ def test_baseschrodinger_get_energy_one_proj():
         d_coeff2 = 0.0
         d_olp1 = wfn.get_overlap(sd1, deriv=np.arange(6))
         d_olp2 = wfn.get_overlap(sd2, deriv=np.arange(6))
-        d_integral1 = (ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6)))
-        d_integral2 = (ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6)))
+        d_integral1 = ham.integrate_sd_wfn(sd1, wfn, wfn_deriv=np.arange(6))
+        d_integral2 = ham.integrate_sd_wfn(sd2, wfn, wfn_deriv=np.arange(6))
         assert np.allclose(
             test.get_energy_one_proj(ciwfn, deriv=True),
             (
@@ -360,8 +367,8 @@ def test_baseschrodinger_get_energy_one_proj():
     coeff2 = ciwfn.get_overlap(0b1010)
     olp1 = wfn.get_overlap(0b0101)
     olp2 = wfn.get_overlap(0b1010)
-    integral1 = (ham.integrate_sd_wfn(0b0101, wfn))
-    integral2 = (ham.integrate_sd_wfn(0b1010, wfn))
+    integral1 = ham.integrate_sd_wfn(0b0101, wfn)
+    integral2 = ham.integrate_sd_wfn(0b1010, wfn)
     d_coeff1 = ciwfn.get_overlap(0b0101, np.arange(2))
     d_coeff2 = ciwfn.get_overlap(0b1010, np.arange(2))
     d_olp1 = 0
@@ -370,11 +377,7 @@ def test_baseschrodinger_get_energy_one_proj():
     d_integral2 = 0
     assert np.allclose(
         test.get_energy_one_proj(ciwfn, deriv=True),
-        (
-            d_coeff1 * integral1
-            + d_coeff2 * integral2
-        )
-        / (coeff1 * olp1 + coeff2 * olp2)
+        (d_coeff1 * integral1 + d_coeff2 * integral2) / (coeff1 * olp1 + coeff2 * olp2)
         - (d_coeff1 * olp1 + d_coeff2 * olp2)
         * (coeff1 * integral1 + coeff2 * integral2)
         / (coeff1 * olp1 + coeff2 * olp2) ** 2,
@@ -402,7 +405,7 @@ def test_baseschrodinger_get_energy_two_proj():
         olp_l = wfn.get_overlap(sd_l)
         olp_r = wfn.get_overlap(sd_r)
         olp_n = wfn.get_overlap(sd_n)
-        integral = (ham.integrate_sd_sd(sd_l, sd_r))
+        integral = ham.integrate_sd_sd(sd_l, sd_r)
         # <Psi | SDl> <SDl | H | SDr> <SDr | Psi> = E <Psi | SDn> <SDn | Psi>
         # E = <Psi | SDl> <SDl | H | SDr> <SDr | Psi> / <Psi | SDn>^2
         assert np.allclose(
@@ -443,10 +446,10 @@ def test_baseschrodinger_get_energy_two_proj():
         olp_r2 = wfn.get_overlap(sd_r2)
         olp_n1 = wfn.get_overlap(sd_n1)
         olp_n2 = wfn.get_overlap(sd_n2)
-        integral11 = (ham.integrate_sd_sd(sd_l1, sd_r1))
-        integral12 = (ham.integrate_sd_sd(sd_l1, sd_r2))
-        integral21 = (ham.integrate_sd_sd(sd_l2, sd_r1))
-        integral22 = (ham.integrate_sd_sd(sd_l2, sd_r2))
+        integral11 = ham.integrate_sd_sd(sd_l1, sd_r1)
+        integral12 = ham.integrate_sd_sd(sd_l1, sd_r2)
+        integral21 = ham.integrate_sd_sd(sd_l2, sd_r1)
+        integral22 = ham.integrate_sd_sd(sd_l2, sd_r2)
         # <Psi| (|SDl1> <SDl1| + |SDl2> <SDl2| ) H (|SDr1> <SDr1| + |SDr2> <SDr2| ) |Psi>
         # = E <Psi| (|SDn1> <SDn1| + |SDn2> <SDn2|) | Psi>
         # <Psi|SDl1> <SDl1|H|SDr1> <SDr1|Psi> + <Psi|SDl2> <SDl2|H|SDr1> <SDr1|Psi> +
@@ -556,6 +559,7 @@ def test_baseschrodinger_get_energy_one_two_proj():
     test = disable_abstract(BaseSchrodinger)(wfn, ham)
 
     from fanpy.tools.sd_list import sd_list
+
     sds = sd_list(4, 10)
     assert np.allclose(test.get_energy_one_proj(sds), test.get_energy_two_proj(sds))
 

@@ -313,9 +313,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
 
             # two sd's are the same
             if diff_order == 0:
-                output[i] = self._integrate_sd_sd_deriv_zero(
-                    x, y, shared_alpha, shared_beta
-                )
+                output[i] = self._integrate_sd_sd_deriv_zero(x, y, shared_alpha, shared_beta)
 
             # two sd's are different by single excitation
             elif diff_order == 1:
@@ -325,9 +323,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
 
             # two sd's are different by double excitation
             else:
-                output[i] = self._integrate_sd_sd_deriv_two(
-                    diff_sd1, diff_sd2, x, y
-                )
+                output[i] = self._integrate_sd_sd_deriv_two(diff_sd1, diff_sd2, x, y)
 
         if components:
             return sign * output.T
@@ -401,8 +397,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         one_electron, coulomb, exchange = 0, 0, 0
         nspatial = self.nspatial
 
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
         # get spatial indices
         spatial_a = slater.spatial_index(a, nspatial)
         spatial_b = slater.spatial_index(b, nspatial)
@@ -582,8 +578,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         one_electron, coulomb, exchange = 0, 0, 0
         nspatial = self.nspatial
 
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
         spatial_a, spatial_b = map(lambda i: slater.spatial_index(i, nspatial), [a, b])
         spin_a, spin_b = map(lambda i: int(not slater.is_alpha(i, nspatial)), [a, b])
 
@@ -3214,9 +3210,9 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                 )
             if ham_deriv is not None:
                 if not (
-                    isinstance(ham_deriv, np.ndarray) and
-                    ham_deriv.ndim == 1 and
-                    ham_deriv.dtype == int
+                    isinstance(ham_deriv, np.ndarray)
+                    and ham_deriv.ndim == 1
+                    and ham_deriv.dtype == int
                 ):
                     raise TypeError(
                         "Derivative indices for the Hamiltonian parameters must be given as a "
@@ -3323,7 +3319,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
                 for sd_exc in slater.excite_bulk_two_ab(
-                        sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
+                    sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
                 )
             ]
         ).reshape(*shape)

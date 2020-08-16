@@ -350,8 +350,8 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         one_electron, coulomb, exchange = 0, 0, 0
         nspatial = self.nspatial
 
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
         spatial_a = slater.spatial_index(a, nspatial)
         spatial_b = slater.spatial_index(b, nspatial)
 
@@ -591,9 +591,7 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
                 )
             # two sd's are different by double excitation
             else:
-                output[i] = self._integrate_sd_sd_deriv_two(
-                    diff_sd1, diff_sd2, spin_ind, x, y
-                )
+                output[i] = self._integrate_sd_sd_deriv_two(diff_sd1, diff_sd2, spin_ind, x, y)
 
         if components:
             return sign * output.T
@@ -726,8 +724,8 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         one_electron, coulomb, exchange = 0, 0, 0
         nspatial = self.nspatial
 
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
         spatial_a, spatial_b = map(lambda i: slater.spatial_index(i, nspatial), [a, b])
         spin_a, spin_b = map(lambda i: int(not slater.is_alpha(i, nspatial)), [a, b])
 
@@ -3325,9 +3323,9 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
                 )
             if ham_deriv is not None:
                 if not (
-                    isinstance(ham_deriv, np.ndarray) and
-                    ham_deriv.ndim == 1 and
-                    ham_deriv.dtype == int
+                    isinstance(ham_deriv, np.ndarray)
+                    and ham_deriv.ndim == 1
+                    and ham_deriv.dtype == int
                 ):
                     raise TypeError(
                         "Derivative indices for the Hamiltonian parameters must be given as a "
@@ -3424,13 +3422,13 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         ).reshape(*shape)
         if ham_deriv is not None:
             output[:, beta_param_indices] += np.sum(
-                self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta) *
-                overlaps_one_beta,
+                self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta)
+                * overlaps_one_beta,
                 axis=2,
             )[:, ham_deriv_beta]
             output[1, alpha_param_indices] += np.sum(
-                self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta) *
-                overlaps_one_beta,
+                self._integrate_sd_sds_deriv_one_ab(occ_alpha, occ_beta, vir_beta)
+                * overlaps_one_beta,
                 axis=1,
             )[ham_deriv_alpha]
         else:
@@ -3463,7 +3461,7 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
                 for sd_exc in slater.excite_bulk_two_ab(
-                        sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
+                    sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
                 )
             ]
         ).reshape(*shape)

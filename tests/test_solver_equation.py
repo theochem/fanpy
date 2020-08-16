@@ -72,9 +72,7 @@ def test_cma(tmp_path):
         equation.cma(EnergyOneSideProjection(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
     path = str(tmp_path / "temp.npy")
-    results = equation.cma(
-        EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100], tmpfile=path)
-    )
+    results = equation.cma(EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100], tmpfile=path))
     path = str(tmp_path / "temp_TempBaseWavefunction.npy")
     test = np.load(path)
     assert np.allclose(results["params"], test)
@@ -103,8 +101,8 @@ def test_minimize():
     assert np.allclose(results["function"], 0, atol=1e-7)
 
     del EnergyOneSideProjection.gradient
-    results = equation.minimize(EnergyOneSideProjection(
-        wfn, ham, refwfn=[0b0011, 0b1100]), use_gradient=False
+    results = equation.minimize(
+        EnergyOneSideProjection(wfn, ham, refwfn=[0b0011, 0b1100]), use_gradient=False
     )
     assert results["success"]
     assert np.allclose(results["energy"], 2)

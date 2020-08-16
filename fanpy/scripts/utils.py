@@ -169,12 +169,10 @@ def check_inputs(
         "apg",
     ]
     if wfn_type not in wfn_list:
-        raise ValueError("Wavefunction type must be one of {}.".format(', '.join(wfn_list)))
+        raise ValueError("Wavefunction type must be one of {}.".format(", ".join(wfn_list)))
 
     # check projection space
-    if not (
-        isinstance(pspace_exc, (list, tuple)) and all(isinstance(i, int) for i in pspace_exc)
-    ):
+    if not (isinstance(pspace_exc, (list, tuple)) and all(isinstance(i, int) for i in pspace_exc)):
         raise TypeError("Project space must be given as list/tuple of integers.")
     elif any(i <= 0 or i > nelec for i in pspace_exc):
         raise ValueError(

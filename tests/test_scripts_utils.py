@@ -15,23 +15,42 @@ def test_check_inputs():
         )
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            ham_noise='0'
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            ham_noise="0",
         )
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            wfn_noise='0'
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            wfn_noise="0",
         )
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            optimize_orbs=None
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            optimize_orbs=None,
         )
     with pytest.raises(TypeError):
-        check_inputs(
-            2, 1, "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0
-        )
+        check_inputs(2, 1, "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0)
     with pytest.raises(ValueError):
         check_inputs(
             2, "oneint.npy", "twoint.npy\n", "ap1rog", [1, 2], "projected", "least_squares", 0.0
@@ -50,9 +69,7 @@ def test_check_inputs():
         )
 
     with pytest.raises(ValueError):
-        check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "test", "least_squares", 0.0
-        )
+        check_inputs(2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "test", "least_squares", 0.0)
 
     with pytest.raises(ValueError):
         check_inputs(2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "test", 0.0)
@@ -70,50 +87,107 @@ def test_check_inputs():
 
     with pytest.raises(ValueError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "fci", [1, 2], "projected", "diag", 0.0,
-            optimize_orbs=True
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "fci",
+            [1, 2],
+            "projected",
+            "diag",
+            0.0,
+            optimize_orbs=True,
         )
 
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            load_orbs=1
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            load_orbs=1,
         )
     with pytest.raises(ValueError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            filename="sdf;"
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            filename="sdf;",
         )
 
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            memory=10
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            memory=10,
         )
     with pytest.raises(ValueError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            memory="10bytes"
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            memory="10bytes",
         )
 
     with pytest.raises(TypeError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            solver_kwargs=1
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            solver_kwargs=1,
         )
     with pytest.raises(ValueError):
         check_inputs(
-            2, "oneint.npy", "twoint.npy", "ap1rog", [1, 2], "projected", "least_squares", 0.0,
-            wfn_kwargs="sdfdsf;"
+            2,
+            "oneint.npy",
+            "twoint.npy",
+            "ap1rog",
+            [1, 2],
+            "projected",
+            "least_squares",
+            0.0,
+            wfn_kwargs="sdfdsf;",
         )
 
 
 def test_parser():
     "Test fanpy.scripts.utils.parser."
-    args = parser.parse_args([
-        "--nelec", "1", "--one_int_file", "oneint.npy", "--two_int_file", "twoint.npy",
-        "--wfn_type", "ap1rog"
-    ])
+    args = parser.parse_args(
+        [
+            "--nelec",
+            "1",
+            "--one_int_file",
+            "oneint.npy",
+            "--two_int_file",
+            "twoint.npy",
+            "--wfn_type",
+            "ap1rog",
+        ]
+    )
     assert args.nelec == 1
     assert args.one_int_file == "oneint.npy"
     assert args.two_int_file == "twoint.npy"

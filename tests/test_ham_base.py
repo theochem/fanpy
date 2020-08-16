@@ -8,6 +8,7 @@ from utils import disable_abstract
 
 class TestBaseHamiltonian(BaseHamiltonian):
     """Empty container class."""
+
     def __init__(self):
         """Fake init."""
 

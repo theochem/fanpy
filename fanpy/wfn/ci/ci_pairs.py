@@ -126,12 +126,7 @@ class CIPairs(DOCI):
 
         # create AP1roG
         ap1rog = AP1roG(
-            self.nelec,
-            self.nspin,
-            ngem=None,
-            orbpairs=None,
-            ref_sd=ref_sd,
-            params=None,
+            self.nelec, self.nspin, ngem=None, orbpairs=None, ref_sd=ref_sd, params=None
         )
         # fill empty geminal coefficient
         gem_coeffs = np.zeros(ap1rog.params.shape)

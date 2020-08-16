@@ -16,6 +16,7 @@ def test_generate_fci_cimatrix_h2_631gdp():
     """
     pytest.importorskip("psi4")
     from fanpy.tools.wrapper.psi4 import hartreefock
+
     hf_data = hartreefock(find_datafile("data_h2.xyz"), "6-31gss")
 
     nelec = 2

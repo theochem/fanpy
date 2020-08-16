@@ -259,9 +259,9 @@ class BaseGeminal(BaseWavefunction):
         for i, orbpair in enumerate(orbpairs):
             if __debug__:
                 if not (
-                    isinstance(orbpair, (list, tuple)) and
-                    len(orbpair) == 2 and
-                    all(isinstance(ind, int) for ind in orbpair)
+                    isinstance(orbpair, (list, tuple))
+                    and len(orbpair) == 2
+                    and all(isinstance(ind, int) for ind in orbpair)
                 ):
                     raise TypeError("Each orbital pair must be a 2-tuple/list of integers.")
                 if orbpair[0] == orbpair[1]:
@@ -576,6 +576,6 @@ class BaseGeminal(BaseWavefunction):
             Slater determinant with respect to which the wavefunction is normalized.
 
         """
-        norm = sum(self.get_overlap(i)**2 for i in pspace)
-        self.assign_params(self.params * norm ** (- 0.5 / self.ngem))
+        norm = sum(self.get_overlap(i) ** 2 for i in pspace)
+        self.assign_params(self.params * norm ** (-0.5 / self.ngem))
         self.clear_cache()

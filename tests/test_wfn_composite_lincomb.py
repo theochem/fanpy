@@ -158,7 +158,7 @@ def test_get_overlap():
     )
     assert np.allclose(
         test.get_overlap(0b0101, deriv=(test, np.array([0, 1]))),
-        np.array([test.wfns[0].get_overlap(0b0101), test.wfns[1].get_overlap(0b0101)])
+        np.array([test.wfns[0].get_overlap(0b0101), test.wfns[1].get_overlap(0b0101)]),
     )
 
 

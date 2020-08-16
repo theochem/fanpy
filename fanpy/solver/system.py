@@ -133,11 +133,13 @@ def root(objective, **kwargs):
     if objective.num_eqns > objective.active_params.size:
         print("Too many equations for root solver. Excess equations will be truncated.")
         num_constraints = len(objective.constraints)
-        objective.pspace = objective.pspace[:objective.active_params.size - num_constraints]
-        objective.eqn_weights = np.hstack([
-            objective.eqn_weights[:objective.active_params.size - num_constraints],
-            objective.eqn_weights[-num_constraints:],
-        ])
+        objective.pspace = objective.pspace[: objective.active_params.size - num_constraints]
+        objective.eqn_weights = np.hstack(
+            [
+                objective.eqn_weights[: objective.active_params.size - num_constraints],
+                objective.eqn_weights[-num_constraints:],
+            ]
+        )
 
     kwargs.setdefault("method", "hybr")
     kwargs.setdefault("options", {})

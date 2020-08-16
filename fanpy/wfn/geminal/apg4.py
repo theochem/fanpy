@@ -7,11 +7,20 @@ from fanpy.wfn.geminal.apg import APG
 
 class APG4(APG):
     def __init__(
-            self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None,
-            tol=1e-4, num_matchings=2
+        self,
+        nelec,
+        nspin,
+        dtype=None,
+        memory=None,
+        ngem=None,
+        orbpairs=None,
+        params=None,
+        tol=1e-4,
+        num_matchings=2,
     ):
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory, ngem=ngem, orbpairs=orbpairs,
-                         params=params)
+        super().__init__(
+            nelec, nspin, dtype=dtype, memory=memory, ngem=ngem, orbpairs=orbpairs, params=params
+        )
         self.tol = tol
         self.num_matchings = num_matchings
         self.adjacency = None

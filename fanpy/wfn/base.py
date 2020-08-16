@@ -305,7 +305,7 @@ class BaseWavefunction:
         # pylint: disable=C0103
         # assign memory allocated to cache
         if self.memory == np.inf:
-            maxsize = 2**30
+            maxsize = 2 ** 30
         elif include_derivative:
             maxsize = int(self.memory / 8 / (self.nparams + 1))
         else:

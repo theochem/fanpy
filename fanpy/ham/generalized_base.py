@@ -90,10 +90,7 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
 
         """
         if __debug__:
-            if not (
-                isinstance(one_int, np.ndarray)
-                and isinstance(two_int, np.ndarray)
-            ):
+            if not (isinstance(one_int, np.ndarray) and isinstance(two_int, np.ndarray)):
                 raise TypeError("Integrals must be given as a numpy array")
             if not (one_int.ndim == 2 and one_int.shape[0] == one_int.shape[1]):
                 raise ValueError("One-electron integrals be a (two-dimensional) square matrix.")
@@ -154,9 +151,9 @@ class BaseGeneralizedHamiltonian(BaseHamiltonian):
             if not (
                 isinstance(theta, (int, float))
                 or (
-                    isinstance(theta, np.ndarray) and
-                    theta.dtype in [int, float] and
-                    theta.size == 1
+                    isinstance(theta, np.ndarray)
+                    and theta.dtype in [int, float]
+                    and theta.size == 1
                 )
             ):
                 raise TypeError("Angle `theta` must be a float or numpy array of one float.")

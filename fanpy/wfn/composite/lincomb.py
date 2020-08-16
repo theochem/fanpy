@@ -257,19 +257,19 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         if __debug__:
             if not (
-                isinstance(deriv, tuple) and
-                len(deriv) == 2 and
-                isinstance(deriv[0], BaseWavefunction) and
-                isinstance(deriv[1], np.ndarray) and
-                deriv[1].ndim == 1 and
-                np.issubdtype(deriv[1].dtype, np.integer)
+                isinstance(deriv, tuple)
+                and len(deriv) == 2
+                and isinstance(deriv[0], BaseWavefunction)
+                and isinstance(deriv[1], np.ndarray)
+                and deriv[1].ndim == 1
+                and np.issubdtype(deriv[1].dtype, np.integer)
             ):
                 raise TypeError(
                     "Derivative indices must be given as a 2-tuple whose first element is the "
                     "wavefunction and the second elment is the one-dimensional numpy array of "
                     "integer indices."
                 )
-            if deriv[0] not in (self, ) + self.wfns:
+            if deriv[0] not in (self,) + self.wfns:
                 raise ValueError(
                     "Selected wavefunction (for derivatization) is not one of the composite "
                     "wavefunction or its underlying wavefunctions."

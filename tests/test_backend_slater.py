@@ -676,7 +676,8 @@ def test_sign_excite_one():
         slater.sign_excite_one(occ_indices, vir_indices),
         [
             slater.sign_excite(slater.create(0, *occ_indices), [i], [j])
-            for i in occ_indices for j in vir_indices
+            for i in occ_indices
+            for j in vir_indices
         ],
     )
 
@@ -700,9 +701,9 @@ def test_sign_excite_two():
         [
             slater.sign_excite(slater.create(0, *occ_indices), [i1, i2], [j2, j1])
             for i, i1 in enumerate(occ_indices)
-            for i2 in occ_indices[i + 1:]
+            for i2 in occ_indices[i + 1 :]
             for j, j1 in enumerate(vir_indices)
-            for j2 in vir_indices[j + 1:]
+            for j2 in vir_indices[j + 1 :]
         ],
     )
 

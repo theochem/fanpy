@@ -6,11 +6,20 @@ from fanpy.wfn.geminal.apg import APG
 
 class APG3(APG):
     def __init__(
-            self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None,
-            tol=1e-4, num_matchings=1
+        self,
+        nelec,
+        nspin,
+        dtype=None,
+        memory=None,
+        ngem=None,
+        orbpairs=None,
+        params=None,
+        tol=1e-4,
+        num_matchings=1,
     ):
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory, ngem=ngem, orbpairs=orbpairs,
-                         params=params)
+        super().__init__(
+            nelec, nspin, dtype=dtype, memory=memory, ngem=ngem, orbpairs=orbpairs, params=params
+        )
         self.tol = tol
         self.num_matchings = num_matchings
         self.connectivity = None
@@ -38,7 +47,7 @@ class APG3(APG):
             key=lambda pmatch_sign: np.prod([weights[self.get_col_ind(i)] for i in pmatch_sign[0]]),
             reverse=True,
         )
-        yield from pmatch_sign[:self.num_matchings]
+        yield from pmatch_sign[: self.num_matchings]
 
     def clear_cache(self, key=None):
         super().clear_cache(key=key)

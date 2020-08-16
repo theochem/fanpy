@@ -61,6 +61,7 @@ class DeterminantRatio(BaseWavefunction):
         determinant.
 
     """
+
     def __init__(
         self, nelec, nspin, memory=None, numerator_mask=None, params=None, enable_cache=True
     ):
@@ -114,8 +115,9 @@ class DeterminantRatio(BaseWavefunction):
             numerator_mask = np.array([True, False])
 
         if __debug__ and not (
-            isinstance(numerator_mask, np.ndarray) and
-            numerator_mask.dtype == bool and numerator_mask.size > 0
+            isinstance(numerator_mask, np.ndarray)
+            and numerator_mask.dtype == bool
+            and numerator_mask.size > 0
         ):
             raise TypeError(
                 "Mask for the numerator must be given as a boolean numpy array with one or more "
@@ -214,7 +216,7 @@ class DeterminantRatio(BaseWavefunction):
                     "matrices."
                 )
 
-        flat_matrix = self.params[index * self.matrix_size: (index + 1) * self.matrix_size]
+        flat_matrix = self.params[index * self.matrix_size : (index + 1) * self.matrix_size]
         return flat_matrix.reshape(self.matrix_shape)
 
     def decompose_index(self, param_index):
@@ -303,8 +305,12 @@ class DeterminantRatio(BaseWavefunction):
 
         """
         # NOTE: all of the rows are assumed to be selected when the columns are selected.
-        determinants = np.array([np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
-                                 for i in range(self.num_matrices)])
+        determinants = np.array(
+            [
+                np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
+                for i in range(self.num_matrices)
+            ]
+        )
         numerator = np.prod(determinants[self.numerator_mask])
         denominator = np.prod(determinants[np.logical_not(self.numerator_mask)])
         return numerator / denominator
@@ -329,8 +335,13 @@ class DeterminantRatio(BaseWavefunction):
             # compute determinants of matrices that are not being derivatized
             # NOTE: all of the rows are assumed to be selected when the columns are selected.
             # ASSUME: selected matrix is square (i.e. has same number of electrons)
-            determinants = np.array([np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
-                                    for i in range(self.num_matrices) if i != deriv_matrix])
+            determinants = np.array(
+                [
+                    np.linalg.det(self.get_matrix(i)[:, self.get_columns(sd, i)])
+                    for i in range(self.num_matrices)
+                    if i != deriv_matrix
+                ]
+            )
             new_numerator_mask = np.delete(self.numerator_mask, deriv_matrix)
             numerator = np.prod(determinants[new_numerator_mask])
             denominator = np.prod(determinants[np.logical_not(new_numerator_mask)])
@@ -360,11 +371,9 @@ class DeterminantRatio(BaseWavefunction):
                     deriv_determinant = sign_row * sign_col * minor
 
                     index = (
-                        deriv_matrix *
-                        self.matrix_size +
-                        deriv_row *
-                        self.matrix_shape[1] +
-                        deriv_col
+                        deriv_matrix * self.matrix_size
+                        + deriv_row * self.matrix_shape[1]
+                        + deriv_col
                     )
                     # if derivatized matrix is a numerator
                     if self.numerator_mask[deriv_matrix]:
@@ -372,11 +381,11 @@ class DeterminantRatio(BaseWavefunction):
                     # if derivatized matrix is a denominator
                     else:
                         output[index] = (
-                            numerator /
-                            denominator *
-                            (-1) *
-                            old_determinant**(-2) *
-                            deriv_determinant
+                            numerator
+                            / denominator
+                            * (-1)
+                            * old_determinant ** (-2)
+                            * deriv_determinant
                         )
         return output
 

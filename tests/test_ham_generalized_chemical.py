@@ -183,20 +183,16 @@ def test_integrate_sd_sd_trivial():
     assert np.allclose((0, 0, 0), test.integrate_sd_sd(0b000111, 0b111000, components=True))
     assert np.allclose(
         (0, two_int[0, 1, 2, 3], -two_int[0, 1, 3, 2]),
-        test.integrate_sd_sd(0b100011, 0b101100, components=True)
+        test.integrate_sd_sd(0b100011, 0b101100, components=True),
     )
     assert two_int[0, 1, 2, 3] - two_int[0, 1, 3, 2] == test.integrate_sd_sd(
         0b100011, 0b101100, components=False
     )
-    assert np.allclose(
-        (one_int[0, 0], 0, 0), test.integrate_sd_sd(0b1, 0b1, components=True)
-    )
-    assert np.allclose(
-        (one_int[0, 1], 0, 0), test.integrate_sd_sd(0b1, 0b10, components=True)
-    )
+    assert np.allclose((one_int[0, 0], 0, 0), test.integrate_sd_sd(0b1, 0b1, components=True))
+    assert np.allclose((one_int[0, 1], 0, 0), test.integrate_sd_sd(0b1, 0b10, components=True))
     assert np.allclose(
         (0, -two_int[1, 4, 1, 3] + two_int[0, 4, 0, 3], two_int[1, 4, 3, 1] - two_int[0, 4, 3, 0]),
-        test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel()
+        test.integrate_sd_sd(0b110001, 0b101010, deriv=np.array([0]), components=True).ravel(),
     )
 
     with pytest.raises(TypeError):
@@ -798,9 +794,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
     wfn.wfns[1].assign_params(np.random.rand(wfn.wfns[1].nparams))
 
     def objective(params):
-        temp_wfn = LinearCombinationWavefunction(
-            3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)]
-        )
+        temp_wfn = LinearCombinationWavefunction(3, 6, [CIWavefunction(3, 6), CIWavefunction(3, 6)])
         temp_wfn.assign_params(wfn.params.copy())
         temp_wfn.wfns[0].assign_params(params.copy())
         temp_wfn.wfns[1].assign_params(wfn.wfns[1].params.copy())
@@ -810,7 +804,7 @@ def test_integrate_sd_wfn_deriv_fdiff():
         nd.Gradient(objective)(wfn.wfns[0].params),
         ham.integrate_sd_wfn(
             0b001011, wfn, wfn_deriv=(wfn.wfns[0], np.arange(wfn.wfns[0].nparams))
-        )
+        ),
     )
 
 

@@ -135,7 +135,8 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
         cycles = list(reversed(range(1, n + 1)))
         # cycles keeps track of the number of swaps and the positions of elements that are swapped
         yield (  # pragma: no branch
-            tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+            tuple(zip(indices_one, (pool[i] for i in indices))),
+            sign * orig_sign,
         )
         # NOTE: to obtain the signature, the jumbld pair structure must be unzipped, then sorted
         #       from largest to smallest. orig_sign accounts for this transposition/permutation
@@ -158,7 +159,8 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
                     # require x+(x+1)=2x+1 swaps
                     sign *= -1
                     yield (  # pragma: no branch
-                        tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+                        tuple(zip(indices_one, (pool[i] for i in indices))),
+                        sign * orig_sign,
                     )
                     break
             else:

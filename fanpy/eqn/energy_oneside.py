@@ -208,10 +208,7 @@ class EnergyOneSideProjection(BaseSchrodinger):
         if refwfn is None:
             self.refwfn = tuple(
                 sd_list.sd_list(
-                    self.wfn.nelec,
-                    self.wfn.nspin,
-                    spin=self.wfn.spin,
-                    seniority=self.wfn.seniority,
+                    self.wfn.nelec, self.wfn.nspin, spin=self.wfn.spin, seniority=self.wfn.seniority
                 )
             )
             # break out of function

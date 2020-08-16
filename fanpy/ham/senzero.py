@@ -113,9 +113,9 @@ class SeniorityZeroHamiltonian(RestrictedMolecularHamiltonian):
                 )
             if ham_deriv is not None:
                 if not (
-                    isinstance(ham_deriv, np.ndarray) and
-                    ham_deriv.ndim == 1 and
-                    ham_deriv.dtype == int
+                    isinstance(ham_deriv, np.ndarray)
+                    and ham_deriv.ndim == 1
+                    and ham_deriv.dtype == int
                 ):
                     raise TypeError(
                         "Derivative indices for the Hamiltonian parameters must be given as a "
@@ -248,8 +248,8 @@ class SeniorityZeroHamiltonian(RestrictedMolecularHamiltonian):
             )
         # two sd's are different by double excitation
         else:
-            a, = diff_sd1
-            b, = diff_sd2
+            (a,) = diff_sd1
+            (b,) = diff_sd2
             spatial_a = slater.spatial_index(a, nspatial)
             spatial_b = slater.spatial_index(b, nspatial)
 

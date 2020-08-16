@@ -558,12 +558,14 @@ def test_jacobi_get_overlap_der():
     # 0b0101 uses [[0, 0, 1, 0],
     #              [-sin, 0, 0, cos]]
     assert np.isclose(
-        test.get_overlap(0b1100, deriv=(test, np.array([0]))), (cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b1100])
+        test.get_overlap(0b1100, deriv=(test, np.array([0]))),
+        (cos * wfn_sd_coeff[0b0101] - sin * wfn_sd_coeff[0b1100]),
     )
     # 0b0011 uses [[0, 1, 0, 0]],
     #              [-sin, 0, 0, cos]]
     assert np.isclose(
-        test.get_overlap(0b1010, deriv=(test, np.array([0]))), (cos * wfn_sd_coeff[0b0011] - sin * wfn_sd_coeff[0b1010])
+        test.get_overlap(0b1010, deriv=(test, np.array([0]))),
+        (cos * wfn_sd_coeff[0b0011] - sin * wfn_sd_coeff[0b1010]),
     )
 
     test.assign_jacobi_indices((0, 2))
@@ -807,12 +809,7 @@ def test_jacobi_compare_nonorth():
 
     # one rotation
     jacobi = JacobiWavefunction(
-        nelec,
-        nspin,
-        doci,
-        memory=doci.memory,
-        orbtype="restricted",
-        jacobi_indices=(0, 1),
+        nelec, nspin, doci, memory=doci.memory, orbtype="restricted", jacobi_indices=(0, 1)
     )
     nonorth = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory)
 
@@ -930,11 +927,7 @@ def test_jacobi_energy():
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == "nonorth":
             wfn = NonorthWavefunction(
-                nelec,
-                nspin,
-                doci,
-                memory=doci.memory,
-                params=jacobi.jacobi_rotation,
+                nelec, nspin, doci, memory=doci.memory, params=jacobi.jacobi_rotation
             )
         norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
         if expectation_type == "ci matrix":
@@ -947,9 +940,7 @@ def test_jacobi_energy():
                 / norm
             )
         elif expectation_type == "projected":
-            return (
-                sum(wfn.get_overlap(sd) * ham.integrate_sd_wfn(sd, wfn) for sd in sds) / norm
-            )
+            return sum(wfn.get_overlap(sd) * ham.integrate_sd_wfn(sd, wfn) for sd in sds) / norm
 
     for orbpair in it.combinations(range(4), 2):
         theta = np.pi * (np.random.random() - 0.5)

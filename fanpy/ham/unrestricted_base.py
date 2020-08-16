@@ -119,8 +119,8 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                     "Each block of one-electron integrals be a (two-dimensional) square " "matrix."
                 )
             if not all(
-                i.ndim == 4 and
-                i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3] for i in two_int
+                i.ndim == 4 and i.shape[0] == i.shape[1] == i.shape[2] == i.shape[3]
+                for i in two_int
             ):
                 raise ValueError(
                     "Each block of two-electron integrals must have four-dimensional "
@@ -174,7 +174,8 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
                 raise ValueError("Indices must be different.")
             if not (0 <= jacobi_indices[0] < self.nspin and 0 <= jacobi_indices[1] < self.nspin):
                 raise ValueError(
-                    "Indices must be greater than or equal to 0 and less than the number " "of rows."
+                    "Indices must be greater than or equal to 0 and less than the number "
+                    "of rows."
                 )
             if jacobi_indices[0] // num_orbs != jacobi_indices[1] // num_orbs:
                 raise ValueError("Indices must select from orbitals of same spin.")

@@ -312,9 +312,7 @@ class MatrixProductState(BaseWavefunction):
             #       last one)
             #       assumes that there are K matrices
             matrices = [np.zeros(self.get_matrix_shape(0))]
-            matrices += [
-                np.zeros(self.get_matrix_shape(1)) for i in range(self.nspatial - 2)
-            ]
+            matrices += [np.zeros(self.get_matrix_shape(1)) for i in range(self.nspatial - 2)]
             matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1))]
 
             ground_sd = slater.ground(self.nelec, self.nspin)
@@ -509,12 +507,12 @@ class MatrixProductState(BaseWavefunction):
                 start_index = D * n
                 end_index = start_index + D
             elif k < K - 1:
-                start_index = 4 * D + 4 * D**2 * (k - 1) + D**2 * n
-                end_index = start_index + D**2
+                start_index = 4 * D + 4 * D ** 2 * (k - 1) + D ** 2 * n
+                end_index = start_index + D ** 2
             else:
-                start_index = 4 * D + 4 * D**2 * (k - 1) + D * n
+                start_index = 4 * D + 4 * D ** 2 * (k - 1) + D * n
                 end_index = start_index + D
-            output[start_index : end_index] = np.ravel(deriv_block)
+            output[start_index:end_index] = np.ravel(deriv_block)
         return output[deriv]
 
     def enable_cache(self, include_derivative=True):
@@ -538,7 +536,7 @@ class MatrixProductState(BaseWavefunction):
         """
         # assign memory allocated to cache
         if self.memory == np.inf:
-            maxsize = 2**30
+            maxsize = 2 ** 30
         elif include_derivative:
             maxsize = int(self.memory / 8 / (self.dimension ** 2 + 1))
         else:

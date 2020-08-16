@@ -23,7 +23,7 @@ def test_localenergy_init():
     assert test.indices_component_params == indices
     assert isinstance(test.step_print, bool) and test.step_print
     assert isinstance(test.step_save, bool) and test.step_save
-    assert test.pspace == (0b0101, )
+    assert test.pspace == (0b0101,)
 
 
 def test_localenergy_assign_pspace():
@@ -63,7 +63,7 @@ def test_localenergy_objective():
     test3 = EnergyOneSideProjection(wfn, ham, refwfn=(0b0110001100,))
     assert np.allclose(
         test.objective(test.active_params),
-        test2.objective(test2.active_params) + test3.objective(test3.active_params)
+        test2.objective(test2.active_params) + test3.objective(test3.active_params),
     )
 
     test = LocalEnergy(
@@ -71,7 +71,7 @@ def test_localenergy_objective():
     )
     assert np.allclose(
         test.objective(test.active_params),
-        test2.objective(test2.active_params) + test3.objective(test3.active_params)
+        test2.objective(test2.active_params) + test3.objective(test3.active_params),
     )
 
 

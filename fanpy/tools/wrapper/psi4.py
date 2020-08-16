@@ -49,7 +49,7 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
 
     mints = psi4.core.MintsHelper(hf_wfn.basisset())
     one_int = np.asarray(mints.ao_kinetic()) + np.asarray(mints.ao_potential())
-    one_int = np.einsum('uj,vi,uv', npC, npC, one_int)
+    one_int = np.einsum("uj,vi,uv", npC, npC, one_int)
     two_int = np.asarray(mints.mo_eri(C, C, C, C))
     two_int = two_int.swapaxes(1, 2)
 

@@ -171,9 +171,7 @@ def test_doci_h2_hf_631gdp_slow():
     # two_int = np.einsum('abkl,kc->abcl', two_int, orb_rot)
     # two_int = np.einsum('abcl,ld->abcd', two_int, orb_rot)
 
-    ham = SeniorityZeroHamiltonian(
-        one_int, two_int, params=np.random.rand(45)
-    )
+    ham = SeniorityZeroHamiltonian(one_int, two_int, params=np.random.rand(45))
     obj = EnergyOneSideProjection(
         doci,
         ham,

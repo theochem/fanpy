@@ -315,8 +315,8 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
         shared_indices = shared_indices.astype(int)
         one_electron = self.one_int[a, b]
         coulomb = np.sum(self.two_int[shared_indices, a, shared_indices, b])
@@ -489,9 +489,7 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
                 )
             # two sd's are different by double excitation
             else:
-                output[i] = self._integrate_sd_sd_deriv_two(
-                    diff_sd1, diff_sd2, x, y
-                )
+                output[i] = self._integrate_sd_sd_deriv_two(diff_sd1, diff_sd2, x, y)
 
         if components:
             return sign * output.T
@@ -576,8 +574,8 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
 
         """
         # pylint: disable=C0103
-        a, = diff_sd1
-        b, = diff_sd2
+        (a,) = diff_sd1
+        (b,) = diff_sd2
 
         one_electron, coulomb, exchange = 0, 0, 0
         shared_indices = shared_indices.astype(int)
@@ -1542,9 +1540,9 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
                 )
             if ham_deriv is not None:
                 if not (
-                    isinstance(ham_deriv, np.ndarray) and
-                    ham_deriv.ndim == 1 and
-                    ham_deriv.dtype == int
+                    isinstance(ham_deriv, np.ndarray)
+                    and ham_deriv.ndim == 1
+                    and ham_deriv.dtype == int
                 ):
                     raise TypeError(
                         "Derivative indices for the Hamiltonian parameters must be given as a "

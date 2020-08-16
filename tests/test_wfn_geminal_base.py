@@ -167,7 +167,7 @@ def test_gem_default_params():
     test.assign_nspin(6)
     test.assign_orbpairs()
     test.assign_ngem(3)
-    test._cache_fns ={}
+    test._cache_fns = {}
     test.assign_params()
     np.allclose(
         test.params,
@@ -314,7 +314,7 @@ def test_gem_compute_permanent():
     # row inds
     assert np.equal(
         test.compute_permanent(col_inds=np.array((1, 2)), row_inds=np.array([0, 1])),
-        1 * 17 + 16 * 2
+        1 * 17 + 16 * 2,
     )
     # ryser
     assert np.equal(
@@ -329,7 +329,7 @@ def test_gem_compute_permanent():
     # one by one matrix derivatized
     assert np.equal(
         test.compute_permanent(col_inds=np.array([0]), row_inds=np.array([0]), deriv=np.array([0])),
-        1
+        1,
     )
 
 
@@ -370,7 +370,8 @@ def test_gem_get_overlap():
             BaseGeminal,
             dict_overwrite={
                 "generate_possible_orbpairs": lambda self, occ_indices: [
-                    (((0, 1), (2, 3)), 1) if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
+                    (((0, 1), (2, 3)), 1)
+                    if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
                     else ((), 1)
                 ]
             },
@@ -423,7 +424,8 @@ def test_normalize():
             BaseGeminal,
             dict_overwrite={
                 "generate_possible_orbpairs": lambda self, occ_indices: [
-                    (((0, 1), (2, 3)), 1) if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
+                    (((0, 1), (2, 3)), 1)
+                    if tuple(occ_indices.tolist()) == (0, 1, 2, 3)
                     else ((), 1)
                 ]
             },

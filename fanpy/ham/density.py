@@ -333,8 +333,8 @@ def density_matrix(
                         add_two_density(two_densities, j, i, i, j, -val, orbtype=orbtype)
             # if single excitation
             elif len(left_diff) == 1:
-                i, = left_diff
-                k, = right_diff
+                (i,) = left_diff
+                (k,) = right_diff
                 add_one_density(one_densities, i, k, val, orbtype=orbtype)
                 add_one_density(one_densities, k, i, val, orbtype=orbtype)
                 for j in shared_indices:

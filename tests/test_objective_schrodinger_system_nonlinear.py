@@ -105,7 +105,7 @@ def test_system_assign_eqn_weights():
     test.assign_refwfn()
     test.indices_component_params = ComponentParameterIndices()
     test.indices_component_params[test.wfn] = np.arange(test.wfn.nparams)
-    test.energy_type = 'compute'
+    test.energy_type = "compute"
     test.assign_constraints()
 
     test.assign_eqn_weights()
@@ -152,7 +152,9 @@ def test_system_assign_constraints():
     with pytest.raises(TypeError):
         test.assign_constraints([norm_constraint, lambda x: None])
     norm_constraint.indices_component_params = ComponentParameterIndices()
-    norm_constraint.indices_component_params[norm_constraint.wfn] = np.arange(norm_constraint.wfn.nparams - 1)
+    norm_constraint.indices_component_params[norm_constraint.wfn] = np.arange(
+        norm_constraint.wfn.nparams - 1
+    )
     with pytest.raises(ValueError):
         test.assign_constraints(norm_constraint)
     with pytest.raises(ValueError):

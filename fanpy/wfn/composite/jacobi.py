@@ -100,14 +100,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
     """
 
     def __init__(
-        self,
-        nelec,
-        nspin,
-        wfn,
-        memory=None,
-        params=None,
-        orbtype=None,
-        jacobi_indices=None,
+        self, nelec, nspin, wfn, memory=None, params=None, orbtype=None, jacobi_indices=None
     ):
         """Initialize the wavefunction.
 
@@ -307,7 +300,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
                 jacobi_indices[1] < self.nspatial
             ):
                 raise ValueError(
-                    "If the orbitals are unrestricted, the alpha and beta orbitals cannot " "be mixed."
+                    "If the orbitals are unrestricted, the alpha and beta orbitals cannot "
+                    "be mixed."
                 )
 
         if jacobi_indices[0] > jacobi_indices[1]:
@@ -716,12 +710,12 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")
             if not (
-                isinstance(deriv, tuple) and
-                len(deriv) == 2 and
-                isinstance(deriv[0], BaseWavefunction) and
-                isinstance(deriv[1], np.ndarray) and
-                deriv[1].ndim == 1 and
-                np.issubdtype(deriv[1].dtype, np.integer)
+                isinstance(deriv, tuple)
+                and len(deriv) == 2
+                and isinstance(deriv[0], BaseWavefunction)
+                and isinstance(deriv[1], np.ndarray)
+                and deriv[1].ndim == 1
+                and np.issubdtype(deriv[1].dtype, np.integer)
             ):
                 raise TypeError(
                     "Derivative indices must be given as a 2-tuple whose first element is the "

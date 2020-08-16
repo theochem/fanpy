@@ -21,9 +21,9 @@ def test_energyvariational_init():
     assert test.indices_component_params == indices
     assert isinstance(test.step_print, bool) and test.step_print
     assert isinstance(test.step_save, bool) and test.step_save
-    assert test.pspace_l == (0b0101, )
-    assert test.pspace_r == (0b0101, )
-    assert test.pspace_n == (0b0101, )
+    assert test.pspace_l == (0b0101,)
+    assert test.pspace_r == (0b0101,)
+    assert test.pspace_n == (0b0101,)
 
 
 def test_energyvariational_assign_pspace():

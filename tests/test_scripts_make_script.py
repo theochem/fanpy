@@ -32,111 +32,194 @@ def test_make_script(tmp_path):
 
     for objective in ["least_squares", "variational", "one_energy"]:
         make_script(
-            2, oneint, twoint, "ap1rog", objective=objective, solver="minimize",
-            filename=script_path
+            2,
+            oneint,
+            twoint,
+            "ap1rog",
+            objective=objective,
+            solver="minimize",
+            filename=script_path,
         )
         subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "apig", objective="projected", solver="least_squares",
-        filename=script_path, solver_kwargs=""
+        2,
+        oneint,
+        twoint,
+        "apig",
+        objective="projected",
+        solver="least_squares",
+        filename=script_path,
+        solver_kwargs="",
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "apig", objective="variational", solver="cma",
-        filename=script_path
+        2, oneint, twoint, "apig", objective="variational", solver="cma", filename=script_path
     )
     subprocess.check_output(["python", script_path])
     make_script(
-        2, oneint, twoint, "apig", objective="variational", solver="cma",
-        filename=script_path, solver_kwargs=""
-    )
-    subprocess.check_output(["python", script_path])
-
-    make_script(
-        2, oneint, twoint, "apig", objective="projected", solver="root",
-        filename=script_path
-    )
-    subprocess.check_output(["python", script_path])
-    make_script(
-        2, oneint, twoint, "apig", objective="projected", solver="root",
-        filename=script_path, solver_kwargs=""
+        2,
+        oneint,
+        twoint,
+        "apig",
+        objective="variational",
+        solver="cma",
+        filename=script_path,
+        solver_kwargs="",
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "doci", objective="variational", solver="diag",
-        filename=script_path
+        2, oneint, twoint, "apig", objective="projected", solver="root", filename=script_path
+    )
+    subprocess.check_output(["python", script_path])
+    make_script(
+        2,
+        oneint,
+        twoint,
+        "apig",
+        objective="projected",
+        solver="root",
+        filename=script_path,
+        solver_kwargs="",
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, solver_kwargs=""
+        2, oneint, twoint, "doci", objective="variational", solver="diag", filename=script_path
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, memory="2gb"
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        solver_kwargs="",
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, wfn_noise=0.2
-    )
-    subprocess.check_output(["python", script_path])
-    make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, ham_noise=0.2
-    )
-    subprocess.check_output(["python", script_path])
-
-    make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, pspace_exc=[1, 2]
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        memory="2gb",
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, optimize_orbs=True
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        wfn_noise=0.2,
+    )
+    subprocess.check_output(["python", script_path])
+    make_script(
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        ham_noise=0.2,
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, save_chk=str(tmp_path / "checkpoint.npy"), optimize_orbs=True
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        pspace_exc=[1, 2],
+    )
+    subprocess.check_output(["python", script_path])
+
+    make_script(
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        optimize_orbs=True,
+    )
+    subprocess.check_output(["python", script_path])
+
+    make_script(
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        save_chk=str(tmp_path / "checkpoint.npy"),
+        optimize_orbs=True,
     )
     subprocess.check_output(["python", script_path])
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path, load_wfn=str(tmp_path / "checkpoint_AP1roG.npy")
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
+        load_wfn=str(tmp_path / "checkpoint_AP1roG.npy"),
     )
     subprocess.check_output(["python", script_path])
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
         filename=script_path,
         load_ham=str(tmp_path / "checkpoint_RestrictedMolecularHamiltonian.npy"),
     )
     subprocess.check_output(["python", script_path])
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
         filename=script_path,
         load_ham=str(tmp_path / "checkpoint_RestrictedMolecularHamiltonian.npy"),
-        load_ham_um=str(tmp_path / "checkpoint_RestrictedMolecularHamiltonian_um.npy")
+        load_ham_um=str(tmp_path / "checkpoint_RestrictedMolecularHamiltonian_um.npy"),
     )
     subprocess.check_output(["python", script_path])
 
     make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=script_path
+        2,
+        oneint,
+        twoint,
+        "ap1rog",
+        objective="variational",
+        solver="minimize",
+        filename=script_path,
     )
     script = make_script(
-        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize",
-        filename=-1
+        2, oneint, twoint, "ap1rog", objective="variational", solver="minimize", filename=-1
     )
     with open(script_path, "r") as f:
         assert f.read() == script

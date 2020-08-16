@@ -83,8 +83,7 @@ def answer_apig_h2_sto6g():
             ys.append(apig.params[0, 1])
             # FIXME: need function to compute energy
             energy = sum(
-                (ham.integrate_sd_wfn(sd, apig)) * apig.get_overlap(sd)
-                for sd in (0b0101, 0b1010)
+                (ham.integrate_sd_wfn(sd, apig)) * apig.get_overlap(sd) for sd in (0b0101, 0b1010)
             )
             energy /= norm
             energies.append(energy)

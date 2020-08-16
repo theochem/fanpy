@@ -83,16 +83,7 @@ class CIWavefunction(BaseWavefunction):
     """
 
     # pylint:disable=W0223
-    def __init__(
-        self,
-        nelec,
-        nspin,
-        memory=None,
-        params=None,
-        sds=None,
-        spin=None,
-        seniority=None,
-    ):
+    def __init__(self, nelec, nspin, memory=None, params=None, sds=None, spin=None, seniority=None):
         """Initialize the wavefunction.
 
         Parameters

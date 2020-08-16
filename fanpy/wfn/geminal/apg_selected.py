@@ -32,7 +32,7 @@ class APGSelected(APG):
         dead_indices = np.where(np.sum(np.abs(self.params), axis=0) < self.tol)[0]
         dead_orbpairs = set([self.get_orbpair(ind) for ind in dead_indices])
         for pmatch in generate_general_pmatch(
-                occ_indices, np.ones((len(occ_indices), len(occ_indices)))
+            occ_indices, np.ones((len(occ_indices), len(occ_indices)))
         ):
             if any(i in dead_orbpairs for i in pmatch):
                 continue

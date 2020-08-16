@@ -39,6 +39,7 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
         Default uses `BaseWavefunction.assign_params`.
 
     """
+
     class GeneratedWavefunction(BaseWavefunction):
         def __init__(self, nelec, nspin, memory=None, params=None):
             """Initialize the wavefunction.

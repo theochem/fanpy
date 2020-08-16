@@ -91,8 +91,17 @@ class BaseQuasiparticle(BaseWavefunction):
         determinant.
 
     """
-    def __init__(self, nelec, nspin, memory=None, nquasiparticle=None,
-                 orbsubsets=None, params=None, enable_cache=True):
+
+    def __init__(
+        self,
+        nelec,
+        nspin,
+        memory=None,
+        nquasiparticle=None,
+        orbsubsets=None,
+        params=None,
+        enable_cache=True,
+    ):
         """Initialize the wavefunction.
 
         Parameters
@@ -212,8 +221,9 @@ class BaseQuasiparticle(BaseWavefunction):
 
             orbsubset = tuple(sorted(orbsubset))
             if __debug__ and orbsubset in dict_orbsubset_ind:
-                raise ValueError("The given orbital subset have multiple entries of {0}"
-                                 "".format(orbsubset))
+                raise ValueError(
+                    "The given orbital subset have multiple entries of {0}" "".format(orbsubset)
+                )
             dict_orbsubset_ind[orbsubset] = i
 
             if len(orbsubset) not in orbsubset_sizes:
@@ -274,8 +284,9 @@ class BaseQuasiparticle(BaseWavefunction):
             params = np.zeros((self.nquasiparticle, self.norbsubsets))
             for ind, orbsubset in other.dict_ind_orbsubset.items():
                 try:
-                    params[:other.nquasiparticle,
-                           self.get_col_ind(orbsubset)] = other.params[:, ind]
+                    params[: other.nquasiparticle, self.get_col_ind(orbsubset)] = other.params[
+                        :, ind
+                    ]
                 except ValueError:
                     print(
                         "The orbital subset of the given wavefunction, {0}, is not possible in "

@@ -540,7 +540,7 @@ def test_nonorth_olp_deriv_restricted():
     assert np.isclose(
         test._olp_deriv(0b0101, 0),
         (
-            + 2 * 1 * wfn_sd_coeff[0b0101]
+            +2 * 1 * wfn_sd_coeff[0b0101]
             + 2 * wfn_sd_coeff[0b1001]
             + 2 * wfn_sd_coeff[0b0110]
             + 0 * wfn_sd_coeff[0b1100]
@@ -566,8 +566,7 @@ def test_nonorth_olp_deriv_restricted():
     # 0b1101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(
-        test._olp_deriv(0b1101, 0),
-        3 * 6 * test.wfn.get_overlap(0b1101) + 2 * (1 * -4 + 1 * 6)
+        test._olp_deriv(0b1101, 0), 3 * 6 * test.wfn.get_overlap(0b1101) + 2 * (1 * -4 + 1 * 6)
     )
 
 
@@ -695,9 +694,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
             ham.cache_two_ints()
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == "nonorth":
-            wfn = NonorthWavefunction(
-                nelec, nspin, doci, memory=doci.memory, params=transform
-            )
+            wfn = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory, params=transform)
 
         norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
         if expectation_type == "ci matrix":
@@ -710,9 +707,7 @@ def test_nonorth_energy_unitary_transform_hamiltonian():
                 / norm
             )
         elif expectation_type == "projected":
-            return (
-                sum(wfn.get_overlap(sd) * ham.integrate_sd_wfn(sd, wfn) for sd in sds) / norm
-            )
+            return sum(wfn.get_overlap(sd) * ham.integrate_sd_wfn(sd, wfn) for sd in sds) / norm
 
     assert np.allclose(get_energy("doci", "ci matrix"), get_energy("nonorth", "ci matrix"))
     assert np.allclose(get_energy("doci", "projected"), get_energy("nonorth", "projected"))

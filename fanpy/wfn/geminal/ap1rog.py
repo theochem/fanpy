@@ -266,8 +266,8 @@ class AP1roG(APIG):
         """
         super().assign_orbpairs(orbpairs=orbpairs)
         if __debug__ and not (
-            set(self.dict_orbpair_ind.keys()) <=
-            set((i, i + self.nspatial) for i in range(self.nspatial))
+            set(self.dict_orbpair_ind.keys())
+            <= set((i, i + self.nspatial) for i in range(self.nspatial))
         ):
             raise ValueError(
                 "Only the alpha-beta spin orbital pair of each spatial orbital is allowed."

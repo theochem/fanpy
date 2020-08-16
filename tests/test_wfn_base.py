@@ -80,57 +80,32 @@ def test_assign_params():
         skip_init(disable_abstract(BaseWavefunction)).assign_params(None)
     # default
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction,
-            dict_overwrite={
-                "assign_params": temp_assign_params,
-            },
-        )
+        disable_abstract(BaseWavefunction, dict_overwrite={"assign_params": temp_assign_params})
     )
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
 
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction,
-            dict_overwrite={
-                "assign_params": temp_assign_params,
-            },
-        )
+        disable_abstract(BaseWavefunction, dict_overwrite={"assign_params": temp_assign_params})
     )
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
 
     # check errors
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction,
-            dict_overwrite={
-                "assign_params": temp_assign_params,
-            },
-        )
+        disable_abstract(BaseWavefunction, dict_overwrite={"assign_params": temp_assign_params})
     )
 
     # check noise
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction,
-            dict_overwrite={
-                "assign_params": temp_assign_params,
-            },
-        )
+        disable_abstract(BaseWavefunction, dict_overwrite={"assign_params": temp_assign_params})
     )
     test.assign_params(add_noise=True)
     assert np.all(np.abs(test.params - np.identity(10)) <= 0.2 / 100)
     assert not np.allclose(test.params, np.identity(10))
 
     test = skip_init(
-        disable_abstract(
-            BaseWavefunction,
-            dict_overwrite={
-                "assign_params": temp_assign_params,
-            },
-        )
+        disable_abstract(BaseWavefunction, dict_overwrite={"assign_params": temp_assign_params})
     )
     test.assign_params(params=np.identity(10).astype(complex), add_noise=True)
     assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1 / 100)
@@ -143,8 +118,9 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "assign_params": lambda self, params=None, add_noise=False:
-                temp_assign_params(self, params, add_noise, np.zeros((1, 1, 1))),
+                "assign_params": lambda self, params=None, add_noise=False: temp_assign_params(
+                    self, params, add_noise, np.zeros((1, 1, 1))
+                )
             },
         )
     )
@@ -177,9 +153,7 @@ def test_olp_deriv():
 
 def test_enable_cache():
     """Test BaseWavefunction.enable_cache."""
-    test = skip_init(
-        disable_abstract(BaseWavefunction)
-    )
+    test = skip_init(disable_abstract(BaseWavefunction))
     test.memory = 16
     test.params = np.array([1, 2, 3])
     test.enable_cache(include_derivative=False)
@@ -200,7 +174,7 @@ def test_enable_cache():
 
     test.memory = np.inf
     test.enable_cache()
-    assert test._cache_fns["overlap"].cache_info().maxsize == 2**30
+    assert test._cache_fns["overlap"].cache_info().maxsize == 2 ** 30
 
 
 def test_clear_cache():
@@ -247,9 +221,7 @@ def test_nspatial():
 
 def test_nparams():
     """Test BaseWavefunction.nparams."""
-    test = skip_init(
-        disable_abstract(BaseWavefunction)
-    )
+    test = skip_init(disable_abstract(BaseWavefunction))
     test.params = np.arange(100)
     assert test.nparams == 100
 

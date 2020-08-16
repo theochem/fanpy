@@ -30,6 +30,7 @@ class ParamContainer:
         Assign parameters.
 
     """
+
     def __init__(self, params):
         """Initialize.
 
@@ -76,9 +77,9 @@ class ParamContainer:
 
         if __debug__:
             if not (
-                isinstance(params, np.ndarray) and
-                params.ndim == 1 and
-                np.issubdtype(params.dtype, np.number)
+                isinstance(params, np.ndarray)
+                and params.ndim == 1
+                and np.issubdtype(params.dtype, np.number)
             ):
                 raise TypeError(
                     "Parameters must be given as a numpy array (or list or tuple) of numbers."
@@ -108,6 +109,7 @@ class ComponentParameterIndices(OrderedDict):
     selected for optimization will be referred to as `active`.
 
     """
+
     def __getitem__(self, component):
         """Return the indices of the component parameters that are active in the optimization."""
         try:
@@ -152,12 +154,12 @@ class ComponentParameterIndices(OrderedDict):
                     "`ParamContainer`."
                 )
             if not (
-                isinstance(indices, np.ndarray) and
-                indices.ndim == 1 and
-                (
-                    indices.dtype == np.bool or
-                    np.issubdtype(indices.dtype, np.integer) or
-                    indices.size == 0
+                isinstance(indices, np.ndarray)
+                and indices.ndim == 1
+                and (
+                    indices.dtype == np.bool
+                    or np.issubdtype(indices.dtype, np.integer)
+                    or indices.size == 0
                 )
             ):
                 raise TypeError(
