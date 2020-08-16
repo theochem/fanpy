@@ -60,7 +60,7 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
 
     """
 
-    def __init__(self, one_int, two_int, params=None):
+    def __init__(self, one_int, two_int, params=None, update_prev_params=False):
         """Initialize the Hamiltonian.
 
         Parameters
@@ -73,6 +73,9 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         """
         super().__init__(one_int, two_int)
         self.set_ref_ints()
+        self.cache_two_ints()
+        self._prev_params = None
+        self.update_prev_params = update_prev_params
         self.assign_params(params=params)
 
     @property
@@ -151,6 +154,18 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
 
         # assign parameters
         self.params = params
+        if self._prev_params is None:
+            self._prev_params = np.zeros(params.size)
+            self._prev_unitary_alpha = math_tools.unitary_matrix(
+                self._prev_params[: num_params // 2]
+            )
+            self._prev_unitary_beta = math_tools.unitary_matrix(
+                self._prev_params[num_params // 2 :]
+            )
+        params_prev = self._prev_params
+        params_diff = params - params_prev
+        unitary_prev_alpha = self._prev_unitary_alpha
+        unitary_prev_beta = self._prev_unitary_beta
 
         # revert integrals back to original
         self.assign_integrals(
@@ -163,11 +178,18 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         )
 
         # convert antihermitian part to unitary matrix.
-        unitary_alpha = math_tools.unitary_matrix(params[: num_params // 2])
-        unitary_beta = math_tools.unitary_matrix(params[num_params // 2 :])
+        unitary_diff_alpha = math_tools.unitary_matrix(params_diff[: num_params // 2])
+        unitary_alpha = unitary_prev_alpha.dot(unitary_diff_alpha)
+        unitary_diff_beta = math_tools.unitary_matrix(params_diff[num_params // 2 :])
+        unitary_beta = unitary_prev_beta.dot(unitary_diff_beta)
 
         # transform integrals
         self.orb_rotate_matrix([unitary_alpha, unitary_beta])
+
+        if self.update_prev_params:
+            self._prev_params = params.copy()
+            self._prev_unitary_alpha = unitary_alpha
+            self._prev_unitary_beta = unitary_beta
 
         # cache two electron integrals
         self.cache_two_ints()
