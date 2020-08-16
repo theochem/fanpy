@@ -179,7 +179,7 @@ def test_unitary_matrix():
     with pytest.raises(TypeError):
         unitary_matrix([1, 2, 3])
     with pytest.raises(TypeError):
-        unitary_matrix(np.array([[1, 2], [3]]))
+        unitary_matrix(np.array([[1, 2], [3]], dtype=object))
     with pytest.raises(TypeError):
         unitary_matrix(np.array([[1, 2], [0, 3]]))
     with pytest.raises(TypeError):

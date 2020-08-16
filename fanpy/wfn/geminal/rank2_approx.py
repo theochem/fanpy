@@ -423,7 +423,7 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
         rank2_params = np.zeros(indices.size)
         rank2_params[indices] = vals
         not_indices = np.logical_not(indices)
-        rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
+        rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate, rcond=None)[0]
     # solve by SVD
     else:  # if method == "svd":
         _, s, vh = np.linalg.svd(matrix, full_matrices=False)  # pylint: disable=C0103
@@ -438,7 +438,7 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
             ]
         )
         # linearly combine right null vectors
-        lin_comb = np.linalg.lstsq(vh[indices].T, b)[0]
+        lin_comb = np.linalg.lstsq(vh[indices].T, b, rcond=None)[0]
         rank2_params = vh[indices].T.dot(lin_comb).flatten()
 
     # Check
