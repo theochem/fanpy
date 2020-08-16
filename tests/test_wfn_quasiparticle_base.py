@@ -7,7 +7,7 @@ from numpy.testing import assert_raises
 import pytest
 
 
-class TestQuasiparticle(BaseQuasiparticle):
+class TempQuasiparticle(BaseQuasiparticle):
     """Class for testing BaseQuasiparticle."""
 
     def __init__(self):
@@ -26,7 +26,7 @@ class TestQuasiparticle(BaseQuasiparticle):
 
 def test_assign_nquasiparticle():
     """Test BaseQuasiparticle.assign_nquasiparticle."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     assert_raises(NotImplementedError, test.assign_nquasiparticle)
     assert_raises(NotImplementedError, test.assign_nquasiparticle, None)
     assert_raises(TypeError, test.assign_nquasiparticle, "2")
@@ -40,7 +40,7 @@ def test_assign_nquasiparticle():
 
 def test_assign_orbsubsets():
     """Test BaseQuasiparticle.assign_orbsubsets."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     assert_raises(NotImplementedError, test.assign_orbsubsets)
     assert_raises(NotImplementedError, test.assign_orbsubsets, None)
     assert_raises(TypeError, test.assign_orbsubsets, 12)
@@ -62,14 +62,14 @@ def test_assign_orbsubsets():
 
 def test_norbsubsets():
     """Test BaseQuasiparticle.norbsubsets."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_orbsubsets([(0, 1), (1, 2), (0, 1, 2)])
     assert test.norbsubsets == 3
 
 
 def test_get_col_ind():
     """Test BaseQuasiparticle.get_col_ind."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_orbsubsets([(0,), (0, 1), (0, 1, 2), (0, 1, 2, 3), (1,)])
     assert test.get_col_ind((0,)) == 0
     assert test.get_col_ind((0, 1)) == 1
@@ -82,7 +82,7 @@ def test_get_col_ind():
 
 def test_get_orbsubset():
     """Test BaseQuasiparticle.get_orbsubset."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_orbsubsets([(0,), (0, 1), (0, 1, 2), (0, 1, 2, 3), (1,)])
     assert test.get_orbsubset(0) == (0,)
     assert test.get_orbsubset(1) == (0, 1)
@@ -95,7 +95,7 @@ def test_get_orbsubset():
 
 def test_assign_params():
     """Test BaseQuasiparticle.assign_params."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_nelec(8)
     test.assign_nspin(10)
     test.assign_nquasiparticle(4)
@@ -111,7 +111,7 @@ def test_assign_params():
     other_indices = np.array([i for i in range(test.norbsubsets) if i not in indices])
     assert np.allclose(test.params[np.arange(4)[:, None], other_indices[None, :]], 0)
 
-    test2 = TestQuasiparticle()
+    test2 = TempQuasiparticle()
     test2.assign_nelec(2)
     assert_raises(ValueError, test.assign_params, test2)
     test2.assign_nelec(8)
@@ -137,7 +137,7 @@ def test_assign_params():
 
 def test_compute_permsum():
     """Test BaseQuasiparticle.compute_permsum."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_nquasiparticle(4)
     test.assign_orbsubsets([(0,), (1,), (2,), (3,), (4,), (5,)])
     test.params = np.arange(24).reshape(4, 6)
@@ -256,7 +256,7 @@ def test_compute_permsum():
 
 def test_process_subsets():
     """Test BaseQuasiparticle._process_subsets."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.dict_orbsubset_ind = {(0, 1): 0, (2, 3): 1, (4, 5, 6): 2, (7,): 3}
     assert np.allclose(test._process_subsets([(0, 1), (2, 3), (7,)])[0], [0, 1, 3])
     assert test._process_subsets([(0, 1), (2, 3), (7,)])[1] == [(0, 1), (2, 3)]
@@ -273,7 +273,7 @@ def test_process_subsets():
 
 def test_olp_deriv():
     """Test BaseQuasiparticle._olp_deriv."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_nquasiparticle(4)
     test.params = np.arange(24).reshape(4, 6)
 
@@ -293,7 +293,7 @@ def test_olp_deriv():
 
 def test_olp():
     """Test BaseQuasiparticle._olp."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_nquasiparticle(4)
     test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8), ()])
     test.params = np.arange(24).reshape(4, 6)
@@ -302,7 +302,7 @@ def test_olp():
 
 def test_get_overlap():
     """Test BaseQuasiparticle.get_overlap."""
-    test = TestQuasiparticle()
+    test = TempQuasiparticle()
     test.assign_nquasiparticle(4)
     test.assign_orbsubsets([(0, 1), (2, 3), (4,), (5, 6, 7), (1, 3, 5), (2, 4, 6, 8)])
     test.params = np.arange(24).reshape(4, 6)

@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 
-class TestBaseHamiltonian(BaseHamiltonian):
+class TempBaseHamiltonian(BaseHamiltonian):
     """Empty container class."""
 
     def __init__(self):
@@ -25,14 +25,14 @@ class TestBaseHamiltonian(BaseHamiltonian):
 
 def test_assign_integrals():
     """Test BaseHamiltonian.assign_integrals."""
-    test = TestBaseHamiltonian()
+    test = TempBaseHamiltonian()
     with pytest.raises(NotImplementedError):
         test.assign_integrals(None, None)
 
 
 def test_integrate_sd_wfn():
     """Test BaseHamiltonian.integrate_sd_wfn."""
-    ham = TestBaseHamiltonian()
+    ham = TempBaseHamiltonian()
     wfn = CIWavefunction(4, 10)
     wfn.assign_params(np.random.rand(wfn.nparams))
     with pytest.raises(TypeError):
@@ -48,5 +48,5 @@ def test_integrate_sd_wfn():
 
 def test_nspatial():
     """Test BaseHamiltonian.nspatial."""
-    test = TestBaseHamiltonian()
+    test = TempBaseHamiltonian()
     assert test.nspatial == 5

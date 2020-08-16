@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 
-class TestDeterminantRatio(DeterminantRatio):
+class TempDeterminantRatio(DeterminantRatio):
     """DeterminantRatio that skips initialization."""
 
     def __init__(self):
@@ -16,7 +16,7 @@ class TestDeterminantRatio(DeterminantRatio):
 
 def test_assign_numerator_mask():
     """Test DeterminantRatio.assign_numerator_mask."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     # check default
     test.assign_numerator_mask()
     assert np.allclose(test.numerator_mask, [True, False])
@@ -34,7 +34,7 @@ def test_assign_numerator_mask():
 
 def test_matrix_shape():
     """Test DeterminantRatio.matrix_shape."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.nelec = 2
     test.nspin = 4
     assert test.matrix_shape == (2, 4)
@@ -42,7 +42,7 @@ def test_matrix_shape():
 
 def test_matrix_size():
     """Test DeterminantRatio.matrix_size."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.nelec = 2
     test.nspin = 4
     assert test.matrix_size == 8
@@ -50,21 +50,21 @@ def test_matrix_size():
 
 def test_num_matrices():
     """Test DeterminantRatio.num_matrices."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.numerator_mask = np.array([False, False, False, True, False])
     assert test.num_matrices == 5
 
 
 def test_get_columns():
     """Test DeterminantRatio.get_columns."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     assert np.allclose(test.get_columns(0b010101, 0), np.array([0, 2, 4]))
     assert np.allclose(test.get_columns(0b000111, 0), np.array([0, 1, 2]))
 
 
 def test_get_matrix():
     """Test DeterminantRatio.get_matrix."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.nelec = 2
     test.nspin = 4
     test.numerator_mask = np.array([True, False])
@@ -83,7 +83,7 @@ def test_get_matrix():
 
 def test_decompose_index():
     """Test DeterminantRatio.decompose_index."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.nelec = 2
     test.nspin = 4
     test.numerator_mask = np.array([True, False])
@@ -98,7 +98,7 @@ def test_decompose_index():
 
 def test_assign_params():
     """Test DeterminantRatio.assign_params."""
-    test = TestDeterminantRatio()
+    test = TempDeterminantRatio()
     test.nelec = 2
     test.nspin = 4
     test.numerator_mask = np.array([True, False, False])
@@ -117,7 +117,7 @@ def test_assign_params():
     test.assign_params(params=params, add_noise=False)
     assert np.allclose(test.params, params)
 
-    test2 = TestDeterminantRatio()
+    test2 = TempDeterminantRatio()
     test2.nelec = 2
     test2.nspin = 4
     test2.numerator_mask = np.array([True, False, False])

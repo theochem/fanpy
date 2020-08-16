@@ -10,7 +10,7 @@ from numpy.testing import assert_raises
 from utils import find_datafile
 
 
-class TestAntisymmeterizedProductTetrets(AntisymmeterizedProductTetrets):
+class TempAntisymmeterizedProductTetrets(AntisymmeterizedProductTetrets):
     """AntisymmeterizedProductTetrets that skips initialization."""
 
     def __init__(self):
@@ -20,7 +20,7 @@ class TestAntisymmeterizedProductTetrets(AntisymmeterizedProductTetrets):
 
 def test_assign_nelec():
     """Test AntisymeterizedProductTetrets.assign_nelec."""
-    test = TestAntisymmeterizedProductTetrets()
+    test = TempAntisymmeterizedProductTetrets()
     test.assign_nelec(4)
     assert test.nelec == 4
     test.assign_nelec(8)
@@ -30,7 +30,7 @@ def test_assign_nelec():
 
 def test_assign_nquasiparticle():
     """Test AntisymeterizedProductTetrets.assign_nquasiparticle."""
-    test = TestAntisymmeterizedProductTetrets()
+    test = TempAntisymmeterizedProductTetrets()
     test.nelec = 4
     test.assign_nquasiparticle()
     assert test.nquasiparticle == 1
@@ -41,7 +41,7 @@ def test_assign_nquasiparticle():
 
 def test_asign_orbsubsets():
     """Test AntisymeterizedProductTetrets.assign_orbsubsets."""
-    test = TestAntisymmeterizedProductTetrets()
+    test = TempAntisymmeterizedProductTetrets()
     test.nspin = 4
     test.assign_orbsubsets()
     assert test.dict_orbsubset_ind == {(0, 1, 2, 3): 0}
@@ -99,7 +99,7 @@ def test_asign_orbsubsets():
 
 def test_generate_possible_orbsubsets():
     """Test AntisymeterizedProductTetrets.generate_possible_orbsubsets."""
-    test = TestAntisymmeterizedProductTetrets()
+    test = TempAntisymmeterizedProductTetrets()
     assert_raises(ValueError, next, test.generate_possible_orbsubsets([0, 1, 2, 3, 4]))
 
     answer = [[(0, 1, 2, 3)]]
