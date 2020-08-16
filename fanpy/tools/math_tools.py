@@ -353,7 +353,7 @@ def unitary_matrix(antiherm_elements, norm_threshold=1e-8, num_threshold=100):
 
     antiherm = np.zeros((dim, dim))
     antiherm[np.triu_indices(dim, k=1)] = antiherm_elements
-    antiherm -= np.triu(antiherm).T
+    antiherm -= np.triu(antiherm).T  # pylint: disable=E1101
 
     unitary = np.identity(dim)
     n = 1

@@ -108,6 +108,7 @@ class EnergyTwoSideProjection(BaseSchrodinger):
 
     """
 
+    # pylint: disable=W0223
     def __init__(
         self,
         wfn,

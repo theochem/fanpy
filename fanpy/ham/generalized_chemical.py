@@ -185,7 +185,7 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
         np.save(filename, self.params)
         np.save("{}_um{}".format(root, ext), self._prev_unitary)
 
-    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):  # pylint: disable=R0911
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -1530,7 +1530,7 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
         derivatives are selected afterwards.
 
         """
-        # pylint: disable=C0103
+        # pylint: disable=C0103,R0912,R0915
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")

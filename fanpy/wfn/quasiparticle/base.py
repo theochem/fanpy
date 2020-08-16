@@ -432,11 +432,10 @@ class BaseQuasiparticle(BaseWavefunction):
             #        on the fly instead of caching (this method is called by a cached method))
             return 0.0
         # if everything is cut
-        elif row_inds_trunc.size == col_inds_trunc.size == 0:
+        if row_inds_trunc.size == col_inds_trunc.size == 0:
             return 1.0
         # if something remains
-        else:
-            return self.compute_permsum(nboson, col_inds_trunc, row_inds_trunc)
+        return self.compute_permsum(nboson, col_inds_trunc, row_inds_trunc)
 
     def _process_subsets(self, subsets):
         """Extract the column indices, and list of bosons and fermions from the given subsets.
@@ -476,7 +475,7 @@ class BaseQuasiparticle(BaseWavefunction):
 
         return col_inds, bosons, fermions
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -504,7 +503,7 @@ class BaseQuasiparticle(BaseWavefunction):
             val += sign * self.compute_permsum(len(bosons), col_inds)
         return val
 
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters

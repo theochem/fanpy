@@ -92,6 +92,7 @@ class EnergyOneSideProjection(BaseSchrodinger):
 
     """
 
+    # pylint: disable=W0223
     def __init__(
         self,
         wfn,
@@ -176,7 +177,7 @@ class EnergyOneSideProjection(BaseSchrodinger):
         """
         return 1
 
-    def assign_refwfn(self, refwfn=None):
+    def assign_refwfn(self, refwfn=None):  # pylint: disable=R0912
         """Assign the reference wavefunction.
 
         Parameters

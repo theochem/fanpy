@@ -157,7 +157,7 @@ def hartreefock(
 
 if __name__ == "__main__":
     # extract keyword from command line
-    kwargs = {key: val for key, val in zip(sys.argv[4::2], sys.argv[5::2])}
+    kwargs = {key: val for key, val in zip(sys.argv[4::2], sys.argv[5::2])}  # pylint: disable=R1721
     # change data types
     if "nelec" in kwargs:
         kwargs["nelec"] = int(kwargs["nelec"])

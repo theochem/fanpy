@@ -140,6 +140,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
 
     """
 
+    # pylint: disable=W0223
     def __init__(
         self,
         wfn,
@@ -508,7 +509,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
 
         return obj
 
-    def jacobian(self, params):
+    def jacobian(self, params):  # pylint: disable=R0915
         r"""Return the Jacobian of the projected Schrodinger equation evaluated at the given params.
 
         If :math:`(f_1(\vec{x}), f_2(\vec{x}), \dots)` is the objective function, the Jacobian is

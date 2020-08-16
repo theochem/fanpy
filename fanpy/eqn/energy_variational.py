@@ -92,6 +92,7 @@ class EnergyVariational(EnergyTwoSideProjection):
 
     """
 
+    # pylint: disable=W0223
     def __init__(
         self,
         wfn,

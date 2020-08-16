@@ -6,7 +6,7 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
     Runs HF in PySCF and generates the corresponding one- and two-electron integrals.
 
 """
-# pylint: disable=C0103
+# pylint: disable=C0103,E0611
 import ctypes
 import os
 
@@ -153,8 +153,8 @@ def fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
     # to one another. i.e. From one bit string, and several indices that describes
     # certain excitation, we can get the other bit string
     # NOTE: PySCF treats alpha and the beta bits separately
-    occslista = np.asarray(cistring._gen_occslst(range(norb), neleca))
-    occslistb = np.asarray(cistring._gen_occslst(range(norb), nelecb))
+    occslista = np.asarray(cistring._gen_occslst(range(norb), neleca))  # pylint: disable=W0212
+    occslistb = np.asarray(cistring._gen_occslst(range(norb), nelecb))  # pylint: disable=W0212
     # number of Slater determinants
     na = len(occslista)  # number of "alpha" Slater determinants
     nb = len(occslistb)  # number of "beta" Slater determinants

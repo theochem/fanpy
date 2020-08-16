@@ -4,7 +4,7 @@ import textwrap
 from fanpy.scripts.utils import check_inputs, parser
 
 
-def make_script(
+def make_script(  # pylint: disable=R1710,R0912,R0915
     nelec,
     one_int_file,
     two_int_file,
@@ -257,8 +257,8 @@ def make_script(
     output += "one_int_file = '{}'\n".format(one_int_file)
     output += "one_int = np.load(one_int_file)\n"
     output += (
-        "print('One-Electron Integrals: {{}}'.format(os.path.abspath(one_int_file)))"  # noqa: F523
-        "\n".format(one_int_file)
+        "print('One-Electron Integrals: {{}}'"  # noqa: F523 # pylint: disable=E1305
+        ".format(os.path.abspath(one_int_file)))\n".format(one_int_file)
     )
     output += "\n"
 
@@ -266,8 +266,8 @@ def make_script(
     output += "two_int_file = '{}'\n".format(two_int_file)
     output += "two_int = np.load(two_int_file)\n"
     output += (
-        "print('Two-Electron Integrals: {{}}'.format(os.path.abspath(two_int_file)))"  # noqa: F523
-        "\n".format(two_int_file)
+        "print('Two-Electron Integrals: {{}}'"  # noqa: F523 # pylint: disable=E1305
+        ".format(os.path.abspath(two_int_file)))\n".format(two_int_file)
     )
     output += "\n"
 
@@ -397,7 +397,7 @@ def make_script(
         )
     elif objective == "one_energy":  # pragma: no branch
         objective1 = "objective = EnergyOneSideProjection("
-        objective2 = "wfn, ham, param_selection=param_selection, " "refwfn=pspace)\n"
+        objective2 = "wfn, ham, param_selection=param_selection, refwfn=pspace)\n"
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )
@@ -434,7 +434,7 @@ def make_script(
     elif filename == -1:
         return output
     else:
-        with open(filename, "w") as f:
+        with open(filename, "w") as f:  # pylint: disable=C0103
             f.write(output)
 
 

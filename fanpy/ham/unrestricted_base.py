@@ -54,6 +54,7 @@ class BaseUnrestrictedHamiltonian(BaseHamiltonian):
             Two electron integrals.
 
         """
+        # pylint: disable=W0231
         self.assign_integrals(one_int, two_int)
 
     @property

@@ -84,7 +84,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
 
     # FIXME: remove sign?
     # FIXME: too many branches, too many statements
-    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):  # pylint: disable=R0911
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -1117,7 +1117,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
 
         return sign_b[None, :] * np.array([one_electron_b, coulomb_b, exchange_b])
 
-    def _integrate_sd_sds_two_aa(self, occ_alpha, occ_beta, vir_alpha):
+    def _integrate_sd_sds_two_aa(self, occ_alpha, occ_beta, vir_alpha):  # pylint: disable=W0613
         """Return the integrals of a Slater determinant with its second order (alpha) excitations.
 
         Paramters
@@ -1198,7 +1198,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
 
         return sign * coulomb
 
-    def _integrate_sd_sds_two_bb(self, occ_alpha, occ_beta, vir_beta):
+    def _integrate_sd_sds_two_bb(self, occ_alpha, occ_beta, vir_beta):  # pylint: disable=W0613
         """Return the integrals of a Slater determinant with its second order (beta) excitations.
 
         Paramters
@@ -2422,7 +2422,9 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             ]
         )
 
-    def _integrate_sd_sds_deriv_two_aaa(self, occ_alpha, occ_beta, vir_alpha):
+    def _integrate_sd_sds_deriv_two_aaa(
+        self, occ_alpha, occ_beta, vir_alpha
+    ):  # pylint: disable=W0613
         """Return (alpha) derivatives of integrals of an SD and its (alpha) double excitations.
 
         Paramters
@@ -2890,7 +2892,9 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         triu_rows, triu_cols = np.triu_indices(nspatial, k=1)
         return sign_ab[None, :] * coulomb_ba[triu_rows, triu_cols, :, :].reshape(triu_rows.size, -1)
 
-    def _integrate_sd_sds_deriv_two_bbb(self, occ_alpha, occ_beta, vir_beta):
+    def _integrate_sd_sds_deriv_two_bbb(
+        self, occ_alpha, occ_beta, vir_beta
+    ):  # pylint: disable=W0613
         """Return (beta) derivatives of integrals of an SD and its (beta) double excitations.
 
         Paramters
@@ -3141,7 +3145,9 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             ]
         )
 
-    def integrate_sd_wfn(self, sd, wfn, wfn_deriv=None, ham_deriv=None, components=False):
+    def integrate_sd_wfn(
+        self, sd, wfn, wfn_deriv=None, ham_deriv=None, components=False
+    ):  # pylint: disable=R0912,R0915
         r"""Integrate the Hamiltonian with against a Slater determinant and a wavefunction.
 
         .. math::

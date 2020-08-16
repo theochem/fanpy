@@ -147,7 +147,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             None if all spins are allowed.
 
         """
-        return NonorthWavefunction.spin.__get__(self)  # pylint: disable=E1120
+        return NonorthWavefunction.spin.__get__(self)  # pylint: disable=E1120,E1101
 
     # FIXME: copied from NonorthWavefunction
     @property
@@ -166,7 +166,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             None if all seniority are allowed.
 
         """
-        return NonorthWavefunction.seniority.__get__(self)  # pylint: disable=E1120
+        return NonorthWavefunction.seniority.__get__(self)  # pylint: disable=E1120,E1101
 
     @property
     def jacobi_rotation(self):
@@ -310,7 +310,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         self.jacobi_indices = tuple(jacobi_indices)
 
     # FIXME: too many return statements, too many branches
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -481,7 +481,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             )
 
     # FIXME: too many return statements, too many branches
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -737,8 +737,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         wfn, indices = deriv
         if wfn == self:
             return np.array([self._olp_deriv(sd)])[indices]
-        else:
-            raise NotImplementedError(
-                "To implement this, the derivative indices must be passed to the "
-                "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
-            )
+        raise NotImplementedError(
+            "To implement this, the derivative indices must be passed to the "
+            "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
+        )

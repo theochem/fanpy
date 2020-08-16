@@ -285,5 +285,4 @@ class LinearCombinationWavefunction(BaseWavefunction):
         wfn, indices = deriv
         if wfn == self:
             return wfn_contrib
-        else:
-            return self.params[self.wfns.index(wfn)] * wfn.get_overlap(sd, deriv=indices)
+        return self.params[self.wfns.index(wfn)] * wfn.get_overlap(sd, deriv=indices)

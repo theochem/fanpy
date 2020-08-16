@@ -56,7 +56,7 @@ def cma(objective, **kwargs):
         If objective has more than one equation.
 
     """
-    import cma as solver
+    import cma as solver  # pylint: disable=C0415
 
     if not isinstance(objective, BaseSchrodinger):
         raise TypeError("Objective must be a BaseSchrodinger instance.")
@@ -151,7 +151,7 @@ def minimize(objective, use_gradient=True, **kwargs):
         If objective has more than one equation.
 
     """
-    import scipy.optimize
+    import scipy.optimize  # pylint: disable=C0415
 
     if not isinstance(objective, BaseSchrodinger):
         raise TypeError("Objective must be a BaseSchrodinger instance.")
@@ -172,7 +172,7 @@ def minimize(objective, use_gradient=True, **kwargs):
     ham = objective.ham
     ham.update_prev_params = False
 
-    def update_iteration(*args):
+    def update_iteration(*args):  # pylint: disable=W0613
         """Clean up at the end of each iteration."""
         # update hamiltonian
         if objective.indices_component_params[ham].size > 0:

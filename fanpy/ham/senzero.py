@@ -154,7 +154,7 @@ class SeniorityZeroHamiltonian(RestrictedMolecularHamiltonian):
 
         return integral
 
-    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):
+    def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):  # pylint: disable=R0911
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::

@@ -18,7 +18,7 @@ parser : argparse.ArgumentParser
 import argparse
 
 
-def check_inputs(
+def check_inputs(  # pylint: disable=R0912,R0915
     nelec,
     one_int_file,
     two_int_file,
@@ -174,7 +174,7 @@ def check_inputs(
     # check projection space
     if not (isinstance(pspace_exc, (list, tuple)) and all(isinstance(i, int) for i in pspace_exc)):
         raise TypeError("Project space must be given as list/tuple of integers.")
-    elif any(i <= 0 or i > nelec for i in pspace_exc):
+    if any(i <= 0 or i > nelec for i in pspace_exc):
         raise ValueError(
             "Projection space must contain orders of excitations that are greater than"
             " 0 and less than or equal to the number of electrons."
@@ -201,12 +201,12 @@ def check_inputs(
             "(objective) that consists of one equation (`least_squares`, `variational`, "
             "`one_energy`)".format(solver)
         )
-    elif solver in ["least_squares", "root"] and objective != "projected":
+    if solver in ["least_squares", "root"] and objective != "projected":
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation (objective) as a "
             "systems of equations (`projected`)".format(solver)
         )
-    elif solver == "diag" and wfn_type not in ["ci_pairs", "cisd", "fci", "doci"]:
+    if solver == "diag" and wfn_type not in ["ci_pairs", "cisd", "fci", "doci"]:
         raise ValueError(
             "The diagonalization solver, `diag`, is only compatible with CI " "wavefunctions."
         )
@@ -224,7 +224,7 @@ def check_inputs(
         "save_chk": save_chk,
         "filename": filename,
     }
-    for varname, name in files.items():
+    for name in files.values():
         if name is None:
             continue
         if not isinstance(name, str):
@@ -256,7 +256,7 @@ def check_inputs(
             )
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser()  # pylint: disable=C0103
 parser.add_argument("--nelec", type=int, required=True, help="Number of electrons.")
 parser.add_argument(
     "--one_int_file",

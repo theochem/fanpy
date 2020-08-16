@@ -33,6 +33,8 @@ def ham_factory(integrate_sd_sd, integrals, nspin, orders=(1, 2), integrate_sd_w
     """
 
     class GeneratedHamiltonian(BaseHamiltonian):
+        """Generated Hamiltonian using the given integrate_sd_sd and integrate_sd_wfn."""
+
         def __init__(self, integrals, nspin):
             """Initialize the Hamiltonian.
 
@@ -42,6 +44,7 @@ def ham_factory(integrate_sd_sd, integrals, nspin, orders=(1, 2), integrate_sd_w
                 Basis set representation of the Hamiltonian.
 
             """
+            super().__init__()
             self.assign_integrals(integrals)
             self._nspin = nspin
 
@@ -135,8 +138,7 @@ def ham_factory(integrate_sd_sd, integrals, nspin, orders=(1, 2), integrate_sd_w
                             integral += coeff * self.integrate_sd_sd(sd, sd_m)
 
                 return integral
-            else:
-                return integrate_sd_wfn(self, sd, wfn, wfn_deriv=wfn_deriv)
+            return integrate_sd_wfn(self, sd, wfn, wfn_deriv=wfn_deriv)
 
         def integrate_sd_sd(self, sd1, sd2):
             r"""Integrate the Hamiltonian with against two Slater determinants.

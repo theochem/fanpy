@@ -160,7 +160,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return tuple(i.shape for i in self.params)
 
     @property
-    def orbtype(self):
+    def orbtype(self):  # pylint: disable=R1710
         """Return the orbital type.
 
         Returns
@@ -270,7 +270,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         self.params = tuple(params)
         self.clear_cache()
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -329,7 +329,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return output
 
     # FIXME: too many branches, too many statements
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd, deriv):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -630,8 +630,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                     continue
                 output[i] = self._olp_deriv(sd, i)
             return output
-        else:
-            raise NotImplementedError(
-                "To implement this, the derivative indices must be passed to the "
-                "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
-            )
+        raise NotImplementedError(
+            "To implement this, the derivative indices must be passed to the "
+            "`wfn.get_overlap` in `_olp`. But that interferes with the caching system."
+        )

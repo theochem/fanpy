@@ -221,6 +221,7 @@ class BaseSchrodinger:
         np.ndarray([1, 2, 3, 4, 5, 6, 7])
 
         """
+        # pylint: disable=E1101
         return np.hstack([component.params.ravel() for component in self.indices_component_params])
 
     @property
@@ -283,6 +284,7 @@ class BaseSchrodinger:
                     names_count[name] += 1
                     name = "{}{}".format(name, names_count[name])
 
+                # pylint: disable=E1101
                 component.save_params("{}_{}{}".format(root, name, ext))
 
     def assign_params(self, params):
@@ -317,7 +319,7 @@ class BaseSchrodinger:
             new_params[indices] = params[indices_objective_params[component]]
             component.assign_params(new_params)
 
-    def wrapped_get_overlap(self, sd, deriv=False):
+    def wrapped_get_overlap(self, sd, deriv=False):  # pylint: disable=C0103
         """Wrap `get_overlap` to be derivatized with respect to the parameters of the objective.
 
         Parameters
@@ -368,7 +370,7 @@ class BaseSchrodinger:
 
     # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
     # different derivs)
-    def wrapped_integrate_sd_wfn(self, sd, deriv=False):
+    def wrapped_integrate_sd_wfn(self, sd, deriv=False):  # pylint: disable=C0103
         r"""Wrap `integrate_sd_wfn` to be derivatized wrt the parameters of the objective.
 
         Parameters

@@ -107,6 +107,7 @@ class BasicAPsetG(BaseGeminal):
                 "configuration will be used."
             )
         orbpairs = [(i, j) for i in range(self.nspatial) for j in range(self.nspatial, self.nspin)]
+        # pylint: disable=R1721
         self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
@@ -158,7 +159,7 @@ class BasicAPsetG(BaseGeminal):
             If given orbital pair is not valid.
 
         """
-        if __debug__ and not (0 <= col_ind < self.nspatial ** 2):
+        if __debug__ and not 0 <= col_ind < self.nspatial ** 2:
             raise ValueError(
                 "Given column index, {0}, is not used in the wavefunction".format(col_ind)
             )

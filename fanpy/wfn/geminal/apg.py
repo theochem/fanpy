@@ -172,7 +172,7 @@ class APG(BaseGeminal):
 
         """
         # pylint: disable=C0103
-        if __debug__ and not (0 <= col_ind < self.nspin * (self.nspin - 1) / 2):
+        if __debug__ and not 0 <= col_ind < self.nspin * (self.nspin - 1) / 2:
             raise ValueError(
                 "Column index, {0}, is less than 0 or greater than or the number of columns."
                 "".format(col_ind)

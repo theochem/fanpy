@@ -57,7 +57,7 @@ class BaseWavefunction:
 
     """
 
-    def __init__(self, nelec, nspin, memory=None, params=None):
+    def __init__(self, nelec, nspin, memory=None, params=None):  # pylint: disable=W0613
         """Initialize the wavefunction.
 
         Parameters
@@ -320,7 +320,7 @@ class BaseWavefunction:
             self._olp_deriv = functools.lru_cache(maxsize)(self._olp_deriv)
             self._cache_fns["overlap derivative"] = self._olp_deriv
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the nontrivial overlap with the Slater determinant.
 
         Parameters
@@ -344,7 +344,7 @@ class BaseWavefunction:
         # pylint: disable=C0103
         raise NotImplementedError("Overlap (for caching) has not been implemented.")
 
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=E0202
         """Calculate the nontrivial derivative of the overlap with the Slater determinant.
 
         Parameters

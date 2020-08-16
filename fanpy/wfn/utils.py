@@ -41,6 +41,8 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
     """
 
     class GeneratedWavefunction(BaseWavefunction):
+        """Generated wavefunction class from the given olp and olp_deriv."""
+
         def __init__(self, nelec, nspin, memory=None, params=None):
             """Initialize the wavefunction.
 
@@ -76,7 +78,7 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
             else:
                 assign_params(self, params)
 
-        def _olp(self, sd):
+        def _olp(self, sd):  # pylint: disable=E0202
             """Return overlap of the wavefunction with the Slater determinant.
 
             Parameters
@@ -93,7 +95,7 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
             """
             return olp(sd, self.params)
 
-        def _olp_deriv(self, sd):
+        def _olp_deriv(self, sd):  # pylint: disable=E0202
             """Return the derivatives of the overlap with the Slater determinant.
 
             Parameters

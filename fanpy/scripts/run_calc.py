@@ -22,7 +22,6 @@ def run_calc(
     load_ham_um=None,
     load_wfn=None,
     save_chk="",
-    filename=None,
     memory=None,
 ):
     """Script for running some basic calculations.
@@ -96,11 +95,6 @@ def run_calc(
         wavefunction.
     save_chk : str
         Name of the Numpy file that will store the chkpoint of the objective.
-    filename : str
-        Name of the script
-        By default, the script is printed.
-        If `-1` is given, then the script is returned as a string.
-        Otherwise, the given string is treated as the name of the file.
     memory : None
         Memory available to run calculations.
 
@@ -131,7 +125,7 @@ def run_calc(
     # run script
     # NOTE: Since the script is entirely generated from make_script, it should be more difficult to
     # inject something into the executable. (hopefully)
-    exec(script)  # nosec: B102
+    exec(script)  # nosec: B102 # pylint: disable=W0122
 
 
 def main():

@@ -1,9 +1,10 @@
+"""Script for utilizing Psi4."""
 import numpy as np
 
 import psi4
 
 
-def hartreefock(xyz_file, basis, is_unrestricted=False):
+def hartreefock(xyz_file, basis, is_unrestricted=False):  # pylint: disable=W0613
     """Run HF using PySCF.
 
     Parameters
@@ -37,9 +38,10 @@ def hartreefock(xyz_file, basis, is_unrestricted=False):
         If calculation is unrestricted or generalized.
 
     """
+    # pylint: disable=E1101,C0103
     # get coordinates
-    with open(xyz_file, "r") as f:
-        lines = [i.strip() for i in f.readlines()[2:]]
+    with open(xyz_file, "r") as fh:
+        lines = [i.strip() for i in fh.readlines()[2:]]
         geometry = "\n".join(lines + ["symmetry c1"])
 
     mol = psi4.geometry(geometry)

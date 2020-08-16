@@ -126,7 +126,7 @@ class RankTwoApprox:
             for i in range(self.ngem):
                 col_ind = self.get_col_ind((i, i + self.nspatial))
                 template[i, col_ind] += 1
-            template += 0.0001 * np.random.rand(*template.shape)
+            template += 0.0001 * np.random.rand(*template.shape)  # pylint: disable=E1133
             # FIXME: fails a lot
             params = full_to_rank2(template, rmsd=0.01)
 
@@ -181,7 +181,7 @@ class RankTwoApprox:
         if __debug__:
             if not (isinstance(deriv, int) or np.issubdtype(type(deriv), np.integer)):
                 raise TypeError("deriv must be an integer.")
-            if not (0 <= deriv < self.nparams):
+            if not 0 <= deriv < self.nparams:
                 raise ValueError(
                     "deriv must be greater than or equal to zero and less than the number of "
                     "parameters"
@@ -213,39 +213,37 @@ class RankTwoApprox:
                     )
             return val
         # if differentiating along column (epsilon or zeta)
-        else:  # if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
-            col_to_remove = (deriv - self.ngem) % self.norbpair
-            col_inds_trunc = col_inds[col_inds != col_to_remove]
-            if col_inds_trunc.size == col_inds.size:
-                return 0.0
+        # else:  # if self.ngem <= deriv < self.ngem + 2 * self.norbpair:
+        col_to_remove = (deriv - self.ngem) % self.norbpair
+        col_inds_trunc = col_inds[col_inds != col_to_remove]
+        if col_inds_trunc.size == col_inds.size:
+            return 0.0
 
-            val = 0.0
-            for row_to_remove in row_inds:
-                row_inds_trunc = row_inds[row_inds != row_to_remove]
-                # differentiating wrt column
-                if self.ngem <= deriv < self.ngem + self.norbpair:
-                    # derivative of matrix element c_ij wrt epsilon_j
-                    der_cij_colj = (
-                        self.zetas[col_to_remove]
-                        / (self.lambdas[row_to_remove] - self.epsilons[col_to_remove]) ** 2
-                    )
-                else:
-                    # derivative of matrix element c_ij wrt zeta_j
-                    der_cij_colj = 1.0 / (
-                        self.lambdas[row_to_remove] - self.epsilons[col_to_remove]
-                    )
+        val = 0.0
+        for row_to_remove in row_inds:
+            row_inds_trunc = row_inds[row_inds != row_to_remove]
+            # differentiating wrt column
+            if self.ngem <= deriv < self.ngem + self.norbpair:
+                # derivative of matrix element c_ij wrt epsilon_j
+                der_cij_colj = (
+                    self.zetas[col_to_remove]
+                    / (self.lambdas[row_to_remove] - self.epsilons[col_to_remove]) ** 2
+                )
+            else:
+                # derivative of matrix element c_ij wrt zeta_j
+                der_cij_colj = 1.0 / (self.lambdas[row_to_remove] - self.epsilons[col_to_remove])
 
-                if row_inds_trunc.size == col_inds_trunc.size == 0:
-                    val += der_cij_colj
-                else:
-                    val += der_cij_colj * math_tools.permanent_borchardt(
-                        self.lambdas[row_inds_trunc],
-                        self.epsilons[col_inds_trunc],
-                        self.zetas[col_inds_trunc],
-                    )
-            return val
+            if row_inds_trunc.size == col_inds_trunc.size == 0:
+                val += der_cij_colj
+            else:
+                val += der_cij_colj * math_tools.permanent_borchardt(
+                    self.lambdas[row_inds_trunc],
+                    self.epsilons[col_inds_trunc],
+                    self.zetas[col_inds_trunc],
+                )
+        return val
 
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=C0103
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -428,12 +426,11 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
         rank2_params[not_indices] = np.linalg.lstsq(matrix[:, not_indices], ordinate)[0]
     # solve by SVD
     else:  # if method == "svd":
-        # pylint: disable=C0103
-        _, s, vh = np.linalg.svd(matrix, full_matrices=False)
+        _, s, vh = np.linalg.svd(matrix, full_matrices=False)  # pylint: disable=C0103
         # find null vectors
         indices = np.abs(s) < 1
         # guess solution
-        b = np.vstack(
+        b = np.vstack(  # pylint: disable=C0103
             [
                 np.random.rand(ngem, 1),
                 np.sort(np.random.rand(norbpair, 1)) - 1,

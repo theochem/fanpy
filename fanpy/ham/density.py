@@ -17,7 +17,7 @@ import numpy as np
 
 # FIXME: incredibly slow/bad approach
 # TODO: add density_wfn_wfn, density_wfn_sd, density_sd_sd?
-def add_one_density(matrices, spin_i, spin_j, val, orbtype):
+def add_one_density(matrices, spin_i, spin_j, val, orbtype):  # pylint: disable=R0912
     r"""Add some value to the appropriate density matrix element.
 
     .. math::
@@ -324,7 +324,7 @@ def density_matrix(
 
             # FIXME: use symmetry instead
             # if they're the same
-            elif len(left_diff) == 0:
+            if len(left_diff) == 0:
                 for ind, i in enumerate(shared_indices):
                     add_one_density(one_densities, i, i, val, orbtype=orbtype)
                     for j in shared_indices[ind + 1 :]:

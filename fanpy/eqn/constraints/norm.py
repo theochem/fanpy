@@ -51,6 +51,7 @@ class NormConstraint(BaseSchrodinger):
 
     """
 
+    # pylint: disable=W0223
     def __init__(self, wfn, refwfn=None, param_selection=None):
         r"""Initialize the norm constraint.
 
@@ -75,6 +76,7 @@ class NormConstraint(BaseSchrodinger):
             Default selects the wavefunction parameters.
 
         """
+        # pylint: disable=W0231
         if not isinstance(wfn, BaseWavefunction):
             raise TypeError(
                 "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."

@@ -441,7 +441,7 @@ class BaseGeminal(BaseWavefunction):
         else:
             return permanent(self.params[row_inds_trunc[:, None], col_inds_trunc[None, :]])
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -468,7 +468,7 @@ class BaseGeminal(BaseWavefunction):
             val += sign * self.compute_permanent(col_inds)
         return val
 
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters

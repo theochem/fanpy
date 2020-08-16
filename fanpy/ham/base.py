@@ -152,6 +152,7 @@ class BaseHamiltonian:
                         "Derivative indices for the Hamiltonian parameters must be given as a "
                         "one-dimensional numpy array of integers."
                     )
+                # pylint: disable=E1101
                 if np.any(ham_deriv < 0) or np.any(ham_deriv >= self.nparams):
                     raise ValueError(
                         "Derivative indices for the Hamiltonian parameters must be greater than or "

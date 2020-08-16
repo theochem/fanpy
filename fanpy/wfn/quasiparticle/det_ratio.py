@@ -168,7 +168,7 @@ class DeterminantRatio(BaseWavefunction):
 
     # NOTE: all of the rows are assumed to be selected when the columns are selected.
     # TODO: select different columns depending on the matrix whose columns are selected
-    def get_columns(self, sd, index):
+    def get_columns(self, sd, index):  # pylint: disable=C0103,W0613,R0201
         """Get the columns that correspond to the given Slater determinant for the given matrix.
 
         Parameters
@@ -290,7 +290,7 @@ class DeterminantRatio(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -316,7 +316,7 @@ class DeterminantRatio(BaseWavefunction):
         denominator = np.prod(determinants[np.logical_not(self.numerator_mask)])
         return numerator / denominator
 
-    def _olp_deriv(self, sd):
+    def _olp_deriv(self, sd):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters

@@ -43,7 +43,7 @@ def least_squares(objective, **kwargs):
         If objective is not ProjectedSchrodinger instance.
 
     """
-    from scipy.optimize import least_squares as solver
+    from scipy.optimize import least_squares as solver  # pylint: disable=C0415
 
     if not isinstance(objective, ProjectedSchrodinger):
         raise TypeError("Given objective must be an instance of ProjectedSchrodinger.")
@@ -122,7 +122,7 @@ def root(objective, **kwargs):
         If objective is not ProjectedSchrodinger instance.
 
     """
-    from scipy.optimize import root as solver
+    from scipy.optimize import root as solver  # pylint: disable=C0415
 
     if not isinstance(objective, ProjectedSchrodinger):
         raise TypeError("Given objective must be an instance of ProjectedSchrodinger.")

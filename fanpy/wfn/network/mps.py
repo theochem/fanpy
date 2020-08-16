@@ -287,7 +287,9 @@ class MatrixProductState(BaseWavefunction):
             param_index -= self.get_matrix_indices(ind_spatial)[0]
 
         matrix_shape = self.get_matrix_shape(ind_spatial)
-        ind_occ, ind_row, ind_col = np.unravel_index([param_index], matrix_shape)
+        ind_occ, ind_row, ind_col = np.unravel_index(  # pylint: disable=W0632
+            [param_index], matrix_shape
+        )
         return ind_spatial, ind_occ.item(), ind_row.item(), ind_col.item()
 
     # TODO: the parameters can probably be changed to something more elegant (like a tensor object
@@ -339,7 +341,7 @@ class MatrixProductState(BaseWavefunction):
         super().assign_params(params=params, add_noise=add_noise)
         self.clear_cache()
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -361,7 +363,7 @@ class MatrixProductState(BaseWavefunction):
             temp_matrix = temp_matrix.dot(self.get_matrix(i)[occ_indices[i], :, :])
         return temp_matrix.item()
 
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd, deriv):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -408,7 +410,7 @@ class MatrixProductState(BaseWavefunction):
 
         return (left_temp * right_temp).item()
 
-    def _olp_deriv_block(self, sd, ind_spatial):
+    def _olp_deriv_block(self, sd, ind_spatial):  # pylint: disable=C0103,E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -484,6 +486,7 @@ class MatrixProductState(BaseWavefunction):
             If deriv is not a one dimensional numpy array of integers.
 
         """
+        # pylint: disable=C0103
         if __debug__:
             if not slater.is_sd_compatible(sd):
                 raise TypeError("Slater determinant must be given as an integer.")

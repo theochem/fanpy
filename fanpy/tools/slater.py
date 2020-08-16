@@ -1070,7 +1070,7 @@ def spatial_to_spin_indices(spatial_indices, nspatial, to_beta=True):
         return spatial_indices
 
 
-def excite_bulk(sd, occ_indices, vir_indices, excite_order):
+def excite_bulk(sd, occ_indices, vir_indices, excite_order):  # pylint: disable=W0621
     """Return all possible excitations from the given occupied and virtual orbitals.
 
     Parameters
@@ -1116,7 +1116,7 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
     ).reshape(-1, excite_order)
     occ_indices = np.left_shift(1, occ_indices)
     if excite_order >= 2:
-        occ_indices = np.bitwise_or.reduce(occ_indices.T)
+        occ_indices = np.bitwise_or.reduce(occ_indices.T)  # pylint: disable=E1101
 
     vir_indices = np.fromiter(
         it.chain.from_iterable(it.combinations(vir_indices.tolist(), excite_order)),
@@ -1125,7 +1125,7 @@ def excite_bulk(sd, occ_indices, vir_indices, excite_order):
     ).reshape(-1, excite_order)
     vir_indices = np.left_shift(1, vir_indices)
     if excite_order >= 2:
-        vir_indices = np.bitwise_or.reduce(vir_indices.T)
+        vir_indices = np.bitwise_or.reduce(vir_indices.T)  # pylint: disable=E1101
 
     return np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_indices)[:, None], vir_indices[None, :]))
 
@@ -1164,14 +1164,14 @@ def excite_bulk_two_ab(sd, occ_alpha, occ_beta, vir_alpha, vir_beta):
         occ_beta = np.array(occ_beta)
         vir_alpha = np.array(vir_alpha)
         vir_beta = np.array(vir_beta)
-
+    # pylint: disable=W0621
     occ_indices = np.fromiter(
         it.chain.from_iterable(it.product(occ_alpha.tolist(), occ_beta.tolist())),
         int,
         count=2 * len(occ_alpha) * len(occ_beta),
     ).reshape(-1, 2)
     occ_indices = np.left_shift(1, occ_indices)
-    occ_indices = np.bitwise_or.reduce(occ_indices.T)
+    occ_indices = np.bitwise_or.reduce(occ_indices.T)  # pylint: disable=E1101
 
     vir_indices = np.fromiter(
         it.chain.from_iterable(it.product(vir_alpha.tolist(), vir_beta.tolist())),
@@ -1179,12 +1179,12 @@ def excite_bulk_two_ab(sd, occ_alpha, occ_beta, vir_alpha, vir_beta):
         count=2 * len(vir_alpha) * len(vir_beta),
     ).reshape(-1, 2)
     vir_indices = np.left_shift(1, vir_indices)
-    vir_indices = np.bitwise_or.reduce(vir_indices.T)
+    vir_indices = np.bitwise_or.reduce(vir_indices.T)  # pylint: disable=E1101
 
     return np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_indices)[:, None], vir_indices[None, :]))
 
 
-def sign_excite_one(occ_indices, vir_indices):
+def sign_excite_one(occ_indices, vir_indices):  # pylint: disable=W0621
     """Return the signs of Slater determinants after first-order excitation.
 
     Parameters
@@ -1228,7 +1228,7 @@ def sign_excite_one(occ_indices, vir_indices):
     return np.array(output)
 
 
-def sign_excite_two(occ_indices, vir_indices):
+def sign_excite_two(occ_indices, vir_indices):  # pylint: disable=W0621,R0912
     """Return the signs of Slater determinants after second-order excitation (same spin).
 
     Parameters
@@ -1299,7 +1299,7 @@ def sign_excite_two(occ_indices, vir_indices):
     return np.array(output)
 
 
-def sign_excite_two_ab(occ_alpha, occ_beta, vir_alpha, vir_beta):
+def sign_excite_two_ab(occ_alpha, occ_beta, vir_alpha, vir_beta):  # pylint: disable=R0912
     """Return the signs of Slater determinants after first-order excitations (different spin).
 
     One occupied alpha orbital and one occupied beta orbital are excited to virtual alpha and beta

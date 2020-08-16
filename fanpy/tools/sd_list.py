@@ -129,7 +129,7 @@ def sd_list(nelec, nspin, num_limit=None, exc_orders=None, spin=None, seniority=
     )
     vir_indices = sorted(vir_indices, key=lambda x: x - nspatial if x >= nspatial else x)
 
-    if num_limit is not None and 1 == num_limit:
+    if num_limit is not None and num_limit == 1:
         return sds
 
     count = 1

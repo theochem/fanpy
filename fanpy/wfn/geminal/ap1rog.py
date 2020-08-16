@@ -288,7 +288,7 @@ class AP1roG(APIG):
         self.dict_reforbpair_ind = dict_reforbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
-    def _olp(self, sd):
+    def _olp(self, sd):  # pylint: disable=E0202
         """Calculate the overlap with the Slater determinant.
 
         Parameters
@@ -316,7 +316,7 @@ class AP1roG(APIG):
         # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
         return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
 
-    def _olp_deriv(self, sd, deriv):
+    def _olp_deriv(self, sd, deriv):  # pylint: disable=E0202
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
