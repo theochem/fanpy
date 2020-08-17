@@ -40,7 +40,9 @@ number of terms in the integration can be limited by (1) integrating the Schröd
 some reference wavefunction or (2) using subsets of the Slater determinants to project out less
 important components of the wavefunction.
 
+
 .. _integrateref:
+
 Integrating With A Reference Wavefunction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When integrating the Schrödinger equation, we can use a reference wavefunction, :math:`\Phi`,
@@ -84,7 +86,7 @@ In the FANCI module, only the following reference wavefunctions are supported:
     }
 
 This objective is implemented in class
-:class:`EnergyOneSideProjection <wfns.eqn.energy_oneside.OneSidedEnergy>`.
+:class:`EnergyOneSideProjection <fanpy.eqn.energy_oneside.OneSidedEnergy>`.
 
 Projecting Out Slater Determinants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,7 +132,7 @@ We can sum over a subset of the Slater determinants to reduce the number of eval
     }
 
 This objective is implemented in class
-:class:`EnergyTwoSideProjection <wfns.eqn.energy_twoside.TwoSidedEnergy>`.
+:class:`EnergyTwoSideProjection <fanpy.eqn.energy_twoside.TwoSidedEnergy>`.
 
 
 Projected Schrödinger Equation
@@ -167,7 +169,7 @@ satisfied. Then, we can ignore Slater determinants where both
 :math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right> - E \left< \mathbf{m} \middle| \Psi \right> \approx 0`.
 
 The objective for the projected Schrödinger equation is implemented in class
-:class:`ProjectedSchrodinger <wfns.eqn.projected.SystemEquations>`.
+:class:`ProjectedSchrodinger <fanpy.eqn.projected.SystemEquations>`.
 
 Projection Space
 ~~~~~~~~~~~~~~~~
@@ -232,4 +234,4 @@ where :math:`\Phi` can be
     \sum_{\mathbf{m} \in S_{trunc}} f^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right> - 1 = 0
 
 Though there is no abstract base class for the constraints specifically, they should follow the same
-structure as the abstract base class, :class:`BaseObjective <wfns.eqn.base.BaseObjective>`.
+structure as the abstract base class, :class:`BaseObjective <fanpy.eqn.base.BaseObjective>`.

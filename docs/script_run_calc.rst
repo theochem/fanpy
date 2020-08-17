@@ -1,23 +1,23 @@
 .. _script_run_calc:
 
-wfns_run_calc.py
+Run Calculations
 ================
-The script :py:mod:`wfns_run_calc.py` runs a calculation using a set of arguments and optional
+The script :py:mod:`fanpy_run_calc` runs a calculation using a set of arguments and optional
 arguments:
 
 .. code:: bash
 
-   wfns_run_calc.py [-h] --nelec NELEC --one_int_file ONE_INT_FILE
-                    --two_int_file TWO_INT_FILE --wfn_type WFN_TYPE
-                    [--nuc_repulsion NUC_NUC] [--optimize_orbs]
-                    [--pspace PSPACE_EXC [PSPACE_EXC ...]]
-                    [--objective OBJECTIVE] [--solver SOLVER]
-                    [--solver_kwargs SOLVER_KWARGS]
-                    [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
-                    [--load_ham LOAD_HAM] [--load_wfn LOAD_WFN]
-                    [--load_chk LOAD_CHK] [--save_orbs SAVE_ORBS]
-                    [--save_ham SAVE_HAM] [--save_wfn SAVE_WFN]
-                    [--save_chk SAVE_CHK] [--memory MEMORY]
+   fanpy_run_calc [-h] --nelec NELEC --one_int_file ONE_INT_FILE
+                  --two_int_file TWO_INT_FILE --wfn_type WFN_TYPE
+                  [--nuc_repulsion NUC_NUC] [--optimize_orbs]
+                  [--pspace PSPACE_EXC [PSPACE_EXC ...]]
+                  [--objective OBJECTIVE] [--solver SOLVER]
+                  [--solver_kwargs SOLVER_KWARGS]
+                  [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
+                  [--load_ham LOAD_HAM] [--load_wfn LOAD_WFN]
+                  [--load_chk LOAD_CHK] [--save_orbs SAVE_ORBS]
+                  [--save_ham SAVE_HAM] [--save_wfn SAVE_WFN]
+                  [--save_chk SAVE_CHK] [--memory MEMORY]
 
 
 where the arguments inside square brackets are optional.

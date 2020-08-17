@@ -26,4 +26,4 @@ define its overlap function. Consequently, the wavefunction parameters must also
 ensure that the overlap function has a consistent input. The number of electrons and spin orbitals
 must also be defined as they almost always affect the number and shape of the parameters. This
 framework is established in the abstract base class,
-:class:`BaseWavefunction <wfns.wfn.base.BaseWavefunction>`.
+:class:`BaseWavefunction <fanpy.wfn.base.BaseWavefunction>`.

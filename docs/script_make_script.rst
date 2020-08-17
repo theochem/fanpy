@@ -1,25 +1,25 @@
 .. _script_make_script:
 
-wfns_make_script.py
-===================
-The script :py:mod:`wfns_make_script.py` runs a calculation using a set of arguments and optional
+Making Calculation Scripts
+==========================
+The script :py:mod:`fanpy_make_script` runs a calculation using a set of arguments and optional
 arguments:
 
 .. code:: bash
 
-   wfns_make_script.py [-h] --nelec NELEC --nspin NSPIN
-                       --one_int_file ONE_INT_FILE --two_int_file TWO_INT_FILE
-                       --wfn_type WFN_TYPE
-                       [--nuc_repulsion NUC_NUC] [--optimize_orbs]
-                       [--pspace PSPACE_EXC [PSPACE_EXC ...]]
-                       [--objective OBJECTIVE] [--solver SOLVER]
-                       [--solver_kwargs SOLVER_KWARGS]
-                       [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
-                       [--load_ham LOAD_HAM] [--load_wfn LOAD_WFN]
-                       [--load_chk LOAD_CHK] [--save_orbs SAVE_ORBS]
-                       [--save_ham SAVE_HAM] [--save_wfn SAVE_WFN]
-                       [--save_chk SAVE_CHK] [--memory MEMORY]
-                       [--filename FILENAME]
+   fanpy_make_script [-h] --nelec NELEC --nspin NSPIN
+                     --one_int_file ONE_INT_FILE --two_int_file TWO_INT_FILE
+                     --wfn_type WFN_TYPE
+                     [--nuc_repulsion NUC_NUC] [--optimize_orbs]
+                     [--pspace PSPACE_EXC [PSPACE_EXC ...]]
+                     [--objective OBJECTIVE] [--solver SOLVER]
+                     [--solver_kwargs SOLVER_KWARGS]
+                     [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
+                     [--load_ham LOAD_HAM] [--load_wfn LOAD_WFN]
+                     [--load_chk LOAD_CHK] [--save_orbs SAVE_ORBS]
+                     [--save_ham SAVE_HAM] [--save_wfn SAVE_WFN]
+                     [--save_chk SAVE_CHK] [--memory MEMORY]
+                     [--filename FILENAME]
 
 
 where the arguments inside square brackets are optional.
@@ -30,10 +30,6 @@ Mandatory Keywords
 :code:`--nelec NELEC`
    Number of electrons in the wavefunction.
    :code:`NELEC` is an integer.
-
-:code:`--nspin NSPIN`
-   Number of spin orbitals used in the wavefunction and Hamiltonian.
-   :code:`NSPIN` is an integer.
 
 :code:`--one_int_file ONE_INT_FILE`
    One-electron integrals used to construct the chemical Hamiltonian.

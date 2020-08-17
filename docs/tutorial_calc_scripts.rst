@@ -11,22 +11,23 @@ those provided by the two scripts.
 
 Using a script that runs a calculation
 --------------------------------------
-The script :ref:`wfns_run_calc.py <script_run_calc>` runs a calculation using a set of arguments and optional
-arguments:
+The script :ref:`fanpy_run_calc <script_run_calc>` runs a calculation using a set of
+arguments and optional arguments:
 
 .. code:: bash
 
-   wfns_run_calc.py [-h] --nelec NELEC --one_int_file ONE_INT_FILE
-                    --two_int_file TWO_INT_FILE --wfn_type WFN_TYPE
-                    [--nuc_repulsion NUC_NUC] [--optimize_orbs]
-                    [--pspace PSPACE_EXC [PSPACE_EXC ...]]
-                    [--objective OBJECTIVE] [--solver SOLVER]
-                    [--solver_kwargs SOLVER_KWARGS]
-                    [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
-                    [--load_ham LOAD_HAM] [--load_wfn LOAD_WFN]
-                    [--load_chk LOAD_CHK] [--save_orbs SAVE_ORBS]
-                    [--save_ham SAVE_HAM] [--save_wfn SAVE_WFN]
-                    [--save_chk SAVE_CHK] [--memory MEMORY]
+   fanpy_run_calc [-h] --nelec NELEC --one_int_file ONE_INT_FILE
+                      --two_int_file TWO_INT_FILE --wfn_type WFN_TYPE
+                      [--nuc_repulsion NUC_NUC] [--optimize_orbs]
+                      [--pspace PSPACE_EXC [PSPACE_EXC ...]]
+                      [--objective OBJECTIVE] [--solver SOLVER]
+                      [--ham_noise HAM_NOISE] [--wfn_noise WFN_NOISE]
+                      [--solver_kwargs SOLVER_KWARGS]
+                      [--wfn_kwargs WFN_KWARGS] [--load_orbs LOAD_ORBS]
+                      [--load_ham LOAD_HAM] [--load_ham_um LOAD_HAM_UM]
+                      [--load_wfn LOAD_WFN] [--save_chk SAVE_CHK]
+                      [--memory MEMORY]
+
 
 where the arguments inside square brackets are optional.
 
@@ -64,48 +65,49 @@ Following are some examples:
 
 .. code:: bash
 
-   wfns_run_calc.py --nelec 4 --one_int_file oneint.npy \
-                    --two_int_file twoint.npy --wfn_type fci
+   fanpy_run_calc --nelec 4 --one_int_file oneint.npy \
+                  --two_int_file twoint.npy --wfn_type fci
 
 - Same FCI calculation except the CI matrix is diagonalized
 
 .. code:: bash
 
-   wfns_run_calc.py --nelec 4 --one_int_file oneint.npy \
-                    --two_int_file twoint.npy --wfn_type fci \
-                    --solver diag
+   fanpy_run_calc --nelec 4 --one_int_file oneint.npy \
+                  --two_int_file twoint.npy --wfn_type fci \
+                  --solver diag
 
 - AP1roG calculation without orbital optimization solved as a system of equations using a least
   squares solver
 
 .. code:: bash
 
-   wfns_run_calc.py --nelec 4 --one_int_file oneint.npy \
-                    --two_int_file twoint.npy --wfn_type ap1rog \
-                    --objective system --solver least_squares
+   fanpy_run_calc --nelec 4 --one_int_file oneint.npy \
+                  --two_int_file twoint.npy --wfn_type ap1rog \
+                  --objective system --solver least_squares
 
 - AP1roG calculation with orbital optimization solved as a squared sum of equations using a CMA
   solver
 
 .. code:: bash
 
-   wfns_run_calc.py --nelec 4 --one_int_file oneint.npy \
-                    --two_int_file twoint.npy --wfn_type ap1rog \
-                    --optimize_orbs --objective system --solver cma
+   fanpy_run_calc --nelec 4 --one_int_file oneint.npy \
+                  --two_int_file twoint.npy --wfn_type ap1rog \
+                  --optimize_orbs --objective system --solver cma
 
 
-For a detailed explanation of each keyword, go to :ref:`wfns_run_calc.py <script_run_calc>`.
+For a detailed explanation of each keyword, go to :ref:`fanpy_run_calc
+<script_run_calc>`.
 
 .. _tutorial_calc_make_script:
 
 Using a script that makes a script
 ----------------------------------
-The script :ref:`wfns_make_script.py <script_make_script>` creates a script that can be executed to
-run the calculation:
+The script :ref:`fanpy_make_script <script_make_script>` creates a script that can
+be executed to run the calculation:
 
 .. code:: bash
 
-   wfns_make_script.py [-h] --nelec NELEC --nspin NSPIN
+   fanpy_make_script.py [-h] --nelec NELEC --nspin NSPIN
                        --one_int_file ONE_INT_FILE --two_int_file TWO_INT_FILE
                        --wfn_type WFN_TYPE
                        [--nuc_repulsion NUC_NUC] [--optimize_orbs]
@@ -119,18 +121,20 @@ run the calculation:
                        [--save_chk SAVE_CHK] [--memory MEMORY]
                        [--filename FILENAME]
 
-where the arguments inside square brackets are optional. This script shares all of the keywords with
-:ref:`wfns_run_calc.py <script_run_calc>` with addition of two more keywords: :code:`--nspin NSPIN`
-and :code:`--filename FILENAME`. The :code:`--nspin NSPIN` specifies the number of spin orbitals
-used in the system. This number must match the number of orbitals associated with the integrals
-(number of spatial orbitals times two). The :code:`--filename FILENAME` is the name of the script
-that will be produced. If it not provided then the script is printed onto the screen
-(:code:`STDOUT`).
 
-Though the functionality of this script is very close to the :ref:`wfns_run_calc.py
-<script_run_calc>`, this script can be used to produce a template. The template can be modified for
-functionality that is not included in the scripts :ref:`wfns_run_calc.py <script_run_calc>` and
-:ref:`wfns_make_script.py <script_make_script>`. For details on modifying the template script, see
+where the arguments inside square brackets are optional. This script shares all of the keywords with
+:ref:`fanpy_run_calc <script_run_calc>` with addition of two more keywords:
+:code:`--nspin NSPIN` and :code:`--filename FILENAME`. The :code:`--nspin NSPIN` specifies the
+number of spin orbitals used in the system. This number must match the number of orbitals associated
+with the integrals (number of spatial orbitals times two). The :code:`--filename FILENAME` is the
+name of the script that will be produced. If it not provided then the script is printed onto the
+screen (:code:`STDOUT`).
+
+Though the functionality of this script is very close to the :ref:`fanpy_run_calc
+<script_run_calc>`, this script can be used to produce a template. The template can
+be modified for functionality that is not included in the scripts :ref:`fanpy_run_calc
+<script_run_calc>` and :ref:`fanpy_make_script
+<script_make_script>`. For details on modifying the template script, see
 :ref:`How to make a script <tutorial_calc_code>`.
 
 Following are some examples:
@@ -140,7 +144,7 @@ Following are some examples:
 
 .. code:: bash
 
-   wfns_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
+   fanpy_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
                        --two_int_file twoint.npy --wfn_type fci \
                        --filename example.py
    python3 example.py
@@ -149,7 +153,7 @@ Following are some examples:
 
 .. code:: bash
 
-   wfns_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
+   fanpy_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
                        --two_int_file twoint.npy --wfn_type fci \
                        --solver diag --filename example.py
    python3 example.py
@@ -159,7 +163,7 @@ Following are some examples:
 
 .. code:: bash
 
-   wfns_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
+   fanpy_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
                        --two_int_file twoint.npy --wfn_type ap1rog \
                        --objective system --solver least_squares \
                        --filename example.py
@@ -171,11 +175,12 @@ Following are some examples:
 
 .. code:: bash
 
-   wfns_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
+   fanpy_make_script.py --nelec 4 --nspin 8 --one_int_file oneint.npy \
                        --two_int_file twoint.npy --wfn_type ap1rog \
                        --optimize_orbs --objective least_squares \
                        --solver cma --filename example.py
    python3 example.py
 
 
-For a detailed explanation of each keyword, go to :ref:`wfns_make_script.py <script_make_script>`.
+For a detailed explanation of each keyword, go to :ref:`fanpy_make_script
+<script_make_script>`.

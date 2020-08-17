@@ -59,7 +59,7 @@ one another. (FIXME) Then, by the Slater-Condon rule, the Hamiltonian only needs
 orbitals as the number of electrons that are involved in it. For example, a one-electron operator
 will only need to consider one-electron components of the Slater determinants. When the Hamiltonian
 involves operators of different numbers of electrons, the Hamiltonian can be separated into
-different components. In the :class:`MolecularHamiltonian <wfns.ham.chemical.ChemicalHamiltonian>`,
+different components. In the :class:`MolecularHamiltonian <fanpy.ham.chemical.ChemicalHamiltonian>`,
 the Hamiltonian can be decomposoed into the one and two-electron operators:
 
 .. math::
@@ -118,4 +118,4 @@ wavefunction. In the FANCI module, the objectives represent the Schrödinger equ
 :math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` and
 :math:`\left< \Phi \middle| \hat{H} \middle| \Phi \right>`, where
 :math:`\Phi` is a Slater determinant and :math:`\Psi` is the wavefunction. This framework is
-established in the abstract base class, :class:`BaseHamiltonian <wfns.ham.base.BaseHamiltonian>`.
+established in the abstract base class, :class:`BaseHamiltonian <fanpy.ham.base.BaseHamiltonian>`.

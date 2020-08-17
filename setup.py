@@ -88,7 +88,6 @@ setup(
         "console_scripts": [
             "fanpy_make_script=fanpy.scripts.make_script:main",
             "fanpy_run_calc=fanpy.scripts.run_calc:main",
-            "fanpy_make_nn_script=fanpy.scripts.make_nn_script:main",
         ]
     },
     # List additional URLs that are relevant to your project as a dict.
