@@ -2,120 +2,181 @@
 
 Hamiltonian
 ===========
-..
-   The exact nonrelativistic, time-independent chemical Hamiltonian, :math:`\mathscr{H}`, involves the
-   interactions between the nuclei (denoted by index :math:`A`) and the electrons (denoted by index
-   :math:`i`):
 
-   .. math::
+The non-relativistic electronic Hamiltonian of molecular systems, in atomic units, is given by
 
-       \mathscf{H} &= - \sum_A \frac{1}{2M_A} \nabla_A^2 + \sum_{A<B} \frac{Z_A Z_B}{R_{AB}}
-                      - \sum_i \frac{1}{2} \nabla_i^2 + \sum_{i<j} \frac{1}{r_{ij}}
-                      - \sum_A \sum_i \frac{Z_A}{r_{iA}}
+.. math::
 
-   where all units are in atomic units (atomic units will always be used in this module).
+    \hat{H} &=
+    -\frac{1}{2} \sum_i \nabla^2_i
+    - \sum_i \sum_A \frac{Z_A}{r_{iA}}
+    + \sum_{i<j} \frac{1}{r_{ij}}\\
+    &= \sum_i \hat{h}_i + \sum_{i<j} \hat{g}_{ij}
 
-   In electronic structure, we often separate out the electronic component from the nuclear component.
+where :math:`\nabla_i` is the gradient with respect to the position of electron :math:`i`,
+:math:`Z_A` is the charge of the atomic nucleus :math:`A`, :math:`r_{iA}` is the distance between
+electron :math:`i` and nucleus :math:`A`, and :math:`r_{ij}` is the distance between electrons
+:math:`i` and :math:`j`. For each electron :math:`i`, the operators for the kinetic energy,
+:math:`-\frac{1}{2} \nabla^2_i`, and the nuclear electron attraction, :math:`- \sum_A
+\frac{Z_A}{r_{iA}}`, are grouped together to form the one-electron operator, :math:`\hat{h}_i`.
 
-   .. math::
 
-       \mathscf{H} &= \mathscf{H_{\mathrm{nuc}} + \mathscf{H_{\mathrm{el}}\\
-       \mathscf{H_{\mathrm{el}} &= - \sum_i \frac{1}{2} \nabla_i^2 + \sum_{i<j} \frac{1}{r_{ij}}
-                                   - \sum_A \sum_i \frac{Z_A}{r_{iA}}\\
-       \mathscf{H_{\mathrm{nuc}} &= - \sum_A \frac{1}{2M_A} \nabla_A^2 + \sum_{A<B} \frac{Z_A Z_B}{R_{AB}}
+Since the wavefunction is a function of the positions of the electrons, the electron indices,
+:math:`i` and :math:`j`, are needed to keep track of the distinct electronic positions even though
+all electrons are equivalent particles. It is helpful to project the Hamiltonian onto the orbital
+basis set and reexpress it with second quantization, so that the electronic positions need not be
+tracked explicitly. The matrix representations of the one- and two-electron operators in the orbital
+basis set are denoted as one-electron integrals, :math:`h_{ij}`, and two-electron integrals,
+:math:`g_{ijkl}`, respectively. Explicitly,
 
-   Using the Born-Oppenheimer approximation, the solution to the Hamiltonian, :math:`\mathscr{H}`,
-   can be decomposed into the nuclear and electronic components.
+.. math::
 
-The Hamiltonian describes the system and the interactions within the system. Within a finite
-one-electron basis set, :math:`\{\phi_i\}`, we can represent the Hamiltonian explicitly in terms
-of the Slater determinants using a projection operator:
+    h_{ij}
+    &= \int \phi^*_i(\mathbf{r}_1) \hat{h} \phi_j(\mathbf{r}_1) d\mathbf{r}_1\\
+    &= \int \phi^*_i(\mathbf{r}_1)
+    \left( -\frac{1}{2} \nabla^2  - \sum_A \frac{Z_A}{|\mathbf{r}_1 - \mathbf{r}_{A}|} \right)
+    \phi_j(\mathbf{r}_1) d\mathbf{r}_1
+
+.. math::
+
+    g_{ijkl}
+    &= \int \phi^*_i(\mathbf{r}_1) \phi^*_j(\mathbf{r}_2)
+    \hat{g}
+    \phi_k(\mathbf{r}_1) \phi_l(\mathbf{r}_2)
+    d\mathbf{r}_1 d\mathbf{r}_2\\
+    &= \int \phi^*_i(\mathbf{r}_1) \phi^*_j(\mathbf{r}_2)
+    \frac{1}{|\mathbf{r}_1 - \mathbf{r}_2|}
+    \phi_k(\mathbf{r}_1) \phi_l(\mathbf{r}_2)
+    d\mathbf{r}_1 d\mathbf{r}_2\\
+
+Note that in the literature two-electron integrals are sometimes denoted using physicists' notation
+and sometimes using chemists' notation. The equation above is in the physicists' notation. The
+following equation is in the chemists' notation:
+
+.. math::
+
+    g_{ijkl}
+    &= \int \phi^*_i(\mathbf{r}_1) \phi^*_k(\mathbf{r}_2)
+    \hat{g}
+    \phi_j(\mathbf{r}_1) \phi_l(\mathbf{r}_2)
+    d\mathbf{r}_1 d\mathbf{r}_2\\
+
+:code:`Fanpy` defaults to the physicists' notation, unless an option is provided otherwise.
+
+Using the one- and two-electron integrals, the second-quantized Hamiltonian is:
 
 .. math::
 
     \hat{H}
-    &= \sum_{ij} \left| \phi_i \middle> \middle< \phi_i \right| \hat{H}
-       \left| \phi_j \middle> \middle< \phi_j \right|\\
-    &\hspace{2em}
-       + \sum_{i<j} \sum_{k<l} \left| \phi_i \phi_j \middle> \middle< \phi_i \phi_j \right| \hat{H}
-         \left| \phi_k \phi_l \middle> \middle< \phi_k \phi_l \right|\\
-    &\hspace{2em}
-       + \sum_{i<j<k} \sum_{l<m<n}
-         \left| \phi_i \phi_j \phi_k \middle> \middle< \phi_i \phi_j \phi_k \right| \hat{H}
-         \left| \phi_l \phi_m \phi_n \middle> \middle< \phi_l \phi_m \phi_n \right|\\
-    &\hspace{2em}
-       + \dots\\
-    &= \sum_{n=1}^\infty \sum_{i_1 < i_2 < \dots < i_n} \sum_{j_1 < j_2 < \dots < j_n}
-       \left| \phi_{i_1} \dots \phi_{i_n} \middle> \middle< \phi_{i_1} \dots \phi_{i_n} \right|
-       \hat{H}
-       \left| \phi_{j_1} \dots \phi_{j_n} \middle> \middle< \phi_{j_1} \dots \phi_{j_n} \right|
-
-Though this form of the Hamiltonian is infeasible (it requires a sum over all Fock space), it
-demonstrates that the Hamiltonian operator can be described as the integrals of the operator
-against different Slater determinants:
-:math:`\left< \phi_{i_1} \dots \phi_{i_n} \middle| \hat{H} \middle| \phi_{j_1} \dots \phi_{j_n} \right>`.
-With an orthonormal one-electron basis set, the corresponding Slater determinants are orthonormal to
-one another. (FIXME) Then, by the Slater-Condon rule, the Hamiltonian only needs to consider as many
-orbitals as the number of electrons that are involved in it. For example, a one-electron operator
-will only need to consider one-electron components of the Slater determinants. When the Hamiltonian
-involves operators of different numbers of electrons, the Hamiltonian can be separated into
-different components. In the :class:`MolecularHamiltonian <fanpy.ham.chemical.ChemicalHamiltonian>`,
-the Hamiltonian can be decomposoed into the one and two-electron operators:
-
-.. math::
-
-    \hat{H}_{one}
-    &= \left(
-           \sum_{i} a^\dagger_i \left< \phi_i \right|
-       \right) \hat{H}_{one} \left(
-           \sum_{j} \left| \phi_j \right> a_j
-       \right)\\
-    &= \sum_{ij} a^\dagger_i \left< \phi_i \middle| \hat{H}_{one} \middle| \phi_j \right> a_j\\
     &= \sum_{ij} h_{ij} a^\dagger_i a_j
+    + \frac{1}{2} \sum_{ijkl} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k\\
+
+
+Note that this second-quantized Hamiltonian is valid for any number of fermions, interacting by any
+type of 1-body and 2-body forces. Thus this equation, and the numerical methods used to solve it,
+are applicable not only to molecules but to any other system of interacting elementary fermionic
+particles. At this moment, only the electronic molecular Hamiltonians are implemented in
+:code:`Fanpy`, though its structure supports Hamiltonians of other fermionic particles.
+
+In :code:`Fanpy`, the Hamiltonians can be expressed with respect to restricted, unrestricted, and
+generalized orbitals which differ by the ways in which they treat spin orbitals of opposing spins.
+In generalized orbitals, no assumptions are made in regads to the spin of the orbitals. Thus, the
+following properties hold for the one- and two-electron integrals:
 
 .. math::
 
-    \hat{H}_{two}
-    &= \left(
-           \sum_{i<j} a^\dagger_i a^\dagger_j \left< \phi_i \phi_j \right|
-       \right) \hat{H}_{two} \left(
-           \sum_{k<l} \left| \phi_k \phi_l \right> a_l a_k
-       \right)\\
-    &= \sum_{i<j} \sum_{k<l} a^\dagger_i a^\dagger_j
-       \left< \phi_i \phi_j \middle| \hat{H}_{two} \middle| \phi_k \phi_l \right> a_l a_k\\
-    &= \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
+    h^\chi_{ij} &= (h^\chi_{ji})^*\\
+    g^{\chi}_{ijkl} &= g^\chi_{jilk}\\
+    g^{\chi}_{ijkl} &= (g^\chi_{klij})^*
+
+If the orbitals are unrestricted, only the spin orbitals of the same spin can be integrated with one
+another:
 
 .. math::
 
-    \hat{H}
-    &= \hat{H}_{one} + \hat{H}_{two}\\
-    &= \sum_{ij} h_{ij} a^\dagger_i a_j
-       + \sum_{i<j} \sum_{k<l} g_{ijkl} a^\dagger_i a^\dagger_j a_l a_k
+    h_{ij}^\chi &=
+    \begin{cases}
+      h^\alpha_{ij} & \mbox{if $\sigma_i = \sigma_j = \alpha$}\\
+      h^\beta_{ij} & \mbox{if $\sigma_i = \sigma_j = \beta$}\\
+      0 & \mbox{else}\\
+    \end{cases}\\
+    g_{ijkl}^{\chi} &=
+    \begin{cases}
+      g^{\alpha \alpha}_{ijkl} & \mbox{if $\sigma_i = \sigma_j = \sigma_k = \sigma_l$}\\
+      g^{\alpha \beta}_{ijkl} & \mbox{if $\sigma_i = \sigma_k = \alpha$ and $\sigma_j = \sigma_l = \beta$}\\
+      g^{\beta \alpha}_{ijkl} & \mbox{if $\sigma_i = \sigma_k = \beta$ and $\sigma_j = \sigma_l = \alpha$}\\
+      g^{\beta \beta}_{ijkl} & \mbox{if $\sigma_i = \sigma_j = \sigma_k = \sigma_l$}\\
+      0 & \mbox{else}\\
+    \end{cases}
 
-where :math:`h_{ij} = \left< \phi_i \right| \hat{H}_{one} \left| \phi_j \right>` and
-:math:`g_{ijkl} = \left< \phi_i \phi_j \right| \hat{H}_{two} \left| \phi_k \phi_l \right>`. Note
-that the projection operators in the first Equation, i.e.
+and the following properties hold:
 
 .. math::
 
-    \sum_{i_1 < i_2 < \dots < i_n}
-    \left| \phi_{i_1} \dots \phi_{i_n} \middle> \middle< \phi_{i_1} \dots \phi_{i_n} \right|
+    h^\alpha_{ij} &= (h^\alpha_{ji})^*\\
+    h^\beta_{ij} &= (h^\beta_{ji})^*\\
+    g^{\alpha \alpha}_{ijkl} &= g^{\alpha \alpha}_{jilk}\\
+    g^{\alpha \beta}_{ijkl} &= g^{\beta \alpha}_{jilk}\\
+    g^{\beta \beta}_{ijkl} &= g^{\beta \beta}_{jilk}\\
+    g^{\alpha \alpha}_{ijkl} &= (g^{\alpha \alpha}_{klij})^*\\
+    g^{\alpha \beta}_{ijkl} &= (g^{\alpha \beta}_{klij})^*\\
+    g^{\beta \beta}_{ijkl} &= (g^{\beta \beta}_{klij})^*\\
 
-and
+If the orbitals are restricted, the spin orbitals of opposing spins are constrained to be equal to
+one another (except for their spins) and only the spin orbitals of the same spin can be integrated
+with one another:
 
 .. math::
 
-    \sum_{j_1 < j_2 < \dots < j_n}
-    \left| \phi_{j_1} \dots \phi_{j_n} \middle> \middle< \phi_{j_1} \dots \phi_{j_n} \right|
+    h_{ij}^\phi &=
+    \begin{cases}
+      h^\alpha_{ij}  =  h^\beta_{ij} = h^\phi_{ij} & \mbox{if $\sigma_i = \sigma_j}\\
+      0 & \mbox{else}\\
+    \end{cases}\\
+    g_{ijkl}^{\chi} &=
+    \begin{cases}
+      g^{\alpha \alpha}_{ijkl} = g^{\alpha \beta}_{ijkl} = g^{\beta \alpha}_{ijkl} =
+      g^{\beta \beta}_{ijkl} =  = g^\phi_{ijkl}
+      & \mbox{if $\sigma_i = \sigma_k and $\sigma_j = \sigma_l}\\
+      0 & \mbox{else}\\
+    \end{cases}
 
-can be removed, because they can be interpreted as resolution of identity within the given
-one-electron basis set.
+The following properties hold for the restricted orbitals:
 
-Therefore, all Hamiltonians can be expressed within the one-electron basis set in a similar manner
-and we can construct a framework from which all possible Hamiltonian can be built. All Hamiltonians
-only need to contain the integrals and the method by which these integrals are applied to the
-wavefunction. In the FANCI module, the objectives represent the Schrödinger equation with
-:math:`\left< \Phi \middle| \hat{H} \middle| \Psi \right>` and
-:math:`\left< \Phi \middle| \hat{H} \middle| \Phi \right>`, where
-:math:`\Phi` is a Slater determinant and :math:`\Psi` is the wavefunction. This framework is
-established in the abstract base class, :class:`BaseHamiltonian <fanpy.ham.base.BaseHamiltonian>`.
+.. math::
+
+    h^\phi_{ij} &= (h^\phi_{ji})^*\\
+    g^{\phi}_{ijkl} &= g^\phi_{jilk}\\
+    g^{\phi}_{ijkl} &= (g^\phi_{klij})^*
+
+Orbital rotations of the electronic molecular Hamiltonian is supported by explicitly transforming
+the integrals with a Jacobi matrix, a general transformation matrix, and with a unitary matrix (that
+corresponds to an anti-Hermitian matrix). The integrals of the Hamiltonian with Slater determinants
+(:code:`integrate_sd_sd` and :code:`integrate_sd_wfn`) can be derivatized with respect to the
+anti-Hermitian matrix elements, :math:`\kappa_{ij}`, in the unitary transformation operator,
+:math:`\exp^{\hat{\mathbf{\kappa}}} = \sum_{i>j} \kappa_{ij} (a^\dagger_i a_j - a_j^\dagger a_i)`:
+
+.. math::
+
+  \left.
+    \frac{
+      \partial \braket{\mathbf{m} | e^{-\hat{\mathbf{\kappa}}} \hat{H} e^{\hat{\mathbf{\kappa}}} | \mathbf{n}}
+    }{\partial \kappa_{ij}}
+  \right|_{\kappa = 0}
+  =
+  \left.
+    \frac{
+      \partial \braket{\mathbf{m} | [\hat{H}, \hat{\mathbf{\kappa}}]  | \mathbf{n}}
+    }{\partial \kappa_{ij}}
+  \right|_{\kappa = 0}
+
+In the :code:`Fanpy`, the objectives represent the Schrödinger equation with the integrals
+:math:`\left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>` and
+:math:`\left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>`, where
+:math:`\mathbf{m}` and :math:`\mathbf{n}` are Slater determinants and :math:`\Psi` is the
+wavefunction. The electronic molecular Hamiltonians of the restricted, unrestricted, and generalized
+orbitals are given in
+:class:`RestrictedMolecularHamiltonian <fanpy.ham.restricted_chemical.RestrictedMolecularHamiltonian>`,
+:class:`UnrestrictedMolecularHamiltonian <fanpy.ham.unrestricted_chemical.UnrestrictedMolecularHamiltonian>`,
+and :class:`GeneralizedMolecularHamiltonian <fanpy.ham.generalized_chemical.GeneralizedMolecularHamiltonian>`,
+respectively.

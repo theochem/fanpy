@@ -10,7 +10,7 @@ Schrödinger equation,
 
 for the given electronic Hamiltonian, :math:`\hat{H}`. Since finding the exact solution in the full
 Hilbert space (function space) is not practical, we use a finite set of one-electron basis functions
-(orbitals) from which we build the N-electron basis functions. Since the wavefunction is
+(orbitals) from which we build the N-electron basis functions (Slater determinants). Since the wavefunction is
 antisymmeteric with respect to the interchange of the electrons, we use the antisymmeterized
 product of orbitals (Slater determinant) as the foundation from which the wavefunction is built.
 Then, the Hamiltonian, which operates on the wavefunction, can also be expressed with respect to
@@ -39,6 +39,6 @@ equation can be decomposed into four components:
     * The solver is an algorithm that will optimize the objective.
 
 Each component is independent of the others, except through the modules in
-:mod:`tools <fanpy.backend>`. Almost all combinations of the components are possible, though
+:mod:`tools <fanpy.tools>`. Almost all combinations of the components are possible, though
 special care needs to be taken to ensure that the the given combination is meaningful. Please see
 their respective sections for more details.
