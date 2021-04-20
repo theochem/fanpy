@@ -5,6 +5,7 @@ import os
 from fanpy.ham.unrestricted_base import BaseUnrestrictedHamiltonian
 from fanpy.tools import math_tools, slater
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+from fanpy.wfn.composite.product import ProductWavefunction
 
 import numpy as np
 
@@ -3380,7 +3381,7 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
             shape = (-1,)
             output = np.zeros(3)
         elif wfn_deriv is not None:
-            if isinstance(wfn, LinearCombinationWavefunction):
+            if isinstance(wfn, (LinearCombinationWavefunction, ProductWavefunction)):
                 shape = (-1, len(wfn_deriv[1]))
                 output = np.zeros((3, len(wfn_deriv[1])))
             else:

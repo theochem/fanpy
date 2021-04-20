@@ -9,6 +9,7 @@ from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
 from fanpy.wfn.composite.base_one import BaseCompositeOneWavefunction
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+from fanpy.wfn.composite.product import ProductWavefunction
 
 import numpy as np
 
@@ -350,7 +351,10 @@ class BaseSchrodinger:
             return self.wfn.get_overlap(sd)
 
         output = np.zeros(self.active_nparams)
-        if not isinstance(self.wfn, (BaseCompositeOneWavefunction, LinearCombinationWavefunction)):
+        if not isinstance(
+                self.wfn,
+                (BaseCompositeOneWavefunction, LinearCombinationWavefunction, ProductWavefunction),
+        ):
             inds_component = self.indices_component_params[self.wfn]
             if inds_component.size > 0:
                 inds_objective = self.indices_objective_params[self.wfn]
@@ -358,8 +362,10 @@ class BaseSchrodinger:
         else:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
-            else:
+            elif isinstance(self.wfn, LinearCombinationWavefunction):
                 wfns = (self.wfn,) + self.wfn.wfns
+            else:
+                wfns = self.wfn.wfns
             for wfn in wfns:
                 inds_component = self.indices_component_params[wfn]
                 if inds_component.size > 0:
@@ -402,7 +408,10 @@ class BaseSchrodinger:
 
         output = np.zeros(self.active_nparams)
 
-        if not isinstance(self.wfn, (BaseCompositeOneWavefunction, LinearCombinationWavefunction)):
+        if not isinstance(
+                self.wfn,
+                (BaseCompositeOneWavefunction, LinearCombinationWavefunction, ProductWavefunction),
+        ):
             wfn_inds_component = self.indices_component_params[self.wfn]
             if wfn_inds_component.size > 0:
                 wfn_inds_objective = self.indices_objective_params[self.wfn]
@@ -412,8 +421,10 @@ class BaseSchrodinger:
         else:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
-            else:
+            elif isinstance(self.wfn, LinearCombinationWavefunction):
                 wfns = (self.wfn,) + self.wfn.wfns
+            else:
+                wfns = self.wfn.wfns
             for wfn in wfns:
                 wfn_inds_component = self.indices_component_params[wfn]
                 if wfn_inds_component.size > 0:

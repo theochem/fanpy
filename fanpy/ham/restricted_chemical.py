@@ -4,6 +4,7 @@ import itertools as it
 from fanpy.ham.generalized_chemical import GeneralizedMolecularHamiltonian
 from fanpy.tools import slater
 from fanpy.wfn.composite.lincomb import LinearCombinationWavefunction
+from fanpy.wfn.composite.product import ProductWavefunction
 
 import numpy as np
 
@@ -3243,7 +3244,7 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             shape = (-1,)
             output = np.zeros(3)
         elif wfn_deriv is not None:
-            if isinstance(wfn, LinearCombinationWavefunction):
+            if isinstance(wfn, (LinearCombinationWavefunction, ProductWavefunction)):
                 shape = (-1, len(wfn_deriv[1]))
                 output = np.zeros((3, len(wfn_deriv[1])))
             else:
