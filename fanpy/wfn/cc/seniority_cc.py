@@ -71,7 +71,7 @@ class SeniorityCC(BaseCC):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -107,7 +107,7 @@ class SeniorityCC(BaseCC):
         to the given indices to be created.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, ranks=None, indices=None,
+    def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
                  refwfn=None, params=None, exop_combinations={}):
         """Initialize the wavefunction.
 
@@ -142,7 +142,7 @@ class SeniorityCC(BaseCC):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, ranks=ranks, indices=indices, params=params,
+        super().__init__(nelec, nspin, ranks=ranks, indices=indices, params=params,
                          exop_combinations=exop_combinations)
         self.assign_refwfn(refwfn=refwfn)
         self.load_cache()
@@ -195,17 +195,18 @@ class SeniorityCC(BaseCC):
             if slater.total_occ(refwfn) != self.nelec:
                 raise ValueError('refwfn must have {} electrons'.format(self.nelec))
             # TODO: check that refwfn has the right number of spin-orbs
-            if not all([i + self.nspatial in slater.occ_indices(refwfn) for i in
-                        slater.occ_indices(refwfn)[:self.nspatial]] +
-                       [i - self.nspatial in slater.occ_indices(refwfn) for i in
-                        slater.occ_indices(refwfn)[self.nspatial:]]):
-                raise ValueError('refwfn must be a seniority-0 wavefuntion')
+            # FIXME: bad check
+            # if not all([i + self.nspatial in slater.occ_indices(refwfn) for i in
+            #             slater.occ_indices(refwfn)[:self.nspatial]] +
+            #            [i - self.nspatial in slater.occ_indices(refwfn) for i in
+            #             slater.occ_indices(refwfn)[self.nspatial:]]):
+            #     raise ValueError('refwfn must be a seniority-0 wavefuntion')
             self.refwfn = refwfn
         else:
             if not isinstance(refwfn, CIWavefunction):
                 raise TypeError('refwfn must be a CIWavefunction or a int object')
-            if not hasattr(refwfn, 'sd_vec'):  # NOTE: Redundant test.
-                raise AttributeError('refwfn must have the sd_vec attribute')
+            if not hasattr(refwfn, 'sds'):  # NOTE: Redundant test.
+                raise AttributeError('refwfn must have the sds attribute')
             if refwfn.nelec != self.nelec:
                 raise ValueError('refwfn must have {} electrons'.format(self.nelec))
             if refwfn.nspin != self.nspin:
@@ -299,7 +300,7 @@ class SeniorityCC(BaseCC):
                         continue
             return val
 
-    def _olp_deriv(self, sd1, sd2, deriv):
+    def _olp_deriv(self, sd1, sd2):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -308,8 +309,6 @@ class SeniorityCC(BaseCC):
             Occupation vector of the left Slater determinant given as a bitstring.
         sd2 : int
             Occupation vector of the right Slater determinant given as a bitstring.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
 
         Returns
         -------
@@ -351,7 +350,7 @@ class SeniorityCC(BaseCC):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
-            val = 0.0
+            val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
             for exop_list in self.exop_combinations[tuple(a_inds + c_inds)]:
@@ -375,7 +374,7 @@ class SeniorityCC(BaseCC):
                             break
                         extra_sd = slater.excite(extra_sd, *exop)
                     if sign:
-                        val += sign * self.product_amplitudes(inds, deriv=deriv)
+                        val += sign * self.product_amplitudes(inds, deriv=True)
                     else:
                         continue
             return val

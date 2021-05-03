@@ -64,7 +64,7 @@ class PCCD(BaseCC):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -100,7 +100,7 @@ class PCCD(BaseCC):
         to the given indices to be created.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, ranks=None, indices=None,
+    def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
                  refwfn=None, params=None, exop_combinations={}):
         """Initialize the wavefunction.
 
@@ -135,7 +135,7 @@ class PCCD(BaseCC):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, params=params,
+        super().__init__(nelec, nspin, params=params,
                          exop_combinations=exop_combinations)
         self.assign_ranks(ranks=ranks)
         self.assign_exops(indices=indices)

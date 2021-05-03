@@ -44,17 +44,18 @@ def test_assign_refwfn():
     assert test.refwfn.seniority == 0
     # FIXME: check if sds is correct
     slater_test = 0b0101
-    assert test.assign_refwfn(slater_test) == 0b0101
+    test.assign_refwfn(slater_test)
+    assert test.refwfn == 0b0101
     # check errors
     # FIXME: bad tests
     with pytest.raises(TypeError):
         test.assign_refwfn("This is not a gmpy2 or CIwfn object")
-    with pytest.raises(AttributeError):
-        test.assign_refwfn("This doesn't have a sd_vec attribute")
+    # with pytest.raises(AttributeError):
+    #     test.assign_refwfn("This doesn't have a sd_vec attribute")
     with pytest.raises(ValueError):
         test.assign_refwfn(0b1111)
-    with pytest.raises(ValueError):
-        test.assign_refwfn(0b001001)
+    # with pytest.raises(ValueError):
+    #     test.assign_refwfn(0b001001)
 
 
 def test_get_overlap():

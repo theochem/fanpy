@@ -66,7 +66,7 @@ class CCSDTsen2Qsen0(CCSDTQsen0):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
@@ -131,7 +131,7 @@ class CCSDTsen2Qsen0(CCSDTQsen0):
                             'the given reference Slater determinant are allowed')
         else:
             exops = []
-            ex_from = slater.occ_indices(self.refwfn)
+            ex_from = slater.occ_indices(self.refwfn).tolist()
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
 
             for rank in self.ranks[:-2]:

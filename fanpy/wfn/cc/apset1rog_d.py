@@ -62,7 +62,7 @@ class APset1roGD(PCCD):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.

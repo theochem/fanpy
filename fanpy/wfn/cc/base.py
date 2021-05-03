@@ -55,7 +55,7 @@ class BaseCC(BaseWavefunction):
         Memory available for the wavefunction.
     ranks : list of ints
         Ranks of the excitation operators.
-    exops : list of list of int
+    exops : dictionary of tuple to int
         Excitation operators given as lists of ints. The first half of indices correspond to
         indices to be annihilated, the second half correspond to indices to be created.
     refwfn : {CIWavefunction, int}
@@ -86,7 +86,7 @@ class BaseCC(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ranks=None, indices=None,
+    __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
              refwfn=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
@@ -123,7 +123,7 @@ class BaseCC(BaseWavefunction):
         to the given indices to be created.
 
     """
-    def __init__(self, nelec, nspin, dtype=None, memory=None, ranks=None, indices=None,
+    def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
                  refwfn=None, params=None, exop_combinations={}):
         """Initialize the wavefunction.
 
@@ -158,7 +158,7 @@ class BaseCC(BaseWavefunction):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype)
+        super().__init__(nelec, nspin)
         self.assign_ranks(ranks=ranks)
         self.assign_refwfn(refwfn=refwfn)
         self.assign_exops(indices=indices)
@@ -303,9 +303,9 @@ class BaseCC(BaseWavefunction):
         excitation operators.
 
         """
-        # FIXME: change into dictionary
         if indices is None:
-            exops = []
+            exops = {}
+            counter = 0
             for rank in self.ranks:
                 for annihilators in combinations(range(self.nspin), rank):
                     for creators in combinations([i for i in range(self.nspin)
@@ -315,7 +315,9 @@ class BaseCC(BaseWavefunction):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        exops.append(exop)
+                        # exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
         elif isinstance(indices, list):
             if len(indices) != 2:
@@ -330,7 +332,8 @@ class BaseCC(BaseWavefunction):
             ex_from, ex_to = list(set(indices[0])), list(set(indices[1]))
             ex_from.sort()
             ex_to.sort()
-            exops = []
+            exops = {}
+            counter = 0
             for rank in self.ranks:
                 for annihilators in combinations(ex_from, rank):
                     for creators in combinations(ex_to, rank):
@@ -339,7 +342,9 @@ class BaseCC(BaseWavefunction):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        exops.append(exop)
+                        # exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
         else:
             raise TypeError('`indices` must be None or a list of 2 lists of non-negative ints')
@@ -418,10 +423,11 @@ class BaseCC(BaseWavefunction):
             if self.nexops != other.nexops:
                 raise ValueError('The number of excitation operators in the two wavefunctions'
                                  'must be the same.')
-            params = np.zeros(self.params_shape, dtype=self.dtype)
-            for ind, exop in enumerate(other.exops):
+            params = np.zeros(self.params_shape)
+            # for ind, exop in enumerate(other.exops):
+            for exop, ind in other.exops.items():
                 try:
-                    params[:, self.get_ind(exop)] = other.params[:, ind]
+                    params[self.get_ind(exop)] = other.params[ind]
                     # FIXME: Couldn't be just: params[self.get_ind(exop)] = other.params[ind]?
                 except ValueError:
                     print('The excitation of the given wavefunction is not possible in the '
@@ -454,10 +460,10 @@ class BaseCC(BaseWavefunction):
             If given excitation operator is not valid.
 
         """
-        # FIXME: change into dictionary
         try:
-            return self.exops.index(exop)
-        except (ValueError, TypeError):
+            # return self.exops.index(exop)
+            return self.exops[tuple(exop)]
+        except (ValueError, TypeError, KeyError):
             raise ValueError('Given excitation operator, {0}, is not included in the '
                              'wavefunction.'.format(exop))
 
@@ -480,37 +486,37 @@ class BaseCC(BaseWavefunction):
             If index is not valid.
 
         """
-        try:
-            return self.exops[ind]
-        except (IndexError, TypeError):
-            raise ValueError('Given index, {0}, is not used in the '
-                             'wavefunction'.format(ind))
+        for exop, i in self.exops.items():
+            if i == ind:
+                return exop
+        raise ValueError('Given index, {0}, is not used in the wavefunction'.format(ind))
 
-    def product_amplitudes(self, inds, deriv=None):
+    def product_amplitudes(self, inds, deriv=False):
         """Compute the product of the CC amplitudes that corresponds to the given indices.
 
         Parameters
         ----------
         inds : {list, np.ndarray}
             Indices of the excitation operators that will be used.
-        deriv : {int, None}
+        deriv : bool
             Index of the element with with respect to which the product is derivatized.
             Default is no derivatization.
 
         Returns
         -------
-        product : float
+        product : {float, np.ndarray}
             Product of the CC selected amplitudes.
 
         """
         inds = np.array(inds)
-        if deriv is None:
+        if not deriv:
             return np.prod(self.params[inds])
         else:
-            if deriv not in inds:
-                return 0.0
-            else:
-                return self.product_amplitudes([ind for ind in inds if ind is not deriv])
+            output = np.zeros(self.nparams)
+            selected_params = self.params[inds]
+            for ind in inds:
+                output[ind] = np.prod(selected_params[ind != inds])
+            return output
 
     def load_cache(self):
         """Load the functions whose values will be cached.
@@ -549,9 +555,9 @@ class BaseCC(BaseWavefunction):
             return self._olp(sd1, sd2)
 
         @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp_deriv(sd1, sd2, deriv):
+        def _olp_deriv(sd1, sd2):
             """Cached _olp_deriv method without caching the instance."""
-            return self._olp_deriv(sd1, sd2, deriv)
+            return self._olp_deriv(sd1, sd2)
 
         # create cache
         if not hasattr(self, '_cache_fns'):
@@ -620,7 +626,7 @@ class BaseCC(BaseWavefunction):
                         continue
             return val
 
-    def _olp_deriv(self, sd1, sd2, deriv):
+    def _olp_deriv(self, sd1, sd2):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -629,8 +635,6 @@ class BaseCC(BaseWavefunction):
             Occupation vector of the left Slater determinant given as a bitstring.
         sd2 : int
             Occupation vector of the right Slater determinant given as a bitstring.
-        deriv : int
-            Index of the parameter with respect to which the overlap is derivatized.
 
         Returns
         -------
@@ -639,14 +643,14 @@ class BaseCC(BaseWavefunction):
 
         """
         if sd1 == sd2:
-            return 0.0
+            return np.zeros(self.nparams)
         else:
             # FIXME: this should definitely be vectorized
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
-            val = 0.0
+            val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
             # FIXME: exop_list only provides indices (for product_amplitudes) and exop (for sign).
@@ -667,7 +671,7 @@ class BaseCC(BaseWavefunction):
                             break
                         extra_sd = slater.excite(extra_sd, *exop)
                     if sign:
-                        val += sign * self.product_amplitudes(inds, deriv=deriv)
+                        val += sign * self.product_amplitudes(inds, deriv=True)
                     else:
                         continue
             return val
@@ -699,9 +703,9 @@ class BaseCC(BaseWavefunction):
         ----------
         sd : {int, int}
             Slater Determinant against which the overlap is taken.
-        deriv : int
-            Index of the parameter to derivatize.
-            Default does not derivatize.
+        deriv : {np.ndarray, None}
+            Indices of the parameters with respect to which the overlap is derivatized.
+            Default returns the overlap without derivatization.
 
         Returns
         -------
@@ -721,23 +725,20 @@ class BaseCC(BaseWavefunction):
                     val += self._cache_fns['overlap'](sd, refsd) * self.refwfn.get_overlap(refsd)
                 return val
             # if derivatization
-            elif isinstance(deriv, (int, np.int64)):
-                if deriv >= self.nparams:
-                    return 0.0
-                val = 0.0
+            else:
+                val = np.zeros(self.nparams)
                 for refsd in self.refwfn.sd_vec:
-                    val += (self._cache_fns['overlap derivative'](sd, refsd, deriv) *
+                    val += (self._cache_fns['overlap derivative'](sd, refsd) *
                             self.refwfn.get_overlap(refsd))
-                return val
+                return val[deriv]
         else:
             # if no derivatization
             if deriv is None:
                 return self._cache_fns['overlap'](sd, self.refwfn)
             # if derivatization
-            elif isinstance(deriv, (int, np.int64)):
-                if deriv >= self.nparams:
-                    return 0.0
-                return self._cache_fns['overlap derivative'](sd, self.refwfn, deriv)
+            else:
+                val = self._cache_fns['overlap derivative'](sd, self.refwfn)
+                return val[deriv]
 
     def generate_possible_exops(self, a_inds, c_inds):
         """Assign possible excitation operators from the given creation and annihilation operators.
@@ -788,5 +789,5 @@ class BaseCC(BaseWavefunction):
                             check_ops.append(match)
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
-            if all(op in self.exops for op in op_list):
+            if all(tuple(op) in self.exops for op in op_list):
                 self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)
