@@ -445,19 +445,3 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
         # norm = max(self.probable_sds.values()) ** 2
         self.output_scale *= norm ** (-0.5 / self.params_shape[-1][0])
         self.clear_cache()
-
-    # def update_pspace_norm(self, refwfn=None):
-    #     if refwfn:
-    #         self.pspace_norm = refwfn
-    #     else:
-    #         # self.pspace_norm = list(self.probable_sds.keys())
-    #         self.pspace_norm.add(max(self.probable_sds.keys(), key=lambda x: self.probable_sds[x]))
-    #         # max_sd = max(self.probable_sds.keys(), key=lambda x: self.probable_sds[x])
-    #         # if self.probable_sds[max_sd] > self.get_overlap(self.probable_sds.pop()):
-    #         #     self.pspace_norm = [max_sd]
-    #     print('Adapt normalization pspace')
-    #     print(
-    #         sum(self.get_overlap(sd)**2 for sd in self.pspace_norm),
-    #         len(self.probable_sds), len(self.pspace_norm), max(self.probable_sds.values()),
-    #         'norm_pspace'
-    #     )

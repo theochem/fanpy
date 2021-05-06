@@ -9,6 +9,9 @@ https://github.com/pypa/sampleproject
 from os import path
 
 from setuptools import find_packages, setup
+from setuptools.extension import Extension
+from Cython.Build import cythonize
+import numpy
 
 here = path.abspath(path.dirname(__file__))
 
@@ -97,4 +100,52 @@ setup(
         "Source": "https://github.com/theochem/gbasis/",
     },
     zip_safe=False,
+    ext_modules= cythonize(
+            [
+        # Extension(
+        #     "fanpy.objective.schrodinger.cext",
+        #     ["fanpy/objective/schrodinger/cext.pyx"],
+        #     include_dirs=[numpy.get_include()],
+        # ),
+        # Extension(
+        #     "fanpy.wfn.geminal.cext",
+        #     ["fanpy/wfn/geminal/cext.pyx"],
+        #     include_dirs=[numpy.get_include()],
+        # ),
+        Extension(
+            "fanpy.upgrades.cext_apg",
+            ["fanpy/upgrades/cext_apg.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "fanpy.upgrades.cext_sign",
+            ["fanpy/upgrades/cext_sign.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "fanpy.upgrades.cext_objective",
+            ["fanpy/upgrades/cext_objective.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "fanpy.upgrades.cext_vqmc",
+            ["fanpy/upgrades/cext_vqmc.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "fanpy.upgrades.cext_apg_parallel",
+            ["fanpy/upgrades/cext_apg_parallel.pyx"],
+            #extra_compile_args=['-fopenmp'],
+            #extra_link_args=['-fopenmp'],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "fanpy.upgrades.cext_apg_parallel2",
+            ["fanpy/upgrades/cext_apg_parallel2.pyx"],
+            #extra_compile_args=['-fopenmp'],
+            #extra_link_args=['-fopenmp'],
+            include_dirs=[numpy.get_include()],
+        ),
+        ]
+    ),
 )

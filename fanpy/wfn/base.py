@@ -82,6 +82,9 @@ class BaseWavefunction:
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
         # self.assign_params(params)
+        self.probable_sds = {}
+        self.olp_threshold = 42
+        self.pspace_norm = set()
 
     @property
     def nspatial(self):

@@ -395,6 +395,13 @@ parser.add_argument(
     ),
 )
 parser.add_argument(
+    "--load_chk",
+    type=str,
+    default="",
+    required=False,
+    help="Name of the Numpy file that will be loaded as the chkpoint of the objective.",
+)
+parser.add_argument(
     "--save_chk",
     type=str,
     default="",

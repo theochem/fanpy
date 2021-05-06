@@ -22,9 +22,11 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     load_ham=None,
     load_ham_um=None,
     load_wfn=None,
+    load_chk=None,
     save_chk="",
     filename=None,
     memory=None,
+    constraint=None,
 ):
     """Make a script for running calculations.
 
@@ -189,6 +191,16 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         wfn_name = "APG"
         if wfn_kwargs is None:
             wfn_kwargs = "ngem=None"
+    elif wfn_type == "network":
+        from_imports.append(("fanpy.upgrades.numpy_network", "NumpyNetwork"))
+        wfn_name = "NumpyNetwork"
+        if wfn_kwargs is None:
+            wfn_kwargs = "num_layers=2"
+    elif wfn_type == "rbm":
+        from_imports.append(("fanpy.wfn.network.rbm", "RestrictedBoltzmannMachine"))
+        wfn_name = "RestrictedBoltzmannMachine"
+        if wfn_kwargs is None:
+            wfn_kwargs = "nbath=nspin, num_layers=1, orders=(1, 2)"
 
     if wfn_name in ["DOCI", "CIPairs"]:
         from_imports.append(("fanpy.ham.senzero", "SeniorityZeroHamiltonian"))
@@ -208,6 +220,11 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     elif objective == "one_energy":  # pragma: no branch
         from_imports.append(("fanpy.eqn.energy_oneside", "EnergyOneSideProjection"))
 
+    if constraint == 'norm':
+        from_imports.append(("fanpy.eqn.constraints.norm", "NormConstraint"))
+    elif constraint == 'energy':
+        from_imports.append(("fanpy.eqn.constraints.energy", "EnergyConstraint"))
+
     if solver == "cma":
         from_imports.append(("fanpy.solver.equation", "cma"))
         solver_name = "cma"
@@ -220,10 +237,12 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         from_imports.append(("fanpy.solver.ci", "brute"))
         solver_name = "brute"
     elif solver == "minimize":
-        from_imports.append(("fanpy.solver.equation", "minimize"))
-        solver_name = "minimize"
+        # from_imports.append(("fanpy.solver.equation", "minimize"))
+        # solver_name = "minimize"
+        from_imports.append(("fanpy.upgrades.bfgs_fanpy", "bfgs_minimize"))
+        solver_name = "bfgs_minimize"
         if solver_kwargs is None:
-            solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 1e-8}"
+            solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 1e-8, 'disp':True}"
     elif solver == "least_squares":
         from_imports.append(("fanpy.solver.system", "least_squares"))
         solver_name = "least_squares"
@@ -246,6 +265,30 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         output += "import {}\n".format(i)
     for key, val in from_imports:
         output += "from {} import {}\n".format(key, val)
+    output += "from fanpy.upgrades import speedup_sd, speedup_sign\n"
+    if "apg" in wfn_type or wfn_type in ['ap1rog', 'apig']:
+        output += "import fanpy.upgrades.speedup_apg\n"
+        output += "import fanpy.upgrades.speedup_objective\n"
+    if 'ci' in wfn_type or wfn_type == 'network':
+        output += "import fanpy.upgrades.speedup_objective\n"
+    if solver == "trustregion":
+        output += "from fanpy.upgrades.trustregion_qmc_fanpy import minimize\n"
+        output += "from fanpy.upgrades.trf_fanpy import least_squares\n"
+        if solver_kwargs is None:
+            solver_kwargs = (
+                'constraint_bounds=(-1e-1, 1e-1), energy_bound=-np.inf, norm_constraint=True, '
+                "options={'gtol': 1e-8, 'xtol': 1e-8, 'maxiter': 1000}"
+            )
+        solver_name = "minimize"
+    elif solver == "least_squares":
+        output += "from fanpy.upgrades.trf_fanpy import least_squares\n"
+        solver_name = "least_squares"
+        if solver_kwargs is None:
+            solver_kwargs = (
+                "xtol=1.0e-10, ftol=1.0e-10, gtol=1.0e-10, "
+                "max_nfev=1000*objective.params.size, jac=objective.jacobian"
+            )
+
     output += "\n\n"
 
     output += "# Number of electrons\n"
@@ -313,6 +356,15 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n".join(
         textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
     )
+    ham_init1 = "ham = {}(".format(ham_name)
+    ham_init2 = "one_int, two_int"
+    if solver == 'cma':
+        ham_init2 += ')\n'
+    else:
+        ham_init2 += ', update_prev_params=True)\n'
+    output += "\n".join(
+        textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
+    )
 
     if load_ham_um is not None:
         output += "# Load unitary matrix of the Hamiltonian\n"
@@ -374,20 +426,55 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         output += "param_selection = [(wfn, np.ones(wfn.nparams, dtype=bool))]\n"
     output += "\n"
 
+    if objective in ['system', 'least_squares']:
+        if constraint == 'norm':
+            output += "# Set up constraints\n"
+            output += "norm = NormConstraint(wfn, refwfn=pspace, param_selection=param_selection)\n"
+            output += "weights = np.ones(len(pspace) + 1)\n"
+            output += "weights[-1] = 100\n\n"
+        elif constraint == 'energy':
+            output += "# Set up constraints\n"
+            output += "energy = EnergyConstraint(wfn, ham, param_selection=param_selection, refwfn=pspace,\n"
+            output += "                          ref_energy=-100, queue_size=4, min_diff=1e-2, simple=True)\n"
+            output += "weights = np.ones(len(pspace) + 1)\n"
+            output += "weights[-1] = 100\n\n"
+        else:
+            output += '# Set up weights\n'
+            output += "weights = np.ones(len(pspace))\n\n"
+
     output += "# Initialize objective\n"
     if objective == "projected":
-        objective1 = "objective = ProjectedSchrodinger("
-        objective2 = (
-            "wfn, ham, param_selection=param_selection, "
-            "pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n"
-        )
+        if solver == 'trustregion':
+            objective1 = "objective = ProjectedSchrodinger("
+            if wfn_type != 'ap1rog':
+                objective2 = (
+                    "wfn, ham, param_selection=param_selection, "
+                    "pspace=pspace, refwfn=pspace, energy_type='compute', "
+                    "energy=None, constraints=[], eqn_weights=weights)\n"
+                )
+            else:
+                objective2 = (
+                    "wfn, ham, param_selection=param_selection, "
+                    "pspace=pspace, refwfn=[pspace[0]], energy_type='compute', "
+                    "energy=None, constraints=[], eqn_weights=weights)\n"
+                )
+        else:
+            objective1 = "objective = ProjectedSchrodinger("
+            objective2 = (
+                "wfn, ham, param_selection=param_selection, "
+                "pspace=pspace, refwfn={}, energy_type='variable', "
+                "energy=0.0, constraints=[{}], eqn_weights=weights)\n".format(
+                    'pspace' if wfn_type != 'ap1rog' else 'None', constraint if constraint else ''
+                )
+            )
     elif objective == "least_squares":
         objective1 = "objective = LeastSquaresEquations("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n"
+            "pspace=pspace, refwfn={}, energy_type='variable', "
+            "energy=0.0, constraints=[{}], eqn_weights=weights)\n".format(
+                'pspace' if wfn_type != 'ap1rog' else 'None', constraint if constraint else ''
+            )
         )
     elif objective == "variational":
         objective1 = "objective = EnergyTwoSideProjection("
@@ -397,13 +484,89 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         )
     elif objective == "one_energy":  # pragma: no branch
         objective1 = "objective = EnergyOneSideProjection("
-        objective2 = "wfn, ham, param_selection=param_selection, refwfn=pspace)\n"
+        objective2 = (
+            "wfn, ham, param_selection=param_selection, "
+            "refwfn=pspace)\n"
+        )
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )
     output += "\n"
     output += "objective.tmpfile = '{}'".format(save_chk)
     output += "\n\n"
+    if objective == 'system':
+        output += 'objective.print_energy = False\n'
+    if objective == 'least_squares':
+        output += 'objective.print_energy = True\n'
+    if solver != 'cma' and objective in ['one_energy', 'one_energy_system']:
+        output += "objective.print_energy = True\n\n"
+    if constraint == 'energy':
+        output += 'objective.adaptive_weights = True\n'
+        output += 'objective.num_count = 10\n'
+        output += 'objective.decrease_factor = 5\n\n'
+    if solver == 'trustregion':
+        if wfn_type == 'ap1rog':
+            output += "objective.adapt_type = []\n"
+        else:
+            # output += "objective.adapt_type = ['norm', 'energy']\n"
+            output += "objective.adapt_type = []\n"
+        output += "wfn.olp_threshold = 0.001\n"
+        output += "objective.weight_type = 'ones'\n"
+        output += "objective.sample_size = len(pspace)\n"
+        output += "wfn.pspace_norm = objective.refwfn\n"
+
+    if load_chk is not None:
+        if False:
+            output += "# Load checkpoint\n"
+            output += "chk_point_file = '{}'\n".format(load_chk)
+            output += "chk_point = np.load(chk_point_file)\n"
+            if objective in ["system", "system_qmc", "least_squares", "one_energy_system"]:
+                output += "if chk_point.size == objective.params.size - 1 and objective.energy_type == 'variable':\n"
+                output += '    objective.assign_params(np.hstack([chk_point, 0]))\n'
+                output += "elif chk_point.size - 1 == objective.params.size and objective.energy_type != 'variable':\n"
+                output += '    objective.assign_params(chk_point[:-1])\n'
+                output += 'else:\n'
+                output += "    objective.assign_params(chk_point)\n"
+            else:
+                output += "objective.assign_params(chk_point)\n"
+            output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
+            output += "\n"
+            # check for unitary matrix
+            output += '# Load checkpoint hamiltonian unitary matrix\n'
+            output += "ham_params = chk_point[wfn.nparams:]\n"
+            output += "load_chk_um = '{}_um{}'.format(*os.path.splitext(chk_point_file))\n"
+            output += "if os.path.isfile(load_chk_um):\n"
+            output += "    ham._prev_params = ham_params.copy()\n"
+            output += "    ham._prev_unitary = np.load(load_chk_um)\n"
+            output += "ham.assign_params(ham_params)\n\n"
+        else:
+            output += "# Load checkpoint\n"
+            output += "import os\n"
+            output += "dirname, chk_point_file = os.path.split('{}')\n".format(load_chk)
+            output += "chk_point_file, ext = os.path.splitext(chk_point_file)\n"
+            output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
+            output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
+            output += "try:\n"
+            output += "    ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_ham_prev' + ext))\n"
+            output += "except FileNotFoundError:\n"
+            output += "    ham._prev_params = ham.params.copy()\n"
+            output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
+            output += "ham.assign_params(ham.params)\n"
+
+    if wfn_type in ['apg', 'apig', 'apsetg', 'apg2', 'apg3', 'apg4', 'apg5', 'apg6', 'apg7', 'doci', 'network']:
+        output += "# Normalize\n"
+        output += "wfn.normalize(pspace)\n\n"
+
+    # load energy
+    if objective in ["system", "system_qmc", "least_squares", "one_energy_system"] and solver != 'trustregion':
+        output += "# Set energies\n"
+        output += "energy_val = objective.get_energy_one_proj(pspace)\n"
+        output += "print('Initial energy:', energy_val)\n"
+        output += "if objective.energy_type != 'compute':\n"
+        output += "    objective.energy.params = np.array([energy_val])\n\n"
+        if constraint == 'energy':
+            output += "# Set energy constraint\n"
+            output += "energy.ref_energy = energy_val - 15\n\n"
 
     output += "# Solve\n"
     if solver_name == "brute":
@@ -426,6 +589,8 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
     output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
     output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
+    if objective in ["system", "system_qmc"]:
+        output += "print('Cost: {}'.format(results['cost']))\n"
 
     if filename is None:  # pragma: no cover
         print(output)
@@ -467,6 +632,7 @@ def main():  # pragma: no cover
         load_ham=args.load_ham,
         load_ham_um=args.load_ham_um,
         load_wfn=args.load_wfn,
+        load_chk=args.load_chk,
         save_chk=args.save_chk,
         filename=args.filename,
         memory=args.memory,
