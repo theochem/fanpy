@@ -8,6 +8,7 @@ from fanpy.wfn.composite.product import ProductWavefunction
 
 import numpy as np
 
+from scipy.special import comb
 # pylint: disable=C0302
 
 
@@ -3240,6 +3241,51 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
+        def fromiter(iterator, dtype, ydim, count):
+            return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
+
+        occ_one_alpha = fromiter(it.combinations(occ_alpha.tolist(), 1), int, 1, count=len(occ_alpha))
+        occ_one_alpha = np.left_shift(1, occ_one_alpha[:, 0])
+
+        occ_one_beta = fromiter(it.combinations(occ_beta.tolist(), 1), int, 1, count=len(occ_beta))
+        occ_one_beta = np.left_shift(1, occ_one_beta[:, 0])
+
+        vir_one_alpha = fromiter(it.combinations(vir_alpha.tolist(), 1), int, 1, count=len(vir_alpha))
+        vir_one_alpha = np.left_shift(1, vir_one_alpha[:, 0])
+
+        vir_one_beta = fromiter(it.combinations(vir_beta.tolist(), 1), int, 1, count=len(vir_beta))
+        vir_one_beta = np.left_shift(1, vir_one_beta[:, 0])
+
+        occ_two_aa = fromiter(it.combinations(occ_alpha.tolist(), 2),
+                                    int, ydim=2, count=2*comb(len(occ_alpha), 2))
+        occ_two_aa = np.left_shift(1, occ_two_aa)
+        occ_two_aa = np.bitwise_or(occ_two_aa[:, 0], occ_two_aa[:, 1])
+
+        occ_two_ab = fromiter(it.product(occ_alpha.tolist(), occ_beta.tolist()),
+                                    int, 2, count=2*len(occ_alpha) * len(occ_beta))
+        occ_two_ab = np.left_shift(1, occ_two_ab)
+        occ_two_ab = np.bitwise_or(occ_two_ab[:, 0], occ_two_ab[:, 1])
+
+        occ_two_bb = fromiter(it.combinations(occ_beta.tolist(), 2),
+                                    int, 2, count=2*comb(len(occ_beta), 2))
+        occ_two_bb = np.left_shift(1, occ_two_bb)
+        occ_two_bb = np.bitwise_or(occ_two_bb[:, 0], occ_two_bb[:, 1])
+
+        vir_two_aa = fromiter(it.combinations(vir_alpha.tolist(), 2),
+                                    int, 2, count=2*comb(len(vir_alpha), 2))
+        vir_two_aa = np.left_shift(1, vir_two_aa)
+        vir_two_aa = np.bitwise_or(vir_two_aa[:, 0], vir_two_aa[:, 1])
+
+        vir_two_ab = fromiter(it.product(vir_alpha.tolist(), vir_beta.tolist()),
+                                    int, 2, count=2*len(vir_alpha) * len(vir_beta))
+        vir_two_ab = np.left_shift(1, vir_two_ab)
+        vir_two_ab = np.bitwise_or(vir_two_ab[:, 0], vir_two_ab[:, 1])
+
+        vir_two_bb = fromiter(it.combinations(vir_beta.tolist(), 2),
+                                    int, 2, count=2*comb(len(vir_beta), 2))
+        vir_two_bb = np.left_shift(1, vir_two_bb)
+        vir_two_bb = np.bitwise_or(vir_two_bb[:, 0], vir_two_bb[:, 1])
+
         if wfn_deriv is None and ham_deriv is None:
             shape = (-1,)
             output = np.zeros(3)
@@ -3272,7 +3318,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         overlaps_one_alpha = np.array(
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 1)
+                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_alpha)[:, None],
+                                                        vir_one_alpha[None, :]))
             ]
         ).reshape(*shape)
         if ham_deriv is not None:
@@ -3290,7 +3337,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         overlaps_one_beta = np.array(
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_beta + nspatial, vir_beta + nspatial, 1)
+                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_beta)[:, None],
+                                                        vir_one_beta[None, :]))
             ]
         ).reshape(*shape)
         if ham_deriv is not None:
@@ -3307,7 +3355,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         overlaps_two_aa = np.array(
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_alpha, vir_alpha, 2)
+                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_aa)[:, None],
+                                                        vir_two_aa[None, :]))
             ]
         ).reshape(*shape)
         if occ_alpha.size > 1 and vir_alpha.size > 1:
@@ -3326,9 +3375,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         overlaps_two_ab = np.array(
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk_two_ab(
-                    sd, occ_alpha, occ_beta + nspatial, vir_alpha, vir_beta + nspatial
-                )
+                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_ab)[:, None],
+                                                        vir_two_ab[None, :]))
             ]
         ).reshape(*shape)
         if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
@@ -3353,7 +3401,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         overlaps_two_bb = np.array(
             [
                 wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in slater.excite_bulk(sd, occ_beta + nspatial, vir_beta + nspatial, 2)
+                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_bb)[:, None],
+                                                        vir_two_bb[None, :]))
             ]
         ).reshape(*shape)
         if occ_beta.size > 1 and vir_beta.size > 1:

@@ -256,7 +256,7 @@ class EnergyOneSideProjection(BaseSchrodinger):
 
         self.refwfn = refwfn
 
-    def objective(self, params):
+    def objective(self, params, assign=True, normalize=False, save=True):
         """Return the energy integrated against the reference wavefunction.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
@@ -274,9 +274,13 @@ class EnergyOneSideProjection(BaseSchrodinger):
         """
         params = np.array(params)
         # Assign params
-        self.assign_params(params)
+        if assign:
+            self.assign_params(params)
+        # Normalize
+        if normalize and hasattr(self.wfn, "normalize"):
+            self.wfn.normalize(self.refwfn)
         # Save params
-        if self.step_save:
+        if save and self.step_save:
             self.save_params()
 
         energy = self.get_energy_one_proj(self.refwfn)
@@ -288,7 +292,7 @@ class EnergyOneSideProjection(BaseSchrodinger):
 
         return energy
 
-    def gradient(self, params):
+    def gradient(self, params, assign=True, normalize=True, save=True):
         """Return the gradient of the energy integrated against the reference wavefunction.
 
         See `BaseSchrodinger.get_energy_one_proj` for details.
@@ -306,7 +310,14 @@ class EnergyOneSideProjection(BaseSchrodinger):
         """
         params = np.array(params)
         # Assign params
-        self.assign_params(params)
+        if assign:
+            self.assign_params(params)
+        # Normalize
+        if normalize and hasattr(self.wfn, "normalize"):
+            self.wfn.normalize(self.refwfn)
+        # Save params
+        if save:
+            self.save_params()
 
         grad = self.get_energy_one_proj(self.refwfn, True)
 

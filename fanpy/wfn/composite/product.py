@@ -142,9 +142,9 @@ class ProductWavefunction(LinearCombinationWavefunction):
                 isinstance(deriv, tuple)
                 and len(deriv) == 2
                 and isinstance(deriv[0], BaseWavefunction)
-                and isinstance(deriv[1], np.ndarray)
-                and deriv[1].ndim == 1
-                and np.issubdtype(deriv[1].dtype, np.integer)
+                # and isinstance(deriv[1], np.ndarray)
+                # and deriv[1].ndim == 1
+                # and np.issubdtype(deriv[1].dtype, np.integer)
             ):
                 raise TypeError(
                     "Derivative indices must be given as a 2-tuple whose first element is the "
@@ -156,11 +156,11 @@ class ProductWavefunction(LinearCombinationWavefunction):
                     "Selected wavefunction (for derivatization) is not one of the composite "
                     "wavefunction or its underlying wavefunctions."
                 )
-            if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= deriv[0].nparams)):
-                raise ValueError(
-                    "Provided indices must be greater than or equal to zero and less than the "
-                    "number of parameters."
-                )
+            # if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= deriv[0].nparams)):
+            #     raise ValueError(
+            #         "Provided indices must be greater than or equal to zero and less than the "
+            #         "number of parameters."
+            #     )
 
         wfn, indices = deriv
         wfn_index = self.wfns.index(wfn)

@@ -231,7 +231,8 @@ def scipy_minimize(fun, x0, args=(), method=None, jac=None, hess=None,
 def bfgs_minimize(objective, save_file="", **kwargs):
     objective = EnergyOneSideProjectionBFGS(objective)
 
-    objective.print_energy = False
+    # objective.print_energy = False
+    objective.step_print = False
     objective.ham.update_prev_params = False
 
     # objective.wfn.normalize()

@@ -439,7 +439,7 @@ class ProjectedSchrodinger(BaseSchrodinger):
                 )
         self.eqn_weights = eqn_weights
 
-    def objective(self, params):
+    def objective(self, params, return_energy=False, assign=True, normalize=True, save=False):
         r"""Return the Projected Schrodinger equation evaluated at the given parameters.
 
         Parameters
@@ -455,9 +455,13 @@ class ProjectedSchrodinger(BaseSchrodinger):
         """
         params = np.array(params)
         # Assign params to wavefunction, hamiltonian, and other involved objects.
-        self.assign_params(params)
+        if assign:
+            self.assign_params(params)
+        # Normalize
+        if normalize and hasattr(self.wfn, "normalize"):
+            self.wfn.normalize(self.refwfn)
         # Save params
-        if self.step_save:
+        if save and self.step_save:
             self.save_params()
 
         get_overlap = self.wrapped_get_overlap
@@ -507,9 +511,12 @@ class ProjectedSchrodinger(BaseSchrodinger):
             self.print_queue["Cost"] = cost
             self.print_queue["Cost from constraints"] = cost_constraints
 
-        return obj
+        if return_energy:
+            return obj, energy
+        else:
+            return obj
 
-    def jacobian(self, params):  # pylint: disable=R0915
+    def jacobian(self, params, return_d_energy=False, assign=False, normalize=False, save=True):  # pylint: disable=R0915
         r"""Return the Jacobian of the projected Schrodinger equation evaluated at the given params.
 
         If :math:`(f_1(\vec{x}), f_2(\vec{x}), \dots)` is the objective function, the Jacobian is
@@ -540,7 +547,15 @@ class ProjectedSchrodinger(BaseSchrodinger):
         """
         params = np.array(params)
         # Assign params
-        self.assign_params(params)
+        if assign:
+            self.assign_params(params)
+        # Normalize
+        # commented out because trf would already normalized
+        if normalize and hasattr(self.wfn, "normalize"):
+            self.wfn.normalize(self.refwfn)
+        # Save params
+        if save:
+            self.save_params()
 
         get_overlap = self.wrapped_get_overlap
         integrate_sd_wfn = self.wrapped_integrate_sd_wfn

@@ -610,7 +610,8 @@ def least_squares(
     kwargs['tr_options'].setdefault('cost_tol', 1e-10)
     kwargs['tr_options'].setdefault('counter_limit', 10)
 
-    objective.print_energy = False
+    # objective.print_energy = False
+    objective.step_print = False
     objective.print_queue = {}
 
     low_bounds = [param_bounds[0]] * objective.params.size

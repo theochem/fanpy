@@ -367,6 +367,8 @@ class BaseSchrodinger:
             else:
                 wfns = self.wfn.wfns
             for wfn in wfns:
+                if wfn not in self.indices_component_params:
+                    continue
                 inds_component = self.indices_component_params[wfn]
                 if inds_component.size > 0:
                     inds_objective = self.indices_objective_params[wfn]
@@ -426,6 +428,8 @@ class BaseSchrodinger:
             else:
                 wfns = self.wfn.wfns
             for wfn in wfns:
+                if wfn not in self.indices_component_params:
+                    continue
                 wfn_inds_component = self.indices_component_params[wfn]
                 if wfn_inds_component.size > 0:
                     wfn_inds_objective = self.indices_objective_params[wfn]
