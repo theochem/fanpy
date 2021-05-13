@@ -224,7 +224,7 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
         # if no derivatization
         if deriv is None:
             return self._olp(sd)
-        return self._olp_deriv(sd)
+        return self._olp_deriv(sd)[deriv]
 
     def _olp(self, sd):
         output = np.prod(self._olp_helper(sd) * self.output_scale)
@@ -424,7 +424,7 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
         output.append(
             np.moveaxis(np.sum(other_vals[:, None, None, :] * grads[-1], axis=0), 2, 0).reshape(len(sds), -1)
         )
-        return np.hstack(output)
+        return np.hstack(output)[deriv]
 
     def normalize(self, pspace=None):
         if pspace is not None:
