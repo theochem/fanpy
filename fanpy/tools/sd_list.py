@@ -121,8 +121,8 @@ def sd_list(nelec, nspin, num_limit=None, exc_orders=None, spin=None, seniority=
     if satisfies_conditions(ground, nspatial, spin, seniority):
         sds.append(ground)
 
-    occ_indices = slater.occ_indices(ground)
-    vir_indices = slater.vir_indices(ground, nspin)
+    occ_indices = slater.occ_indices(ground).tolist()
+    vir_indices = slater.vir_indices(ground, nspin).tolist()
     # order by energy
     occ_indices = sorted(
         occ_indices, key=lambda x: x - nspatial if x >= nspatial else x, reverse=True

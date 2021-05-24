@@ -268,6 +268,10 @@ class SeniorityCC(BaseCC):
             return 1.0
         else:
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
+            if isinstance(a_inds, np.ndarray):
+                a_inds = a_inds.tolist()
+            if isinstance(c_inds, np.ndarray):
+                c_inds = c_inds.tolist()
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
@@ -347,6 +351,10 @@ class SeniorityCC(BaseCC):
             return 0.0
         else:
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
+            if isinstance(a_inds, np.ndarray):
+                a_inds = a_inds.tolist()
+            if isinstance(c_inds, np.ndarray):
+                c_inds = c_inds.tolist()
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
