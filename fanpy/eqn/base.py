@@ -362,10 +362,10 @@ class BaseSchrodinger:
         else:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
+            elif isinstance(self.wfn, ProductWavefunction):
+                wfns = self.wfn.wfns
             elif isinstance(self.wfn, LinearCombinationWavefunction):
                 wfns = (self.wfn,) + self.wfn.wfns
-            else:
-                wfns = self.wfn.wfns
             for wfn in wfns:
                 if wfn not in self.indices_component_params:
                     continue
@@ -423,10 +423,10 @@ class BaseSchrodinger:
         else:
             if isinstance(self.wfn, BaseCompositeOneWavefunction):  # pragma: no cover
                 wfns = [self.wfn, self.wfn.wfn]
+            elif isinstance(self.wfn, ProductWavefunction):
+                wfns = self.wfn.wfns
             elif isinstance(self.wfn, LinearCombinationWavefunction):
                 wfns = (self.wfn,) + self.wfn.wfns
-            else:
-                wfns = self.wfn.wfns
             for wfn in wfns:
                 if wfn not in self.indices_component_params:
                     continue
