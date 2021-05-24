@@ -184,7 +184,10 @@ class GeneralizedMolecularHamiltonian(BaseGeneralizedHamiltonian):
         """
         root, ext = os.path.splitext(filename)
         np.save(filename, self.params)
-        np.save("{}_um{}".format(root, ext), self._prev_unitary)
+
+        unitary_diff = math_tools.unitary_matrix(self.params - self._prev_params)
+        unitary = self._prev_unitary.dot(unitary_diff)
+        np.save("{}_um{}".format(root, ext), unitary)
 
     def integrate_sd_sd(self, sd1, sd2, deriv=None, components=False):  # pylint: disable=R0911
         r"""Integrate the Hamiltonian with against two Slater determinants.

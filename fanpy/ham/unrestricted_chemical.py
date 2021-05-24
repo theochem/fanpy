@@ -211,7 +211,17 @@ class UnrestrictedMolecularHamiltonian(BaseUnrestrictedHamiltonian):
         """
         root, ext = os.path.splitext(filename)
         np.save(filename, self.params)
-        np.save("{}_um{}".format(root, ext), [self._prev_unitary_alpha, self._prev_unitary_beta])
+
+        num_orbs = self.one_int[0].shape[0]
+        num_params = num_orbs * (num_orbs - 1)
+        params_diff = self.params - self._prev_params
+        unitary_prev_alpha = self._prev_unitary_alpha
+        unitary_prev_beta = self._prev_unitary_beta
+        unitary_diff_alpha = math_tools.unitary_matrix(params_diff[: num_params // 2])
+        unitary_diff_beta = math_tools.unitary_matrix(params_diff[num_params // 2 :])
+        unitary_alpha = unitary_prev_alpha.dot(unitary_diff_alpha)
+        unitary_beta = unitary_prev_beta.dot(unitary_diff_beta)
+        np.save("{}_um{}".format(root, ext), [unitary_alpha, unitary_beta])
 
     # FIXME: remove sign?
     # FIXME: too many branches, too many statements
