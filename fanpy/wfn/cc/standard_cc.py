@@ -97,7 +97,7 @@ class StandardCC(BaseCC):
 
     """
     def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
-                 refwfn=None, params=None, exop_combinations={}):
+                 refwfn=None, params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -132,7 +132,7 @@ class StandardCC(BaseCC):
 
         """
         super().__init__(nelec, nspin, ranks=ranks, params=params,
-                         exop_combinations=exop_combinations)
+                         exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_exops(indices=indices)
         self.assign_refwfn(refwfn=refwfn)
 
@@ -164,7 +164,9 @@ class StandardCC(BaseCC):
             raise TypeError('Only the occ-virt excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            exops = []
+            #exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
             for rank in self.ranks:
@@ -175,7 +177,9 @@ class StandardCC(BaseCC):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        exops.append(exop)
+                        #exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
 
     def assign_refwfn(self, refwfn=None):

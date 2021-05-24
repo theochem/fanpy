@@ -124,7 +124,7 @@ class BaseCC(BaseWavefunction):
 
     """
     def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
-                 refwfn=None, params=None, exop_combinations={}):
+                 refwfn=None, params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -165,7 +165,9 @@ class BaseCC(BaseWavefunction):
         self.assign_params(params=params)
         self._cache_fns = {}
         self.load_cache()
-        self.exop_combinations = exop_combinations
+        if exop_combinations is None:
+            self.exop_combinations = {}
+        self.refresh_exops = refresh_exops
 
     @property
     def nexops(self):
@@ -304,6 +306,7 @@ class BaseCC(BaseWavefunction):
 
         """
         if indices is None:
+            #exops = []
             exops = {}
             counter = 0
             for rank in self.ranks:
@@ -315,7 +318,7 @@ class BaseCC(BaseWavefunction):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        # exops.append(exop)
+                        #exops.append(exop)
                         exops[tuple(exop)] = counter
                         counter += 1
             self.exops = exops
@@ -332,6 +335,7 @@ class BaseCC(BaseWavefunction):
             ex_from, ex_to = list(set(indices[0])), list(set(indices[1]))
             ex_from.sort()
             ex_to.sort()
+            #exops = []
             exops = {}
             counter = 0
             for rank in self.ranks:
@@ -342,7 +346,7 @@ class BaseCC(BaseWavefunction):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        # exops.append(exop)
+                        #exops.append(exop)
                         exops[tuple(exop)] = counter
                         counter += 1
             self.exops = exops
@@ -440,6 +444,7 @@ class BaseCC(BaseWavefunction):
                 "Given parameters must have the shape, {}".format(self.template_params.shape)
             )
         super().assign_params(params=params, add_noise=add_noise)
+        self.clear_cache()
 
     def get_ind(self, exop):
         """Get index that corresponds to the given excitation operator.
@@ -461,7 +466,7 @@ class BaseCC(BaseWavefunction):
 
         """
         try:
-            # return self.exops.index(exop)
+            #return self.exops.index(exop)
             return self.exops[tuple(exop)]
         except (ValueError, TypeError, KeyError):
             raise ValueError('Given excitation operator, {0}, is not included in the '
@@ -486,10 +491,15 @@ class BaseCC(BaseWavefunction):
             If index is not valid.
 
         """
-        for exop, i in self.exops.items():
-            if i == ind:
-                return exop
-        raise ValueError('Given index, {0}, is not used in the wavefunction'.format(ind))
+        try:
+            return self.exops[ind]
+        except (IndexError, TypeError):
+            raise ValueError('Given index, {0}, is not used in the '
+                             'wavefunction'.format(ind))
+        # for exop, i in self.exops.items():
+        #     if i == ind:
+        #         return exop
+        # raise ValueError('Given index, {0}, is not used in the wavefunction'.format(ind))
 
     def product_amplitudes(self, inds, deriv=False):
         """Compute the product of the CC amplitudes that corresponds to the given indices.
@@ -512,6 +522,12 @@ class BaseCC(BaseWavefunction):
         if not deriv:
             return np.prod(self.params[inds])
         else:
+            #for i in inds:
+            #    trunc_inds = [ind for ind in inds if ind != i]
+            #    if trunc_inds:
+            #        return self.product_amplitudes(trunc_inds)
+            #    else:
+            #        return 1
             output = np.zeros(self.nparams)
             selected_params = self.params[inds]
             for ind in inds:
@@ -768,6 +784,9 @@ class BaseCC(BaseWavefunction):
         to excite to and from the given indices.
 
         """
+        if self.refresh_exops and len(self.exop_combinations) > self.refresh_exops:
+            self.exop_combinations = {}
+
         exrank = len(a_inds)
         check_ops = []
         # NOTE: Is necessary to invert the results of int_partition_recursive
@@ -798,4 +817,6 @@ class BaseCC(BaseWavefunction):
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
             if all(tuple(op) in self.exops for op in op_list):
+            # if all(tuple(op) in self.exops for op in op_list):
                 self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)
+

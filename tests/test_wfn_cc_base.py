@@ -1,4 +1,5 @@
 """Test fanpy.wavefunction.cc.cc_wavefunction."""
+import itertools as it
 import numdifftools as nd
 
 import numpy as np
@@ -223,3 +224,18 @@ def test_generate_possible_exops():
     test.generate_possible_exops([0, 2], [1, 3])
     assert test.exop_combinations[(0, 2, 1, 3)] == [([0, 1], [2, 3]), ([0, 3], [2, 1]),
                                                     ([0, 2, 1, 3], )]
+
+    test = TempBaseCC()
+    test.assign_nelec(4)
+    test.assign_nspin(8)
+    test.assign_ranks([1, 2, 3])
+    test.exops = [[2, 6], [2, 5], [0, 1, 4, 5], [0, 1, 4, 6], [0, 1, 2, 4, 5, 6]]
+    test.generate_possible_exops([0, 1, 2], [4, 5, 6])
+    assert test.exop_combinations == {
+        (0, 1, 2, 4, 5, 6): [([2, 5], [0, 1, 4, 6]), ([2, 6], [0, 1, 4, 5]), ([0, 1, 2, 4, 5, 6],)],
+    }
+    test.generate_possible_exops([0, 1], [4, 5])
+    assert test.exop_combinations == {
+        (0, 1, 2, 4, 5, 6): [([2, 5], [0, 1, 4, 6]), ([2, 6], [0, 1, 4, 5]), ([0, 1, 2, 4, 5, 6],)],
+        (0, 1, 4, 5): [([0, 1, 4, 5],)],
+    }

@@ -99,7 +99,7 @@ class CCSDsen0(PCCD):
     """
     # FIXME: NOT TESTED
     def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
-                 refwfn=None, params=None, exop_combinations={}):
+                 refwfn=None, params=None, exop_combinations=None):
         """Initialize the wavefunction.
 
         Parameters
