@@ -327,7 +327,7 @@ def test_system_jacobian():
         test = ProjectedSchrodinger(
             wfn, ham, energy=3.0, energy_type="variable", eqn_weights=weights, refwfn=refwfn
         )
-        jacobian = test.jacobian(guess)
+        jacobian = test.jacobian(guess, normalize=False, assign=True)
         for eqn, sd, weight in zip(
             jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
         ):
@@ -388,7 +388,7 @@ def test_system_jacobian_active_ciref():
         param_selection=((wfn, np.ones(6, dtype=bool)), (ciref, np.ones(6, dtype=bool))),
     )
 
-    jacobian = test.jacobian(np.random.rand(12))
+    jacobian = test.jacobian(np.random.rand(12), assign=True)
     for eqn, sd, weight in zip(
         jacobian[:-1], [0b0101, 0b0110, 0b1100, 0b0011, 0b1001, 0b1010], weights[:-1]
     ):

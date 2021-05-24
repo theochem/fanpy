@@ -3232,6 +3232,8 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                         "Derivative indices for the Hamiltonian parameters must be greater than or "
                         "equal to 0 and be less than the number of parameters."
                     )
+        if self.nspin > 64:
+            sd = int(sd)
         nspatial = self.nspatial
         occ_indices = np.array(slater.occ_indices(sd))
         vir_indices = np.array(slater.vir_indices(sd, self.nspin))
@@ -3241,50 +3243,51 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
         occ_beta = occ_indices[occ_indices >= nspatial]
         vir_beta = vir_indices[vir_indices >= nspatial]
 
-        def fromiter(iterator, dtype, ydim, count):
-            return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
+        if self.nspin <= 64:
+            def fromiter(iterator, dtype, ydim, count):
+                return np.fromiter(it.chain.from_iterable(iterator), dtype, count=int(count)).reshape(-1, ydim)
 
-        occ_one_alpha = fromiter(it.combinations(occ_alpha.tolist(), 1), int, 1, count=len(occ_alpha))
-        occ_one_alpha = np.left_shift(1, occ_one_alpha[:, 0])
+            occ_one_alpha = fromiter(it.combinations(occ_alpha.tolist(), 1), int, 1, count=len(occ_alpha))
+            occ_one_alpha = np.left_shift(1, occ_one_alpha[:, 0])
 
-        occ_one_beta = fromiter(it.combinations(occ_beta.tolist(), 1), int, 1, count=len(occ_beta))
-        occ_one_beta = np.left_shift(1, occ_one_beta[:, 0])
+            occ_one_beta = fromiter(it.combinations(occ_beta.tolist(), 1), int, 1, count=len(occ_beta))
+            occ_one_beta = np.left_shift(1, occ_one_beta[:, 0])
 
-        vir_one_alpha = fromiter(it.combinations(vir_alpha.tolist(), 1), int, 1, count=len(vir_alpha))
-        vir_one_alpha = np.left_shift(1, vir_one_alpha[:, 0])
+            vir_one_alpha = fromiter(it.combinations(vir_alpha.tolist(), 1), int, 1, count=len(vir_alpha))
+            vir_one_alpha = np.left_shift(1, vir_one_alpha[:, 0])
 
-        vir_one_beta = fromiter(it.combinations(vir_beta.tolist(), 1), int, 1, count=len(vir_beta))
-        vir_one_beta = np.left_shift(1, vir_one_beta[:, 0])
+            vir_one_beta = fromiter(it.combinations(vir_beta.tolist(), 1), int, 1, count=len(vir_beta))
+            vir_one_beta = np.left_shift(1, vir_one_beta[:, 0])
 
-        occ_two_aa = fromiter(it.combinations(occ_alpha.tolist(), 2),
-                                    int, ydim=2, count=2*comb(len(occ_alpha), 2))
-        occ_two_aa = np.left_shift(1, occ_two_aa)
-        occ_two_aa = np.bitwise_or(occ_two_aa[:, 0], occ_two_aa[:, 1])
+            occ_two_aa = fromiter(it.combinations(occ_alpha.tolist(), 2),
+                                        int, ydim=2, count=2*comb(len(occ_alpha), 2))
+            occ_two_aa = np.left_shift(1, occ_two_aa)
+            occ_two_aa = np.bitwise_or(occ_two_aa[:, 0], occ_two_aa[:, 1])
 
-        occ_two_ab = fromiter(it.product(occ_alpha.tolist(), occ_beta.tolist()),
-                                    int, 2, count=2*len(occ_alpha) * len(occ_beta))
-        occ_two_ab = np.left_shift(1, occ_two_ab)
-        occ_two_ab = np.bitwise_or(occ_two_ab[:, 0], occ_two_ab[:, 1])
+            occ_two_ab = fromiter(it.product(occ_alpha.tolist(), occ_beta.tolist()),
+                                        int, 2, count=2*len(occ_alpha) * len(occ_beta))
+            occ_two_ab = np.left_shift(1, occ_two_ab)
+            occ_two_ab = np.bitwise_or(occ_two_ab[:, 0], occ_two_ab[:, 1])
 
-        occ_two_bb = fromiter(it.combinations(occ_beta.tolist(), 2),
-                                    int, 2, count=2*comb(len(occ_beta), 2))
-        occ_two_bb = np.left_shift(1, occ_two_bb)
-        occ_two_bb = np.bitwise_or(occ_two_bb[:, 0], occ_two_bb[:, 1])
+            occ_two_bb = fromiter(it.combinations(occ_beta.tolist(), 2),
+                                        int, 2, count=2*comb(len(occ_beta), 2))
+            occ_two_bb = np.left_shift(1, occ_two_bb)
+            occ_two_bb = np.bitwise_or(occ_two_bb[:, 0], occ_two_bb[:, 1])
 
-        vir_two_aa = fromiter(it.combinations(vir_alpha.tolist(), 2),
-                                    int, 2, count=2*comb(len(vir_alpha), 2))
-        vir_two_aa = np.left_shift(1, vir_two_aa)
-        vir_two_aa = np.bitwise_or(vir_two_aa[:, 0], vir_two_aa[:, 1])
+            vir_two_aa = fromiter(it.combinations(vir_alpha.tolist(), 2),
+                                        int, 2, count=2*comb(len(vir_alpha), 2))
+            vir_two_aa = np.left_shift(1, vir_two_aa)
+            vir_two_aa = np.bitwise_or(vir_two_aa[:, 0], vir_two_aa[:, 1])
 
-        vir_two_ab = fromiter(it.product(vir_alpha.tolist(), vir_beta.tolist()),
-                                    int, 2, count=2*len(vir_alpha) * len(vir_beta))
-        vir_two_ab = np.left_shift(1, vir_two_ab)
-        vir_two_ab = np.bitwise_or(vir_two_ab[:, 0], vir_two_ab[:, 1])
+            vir_two_ab = fromiter(it.product(vir_alpha.tolist(), vir_beta.tolist()),
+                                        int, 2, count=2*len(vir_alpha) * len(vir_beta))
+            vir_two_ab = np.left_shift(1, vir_two_ab)
+            vir_two_ab = np.bitwise_or(vir_two_ab[:, 0], vir_two_ab[:, 1])
 
-        vir_two_bb = fromiter(it.combinations(vir_beta.tolist(), 2),
-                                    int, 2, count=2*comb(len(vir_beta), 2))
-        vir_two_bb = np.left_shift(1, vir_two_bb)
-        vir_two_bb = np.bitwise_or(vir_two_bb[:, 0], vir_two_bb[:, 1])
+            vir_two_bb = fromiter(it.combinations(vir_beta.tolist(), 2),
+                                        int, 2, count=2*comb(len(vir_beta), 2))
+            vir_two_bb = np.left_shift(1, vir_two_bb)
+            vir_two_bb = np.bitwise_or(vir_two_bb[:, 0], vir_two_bb[:, 1])
 
         if wfn_deriv is None and ham_deriv is None:
             shape = (-1,)
@@ -3300,11 +3303,87 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             shape = (-1,)
             output = np.zeros((3, len(ham_deriv)))
 
+        if self.nspin <= 64:
+            overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
+            overlaps_one_alpha = np.array(
+                [
+                    wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                    for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_alpha)[:, None],
+                                                            vir_one_alpha[None, :]))
+                ]
+            ).reshape(*shape)
+            overlaps_one_beta = np.array(
+                [
+                    wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                    for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_beta)[:, None],
+                                                            vir_one_beta[None, :]))
+                ]
+            ).reshape(*shape)
+            overlaps_two_aa = np.array(
+                [
+                    wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                    for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_aa)[:, None],
+                                                            vir_two_aa[None, :]))
+                ]
+            ).reshape(*shape)
+            overlaps_two_ab = np.array(
+                [
+                    wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                    for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_ab)[:, None],
+                                                            vir_two_ab[None, :]))
+                ]
+            ).reshape(*shape)
+            overlaps_two_bb = np.array(
+                [
+                    wfn.get_overlap(sd_exc, deriv=wfn_deriv)
+                    for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_bb)[:, None],
+                                                            vir_two_bb[None, :]))
+                ]
+            ).reshape(*shape)
+        else:
+            overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
+            overlaps_one_alpha = np.array(
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                    for occ in it.combinations(occ_alpha.tolist(), 1)
+                    for vir in it.combinations(vir_alpha.tolist(), 1)
+                ]
+            ).reshape(*shape)
+
+            overlaps_one_beta = np.array(
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                    for occ in it.combinations(occ_beta.tolist(), 1)
+                    for vir in it.combinations(vir_beta.tolist(), 1)
+                ]
+            ).reshape(*shape)
+
+            overlaps_two_aa = np.array(
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                    for occ in it.combinations(occ_alpha.tolist(), 2)
+                    for vir in it.combinations(vir_alpha.tolist(), 2)
+                ]
+            ).reshape(*shape)
+            overlaps_two_ab = np.array(
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                    for occ in it.product(occ_alpha.tolist(), occ_beta.tolist())
+                    for vir in it.product(vir_alpha.tolist(), vir_beta.tolist())
+                ]
+            ).reshape(*shape)
+            overlaps_two_bb = np.array(
+                [
+                    wfn.get_overlap(slater.excite(sd, *occ, *vir), deriv=wfn_deriv)
+                    for occ in it.combinations(occ_beta.tolist(), 2)
+                    for vir in it.combinations(vir_beta.tolist(), 2)
+                ]
+            ).reshape(*shape)
+
         # FIXME: hardcode slater determinant structure
         occ_beta -= nspatial
         vir_beta -= nspatial
 
-        overlaps_zero = np.array([[wfn.get_overlap(sd, deriv=wfn_deriv)]]).reshape(*shape)
         if ham_deriv is not None:
             integrals_zero = self._integrate_sd_sds_deriv_zero_alpha(occ_alpha, occ_beta, vir_alpha)
             integrals_zero += self._integrate_sd_sds_deriv_zero_beta(occ_alpha, occ_beta, vir_beta)
@@ -3315,13 +3394,6 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                 integrals_zero = np.expand_dims(integrals_zero, 2)
             output += np.sum(integrals_zero * overlaps_zero, axis=1)
 
-        overlaps_one_alpha = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_alpha)[:, None],
-                                                        vir_one_alpha[None, :]))
-            ]
-        ).reshape(*shape)
         if ham_deriv is not None:
             integrals_one_aa = self._integrate_sd_sds_deriv_one_aa(occ_alpha, occ_beta, vir_alpha)
             output += np.sum(integrals_one_aa * overlaps_one_alpha, axis=2)[:, ham_deriv]
@@ -3334,13 +3406,6 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
             output += np.sum(integrals_one_alpha * overlaps_one_alpha, axis=1)
 
         # FIXME: hardcode slater determinant structure
-        overlaps_one_beta = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_one_beta)[:, None],
-                                                        vir_one_beta[None, :]))
-            ]
-        ).reshape(*shape)
         if ham_deriv is not None:
             integrals_one_bb = self._integrate_sd_sds_deriv_one_bb(occ_alpha, occ_beta, vir_beta)
             output += np.sum(integrals_one_bb * overlaps_one_beta, axis=2)[:, ham_deriv]
@@ -3352,13 +3417,6 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                 integrals_one_beta = np.expand_dims(integrals_one_beta, 2)
             output += np.sum(integrals_one_beta * overlaps_one_beta, axis=1)
 
-        overlaps_two_aa = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_aa)[:, None],
-                                                        vir_two_aa[None, :]))
-            ]
-        ).reshape(*shape)
         if occ_alpha.size > 1 and vir_alpha.size > 1:
             if ham_deriv is not None:
                 integrals_two_aaa = self._integrate_sd_sds_deriv_two_aaa(
@@ -3372,13 +3430,6 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                 output[1:] += np.sum(integrals_two_aa * overlaps_two_aa, axis=1)
 
         # FIXME: hardcode slater determinant structure
-        overlaps_two_ab = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_ab)[:, None],
-                                                        vir_two_ab[None, :]))
-            ]
-        ).reshape(*shape)
         if occ_alpha.size > 0 and occ_beta.size > 0 and vir_alpha.size > 0 and vir_beta.size > 0:
             if ham_deriv is not None:
                 integrals_two_aab = self._integrate_sd_sds_deriv_two_aab(
@@ -3398,13 +3449,6 @@ class RestrictedMolecularHamiltonian(GeneralizedMolecularHamiltonian):
                 output[1] += np.sum(integrals_two_ab * overlaps_two_ab, axis=0)
 
         # FIXME: hardcode slater determinant structure
-        overlaps_two_bb = np.array(
-            [
-                wfn.get_overlap(sd_exc, deriv=wfn_deriv)
-                for sd_exc in np.ravel(np.bitwise_or(np.bitwise_xor(sd, occ_two_bb)[:, None],
-                                                        vir_two_bb[None, :]))
-            ]
-        ).reshape(*shape)
         if occ_beta.size > 1 and vir_beta.size > 1:
             if ham_deriv is not None:
                 integrals_two_bbb = self._integrate_sd_sds_deriv_two_bbb(

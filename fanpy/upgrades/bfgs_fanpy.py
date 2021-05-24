@@ -74,7 +74,7 @@ def fanpy_minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
 
     old_fval = f(x0)
     print(
-        "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['energy'])
+        "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['Electronic energy'])
     )
 
     if fprime is None:
@@ -131,7 +131,7 @@ def fanpy_minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         schrodinger.save_params()
         # print
         print(
-            "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['energy'])
+            "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['Electronic energy'])
         )
 
         gnorm = vecnorm(gfk, ord=norm)
@@ -200,12 +200,12 @@ class EnergyOneSideProjectionBFGS(EnergyOneSideProjection):
 
     def objective(self, params, parallel=None):
         return super().objective(
-            params, parallel=parallel, assign=False, normalize=False, save=False
+            params, assign=True, normalize=False, save=False
         )
 
     def gradient(self, params, parallel=None):
         return super().gradient(
-            params, parallel=parallel, assign=False, normalize=False, save=False
+            params, assign=True, normalize=False, save=False
         )
 
 
@@ -228,7 +228,7 @@ def scipy_minimize(fun, x0, args=(), method=None, jac=None, hess=None,
     return fanpy_minimize_bfgs(fun, x0, args, jac, callback, **options)
 
 
-def bfgs_minimize(objective, save_file="", **kwargs):
+def bfgs_minimize(objective, **kwargs):
     objective = EnergyOneSideProjectionBFGS(objective)
 
     # objective.print_energy = False
@@ -242,9 +242,12 @@ def bfgs_minimize(objective, save_file="", **kwargs):
     kwargs["options"]['schrodinger'] = objective
 
 
-    output = wrap_scipy(scipy_minimize)(objective, save_file=save_file, **kwargs)
+    output = wrap_scipy(scipy_minimize)(objective, **kwargs)
     output["function"] = output["internal"].fun
     output["energy"] = output["function"]
+
+    # save parameters
+    objective.save_params()
 
     return output
 

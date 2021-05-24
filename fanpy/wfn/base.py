@@ -418,3 +418,6 @@ class BaseWavefunction:
         number of values cached this way.
 
         """
+
+    def normalize(self, refwfn=None):
+        pass

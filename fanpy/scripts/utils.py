@@ -167,6 +167,27 @@ def check_inputs(  # pylint: disable=R0912,R0915
         "apig",
         "apsetg",
         "apg",
+        "network",
+        "rbm",
+
+        "basecc",
+        "standardcc",
+        "generalizedcc",
+        "senioritycc",
+        "pccd",
+        "ap1rogsd",
+        "ap1rogsd_spin",
+        "apsetgd",
+        "apsetgsd",
+        "apg1rod",
+        "apg1rosd",
+        "ccsdsen0",
+        "ccsdqsen0",
+        "ccsdtqsen0",
+        "ccsdtsen2qsen0",
+        "ccsd",
+        "ccsdt",
+        "ccsdtq",
     ]
     if wfn_type not in wfn_list:
         raise ValueError("Wavefunction type must be one of {}.".format(", ".join(wfn_list)))
@@ -189,7 +210,7 @@ def check_inputs(  # pylint: disable=R0912,R0915
         )
 
     # check solver
-    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root"]:
+    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root", "trustregion"]:
         raise ValueError(
             "Solver must be one of `cma`, `diag`, `minimize`, `least_squares`, or `root`."
         )

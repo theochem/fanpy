@@ -1,4 +1,5 @@
 from fanpy.wfn.geminal.base import BaseGeminal
+from fanpy.wfn.geminal.ap1rog import AP1roG
 from fanpy.wfn.geminal.apg import APG
 # from fanpy.wfn.geminal.apg2 import APG2
 # from fanpy.wfn.geminal.apg3 import APG3
@@ -8,9 +9,9 @@ from fanpy.wfn.geminal.apg import APG
 import fanpy.tools.slater as slater
 # import fanpy.tools.graphs as graphs
 import numpy as np
-from fanpy.upgrades.cext_apg import generate_complete_pmatch, generate_general_pmatch
-from fanpy.upgrades.cext_apg_parallel import _olp_internal_apig
-from fanpy.upgrades.cext_apg_parallel2 import _olp_internal
+from fanpy.upgrades.cext_apg import generate_complete_pmatch, generate_general_pmatch, _olp_deriv_internal_ap1rog
+from fanpy.upgrades.cext_apg_parallel import _olp_internal_apig, _olp_deriv_internal_apig
+from fanpy.upgrades.cext_apg_parallel2 import _olp_internal, _olp_deriv_internal
 from fanpy.wfn.geminal.apig import APIG
 
 
@@ -302,3 +303,101 @@ APG.generate_possible_orbpairs = apg_generate_possible_orbpairs
 # APG6.generate_possible_orbpairs = apg6_generate_possible_orbpairs
 APIG.generate_possible_orbpairs = apig_generate_possible_orbpairs
 APIG._olp = _olp_apig
+
+
+
+def _olp_deriv(self, sd):
+    # NOTE: This module requires the sped up objective functions
+    occ_indices = list(slater.occ_indices(sd))
+
+    if hasattr(self, "temp_generator"):
+        orbpair_generator = self.temp_generator
+    else:
+        orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+    if not orbpair_generator:
+        return np.zeros(self.nparams)
+
+    return _olp_deriv_internal(orbpair_generator, self.params, self.nspin)
+
+
+def _olp_deriv_apig(self, sd):
+    # NOTE: This module requires the sped up objective functions
+    occ_indices = list(slater.occ_indices(sd))
+
+    if hasattr(self, "temp_generator"):
+        orbpair_generator = self.temp_generator
+    else:
+        orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+    if not orbpair_generator:
+        return np.zeros(self.nparams)
+
+    return _olp_deriv_internal_apig(orbpair_generator, self.params)
+
+
+def _olp_deriv_ap1rog(self, sd):
+    # NOTE: This module requires the sped up objective functions
+    spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+    spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
+    orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
+    inds_annihilated = np.array(
+        [self.dict_reforbpair_ind[(i, i + self.nspatial)] for i in orbs_annihilated]
+    )
+    inds_created = np.array(
+        [self.dict_orbpair_ind[(i, i + self.nspatial)] for i in orbs_created]
+    )
+
+    # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
+    return _olp_deriv_internal_ap1rog(self.params, inds_created, inds_annihilated)
+    # return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created, deriv=deriv)
+
+
+def get_overlap_ap1rog(self, sd, deriv=None):
+    # cut off beta part (for just the alpha/spatial part)
+    spatial_ref_sd, _ = slater.split_spin(self.ref_sd, self.nspatial)
+    spatial_sd, _ = slater.split_spin(sd, self.nspatial)
+    # get indices of the occupied orbitals
+    orbs_annihilated, orbs_created = slater.diff_orbs(spatial_ref_sd, spatial_sd)
+
+    if deriv is None:
+        zero = 0.0
+    elif not isinstance(deriv, np.ndarray):
+        raise TypeError
+    else:
+        zero = np.zeros(len(deriv))
+
+    # if different number of electrons
+    if len(orbs_annihilated) != len(orbs_created):
+        return zero
+    # if different seniority
+    if slater.get_seniority(sd, self.nspatial) != 0:
+        return zero
+
+    # convert to spatial orbitals
+    # NOTE: these variables are essentially the same as the output of
+    #       generate_possible_orbpairs
+    inds_annihilated = np.array(
+        [self.dict_reforbpair_ind[(i, i + self.nspatial)] for i in orbs_annihilated]
+    )
+    inds_created = np.array(
+        [self.dict_orbpair_ind[(i, i + self.nspatial)] for i in orbs_created]
+    )
+
+    # if no derivatization
+    if deriv is None:
+        if inds_annihilated.size == inds_created.size == 0:
+            return 1.0
+
+        return self._olp(sd)
+
+    if inds_annihilated.size == inds_created.size == 0:
+        return zero
+
+    deriv = deriv[deriv < self.nparams]
+    zero[deriv < self.nparams] = self._olp_deriv(sd)[deriv]
+    return zero
+
+
+BaseGeminal._olp_deriv = _olp_deriv
+APIG._olp_deriv = _olp_deriv_apig
+AP1roG.get_overlap = get_overlap_ap1rog
+AP1roG._olp_deriv = _olp_deriv_ap1rog

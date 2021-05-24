@@ -4,7 +4,7 @@ from numpy.linalg import norm
 from scipy.linalg import svd, qr
 from scipy.sparse.linalg import lsmr
 from scipy.optimize import OptimizeResult
-from scipy._lib.six import string_types
+#from scipy._lib.six import string_types
 
 from scipy.optimize._lsq.common import (
     solve_lsq_trust_region, solve_trust_region_2d, minimize_quadratic_1d, build_quadratic_1d,
@@ -24,7 +24,7 @@ from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.eqn.constraints.energy import EnergyConstraint
-import fanpy.upgrades.speedup_objective
+#import fanpy.upgrades.speedup_objective
 
 
 def trf_bounds_fanpy(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
@@ -68,7 +68,8 @@ def trf_bounds_fanpy(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
 
     g = compute_grad(J, f)
 
-    jac_scale = isinstance(x_scale, string_types) and x_scale == 'jac'
+    #jac_scale = isinstance(x_scale, string_types) and x_scale == 'jac'
+    jac_scale = isinstance(x_scale, str) and x_scale == 'jac'
     if jac_scale:
         scale, scale_inv = compute_jac_scale(J)
     else:
@@ -114,21 +115,21 @@ def trf_bounds_fanpy(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
 
         if verbose == 2:
             print(
-                "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['energy'])
+                "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['Electronic energy'])
             )
             print(
                 "(Mid Optimization) Cost (without constraints): "
-                "{}".format(schrodinger.print_queue['cost'])
+                "{}".format(schrodinger.print_queue['Cost'])
             )
             if 'constraint' in schrodinger.print_queue:
                 print(
                     "(Mid Optimization) Constraint Cost: "
-                    "{}".format(schrodinger.print_queue['constraint'])
+                    "{}".format(schrodinger.print_queue['Cost from constraints'])
                 )
-            print(
-                "(Mid Optimization) Residual: "
-                "{}".format(schrodinger.print_queue['residual'])
-            )
+            #print(
+            #    "(Mid Optimization) Residual: "
+            #    "{}".format(schrodinger.print_queue['residual'])
+            #)
             print_iteration_nonlinear(iteration, nfev, cost, actual_reduction,
                                       step_norm, g_norm)
 
@@ -323,7 +324,8 @@ def trf_no_bounds_fanpy(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
 
     g = compute_grad(J, f)
 
-    jac_scale = isinstance(x_scale, string_types) and x_scale == 'jac'
+    #jac_scale = isinstance(x_scale, string_types) and x_scale == 'jac'
+    jac_scale = isinstance(x_scale, str) and x_scale == 'jac'
     if jac_scale:
         scale, scale_inv = compute_jac_scale(J)
     else:
@@ -360,21 +362,21 @@ def trf_no_bounds_fanpy(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
 
         if verbose == 2:
             print(
-                "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['energy'])
+                "(Mid Optimization) Electronic Energy: {}".format(schrodinger.print_queue['Electronic energy'])
             )
             print(
                 "(Mid Optimization) Cost (without constraints): "
-                "{}".format(schrodinger.print_queue['cost'])
+                "{}".format(schrodinger.print_queue['Cost'])
             )
             if 'constraint' in schrodinger.print_queue:
                 print(
                     "(Mid Optimization) Constraint Cost: "
-                    "{}".format(schrodinger.print_queue['constraint'])
+                    "{}".format(schrodinger.print_queue['Cost from constraint'])
                 )
-            print(
-                "(Mid Optimization) Residual: "
-                "{}".format(schrodinger.print_queue['residual'])
-            )
+            # print(
+            #     "(Mid Optimization) Residual: "
+            #     "{}".format(schrodinger.print_queue['residual'])
+            # )
             print_iteration_nonlinear(iteration, nfev, cost, actual_reduction,
                                       step_norm, g_norm)
 
@@ -535,25 +537,10 @@ class ProjectedSchrodingerSystem(ProjectedSchrodinger):
         )
 
     def save_params(self):
+        super().save_params()
         if self.tmpfile != "":
             # np.save(self.tmpfile, self.param_selection.all_params)
             header, ext = os.path.splitext(self.tmpfile)
-            try:
-                np.save('{}_wfn{}'.format(header, ext), self.wfn.params)
-            except (OSError, AttributeError):
-                pass
-            try:
-                np.save('{}_ham{}'.format(header, ext), self.ham.params)
-            except (OSError, AttributeError):
-                pass
-            try:
-                np.save('{}_ham_prev{}'.format(header, ext), self.ham._prev_params)
-            except (OSError, AttributeError):
-                pass
-            try:
-                np.save('{}_ham_um{}'.format(header, ext), self.ham._prev_unitary)
-            except (OSError, AttributeError):
-                pass
             try:
                 np.save(header + '_pspace' + ext, self.pspace)
             except (OSError, AttributeError):

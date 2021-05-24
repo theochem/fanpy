@@ -24,7 +24,8 @@ from fanpy.eqn.energy_oneside import EnergyOneSideProjection
 from fanpy.eqn.projected import ProjectedSchrodinger
 from fanpy.eqn.constraints.norm import NormConstraint
 from fanpy.tools import math_tools
-from fanpy.upgrades import speedup_sd, speedup_sign, speedup_objective
+#from fanpy.upgrades import speedup_sd, speedup_sign, speedup_objective
+from fanpy.upgrades import speedup_sign
 
 
 def equality_constrained_sqp(fun_and_constr, grad_and_jac, lagr_hess,
@@ -1469,19 +1470,18 @@ class EnergyOneSideProjectionSystem(EnergyOneSideProjection):
 
     def objective(self, params, parallel=None):
         return super().objective(
-            params, parallel=parallel, assign=False, normalize=False, save=False
+            params, assign=False, normalize=False, save=False
         )
 
     def gradient(self, params, parallel=None):
         return super().gradient(
-            params, parallel=parallel, assign=False, normalize=False, save=False
+            params, assign=False, normalize=False, save=False
         )
 
     def adapt_pspace_energy(self):
         probable_sds, olps = zip(*self.wfn.probable_sds.items())
 
         print('Adapt energy pspace')
-        print(max(olps), len(self.refwfn), self.sample_size, 'refwfn')
         self.refwfn = sorted(
             self.wfn.probable_sds, key=lambda sd: abs(self.wfn.probable_sds[sd]), reverse=True
         )[:self.sample_size]
@@ -1501,7 +1501,7 @@ class ProjectedSchrodingerSystem(ProjectedSchrodinger):
             energy=objective.energy.params[0],
             constraints=[],
         )
-        if eqn.constraints:
+        if objective.constraints:
             raise ValueError(
                 'No constraints allowed'
             )
@@ -1568,40 +1568,25 @@ class ProjectedSchrodingerSystem(ProjectedSchrodinger):
             self.eqn_weights = np.array(weights)
 
     def save_params(self):
+        super().save_params()
         if self.tmpfile != "":
             # np.save(self.tmpfile, self.param_selection.all_params)
             header, ext = os.path.splitext(self.tmpfile)
             try:
-                np.save('{}_wfn{}'.format(header, ext), self.wfn.params)
-            except OSError:
-                pass
-            try:
-                np.save('{}_ham{}'.format(header, ext), self.ham.params)
-            except OSError:
-                pass
-            try:
-                np.save('{}_ham_prev{}'.format(header, ext), self.ham._prev_params)
-            except OSError:
-                pass
-            try:
-                np.save('{}_ham_um{}'.format(header, ext), self.ham._prev_unitary)
-            except OSError:
-                pass
-            try:
                 np.save(header + '_pspace' + ext, self.pspace)
-            except OSError:
+            except (OSError, AttributeError):
                 pass
             try:
                 np.save(header + '_refwfn' + ext, self.refwfn)
-            except OSError:
+            except (OSError, AttributeError):
                 pass
             try:
                 np.save(header + '_pspace_norm' + ext, self.wfn.pspace_norm)
-            except OSError:
+            except (OSError, AttributeError):
                 pass
             try:
                 np.save(header + '_eqn_weights' + ext, self.eqn_weights)
-            except OSError:
+            except (OSError, AttributeError):
                 pass
 
 
@@ -1636,9 +1621,9 @@ def minimize(
     objective, old_objective = ProjectedSchrodingerSystem(
         objective, norm_constraint=norm_constraint
     ), objective
-    objective.assign_params(old_objective.params)
+    objective.assign_params(old_objective.active_params)
 
-    objective.print_energy = True
+    objective.step_print = True
     objective.ham.update_prev_params = False
     if objective.wfn.olp_threshold >= 1:
         objective.wfn.olp_threshold = 0.01
@@ -1664,9 +1649,9 @@ def minimize(
     objective.energy_objective = energy
     energy.sample_size = objective.sample_size
 
-    if old_eqn.constraints and not (
-        len(old_eqn.constraints) == 1 and
-        isinstance(old_eqn.constraints[0], NormConstraint)
+    if old_objective.constraints and not (
+        len(old_objective.constraints) == 1 and
+        isinstance(old_objective.constraints[0], NormConstraint)
     ):
         raise ValueError(
             'Only norm constraint is upported (and there cannot be more than one norm '
@@ -1676,7 +1661,7 @@ def minimize(
     if objective.sample_size != len(objective.pspace):
         raise ValueError('Starting pspace must have the same size as the sample size.')
 
-    objective.wfn.normalize()
+    objective.wfn.normalize(objective.refwfn)
 
     kwargs["method"] = "trust-constr"
     kwargs["jac"] = energy.gradient
@@ -1701,7 +1686,7 @@ def minimize(
     lb, ub = constraint_bounds
     lb = np.ones(objective.num_eqns) * constraint_bounds[0]
     ub = np.ones(objective.num_eqns) * constraint_bounds[1]
-    if eqn.constraints:
+    if objective.constraints:
         lb[-1] = -1e-5
         ub[-1] = 1e-5
 
@@ -1724,7 +1709,7 @@ def minimize(
     # )
 
     output = wrap_scipy(minimize_rewritten)(
-        energy, save_file=save_file, constraints=constraints, **kwargs
+        energy, constraints=constraints, **kwargs
     )
     output["function"] = output["internal"].fun
     output["energy"] = output["function"]

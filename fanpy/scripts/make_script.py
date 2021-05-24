@@ -1,4 +1,5 @@
 """Code generating script."""
+import os
 import textwrap
 
 from fanpy.scripts.utils import check_inputs, parser
@@ -202,7 +203,101 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         if wfn_kwargs is None:
             wfn_kwargs = "nbath=nspin, num_layers=1, orders=(1, 2)"
 
-    if wfn_name in ["DOCI", "CIPairs"]:
+    elif wfn_type == "basecc":
+        from_imports.append(("fanpy.wfn.cc.base", "BaseCC"))
+        wfn_name = "BaseCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "standardcc":
+        from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
+        wfn_name = "StandardCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "generalizedcc":
+        from_imports.append(("fanpy.wfn.cc.generalized_cc", "GeneralizedCC"))
+        wfn_name = "GeneralizedCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "senioritycc":
+        from_imports.append(("fanpy.wfn.cc.seniority", "SeniorityCC"))
+        wfn_name = "SeniorityCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "pccd":
+        from_imports.append(("fanpy.wfn.cc.pccd_ap1rog", "PCCD"))
+        wfn_name = "PCCD"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ap1rogsd":
+        from_imports.append(("fanpy.wfn.cc.ap1rog_generalized", "AP1roGSDGeneralized"))
+        wfn_name = "AP1roGSDGeneralized"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ap1rogsd_spin":
+        from_imports.append(("fanpy.wfn.cc.ap1rog_spin", "AP1roGSDSpin"))
+        wfn_name = "AP1roGSDSpin"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "apsetgd":
+        from_imports.append(("fanpy.wfn.cc.apsetg_d", "APsetGD"))
+        wfn_name = "APsetGD"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "apsetgsd":
+        from_imports.append(("fanpy.wfn.cc.apsetg_sd", "APsetGSD"))
+        wfn_name = "APsetGSD"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "apg1rod":
+        from_imports.append(("fanpy.wfn.cc.apg1ro_d", "APG1roD"))
+        wfn_name = "APG1roD"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "apg1rosd":
+        from_imports.append(("fanpy.wfn.cc.apg1ro_sd", "APG1roSD"))
+        wfn_name = "APG1roSD"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccsdsen0":
+        from_imports.append(("fanpy.wfn.cc.ccsd_sen0", "CCSDsen0"))
+        wfn_name = "CCSDsen0"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccsdqsen0":
+        from_imports.append(("fanpy.wfn.cc.ccsdq_sen0", "CCSDQsen0"))
+        wfn_name = "CCSDQsen0"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccsdtqsen0":
+        from_imports.append(("fanpy.wfn.cc.ccsdtq_sen0", "CCSDTQsen0"))
+        wfn_name = "CCSDTQsen0"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccsdtsen2qsen0":
+        from_imports.append(("fanpy.wfn.cc.ccsdt_sen2_q_sen0", "CCSDTsen2Qsen0"))
+        wfn_name = "CCSDTsen2Qsen0"
+        if wfn_kwargs is None:
+            wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccsd":
+        from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
+        wfn_name = "StandardCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "indices=None, refwfn=None, exop_combinations=None"
+        wfn_kwargs = f"ranks=[1, 2], {wfn_kwargs}"
+    elif wfn_type == "ccsdt":
+        from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
+        wfn_name = "StandardCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "indices=None, refwfn=None, exop_combinations=None"
+        wfn_kwargs = f"ranks=[1, 2, 3], {wfn_kwargs}"
+    elif wfn_type == "ccsdtq":
+        from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
+        wfn_name = "StandardCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "indices=None, refwfn=None, exop_combinations=None"
+        wfn_kwargs = f"ranks=[1, 2, 3, 4], {wfn_kwargs}"
+
+    if wfn_name in ["DOCI", "CIPairs"] and not optimize_orbs:
         from_imports.append(("fanpy.ham.senzero", "SeniorityZeroHamiltonian"))
         ham_name = "SeniorityZeroHamiltonian"
     else:
@@ -265,12 +360,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         output += "import {}\n".format(i)
     for key, val in from_imports:
         output += "from {} import {}\n".format(key, val)
-    output += "from fanpy.upgrades import speedup_sd, speedup_sign\n"
+    output += "from fanpy.upgrades import speedup_sign\n"
     if "apg" in wfn_type or wfn_type in ['ap1rog', 'apig']:
         output += "import fanpy.upgrades.speedup_apg\n"
-        output += "import fanpy.upgrades.speedup_objective\n"
+        # output += "import fanpy.upgrades.speedup_objective\n"
     if 'ci' in wfn_type or wfn_type == 'network':
-        output += "import fanpy.upgrades.speedup_objective\n"
+        # output += "import fanpy.upgrades.speedup_objective\n"
+        pass
     if solver == "trustregion":
         output += "from fanpy.upgrades.trustregion_qmc_fanpy import minimize\n"
         output += "from fanpy.upgrades.trf_fanpy import least_squares\n"
@@ -352,11 +448,6 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     output += "# Initialize Hamiltonian\n"
     ham_init1 = "ham = {}(".format(ham_name)
-    ham_init2 = "one_int, two_int)\n"
-    output += "\n".join(
-        textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
-    )
-    ham_init1 = "ham = {}(".format(ham_name)
     ham_init2 = "one_int, two_int"
     if solver == 'cma':
         ham_init2 += ')\n'
@@ -399,6 +490,76 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "print('Hamiltonian: {}')\n".format(ham_name)
     output += "\n"
 
+    if load_chk:
+        if False:
+            output += "# Load checkpoint\n"
+            output += "chk_point_file = '{}'\n".format(load_chk)
+            output += "chk_point = np.load(chk_point_file)\n"
+            if objective in ["projected", "system_qmc", "least_squares", "one_energy_system"]:
+                output += "if chk_point.size == objective.params.size - 1 and objective.energy_type == 'variable':\n"
+                output += '    objective.assign_params(np.hstack([chk_point, 0]))\n'
+                output += "elif chk_point.size - 1 == objective.params.size and objective.energy_type != 'variable':\n"
+                output += '    objective.assign_params(chk_point[:-1])\n'
+                output += 'else:\n'
+                output += "    objective.assign_params(chk_point)\n"
+            else:
+                output += "objective.assign_params(chk_point)\n"
+            output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
+            output += "\n"
+            # check for unitary matrix
+            output += '# Load checkpoint hamiltonian unitary matrix\n'
+            output += "ham_params = chk_point[wfn.nparams:]\n"
+            output += "load_chk_um = '{}_um{}'.format(*os.path.splitext(chk_point_file))\n"
+            output += "if os.path.isfile(load_chk_um):\n"
+            output += "    ham._prev_params = ham_params.copy()\n"
+            output += "    ham._prev_unitary = np.load(load_chk_um)\n"
+            output += "ham.assign_params(ham_params)\n\n"
+        else:
+            output += "# Load checkpoint\n"
+            output += "import os\n"
+            output += "dirname, chk_point_file = os.path.split('{}')\n".format(load_chk)
+            output += "chk_point_file, ext = os.path.splitext(chk_point_file)\n"
+            dirname, chk_point_file = os.path.split(load_chk)
+            chk_point_file, ext = os.path.splitext(chk_point_file)
+            if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + wfn_name + ext)):
+                output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_' + wfn.__class__.__name__ + ext)))\n"
+            else:
+                output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
+            if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + ext)):
+                output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + ext)))\n"
+            else:
+                output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
+            if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + '_prev' + ext)):
+                output += "ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_prev' + ext))\n"
+            else:
+                output += "ham._prev_params = ham.params.copy()\n"
+            if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + '_um' + ext)):
+                output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_um' + ext))\n"
+            else:
+                output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
+            output += "ham.assign_params(ham.params)\n\n"
+
+            #output += "import os\n"
+            #output += "dirname, chk_point_file = os.path.split('{}')\n".format(load_chk)
+            #output += "chk_point_file, ext = os.path.splitext(chk_point_file)\n"
+            #output += "try:\n"
+            #output += "    wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_' + wfn.__class__.__name__ + ext)))\n"
+            #output += "except FileNotFoundError:\n"
+            #output += "    wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
+            #output += "try:\n"
+            #output += "    ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + ext)))\n"
+            #output += "except FileNotFoundError:\n"
+            #output += "    ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
+            #output += "try:\n"
+            #output += "    ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_prev' + ext))\n"
+            #output += "except FileNotFoundError:\n"
+            #output += "    ham._prev_params = ham.params.copy()\n"
+            #output += "try:\n"
+            #output += "    ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_um' + ext))\n"
+            #output += "except FileNotFoundError:\n"
+            #output += "    ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
+            #output += "ham.assign_params(ham.params)\n\n"
+
     if pspace_exc is None:  # pragma: no cover
         pspace = "[1, 2]"
     else:
@@ -426,7 +587,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         output += "param_selection = [(wfn, np.ones(wfn.nparams, dtype=bool))]\n"
     output += "\n"
 
-    if objective in ['system', 'least_squares']:
+    if objective in ['projected', 'least_squares']:
         if constraint == 'norm':
             output += "# Set up constraints\n"
             output += "norm = NormConstraint(wfn, refwfn=pspace, param_selection=param_selection)\n"
@@ -494,7 +655,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
     output += "objective.tmpfile = '{}'".format(save_chk)
     output += "\n\n"
-    if objective == 'system':
+    if objective == 'projected':
         output += 'objective.print_energy = False\n'
     if objective == 'least_squares':
         output += 'objective.print_energy = True\n'
@@ -515,50 +676,12 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         output += "objective.sample_size = len(pspace)\n"
         output += "wfn.pspace_norm = objective.refwfn\n"
 
-    if load_chk is not None:
-        if False:
-            output += "# Load checkpoint\n"
-            output += "chk_point_file = '{}'\n".format(load_chk)
-            output += "chk_point = np.load(chk_point_file)\n"
-            if objective in ["system", "system_qmc", "least_squares", "one_energy_system"]:
-                output += "if chk_point.size == objective.params.size - 1 and objective.energy_type == 'variable':\n"
-                output += '    objective.assign_params(np.hstack([chk_point, 0]))\n'
-                output += "elif chk_point.size - 1 == objective.params.size and objective.energy_type != 'variable':\n"
-                output += '    objective.assign_params(chk_point[:-1])\n'
-                output += 'else:\n'
-                output += "    objective.assign_params(chk_point)\n"
-            else:
-                output += "objective.assign_params(chk_point)\n"
-            output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
-            output += "\n"
-            # check for unitary matrix
-            output += '# Load checkpoint hamiltonian unitary matrix\n'
-            output += "ham_params = chk_point[wfn.nparams:]\n"
-            output += "load_chk_um = '{}_um{}'.format(*os.path.splitext(chk_point_file))\n"
-            output += "if os.path.isfile(load_chk_um):\n"
-            output += "    ham._prev_params = ham_params.copy()\n"
-            output += "    ham._prev_unitary = np.load(load_chk_um)\n"
-            output += "ham.assign_params(ham_params)\n\n"
-        else:
-            output += "# Load checkpoint\n"
-            output += "import os\n"
-            output += "dirname, chk_point_file = os.path.split('{}')\n".format(load_chk)
-            output += "chk_point_file, ext = os.path.splitext(chk_point_file)\n"
-            output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
-            output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
-            output += "try:\n"
-            output += "    ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_ham_prev' + ext))\n"
-            output += "except FileNotFoundError:\n"
-            output += "    ham._prev_params = ham.params.copy()\n"
-            output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
-            output += "ham.assign_params(ham.params)\n"
-
     if wfn_type in ['apg', 'apig', 'apsetg', 'apg2', 'apg3', 'apg4', 'apg5', 'apg6', 'apg7', 'doci', 'network']:
         output += "# Normalize\n"
         output += "wfn.normalize(pspace)\n\n"
 
     # load energy
-    if objective in ["system", "system_qmc", "least_squares", "one_energy_system"] and solver != 'trustregion':
+    if objective in ["projected", "system_qmc", "least_squares", "one_energy_system"] and solver != 'trustregion':
         output += "# Set energies\n"
         output += "energy_val = objective.get_energy_one_proj(pspace)\n"
         output += "print('Initial energy:', energy_val)\n"
@@ -589,8 +712,8 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
     output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
     output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
-    if objective in ["system", "system_qmc"]:
-        output += "print('Cost: {}'.format(results['cost']))\n"
+    #if objective in ["projected", "system_qmc"]:
+    #    output += "print('Residuals: {}'.format(results['residuals']))\n"
 
     if filename is None:  # pragma: no cover
         print(output)
