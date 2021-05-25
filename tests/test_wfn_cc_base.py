@@ -204,6 +204,7 @@ def test_get_overlap():
     test.assign_refwfn()
     test.assign_memory("1gb")
     test.assign_params(np.arange(1, 19))
+    test.refresh_exops = None
     test.load_cache()
     # FIXME: WRONG NUMBERS
     # assert test.get_overlap(0b1010) == 1*4 + 2*3 + 5
@@ -222,6 +223,7 @@ def test_generate_possible_exops():
     test.assign_nspin(4)
     test.assign_ranks()
     test.assign_exops()
+    test.refresh_exops = None
     test.generate_possible_exops([0, 2], [1, 3])
     assert test.exop_combinations[(0, 2, 1, 3)] == [([0, 1], [2, 3]), ([0, 3], [2, 1]),
                                                     ([0, 2, 1, 3], )]
@@ -231,6 +233,7 @@ def test_generate_possible_exops():
     test.assign_nspin(8)
     test.assign_ranks([1, 2, 3])
     test.exops = [[2, 6], [2, 5], [0, 1, 4, 5], [0, 1, 4, 6], [0, 1, 2, 4, 5, 6]]
+    test.refresh_exops = None
     test.generate_possible_exops([0, 1, 2], [4, 5, 6])
     assert test.exop_combinations == {
         (0, 1, 2, 4, 5, 6): [([2, 5], [0, 1, 4, 6]), ([2, 6], [0, 1, 4, 5]), ([0, 1, 2, 4, 5, 6],)],

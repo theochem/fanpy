@@ -53,6 +53,7 @@ def test_generate_possible_exops():
     test.assign_refwfn()
     test.assign_ranks([1])
     test.assign_exops()
+    test.refresh_exops = None
     test.generate_possible_exops([0, 2], [1, 3])
     assert test.exop_combinations[(0, 2, 1, 3)] == [([0, 1], [2, 3]), ([0, 3], [2, 1])]
 
@@ -68,6 +69,7 @@ def test_generate_possible_exops():
     test.assign_refwfn(0b00110011)
     test.assign_ranks([1])
     test.assign_exops()
+    test.refresh_exops = None
     test.generate_possible_exops([0, 1], [2, 3])
     assert test.exop_combinations[(0, 1, 2, 3)] == [([0, 2], [1, 3]), ([0, 3], [1, 2])]
     test.generate_possible_exops([0, 1, 4], [2, 3, 6])
@@ -85,6 +87,7 @@ def test_generate_possible_exops():
     test.assign_refwfn(0b00110011)
     test.assign_ranks([1, 2])
     test.assign_exops()
+    test.refresh_exops = None
     test.generate_possible_exops([0, 1], [2, 3])
     assert test.exop_combinations == {
         (0, 1, 2, 3): [([0, 2], [1, 3]), ([0, 3], [1, 2]), ([0, 1, 2, 3],)]
@@ -107,6 +110,7 @@ def test_generate_possible_exops():
     test.assign_refwfn(0b00110011)
     test.assign_ranks([1, 2, 3])
     test.assign_exops()
+    test.refresh_exops = None
     test.generate_possible_exops([0, 1], [2, 3])
     assert test.exop_combinations == {
         (0, 1, 2, 3): [([0, 2], [1, 3]), ([0, 3], [1, 2]), ([0, 1, 2, 3],)]

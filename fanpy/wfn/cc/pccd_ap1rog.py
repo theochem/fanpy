@@ -101,7 +101,7 @@ class PCCD(BaseCC):
 
     """
     def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
-                 refwfn=None, params=None, exop_combinations=None):
+                 refwfn=None, params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -136,7 +136,7 @@ class PCCD(BaseCC):
 
         """
         super().__init__(nelec, nspin, params=params,
-                         exop_combinations=exop_combinations)
+                         exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_ranks(ranks=ranks)
         self.assign_exops(indices=indices)
         self.assign_refwfn(refwfn=refwfn)

@@ -108,7 +108,7 @@ class SeniorityCC(BaseCC):
 
     """
     def __init__(self, nelec, nspin, memory=None, ranks=None, indices=None,
-                 refwfn=None, params=None, exop_combinations=None):
+                 refwfn=None, params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -143,7 +143,7 @@ class SeniorityCC(BaseCC):
 
         """
         super().__init__(nelec, nspin, ranks=ranks, indices=indices, params=params,
-                         exop_combinations=exop_combinations)
+                         exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_refwfn(refwfn=refwfn)
         self.load_cache()
 
