@@ -215,8 +215,8 @@ class SeniorityCC(BaseCC):
                 raise ValueError('refwfn must be a seniority-0 wavefuntion')
             self.refwfn = refwfn
 
-    def _olp(self, sd1, sd2):
-        """Calculate the matrix element of the CC operator between the Slater determinants.
+    def _olp(self, sd):
+        r"""Calculate the matrix element of the CC operator between the Slater determinants.
 
         .. math::
 
@@ -264,9 +264,9 @@ class SeniorityCC(BaseCC):
                 else:
                     return False
 
-        if sd1 == sd2:
-            return 1.0
-        else:
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return 1.0
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
             if isinstance(a_inds, np.ndarray):
                 a_inds = a_inds.tolist()
@@ -287,13 +287,13 @@ class SeniorityCC(BaseCC):
                     extra_sd = sd2
                     for exop in exop_list:
                         if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                                   + [complement_empty(i, extra_sd) for i in
-                                       exop[len(exop) // 2:]]):
+                                    + [complement_empty(i, extra_sd) for i in
+                                        exop[len(exop) // 2:]]):
                             sign = None
                             break
                         try:
                             sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                       exop[len(exop) // 2:])
+                                                        exop[len(exop) // 2:])
                         except ValueError:
                             sign = None
                             break
@@ -304,7 +304,15 @@ class SeniorityCC(BaseCC):
                         continue
             return val
 
-    def _olp_deriv(self, sd1, sd2):
+        if isinstance(self.refwfn, CIWavefunction):
+            val = 0
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)
+
+    def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -347,9 +355,9 @@ class SeniorityCC(BaseCC):
                 else:
                     return False
 
-        if sd1 == sd2:
-            return 0.0
-        else:
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return 0.0
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
             if isinstance(a_inds, np.ndarray):
                 a_inds = a_inds.tolist()
@@ -370,13 +378,13 @@ class SeniorityCC(BaseCC):
                     extra_sd = sd2
                     for exop in exop_list:
                         if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                                   + [complement_empty(i, extra_sd) for i in
-                                       exop[len(exop) // 2:]]):
+                                + [complement_empty(i, extra_sd) for i in
+                                    exop[len(exop) // 2:]]):
                             sign = None
                             break
                         try:
                             sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                       exop[len(exop) // 2:])
+                                                    exop[len(exop) // 2:])
                         except ValueError:
                             sign = None
                             break
@@ -386,3 +394,11 @@ class SeniorityCC(BaseCC):
                     else:
                         continue
             return val
+
+        if isinstance(self.refwfn, CIWavefunction):
+            val = np.zeros(self.nparams)
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)

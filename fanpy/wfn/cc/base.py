@@ -545,14 +545,14 @@ class BaseCC(BaseWavefunction):
 
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp(sd1, sd2):
+        def _olp(sd1):
             """Cached _olp method without caching the instance."""
-            return self._olp(sd1, sd2)
+            return self._olp(sd1)
 
         @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp_deriv(sd1, sd2):
+        def _olp_deriv(sd1):
             """Cached _olp_deriv method without caching the instance."""
-            return self._olp_deriv(sd1, sd2)
+            return self._olp_deriv(sd1)
 
         # create cache
         if not hasattr(self, '_cache_fns'):
@@ -562,7 +562,7 @@ class BaseCC(BaseWavefunction):
         self._cache_fns['overlap'] = _olp
         self._cache_fns['overlap derivative'] = _olp_deriv
 
-    def _olp(self, sd1, sd2):
+    def _olp(self, sd):
         r"""Calculate the matrix element of the CC operator between the Slater determinants.
 
         .. math::
@@ -584,9 +584,9 @@ class BaseCC(BaseWavefunction):
             Matrix element of the CC operator between the given Slater determinant.
 
         """
-        if sd1 == sd2:
-            return 1.0
-        else:
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return 1.0
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
             if isinstance(a_inds, np.ndarray):
                 a_inds = a_inds.tolist()
@@ -625,7 +625,15 @@ class BaseCC(BaseWavefunction):
                         continue
             return val
 
-    def _olp_deriv(self, sd1, sd2):
+        if isinstance(self.refwfn, CIWavefunction):
+            val = 0
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)
+
+    def _olp_deriv(self, sd):
         """Calculate the derivative of the overlap with the Slater determinant.
 
         Parameters
@@ -641,9 +649,9 @@ class BaseCC(BaseWavefunction):
             Derivative of the overlap with respect to the given parameter.
 
         """
-        if sd1 == sd2:
-            return np.zeros(self.nparams)
-        else:
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return np.zeros(self.nparams)
             # FIXME: this should definitely be vectorized
             c_inds, a_inds = slater.diff_orbs(sd1, sd2)
             if isinstance(a_inds, np.ndarray):
@@ -656,8 +664,6 @@ class BaseCC(BaseWavefunction):
             val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
-            # FIXME: exop_list only provides indices (for product_amplitudes) and exop (for sign).
-            # This can probably be stored instead of exop_list
             for exop_list in self.exop_combinations[tuple(a_inds + c_inds)]:
                 if len(exop_list) == 0:
                     continue
@@ -678,6 +684,14 @@ class BaseCC(BaseWavefunction):
                     else:
                         continue
             return val
+
+        if isinstance(self.refwfn, CIWavefunction):
+            val = np.zeros(self.nparams)
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
@@ -720,28 +734,13 @@ class BaseCC(BaseWavefunction):
         Bit of performance is lost in exchange for generalizability. Hopefully it is still readable.
 
         """
-        if isinstance(self.refwfn, CIWavefunction):
-            # if no derivatization
-            if deriv is None:
-                val = 0.0
-                for refsd in self.refwfn.sd_vec:
-                    val += self._cache_fns['overlap'](sd, refsd) * self.refwfn.get_overlap(refsd)
-                return val
-            # if derivatization
-            else:
-                val = np.zeros(self.nparams)
-                for refsd in self.refwfn.sd_vec:
-                    val += (self._cache_fns['overlap derivative'](sd, refsd) *
-                            self.refwfn.get_overlap(refsd))
-                return val[deriv]
+        # if no derivatization
+        if deriv is None:
+            return self._cache_fns['overlap'](sd)
+        # if derivatization
         else:
-            # if no derivatization
-            if deriv is None:
-                return self._cache_fns['overlap'](sd, self.refwfn)
-            # if derivatization
-            else:
-                val = self._cache_fns['overlap derivative'](sd, self.refwfn)
-                return val[deriv]
+            val = self._cache_fns['overlap derivative'](sd)
+            return val[deriv]
 
     def generate_possible_exops(self, a_inds, c_inds):
         """Assign possible excitation operators from the given creation and annihilation operators.
