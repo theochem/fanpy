@@ -149,21 +149,27 @@ class AP1roGSDGeneralized(PCCD):
             raise TypeError('Only the excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt in ex_to:
                     exop = [occ_alpha, occ_alpha + self.nspatial,
                             virt, occ_alpha + self.nspatial]
-                    exops.append(exop)
+                    exops[tuple(exop)] = counter
+                    counter += 1
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt in ex_to:
                     exop = [occ_alpha, occ_alpha + self.nspatial,
                             occ_alpha, virt]
-                    exops.append(exop)
-            super().assign_exops(indices)
-            self.exops = exops + self.exops
+                    exops[tuple(exop)] = counter
+                    counter += 1
+            super().assign_exops(None)
+            shift = len(exops)
+            for exop, ind in self.exops.items():
+                exops[exop] = ind + shift
+            self.exops = exops
 
     def generate_possible_exops(self, a_inds, c_inds):
         """Assign possible excitation operators from the given creation and annihilation operators.

@@ -151,7 +151,8 @@ class CCSDTQsen0(CCSDsen0):
             raise TypeError('Only the excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn).tolist()
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
 
@@ -163,7 +164,8 @@ class CCSDTQsen0(CCSDsen0):
                             exop.append(annihilator)
                         for creator in creators:
                             exop.append(creator)
-                        exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
 
             # Seniority 0 quadruples
             for occ_alpha1 in ex_from[:len(ex_from) // 2]:
@@ -175,5 +177,6 @@ class CCSDTQsen0(CCSDsen0):
                                     occ_alpha2, occ_alpha2 + self.nspatial,
                                     virt_alpha1, virt_alpha1 + self.nspatial,
                                     virt_alpha2, virt_alpha2 + self.nspatial]
-                            exops.append(exop)
+                            exops[tuple(exop)] = counter
+                            counter += 1
             self.exops = exops

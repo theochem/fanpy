@@ -184,13 +184,14 @@ def test_olp_deriv():
     """Test BaseCC._olp_deriv."""
     test = BaseCC(4, 10, )
     test.assign_params(np.random.rand(test.nparams))
+    test.assign_refwfn(slater.ground(4, 10))
     for sd in np.random.choice(sd_list(4, 10), 5):
         def func(x):
             test.assign_params(x)
-            return test._olp(sd, slater.ground(4, 10))
+            return test._olp(sd)
 
         grad = nd.Gradient(func, step=1e-4)(test.params)
-        assert np.allclose(test._olp_deriv(sd, slater.ground(4, 10)), grad, atol=1e-4)
+        assert np.allclose(test._olp_deriv(sd), grad, atol=1e-4)
 
 
 def test_get_overlap():

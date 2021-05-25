@@ -164,7 +164,6 @@ class StandardCC(BaseCC):
             raise TypeError('Only the occ-virt excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            #exops = []
             exops = {}
             counter = 0
             ex_from = slater.occ_indices(self.refwfn)
@@ -172,13 +171,7 @@ class StandardCC(BaseCC):
             for rank in self.ranks:
                 for annihilators in combinations(ex_from, rank):
                     for creators in combinations(ex_to, rank):
-                        exop = []
-                        for annihilator in annihilators:
-                            exop.append(annihilator)
-                        for creator in creators:
-                            exop.append(creator)
-                        #exops.append(exop)
-                        exops[tuple(exop)] = counter
+                        exops[(*annihilators, *creators)] = counter
                         counter += 1
             self.exops = exops
 

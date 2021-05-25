@@ -19,5 +19,5 @@ def test_assign_exops():
     with pytest.raises(ValueError):
         test.assign_exops([[0, 1, 4, 5], [2, 3, 6, 7]])
     test.assign_exops()
-    assert test.exops == [[0, 4, 2, 6], [0, 4, 2, 7], [0, 4, 3, 6], [0, 4, 3, 7],
-                          [1, 5, 2, 6], [1, 5, 2, 7], [1, 5, 3, 6], [1, 5, 3, 7]]
+    assert test.exops == {(0, 4, 2, 6): 0, (0, 4, 2, 7): 1, (0, 4, 3, 6): 2, (0, 4, 3, 7): 3,
+                          (1, 5, 2, 6): 4, (1, 5, 2, 7): 5, (1, 5, 3, 6): 6, (1, 5, 3, 7): 7}

@@ -124,13 +124,15 @@ class APG1roD(PCCD):
             raise TypeError('Only the excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt1 in ex_to:
                     for virt2 in ex_to[ex_to.index(virt1) + 1:]:
                         exop = [occ_alpha, occ_alpha + self.nspatial, virt1, virt2]
-                        exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
 

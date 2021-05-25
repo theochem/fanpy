@@ -188,7 +188,8 @@ class CCSDsen0(PCCD):
             raise TypeError('Only the excitation operators constructed by default from '
                             'the given reference Slater determinant are allowed')
         else:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
 
@@ -196,12 +197,14 @@ class CCSDsen0(PCCD):
             for annihilator in ex_from:
                 for creator in ex_to:
                     exop = [annihilator, creator]
-                    exops.append(exop)
+                    exops[tuple(exop)] = counter
+                    counter += 1
 
             # Seniority 0 doubles
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt_alpha in ex_to[:len(ex_to) // 2]:
                     exop = [occ_alpha, occ_alpha + self.nspatial,
                             virt_alpha, virt_alpha + self.nspatial]
-                    exops.append(exop)
+                    exops[tuple(exop)] = counter
+                    counter += 1
             self.exops = exops

@@ -161,7 +161,8 @@ class APset1roGSD(APset1roGD):
 
         """
         if indices is None:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             virt_alphas = [i for i in range(self.nspin) if
                            (i not in ex_from) and slater.is_alpha(i, self.nspatial)]
@@ -171,17 +172,23 @@ class APset1roGSD(APset1roGD):
                 for virt_alpha in virt_alphas:
                     exop = [occ_alpha, occ_alpha + self.nspatial,
                             virt_alpha, occ_alpha + self.nspatial]
-                    exops.append(exop)
+                    exops[tuple(exop)] = counter
+                    counter += 1
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt_beta in virt_betas:
                     exop = [occ_alpha, occ_alpha + self.nspatial,
                             occ_alpha, virt_beta]
-                    exops.append(exop)
-            super().assign_exops(indices)
-            self.exops = exops + self.exops
+                    exops[tuple(exop)] = counter
+                    counter += 1
+            super().assign_exops(None)
+            shift = len(exops)
+            for exop, ind in self.exops.items():
+                exops[exop] = ind + shift
+            self.exops = exops
 
         elif isinstance(indices, list):
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             if len(indices) != 2:
                 raise TypeError('`indices` must have exactly 2 elements')
@@ -202,13 +209,18 @@ class APset1roGSD(APset1roGD):
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for i in indices[0]:
                     exop = [occ_alpha, occ_alpha + self.nspatial, i, occ_alpha + self.nspatial]
-                    exops.append(exop)
+                    exops[tuple(exop)] = counter
+                    counter += 1
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for j in indices[1]:
                     exop = [occ_alpha, occ_alpha + self.nspatial, occ_alpha, j]
-                    exops.append(exop)
-            super().assign_exops(indices)
-            self.exops = exops + self.exops
+                    exops[tuple(exop)] = counter
+                    counter += 1
+            super().assign_exops(None)
+            shift = len(exops)
+            for exop, ind in self.exops.items():
+                exops[exop] = ind + shift
+            self.exops = exops
 
     def generate_possible_exops(self, a_inds, c_inds):
         """Assign possible excitation operators from the given creation and annihilation operators.

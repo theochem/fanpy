@@ -46,7 +46,7 @@ def test_assign_exops():
     with pytest.raises(TypeError):
         test.assign_exops([[0, 1, 4, 5], [2, 3, 6, 7]])
     test.assign_exops()
-    assert test.exops == [[0, 4, 2, 6], [0, 4, 3, 7], [1, 5, 2, 6], [1, 5, 3, 7]]
+    assert test.exops == {(0, 4, 2, 6): 0, (0, 4, 3, 7): 1, (1, 5, 2, 6): 2, (1, 5, 3, 7): 3}
 
 
 def test_assign_refwfn():

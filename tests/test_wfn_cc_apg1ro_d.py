@@ -17,9 +17,9 @@ def test_assign_exops():
     test.assign_nspin(8)
     test.assign_refwfn()
     test.assign_ranks()
-    test.assign_exops()
     with pytest.raises(TypeError):
         test.assign_exops([[0, 1, 4, 5], [2, 3, 6, 7]])
-    assert test.exops == [[0, 4, 2, 3], [0, 4, 2, 6], [0, 4, 2, 7], [0, 4, 3, 6],
-                          [0, 4, 3, 7], [0, 4, 6, 7], [1, 5, 2, 3], [1, 5, 2, 6],
-                          [1, 5, 2, 7], [1, 5, 3, 6], [1, 5, 3, 7], [1, 5, 6, 7]]
+    test.assign_exops()
+    assert test.exops == {(0, 4, 2, 3): 0, (0, 4, 2, 6): 1, (0, 4, 2, 7): 2, (0, 4, 3, 6): 3,
+                          (0, 4, 3, 7): 4, (0, 4, 6, 7): 5, (1, 5, 2, 3): 6, (1, 5, 2, 6): 7,
+                          (1, 5, 2, 7): 8, (1, 5, 3, 6): 9, (1, 5, 3, 7): 10, (1, 5, 6, 7): 11}

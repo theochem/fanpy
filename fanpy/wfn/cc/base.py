@@ -306,20 +306,13 @@ class BaseCC(BaseWavefunction):
 
         """
         if indices is None:
-            #exops = []
             exops = {}
             counter = 0
             for rank in self.ranks:
                 for annihilators in combinations(range(self.nspin), rank):
                     for creators in combinations([i for i in range(self.nspin)
                                                   if i not in annihilators], rank):
-                        exop = []
-                        for annihilator in annihilators:
-                            exop.append(annihilator)
-                        for creator in creators:
-                            exop.append(creator)
-                        #exops.append(exop)
-                        exops[tuple(exop)] = counter
+                        exops[(*annihilators, *creators)] = counter
                         counter += 1
             self.exops = exops
         elif isinstance(indices, list):
@@ -335,19 +328,12 @@ class BaseCC(BaseWavefunction):
             ex_from, ex_to = list(set(indices[0])), list(set(indices[1]))
             ex_from.sort()
             ex_to.sort()
-            #exops = []
             exops = {}
             counter = 0
             for rank in self.ranks:
                 for annihilators in combinations(ex_from, rank):
                     for creators in combinations(ex_to, rank):
-                        exop = []
-                        for annihilator in annihilators:
-                            exop.append(annihilator)
-                        for creator in creators:
-                            exop.append(creator)
-                        #exops.append(exop)
-                        exops[tuple(exop)] = counter
+                        exops[(*annihilators, *creators)] = counter
                         counter += 1
             self.exops = exops
         else:
@@ -428,7 +414,6 @@ class BaseCC(BaseWavefunction):
                 raise ValueError('The number of excitation operators in the two wavefunctions'
                                  'must be the same.')
             params = np.zeros(self.params_shape)
-            # for ind, exop in enumerate(other.exops):
             for exop, ind in other.exops.items():
                 try:
                     params[self.get_ind(exop)] = other.params[ind]
@@ -466,7 +451,6 @@ class BaseCC(BaseWavefunction):
 
         """
         try:
-            #return self.exops.index(exop)
             return self.exops[tuple(exop)]
         except (ValueError, TypeError, KeyError):
             raise ValueError('Given excitation operator, {0}, is not included in the '
@@ -491,15 +475,10 @@ class BaseCC(BaseWavefunction):
             If index is not valid.
 
         """
-        try:
-            return self.exops[ind]
-        except (IndexError, TypeError):
-            raise ValueError('Given index, {0}, is not used in the '
-                             'wavefunction'.format(ind))
-        # for exop, i in self.exops.items():
-        #     if i == ind:
-        #         return exop
-        # raise ValueError('Given index, {0}, is not used in the wavefunction'.format(ind))
+        for exop, i in self.exops.items():
+            if i == ind:
+                return exop
+        raise ValueError('Given index, {0}, is not used in the wavefunction'.format(ind))
 
     def product_amplitudes(self, inds, deriv=False):
         """Compute the product of the CC amplitudes that corresponds to the given indices.

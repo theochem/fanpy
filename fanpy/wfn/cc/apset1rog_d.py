@@ -136,7 +136,8 @@ class APset1roGD(PCCD):
 
         """
         if indices is None:
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             virt_alphas = [i for i in range(self.nspin) if
                            (i not in ex_from) and slater.is_alpha(i, self.nspatial)]
@@ -146,11 +147,13 @@ class APset1roGD(PCCD):
                 for virt_alpha in virt_alphas:
                     for virt_beta in virt_betas:
                         exop = [occ_alpha, occ_alpha + self.nspatial, virt_alpha, virt_beta]
-                        exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
 
         elif isinstance(indices, list):
-            exops = []
+            exops = {}
+            counter = 0
             ex_from = slater.occ_indices(self.refwfn)
             if len(indices) != 2:
                 raise TypeError('`indices` must have exactly 2 elements')
@@ -172,6 +175,7 @@ class APset1roGD(PCCD):
                 for i in indices[0]:
                     for j in indices[1]:
                         exop = [occ_alpha, occ_alpha + self.nspatial, i, j]
-                        exops.append(exop)
+                        exops[tuple(exop)] = counter
+                        counter += 1
             self.exops = exops
 
