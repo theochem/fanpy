@@ -216,6 +216,15 @@ def test_get_overlap():
     )
 
 
+def check_sign(occ_indices, exops):
+    sd = slater.create(0, *occ_indices)
+    sign = 1
+    for exop in exops:
+        sign *= slater.sign_excite(sd, exop[:len(exop) // 2], exop[len(exop) // 2:])
+        sd = slater.excite(sd, *exop)
+    return sign
+
+
 def test_generate_possible_exops():
     """Test CCWavefunction.generate_possible_exops."""
     test = TempBaseCC()
@@ -225,21 +234,45 @@ def test_generate_possible_exops():
     test.assign_exops()
     test.refresh_exops = None
     test.generate_possible_exops([0, 2], [1, 3])
-    assert test.exop_combinations[(0, 2, 1, 3)] == [([0, 1], [2, 3]), ([0, 3], [2, 1]),
-                                                    ([0, 2, 1, 3], )]
+    assert np.allclose(
+        test.exop_combinations[(0, 2, 1, 3)][0][0], [test.get_ind((0, 1)), test.get_ind((2, 3))]
+    )
+    assert np.allclose(
+        test.exop_combinations[(0, 2, 1, 3)][1][0], [test.get_ind((0, 3)), test.get_ind((2, 1))]
+    )
+    assert np.allclose(
+        test.exop_combinations[(0, 2, 1, 3)][2][0], [test.get_ind((0, 2, 1, 3))]
+    )
+    base_sign = slater.sign_excite(0b0101, [0, 2], [1, 3])
+    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][0][1] == check_sign([0, 2], [[0, 1], [2, 3]])
+    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][1][1] == check_sign([0, 2], [[0, 3], [2, 1]])
+    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][2][1] == check_sign([0, 2], [[0, 2, 1, 3]])
 
     test = TempBaseCC()
     test.assign_nelec(4)
     test.assign_nspin(8)
     test.assign_ranks([1, 2, 3])
-    test.exops = [[2, 6], [2, 5], [0, 1, 4, 5], [0, 1, 4, 6], [0, 1, 2, 4, 5, 6]]
     test.refresh_exops = None
+    test.exops = {(2, 6): 0, (2, 5): 1, (0, 1, 4, 5): 2, (0, 1, 4, 6): 3, (0, 1, 2, 4, 5, 6): 4}
     test.generate_possible_exops([0, 1, 2], [4, 5, 6])
-    assert test.exop_combinations == {
-        (0, 1, 2, 4, 5, 6): [([2, 5], [0, 1, 4, 6]), ([2, 6], [0, 1, 4, 5]), ([0, 1, 2, 4, 5, 6],)],
-    }
-    test.generate_possible_exops([0, 1], [4, 5])
-    assert test.exop_combinations == {
-        (0, 1, 2, 4, 5, 6): [([2, 5], [0, 1, 4, 6]), ([2, 6], [0, 1, 4, 5]), ([0, 1, 2, 4, 5, 6],)],
-        (0, 1, 4, 5): [([0, 1, 4, 5],)],
-    }
+    assert np.allclose(
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][0][0],
+        [test.get_ind((2, 5)), test.get_ind((0, 1, 4, 6))],
+    )
+    assert np.allclose(
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][0],
+        [test.get_ind((2, 6)), test.get_ind((0, 1, 4, 5))],
+    )
+    assert np.allclose(
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][0], [test.get_ind((0, 1, 2, 4, 5, 6))],
+    )
+    base_sign = slater.sign_excite(0b00000111, [0, 1, 2], [4, 5, 6])
+    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][0][1] == check_sign(
+        [0, 1, 2], [[2, 5], [0, 1, 4, 6]]
+    )
+    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][1] == check_sign(
+        [0, 1, 2], [[2, 6], [0, 1, 4, 5]]
+    )
+    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][1] == check_sign(
+        [0, 1, 2], [[0, 1, 2, 4, 5, 6]]
+    )

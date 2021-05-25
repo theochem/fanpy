@@ -595,6 +595,9 @@ class BaseCC(BaseWavefunction):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
             val = 0.0
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -607,22 +610,10 @@ class BaseCC(BaseWavefunction):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds = np.array([self.get_ind(exop) for exop in exop_list])
-                    sign = 1
-                    extra_sd = sd2
-                    for exop in exop_list:
-                        # FIXME: use array sign_excite?
-                        try:
-                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                       exop[len(exop) // 2:])
-                        except ValueError:
-                            sign = None
-                            break
-                        extra_sd = slater.excite(extra_sd, *exop)
-                    if sign:
-                        val += sign * self.product_amplitudes(inds)
-                    else:
-                        continue
+                    inds, perm_sign = exop_list
+                    val += sign * perm_sign * self.product_amplitudes(inds)
+                    # FIXME: sometimes exop contains virtual orbitals in annihilators
+                    # may need to explicitly excite
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -661,6 +652,9 @@ class BaseCC(BaseWavefunction):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
             val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -668,21 +662,10 @@ class BaseCC(BaseWavefunction):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds = np.array([self.get_ind(exop) for exop in exop_list])
-                    sign = 1
-                    extra_sd = sd2
-                    for exop in exop_list:
-                        try:
-                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                       exop[len(exop) // 2:])
-                        except ValueError:
-                            sign = None
-                            break
-                        extra_sd = slater.excite(extra_sd, *exop)
-                    if sign:
-                        val += sign * self.product_amplitudes(inds, deriv=True)
-                    else:
-                        continue
+                    inds, perm_sign = exop_list
+                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
+                    # FIXME: sometimes exop contains virtual orbitals in annihilators
+                    # may need to explicitly excite
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -785,6 +768,7 @@ class BaseCC(BaseWavefunction):
                         for crea in creas:
                             if len(annh) == len(crea):
                                 combs.append(annh+crea)
+                    # FIXME: CHECK IF NECESSARY
                     for match in combinations(combs, nops):
                         matchs = []
                         for op in match:
@@ -795,6 +779,22 @@ class BaseCC(BaseWavefunction):
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
             if all(tuple(op) in self.exops for op in op_list):
-            # if all(tuple(op) in self.exops for op in op_list):
-                self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)
+                num_hops = 0
+                jumbled_a_inds = []
+                jumbled_c_inds = []
+                prev_hurdles = 0
+                for exop in op_list:
+                    num_inds = len(exop) // 2
+                    num_hops += prev_hurdles * num_inds
+                    prev_hurdles += num_inds
+                    jumbled_a_inds.extend(exop[:num_inds])
+                    jumbled_c_inds.extend(exop[num_inds:])
+                # move all the annihilators to one side and creators to another
+                sign = (-1) ** num_hops
+                # unjumble the annihilators
+                sign *= slater.sign_perm(jumbled_a_inds, a_inds)
+                # unjumble the creators
+                sign *= slater.sign_perm(jumbled_c_inds, c_inds)
 
+                inds = np.array([self.get_ind(exop) for exop in op_list])
+                self.exop_combinations[tuple(a_inds + c_inds)].append((inds, sign))

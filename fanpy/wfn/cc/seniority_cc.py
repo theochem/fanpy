@@ -275,6 +275,9 @@ class SeniorityCC(BaseCC):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
             val = 0.0
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -282,26 +285,17 @@ class SeniorityCC(BaseCC):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds = np.array([self.get_ind(exop) for exop in exop_list])
-                    sign = 1
-                    extra_sd = sd2
-                    for exop in exop_list:
-                        if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                                    + [complement_empty(i, extra_sd) for i in
-                                        exop[len(exop) // 2:]]):
-                            sign = None
-                            break
-                        try:
-                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                        exop[len(exop) // 2:])
-                        except ValueError:
-                            sign = None
-                            break
-                        extra_sd = slater.excite(extra_sd, *exop)
-                    if sign:
-                        val += sign * self.product_amplitudes(inds)
-                    else:
-                        continue
+                    inds, perm_sign = exop_list
+                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
+                    # FIXME: sometimes exop contains virtual orbitals in annihilators
+                    # may need to explicitly excite
+                    # FIXME: DOES NOT CHECK IF EXCITATION CONSERVES SENIORITY
+                    # for exop in exop_list:
+                    #     if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
+                    #                 + [complement_empty(i, extra_sd) for i in
+                    #                     exop[len(exop) // 2:]]):
+                    #         sign = None
+                    #         break
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -366,6 +360,9 @@ class SeniorityCC(BaseCC):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
             val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -373,26 +370,17 @@ class SeniorityCC(BaseCC):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds = np.array([self.get_ind(exop) for exop in exop_list])
-                    sign = 1
-                    extra_sd = sd2
-                    for exop in exop_list:
-                        if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                                + [complement_empty(i, extra_sd) for i in
-                                    exop[len(exop) // 2:]]):
-                            sign = None
-                            break
-                        try:
-                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
-                                                    exop[len(exop) // 2:])
-                        except ValueError:
-                            sign = None
-                            break
-                        extra_sd = slater.excite(extra_sd, *exop)
-                    if sign:
-                        val += sign * self.product_amplitudes(inds, deriv=True)
-                    else:
-                        continue
+                    inds, perm_sign = exop_list
+                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
+                    # FIXME: sometimes exop contains virtual orbitals in annihilators
+                    # may need to explicitly excite
+                    # FIXME: DOES NOT CHECK IF EXCITATION CONSERVES SENIORITY
+                    # for exop in exop_list:
+                    #     if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
+                    #             + [complement_empty(i, extra_sd) for i in
+                    #                 exop[len(exop) // 2:]]):
+                    #         sign = None
+                    #         break
             return val
 
         if isinstance(self.refwfn, CIWavefunction):

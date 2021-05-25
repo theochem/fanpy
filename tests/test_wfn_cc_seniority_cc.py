@@ -65,6 +65,7 @@ def test_get_overlap():
     test.assign_nspin(8)
     test.assign_ranks([1])
     test.assign_refwfn()
+    test.refresh_exops = None
     test.assign_exops([[0, 1, 4, 5], [2, 3, 6, 7]])
     test.assign_params(np.array(range(17)[1:]))
     test.assign_memory("1gb")
