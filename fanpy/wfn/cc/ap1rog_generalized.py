@@ -5,8 +5,6 @@ from fanpy.tools import slater
 from fanpy.tools import graphs
 from fanpy.wfn.cc.pccd_ap1rog import PCCD
 
-import numpy as np
-
 
 class AP1roGSDGeneralized(PCCD):
     r"""AP1roG wavefunction with single and double excitations, broken spin symmetry.
@@ -193,9 +191,6 @@ class AP1roGSDGeneralized(PCCD):
         to excite to and from the given indices.
 
         """
-        if self.refresh_exops and len(self.exop_combinations) > self.refresh_exops:
-            self.exop_combinations = {}
-
         exrank = len(a_inds)
         check_ops = []
         # NOTE: Is necessary to invert the results of int_partition_recursive
@@ -228,31 +223,11 @@ class AP1roGSDGeneralized(PCCD):
             op_list = [list(operator) for operator in op_list]
             for i in range(len(op_list)):
                 if len(op_list[i]) == 2:
-                    # FIXME: if not doubly occupied, this annihilates orbitals that may not be
-                    # occcupied
                     if op_list[i][0] < self.nspatial:
                         op_list[i] = [op_list[i][0], op_list[i][0] + self.nspatial,
                                       op_list[i][1], op_list[i][0] + self.nspatial]
                     else:
                         op_list[i] = [op_list[i][0] - self.nspatial, op_list[i][0],
                                       op_list[i][0] - self.nspatial, op_list[i][1]]
-            if all(tuple(op) in self.exops for op in op_list):
-                num_hops = 0
-                jumbled_a_inds = []
-                jumbled_c_inds = []
-                prev_hurdles = 0
-                for exop in op_list:
-                    num_inds = len(exop) // 2
-                    num_hops += prev_hurdles * num_inds
-                    prev_hurdles = num_inds
-                    jumbled_a_inds.extend(exop[:num_inds])
-                    jumbled_c_inds.extend(exop[num_inds:])
-                # move all the annihilators to one side and creators to another
-                sign = (-1) ** num_hops
-                # unjumble the annihilators
-                sign *= slater.sign_perm(jumbled_a_inds, a_inds)
-                # unjumble the creators
-                sign *= slater.sign_perm(jumbled_c_inds, c_inds)
-
-                inds = np.array([self.get_ind(exop) for exop in op_list])
-                self.exop_combinations[tuple(a_inds + c_inds)].append((inds, sign))
+            if all(op in self.exops for op in op_list):
+                self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)

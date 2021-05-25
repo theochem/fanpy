@@ -1,9 +1,12 @@
 """Seniority Coupled Cluster wavefunctions."""
 import numpy as np
 import functools
+from itertools import combinations
+from collections import Counter
+from fanpy.tools import slater
+from fanpy.tools import graphs
 from fanpy.wfn.cc.base import BaseCC
 from fanpy.wfn.ci.base import CIWavefunction
-from fanpy.tools import slater
 
 
 class SeniorityCC(BaseCC):
@@ -275,9 +278,6 @@ class SeniorityCC(BaseCC):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
-            # get sign
-            sign = slater.sign_excite(sd2, a_inds, c_inds)
-
             val = 0.0
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -285,17 +285,26 @@ class SeniorityCC(BaseCC):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds, perm_sign = exop_list
-                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
-                    # FIXME: sometimes exop contains virtual orbitals in annihilators
-                    # may need to explicitly excite
-                    # FIXME: DOES NOT CHECK IF EXCITATION CONSERVES SENIORITY
-                    # for exop in exop_list:
-                    #     if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                    #                 + [complement_empty(i, extra_sd) for i in
-                    #                     exop[len(exop) // 2:]]):
-                    #         sign = None
-                    #         break
+                    inds = np.array([self.get_ind(exop) for exop in exop_list])
+                    sign = 1
+                    extra_sd = sd2
+                    for exop in exop_list:
+                        if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
+                                    + [complement_empty(i, extra_sd) for i in
+                                        exop[len(exop) // 2:]]):
+                            sign = None
+                            break
+                        try:
+                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
+                                                        exop[len(exop) // 2:])
+                        except ValueError:
+                            sign = None
+                            break
+                        extra_sd = slater.excite(extra_sd, *exop)
+                    if sign:
+                        val += sign * self.product_amplitudes(inds)
+                    else:
+                        continue
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -360,9 +369,6 @@ class SeniorityCC(BaseCC):
             # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
             # that need to be applied to sd2 to turn it into sd1
 
-            # get sign
-            sign = slater.sign_excite(sd2, a_inds, c_inds)
-
             val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
@@ -370,17 +376,26 @@ class SeniorityCC(BaseCC):
                 if len(exop_list) == 0:
                     continue
                 else:
-                    inds, perm_sign = exop_list
-                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
-                    # FIXME: sometimes exop contains virtual orbitals in annihilators
-                    # may need to explicitly excite
-                    # FIXME: DOES NOT CHECK IF EXCITATION CONSERVES SENIORITY
-                    # for exop in exop_list:
-                    #     if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
-                    #             + [complement_empty(i, extra_sd) for i in
-                    #                 exop[len(exop) // 2:]]):
-                    #         sign = None
-                    #         break
+                    inds = np.array([self.get_ind(exop) for exop in exop_list])
+                    sign = 1
+                    extra_sd = sd2
+                    for exop in exop_list:
+                        if not all([complement_occ(i, extra_sd) for i in exop[:len(exop) // 2]]
+                                + [complement_empty(i, extra_sd) for i in
+                                    exop[len(exop) // 2:]]):
+                            sign = None
+                            break
+                        try:
+                            sign *= slater.sign_excite(extra_sd, exop[:len(exop) // 2],
+                                                    exop[len(exop) // 2:])
+                        except ValueError:
+                            sign = None
+                            break
+                        extra_sd = slater.excite(extra_sd, *exop)
+                    if sign:
+                        val += sign * self.product_amplitudes(inds, deriv=True)
+                    else:
+                        continue
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -390,3 +405,62 @@ class SeniorityCC(BaseCC):
             return val
         else:
             return temp_olp(sd, self.refwfn)
+
+    # Restore old exop api
+    # FIXME: BAD structure
+    def generate_possible_exops(self, a_inds, c_inds):
+        """Assign possible excitation operators from the given creation and annihilation operators.
+
+        Parameters
+        ----------
+        a_inds : list of int
+            Indices of the orbitals of the annihilation operators.
+            Must be strictly increasing.
+        c_inds : list of int
+            Indices of the orbitals of the creation operators.
+            Must be strictly increasing.
+
+        Notes
+        -----
+        The excitation operators are sored as values of the exop_combinations dictionary.
+        Each value is a list of lists of possible excitation operators.
+        Each sub-list contains excitation operators such that, multiplied together, they allow
+        to excite to and from the given indices.
+
+        """
+        if self.refresh_exops and len(self.exop_combinations) > self.refresh_exops:
+            self.exop_combinations = {}
+
+        exrank = len(a_inds)
+        check_ops = []
+        # NOTE: Is necessary to invert the results of int_partition_recursive
+        # to be consistent with the ordering of operators in the CC operator.
+        for partition in list(graphs.int_partition_recursive(self.ranks,
+                                                             self.nranks, exrank))[::-1]:
+            reduced_partition = Counter(partition)
+            bin_size_num = []
+            for bin_size in sorted(reduced_partition):
+                bin_size_num.append((bin_size, reduced_partition[bin_size]))
+            nops = 0
+            for b_size in bin_size_num:
+                nops += b_size[1]
+            for annhs in graphs.generate_unordered_partition(a_inds, bin_size_num):
+                for creas in graphs.generate_unordered_partition(c_inds, bin_size_num):
+                    combs = []
+                    for annh in annhs:
+                        for crea in creas:
+                            if len(annh) == len(crea):
+                                combs.append(annh+crea)
+                    for match in combinations(combs, nops):
+                        matchs = []
+                        for op in match:
+                            other_ops = [other_op for other_op in match if other_op != op]
+                            matchs += [set(other_op).isdisjoint(op) for other_op in other_ops]
+                        if all(matchs):
+                            check_ops.append(match)
+        self.exop_combinations[tuple(a_inds + c_inds)] = []
+        for op_list in check_ops:
+            if all(tuple(op) in self.exops for op in op_list):
+            # if all(tuple(op) in self.exops for op in op_list):
+                self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)
+
