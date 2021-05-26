@@ -394,12 +394,12 @@ class AP1roG(APIG):
         # if different number of electrons
         if len(orbs_annihilated) != len(orbs_created):
             if deriv is not None:
-                return np.zeros(self.nparams)
+                return np.zeros(deriv.size)
             return 0.0
         # if different seniority
         if slater.get_seniority(sd, self.nspatial) != 0:
             if deriv is not None:
-                return np.zeros(self.nparams)
+                return np.zeros(deriv.size)
             return 0.0
 
         # convert to spatial orbitals
