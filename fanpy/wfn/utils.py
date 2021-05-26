@@ -1,5 +1,8 @@
 """Utility function for constructing Wavefunction instances."""
+import os
+from fanpy.eqn.utils import ComponentParameterIndices
 from fanpy.wfn.base import BaseWavefunction
+from fanpy.wfn.composite.product import ProductWavefunction
 from fanpy.tools import slater
 
 import numpy as np
@@ -148,7 +151,7 @@ def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params
     return GeneratedWavefunction(nelec, nspin, params=params, memory=memory)
 
 
-def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
+def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwargs):
     """Covert the given wavefunction instance to that of FanCI class.
 
     https://github.com/QuantumElephant/FanCI
@@ -160,7 +163,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
         PyCI Hamiltonian.
     nproj : int, optional
         Number of determinants in projection ("P") space.
-    wfn : pyci.doci_wfn, optional
+    proj_wfn : pyci.doci_wfn, optional
         If specified, this PyCI wave function defines the projection ("P") space.
     kwargs : Any, optional
         Additional keyword arguments for base FanCI class.
@@ -187,6 +190,13 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
             nocc: int,
             nproj: int = None,
             wfn: pyci.doci_wfn = None,
+            fill: str = "excitation",
+            seniority: int = None,
+            step_print: bool = True,
+            step_save: bool = True,
+            tmpfile: str = "",
+            param_selection = None,
+            mask=None,
             **kwargs: Any,
         ) -> None:
             r"""
@@ -204,6 +214,20 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
                 Number of determinants in projection ("P") space.
             wfn : pyci.doci_wfn, optional
                 If specified, this PyCI wave function defines the projection ("P") space.
+            fill : ('excitation' | 'seniority' | None)
+                Whether to fill the projection ("P") space by excitation level, by seniority, or not
+            at all (in which case ``wfn`` must already be filled).
+            step_print : bool
+                Option to print relevant information when the objective is evaluated.
+                Default is True.
+            step_save : bool
+                Option to save parameters with every evaluation of the objective.
+                Default is True
+            tmpfile : str
+                Name of the file that will store the parameters used by the objective method.
+                By default, the parameter values are not stored.
+                If a file name is provided, then parameters are stored upon execution of the objective
+                method.
             kwargs : Any, optional
                 Additional keyword arguments for base FanCI class.
 
@@ -211,34 +235,49 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
             if not isinstance(ham, pyci.hamiltonian):
                 raise TypeError(f"Invalid `ham` type `{type(ham)}`; must be `pyci.hamiltonian`")
 
+            # Save sub-class -specific attributes
+            self._fanpy_wfn = fanpy_wfn
+
+            self.step_print = step_print
+            self.step_save = step_save
+            if param_selection is None:
+                param_selection = [(fanpy_wfn, np.arange(fanpy_wfn.nparams))]
+            if isinstance(param_selection, ComponentParameterIndices):
+                self.indices_component_params = param_selection
+            else:
+                self.indices_component_params = ComponentParameterIndices()
+                for component, indices in param_selection:
+                    self.indices_component_params[component] = indices
+            self.tmpfile = tmpfile
+
+            mask = []
+            for component, indices in self.indices_component_params.items():
+                bool_indices = np.zeros(component.nparams, dtype=bool)
+                bool_indices[indices] = True
+                mask.append(bool_indices)
+            # optimize energy
+            mask.append(True)
+            mask = np.hstack(mask)
+
+            # NOTE: energy is always a parameter
             # Compute number of parameters
-            # FIXME: i'm guessing that energy is always a parameter
-            nparam = wfn.nparams + 1
+            nparam = np.sum(mask)
 
             # Handle default nproj
             nproj = nparam if nproj is None else nproj
 
             # Handle default wfn (P space == single pair excitations)
             if wfn is None:
-                wfn = pyci.doci_wfn(ham.nbasis, nocc, nocc)
-                wfn.add_excited_dets(1)
-            elif not isinstance(wfn, pyci.doci_wfn):
-                raise TypeError(f"Invalid `wfn` type `{type(wfn)}`; must be `pyci.doci_wfn`")
-            elif wfn.nocc_up != nocc or wfn.nocc_dn != nocc:
-                raise ValueError(f"wfn.nocc_{{up,dn}} does not match `nocc={nocc}` parameter")
+                if seniority == 0:
+                    wfn = pyci.doci_wfn(ham.nbasis, nocc // 2, nocc // 2)
+                else:
+                    wfn = pyci.fullci_wfn(ham.nbasis, nocc - nocc // 2, nocc // 2)
+
+            # constraints
+            constraints = {"<\\Phi|\\Psi> - 1>": self.make_norm_constraint()}
 
             # Initialize base class
-            FanCI.__init__(self, ham, wfn, nproj, nparam, **kwargs)
-
-            # Get results of 'searchsorted(i)' from i=0 to i=nbasis for each det. in "S" space
-            arange = np.arange(self._wfn.nbasis, dtype=pyci.c_long)
-            sspace_data = [occs.searchsorted(arange) for occs in self._sspace]
-            pspace_data = sspace_data[: self._nproj]
-
-            # Save sub-class -specific attributes
-            self._fanpy_wfn = fanpy_wfn
-            self._sspace_data = sspace_data
-            self._pspace_data = pspace_data
+            FanCI.__init__(self, ham, wfn, nproj, nparam, fill=fill, mask=mask, constraints=constraints, **kwargs)
 
         def compute_overlap(self, x: np.ndarray, occs_array: Union[np.ndarray, str]) -> np.ndarray:
             r"""
@@ -276,16 +315,19 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
                 # FIXME: CHECK IF occs IS BOOLEAN OR INTEGERS
                 # convert occupation vector to sd
                 if occs.dtype == bool:
-                    sd = slater.create(0, *np.where(occs)[0])
-                else:
-                    sd = slater.create(0, *occs)
+                    occs = np.where(occs)[0]
+                sd = slater.create(0, *occs[0])
+                sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
                 sds.append(sd)
 
             # Feed in parameters into fanpy wavefunction
-            self._fanpy_wfn.assign_params(x)
+            for component, indices in self.indices_component_params.items():
+                new_params = component.params.ravel()
+                new_params[indices] = x[self.indices_objective_params[component]]
+                component.assign_params(new_params)
 
             # initialize
-            y = np.empty(occs_array.shape[0], dtype=pyci.c_double)
+            y = np.zeros(occs_array.shape[0], dtype=pyci.c_double)
 
             # Compute overlaps of occupation vectors
             if hasattr(self._fanpy_wfn, "get_overlaps"):
@@ -333,9 +375,9 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
                 # FIXME: CHECK IF occs IS BOOLEAN OR INTEGERS
                 # convert occupation vector to sd
                 if occs.dtype == bool:
-                    sd = slater.create(0, *np.where(occs)[0])
-                else:
-                    sd = slater.create(0, *occs)
+                    occs = np.where(occs)[0]
+                sd = slater.create(0, *occs[0])
+                sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
                 sds.append(sd)
 
             # Feed in parameters into fanpy wavefunction
@@ -345,13 +387,162 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, **kwargs):
             y = np.zeros((occs_array.shape[0], self._nactive - self._mask[-1]), dtype=pyci.c_double)
 
             # Compute derivatives of overlaps
-            if hasattr(self._fanpy_wfn, "get_overlaps"):
-                y += self._fanpy_wfn.get_overlaps(sds, deriv=True)
+            deriv_indices = self.indices_component_params[self._fanpy_wfn]
+            deriv_indices = np.arange(self.nparam - 1)[self._mask[:-1]]
+            if isinstance(self._fanpy_wfn, ProductWavefunction):
+                wfns = self._fanpy_wfn.wfns
+                for wfn in wfns:
+                    if wfn not in self.indices_component_params:
+                        continue
+                    inds_component = self.indices_component_params[wfn]
+                    if inds_component.size > 0:
+                        inds_objective = self.indices_objective_params[wfn]
+                        y[:, inds_objective] = self._fanpy_wfn.get_overlaps(sds, (wfn, inds_component))
+            elif hasattr(self._fanpy_wfn, "get_overlaps"):
+                y += self._fanpy_wfn.get_overlaps(sds, deriv=deriv_indices)
             else:
                 for i, sd in enumerate(sds):
-                    y[i] = self._fanpy_wfn.get_overlap(
-                        sd, deriv=np.arange(self.nparam)[self._mask[:-1]]
-                    )
+                    y[i] = self._fanpy_wfn.get_overlap(sd, deriv=deriv_indices)
             return y
+
+        def compute_objective(self, x: np.ndarray) -> np.ndarray:
+            r"""
+            Compute the FanCI objective function.
+
+                f : x[k] -> y[n]
+
+            Parameters
+            ----------
+            x : np.ndarray
+                Parameter array, [p_0, p_1, ..., p_n, E].
+
+            Returns
+            -------
+            obj : np.ndarray
+                Objective vector.
+
+            """
+            output = super().compute_objective(x)
+            if self.step_save:
+                self.save_params()
+            if self.step_print:
+                print("(Mid Optimization) Electronic energy: {}".format(x[-1]))
+            return output
+
+        def compute_jacobian(self, x: np.ndarray) -> np.ndarray:
+            r"""
+            Compute the Jacobian of the FanCI objective function.
+
+                j : x[k] -> y[n, k]
+
+            Parameters
+            ----------
+            x : np.ndarray
+                Parameter array, [p_0, p_1, ..., p_n, E].
+
+            Returns
+            -------
+            jac : np.ndarray
+                Jacobian matrix.
+
+            """
+            output = super().compute_jacobian(x)
+            if self.step_save:
+                self.save_params()
+            if self.step_print:
+                grad_norm = np.linalg.norm(output)
+                print("(Mid Optimization) Norm of the gradient of the energy: {}".format(grad_norm))
+            return output
+
+        def save_params(self):
+            """Save the parameters associated with the Schrodinger equation.
+
+            All of the parameters are saved, even if it was frozen in the objective.
+
+            The parameters of each component of the Schrodinger equation is saved separately using the
+            name in the `tmpfile` as the root (removing the extension). The class name of each component
+            and a counter are used to differentiate the files associated with each component.
+
+            """
+            if self.tmpfile != "":
+                root, ext = os.path.splitext(self.tmpfile)
+                names = [type(component).__name__ for component in self.indices_component_params]
+                names_totalcount = {name: names.count(name) for name in set(names)}
+                names_count = {name: 0 for name in set(names)}
+
+                for component in self.indices_component_params:
+                    name = type(component).__name__
+                    if names_totalcount[name] > 1:
+                        names_count[name] += 1
+                        name = "{}{}".format(name, names_count[name])
+
+                    # pylint: disable=E1101
+                    component.save_params("{}_{}{}".format(root, name, ext))
+
+        @property
+        def indices_objective_params(self):
+            """Return the indices of the active objective parameters for each component.
+
+            Returns
+            -------
+            indices_objctive_params : dict
+                Indices of the (active) objective parameters associated with each component.
+
+            """
+            output = {}
+            count = 0
+            for component, indices in self.indices_component_params.items():
+                output[component] = np.arange(count, count + indices.size)
+                count += indices.size
+            return output
+
+        @property
+        def active_params(self):
+            """Return the parameters selected for optimization EXCLUDING ENERGY.
+
+            Returns
+            -------
+            params : np.ndarray
+                Parameters that are selected for optimization.
+                Parameters are first ordered by the ordering of each component, then they are ordered by
+                the order in which they appear in the component.
+
+            Examples
+            --------
+            Suppose you have `wfn` and `ham` with parameters `[1, 2, 3]` and `[4, 5, 6, 7]`,
+            respectively.
+
+            >>> eqn = BaseSchrodinger((wfn, [True, False, True]), (ham, [3, 1]))
+            >>> eqn.active_params
+            np.ndarray([1, 3, 5, 7])
+
+            """
+            return np.hstack(
+                [comp.params.ravel()[inds] for comp, inds in self.indices_component_params.items()]
+            )
+
+        def make_norm_constraint(self):
+            def f(x: np.ndarray) -> float:
+                r""" "
+                Constraint function <\psi_{i}|\Psi> - v_{i}.
+
+                """
+                norm = np.sum(self.compute_overlap(x[:-1], "S") ** 2)
+                if self.step_print:
+                    print(f"(Mid Optimization) Norm of wavefunction: {norm}")
+                return norm - 1
+
+            def dfdx(x: np.ndarray) -> np.ndarray:
+                r""" "
+                Constraint gradient d(<\psi_{i}|\Psi>)/d(p_{k}).
+
+                """
+                y = np.zeros(self._nactive, dtype=pyci.c_double)
+                ovlp = self.compute_overlap(x[:-1], "S")
+                d_ovlp = self.compute_overlap_deriv(x[:-1], "S")
+                y[: self._nactive - self._mask[-1]] = np.sum(2 * ovlp[:, None] * d_ovlp, axis=0)
+                return y
+
+            return f, dfdx
 
     return GeneratedFanCI(wfn, ham, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)

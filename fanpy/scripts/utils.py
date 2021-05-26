@@ -436,3 +436,11 @@ parser.add_argument(
     required=False,
     help="Memory available to run the calculation.",
 )
+parser.add_argument(
+    "--nproj",
+    type=int,
+    dest="nproj",
+    default=None,
+    required=False,
+    help= "Number of states in the projection space.",
+)

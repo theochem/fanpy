@@ -169,3 +169,91 @@ class ProductWavefunction(LinearCombinationWavefunction):
         output *= np.prod(wfn_contrib[wfn_index + 1:])
         output *= wfn.get_overlap(sd, deriv=indices)
         return output
+
+    def get_overlaps(self, sds, deriv=None):
+        r"""Return the overlap of the wavefunction with a Slater determinant.
+
+        .. math::
+
+            \left< \mathbf{m} \middle| \Psi \right>
+
+        Since the overlap can be drivatized with respect to the parameters of the underlying
+        wavefunctions, the API of this method is different from the rest.
+
+        Parameters
+        ----------
+        sd : int
+            Slater Determinant against which the overlap is taken.
+        deriv : {2-tuple, None}
+            Wavefunction and the indices of the parameters with respect to which the overlap is
+            derivatized.
+            First element of the tuple is the wavefunction. Second element of the tuple is the
+            indices of the parameters of the corresponding wavefunction. The overlap will be
+            derivatized with respect to the selected parameters of this wavefunction.
+            Default returns the overlap without derivatization.
+
+        Returns
+        -------
+        overlap : {float, np.ndarray}
+            Overlap (or derivative of the overlap) of the wavefunction with the given Slater
+            determinant.
+
+        Raises
+        ------
+        TypeError
+            If given Slater determinant is not an integer.
+            If `deriv` is not a 2-tuple where the first element is a BaseWavefunction instance and
+            the second element is a one-dimensional numpy array of integers.
+        ValueError
+            If first element of `deriv` is not the composite wavefunction or the underlying
+            waefunctions.
+            If the provided indices is less than zero or greater than or equal to the number of the
+            corresponding parameters.
+
+        """
+        # FIXME: MEMORY
+        wfn_contrib = []
+        for wfn in self.wfns:
+            if hasattr(wfn, "get_overlaps"):
+                wfn_contrib.append(wfn.get_overlaps(sds, deriv=None))
+            else:
+                wfn_contrib.append([wfn.get_overlap(sd, deriv=None) for sd in sds])
+        wfn_contrib = np.array(wfn_contrib)
+        if deriv is None:
+            return np.prod(wfn_contrib, axis=0)
+
+        if __debug__:
+            if not (
+                isinstance(deriv, tuple)
+                and len(deriv) == 2
+                and isinstance(deriv[0], BaseWavefunction)
+                # and isinstance(deriv[1], np.ndarray)
+                # and deriv[1].ndim == 1
+                # and np.issubdtype(deriv[1].dtype, np.integer)
+            ):
+                raise TypeError(
+                    "Derivative indices must be given as a 2-tuple whose first element is the "
+                    "wavefunction and the second elment is the one-dimensional numpy array of "
+                    "integer indices."
+                )
+            if deriv[0] not in self.wfns:
+                raise ValueError(
+                    "Selected wavefunction (for derivatization) is not one of the composite "
+                    "wavefunction or its underlying wavefunctions."
+                )
+            # if deriv[0] == self and (np.any(deriv[1] < 0) or np.any(deriv[1] >= deriv[0].nparams)):
+            #     raise ValueError(
+            #         "Provided indices must be greater than or equal to zero and less than the "
+            #         "number of parameters."
+            #     )
+
+        wfn, indices = deriv
+        wfn_index = self.wfns.index(wfn)
+        # NOTE: assume that parameters are not shared between wavefunctions
+        output = np.prod(wfn_contrib[:wfn_index], axis=0)
+        output *= np.prod(wfn_contrib[wfn_index + 1:], axis=0)
+        if hasattr(wfn, "get_overlaps"):
+            output = output[:, None] * wfn.get_overlaps(sds, deriv=indices)
+        else:
+            output = output[:, None] * np.array([wfn.get_overlap(sd, deriv=indices) for sd in sds])
+        return output
