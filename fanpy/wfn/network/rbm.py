@@ -424,7 +424,7 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
         output.append(
             np.moveaxis(np.sum(other_vals[:, None, None, :] * grads[-1], axis=0), 2, 0).reshape(len(sds), -1)
         )
-        return np.hstack(output)[deriv]
+        return np.hstack(output)[:, deriv]
 
     def normalize(self, pspace=None):
         if pspace is not None:
