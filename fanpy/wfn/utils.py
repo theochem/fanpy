@@ -7,6 +7,9 @@ from fanpy.tools import slater
 
 import numpy as np
 
+from scipy.optimize import OptimizeResult, least_squares, root, minimize
+import cma
+
 
 def wfn_factory(olp, olp_deriv, nelec, nspin, params, memory=None, assign_params=None):
     """Return the instance of the Wavefunction class with the given overlaps.
@@ -251,6 +254,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                     self.indices_component_params[component] = indices
             self.tmpfile = tmpfile
             self.objective_type = objective_type
+            self.print_queue = {}
 
             mask = []
             for component, indices in self.indices_component_params.items():
@@ -383,7 +387,10 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 sds.append(sd)
 
             # Feed in parameters into fanpy wavefunction
-            self._fanpy_wfn.assign_params(x)
+            for component, indices in self.indices_component_params.items():
+                new_params = component.params.ravel()
+                new_params[indices] = x[self.indices_objective_params[component]]
+                component.assign_params(new_params)
 
             # Shape of y is (no. determinants, no. active parameters excluding energy)
             y = np.zeros((occs_array.shape[0], self._nactive - self._mask[-1]), dtype=pyci.c_double)
@@ -426,6 +433,14 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             """
             if self.objective_type == "projected":
                 output = super().compute_objective(x)
+                self.print_queue["Electronic energy"] = x[-1]
+                self.print_queue["Cost"] = np.sum(output[:self._nproj] ** 2)
+                self.print_queue["Cost from constraints"] = np.sum(output[self._nproj:] ** 2)
+                if self.step_print:
+                    print("(Mid Optimization) Electronic energy: {}".format(self.print_queue["Electronic energy"]))
+                    print("(Mid Optimization) Cost: {}".format(self.print_queue["Cost"]))
+                    if self.constraints:
+                        print("(Mid Optimization) Cost from constraints: {}".format(self.print_queue["Cost from constraints"]))
             else:
                 # NOTE: ignores energy and constraints
                 # Allocate objective vector
@@ -445,11 +460,12 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 self._ci_op(ovlp, out=output)
                 output = np.sum(output * ovlp[:self._nproj])
                 output /= np.sum(ovlp[:self._nproj] ** 2)
+                self.print_queue["Electronic energy"] = output
+                if self.step_print:
+                    print("(Mid Optimization) Electronic energy: {}".format(self.print_queue["Electronic energy"]))
 
             if self.step_save:
                 self.save_params()
-            if self.step_print:
-                print("(Mid Optimization) Electronic energy: {}".format(x[-1]))
             return output
 
         def compute_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -471,6 +487,9 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             """
             if self.objective_type == "projected":
                 output = super().compute_jacobian(x)
+                self.print_queue["Norm of the Jacobian"] = np.linalg.norm(output)
+                if self.step_print:
+                    print("(Mid Optimization) Norm of the Jacobian: {}".format(self.print_queue["Norm of the Jacobian"]))
             else:
                 # NOTE: ignores energy and constraints
                 # Allocate Jacobian matrix (in transpose memory order)
@@ -519,12 +538,12 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                     output_col -= 2 * energy_integral * overlaps[:self._nproj] * d_ovlp_col[:self._nproj]
                     output_col /= norm ** 2
                 output = np.sum(output, axis=0)[:-1]
+                self.print_queue["Norm of the gradient of the energy"] = np.linalg.norm(output)
+                if self.step_print:
+                    print("(Mid Optimization) Norm of the gradient of the energy: {}".format(self.print_queue["Norm of the gradient of the energy"]))
 
             if self.step_save:
                 self.save_params()
-            if self.step_print:
-                grad_norm = np.linalg.norm(output)
-                print("(Mid Optimization) Norm of the gradient of the energy: {}".format(grad_norm))
             return output
 
         def save_params(self):
@@ -617,5 +636,105 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 return y
 
             return f, dfdx
+
+        def optimize(
+            self, x0: np.ndarray, mode: str = "lstsq", use_jac: bool = False, **kwargs: Any
+        ) -> OptimizeResult:
+            r"""
+            Optimize the wave function parameters.
+
+            Parameters
+            ----------
+            x0 : np.ndarray
+                Initial guess for wave function parameters.
+            mode : ('lstsq' | 'root' | 'cma'), default='lstsq'
+                Solver mode.
+            use_jac : bool, default=False
+                Whether to use the Jacobian function or a finite-difference approximation.
+            kwargs : Any, optional
+                Additional keyword arguments to pass to optimizer.
+
+            Returns
+            -------
+            result : scipy.optimize.OptimizeResult
+                Result of optimization.
+
+            """
+            # Check if system is underdetermined
+            if self.nequation < self.nactive:
+                raise ValueError("system is underdetermined")
+
+            # Convert x0 to proper dtype array
+            x0 = np.asarray(x0, dtype=pyci.c_double)
+            # Check input x0 length
+            if x0.size != self.nparam:
+                raise ValueError("length of `x0` does not match `param`")
+
+            # Prepare objective, Jacobian, x0
+            if self.nactive < self.nparam:
+                # Generate objective, Jacobian, x0 with frozen parameters
+                x_ref = np.copy(x0)
+                f = self.mask_function(self.compute_objective, x_ref)
+                j = self.mask_function(self.compute_jacobian, x_ref)
+                x0 = np.copy(x0[self.mask])
+            else:
+                # Use bare functions
+                f = self.compute_objective
+                j = self.compute_jacobian
+
+            # Set up initial arguments to optimizer
+            opt_args = f, x0
+            opt_kwargs = kwargs.copy()
+            if use_jac:
+                opt_kwargs["jac"] = j
+
+            # Parse mode parameter; choose optimizer and fix arguments
+            if mode == "lstsq":
+                optimizer = least_squares
+                opt_kwargs.setdefault("xtol", 1.0e-15)
+                opt_kwargs.setdefault("ftol", 1.0e-15)
+                opt_kwargs.setdefault("gtol", 1.0e-15)
+                opt_kwargs.setdefault("max_nfev", 1000 * self.nactive)
+                opt_kwargs.setdefault("verbose", 2)
+                # self.step_print = False
+                if self.objective_type != "projected":
+                    raise ValueError("objective_type must be projected")
+            elif mode == "root":
+                if self.nequation != self.nactive:
+                    raise ValueError("'root' does not work with over-determined system")
+                optimizer = root
+                opt_kwargs.setdefault("method", "hybr")
+                opt_kwargs.setdefault("options", {})
+                opt_kwargs["options"].setdefault("xtol", 1.0e-9)
+            elif mode == "cma":
+                optimizer = cma.fmin
+                opt_kwargs.setdefault("sigma0", 0.01)
+                opt_kwargs.setdefault("options", {})
+                opt_kwargs["options"].setdefault("ftarget", None)
+                opt_kwargs["options"].setdefault("timeout", np.inf)
+                opt_kwargs["options"].setdefault("tolfun", 1e-11)
+                opt_kwargs["options"].setdefault("verb_log", 0)
+                self.step_print = False
+                if self.objective_type != "energy":
+                    raise ValueError("objective_type must be energy")
+            elif mode == "bfgs":
+                if self.objective_type != "energy":
+                    raise ValueError("objective_type must be energy")
+                optimizer = minimize
+                opt_kwargs['method'] = 'bfgs'
+                opt_kwargs.setdefault('options', {"gtol": 1e-8})
+                # opt_kwargs["options"]['schrodinger'] = objective
+            elif mode == "trustregion":
+                raise NotImplementedError
+            elif mode == "trf":
+                if self.objective_type != "projected":
+                    raise ValueError("objective_type must be energy")
+                raise NotImplementedError
+            else:
+                raise ValueError("invalid mode parameter")
+
+            # Run optimizer
+            results = optimizer(*opt_args, **opt_kwargs)
+            return results
 
     return GeneratedFanCI(wfn, ham, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)
