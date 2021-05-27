@@ -197,6 +197,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             tmpfile: str = "",
             param_selection = None,
             mask=None,
+            objective_type: str = "projected",
             **kwargs: Any,
         ) -> None:
             r"""
@@ -249,6 +250,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 for component, indices in param_selection:
                     self.indices_component_params[component] = indices
             self.tmpfile = tmpfile
+            self.objective_type = objective_type
 
             mask = []
             for component, indices in self.indices_component_params.items():
@@ -422,7 +424,28 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 Objective vector.
 
             """
-            output = super().compute_objective(x)
+            if self.objective_type == "projected":
+                output = super().compute_objective(x)
+            else:
+                # NOTE: ignores energy and constraints
+                # Allocate objective vector
+                output = np.zeros(self._nproj, dtype=pyci.c_double)
+
+                # Compute overlaps of determinants in sspace:
+                #
+                #   c_m
+                #
+                ovlp = self.compute_overlap(x[:-1], "S")
+
+                # Compute objective function:
+                #
+                #   f_n = (\sum_n <\Psi|n> <n|H|\Psi>) / \sum_n <\Psi|n> <n|\Psi>
+                #
+                # Note: we update ovlp in-place here
+                self._ci_op(ovlp, out=output)
+                output = np.sum(output * ovlp[:self._nproj])
+                output /= np.sum(ovlp[:self._nproj] ** 2)
+
             if self.step_save:
                 self.save_params()
             if self.step_print:
@@ -446,7 +469,57 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 Jacobian matrix.
 
             """
-            output = super().compute_jacobian(x)
+            if self.objective_type == "projected":
+                output = super().compute_jacobian(x)
+            else:
+                # NOTE: ignores energy and constraints
+                # Allocate Jacobian matrix (in transpose memory order)
+                output = np.zeros((self._nproj, self._nactive), order="F", dtype=pyci.c_double)
+                integrals = np.zeros(self._nproj, dtype=pyci.c_double)
+
+                # Compute Jacobian:
+                #
+                #   J_{nk} = d(<n|H|\Psi>)/d(p_k) - E d(<n|\Psi>)/d(p_k) - dE/d(p_k) <n|\Psi>
+                #   J_{nk} = (\sum_n d<\Psi|n> <n|H|\Psi> + <\Psi|n> d<n|H|\Psi>) / \sum_n <\Psi|n>^2 -
+                #            (\sum_n <\Psi|n> <n|H|\Psi>) / (\sum_n <\Psi|n> <n|\Psi>)^2 * (2 \sum_n <\Psi|n>)
+                #   J_{nk} = ((\sum_n d<\Psi|n> <n|H|\Psi> + <\Psi|n> d<n|H|\Psi>) (\sum_n <\Psi|n>^2)
+                #             - (\sum_n <\Psi|n> <n|H|\Psi>) * (2 \sum_n <\Psi|n> d<\Psi|n>))
+                #            / (\sum_n <\Psi|n>^2)^2
+                #   J_{nk} = ((\sum_n d<\Psi|n> <n|H|\Psi> + <\Psi|n> d<n|H|\Psi>) N
+                #             - H * (2 \sum_n <\Psi|n> d<\Psi|n>))
+                #            / N^2
+                #   J_{nk} = (\sum_n N (d<\Psi|n> <n|H|\Psi> + <\Psi|n> d<n|H|\Psi>) - 2 H <\Psi|n> d<\Psi|n>)
+                #            / N^2
+                #
+                # Compute overlap derivatives in sspace:
+                #
+                #   d(c_m)/d(p_k)
+                #
+                overlaps = self.compute_overlap(x[:-1], "S")
+                norm = np.sum(overlaps[:self._nproj] ** 2)
+                self._ci_op(overlaps, out=integrals)
+                energy_integral = np.sum(overlaps[:self._nproj] * integrals)
+
+                d_ovlp = self.compute_overlap_deriv(x[:-1], "S")
+
+                # Iterate over remaining columns of Jacobian and d_ovlp
+                for output_col, d_ovlp_col in zip(output.transpose(), d_ovlp.transpose()):
+                    #
+                    # Compute each column of the Jacobian:
+                    #
+                    #   d(<n|H|\Psi>)/d(p_k) = <m|H|n> d(c_m)/d(p_k)
+                    #
+                    #   E d(<n|\Psi>)/d(p_k) = E \delta_{nk} d(c_n)/d(p_k)
+                    #
+                    # Note: we update d_ovlp in-place here
+                    self._ci_op(d_ovlp_col, out=output_col)
+                    output_col *= overlaps[:self._nproj]
+                    output_col += d_ovlp_col[:self._nproj] * integrals
+                    output_col *= norm
+                    output_col -= 2 * energy_integral * overlaps[:self._nproj] * d_ovlp_col[:self._nproj]
+                    output_col /= norm ** 2
+                output = np.sum(output, axis=0)[:-1]
+
             if self.step_save:
                 self.save_params()
             if self.step_print:
