@@ -697,6 +697,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 opt_kwargs.setdefault("max_nfev", 1000 * self.nactive)
                 opt_kwargs.setdefault("verbose", 2)
                 # self.step_print = False
+                # opt_kwargs.setdefault("callback", self.print)
                 if self.objective_type != "projected":
                     raise ValueError("objective_type must be projected")
             elif mode == "root":
@@ -706,6 +707,8 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 opt_kwargs.setdefault("method", "hybr")
                 opt_kwargs.setdefault("options", {})
                 opt_kwargs["options"].setdefault("xtol", 1.0e-9)
+                self.step_print = False
+                opt_kwargs.setdefault("callback", self.print)
             elif mode == "cma":
                 optimizer = cma.fmin
                 opt_kwargs.setdefault("sigma0", 0.01)
@@ -724,6 +727,8 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 opt_kwargs['method'] = 'bfgs'
                 opt_kwargs.setdefault('options', {"gtol": 1e-8})
                 # opt_kwargs["options"]['schrodinger'] = objective
+                self.step_print = False
+                opt_kwargs.setdefault("callback", self.print)
             elif mode == "trustregion":
                 raise NotImplementedError
             elif mode == "trf":
@@ -736,5 +741,9 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             # Run optimizer
             results = optimizer(*opt_args, **opt_kwargs)
             return results
+
+        def print(self, *args, **kwargs):
+            for data_type, data in self.print_queue.items():
+                print(f"(Mid Optimization) {data_type}: {data}")
 
     return GeneratedFanCI(wfn, ham, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)

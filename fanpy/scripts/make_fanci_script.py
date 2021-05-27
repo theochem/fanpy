@@ -307,9 +307,6 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 
-    if objective != "projected":
-        raise ValueError("Only projected schrodinger equation supported.")
-
     if solver == "least_squares":
         if solver_kwargs is None:
             solver_kwargs = (
@@ -320,7 +317,23 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     elif solver == "root":  # pragma: no branch
         if solver_kwargs is None:
             solver_kwargs = "method='hybr', options={'xtol': 1.0e-9}"
-        solver_kwargs = ", ".join(["mode='root', use_jac=True" + solver_kwargs])
+        solver_kwargs = ", ".join(["mode='root', use_jac=True", solver_kwargs])
+    elif solver == "cma":
+        if solver_kwargs is None:
+            solver_kwargs = (
+                "sigma0=0.01, options={'ftarget': None, 'timeout': np.inf, "
+                "'tolfun': 1e-11, 'verb_filenameprefix': 'outcmaes', 'verb_log': 1}"
+            )
+        solver_kwargs = ", ".join(["mode='cma', use_jac=False", solver_kwargs])
+    elif solver == "minimize":
+        if solver_kwargs is None:
+            solver_kwargs = "method='BFGS', options={'gtol': 1e-8, 'disp':True}"
+        solver_kwargs = ", ".join(["mode='bfgs', use_jac=True", solver_kwargs])
+    else:
+        raise ValueError("Unsupported solver")
+
+    if nproj == -1:
+        from_imports.append(("scipy.special", "comb"))
 
     if memory is not None:
         memory = "'{}'".format(memory)
@@ -495,7 +508,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "# Projection space\n"
     output += "print('Projection space by excitation')\n"
     output += "fill = 'excitation'\n"
-    output += f"nproj = {nproj}\n"
+    if nproj == -1:
+        output += "nproj = int(comb(nspin // 2, nelec - nelec // 2) * comb(nspin // 2, nelec // 2))\n"
+    else:
+        output += f"nproj = {nproj}\n"
     output += "\n"
 
     output += "# Select parameters that will be optimized\n"
@@ -506,7 +522,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     output += "# Initialize objective\n"
     output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
-    output += "fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority=wfn.seniority, param_selection=param_selection, nproj=nproj)\n"
+    output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority=wfn.seniority, param_selection=param_selection, nproj=nproj, objective_type='{objective}')\n"
     output += "fanci_wfn.tmpfile = '{}'\n".format(save_chk)
     output += "fanci_wfn.step_print = True\n"
     output += "\n"
@@ -524,9 +540,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Solve\n"
-    results1 = "fanci_results = fanci_wfn.optimize("
-    results2 = "np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
-    output += "print('Optimizing wavefunction: lstsq solver')\n"
+    if objective == "projected_stochastic":
+        results1 = "fanci_results = fanci_wfn.optimize_stochastic("
+        results2 = "100, np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
+    else:
+        results1 = "fanci_results = fanci_wfn.optimize("
+        results2 = "np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
+    output += "print('Optimizing wavefunction: solver')\n"
     output += "\n".join(
         textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
     )

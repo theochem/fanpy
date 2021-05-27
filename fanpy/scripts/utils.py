@@ -202,11 +202,11 @@ def check_inputs(  # pylint: disable=R0912,R0915
         )
 
     # check objective
-    objective_list = ["least_squares", "variational", "one_energy"]
-    if objective not in [None, "projected"] + objective_list:
+    objective_list = ["least_squares", "variational", "one_energy", "energy"]
+    if objective not in [None, "projected", "projected_stochastic"] + objective_list:
         raise ValueError(
-            "Objective must be one of `projected`, `least_squares`, `variational`, and "
-            "`one_energy`."
+            "Objective must be one of `projected`, `least_squares`, `variational`, "
+            "`one_energy`, and `energy`."
         )
 
     # check solver

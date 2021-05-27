@@ -129,11 +129,6 @@ setup(
             include_dirs=[numpy.get_include()],
         ),
         Extension(
-            "fanpy.upgrades.cext_vqmc",
-            ["fanpy/upgrades/cext_vqmc.pyx"],
-            include_dirs=[numpy.get_include()],
-        ),
-        Extension(
             "fanpy.upgrades.cext_apg_parallel",
             ["fanpy/upgrades/cext_apg_parallel.pyx"],
             #extra_compile_args=['-fopenmp'],
