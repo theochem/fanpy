@@ -537,7 +537,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                     output_col *= norm
                     output_col -= 2 * energy_integral * overlaps[:self._nproj] * d_ovlp_col[:self._nproj]
                     output_col /= norm ** 2
-                output = np.sum(output, axis=0)[:-1]
+                output = np.sum(output, axis=0)
                 self.print_queue["Norm of the gradient of the energy"] = np.linalg.norm(output)
                 if self.step_print:
                     print("(Mid Optimization) Norm of the gradient of the energy: {}".format(self.print_queue["Norm of the gradient of the energy"]))
