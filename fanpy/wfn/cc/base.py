@@ -1,7 +1,7 @@
 """Base class for excitation Coupled Cluster wavefunctions."""
 import numpy as np
 import functools
-from itertools import combinations
+from itertools import combinations, permutations, product, repeat
 from collections import Counter
 from fanpy.tools import slater
 from fanpy.tools import graphs
@@ -762,20 +762,43 @@ class BaseCC(BaseWavefunction):
             for b_size in bin_size_num:
                 nops += b_size[1]
             for annhs in graphs.generate_unordered_partition(a_inds, bin_size_num):
+                # group by sizes
+                annhs_grouped = {}
+                for annh in annhs:
+                    if len(annh) in annhs_grouped:
+                        annhs_grouped[len(annh)].append(annh)
+                    else:
+                        annhs_grouped[len(annh)] = [annh]
+                # permutations of each size
+                # annhs_perms = {size: permutations(annh) for size, annh in annhs_grouped.items()}
                 for creas in graphs.generate_unordered_partition(c_inds, bin_size_num):
-                    combs = []
-                    for annh in annhs:
-                        for crea in creas:
-                            if len(annh) == len(crea):
-                                combs.append(annh+crea)
-                    # FIXME: CHECK IF NECESSARY
-                    for match in combinations(combs, nops):
-                        matchs = []
-                        for op in match:
-                            other_ops = [other_op for other_op in match if other_op != op]
-                            matchs += [set(other_op).isdisjoint(op) for other_op in other_ops]
-                        if all(matchs):
-                            check_ops.append(match)
+                    # group by sizes
+                    creas_grouped = {}
+                    for crea in creas:
+                        if len(crea) in creas_grouped:
+                            creas_grouped[len(crea)].append(crea)
+                        else:
+                            creas_grouped[len(crea)] = [crea]
+                    # permutations of each size
+                    creas_perms = {size: permutations(crea) for size, crea in creas_grouped.items()}
+
+                    # combine permutations of each annihilation and creation pair (of same size)
+                    exc_perms = []
+                    for size_num in bin_size_num:
+                        size = size_num[0]
+                        # annhs_perm = annhs_perms[size]
+                        annhs_perm = repeat(annhs_grouped[size])
+                        creas_perm = creas_perms[size]
+                        # creas_perm = repeat(creas_grouped[size])
+                        exc_perms.append(zip(annhs_perm, creas_perm))
+
+                    # for each size, pick all the other sizes
+                    for excs in product(*exc_perms):
+                        combs = []
+                        for exc in excs:
+                            exc = zip(*exc)
+                            combs.extend([annh + crea for annh, crea in exc])
+                        check_ops.append(combs)
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
             if all(tuple(op) in self.exops for op in op_list):
