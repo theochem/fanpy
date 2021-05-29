@@ -514,7 +514,7 @@ class BaseCC(BaseWavefunction):
                 output[ind] = np.prod(selected_params[ind != inds])
             return output
 
-    def product_amplitudes_multi(self, indices, deriv=False):
+    def product_amplitudes_multi(self, indices_multi, deriv=False):
         """Compute the product of the CC amplitudes that corresponds to the given indices.
 
         Parameters
@@ -531,30 +531,26 @@ class BaseCC(BaseWavefunction):
             Product of the CC selected amplitudes.
 
         """
-        params = np.hstack([self.params, 1])
-        selected_params = params[indices]
         if not deriv:
-            return np.prod(selected_params, axis=1)
+            output = 0
+            for indices_sign in indices_multi.values():
+                indices, signs = indices_sign[:, :-1], indices_sign[:, -1]
+                output += np.sum(np.prod(self.params[indices], axis=1) * signs)
+            return output
 
-        all_inds = {}
-        for row_ind, ind in enumerate(indices):
-            for i in ind:
-                if i == -1:
-                    continue
-                if i in all_inds:
-                    all_inds[i].add(row_ind)
-                else:
-                    all_inds[i] = set([row_ind])
-        for ind in all_inds:
-            all_inds[ind] = np.array(list(all_inds[ind]))
-
-        output = np.zeros((len(indices), self.nparams))
-        for ind, row_inds in all_inds.items():
-            bool_indices = ind == indices
-            old_params = np.copy(selected_params[bool_indices])
-            selected_params[bool_indices] = 1
-            output[row_inds, ind] = np.prod(selected_params[row_inds], axis=1)
-            selected_params[bool_indices] = old_params
+        unique_indices = set().union(*(set(indices_sign[:, :-1].flatten()) for indices_sign in indices_multi.values()))
+        output = np.zeros(self.nparams)
+        for ind in unique_indices:
+            for indices_sign in indices_multi.values():
+                indices, signs = indices_sign[:, :-1], indices_sign[:, -1]
+                bool_indices = ind == indices
+                row_inds = np.sum(bool_indices, axis=1, dtype=bool)
+                selected_params = self.params[indices]
+                old_params = np.copy(selected_params[bool_indices])
+                selected_params[bool_indices] = 1
+                # print(ind, row_inds, selected_params.shape, signs.shape, output.shape)
+                output[ind] += np.sum(np.prod(selected_params[row_inds], axis=1) * signs[row_inds])
+                selected_params[bool_indices] = old_params
         return output
 
     def load_cache(self):
@@ -648,8 +644,9 @@ class BaseCC(BaseWavefunction):
 
             # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
             # excite
-            indices, perm_signs = self.exop_combinations[tuple(a_inds + c_inds)]
-            val = np.sum(sign * perm_signs * self.product_amplitudes_multi(indices))
+            indices_multi = self.exop_combinations[tuple(a_inds + c_inds)]
+            amplitudes = self.product_amplitudes_multi(indices_multi)
+            val = sign * amplitudes
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -697,10 +694,9 @@ class BaseCC(BaseWavefunction):
 
             # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
             # excite
-            indices, perm_signs = self.exop_combinations[tuple(a_inds + c_inds)]
-            val = np.sum(
-                sign * perm_signs[:, None] * self.product_amplitudes_multi(indices, deriv=True), axis=0
-            )
+            indices_multi = self.exop_combinations[tuple(a_inds + c_inds)]
+            amplitudes = self.product_amplitudes_multi(indices_multi, deriv=True)
+            val = sign * amplitudes
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -835,7 +831,7 @@ class BaseCC(BaseWavefunction):
                             combs.extend([annh + crea for annh, crea in exc])
                         check_ops.append(combs)
 
-        inds_multi = []
+        inds_multi = {}
         signs = []
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
@@ -858,12 +854,12 @@ class BaseCC(BaseWavefunction):
                 sign *= slater.sign_perm(jumbled_c_inds, c_inds)
 
                 inds = np.array([self.get_ind(exop) for exop in op_list])
-                inds_multi.append(inds)
-                signs.append(sign)
+                inds = np.hstack([inds, sign])
+                if inds.size - 1 in inds_multi:
+                    inds_multi[inds.size - 1].append(inds)
+                else:
+                    inds_multi[inds.size - 1] = [inds]
+        for i, indices in inds_multi.items():
+            inds_multi[i] = np.array(indices)
 
-        max_length = max(len(i) for i in inds_multi)
-        indices = -np.ones((len(inds_multi), max_length), dtype=int)
-        for i, inds in enumerate(inds_multi):
-            indices[i][:len(inds)] = inds
-
-        self.exop_combinations[tuple(a_inds + c_inds)] = (indices, np.array(signs))
+        self.exop_combinations[tuple(a_inds + c_inds)] = inds_multi
