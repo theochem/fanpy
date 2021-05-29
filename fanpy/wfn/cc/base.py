@@ -514,6 +514,37 @@ class BaseCC(BaseWavefunction):
                 output[ind] = np.prod(selected_params[ind != inds])
             return output
 
+    def product_amplitudes_multi(self, indices, deriv=False, all_inds=None):
+        """Compute the product of the CC amplitudes that corresponds to the given indices.
+
+        Parameters
+        ----------
+        inds : {list, np.ndarray}
+            Indices of the excitation operators that will be used.
+        deriv : bool
+            Index of the element with with respect to which the product is derivatized.
+            Default is no derivatization.
+
+        Returns
+        -------
+        product : {float, np.ndarray}
+            Product of the CC selected amplitudes.
+
+        """
+        params = np.hstack([self.params, 1])
+        selected_params = params[indices]
+        if not deriv:
+            return np.prod(selected_params, axis=1)
+
+        output = np.zeros((len(indices), self.nparams))
+        for ind, row_inds in all_inds.items():
+            bool_indices = ind == indices
+            old_params = np.copy(selected_params[bool_indices])
+            selected_params[bool_indices] = 1
+            output[row_inds, ind] = np.prod(selected_params[row_inds], axis=1)
+            selected_params[bool_indices] = old_params
+        return output
+
     def load_cache(self):
         """Load the functions whose values will be cached.
 
@@ -603,18 +634,10 @@ class BaseCC(BaseWavefunction):
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
 
-            # FIXME: exop_list only provides indices (for product_amplitudes) and exop (for sign).
-            # This can probably be stored instead of exop_list
-            # FIXME: vectorize? not sure if it's possible because all this hinges on generating
-            # exops
-            for exop_list in self.exop_combinations[tuple(a_inds + c_inds)]:
-                if len(exop_list) == 0:
-                    continue
-                else:
-                    inds, perm_sign = exop_list
-                    val += sign * perm_sign * self.product_amplitudes(inds)
-                    # FIXME: sometimes exop contains virtual orbitals in annihilators
-                    # may need to explicitly excite
+            # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
+            # excite
+            indices, perm_signs, _ = self.exop_combinations[tuple(a_inds + c_inds)]
+            val = np.sum(sign * perm_signs * self.product_amplitudes_multi(indices))
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -659,14 +682,13 @@ class BaseCC(BaseWavefunction):
             val = np.zeros(self.nparams)
             if tuple(a_inds + c_inds) not in self.exop_combinations:
                 self.generate_possible_exops(a_inds, c_inds)
-            for exop_list in self.exop_combinations[tuple(a_inds + c_inds)]:
-                if len(exop_list) == 0:
-                    continue
-                else:
-                    inds, perm_sign = exop_list
-                    val += sign * perm_sign * self.product_amplitudes(inds, deriv=True)
-                    # FIXME: sometimes exop contains virtual orbitals in annihilators
-                    # may need to explicitly excite
+
+            # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
+            # excite
+            indices, perm_signs, all_inds = self.exop_combinations[tuple(a_inds + c_inds)]
+            val = np.sum(
+                sign * perm_signs[:, None] * self.product_amplitudes_multi(indices, deriv=True, all_inds=all_inds), axis=0
+            )
             return val
 
         if isinstance(self.refwfn, CIWavefunction):
@@ -800,6 +822,9 @@ class BaseCC(BaseWavefunction):
                             exc = zip(*exc)
                             combs.extend([annh + crea for annh, crea in exc])
                         check_ops.append(combs)
+
+        inds_multi = []
+        signs = []
         self.exop_combinations[tuple(a_inds + c_inds)] = []
         for op_list in check_ops:
             if all(tuple(op) in self.exops for op in op_list):
@@ -821,4 +846,24 @@ class BaseCC(BaseWavefunction):
                 sign *= slater.sign_perm(jumbled_c_inds, c_inds)
 
                 inds = np.array([self.get_ind(exop) for exop in op_list])
-                self.exop_combinations[tuple(a_inds + c_inds)].append((inds, sign))
+                inds_multi.append(inds)
+                signs.append(sign)
+
+        max_length = max(len(i) for i in inds_multi)
+        indices = -np.ones((len(inds_multi), max_length), dtype=int)
+        for i, inds in enumerate(inds_multi):
+            indices[i][:len(inds)] = inds
+
+        all_inds = {}
+        for row_ind, ind in enumerate(indices):
+            for i in ind:
+                if i == -1:
+                    continue
+                if i in all_inds:
+                    all_inds[i].add(row_ind)
+                else:
+                    all_inds[i] = set([row_ind])
+        for ind in all_inds:
+            all_inds[ind] = np.array(list(all_inds[ind]))
+
+        self.exop_combinations[tuple(a_inds + c_inds)] = (indices, np.array(signs), all_inds)

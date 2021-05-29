@@ -180,6 +180,51 @@ def test_product_amplitudes():
     assert np.allclose(test.product_amplitudes([0, 1, 2], True), answer)
 
 
+def test_product_amplitudes_multi():
+    """Test CCWavefunction.product_amplitudes_multi."""
+    test = TempBaseCC()
+    test.assign_nelec(2)
+    test.assign_nspin(4)
+    test.assign_ranks()
+    test.assign_exops()
+    test.assign_params(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]))
+    indices = np.array([[0, 1, 2]])
+    assert test.product_amplitudes_multi(indices) == 6
+    indices = np.array([[0, 1, 2], [3, 4, 5]])
+    assert np.allclose(test.product_amplitudes_multi(indices), [1 * 2 * 3, 4 * 5 * 6])
+    indices = np.array([[0, 1, 2], [3, 4, -1]])
+    assert np.allclose(test.product_amplitudes_multi(indices), [1 * 2 * 3, 4 * 5])
+    indices = np.array([[0, -1, 2], [3, 4, -1]])
+    assert np.allclose(test.product_amplitudes_multi(indices), [1 * 3, 4 * 5])
+
+    indices = np.array([[0, 1, 2]])
+    answer = np.zeros(18)
+    answer[0] = 2 * 3
+    answer[1] = 1 * 3
+    answer[2] = 1 * 2
+    assert np.allclose(test.product_amplitudes_multi(indices, True), answer)
+
+    indices = np.array([[0, 1, 2], [3, 4, 5]])
+    answer = np.zeros((2, 18))
+    answer[0, 0] = 2 * 3
+    answer[0, 1] = 1 * 3
+    answer[0, 2] = 1 * 2
+    answer[1, 3] = 5 * 6
+    answer[1, 4] = 4 * 6
+    answer[1, 5] = 4 * 5
+    assert np.allclose(test.product_amplitudes_multi(indices, True), answer)
+
+    indices = np.array([[0, 1, 2], [3, 1, 5]])
+    answer = np.zeros((2, 18))
+    answer[0, 0] = 2 * 3
+    answer[0, 1] = 1 * 3
+    answer[0, 2] = 1 * 2
+    answer[1, 3] = 2 * 6
+    answer[1, 1] = 4 * 6
+    answer[1, 5] = 4 * 2
+    assert np.allclose(test.product_amplitudes_multi(indices, True), answer)
+
+
 def test_olp_deriv():
     """Test BaseCC._olp_deriv."""
     test = BaseCC(4, 10, )
@@ -238,15 +283,15 @@ def test_generate_possible_exops():
         test.exop_combinations[(0, 2, 1, 3)][0][0], [test.get_ind((0, 1)), test.get_ind((2, 3))]
     )
     assert np.allclose(
-        test.exop_combinations[(0, 2, 1, 3)][1][0], [test.get_ind((0, 3)), test.get_ind((2, 1))]
+        test.exop_combinations[(0, 2, 1, 3)][0][1], [test.get_ind((0, 3)), test.get_ind((2, 1))]
     )
     assert np.allclose(
-        test.exop_combinations[(0, 2, 1, 3)][2][0], [test.get_ind((0, 2, 1, 3))]
+        test.exop_combinations[(0, 2, 1, 3)][0][2], [test.get_ind((0, 2, 1, 3)), -1]
     )
     base_sign = slater.sign_excite(0b0101, [0, 2], [1, 3])
-    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][0][1] == check_sign([0, 2], [[0, 1], [2, 3]])
+    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][1][0] == check_sign([0, 2], [[0, 1], [2, 3]])
     assert base_sign * test.exop_combinations[(0, 2, 1, 3)][1][1] == check_sign([0, 2], [[0, 3], [2, 1]])
-    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][2][1] == check_sign([0, 2], [[0, 2, 1, 3]])
+    assert base_sign * test.exop_combinations[(0, 2, 1, 3)][1][2] == check_sign([0, 2], [[0, 2, 1, 3]])
 
     test = TempBaseCC()
     test.assign_nelec(4)
@@ -260,19 +305,19 @@ def test_generate_possible_exops():
         [test.get_ind((2, 5)), test.get_ind((0, 1, 4, 6))],
     )
     assert np.allclose(
-        test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][0],
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][0][1],
         [test.get_ind((2, 6)), test.get_ind((0, 1, 4, 5))],
     )
     assert np.allclose(
-        test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][0], [test.get_ind((0, 1, 2, 4, 5, 6))],
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][0][2], [test.get_ind((0, 1, 2, 4, 5, 6)), -1],
     )
     base_sign = slater.sign_excite(0b00000111, [0, 1, 2], [4, 5, 6])
-    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][0][1] == check_sign(
+    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][0] == check_sign(
         [0, 1, 2], [[2, 5], [0, 1, 4, 6]]
     )
     assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][1] == check_sign(
         [0, 1, 2], [[2, 6], [0, 1, 4, 5]]
     )
-    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][1] == check_sign(
+    assert base_sign * test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][2] == check_sign(
         [0, 1, 2], [[0, 1, 2, 4, 5, 6]]
     )
