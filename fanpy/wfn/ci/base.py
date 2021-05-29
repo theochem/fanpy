@@ -120,6 +120,8 @@ class CIWavefunction(BaseWavefunction):
         # FIXME: atleast doubling memory for faster lookup of sd coefficient
         self.dict_sd_index = {sd: i for i, sd in enumerate(self.sds)}
         self.assign_params(params=params)
+        # FIXME: product hack
+        self.default_val = 0
 
     @property
     def spin(self):
@@ -363,7 +365,8 @@ class CIWavefunction(BaseWavefunction):
             try:
                 return self.params[self.dict_sd_index[sd]]
             except KeyError:
-                return 0.0
+                # FIXME: product hack
+                return self.default_val
 
         output = np.zeros(self.nparams)
         try:

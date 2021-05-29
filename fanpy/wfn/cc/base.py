@@ -9,6 +9,7 @@ from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.ci.base import CIWavefunction
 
 
+
 class BaseCC(BaseWavefunction):
     r"""Base Excitation Coupled Cluster Wavefunction.
 

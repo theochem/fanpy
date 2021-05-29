@@ -147,6 +147,8 @@ class BaseGeminal(BaseWavefunction):
         self.assign_params(params=params)
         if enable_cache:
             self.enable_cache()
+        # FIXME: product hack
+        self.default_val = 0
 
     @property
     def npair(self):
@@ -460,12 +462,18 @@ class BaseGeminal(BaseWavefunction):
 
         val = 0.0
         orbpair_generator = self.generate_possible_orbpairs(occ_indices)
+        # FIXME: product hack
+        counter = 0
         for orbpairs, sign in orbpair_generator:
             if len(orbpairs) == 0:
                 continue
 
             col_inds = np.array([self.get_col_ind(orbp) for orbp in orbpairs], dtype=int)
             val += sign * self.compute_permanent(col_inds)
+            counter += 1
+        # FIXME: product hack
+        if counter == 0:
+            return self.default_val
         return val
 
     def _olp_deriv(self, sd):  # pylint: disable=E0202

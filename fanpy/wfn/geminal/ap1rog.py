@@ -150,6 +150,8 @@ class AP1roG(APIG):
         self.assign_params(params=params)
         if enable_cache:
             self.enable_cache()
+        # FIXME: product hack
+        self.default_val = 0
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -400,7 +402,8 @@ class AP1roG(APIG):
         if slater.get_seniority(sd, self.nspatial) != 0:
             if deriv is not None:
                 return np.zeros(deriv.size)
-            return 0.0
+            # FIXME: product hack
+            return self.default_val
 
         # convert to spatial orbitals
         # NOTE: these variables are essentially the same as the output of
