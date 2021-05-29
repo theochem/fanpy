@@ -273,6 +273,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             nproj = nparam if nproj is None else nproj
 
             # Handle default wfn (P space == single pair excitations)
+            # FIXME: unable to generate enough Slater determinants due to spin constraint
             if wfn is None:
                 if seniority == 0:
                     wfn = pyci.doci_wfn(ham.nbasis, nocc // 2, nocc // 2)
@@ -661,8 +662,8 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
 
             """
             # Check if system is underdetermined
-            if self.nequation < self.nactive:
-                raise ValueError("system is underdetermined")
+            # if self.nequation < self.nactive:
+            #     raise ValueError("system is underdetermined")
 
             # Convert x0 to proper dtype array
             x0 = np.asarray(x0, dtype=pyci.c_double)
