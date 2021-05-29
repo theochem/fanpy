@@ -538,10 +538,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     # load energy
     output += "# Set energies\n"
-    output += "integrals = np.zeros(fanci_wfn._nequation, dtype=pyci.c_double)\n"
-    output += "olps = fanci_wfn.compute_overlap(fanci_wfn.active_params, 'S')\n"
+    output += "integrals = np.zeros(fanci_wfn._nproj, dtype=pyci.c_double)\n"
+    output += "olps = fanci_wfn.compute_overlap(fanci_wfn.active_params, 'S')[:fanci_wfn._nproj]\n"
     output += "fanci_wfn._ci_op(olps, out=integrals)\n"
-    output += "energy_val = np.sum(integrals[:-1] * olps[:integrals.shape[0]-1]) / np.sum(olps)\n"
+    output += "energy_val = np.sum(integrals * olps) / np.sum(olps ** 2)\n"
     output += "print('Initial energy:', energy_val)\n"
     output += "\n"
 
