@@ -145,7 +145,7 @@ class SeniorityCC(BaseCC):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, ranks=ranks, indices=indices, params=params,
+        super().__init__(nelec, nspin, memory=memory, ranks=ranks, indices=indices, params=params,
                          exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_refwfn(refwfn=refwfn)
         self.load_cache()

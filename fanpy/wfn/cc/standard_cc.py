@@ -131,7 +131,7 @@ class StandardCC(BaseCC):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, ranks=ranks, params=params,
+        super().__init__(nelec, nspin, memory=memory, ranks=ranks, params=params,
                          exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_exops(indices=indices)
         self.assign_refwfn(refwfn=refwfn)

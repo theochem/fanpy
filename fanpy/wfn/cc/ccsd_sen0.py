@@ -133,7 +133,7 @@ class CCSDsen0(PCCD):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin, refwfn=refwfn, params=params,
+        super().__init__(nelec, nspin, memory=memory, refwfn=refwfn, params=params,
                          exop_combinations=exop_combinations, refresh_exops=refresh_exops)
         self.assign_ranks(ranks=ranks)
         self.assign_exops(indices=indices)

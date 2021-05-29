@@ -159,7 +159,7 @@ class BaseCC(BaseWavefunction):
             annihilation to the creation operators.
 
         """
-        super().__init__(nelec, nspin)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_ranks(ranks=ranks)
         self.assign_refwfn(refwfn=refwfn)
         self.assign_exops(indices=indices)
@@ -581,7 +581,7 @@ class BaseCC(BaseWavefunction):
         if self.memory == np.inf:
             memory = None
         else:
-            memory = int((self.memory - 5*8*self.params.size) / (self.params.size + 1))
+            memory = max(int((self.memory - 5*8*self.params.size) / (self.params.size + 1)), 0)
 
         # create function that will be cached
         @functools.lru_cache(maxsize=memory, typed=False)
@@ -589,7 +589,7 @@ class BaseCC(BaseWavefunction):
             """Cached _olp method without caching the instance."""
             return self._olp(sd1)
 
-        @functools.lru_cache(maxsize=memory, typed=False)
+        @functools.lru_cache(maxsize=0, typed=False)
         def _olp_deriv(sd1):
             """Cached _olp_deriv method without caching the instance."""
             return self._olp_deriv(sd1)
