@@ -279,6 +279,12 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         wfn_name = "CCSDTsen2Qsen0"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
+    elif wfn_type == "ccs":
+        from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
+        wfn_name = "StandardCC"
+        if wfn_kwargs is None:
+            wfn_kwargs = "indices=None, refwfn=None, exop_combinations=None"
+        wfn_kwargs = f"ranks=[1], {wfn_kwargs}"
     elif wfn_type == "ccsd":
         from_imports.append(("fanpy.wfn.cc.standard_cc", "StandardCC"))
         wfn_name = "StandardCC"
@@ -552,12 +558,30 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     )
     output += "\n"
     output += "results = {}\n"
-    output += "results['success'] = fanci_results.success\n"
-    output += "results['params'] = fanci_results.x\n"
-    output += "results['message'] = fanci_results.message\n"
-    output += "results['internal'] = fanci_results\n"
-    output += "results['energy'] = fanci_results.x[-1]\n"
-    output += "\n"
+    if solver != "cma":
+        output += "results['success'] = fanci_results.success\n"
+        output += "results['params'] = fanci_results.x\n"
+        output += "results['message'] = fanci_results.message\n"
+        output += "results['internal'] = fanci_results\n"
+        if solver == "minimize":
+            output += "results['energy'] = fanci_results.fun\n"
+        else:
+            output += "results['energy'] = fanci_results.x[-1]\n"
+        output += "\n"
+    else:
+        output += "results['success'] = fanci_results[-3] != {}\n"
+        output += "results['params'] = fanci_results[0]\n"
+        output += "results['function'] = fanci_results[1]\n"
+        output += "results['energy'] = fanci_results[1]\n"
+        output += "if results['success']:\n"
+        output += "    results['message'] = 'Following termination conditions are satisfied:' + ''.join(\n"
+        output += "        ' {0}: {1},'.format(key, val) for key, val in fanci_results[-3].items()\n"
+        output += "    )\n"
+        output += "    results['message'] = results['message'][:-1] + '.' \n"
+        output += "else:\n"
+        output += "    results['message'] = 'Optimization did not succeed.'\n"
+        output += "results['internal'] = fanci_results\n"
+
 
     output += "# Results\n"
     output += "if results['success']:\n"
