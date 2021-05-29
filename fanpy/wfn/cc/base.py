@@ -514,7 +514,7 @@ class BaseCC(BaseWavefunction):
                 output[ind] = np.prod(selected_params[ind != inds])
             return output
 
-    def product_amplitudes_multi(self, indices, deriv=False, all_inds=None):
+    def product_amplitudes_multi(self, indices, deriv=False):
         """Compute the product of the CC amplitudes that corresponds to the given indices.
 
         Parameters
@@ -535,6 +535,18 @@ class BaseCC(BaseWavefunction):
         selected_params = params[indices]
         if not deriv:
             return np.prod(selected_params, axis=1)
+
+        all_inds = {}
+        for row_ind, ind in enumerate(indices):
+            for i in ind:
+                if i == -1:
+                    continue
+                if i in all_inds:
+                    all_inds[i].add(row_ind)
+                else:
+                    all_inds[i] = set([row_ind])
+        for ind in all_inds:
+            all_inds[ind] = np.array(list(all_inds[ind]))
 
         output = np.zeros((len(indices), self.nparams))
         for ind, row_inds in all_inds.items():
@@ -636,7 +648,7 @@ class BaseCC(BaseWavefunction):
 
             # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
             # excite
-            indices, perm_signs, _ = self.exop_combinations[tuple(a_inds + c_inds)]
+            indices, perm_signs = self.exop_combinations[tuple(a_inds + c_inds)]
             val = np.sum(sign * perm_signs * self.product_amplitudes_multi(indices))
             return val
 
@@ -685,9 +697,9 @@ class BaseCC(BaseWavefunction):
 
             # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
             # excite
-            indices, perm_signs, all_inds = self.exop_combinations[tuple(a_inds + c_inds)]
+            indices, perm_signs = self.exop_combinations[tuple(a_inds + c_inds)]
             val = np.sum(
-                sign * perm_signs[:, None] * self.product_amplitudes_multi(indices, deriv=True, all_inds=all_inds), axis=0
+                sign * perm_signs[:, None] * self.product_amplitudes_multi(indices, deriv=True), axis=0
             )
             return val
 
@@ -854,16 +866,4 @@ class BaseCC(BaseWavefunction):
         for i, inds in enumerate(inds_multi):
             indices[i][:len(inds)] = inds
 
-        all_inds = {}
-        for row_ind, ind in enumerate(indices):
-            for i in ind:
-                if i == -1:
-                    continue
-                if i in all_inds:
-                    all_inds[i].add(row_ind)
-                else:
-                    all_inds[i] = set([row_ind])
-        for ind in all_inds:
-            all_inds[ind] = np.array(list(all_inds[ind]))
-
-        self.exop_combinations[tuple(a_inds + c_inds)] = (indices, np.array(signs), all_inds)
+        self.exop_combinations[tuple(a_inds + c_inds)] = (indices, np.array(signs))
