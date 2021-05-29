@@ -777,6 +777,7 @@ class BaseCC(BaseWavefunction):
 
         """
         if self.refresh_exops and len(self.exop_combinations) > self.refresh_exops:
+            print(f"Resetting exop_combinations at size {self.refresh_exops}")
             self.exop_combinations = {}
 
         exrank = len(a_inds)
