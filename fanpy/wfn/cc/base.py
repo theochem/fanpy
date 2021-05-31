@@ -783,9 +783,9 @@ class BaseCC(BaseWavefunction):
             self.exop_combinations = {}
 
         exrank = len(a_inds)
-        check_ops = []
         # NOTE: Is necessary to invert the results of int_partition_recursive
         # to be consistent with the ordering of operators in the CC operator.
+        inds_multi = {}
         for partition in list(graphs.int_partition_recursive(self.ranks,
                                                              self.nranks, exrank))[::-1]:
             reduced_partition = Counter(partition)
@@ -817,22 +817,47 @@ class BaseCC(BaseWavefunction):
                     creas_perms = {size: permutations(crea) for size, crea in creas_grouped.items()}
 
                     # combine permutations of each annihilation and creation pair (of same size)
-                    exc_perms = []
-                    for size_num in bin_size_num:
-                        size = size_num[0]
-                        # annhs_perm = annhs_perms[size]
-                        annhs_perm = repeat(annhs_grouped[size])
-                        creas_perm = creas_perms[size]
-                        # creas_perm = repeat(creas_grouped[size])
-                        exc_perms.append(zip(annhs_perm, creas_perm))
+                    exc_perms = (zip(repeat(annhs_grouped[size_num[0]]), creas_perms[size_num[0]]) for size_num in bin_size_num)
 
                     # for each size, pick all the other sizes
                     for excs in product(*exc_perms):
                         combs = []
+                        is_continue = False
                         for exc in excs:
                             exc = zip(*exc)
-                            combs.extend([annh + crea for annh, crea in exc])
-                        check_ops.append(combs)
+                            for annh, crea in exc:
+                                op = tuple(annh + crea)
+                                if op not in self.exops:
+                                    is_continue = True
+                                    break
+                                combs.append(op)
+                            if is_continue:
+                                break
+                        if is_continue:
+                            continue
+
+                        num_hops = 0
+                        jumbled_a_inds = []
+                        jumbled_c_inds = []
+                        prev_hurdles = 0
+                        for exop in combs:
+                            num_inds = len(exop) // 2
+                            num_hops += prev_hurdles * num_inds
+                            prev_hurdles += num_inds
+                            jumbled_a_inds.extend(exop[:num_inds])
+                            jumbled_c_inds.extend(exop[num_inds:])
+                        # move all the annihilators to one side and creators to another
+                        sign = (-1) ** num_hops
+                        # unjumble the annihilators
+                        sign *= slater.sign_perm(jumbled_a_inds, a_inds)
+                        # unjumble the creators
+                        sign *= slater.sign_perm(jumbled_c_inds, c_inds)
+
+                        inds = [self.get_ind(exop) for exop in combs] + [sign]
+                        if len(inds) - 1 in inds_multi:
+                            inds_multi[len(inds) - 1].extend(inds)
+                        else:
+                            inds_multi[len(inds) - 1] = inds
 
         two_power = np.ceil(np.log2(self.nparams))
         if two_power <= 8:
@@ -846,34 +871,6 @@ class BaseCC(BaseWavefunction):
         else:
             raise ValueError("Can only support 2**63 number of parameters")
 
-        inds_multi = {}
-        signs = []
-        self.exop_combinations[tuple(a_inds + c_inds)] = []
-        for op_list in check_ops:
-            if all(tuple(op) in self.exops for op in op_list):
-                num_hops = 0
-                jumbled_a_inds = []
-                jumbled_c_inds = []
-                prev_hurdles = 0
-                for exop in op_list:
-                    num_inds = len(exop) // 2
-                    num_hops += prev_hurdles * num_inds
-                    prev_hurdles += num_inds
-                    jumbled_a_inds.extend(exop[:num_inds])
-                    jumbled_c_inds.extend(exop[num_inds:])
-                # move all the annihilators to one side and creators to another
-                sign = (-1) ** num_hops
-                # unjumble the annihilators
-                sign *= slater.sign_perm(jumbled_a_inds, a_inds)
-                # unjumble the creators
-                sign *= slater.sign_perm(jumbled_c_inds, c_inds)
-
-                inds = np.array([self.get_ind(exop) for exop in op_list])
-                inds = np.hstack([inds, sign])
-                if inds.size - 1 in inds_multi:
-                    inds_multi[inds.size - 1].append(inds)
-                else:
-                    inds_multi[inds.size - 1] = [inds]
         for i, indices in inds_multi.items():
-            inds_multi[i] = np.array(indices, dtype=dtype)
+            inds_multi[i] = np.array(indices, dtype=dtype).reshape(-1, i+1)
         self.exop_combinations[tuple(a_inds + c_inds)] = inds_multi
