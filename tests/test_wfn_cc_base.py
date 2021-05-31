@@ -287,6 +287,7 @@ def check_sign(occ_indices, exops):
 def test_generate_possible_exops():
     """Test CCWavefunction.generate_possible_exops."""
     test = TempBaseCC()
+    test.params = np.random.rand(10)
     test.assign_nelec(2)
     test.assign_nspin(4)
     test.assign_ranks()
@@ -294,9 +295,10 @@ def test_generate_possible_exops():
     test.refresh_exops = None
     test.generate_possible_exops([0, 2], [1, 3])
     base_sign = slater.sign_excite(0b0101, [0, 2], [1, 3])
+    sign = check_sign([0, 2], [[0, 1], [2, 3]]) / base_sign
     assert np.allclose(
         test.exop_combinations[(0, 2, 1, 3)][2][0],
-        [test.get_ind((0, 1)), test.get_ind((2, 3)), check_sign([0, 2], [[0, 1], [2, 3]]) / base_sign]
+        [test.get_ind((0, 1)), test.get_ind((2, 3)), sign if sign == 1 else 255]
     )
     assert np.allclose(
         test.exop_combinations[(0, 2, 1, 3)][2][1],
@@ -312,13 +314,14 @@ def test_generate_possible_exops():
     test.assign_nspin(8)
     test.assign_ranks([1, 2, 3])
     test.refresh_exops = None
+    test.params = np.random.rand(5)
     test.exops = {(2, 6): 0, (2, 5): 1, (0, 1, 4, 5): 2, (0, 1, 4, 6): 3, (0, 1, 2, 4, 5, 6): 4}
     test.generate_possible_exops([0, 1, 2], [4, 5, 6])
     base_sign = slater.sign_excite(0b00000111, [0, 1, 2], [4, 5, 6])
+    sign = check_sign([0, 1, 2], [[2, 5], [0, 1, 4, 6]]) / base_sign
     assert np.allclose(
         test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][0],
-        [test.get_ind((2, 5)), test.get_ind((0, 1, 4, 6)),
-         check_sign([0, 1, 2], [[2, 5], [0, 1, 4, 6]]) / base_sign],
+        [test.get_ind((2, 5)), test.get_ind((0, 1, 4, 6)), sign if sign == 1 else 255],
     )
     assert np.allclose(
         test.exop_combinations[(0, 1, 2, 4, 5, 6)][2][1],
@@ -328,4 +331,19 @@ def test_generate_possible_exops():
     assert np.allclose(
         test.exop_combinations[(0, 1, 2, 4, 5, 6)][1][0],
         [test.get_ind((0, 1, 2, 4, 5, 6)), check_sign([0, 1, 2], [[0, 1, 2, 4, 5, 6]]) / base_sign],
+    )
+
+    test = TempBaseCC()
+    test.assign_nelec(4)
+    test.assign_nspin(8)
+    test.assign_ranks([1, 2, 3])
+    test.refresh_exops = None
+    test.exops = {(2, 5): 0, (0, 4): 1, (1, 6): 2}
+    test.params = np.random.rand(3)
+    test.generate_possible_exops([0, 1, 2], [4, 5, 6])
+    base_sign = slater.sign_excite(0b00000111, [0, 1, 2], [4, 5, 6])
+    assert np.allclose(
+        test.exop_combinations[(0, 1, 2, 4, 5, 6)][3][0],
+        [test.get_ind((0, 4)), test.get_ind((1, 6)), test.get_ind((2, 5)),
+         check_sign([0, 1, 2], [[2, 5], [0, 4], [1, 6]]) / base_sign],
     )

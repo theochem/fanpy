@@ -535,20 +535,22 @@ class BaseCC(BaseWavefunction):
             output = 0
             for indices_sign in indices_multi.values():
                 indices, signs = indices_sign[:, :-1], indices_sign[:, -1]
+                signs = signs.astype(np.int8)
+                signs[signs > 1] = -1
                 output += np.sum(np.prod(self.params[indices], axis=1) * signs)
             return output
 
-        unique_indices = set().union(*(set(indices_sign[:, :-1].flatten()) for indices_sign in indices_multi.values()))
         output = np.zeros(self.nparams)
-        for ind in unique_indices:
-            for indices_sign in indices_multi.values():
-                indices, signs = indices_sign[:, :-1], indices_sign[:, -1]
+        for indices_sign in indices_multi.values():
+            indices, signs = indices_sign[:, :-1], indices_sign[:, -1]
+            signs = signs.astype(np.int8)
+            signs[signs > 1] = -1
+            for ind in set(indices.ravel()):
                 bool_indices = ind == indices
                 row_inds = np.sum(bool_indices, axis=1, dtype=bool)
                 selected_params = self.params[indices]
                 old_params = np.copy(selected_params[bool_indices])
                 selected_params[bool_indices] = 1
-                # print(ind, row_inds, selected_params.shape, signs.shape, output.shape)
                 output[ind] += np.sum(np.prod(selected_params[row_inds], axis=1) * signs[row_inds])
                 selected_params[bool_indices] = old_params
         return output
@@ -832,6 +834,18 @@ class BaseCC(BaseWavefunction):
                             combs.extend([annh + crea for annh, crea in exc])
                         check_ops.append(combs)
 
+        two_power = np.ceil(np.log2(self.nparams))
+        if two_power <= 8:
+            dtype = np.uint8
+        elif two_power <= 16:
+            dtype = np.uint16
+        elif two_power <= 32:
+            dtype = np.uint32
+        elif two_power <= 64:
+            dtype = np.uint64
+        else:
+            raise ValueError("Can only support 2**63 number of parameters")
+
         inds_multi = {}
         signs = []
         self.exop_combinations[tuple(a_inds + c_inds)] = []
@@ -861,6 +875,5 @@ class BaseCC(BaseWavefunction):
                 else:
                     inds_multi[inds.size - 1] = [inds]
         for i, indices in inds_multi.items():
-            inds_multi[i] = np.array(indices)
-
+            inds_multi[i] = np.array(indices, dtype=dtype)
         self.exop_combinations[tuple(a_inds + c_inds)] = inds_multi
