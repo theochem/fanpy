@@ -1,6 +1,5 @@
 """Utility function for constructing Wavefunction instances."""
 import os
-import psutil
 from fanpy.eqn.utils import ComponentParameterIndices
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.product import ProductWavefunction
@@ -435,11 +434,11 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             """
             if self.objective_type == "projected":
                 output = super().compute_objective(x)
-                self.print_queue["Electronic energy"] = x[-1]
+                self.print_queue["Electronic Energy"] = x[-1]
                 self.print_queue["Cost"] = np.sum(output[:self._nproj] ** 2)
                 self.print_queue["Cost from constraints"] = np.sum(output[self._nproj:] ** 2)
                 if self.step_print:
-                    print("(Mid Optimization) Electronic energy: {}".format(self.print_queue["Electronic energy"]))
+                    print("(Mid Optimization) Electronic Energy: {}".format(self.print_queue["Electronic Energy"]))
                     print("(Mid Optimization) Cost: {}".format(self.print_queue["Cost"]))
                     if self.constraints:
                         print("(Mid Optimization) Cost from constraints: {}".format(self.print_queue["Cost from constraints"]))
@@ -462,14 +461,13 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 self._ci_op(ovlp, out=output)
                 output = np.sum(output * ovlp[:self._nproj])
                 output /= np.sum(ovlp[:self._nproj] ** 2)
-                self.print_queue["Electronic energy"] = output
+                self.print_queue["Electronic Energy"] = output
                 if self.step_print:
-                    print("(Mid Optimization) Electronic energy: {}".format(self.print_queue["Electronic energy"]))
+                    print("(Mid Optimization) Electronic Energy: {}".format(self.print_queue["Electronic Energy"]))
 
             if self.step_save:
                 self.save_params()
             
-            print("Current memory usage (GB):", psutil.Process(os.getpid()).memory_info().rss / 1024 ** 3)
             return output
 
         def compute_jacobian(self, x: np.ndarray) -> np.ndarray:
