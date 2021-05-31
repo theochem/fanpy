@@ -411,9 +411,9 @@ class BaseCC(BaseWavefunction):
             if self.nspin != other.nspin:
                 raise ValueError('The number of spin orbitals in the two wavefunctions must be the '
                                  'same.')
-            if self.nexops != other.nexops:
-                raise ValueError('The number of excitation operators in the two wavefunctions'
-                                 'must be the same.')
+            #if self.nexops != other.nexops:
+            #    raise ValueError('The number of excitation operators in the two wavefunctions'
+            #                     'must be the same.')
             params = np.zeros(self.params_shape)
             for exop, ind in other.exops.items():
                 try:

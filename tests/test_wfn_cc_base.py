@@ -129,8 +129,8 @@ def test_assign_params():
     test2.assign_nspin(4)
     test2.assign_ranks()
     test2.assign_exops([[0, 1], [2, 3]])
-    with pytest.raises(ValueError):
-        test.assign_params(test2)
+    # with pytest.raises(ValueError):
+    #     test.assign_params(test2)
     test2.assign_nelec(2)
     test2.assign_nspin(4)
     test2.assign_ranks()
