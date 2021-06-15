@@ -155,12 +155,12 @@ class APG1roSD(APG1roD):
             ex_to = [i for i in range(self.nspin) if i not in ex_from]
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt in ex_to:
-                    exop = [occ_alpha, occ_alpha + self.nspatial, virt, occ_alpha + self.nspatial]
+                    exop = [occ_alpha, virt]
                     exops[tuple(exop)] = counter
                     counter += 1
             for occ_alpha in ex_from[:len(ex_from) // 2]:
                 for virt in ex_to:
-                    exop = [occ_alpha, occ_alpha + self.nspatial, occ_alpha, virt]
+                    exop = [occ_alpha + self.nspatial, virt]
                     exops[tuple(exop)] = counter
                     counter += 1
             super().assign_exops(None)
@@ -168,64 +168,3 @@ class APG1roSD(APG1roD):
             for exop, ind in self.exops.items():
                 exops[exop] = ind + shift
             self.exops = exops
-
-    def generate_possible_exops(self, a_inds, c_inds):
-        """Assign possible excitation operators from the given creation and annihilation operators.
-
-        Parameters
-        ----------
-        a_inds : list of int
-            Indices of the orbitals of the annihilation operators.
-            Must be strictly increasing.
-        c_inds : list of int
-            Indices of the orbitals of the creation operators.
-            Must be strictly increasing.
-
-        Notes
-        -----
-        The excitation operators are sored as values of the exop_combinations dictionary.
-        Each value is a list of lists of possible excitation operators.
-        Each sub-list contains excitation operators such that, multiplied together, they allow
-        to excite to and from the given indices.
-
-        """
-        exrank = len(a_inds)
-        check_ops = []
-        # NOTE: Is necessary to invert the results of int_partition_recursive
-        # to be consistent with the ordering of operators in the CC operator.
-        for partition in list(graphs.int_partition_recursive(self.ranks,
-                                                             self.nranks, exrank))[::-1]:
-            reduced_partition = Counter(partition)
-            bin_size_num = []
-            for bin_size in sorted(reduced_partition):
-                bin_size_num.append((bin_size, reduced_partition[bin_size]))
-            nops = 0
-            for b_size in bin_size_num:
-                nops += b_size[1]
-            for annhs in graphs.generate_unordered_partition(a_inds, bin_size_num):
-                for creas in graphs.generate_unordered_partition(c_inds, bin_size_num):
-                    combs = []
-                    for annh in annhs:
-                        for crea in creas:
-                            if len(annh) == len(crea):
-                                combs.append(annh+crea)
-                    for match in combinations(combs, nops):
-                        matchs = []
-                        for op in match:
-                            other_ops = [other_op for other_op in match if other_op != op]
-                            matchs += [set(other_op).isdisjoint(op) for other_op in other_ops]
-                        if all(matchs):
-                            check_ops.append(match)
-        self.exop_combinations[tuple(a_inds + c_inds)] = []
-        for op_list in check_ops:
-            op_list = [list(operator) for operator in op_list]
-            for i in range(len(op_list)):
-                if len(op_list[i]) == 2:
-                    if op_list[i][0] < self.nspatial:
-                        op_list[i] = [op_list[i][0], op_list[i][0] + self.nspatial,
-                                      op_list[i][1], op_list[i][0] + self.nspatial]
-                    else:
-                        op_list[i] = [op_list[i][0] - self.nspatial, op_list[i][0],
-                                      op_list[i][0] - self.nspatial, op_list[i][1]]
-            if all(tuple(op) in self.exops for op in op_list):
-                self.exop_combinations[tuple(a_inds + c_inds)].append(op_list)

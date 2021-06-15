@@ -64,6 +64,7 @@ def test_generate_possible_exops():
     test.assign_ranks([1])
     test.assign_exops()
     test.refresh_exops = None
+    test.params = np.random.rand(4)
     test.generate_possible_exops([0, 2], [1, 3])
     assert np.allclose(
         test.exop_combinations[(0, 2, 1, 3)][0][0], [test.get_ind((0, 1)), test.get_ind((2, 3))]
