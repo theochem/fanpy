@@ -9,12 +9,16 @@ hartreefock(xyz_file, basis, is_unrestricted=False)
 # pylint: disable=C0103,E0611
 import ctypes
 import os
+import re
+
+from fanpy.tools.math_tools import power_symmetric
 
 import numpy as np
 
-from pyscf import ao2mo, gto, scf
+from pyscf import ao2mo, gto, lo, scf
 from pyscf.fci import cistring
 from pyscf.lib import hermi_triu, load_library
+
 
 LIBFCI = load_library("libfci")
 
@@ -221,3 +225,150 @@ def fci_cimatrix(h1e, eri, nelec, is_chemist_notation=False):
         pspace.append(alpha_bit | (beta_bit << norb))
 
     return ci_matrix, pspace
+
+
+def convert_gbs_nwchem(gbs_file: str):
+    """Convert gbs file to nwchem.
+
+    Parameters
+    ----------
+    gbs_file : str
+        Name of the gbs file.
+
+    Returns
+    -------
+    gbs_dict : dict
+
+    """
+    gbs_dict = {}
+    with open(gbs_file, 'r') as f:
+        all_lines = f.read()
+    sections = all_lines.split('****')
+    # first section is the comments
+    for section in sections[1:]:
+        section = section.strip()
+        atom, *orb_coeffs = re.split(r"\s*(\w)\s+\d+\s+\d+\.\d+\n", section)
+        # find atom
+        atom = re.search(r"^(\w+)\s", atom).group(1)
+        # assign dict
+        for orbtype, coeffs in zip(orb_coeffs[::2], orb_coeffs[1::2]):
+            coeffs = coeffs.rstrip()
+            if atom in gbs_dict:
+                gbs_dict[atom] = gbs_dict[atom] + f'{atom} {orbtype}\n{coeffs}\n'
+            else:
+                gbs_dict[atom] = f'{atom} {orbtype}\n{coeffs}\n'
+    return gbs_dict
+
+
+def localize(xyz_file, basis_file, is_unrestricted=False, unit='Bohr', method=None):
+    """Run HF using PySCF.
+
+    Parameters
+    ----------
+    xyz_file : str
+        XYZ file location.
+    basis_file : str
+        Basis file location
+    is_unrestricted : bool
+        Flag to run unrestricted HF.
+        Default is restricted HF.
+
+    Returns
+    -------
+    result : dict
+        "hf_energy"
+            The electronic energy.
+        "nuc_nuc"
+            The nuclear repulsion energy.
+        "one_int"
+            The tuple of the one-electron interal.
+        "two_int"
+            The tuple of the two-electron integral in Physicist's notation.
+
+    Raises
+    ------
+    ValueError
+        If given xyz file does not exist.
+    NotImplementedError
+        If calculation is unrestricted or generalized.
+
+    """
+    # check xyz file
+    cwd = os.path.dirname(__file__)
+    if os.path.isfile(os.path.join(cwd, xyz_file)):
+        xyz_file = os.path.join(cwd, xyz_file)
+    elif not os.path.isfile(xyz_file):  # pragma: no branch
+        raise ValueError("Given xyz_file does not exist")
+
+    # get coordinates
+    with open(xyz_file, "r") as f:
+        lines = [i.strip() for i in f.readlines()[2:]]
+        atoms = ";".join(lines)
+
+    # get mol
+    basis = convert_gbs_nwchem(basis_file)
+    mol = gto.M(
+        atom=atoms, basis={i: j for i, j in basis.items() if i + ' ' in atoms}, parse_arg=False,
+        unit=unit
+    )
+
+    # get hf
+    if is_unrestricted:
+        raise NotImplementedError(
+            "Unrestricted or Generalized orbitals are not supported in this" " PySCF wrapper (yet)."
+        )
+    hf = scf.RHF(mol)
+    # run hf
+    hf.scf()
+    # energies
+    energy_nuc = hf.energy_nuc()
+    energy_tot = hf.kernel()  # HF is solved here
+    energy_elec = energy_tot - energy_nuc
+    # mo_coeffs
+    mo_coeff = hf.mo_coeff
+    # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
+    # get 1e integral
+    one_int_ab = mol.intor("cint1e_nuc_sph") + mol.intor("cint1e_kin_sph")
+    one_int = mo_coeff.T.dot(one_int_ab).dot(mo_coeff)
+    # get 2e integral
+    eri = ao2mo.full(mol, mo_coeff, verbose=0, intor="cint2e_sph")
+    two_int = ao2mo.restore(1, eri, mol.nao_nr())
+    # NOTE: PySCF uses Chemist's notation
+    two_int = np.einsum("ijkl->ikjl", two_int)
+
+    # labels
+    ao_labels = mol.ao_labels()
+    ao_inds = [int(re.search(r'^\d+\s+', label).group(1)) for label in ao_labels]
+
+    # results
+    result = {
+        "hf_energy": energy_elec,
+        "nuc_nuc": energy_nuc,
+        "one_int": one_int,
+        "two_int": two_int,
+        "t_ab_mo": mo_coeff,
+        "ao_inds": ao_inds,
+    }
+
+    if method is None:
+        return result
+
+    if method == "iao":
+        t_ab_lo = lo.vec_lowdin(lo.iao.iao(mol, hf.mo_coeff), hf.get_ovlp())
+    elif method == "boys":
+        t_ab_lo = lo.Boys(hf.mol, hf.mo_coeff).kernel()
+    elif method == "pm":
+        t_ab_lo = lo.PM(hf.mol, hf.mo_coeff).kernel()
+    elif method == "er":
+        t_ab_lo = lo.ER(hf.mol, hf.mo_coeff).kernel()
+    t_mo_lo = power_symmetric(mo_coeff, -1).dot(t_ab_lo)
+
+    one_int = t_mo_lo.T.dot(one_int).dot(t_mo_lo)
+    two_int = np.einsum('ijkl,ia->ajkl', two_int, t_ab_lo)
+    two_int = np.einsum('ajkl,jb->abkl', two_int, t_ab_lo)
+    two_int = np.einsum('abkl,kc->abcl', two_int, t_ab_lo)
+    two_int = np.einsum('abcl,ld->abcd', two_int, t_ab_lo)
+
+    result['one_int'] = one_int
+    result['two_int'] = two_int
+    return result
