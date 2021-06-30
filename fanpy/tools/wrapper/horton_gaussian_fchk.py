@@ -79,6 +79,7 @@ def gaussian_fchk(fchk_file, horton_internal=False):
         "nuc_nuc_energy": nuc_nuc,
         "one_int": tuple(one_mo),
         "two_int": tuple(two_mo),
+        "t_ab_mo": tuple(i.coeffs for i in exps),
     }
     if horton_internal:
         raise NotImplementedError(
@@ -111,3 +112,7 @@ if __name__ == "__main__":
         np.save(sys.argv[3], data["two_int"][0])
     else:
         np.save(sys.argv[3], data["two_int"])
+    if len(data["t_ab_mo"]) == 1:
+        np.save(sys.argv[4], data["t_ab_mo"][0])
+    else:
+        np.save(sys.argv[4], data["t_ab_mo"])
