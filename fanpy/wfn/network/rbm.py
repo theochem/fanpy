@@ -344,7 +344,11 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
         self.forward_cache_lin = []
 
         occ_mask = np.zeros((len(sds), self.nspin), dtype=bool)
-        occ_mask[np.arange(len(sds))[:, None], occ_indices] = True
+        # FIXME: breaks if inconsistent particle number
+        # occ_mask[np.arange(len(sds))[:, None], occ_indices] = True
+        # FIXME: but less efficient
+        for i, inds in enumerate(occ_indices):
+            occ_mask[i, inds] = True
         for order, layer_params in zip(self.orders, self._params):
             # NOTE: if you want to use a different operator, you would change the corresponding
             # input here
