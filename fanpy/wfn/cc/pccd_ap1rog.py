@@ -146,6 +146,9 @@ class PCCD(BaseCC):
         self.assign_exops(indices=indices)
         self.assign_refwfn(refwfn=refwfn)
 
+        # mapping from indices to exops
+        self.ind_exops = sorted(self.exops.keys(), key=lambda x: self.exops[x])
+
     def assign_nelec(self, nelec):
         """Assign the number of electrons.
 
@@ -261,3 +264,231 @@ class PCCD(BaseCC):
                 raise ValueError('refwfn must be a seniority-0 wavefuntion')
             # TODO: check that refwfn has the right number of spin-orbs
             self.refwfn = refwfn
+
+    def _olp(self, sd):
+        r"""Calculate the matrix element of the CC operator between the Slater determinants.
+
+        .. math::
+
+        \[\left\langle  {{m}_{1}}
+        \right|\prod\limits_{u,v}{\left( 1+t_{u}^{v}\hat{\tau }_{u}^{v} \right)}
+        \left| {{m}_{2}} \right\rangle \]
+
+        Parameters
+        ----------
+        sd1 : int
+            Occupation vector of the left Slater determinant given as a bitstring.
+        sd2 : int
+            Occupation vector of the right Slater determinant given as a bitstring.
+
+        Returns
+        -------
+        olp : {float, complex}
+            Matrix element of the CC operator between the given Slater determinant.
+
+        """
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return 1.0
+            c_inds, a_inds = slater.diff_orbs(sd1, sd2)
+            if isinstance(a_inds, np.ndarray):
+                a_inds = a_inds.tolist()
+            if isinstance(c_inds, np.ndarray):
+                c_inds = c_inds.tolist()
+            # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
+            # that need to be applied to sd2 to turn it into sd1
+
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
+            val = 0.0
+            if tuple(a_inds + c_inds) not in self.exop_combinations:
+                self.generate_possible_exops(a_inds, c_inds)
+
+            # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
+            # excite
+            indices_multi = self.exop_combinations[tuple(a_inds + c_inds)]
+            # FIXME: filter out rows whose excitation operators does not have annihilator that is 
+            # doubly occupied
+            occ_indices = set(slater.occ_indices(sd))
+            #print(indices_multi)
+            for exc_order in indices_multi:
+                indices_sign = indices_multi[exc_order]
+                selected_rows = []
+                for row_ind, row in enumerate(indices_sign):
+                    # occupied orbitals but have its spin composite also occupied
+                    # AND its composite CANNOT participate in other excitation operators
+                    trash = set([])
+                    skip_row = False
+                    for exop in (self.ind_exops[i] for i in row[:-1]):
+                        if len(exop) == 2:
+                            if exop[0] in trash:
+                                # skip
+                                skip_row = True
+                                break
+                            if exop[0] < self.nspatial:
+                                if exop[0] + self.nspatial not in occ_indices:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                else:
+                                    # add to trash
+                                    trash.add(exop[0])
+                                    trash.add(exop[0] + self.nspatial)
+                            if exop[0] >= self.nspatial:
+                                if exop[0] - self.nspatial not in occ_indices:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                else:
+                                    # add to trash
+                                    trash.add(exop[0])
+                                    trash.add(exop[0] - self.nspatial)
+                        # FIXME: not sure
+                        else:
+                            for j in exop[:len(exop)//2]:
+                                if j in trash:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                else:
+                                    trash.add(j)
+                            if skip_row:
+                                break
+
+                    if not skip_row:
+                        selected_rows.append(row_ind)
+
+                indices_multi[exc_order] = indices_sign[selected_rows]
+                #FIXME:
+                #print(selected_rows)
+                #print(indices_multi[exc_order])
+
+            amplitudes = self.product_amplitudes_multi(indices_multi)
+            #print(amplitudes)
+            val = sign * amplitudes
+            return val
+
+        if isinstance(self.refwfn, CIWavefunction):
+            val = 0
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)
+
+    def _olp_deriv(self, sd):
+        """Calculate the derivative of the overlap with the Slater determinant.
+
+        Parameters
+        ----------
+        sd1 : int
+            Occupation vector of the left Slater determinant given as a bitstring.
+        sd2 : int
+            Occupation vector of the right Slater determinant given as a bitstring.
+
+        Returns
+        -------
+        olp : {float, complex}
+            Derivative of the overlap with respect to the given parameter.
+
+        """
+        def temp_olp(sd1, sd2):
+            if sd1 == sd2:
+                return np.zeros(self.nparams)
+            # FIXME: this should definitely be vectorized
+            c_inds, a_inds = slater.diff_orbs(sd1, sd2)
+            if isinstance(a_inds, np.ndarray):
+                a_inds = a_inds.tolist()
+            if isinstance(c_inds, np.ndarray):
+                c_inds = c_inds.tolist()
+            # NOTE: Indices of the annihilation (a_inds) and creation (c_inds) operators
+            # that need to be applied to sd2 to turn it into sd1
+
+            # get sign
+            sign = slater.sign_excite(sd2, a_inds, c_inds)
+
+            val = np.zeros(self.nparams)
+            if tuple(a_inds + c_inds) not in self.exop_combinations:
+                self.generate_possible_exops(a_inds, c_inds)
+
+            # FIXME: sometimes exop contains virtual orbitals in annihilators may need to explicitly
+            # excite
+            indices_multi = self.exop_combinations[tuple(a_inds + c_inds)]
+            # FIXME: filter out rows whose excitation operators do not have annihilator that is 
+            # doubly occupied
+            occ_indices = set(slater.occ_indices(sd))
+            for exc_order in indices_multi:
+                indices_sign = indices_multi[exc_order]
+                selected_rows = []
+                for row_ind, row in enumerate(indices_sign):
+                    # occupied orbitals but have its spin composite also occupied
+                    # AND its composite CANNOT participate in other excitation operators
+                    trash = set([])
+                    skip_row = False
+                    for exop in (self.ind_exops[i] for i in row[:-1]):
+                        if len(exop) == 2:
+                            # skip because annihilator was used in a single excitation as the
+                            # opposite spin
+                            if exop[0] in trash:
+                                # skip
+                                skip_row = True
+                                break
+                            if exop[0] < self.nspatial:
+                                # skip because corresponding beta orbital is not occupied
+                                if exop[0] + self.nspatial not in occ_indices:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                # this annihilator and its beta component cannot be used again
+                                else:
+                                    # add to trash
+                                    trash.add(exop[0])
+                                    trash.add(exop[0] + self.nspatial)
+                            if exop[0] >= self.nspatial:
+                                # skip because corresponding alpha orbital is not occupied
+                                if exop[0] - self.nspatial not in occ_indices:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                # this annihilator and its alpha component cannot be used again
+                                else:
+                                    # add to trash
+                                    trash.add(exop[0])
+                                    trash.add(exop[0] - self.nspatial)
+                        # FIXME: not sure
+                        else:
+                            for j in exop[:len(exop)//2]:
+                                # skip because annihilator was used before as part of a single
+                                # excitation or its opposite spin component
+                                if j in trash:
+                                    # skip
+                                    skip_row = True
+                                    break
+                                # not necessary because same orbital is not annihilated multiple
+                                # times by construction
+                                else:
+                                    trash.add(j)
+                            if skip_row:
+                                break
+
+                    if not skip_row:
+                        selected_rows.append(row_ind)
+
+                indices_multi[exc_order] = indices_sign[selected_rows]
+                #FIXME:
+                #print(selected_rows)
+                #print(indices_multi[exc_order])
+
+            amplitudes = self.product_amplitudes_multi(indices_multi, deriv=True)
+            #print(amplitudes)
+            val = sign * amplitudes
+            return val
+
+        if isinstance(self.refwfn, CIWavefunction):
+            val = np.zeros(self.nparams)
+            for refsd in self.refwfn.sd_vec:
+                val += temp_olp(sd, refsd) * self.refwfn.get_overlap(refsd)
+            return val
+        else:
+            return temp_olp(sd, self.refwfn)
