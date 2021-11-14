@@ -335,6 +335,15 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         if solver_kwargs is None:
             solver_kwargs = "method='BFGS', options={'gtol': 1e-8, 'disp':True}"
         solver_kwargs = ", ".join(["mode='bfgs', use_jac=True", solver_kwargs])
+    elif solver == "fanpt":
+        from_imports.append(("fanci.fanpt_wrapper", "reduce_to_fock, solve_fanpt"))
+        if solver_kwargs is None:
+            solver_kwargs = (
+                "fill=fill, energy_active=True, resum=False, ref_sd=0, final_order=1, "
+                "lambda_i=0.0, lambda_f=1.0, steps=50, "
+                "solver_kwargs={'mode':'lstsq', 'use_jac':True, 'xtol':1.0e-8, 'ftol':1.0e-8, "
+                "'gtol':1.0e-5, 'max_nfev':fanci_wfn.nactive, 'verbose':2, 'vtol':1e-5}"
+            )
     else:
         raise ValueError("Unsupported solver")
 
@@ -419,15 +428,29 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Initialize Hamiltonian\n"
-    ham_init1 = "ham = {}(".format(ham_name)
-    ham_init2 = "one_int, two_int"
-    if solver == 'cma':
-        ham_init2 += ')\n'
+
+    if solver != "fanpt":
+        ham_init1 = "ham = {}(".format(ham_name)
+        ham_init2 = "one_int, two_int"
+        if solver == 'cma':
+            ham_init2 += ')\n'
+        else:
+            ham_init2 += ', update_prev_params=True)\n'
+        output += "\n".join(
+            textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
+        )
     else:
-        ham_init2 += ', update_prev_params=True)\n'
-    output += "\n".join(
-        textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
-    )
+        ham_final = "ham = {}(one_int, two_int)".format(ham_name)
+        output += "\n".join(
+            textwrap.wrap(ham_final, width=100, subsequent_indent=" " * len(ham_final))
+        )
+        output += "\n"
+        ham_init = "fock = {}(one_int, reduce_to_fock(two_int))".format(ham_name)
+        output += "\n".join(
+            textwrap.wrap(ham_init, width=100, subsequent_indent=" " * len(ham_init))
+        )
+        output += "\n"
+        output += "print('Hamiltonian: Fock Hamiltonian to {}')\n".format(ham_name)
 
     if load_ham_um is not None:
         output += "# Load unitary matrix of the Hamiltonian\n"
@@ -499,16 +522,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
                 output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
             if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + ext)):
                 output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + ext)))\n"
-            else:
-                output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
             if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + '_prev' + ext)):
                 output += "ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_prev' + ext))\n"
-            else:
-                output += "ham._prev_params = ham.params.copy()\n"
             if os.path.isfile(os.path.join(dirname, chk_point_file + '_' + ham_name + '_um' + ext)):
                 output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_' + ham.__class__.__name__ + '_um' + ext))\n"
-            else:
-                output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
             output += "ham.assign_params(ham.params)\n\n"
 
     output += "# Projection space\n"
@@ -529,8 +546,26 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Initialize objective\n"
-    output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
-    output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority=wfn.seniority, param_selection=param_selection, nproj=nproj, objective_type='{objective}')\n"
+    if solver != "fanpt":
+        output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
+    else:
+        output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
+        output += "pyci_fock = pyci.hamiltonian(nuc_nuc, fock.one_int, fock.two_int)\n"
+    seniority = 'wfn.seniority' if wfn_type != 'pccd' else '0'
+    if solver == "fanpt":
+        output += "\n".join(
+                textwrap.wrap(
+                    f"fanci_wfn = convert_to_fanci(wfn, pyci_fock, seniority={seniority}, "
+                    "param_selection=param_selection, nproj=nproj, objective_type='projected', "
+                    "norm_det=[(0, 1)])",
+                    width=100, subsequent_indent=" " * len("fanci_wfn = convert_to_fanci(")
+                )
+            )
+        output += "\n"
+    elif objective in ["projected_stochastic", "projected"]:
+        output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='projected')\n"
+    elif objective in ["energy", "one_energy", "variational"]:
+        output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='energy')\n"
     output += "fanci_wfn.tmpfile = '{}'\n".format(save_chk)
     output += "fanci_wfn.step_print = True\n"
     output += "\n"
@@ -548,7 +583,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Solve\n"
-    if objective == "projected_stochastic":
+    if solver == "fanpt":
+        results1 = "fanci_results = solve_fanpt("
+        results2 = "fanci_wfn, pyci_fock, pyci_ham, np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
+    elif objective == "projected_stochastic":
         results1 = "fanci_results = fanci_wfn.optimize_stochastic("
         results2 = "100, np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
     else:

@@ -210,7 +210,7 @@ def check_inputs(  # pylint: disable=R0912,R0915
         )
 
     # check solver
-    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root", "trustregion"]:
+    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root", "trustregion", "fanpt"]:
         raise ValueError(
             "Solver must be one of `cma`, `diag`, `minimize`, `least_squares`, or `root`."
         )
@@ -222,7 +222,7 @@ def check_inputs(  # pylint: disable=R0912,R0915
             "(objective) that consists of one equation (`least_squares`, `variational`, "
             "`one_energy`)".format(solver)
         )
-    if solver in ["least_squares", "root"] and objective != "projected":
+    if solver in ["least_squares", "root", "fanpt"] and objective not in ["projected", "projected_stochastic"]:
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation (objective) as a "
             "systems of equations (`projected`)".format(solver)
