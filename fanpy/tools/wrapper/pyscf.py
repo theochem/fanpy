@@ -14,10 +14,13 @@ import re
 from fanpy.tools.math_tools import power_symmetric
 
 import numpy as np
+import scipy.linalg
 
-from pyscf import ao2mo, gto, lo, scf
+from pyscf import ao2mo, gto, lo, scf, __config__
 from pyscf.fci import cistring
 from pyscf.lib import hermi_triu, load_library
+from pyscf.tools import molden
+from pyscf.lo.iao import reference_mol
 
 
 LIBFCI = load_library("libfci")
@@ -247,7 +250,9 @@ def convert_gbs_nwchem(gbs_file: str):
     # first section is the comments
     for section in sections[1:]:
         section = section.strip()
-        atom, *orb_coeffs = re.split(r"\s*(\w)\s+\d+\s+\d+\.\d+\n", section)
+        if not section:
+            continue
+        atom, *orb_coeffs = re.split(r"\s*(\w+)\s+\d+\s+\d+\.\d+\n", section)
         # find atom
         atom = re.search(r"^(\w+)\s", atom).group(1)
         # assign dict
@@ -260,7 +265,7 @@ def convert_gbs_nwchem(gbs_file: str):
     return gbs_dict
 
 
-def localize(xyz_file, basis_file, is_unrestricted=False, unit='Bohr', method=None):
+def localize(xyz_file, basis_file, mo_coeff_file=None, unit='Bohr', method=None, system_inds=None):
     """Run HF using PySCF.
 
     Parameters
@@ -303,29 +308,37 @@ def localize(xyz_file, basis_file, is_unrestricted=False, unit='Bohr', method=No
     # get coordinates
     with open(xyz_file, "r") as f:
         lines = [i.strip() for i in f.readlines()[2:]]
+        #if unit in ["bohr", "Bohr"]:
+        #    lines = [" ".join([str(float(j) * 0.529177249) if i != 0 else j for i, j in enumerate(line.split())]) for line in lines]
         atoms = ";".join(lines)
+    
 
     # get mol
-    basis = convert_gbs_nwchem(basis_file)
+    if os.path.splitext(basis_file)[1] == ".gbs":
+        basis = convert_gbs_nwchem(basis_file)
+    else:
+        basis = basis_file
     mol = gto.M(
         atom=atoms, basis={i: j for i, j in basis.items() if i + ' ' in atoms}, parse_arg=False,
         unit=unit
     )
 
     # get hf
-    if is_unrestricted:
-        raise NotImplementedError(
-            "Unrestricted or Generalized orbitals are not supported in this" " PySCF wrapper (yet)."
-        )
     hf = scf.RHF(mol)
     # run hf
     hf.scf()
+
     # energies
     energy_nuc = hf.energy_nuc()
     energy_tot = hf.kernel()  # HF is solved here
     energy_elec = energy_tot - energy_nuc
+
     # mo_coeffs
-    mo_coeff = hf.mo_coeff
+    if mo_coeff_file is None:
+        mo_coeff = hf.mo_coeff
+    else:
+        mo_coeff = np.load(mo_coeff_file)
+
     # Get integrals (See pyscf.gto.moleintor.getints_by_shell for other types of integrals)
     # get 1e integral
     one_int_ab = mol.intor("cint1e_nuc_sph") + mol.intor("cint1e_kin_sph")
@@ -333,12 +346,18 @@ def localize(xyz_file, basis_file, is_unrestricted=False, unit='Bohr', method=No
     # get 2e integral
     eri = ao2mo.full(mol, mo_coeff, verbose=0, intor="cint2e_sph")
     two_int = ao2mo.restore(1, eri, mol.nao_nr())
+    # FIXME: pyscf integrals
+    hcore_ao = mol.intor_symmetric('int1e_kin') + mol.intor_symmetric('int1e_nuc')
+    one_int = np.einsum('pi,pq,qj->ij', mo_coeff, hcore_ao, mo_coeff)
+    eri_4fold_ao = mol.intor('int2e_sph', aosym=1)
+    two_int = ao2mo.incore.full(eri_4fold_ao, mo_coeff)
+
     # NOTE: PySCF uses Chemist's notation
     two_int = np.einsum("ijkl->ikjl", two_int)
 
     # labels
     ao_labels = mol.ao_labels()
-    ao_inds = [int(re.search(r'^\d+\s+', label).group(1)) for label in ao_labels]
+    ao_inds = [int(re.search(r'^(\d+)\s+', label).group(1)) for label in ao_labels]
 
     # results
     result = {
@@ -353,22 +372,195 @@ def localize(xyz_file, basis_file, is_unrestricted=False, unit='Bohr', method=No
     if method is None:
         return result
 
-    if method == "iao":
-        t_ab_lo = lo.vec_lowdin(lo.iao.iao(mol, hf.mo_coeff), hf.get_ovlp())
-    elif method == "boys":
-        t_ab_lo = lo.Boys(hf.mol, hf.mo_coeff).kernel()
-    elif method == "pm":
-        t_ab_lo = lo.PM(hf.mol, hf.mo_coeff).kernel()
-    elif method == "er":
-        t_ab_lo = lo.ER(hf.mol, hf.mo_coeff).kernel()
-    t_mo_lo = power_symmetric(mo_coeff, -1).dot(t_ab_lo)
+    # energy check
+    one_energy = np.einsum('ii->i', one_int)
+    two_energy = 2 * np.einsum('ijij->ij', two_int)
+    two_energy -= np.einsum('ijji->ij', two_int)
+    two_energy = np.sum(two_energy[:, :hf.mol.nelectron // 2], axis=1)
+    print("pyscf mo energies:", hf.mo_energy)
+    print("computed mo energies:", one_energy + two_energy)
+    print("pyscf hf electronic energy:", energy_elec)
+    print("computed hf electronic energy:", 2 * np.sum(one_energy[:hf.mol.nelectron // 2]) + np.sum(two_energy[:hf.mol.nelectron // 2]))
+
+    if method != "svd":
+        if method == "iao":
+            t_ab_lo= lo.iao.iao(mol, mo_coeff[:,hf.mo_occ > 0], minao="sto-6g")
+            # Orthogonalize IAO
+            t_ab_lo = lo.vec_lowdin(t_ab_lo, hf.get_ovlp())
+        elif method == "boys":
+            t_ab_lo = lo.Boys(hf.mol, mo_coeff).kernel()
+        elif method == "pm":
+            t_ab_lo = lo.PM(hf.mol, mo_coeff).kernel()
+        elif method == "er":
+            t_ab_lo = lo.ER(hf.mol, mo_coeff).kernel()
+        else:
+            t_ab_lo = np.identity(mo_coeff.shape[0])
+
+        olp_ab_ab = mol.intor_symmetric('int1e_ovlp')
+
+        # find the localized orbitals that contribute the most to occupied mo
+        olp_omo_lo = mo_coeff[:, hf.mo_occ > 0].T.dot(olp_ab_ab).dot(t_ab_lo)
+        indices_lo = np.argsort(np.diag(olp_omo_lo.T.dot(olp_omo_lo)))[::-1]
+        # orbitals that are best spanned by occupied orbitals will be considered "occupied"
+        indices_occ_lo, indices_vir_lo = indices_lo[:hf.mol.nelectron // 2], indices_lo[hf.mol.nelectron // 2:]
+        #print(np.diag(olp_omo_lo.T.dot(olp_omo_lo)))
+        #print(indices_occ_lo)
+        #print(indices_vir_lo)
+
+        # find closest unitary matrix
+        u, _, vh = np.linalg.svd(olp_omo_lo[:, indices_occ_lo])
+        t_omo_olo = u.dot(vh)
+        assert np.allclose(t_omo_olo.T.dot(t_omo_olo), np.identity(t_omo_olo.shape[1]))
+        assert np.allclose(t_omo_olo.dot(t_omo_olo.T), np.identity(t_omo_olo.shape[1]))
+        #t_mo_lo[np.where(hf.mo_occ > 0)[0][:, None], indices_occ_ab[None, :]] = u.dot(vh)
+
+        # find the localized orbitals that contribute the most to virtual mo
+        olp_vmo_lo = mo_coeff[:, hf.mo_occ == 0].T.dot(olp_ab_ab).dot(t_ab_lo)
+        u, _, vh = np.linalg.svd(olp_vmo_lo[:, indices_vir_lo])
+        t_vmo_vlo = u.dot(vh)
+        #t_mo_lo[np.where(hf.mo_occ == 0)[0][:, None], indices_vir_ab[None, :]] = u.dot(vh)
+        assert np.allclose(t_vmo_vlo.T.dot(t_vmo_vlo), np.identity(t_vmo_vlo.shape[1]))
+        assert np.allclose(t_vmo_vlo.dot(t_vmo_vlo.T), np.identity(t_vmo_vlo.shape[1]))
+
+        # make transformation matrix from mo
+        t_mo_lo = scipy.linalg.block_diag(t_omo_olo, t_vmo_vlo)
+        assert np.allclose(t_mo_lo.T.dot(t_mo_lo), np.identity(t_mo_lo.shape[1]))
+        assert np.allclose(t_mo_lo.dot(t_mo_lo.T), np.identity(t_mo_lo.shape[1]))
+
+        # make transformation matrix from ab
+        t_ab_lo = mo_coeff.dot(t_mo_lo)
+
+        # FIXME: check
+        # assign lo to atom/system
+        new_lo_inds = []
+        # I AM ASSUMING THAT LO'S CORRESPOND TO AO'S
+        olp_lo_ab = t_ab_lo.T.dot(olp_ab_ab)
+
+        #np.set_printoptions(precision=3)
+        #print(olp_lo_ab) #for i in indices_occ_lo.tolist() + indices_vir_lo.tolist():
+        for i in range(indices_occ_lo.size + indices_vir_lo.size):
+            ao_ind = np.argmax(np.abs(olp_lo_ab[i]))
+            #print(i, ao_ind, ao_inds[ao_ind])
+            new_lo_inds.append(ao_inds[ao_ind])
+        #print(ao_inds)
+        result["ao_inds"] = new_lo_inds
+        result["nelecs"] = [np.sum(indices_occ_lo == i ) for i in range(max(system_inds) + 1)]
+
+        #print(t_ab_lo)
+    else:
+        MINAO = getattr(__config__, 'lo_iao_minao', 'minao')
+
+        pmol = reference_mol(mol, MINAO)
+        orig_s12 = gto.mole.intor_cross('int1e_ovlp', mol, pmol)
+
+        minao_labels = pmol.ao_labels()
+        minao_inds = np.array([system_inds[int(re.search(r'^(\d+)\s+', label).group(1))] for label in minao_labels])
+        #print(minao_labels)
+        #print(minao_inds)
+
+        coeff_mo_lo = []
+        new_lo_inds = []
+        for sub_mo_coeff in [mo_coeff[:, hf.mo_occ > 0], mo_coeff[:, hf.mo_occ == 0]]:
+            s12 = sub_mo_coeff.T.dot(orig_s12)
+            system_s12 = []
+            for i in range(max(system_inds) + 1):
+                system_s12.append(s12[:, minao_inds == i])
+
+            system_mo_lo_T = [[] for i in range(max(system_inds) + 1)]
+            counter = 0
+            cum_transform = np.identity(s12.shape[0])
+            while counter < sub_mo_coeff.shape[1]:
+                system_u = []
+                system_s = []
+                for s12 in system_s12:
+                    u, s, vdag = np.linalg.svd(s12)
+                    system_u.append(u.T)
+                    system_s.append(s)
+                    # TEST: negative singular value?
+                    assert np.all(s > 0)
+                    #print(s12)
+                    #print(s)
+                # find which system had the largest singular value
+                max_system_ind = np.argmax([max(s) for s in system_s])
+                # find largest singular value
+                max_sigma_ind = np.argmax(system_s[max_system_ind])
+                # add corresponding left singular vector
+                system_mo_lo_T[max_system_ind].append(system_u[max_system_ind][max_sigma_ind].dot(cum_transform))
+                # update overlap matrix (remove singular vector)
+                trunc_transform = np.delete(system_u[max_system_ind], max_sigma_ind, axis=0)
+                assert np.allclose(trunc_transform.dot(trunc_transform.T), np.identity(trunc_transform.shape[0]))
+                for i in range(len(system_s12)):
+                    system_s12[i] = trunc_transform.dot(system_s12[i])
+                # update transformation matrix
+                cum_transform = trunc_transform.dot(cum_transform)
+                # increment
+                counter += 1
+
+            lo_inds = [[i] * len(rows) for i, rows in enumerate(system_mo_lo_T)]
+            lo_inds = [j for i in lo_inds for j in i]
+            new_lo_inds.append(lo_inds)
+            lo_inds = np.array(lo_inds)
+            #print(lo_inds, 'y'*99)
+
+            system_mo_lo_T = np.vstack([np.vstack(rows) for rows in system_mo_lo_T if rows])
+            #np.set_printoptions(linewidth=200)
+            #print(system_mo_lo_T)
+
+            # check orthogonalization
+            s1 = mol.intor_symmetric('int1e_ovlp')
+            transform = system_mo_lo_T.dot(sub_mo_coeff.T)
+            olp = transform.dot(s1).dot(transform.T)
+            #print(olp)
+            assert np.allclose(olp, np.identity(transform.shape[0]))
+
+            # check span
+            s12 = gto.mole.intor_cross('int1e_ovlp', mol, pmol)
+            s12 = sub_mo_coeff.T.dot(s12)
+            s12 = system_mo_lo_T.dot(s12)
+            for i in range(max(system_inds) + 1):
+                # how much is inside
+                system_s12 = s12[lo_inds == i][:, minao_inds == i]
+                #print(np.sum(np.diag(system_s12.T.dot(system_s12))))
+                # how much is outside
+                system_s12 = s12[lo_inds == i][:, minao_inds != i]
+                #print(np.sum(np.diag(system_s12.T.dot(system_s12))))
+
+            assert np.allclose(system_mo_lo_T.dot(system_mo_lo_T.T), np.identity(system_mo_lo_T.shape[0]))
+            coeff_mo_lo.append(system_mo_lo_T.T)
+
+        # visualize
+        #temp = np.zeros((coeff_mo_lo[0].shape[0] + coeff_mo_lo[1].shape[0], coeff_mo_lo[0].shape[1] + coeff_mo_lo[1].shape[1]))
+        #temp[np.where(hf.mo_occ > 0)[0][:, None],  np.where(np.arange(temp.shape[1]) < nelec // 2)[0][None, :]] = coeff_mo_lo[0] 
+        #temp[np.where(hf.mo_occ == 0)[0][:, None], np.where(np.arange(temp.shape[1]) >= nelec // 2)[0][None, :]] = coeff_mo_lo[1] 
+        coeff_mo_lo = scipy.linalg.block_diag(*coeff_mo_lo)
+        #assert np.allclose(coeff_mo_lo, temp)
+        t_ab_lo = mo_coeff.dot(coeff_mo_lo)
+
+        result["ao_inds"] = [j for i in new_lo_inds for j in i]
+        indices_occ_lo = np.array(new_lo_inds[0])
+        result["nelecs"] = [np.sum(indices_occ_lo == i ) for i in range(max(system_inds) + 1)]
+
+    t_mo_lo = np.linalg.solve(mo_coeff, t_ab_lo)
+    t_lo_mo = np.linalg.solve(t_ab_lo, mo_coeff)
+    assert np.allclose(mo_coeff, t_ab_lo.dot(t_lo_mo))
+    # check orthogonal
+    assert np.allclose(t_mo_lo.T.dot(t_mo_lo), np.identity(t_mo_lo.shape[1]))
+
+    #t_mo_lo[np.abs(t_mo_lo) < 1e-7] = 0
+    #t_lo_mo[np.abs(t_lo_mo) < 1e-7] = 0
+    assert np.allclose(t_ab_lo, mo_coeff.dot(t_mo_lo))
+    assert np.allclose(t_mo_lo.T.dot(t_mo_lo), np.identity(t_mo_lo.shape[1]))
+
+    molden.from_mo(mol, f'{method}.molden', t_ab_lo)
+    molden.from_mo(mol, 'mo.molden', mo_coeff)
 
     one_int = t_mo_lo.T.dot(one_int).dot(t_mo_lo)
-    two_int = np.einsum('ijkl,ia->ajkl', two_int, t_ab_lo)
-    two_int = np.einsum('ajkl,jb->abkl', two_int, t_ab_lo)
-    two_int = np.einsum('abkl,kc->abcl', two_int, t_ab_lo)
-    two_int = np.einsum('abcl,ld->abcd', two_int, t_ab_lo)
+    two_int = np.einsum('ijkl,ia->ajkl', two_int, t_mo_lo)
+    two_int = np.einsum('ajkl,jb->abkl', two_int, t_mo_lo)
+    two_int = np.einsum('abkl,kc->abcl', two_int, t_mo_lo)
+    two_int = np.einsum('abcl,ld->abcd', two_int, t_mo_lo)
 
     result['one_int'] = one_int
     result['two_int'] = two_int
+    result['t_ab_mo'] = t_ab_lo
     return result
