@@ -1,5 +1,7 @@
 """Utility function for constructing Wavefunction instances."""
 import os
+from typing import List, Tuple
+
 from fanpy.eqn.utils import ComponentParameterIndices
 from fanpy.wfn.base import BaseWavefunction
 from fanpy.wfn.composite.product import ProductWavefunction
@@ -7,7 +9,9 @@ from fanpy.tools import slater
 
 import numpy as np
 
-from scipy.optimize import OptimizeResult, least_squares, root, minimize
+#from scipy.optimize import OptimizeResult, least_squares, root, minimize
+from scipy.optimize import OptimizeResult, root, minimize
+from fanpy.solver.least_squares_fanci import least_squares
 import cma
 
 
@@ -179,6 +183,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
     from typing import Any, Tuple, Union
     import pyci
     from fanci.fanci import FanCI
+    from fanci.alias import Alias
 
     class GeneratedFanCI(FanCI):
         """Generated FanCI wavefunction class from the fanpy wavefunction.
@@ -188,8 +193,8 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
         """
         def __init__(
             self,
-            fanpy_wfn: BaseWavefunction,
             ham: pyci.hamiltonian,
+            fanpy_wfn: BaseWavefunction,
             nocc: int,
             nproj: int = None,
             wfn: pyci.doci_wfn = None,
@@ -201,6 +206,8 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             param_selection = None,
             mask=None,
             objective_type: str = "projected",
+            constraints=None,
+            norm_det=None,
             **kwargs: Any,
         ) -> None:
             r"""
@@ -254,6 +261,7 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                     self.indices_component_params[component] = indices
             self.tmpfile = tmpfile
             self.objective_type = objective_type
+            self.seniority = seniority
             self.print_queue = {}
 
             mask = []
@@ -281,10 +289,11 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                     wfn = pyci.fullci_wfn(ham.nbasis, nocc - nocc // 2, nocc // 2)
 
             # constraints
-            constraints = {"<\\Phi|\\Psi> - 1>": self.make_norm_constraint()}
+            if constraints is None and norm_det is None:
+                constraints = {"<\\Phi|\\Psi> - 1>": self.make_norm_constraint()}
 
             # Initialize base class
-            FanCI.__init__(self, ham, wfn, nproj, nparam, fill=fill, mask=mask, constraints=constraints, **kwargs)
+            FanCI.__init__(self, ham, wfn, nproj, nparam, fill=fill, mask=mask, constraints=constraints, norm_det=norm_det, **kwargs)
 
         def compute_overlap(self, x: np.ndarray, occs_array: Union[np.ndarray, str]) -> np.ndarray:
             r"""
@@ -748,4 +757,101 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             for data_type, data in self.print_queue.items():
                 print(f"(Mid Optimization) {data_type}: {data}")
 
-    return GeneratedFanCI(wfn, ham, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)
+        def optimize_stochastic(
+            self,
+            nsamp: int,
+            x0: np.ndarray,
+            mode: str = "lstsq",
+            use_jac: bool = False,
+            fill: str = "excitation",
+            **kwargs: Any,
+        ) -> List[Tuple[np.ndarray]]:
+            r"""
+            Run a stochastic optimization of a FanCI wave function.
+
+            Parameters
+            ----------
+            nsamp: int
+                Number of samples to compute.
+            x0 : np.ndarray
+                Initial guess for wave function parameters.
+            mode : ('lstsq' | 'root' | 'cma'), default='lstsq'
+                Solver mode.
+            use_jac : bool, default=False
+                Whether to use the Jacobian function or a finite-difference approximation.
+            fill : ('excitation' | 'seniority' | None)
+                Whether to fill the projection ("P") space by excitation level, by seniority, or not
+                at all (in which case ``wfn`` must already be filled).
+            kwargs : Any, optional
+                Additional keyword arguments to pass to optimizer.
+
+            Returns
+            -------
+            result : List[Tuple[np.ndarray]]
+                List of (occs, coeffs, params) vectors for each solution.
+
+            """
+            # Get wave function information
+            ham = self._ham
+            nproj = self._nproj
+            nparam = self._nparam
+            nbasis = self._wfn.nbasis
+            nocc_up = self._wfn.nocc_up
+            nocc_dn = self._wfn.nocc_dn
+            constraints = self._constraints
+            mask = self._mask
+            ci_cls = self._wfn.__class__
+            # Start at sample 1
+            isamp = 1
+            result = []
+            # Iterate until nsamp samples are reached
+            #**kwargs: Any,
+            while True:
+                # Optimize this FanCI wave function and get the result
+                opt = self.optimize(x0, mode=mode, use_jac=use_jac, **kwargs)
+                energy = opt.x[-1]
+                if opt.success:
+                    print('Optimization was successful')
+                else:
+                    print('Optimization was not successful: {}'.format(opt.message))
+                print('Final Electronic Energy for sample {isamp}: {}'.format(energy))
+                x0 = opt.x
+                coeffs = self.compute_overlap(x0[:-1], "S")
+                prob = (coeffs ** 2)
+                prob /= np.sum(prob)
+                nonzero_prob = prob[prob > 0]
+                if nproj > nonzero_prob.size:
+                    print(f"Number of nonzero coefficients, {nonzero_prob.size}, is less than the projection space, {nproj}. Truncating projectionspace")
+                    nproj = nonzero_prob.size
+                # Add the result to our list
+                result.append((np.copy(self.sspace), coeffs, x0))
+                # Check if we're done manually each time; this avoids an extra
+                # CI matrix preparation with an equivalent "for" loop
+                if isamp >= nsamp:
+                    return result
+                # Try to get the garbage collector to remove the old CI matrix
+                del self._ci_op
+                self._ci_op = None
+                # Make new FanCI wave function in-place
+                self.__init__(
+                    ham,
+                    self._fanpy_wfn,
+                    nocc_up + nocc_dn,
+                    nproj=nproj,
+                    # Generate new determinants from "S" space via alias method
+                    wfn=ci_cls(nbasis, nocc_up, nocc_dn, self.sspace[sorted(np.random.choice(np.arange(prob.size), size=nproj, p=prob, replace=False))]),
+                    #wfn=ci_cls(nbasis, nocc_up, nocc_dn, self.sspace[Alias(coeffs ** 2)(nproj)]),
+                    constraints=constraints,
+                    mask=mask,
+                    fill=fill,
+                    seniority=self.seniority,
+                    step_print=self.step_print,
+                    step_save=self.step_save,
+                    tmpfile=self.tmpfile,
+                    param_selection=self.indices_component_params,
+                    objective_type=self.objective_type,
+                )
+                # Go to next iteration
+                isamp += 1
+
+    return GeneratedFanCI(ham, wfn, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)
