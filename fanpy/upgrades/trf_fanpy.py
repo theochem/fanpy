@@ -508,7 +508,7 @@ class ProjectedSchrodingerSystem(ProjectedSchrodinger):
             param_selection=objective.indices_component_params,
             pspace=objective.pspace,
             refwfn=objective.refwfn,
-            eqn_weights=np.hstack([objective.eqn_weights[:objective.eqn_weights.size-len(eqn.constraints)], 1]),
+            eqn_weights=np.hstack([objective.eqn_weights[:objective.eqn_weights.size-len(objective.constraints)], 1]),
             energy_type=objective.energy_type if not variable_energy else 'compute',
             energy=objective.energy.params[0],
             constraints=[NormConstraintSystem(objective)],
@@ -569,7 +569,7 @@ class NormConstraintSystem(NormConstraint):
     def objective(self, params):
         get_overlap = self.wrapped_get_overlap
         overlaps = np.array([get_overlap(i) for i in self.refwfn])
-        print(np.sort(np.abs(overlaps))[:-5:-1], len(self.refwfn), len(self.wfn.probable_sds), 'norm')
+        #print(np.sort(np.abs(overlaps))[:-5:-1], len(self.refwfn), len(self.wfn.probable_sds), 'norm')
         return np.sum(overlaps ** 2) - 1
 
     def gradient(self, params):
@@ -590,7 +590,7 @@ def least_squares(
     kwargs.setdefault("xtol", 1.0e-15)
     kwargs.setdefault("ftol", 1.0e-15)
     kwargs.setdefault("gtol", 1.0e-15)
-    kwargs.setdefault("max_nfev", 1000 * objective.params.size)
+    kwargs.setdefault("max_nfev", 1000 * objective.active_params.size)
     kwargs["jac"] = objective.jacobian
     kwargs.setdefault("tr_options", {}) 
     kwargs['tr_options']['schrodinger'] = objective
@@ -601,17 +601,17 @@ def least_squares(
     objective.step_print = False
     objective.print_queue = {}
 
-    low_bounds = [param_bounds[0]] * objective.params.size
-    upp_bounds = [param_bounds[1]] * objective.params.size
+    low_bounds = [param_bounds[0]] * objective.active_params.size
+    upp_bounds = [param_bounds[1]] * objective.active_params.size
     if objective.energy_type == 'variable':
         low_bounds[-1] = energy_bounds[0]
         upp_bounds[-1] = energy_bounds[1]
 
     if energy_bounds != (-np.inf, np.inf) or param_bounds != (-np.inf, np.inf):
-        output = wrap_scipy(solver)(objective, bounds=(low_bounds, upp_bounds), save_file=save_file,
+        output = wrap_scipy(solver)(objective, bounds=(low_bounds, upp_bounds),
                                     verbose=2, **kwargs)
     else:
-        output = wrap_scipy(solver)(objective, save_file=save_file, verbose=2, **kwargs)
+        output = wrap_scipy(solver)(objective, verbose=2, **kwargs)
     output["energy"] = objective.energy.params[0]
     output["residuals"] = output["internal"].fun
     output["cost"] = output["internal"].cost
