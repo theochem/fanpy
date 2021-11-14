@@ -338,7 +338,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     else:
         raise ValueError("Unsupported solver")
 
-    if nproj == -1:
+    if nproj == 0:
         from_imports.append(("scipy.special", "comb"))
 
     if memory is not None:
@@ -514,8 +514,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "# Projection space\n"
     output += "print('Projection space by excitation')\n"
     output += "fill = 'excitation'\n"
-    if nproj == -1:
+    if nproj == 0:
         output += "nproj = int(comb(nspin // 2, nelec - nelec // 2) * comb(nspin // 2, nelec // 2))\n"
+    elif nproj < 0:
+        output += f"nproj = int(wfn.nparams * {-nproj}) + 1\n"
     else:
         output += f"nproj = {nproj}\n"
     output += "\n"

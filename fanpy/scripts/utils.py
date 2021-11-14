@@ -438,9 +438,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--nproj",
-    type=int,
+    type=float,
     dest="nproj",
-    default=None,
+    default=0,
     required=False,
     help= "Number of states in the projection space.",
 )
