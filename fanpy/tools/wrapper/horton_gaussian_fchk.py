@@ -97,7 +97,7 @@ def gaussian_fchk(fchk_file, horton_internal=False):
 
 if __name__ == "__main__":
     # extract keyword from command line
-    kwargs = {key: val for key, val in zip(sys.argv[4::2], sys.argv[5::2])}  # pylint: disable=R1721
+    kwargs = {key: val for key, val in zip(sys.argv[5::2], sys.argv[6::2])}  # pylint: disable=R1721
     # change data types
     if "horton_internal" in kwargs:
         kwargs["horton_internal"] = kwargs["horton_internal"] == "True"
