@@ -240,13 +240,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apsetgd":
-        from_imports.append(("fanpy.wfn.cc.apsetg_d", "APsetGD"))
-        wfn_name = "APsetGD"
+        from_imports.append(("fanpy.wfn.cc.apset1rog_d", "APset1roGD"))
+        wfn_name = "APset1roGD"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apsetgsd":
-        from_imports.append(("fanpy.wfn.cc.apsetg_sd", "APsetGSD"))
-        wfn_name = "APsetGSD"
+        from_imports.append(("fanpy.wfn.cc.apset1rog_sd", "APset1roGSD"))
+        wfn_name = "APset1roGSD"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apg1rod":
@@ -467,7 +467,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
             output += "# Load checkpoint\n"
             output += "chk_point_file = '{}'\n".format(load_chk)
             output += "chk_point = np.load(chk_point_file)\n"
-            if objective in ["projected", "system_qmc", "least_squares", "one_energy_system"]:
+            if objective in ["projected", "system_qmc", "least_squares", "one_energy_system", "projected_stochastic"]:
                 output += "if chk_point.size == objective.params.size - 1 and objective.energy_type == 'variable':\n"
                 output += '    objective.assign_params(np.hstack([chk_point, 0]))\n'
                 output += "elif chk_point.size - 1 == objective.params.size and objective.energy_type != 'variable':\n"

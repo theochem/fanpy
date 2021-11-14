@@ -239,13 +239,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apsetgd":
-        from_imports.append(("fanpy.wfn.cc.apsetg_d", "APsetGD"))
-        wfn_name = "APsetGD"
+        from_imports.append(("fanpy.wfn.cc.apset1rog_d", "APset1roGD"))
+        wfn_name = "APset1roGD"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apsetgsd":
-        from_imports.append(("fanpy.wfn.cc.apsetg_sd", "APsetGSD"))
-        wfn_name = "APsetGSD"
+        from_imports.append(("fanpy.wfn.cc.apset1rog_sd", "APset1roGSD"))
+        wfn_name = "APset1roGSD"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
     elif wfn_type == "apg1rod":
