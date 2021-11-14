@@ -6,6 +6,7 @@ from collections import Counter
 from fanpy.tools import slater
 from fanpy.tools import graphs
 from fanpy.wfn.cc.base import BaseCC
+from fanpy.wfn.base import BaseWavefunction
 
 
 
@@ -14,7 +15,7 @@ class EmbeddedCC(BaseCC):
 
     """
     def __init__(self, nelec_list, nspin_list, indices_list, cc_list, memory=None, ranks_list=None,
-                 exop_indices_list=None, inter_exops=None, refwfn=None, params_list=None,
+                 exop_indices_list=None, inter_exops=None, refwfn_list=None, params_list=None,
                  inter_params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
@@ -51,7 +52,7 @@ class EmbeddedCC(BaseCC):
             annihilation to the creation operators.
 
         """
-        super().__init__(sum(nelec_list), sum(nspin_list), memory=memory)
+        BaseWavefunction.__init__(self, sum(nelec_list), sum(nspin_list), memory=memory)
 
         # check that nspin matches indices list
         # check that lists have same length
@@ -78,19 +79,15 @@ class EmbeddedCC(BaseCC):
             ranks = max(nelec_list)
         elif isinstance(ranks_list, list) and isinstance(ranks_list[0], int):
             ranks = max(ranks_list)
-        elif isinstance(ranks_list, list) and isinstance(ranks_list[0], list) and isinstance(ranks_list[0][0]):
+        elif isinstance(ranks_list, list) and isinstance(ranks_list[0], list) and isinstance(ranks_list[0][0], int):
             ranks = sorted(set(i for ranks in ranks_list for i in ranks))
-        self.assign_ranks(ranks=ranks)
+        #self.assign_ranks(ranks=ranks)
 
-        self.assign_refwfn(refwfn=refwfn)
-        occ_indices_list = [[] for i in self.indices_list]
-        for i in slater.occ_indices(self.refwfn):
-            system_ind, j = dict_system_sub[i]
-            occ_indices_list[system_ind].append(j)
-        refwfn_list = []
-        for occ_indices in occ_indices_list:
-            refwfn_list.append(slater.create(0, *occ_indices))
-        # NOTE: not used by class but is used to test
+        if not refwfn_list:
+            refwfn_list = []
+            for nelec, nspin in zip(nelec_list, nspin_list):
+                refwfn_list.append(slater.ground(nelec, nspin))
+            # NOTE: not used by class but is used to test
         self.refwfn_list = refwfn_list
 
         # mapping subystem orbitals to system orbitals
@@ -107,6 +104,10 @@ class EmbeddedCC(BaseCC):
                 exop_indices_list, nelec_list, nspin_list, ranks_list, refwfn_list, cc_list,
                 params_list, range(len(nelec_list))
         ):
+            if nelec == 0:
+                continue
+            if nspin == 0:
+                raise ValueError
             # cc's
             cc_sub = CC(nelec, nspin, ranks=ranks, indices=exop_indices, refwfn=refwfn_sub,
                         params=cc_params)
@@ -118,14 +119,18 @@ class EmbeddedCC(BaseCC):
             }
             # convert indices
             self.exops.update(cc_exops)
-            counter += len(self.exops)
+            counter = len(self.exops)
         if inter_exops:
             for exop in inter_exops:
                 assert exop not in self.exops
                 self.exops[exop] = len(self.exops)
+            # FIXME: assume all unique parameters
             if inter_params is not None:
                 assert len(inter_exops) == inter_params.size
                 params.append(inter_params)
+            else:
+                params.append(np.zeros(len(inter_exops)))
+
         self.params = np.hstack(params)
 
         self._cache_fns = {}
