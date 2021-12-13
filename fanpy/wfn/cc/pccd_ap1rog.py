@@ -258,9 +258,9 @@ class PCCD(BaseCC):
             if slater.total_occ(refwfn) != self.nelec:
                 raise ValueError('refwfn must have {} electrons'.format(self.nelec))
             if not all([i + self.nspatial in slater.occ_indices(refwfn) for i in
-                        slater.occ_indices(refwfn)[:self.nspatial]] +
+                        slater.occ_indices(refwfn)[:self.nelec // 2]] +
                        [i - self.nspatial in slater.occ_indices(refwfn) for i in
-                        slater.occ_indices(refwfn)[self.nspatial:]]):
+                        slater.occ_indices(refwfn)[self.nelec // 2:]]):
                 raise ValueError('refwfn must be a seniority-0 wavefuntion')
             # TODO: check that refwfn has the right number of spin-orbs
             self.refwfn = refwfn
@@ -417,7 +417,7 @@ class PCCD(BaseCC):
             indices_multi = self.exop_combinations[tuple(a_inds + c_inds)]
             # FIXME: filter out rows whose excitation operators do not have annihilator that is 
             # doubly occupied
-            occ_indices = set(slater.occ_indices(sd))
+            occ_indices = set(slater.occ_indices(sd2))
             for exc_order in indices_multi:
                 indices_sign = indices_multi[exc_order]
                 selected_rows = []
