@@ -80,9 +80,13 @@ class EmbeddedCC(BaseCC):
         elif isinstance(ranks_list, list) and isinstance(ranks_list[0], int):
             ranks = max(ranks_list)
         elif isinstance(ranks_list, list) and isinstance(ranks_list[0], list) and isinstance(ranks_list[0][0], int):
-            ranks = sorted(set(i for ranks in ranks_list for i in ranks))
-        #self.assign_ranks(ranks=ranks)
+            ranks = sorted(set(i for ranks in ranks_list if ranks for i in ranks))
+        # FIXME: hard coded ranks
+        else:
+            ranks = 2
+        self.assign_ranks(ranks=ranks)
 
+        self.assign_refwfn(refwfn=None)
         if not refwfn_list:
             refwfn_list = []
             for nelec, nspin in zip(nelec_list, nspin_list):
