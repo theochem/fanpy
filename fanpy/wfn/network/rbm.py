@@ -6,10 +6,33 @@ import numpy as np
 
 
 class RestrictedBoltzmannMachine(BaseWavefunction):
+    """
+
+    Parameters
+    ----------
+    nbath : int
+        Number of auxiliary states.
+    orders : np.ndarray(int)
+        Orders of correlations between orpitals that are accoutned for.
+    num_layers : int
+        Number of layers in feed forward neural network analog
+    activation_type : "tanh", "exp", "cosh"
+        Activation function used in RBM.
+    forward_cache_lin : list
+        Low end cache (linear transformation layer) to use for backpropogation (derivative)
+    forward_cache_act : list
+        Low end cache (activation layer) to use for backpropogation (derivative)
+
+    """
     def __init__(
-        self, nelec, nspin, nbath, params=None, memory=None, num_layers=1, orders=(1, 2)
+        self, nelec, nspin, nbath, params=None, memory=None, num_layers=1, orders=(1, 2), activation_type="exp",
     ):
         super().__init__(nelec, nspin, memory=memory)
+
+        if activation_type not in ["tanh", "exp", "cosh"]:
+            raise ValueError(f"Unsupported activation type, {activation_type}")
+        self.activation_type = activation_type
+
         self.nbath = nbath
         self.orders = np.array(orders)
         self.num_layers = num_layers
@@ -134,6 +157,7 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
             #     params.append(np.eye(*param_shape) * scalle)
 
         # self.output_scale = scale
+        # FIXME: not sure why 0.5
         self.output_scale = 0.5
         self._template_params = params
 
@@ -179,17 +203,21 @@ class RestrictedBoltzmannMachine(BaseWavefunction):
 
         self.clear_cache()
 
-    @staticmethod
-    def activation(x):
-        # return np.tanh(x)
-        return 1 + np.exp(x)
-        # return 2 * np.cosh(x)
+    def activation(self, x):
+        if self.activation_type == "tanh":
+            return np.tanh(x)
+        if self.activation_type == "exp":
+            return 1 + np.exp(x)
+        if self.activation_type == "cosh":
+            return 2 * np.cosh(x)
 
-    @staticmethod
-    def activation_deriv(x):
-        # return 1 - np.tanh(x) ** 2
-        return np.exp(x)
-        # return 2 * np.sinh(x)
+    def activation_deriv(self, x):
+        if self.activation_type == "tanh":
+            return 1 - np.tanh(x) ** 2
+        if self.activation_type == "exp":
+            return np.exp(x)
+        if self.activation_type == "cosh":
+            return 2 * np.sinh(x)
 
     def get_overlap(self, sd, deriv=None):
         r"""Return the overlap of the wavefunction with a Slater determinant.
