@@ -702,9 +702,9 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
             # Parse mode parameter; choose optimizer and fix arguments
             if mode == "lstsq":
                 optimizer = least_squares
-                opt_kwargs.setdefault("xtol", 1.0e-15)
-                opt_kwargs.setdefault("ftol", 1.0e-15)
-                opt_kwargs.setdefault("gtol", 1.0e-15)
+                opt_kwargs.setdefault("xtol", 1.0e-8)
+                opt_kwargs.setdefault("ftol", 1.0e-8)
+                opt_kwargs.setdefault("gtol", 1.0e-8)
                 opt_kwargs.setdefault("max_nfev", 1000 * self.nactive)
                 opt_kwargs.setdefault("verbose", 2)
                 # self.step_print = False
