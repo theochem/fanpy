@@ -13,8 +13,9 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     filename=None,
     memory=None,
     constraint=None,
-    disjoint=True,
-    loc_type="pm"
+    wfn_noise=0,
+    loc_type="pm",
+    orbital_optimization=True,
 ):
     """Make a script for running calculations.
 
@@ -43,10 +44,11 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
             "from fanpy.upgrades import speedup_sign",
             """from fanpy.upgrades import speedup_sign
 import fanpy.tools.slater as slater
-from fanpy.wfn.composite.embedding_fixedelectron import FixedEmbeddedWavefunction""",
+from fanpy.wfn.cc.embedding import EmbeddedCC""",
             output
     )
 
+    # FIXME: double check if indentation needed
     if loc_type == "svd":
         indices_list_assign = """indices_list[ao_ind].append(i)
 indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
@@ -57,22 +59,58 @@ indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_bet
     wavefunction_preamble = f"""# System indices
 system_inds = {atom_system_inds}
 
-# Orbital labels
+# Orbital labels (index of the atom to which each localized spatial orbital is assigned)
 ao_inds = np.load('{ao_inds_file}')
 indices_list = [[] for _ in range(max(system_inds) + 1)] 
 for i, ao_ind in enumerate(ao_inds):
     {indices_list_assign}
 indices_list = [sorted(i) for i in indices_list]
 
+print("Spin orbital indices of each subsystem:")
+print(indices_list)
+
 # Number of electrons in each system
 # assuming ground state corresponds to first N/2 alpha and N/2 beta orbitals occupied
 npairs = nelec // 2
 nspatial = nspin // 2
 """ 
+    # FIXME: hardcode electonrs
+
+    wavefunction_preamble += "nelecs = []\n"
     for k in range(len(script_filenames)):
         wavefunction_preamble += f"""nelec{k+1} = len([i for i in indices_list[{k}] if i < npairs or nspatial <= i < nspatial + npairs])
+nelecs.append(nelec{k+1})
 print('Number of Electrons in System {k+1}: {{}}'.format(nelec{k+1}))
 """
+    if orbital_optimization:
+        wavefunction_preamble += fr"""# Add single excitation between systems
+import itertools as it
+from fanpy.tools.slater import ground, occ_indices, vir_indices
+ground_sd = ground(nelec, nspin)
+indices_occ = set(occ_indices(ground_sd))
+
+inter_exops = []
+for indices1, indices2 in it.combinations(indices_list, 2):
+    # FIXME: split into occupied and virtual
+    for i_occ in indices1:
+        if i_occ not in indices_occ:
+            continue
+        for j_vir in indices2:
+            if j_vir in indices_occ:
+                continue
+            inter_exops.append((i_occ, j_vir))
+    for j_occ in indices2:
+        if j_occ not in indices_occ:
+            continue
+        for i_vir in indices1:
+            if i_vir in indices_occ:
+                continue
+            inter_exops.append((j_occ, i_vir))
+inter_exops = list(set(inter_exops))
+""" 
+    else:
+        wavefunction_preamble += fr"""inter_exops = []\n"""
+
     wavefunction_preamble += "\n# Initialize wavefunction 1"
     output = re.sub(r"# Initialize wavefunction", wavefunction_preamble, output)
     output = re.sub(r"wfn = ([\w\d]+)\(nelec, nspin", r"wfn1 = \1(nelec1, len(indices_list[0])", output)
@@ -102,8 +140,19 @@ print('Number of Electrons in System {k+1}: {{}}'.format(nelec{k+1}))
     nelecs = ", ".join([f"nelec{i}" for i in range(1, len(script_filenames) + 1)])
     output = re.sub(
         r"""# Initialize Hamiltonian""",
+#        fr"""# Initialize wavefunction
+#from fanpy.wfn.cc.embedding import EmbeddedCC
+#wfn = EmbeddedCC([nelec1, nelec2], [len(indices) for indices in indices_list], indices_list, wfn_list, memory='6gb', params_list=None, ranks_list=ranks_list, exop_indices_list=None,
+#                 inter_exops=inter_exops, refwfn_list=None,
+#                 exop_combinations=None, refresh_exops=50000)
+#print('Wavefunction: Embedded Fixed Electrons')
+#
+## Initialize Hamiltonian""", 
         fr"""# Initialize wavefunction
-wfn = FixedEmbeddedWavefunction(nelec, [{nelecs}], nspin, indices_list, wfn_list, memory=None, disjoint={disjoint})
+from fanpy.wfn.cc.embedding import EmbeddedCC
+wfn = EmbeddedCC(nelecs, [len(indices) for indices in indices_list], indices_list, wfn_list, memory='6gb',
+                 inter_exops=inter_exops, exop_combinations=None, refresh_exops=50000)
+wfn.assign_params(wfn.params + {wfn_noise} * 2 * (np.random.rand(*wfn.params.shape) - 0.5))
 print('Wavefunction: Embedded Fixed Electrons')
 
 # Initialize Hamiltonian""", 
@@ -111,13 +160,6 @@ print('Wavefunction: Embedded Fixed Electrons')
     )
 
     output = re.sub(r"(nproj = .+)wfn.nparams", r"\1sum(i.nparams for i in wfn_list)", output)
-
-    params_selection = [f"(wfn{i}, np.ones(wfn{i}.nparams, dtype=bool))" for i in range(1, len(script_filenames) + 1)]
-    output = re.sub(
-        r"param_selection = \[\(wfn, np.ones\(wfn.nparams, dtype=bool\)\)\]",
-        f"param_selection = [{', '.join(params_selection)}]",
-        output
-    )
 
     if filename is None:  # pragma: no cover
         print(output)
