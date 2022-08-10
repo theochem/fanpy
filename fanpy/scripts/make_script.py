@@ -238,12 +238,12 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         wfn_name = "AP1roGSDSpin"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
-    elif wfn_type == "apsetgd":
+    elif wfn_type == "apset1rogd":
         from_imports.append(("fanpy.wfn.cc.apset1rog_d", "APset1roGD"))
         wfn_name = "APset1roGD"
         if wfn_kwargs is None:
             wfn_kwargs = "ranks=None, indices=None, refwfn=None, exop_combinations=None"
-    elif wfn_type == "apsetgsd":
+    elif wfn_type == "apset1rogsd":
         from_imports.append(("fanpy.wfn.cc.apset1rog_sd", "APset1roGSD"))
         wfn_name = "APset1roGSD"
         if wfn_kwargs is None:
@@ -337,7 +337,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         from_imports.append(("fanpy.upgrades.bfgs_fanpy", "bfgs_minimize"))
         solver_name = "bfgs_minimize"
         if solver_kwargs is None:
-            solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 1e-8, 'disp':True}"
+            solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 5e-7, 'disp':True}"
     elif solver == "least_squares":
         from_imports.append(("fanpy.solver.system", "least_squares"))
         solver_name = "least_squares"
