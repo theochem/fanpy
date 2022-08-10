@@ -14,9 +14,8 @@ class EmbeddedCC(BaseCC):
     """Embedding of multiple subsystems.
 
     """
-    def __init__(self, nelec_list, nspin_list, indices_list, cc_list, memory=None, ranks_list=None,
-                 exop_indices_list=None, inter_exops=None, refwfn_list=None, params_list=None,
-                 inter_params=None, exop_combinations=None, refresh_exops=None):
+    def __init__(self, nelec_list, nspin_list, indices_list, cc_list, memory=None,
+                 inter_exops=None, inter_params=None, exop_combinations=None, refresh_exops=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -74,47 +73,16 @@ class EmbeddedCC(BaseCC):
         self.dict_system_sub = dict_system_sub
         self.dict_sub_system = dict_sub_system
 
-        # FIXME: ranks is bigger than it need to be
-        if ranks_list is None:
-            ranks = max(nelec_list)
-        elif isinstance(ranks_list, list) and isinstance(ranks_list[0], int):
-            ranks = max(ranks_list)
-        elif isinstance(ranks_list, list) and isinstance(ranks_list[0], list) and isinstance(ranks_list[0][0], int):
-            ranks = sorted(set(i for ranks in ranks_list if ranks for i in ranks))
-        # FIXME: hard coded ranks
-        else:
-            ranks = 2
-        self.assign_ranks(ranks=ranks)
+        self.assign_ranks(ranks=max(max(cc.ranks) for cc in cc_list))
 
         self.assign_refwfn(refwfn=None)
-        if not refwfn_list:
-            refwfn_list = []
-            for nelec, nspin in zip(nelec_list, nspin_list):
-                refwfn_list.append(slater.ground(nelec, nspin))
-            # NOTE: not used by class but is used to test
-        self.refwfn_list = refwfn_list
 
         # mapping subystem orbitals to system orbitals
-        if exop_indices_list is None:
-            exop_indices_list = [None] * len(nelec_list)
-        if ranks_list is None:
-            ranks_list = [None] * len(nelec_list)
-        if params_list is None:
-            params_list = [None] * len(nelec_list)
         params = []
         self.exops = {}
         counter = 0
-        for exop_indices, nelec, nspin, ranks, refwfn_sub, CC, cc_params, system_ind in zip(
-                exop_indices_list, nelec_list, nspin_list, ranks_list, refwfn_list, cc_list,
-                params_list, range(len(nelec_list))
-        ):
-            if nelec == 0:
-                continue
-            if nspin == 0:
-                raise ValueError
+        for cc_sub, system_ind in zip(cc_list, range(len(nelec_list))):
             # cc's
-            cc_sub = CC(nelec, nspin, ranks=ranks, indices=exop_indices, refwfn=refwfn_sub,
-                        params=cc_params)
             params.append(cc_sub.params)
             # FIXME: CHECK EXOPS
             cc_exops = {
@@ -125,7 +93,7 @@ class EmbeddedCC(BaseCC):
             self.exops.update(cc_exops)
             counter = len(self.exops)
         if inter_exops:
-            for exop in inter_exops:
+            for exop in sorted(inter_exops):
                 assert exop not in self.exops
                 self.exops[exop] = len(self.exops)
             # FIXME: assume all unique parameters
