@@ -16,7 +16,7 @@ from fanpy.tools.math_tools import power_symmetric
 import numpy as np
 import scipy.linalg
 
-from pyscf import ao2mo, gto, lo, scf, __config__
+from pyscf import ao2mo, gto, lo, scf, __config__, tools
 from pyscf.fci import cistring
 from pyscf.lib import hermi_triu, load_library
 from pyscf.tools import molden
@@ -265,7 +265,7 @@ def convert_gbs_nwchem(gbs_file: str):
     return gbs_dict
 
 
-def localize(xyz_file, basis_file, mo_coeff_file=None, unit='Bohr', method=None, system_inds=None):
+def localize(xyz_file, basis_file, mo_coeff_file=None, unit='Bohr', method=None, system_inds=None, cubes=False, cube_dim=40):
     """Run HF using PySCF.
 
     Parameters
@@ -539,7 +539,7 @@ def localize(xyz_file, basis_file, mo_coeff_file=None, unit='Bohr', method=None,
         result["ao_inds"] = [j for i in new_lo_inds for j in i]
         indices_occ_lo = np.array(new_lo_inds[0])
         result["nelecs"] = [np.sum(indices_occ_lo == i ) for i in range(max(system_inds) + 1)]
-
+    
     t_mo_lo = np.linalg.solve(mo_coeff, t_ab_lo)
     t_lo_mo = np.linalg.solve(t_ab_lo, mo_coeff)
     assert np.allclose(mo_coeff, t_ab_lo.dot(t_lo_mo))
@@ -553,6 +553,13 @@ def localize(xyz_file, basis_file, mo_coeff_file=None, unit='Bohr', method=None,
 
     molden.from_mo(mol, f'{method}.molden', t_ab_lo)
     molden.from_mo(mol, 'mo.molden', mo_coeff)
+
+    # make cube file
+    if cubes:
+        for i in range(t_ab_lo.shape[1]):
+            tools.cubegen.orbital(mol, f"lo{i}.cube", t_ab_lo[:,i], nx=cube_dim, ny=cube_dim, nz=cube_dim)
+        for i in range(mo_coeff.shape[1]):
+            tools.cubegen.orbital(mol, f"mo{i}.cube", mo_coeff[:,i], nx=cube_dim, ny=cube_dim, nz=cube_dim)
 
     one_int = t_mo_lo.T.dot(one_int).dot(t_mo_lo)
     two_int = np.einsum('ijkl,ia->ajkl', two_int, t_mo_lo)
