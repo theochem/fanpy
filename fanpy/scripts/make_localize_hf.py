@@ -1,5 +1,5 @@
 
-def make_script(xyzfile, basisfile, method, system_inds, unit="Bohr", mo_coeff_file=None, filename="calculate.py"):
+def make_script(xyzfile, basisfile, method, system_inds, unit="Bohr", mo_coeff_file=None, filename="calculate.py", cubes=False, cube_dim=40):
     if mo_coeff_file is not None:
         mo_coeff_file = f'"{mo_coeff_file}"'
 
@@ -19,7 +19,7 @@ with open('./system.xyz', 'w') as f:
         f.write(line)
 
 results = localize("./system.xyz", "{basisfile}", mo_coeff_file={mo_coeff_file}, unit="{unit}",
-                   method="{method}", system_inds={system_inds})
+                   method="{method}", system_inds={system_inds}, cubes={cubes}, cube_dim={cube_dim})
 
 print(f"Nuclear-nuclear repulsion: {{results['nuc_nuc']}}")
 print(f"HF Electronic Energy: {{results['hf_energy']}}")
