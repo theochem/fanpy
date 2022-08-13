@@ -1,5 +1,6 @@
 """Code generating script."""
 import os
+import re
 import textwrap
 
 from fanpy.scripts.utils import check_inputs, parser
@@ -17,6 +18,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     objective="projected",
     solver="least_squares",
     solver_kwargs=None,
+    fanpt=False,
+    fanpt_kwargs=None,
+    fanpt_solver=None,
+    fanpt_solver_kwargs=None,
     wfn_kwargs=None,
     ham_noise=0.0,
     wfn_noise=0.0,
@@ -73,7 +78,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         Keyword `root` uses the MINPACK hybrd routine.
         Must be one of `cma`, `diag`, `least_squares`, or `root`.
         Must be compatible with the objective.
-    solver_kwargs : {str, None}
+    solver_kwargs : {dict, None}
         Keyword arguments for the solver.
     wfn_kwargs : {str, None}
         Keyword arguments for the wavefunction.
@@ -313,6 +318,10 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     from_imports.append(("fanpy.tools.sd_list", "sd_list"))
 
+    if fanpt and fanpt_solver:
+        solver = fanpt_solver
+        solver_kwargs = fanpt_solver_kwargs
+
     if solver == "least_squares":
         if solver_kwargs is None:
             solver_kwargs = (
@@ -335,17 +344,21 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
         if solver_kwargs is None:
             solver_kwargs = "method='BFGS', options={'gtol': 5e-7, 'disp':True}"
         solver_kwargs = ", ".join(["mode='bfgs', use_jac=True", solver_kwargs])
-    elif solver == "fanpt":
-        from_imports.append(("fanci.fanpt_wrapper", "reduce_to_fock, solve_fanpt"))
-        if solver_kwargs is None:
-            solver_kwargs = (
-                "fill=fill, energy_active=True, resum=False, ref_sd=0, final_order=1, "
-                "lambda_i=0.0, lambda_f=1.0, steps=50, "
-                "solver_kwargs={'mode':'lstsq', 'use_jac':True, 'xtol':1.0e-8, 'ftol':1.0e-8, "
-                "'gtol':1.0e-5, 'max_nfev':fanci_wfn.nactive, 'verbose':2, 'vtol':1e-5}"
-            )
+    elif fanpt and solver == "fanpt":
+        solver_kwargs = ""
     else:
         raise ValueError("Unsupported solver")
+
+
+    if fanpt:
+        from_imports.append(("fanci.fanpt_wrapper", "reduce_to_fock, solve_fanpt"))
+        # FIXME: may not be too stable
+        solver_kwargs = re.sub(r"(\s*)(.+?)=(.+?),", r"\1'\2':\3,", solver_kwargs)
+        if fanpt_kwargs is None:
+            fanpt_kwargs = (
+                "fill=fill, energy_active=True, resum=False, ref_sd=0, final_order=1, "
+                "lambda_i=0.0, lambda_f=1.0, steps=50"
+            )
 
     if nproj == 0:
         from_imports.append(("scipy.special", "comb"))
@@ -429,7 +442,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
 
     output += "# Initialize Hamiltonian\n"
 
-    if solver != "fanpt":
+    if not fanpt:
         ham_init1 = "ham = {}(".format(ham_name)
         ham_init2 = "one_int, two_int"
         if solver == 'cma':
@@ -549,28 +562,34 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Initialize objective\n"
-    if solver != "fanpt":
+    if not fanpt:
         output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
     else:
         output += "pyci_ham = pyci.hamiltonian(nuc_nuc, ham.one_int, ham.two_int)\n"
         output += "pyci_fock = pyci.hamiltonian(nuc_nuc, fock.one_int, fock.two_int)\n"
     seniority = 'wfn.seniority' if wfn_type != 'pccd' else '0'
-    if solver == "fanpt":
+
+    ham = "pyci_fock" if fanpt else "pyci_ham"
+    if fanpt:
         output += "\n".join(
                 textwrap.wrap(
-                    f"fanci_wfn = convert_to_fanci(wfn, pyci_fock, seniority={seniority}, "
+                    f"fanpt_wfn = convert_to_fanci(wfn, pyci_fock, seniority={seniority}, "
                     "param_selection=param_selection, nproj=nproj, objective_type='projected', "
                     "norm_det=[(0, 1)])",
                     width=100, subsequent_indent=" " * len("fanci_wfn = convert_to_fanci(")
                 )
             )
         output += "\n"
-    elif objective in ["projected_stochastic", "projected"]:
-        output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='projected')\n"
+
+    if objective in ["projected_stochastic", "projected"]:
+        output += f"fanci_wfn = convert_to_fanci(wfn, {ham}, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='projected')\n"
     elif objective in ["energy", "one_energy", "variational"]:
-        output += f"fanci_wfn = convert_to_fanci(wfn, pyci_ham, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='energy')\n"
+        output += f"fanci_wfn = convert_to_fanci(wfn, {ham}, seniority={seniority}, param_selection=param_selection, nproj=nproj, objective_type='energy')\n"
     output += "fanci_wfn.tmpfile = '{}'\n".format(save_chk)
-    output += "fanci_wfn.step_print = True\n"
+    if fanpt:
+        output += "fanci_wfn.step_print = False\n"
+    else:
+        output += "fanci_wfn.step_print = True\n"
     output += "\n"
 
     # output += "# Normalize\n"
@@ -586,9 +605,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     output += "\n"
 
     output += "# Solve\n"
-    if solver == "fanpt":
+    if fanpt:
+        if not fanpt_solver:
+            solver_addon = ", solver_kwargs=None, solver_wfn=fanci_wfn"
+        else:
+            solver_addon = ", solver_kwargs={" + solver_kwargs + "}, solver_wfn=fanci_wfn"
         results1 = "fanci_results = solve_fanpt("
-        results2 = "fanci_wfn, pyci_fock, pyci_ham, np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
+        results2 = "fanpt_wfn, pyci_fock, pyci_ham, np.hstack([fanci_wfn.active_params, energy_val]), {}{})\n".format(fanpt_kwargs, solver_addon)
     elif objective == "projected_stochastic":
         results1 = "fanci_results = fanci_wfn.optimize_stochastic("
         results2 = "100, np.hstack([fanci_wfn.active_params, energy_val]), {})\n".format(solver_kwargs)
@@ -669,6 +692,10 @@ def main():  # pragma: no cover
         objective=args.objective,
         solver=args.solver,
         solver_kwargs=args.solver_kwargs,
+        fanpt=args.fanpt,
+        fanpt_kwargs=args.fanpt_kwargs,
+        fanpt_solver=args.fanpt_solver,
+        fanpt_solver_kwargs=args.fanpt_solver_kwargs,
         wfn_kwargs=args.wfn_kwargs,
         ham_noise=args.ham_noise,
         wfn_noise=args.wfn_noise,

@@ -368,6 +368,33 @@ parser.add_argument(
     help=("Keyword arguments to customize the solver."),
 )
 parser.add_argument(
+    "--fanpt",
+    action="store_true",
+    required=False,
+    help="Flag for using FANPT.",
+)
+parser.add_argument(
+    "--fanpt_kwargs",
+    type=str,
+    default=None,
+    required=False,
+    help=("Keyword arguments to customize the fanpt."),
+)
+parser.add_argument(
+    "--fanpt_solver",
+    type=str,
+    default=None,
+    required=False,
+    help=("Fanpt solver to use between fanpt iterations."),
+)
+parser.add_argument(
+    "--fanpt_solver_kwargs",
+    type=str,
+    default=None,
+    required=False,
+    help=("Keyword arguments to customize the fanpt solver."),
+)
+parser.add_argument(
     "--wfn_kwargs",
     type=str,
     default=None,
