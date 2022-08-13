@@ -10,11 +10,13 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     script_filenames,
     atom_system_inds,
     ao_inds_file,
+    ao_inds=None,
+    indices_list=None,
     filename=None,
     memory=None,
-    constraint=None,
     disjoint=True,
-    loc_type="pm"
+    loc_type="pm",
+    orbital_optimization=False,
 ):
     """Make a script for running calculations.
 
@@ -38,6 +40,8 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     # use first script as a reference
     with open(script_filenames[0], 'r') as f:
         output = f.read()
+    imports = set()
+    imports |= set(re.findall(r".*import .+", output))
 
     output = re.sub(
             "from fanpy.upgrades import speedup_sign",
@@ -49,7 +53,7 @@ from fanpy.wfn.composite.embedding_fixedelectron import FixedEmbeddedWavefunctio
 
     if loc_type == "svd":
         indices_list_assign = """indices_list[ao_ind].append(i)
-indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
+    indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
     else:
         indices_list_assign = """indices_list[system_inds[ao_ind]].append(i)
     indices_list[system_inds[ao_ind]].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
@@ -58,11 +62,26 @@ indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_bet
 system_inds = {atom_system_inds}
 
 # Orbital labels
-ao_inds = np.load('{ao_inds_file}')
+"""
+    if not ao_inds:
+        wavefunction_preamble += f"ao_inds = np.load('{ao_inds_file}')"
+    else:
+        wavefunction_preamble += f"ao_inds = {ao_inds}"
+
+    if not indices_list:
+        wavefunction_preamble += f"""
 indices_list = [[] for _ in range(max(system_inds) + 1)] 
 for i, ao_ind in enumerate(ao_inds):
     {indices_list_assign}
-indices_list = [sorted(i) for i in indices_list]
+indices_list = [sorted(i) for i in indices_list]"""
+    else:
+        wavefunction_preamble += f"""
+indices_list = {indices_list}"""
+
+    wavefunction_preamble += f"""
+
+print("Spin orbital indices of each subsystem:")
+print(indices_list)
 
 # Number of electrons in each system
 # assuming ground state corresponds to first N/2 alpha and N/2 beta orbitals occupied
@@ -83,6 +102,15 @@ print('Number of Electrons in System {k+1}: {{}}'.format(nelec{k+1}))
         i += 2
         with open(script, 'r') as f:
             script_text = f.read()
+        new_imports = set(re.findall(r".*import .+", script_text))
+        import_stmts = []
+        for import_stmt in new_imports:
+            if import_stmt in imports:
+                continue
+            import_stmts.append(import_stmt)
+        import_stmts = "\n".join(import_stmts)
+        imports |= new_imports
+
         start = script_text.find("# Initialize wavefunction")
         end = script_text.find("# Initialize Hamiltonian")
         wfn_init = script_text[start: end]
@@ -96,8 +124,8 @@ print('Number of Electrons in System {k+1}: {{}}'.format(nelec{k+1}))
 
         output = re.sub(r"# Initialize Hamiltonian", wfn_init, output)
 
-        wfn_import = re.search(fr"\n(.+?{wfn_name})\n", script_text).group(1)
-        output = re.sub("(import \w+Hamiltonian)", fr"\1\n{wfn_import}", output)
+        #wfn_import = re.search(fr"\n(.+?{wfn_name})\n", script_text).group(1)
+        output = re.sub("(import \w+Hamiltonian)", fr"\1\n{import_stmts}", output)
 
     nelecs = ", ".join([f"nelec{i}" for i in range(1, len(script_filenames) + 1)])
     output = re.sub(
@@ -111,11 +139,14 @@ print('Wavefunction: Embedded Fixed Electrons')
     )
 
     output = re.sub(r"(nproj = .+)wfn.nparams", r"\1sum(i.nparams for i in wfn_list)", output)
-
+    
     params_selection = [f"(wfn{i}, np.ones(wfn{i}.nparams, dtype=bool))" for i in range(1, len(script_filenames) + 1)]
+    if orbital_optimization and "(ham, np.ones(ham.nparams, dtype=bool))" not in output:
+        params_selection.append("(ham, np.ones(ham.nparams, dtype=bool))")
+    
     output = re.sub(
-        r"param_selection = \[\(wfn, np.ones\(wfn.nparams, dtype=bool\)\)\]",
-        f"param_selection = [{', '.join(params_selection)}]",
+        r"\(wfn, np.ones\(wfn.nparams, dtype=bool\)\)",
+        ", ".join(params_selection),
         output
     )
 
