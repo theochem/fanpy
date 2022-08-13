@@ -10,6 +10,7 @@ def make_script(  # pylint: disable=R1710,R0912,R0915
     script_filenames,
     atom_system_inds,
     ao_inds_file,
+    ao_inds=None,
     filename=None,
     memory=None,
     constraint=None,
@@ -51,7 +52,7 @@ from fanpy.wfn.cc.embedding import EmbeddedCC""",
     # FIXME: double check if indentation needed
     if loc_type == "svd":
         indices_list_assign = """indices_list[ao_ind].append(i)
-indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
+    indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
     else:
         indices_list_assign = """indices_list[system_inds[ao_ind]].append(i)
     indices_list[system_inds[ao_ind]].append(slater.spatial_to_spin_indices(i, nspin // 2, to_beta=True))"""
@@ -60,7 +61,12 @@ indices_list[ao_ind].append(slater.spatial_to_spin_indices(i, nspin // 2, to_bet
 system_inds = {atom_system_inds}
 
 # Orbital labels (index of the atom to which each localized spatial orbital is assigned)
-ao_inds = np.load('{ao_inds_file}')
+""" 
+    if not ao_inds:
+        wavefunction_preamble += f"ao_inds = np.load('{ao_inds_file}')"
+    else:
+        wavefunction_preamble += f"ao_inds = {ao_inds}"
+    wavefunction_preamble += f"""
 indices_list = [[] for _ in range(max(system_inds) + 1)] 
 for i, ao_ind in enumerate(ao_inds):
     {indices_list_assign}
@@ -151,7 +157,7 @@ inter_exops = list(set(inter_exops))
         fr"""# Initialize wavefunction
 from fanpy.wfn.cc.embedding import EmbeddedCC
 wfn = EmbeddedCC(nelecs, [len(indices) for indices in indices_list], indices_list, wfn_list, memory='6gb',
-                 inter_exops=inter_exops, exop_combinations=None, refresh_exops=50000)
+                 inter_exops=inter_exops, exop_combinations=None, refresh_exops=None)
 wfn.assign_params(wfn.params + {wfn_noise} * 2 * (np.random.rand(*wfn.params.shape) - 0.5))
 print('Wavefunction: Embedded Fixed Electrons')
 
