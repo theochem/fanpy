@@ -332,9 +332,14 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 # convert occupation vector to sd
                 if occs.dtype == bool:
                     occs = np.where(occs)[0]
-                sd = slater.create(0, *occs[0])
-                sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
-                sds.append(sd)
+                if self.seniority == 0:
+                    sd = slater.create(0, *occs)
+                    sd = slater.create(sd, *(occs + self._fanpy_wfn.nspatial))
+                    sds.append(sd)
+                else:
+                    sd = slater.create(0, *occs[0])
+                    sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
+                    sds.append(sd)
 
             # Feed in parameters into fanpy wavefunction
             for component, indices in self.indices_component_params.items():
@@ -392,9 +397,14 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 # convert occupation vector to sd
                 if occs.dtype == bool:
                     occs = np.where(occs)[0]
-                sd = slater.create(0, *occs[0])
-                sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
-                sds.append(sd)
+                if self.seniority == 0:
+                    sd = slater.create(0, *occs)
+                    sd = slater.create(sd, *(occs + self._fanpy_wfn.nspatial))
+                    sds.append(sd)
+                else:
+                    sd = slater.create(0, *occs[0])
+                    sd = slater.create(sd, *(occs[1] + self._fanpy_wfn.nspatial))
+                    sds.append(sd)
 
             # Feed in parameters into fanpy wavefunction
             for component, indices in self.indices_component_params.items():
@@ -854,4 +864,4 @@ def convert_to_fanci(wfn, ham, nproj=None, proj_wfn=None, seniority=None, **kwar
                 # Go to next iteration
                 isamp += 1
 
-    return GeneratedFanCI(ham, wfn, wfn.nelec, nproj=nproj, wfn=proj_wfn, **kwargs)
+    return GeneratedFanCI(ham, wfn, wfn.nelec, nproj=nproj, wfn=proj_wfn, seniority=seniority, **kwargs)
