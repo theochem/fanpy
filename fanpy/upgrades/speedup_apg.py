@@ -272,9 +272,9 @@ def apg6_generate_possible_orbpairs(self, occ_indices):
 def apig_generate_possible_orbpairs(self, occ_indices):
     npairs = len(occ_indices) // 2
     if (npairs * (npairs - 1) // 2) % 2 == 0:
-        sign = -1
-    else:
         sign = 1
+    else:
+        sign = -1
 
     dict_orb_ind = {orbpair[0]: ind for orbpair, ind in self.dict_orbpair_ind.items()}
     output = tuple()
